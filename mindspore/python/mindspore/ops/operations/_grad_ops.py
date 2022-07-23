@@ -2047,7 +2047,7 @@ class UpsampleNearest3DGrad(Primitive):
             One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
     Inputs:
         - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
-            float16, float32, float64.
+          float16, float32, float64.
 
     Outputs:
         Tensor, A 5-D tensor. Has the same type as input grad_output, shape depends on x and output_size/scales.
@@ -3161,6 +3161,45 @@ class GridSampler3DGrad(Primitive):
         self.add_prim_attr('align_corners', align_corners)
 
 
+class SparseSegmentMeanGrad(Primitive):
+    """
+    Compute gradients for SparseSegmentMeanGrad operation.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor of the first input of SparseSegmentMeanGrad.
+        - **indices** (Tensor) - Indices is a 1-D tensor with indices into `x`. Must be one of the following
+          types: int32, int64. Has same rank as `segment_ids`. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor with indices into the output `y`. Must be one of the
+          following types: int32, int64. Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **output_dim0** (Tensor) - Output_dim0 is a 0-D tensor. Dimension 0 of `x` passed to SparseSegmentMean op.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the value of `output_dim0`.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` is not a tensor.
+        TypeError: If the dtype of `x` is not any of the following data types: {float32, float64}.
+        TypeError: If the dtype of `indices` is not int32.
+        TypeError: If the dtype of `segment_ids` is not int32.
+        TypeError: If the dtype of `output_dim0` is not int32.
+        ValueError: If dimension size of `x` less than 1.
+        ValueError: If rank of `indices` or `segment_ids` is not 1.
+        ValueError: If dimension size of `output_dim0` is not 0.
+        ValueError: If the first dimension of `indices` is not equal to the first dimension of `segment_ids`.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If `indices` is out of range of x's first dimension.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentMeanGrad"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids', 'output_dim0'], outputs=['y'])
+
+
 class FractionalMaxPoolGrad(Primitive):
     """Computes gradients for FractionalMaxPool operation."""
 
@@ -3494,9 +3533,9 @@ class GridSampler2DGrad(Primitive):
         - **grad** (Tensor) - A 4-D tensor whose dtype is float16 or float32 and whose shape is :math:`(N, C,
           H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
         - **input_x** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,
-         H_{in}, W_{in})`.
+          H_{in}, W_{in})`.
         - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose
-         shape is :math:`(N, H_{out}, W_{out}, 2)`.
+          shape is :math:`(N, H_{out}, W_{out}, 2)`.
 
     Outputs:
         - **dx** (Tensor) - A 4-D tensor whose dtype and shape are the same as `input_x`.

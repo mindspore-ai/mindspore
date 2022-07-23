@@ -146,6 +146,7 @@ from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
@@ -2177,6 +2178,13 @@ test_case_math_ops = [
         'block': P.Sign(),
         'desc_inputs': [[3]],
         'desc_bprop': [[3]]}),
+    ('SparseSegmentMeanGrad', {
+        'block': G.SparseSegmentMeanGrad(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array(4).astype(np.int32))],
+        'skip': ['backward']}),
     ('Round', {
         'block': P.Round(),
         'desc_inputs': [[3]],
@@ -4426,6 +4434,13 @@ test_case_sparse_ops = [
                         Tensor(np.array([1, 1]), mstype.int64),
                         Tensor(np.array([[1, 2], [3, 4]]), mstype.int64)],
         'skip': ['backward']}),
+    ('SparseSegmentMeanWithNumSegments', {
+        'block': SparseSegmentMeanWithNumSegments(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([2]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
     ('SparseTensorDenseAdd', {
         'block': SparseTensorDenseAdd(),
         'desc_inputs': [Tensor([[0]], mstype.int32),

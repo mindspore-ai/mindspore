@@ -1085,6 +1085,62 @@ class SparseMatrixNNZ(Primitive):
             inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'], outputs=['y'])
 
 
+class SparseSegmentMeanWithNumSegments(Primitive):
+    """
+    Compute the mean along sparse segments of a tensor. It is allowed to have missing id in segment_ids.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor of the first input of SparseSegmentMeanWithNumSegments.
+        - **indices** (Tensor) - 1-D Tensor with indices into `x`. Must be one of the following
+          types: int32, int64. Has same rank as `segment_ids`. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - 1-D Tensor with indices into the output `y`. Must be one of the
+          following types: int32, int64. Values should be sorted and can be repeated. The shape should
+          be :math:`(N,)`.
+        - **num_segments** (Tensor) - Num_segments indicates the size of the output.
+          It should be bigger than the largest id of `segment_ids`.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the value of `num_segments`.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` or `num_segments` is not a tensor.
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
+        TypeError: If dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `segment_ids` and `indices` mismatch.
+        TypeError: If dtype of `num_segments` and `indices` mismatch.
+        ValueError: If rank of `x` less than 1.
+        ValueError: If rank of `indices` or `segment_ids` is not 1.
+        ValueError: If rank of `num_segments` is bigger than 1.
+        ValueError: If numelements of `num_segments` is not 1.
+        ValueError: If the first dimension of `indices` is not equal to the first dimension of `segment_ids`.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
+        ValueError: If `indices` is out of range of x's first dimension.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=ms.float16)
+        >>> indices = Tensor([0, 2, 1], dtype=ms.int32)
+        >>> segment_ids = Tensor([0, 0, 2], dtype=ms.int32)
+        >>> num_segments = Tensor([4], dtype=ms.int32)
+        >>> sparse_segment_mean_with_num_segments = ops.SparseSegmentMeanWithNumSegments()
+        >>> output = sparse_segment_mean_with_num_segments(x, indices, segment_ids, num_segments)
+        >>> print(output)
+        [[1. 1. 1. 0.]
+         [0. 0. 0. 0.]
+         [0. 1. 1. 0.]
+         [0. 0. 0. 0.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentMeanWithNumSegments"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids', 'num_segments'], outputs=['y'])
+
+
 class SparseAdd(Primitive):
     """
     Computes the sum of a COOTensor and another COOTensor.
