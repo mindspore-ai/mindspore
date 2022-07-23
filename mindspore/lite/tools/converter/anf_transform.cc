@@ -340,18 +340,20 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
     return RET_ERROR;
   }
 #endif
-  if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
-    auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
-    if (acl_pass_ptr == nullptr) {
-      MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
-      return RET_ERROR;
-    }
-    if (!acl_pass_ptr->Run(old_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
+  if (param->device.find("Ascend") != std::string::npos) {
+    if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
+      auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
+      if (acl_pass_ptr == nullptr) {
+        MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
+        return RET_ERROR;
+      }
+      if (!acl_pass_ptr->Run(old_graph)) {
+        MS_LOG(ERROR) << "Acl pass failed.";
+        opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+        return RET_ERROR;
+      }
       opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
-      return RET_ERROR;
     }
-    opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);

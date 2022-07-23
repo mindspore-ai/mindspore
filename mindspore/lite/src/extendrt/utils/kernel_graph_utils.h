@@ -87,6 +87,8 @@ class KernelGraphUtils : public std::enable_shared_from_this<KernelGraphUtils> {
     const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
     const std::vector<tensor::TensorPtr> &input_tensors,
     std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const;
+  void UpdateCustomAscendOutputNames(const std::vector<AnfNodePtr> &outputs,
+                                     std::vector<std::string> *output_names) const;
 
 #ifndef ENABLE_SECURITY
   static bool ExistSummaryNode(const KernelGraph *graph);

@@ -24,9 +24,8 @@
 #include "tools/converter/adapter/acl/mapper/spatial_node_adapter.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/optimizer_manager.h"
-#include "tools/common/string_util.h"
 #include "tools/converter/adapter/acl/common/utils.h"
-#include "tools/converter/adapter/acl/src/acl_model_process.h"
+#include "tools/converter/converter_context.h"
 #include "include/registry/pass_registry.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
@@ -370,35 +369,6 @@ ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, cons
   return om_parameter;
 }
 
-STATUS AclPassImpl::CreateGraphAippInput(const FuncGraphPtr &func_graph, const Buffer &om_data) {
-  auto model_process = lite::AclModelProcess(om_data, user_options_cfg_);
-  if (model_process.Load() != lite::RET_OK) {
-    MS_LOG(ERROR) << "Load om failed.";
-    return lite::RET_ERROR;
-  }
-  std::vector<std::vector<int64_t>> inputs_shape;
-  if (model_process.GetInputsShape(&inputs_shape) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get inputs shape failed.";
-    return lite::RET_ERROR;
-  }
-  if (model_process.UnLoad() != lite::RET_OK) {
-    MS_LOG(ERROR) << "UnLoad om failed.";
-    return lite::RET_ERROR;
-  }
-  // create aipp parameter
-  for (size_t i = 0; i < inputs_shape.size(); i++) {
-    ParameterPtr aipp_parameter = func_graph->add_parameter();
-    CHECK_NULL_RETURN(aipp_parameter);
-    aipp_parameter->set_name("aipp" + std::to_string(i));
-    auto type_ptr = TypeIdToType(kNumberTypeUInt8);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, inputs_shape[i]);
-    aipp_parameter->set_abstract(abstract_tensor);
-    aipp_parameter->set_default_param(nullptr);
-    graph_aipp_inputs_.emplace_back(aipp_parameter);
-  }
-  return lite::RET_OK;
-}
-
 // now build the whole graph, not split
 STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
@@ -409,12 +379,6 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
   }
   om_parameter_ = CreateOmParameter(func_graph, om_data);
   MS_CHECK_TRUE_MSG(om_parameter_ != nullptr, lite::RET_ERROR, "Convert graph  to om failed.");
-  if (!user_options_cfg_.insert_op_config_file_path.empty()) {
-    if (CreateGraphAippInput(func_graph, om_data) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Create aipp input failed.";
-      return lite::RET_ERROR;
-    }
-  }
   MS_LOG(DEBUG) << "Build graph success.";
   return lite::RET_OK;
 }
@@ -424,7 +388,6 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
   CHECK_NULL_RETURN(node);
   if (node->isa<ValueNode>()) {
     MS_LOG(INFO) << "Name of graph output value node is : " << node->fullname_with_scope();
-    graph_output_names_.emplace_back(node->fullname_with_scope());
     graph_output_dims_.emplace_back(std::vector<int64_t>());
     graph_outputs_.emplace_back(node);
     return lite::RET_OK;
@@ -462,7 +425,6 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     }
   } else {
     MS_LOG(INFO) << "Name of graph output node is " << cnode->fullname_with_scope();
-    graph_output_names_.emplace_back(cnode->fullname_with_scope());
     std::vector<int64_t> dims;
     STATUS ret;
     if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
@@ -518,7 +480,6 @@ STATUS AclPassImpl::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNode
     MS_LOG(ERROR) << "Get output info of graph failed.";
     return lite::RET_ERROR;
   }
-  custom_node->AddAttr(kOutputNames, MakeValue(graph_output_names_));
   TypeId type;
   if (graph_outputs_.size() == 1) {
     type = lite::acl::GetTypeFromNode(graph_outputs_[0]);
@@ -543,7 +504,6 @@ STATUS AclPassImpl::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNode
 }
 
 void AclPassImpl::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
-  // add output_shape attr
   std::string output_dim_str;
   for (const auto &item : graph_output_dims_) {
     output_dim_str += std::to_string(item.size()) + ",";
@@ -556,6 +516,8 @@ void AclPassImpl::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
   prim->set_attr(attrs);
   prim->AddAttr(kFuncType, api::MakeValue<std::string>("acl_build"));
   prim->AddAttr(kUniqueName, api::MakeValue<std::string>("CustomAscend"));
+  auto output_names = lite::ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
+  prim->AddAttr(kOutputNames, api::MakeValue<std::vector<std::string>>(output_names));
 }
 
 CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {
@@ -576,21 +538,6 @@ CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {
   }
   SetCustomAttrs(prim);
   return custom_node;
-}
-
-STATUS AclPassImpl::ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph) {
-  auto graph_inputs = func_graph->get_inputs();
-  if (graph_aipp_inputs_.size() != graph_inputs.size()) {
-    MS_LOG(ERROR) << "Input size of aipp " << graph_aipp_inputs_.size() << " and input size of func graph "
-                  << graph_inputs.size() << " are not equal.";
-    return lite::RET_ERROR;
-  }
-  for (size_t i = 0; i < graph_inputs.size(); ++i) {
-    auto aipp_abstract = graph_aipp_inputs_[i]->abstract();
-    CHECK_NULL_RETURN(aipp_abstract);
-    graph_inputs[i]->set_abstract(aipp_abstract->Clone());
-  }
-  return lite::RET_OK;
 }
 
 CNodePtr AclPassImpl::CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node) {
@@ -638,12 +585,6 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
     MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, lite::RET_ERROR, "Create make tuple cnode failed.");
     if (!manager->Replace(return_input, make_tuple_node)) {
       MS_LOG(ERROR) << "Replace node failed for outputs of graph.";
-      return lite::RET_ERROR;
-    }
-  }
-  if (!graph_aipp_inputs_.empty()) {
-    if (ReplaceInputsByAippInputs(func_graph) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Replace inputs by aipp inputs failed.";
       return lite::RET_ERROR;
     }
   }

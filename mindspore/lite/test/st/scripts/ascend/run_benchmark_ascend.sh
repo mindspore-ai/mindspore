@@ -59,7 +59,7 @@ function Run_Benchmark() {
 
         echo "Benchmarking ${model_name} ......"
         model_type=${model_name##*.}
-        model_file=${ms_models_path}'/'${model_name}'.ms'
+        model_file=${ms_models_path}'/'${model_name}'.mindir'
         input_files=""
         output_file=""
         data_path=${model_data_path}'/data/'
