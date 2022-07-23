@@ -154,7 +154,7 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-void ResizeLinear1DGradCpuKernelMod::MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs) {
+void ResizeLinear1DGradCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
   workspace_size_list_.clear();
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
@@ -192,7 +192,7 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_RESIZE_FAILED;
   }
 
-  MallocWorkSpace(inputs);
+  SetWorkSpaceSize(inputs);
   return KRET_OK;
 }
 
