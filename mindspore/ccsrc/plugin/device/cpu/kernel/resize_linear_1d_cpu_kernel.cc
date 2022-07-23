@@ -149,7 +149,7 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-void ResizeLinear1DCpuKernelMod::MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs) {
+void ResizeLinear1DCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
   workspace_size_list_.clear();
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
@@ -183,7 +183,7 @@ int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   in_width_ = LongToSize(input_shape[kIndex2]);
   out_width_ = LongToSize(output_shape[kIndex2]);
 
-  MallocWorkSpace(inputs);
+  SetWorkSpaceSize(inputs);
   return KRET_OK;
 }
 
