@@ -23,6 +23,8 @@
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/dropout_nd.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl//fp32/dropout_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -102,6 +104,7 @@ int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                   << " but got " << input_shape_.size() << "D";
     return KRET_RESIZE_FAILED;
   }
+  scale_ = 1.0f / keep_prob_;
   return KRET_OK;
 }
 
@@ -109,42 +112,63 @@ template <typename T>
 bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspaces,
                                          const std::vector<AddressPtr> &outputs) {
-  const T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto input = GetDeviceAddress<T>(inputs, kIndex0);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   auto mask = GetDeviceAddress<bool>(outputs, kIndex1);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
   if (keep_prob_ == 0.0f) {
     auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }
     ret = memset_s(mask, outputs.at(kIndex1)->size, 0, outputs.at(kIndex1)->size);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
     }
     return true;
   }
-  size_t inner_size = input_elements_ / channels_;
-  float scale = 1.0f / keep_prob_;
+  int inner_size = SizeToInt(input_elements_ / channels_);
   // Get channel index over all samples.
-  auto task_generate_rand = [this, &inner_size, &mask](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
+  CTask task;
+  int ret_code = EOK;
+  task = [this, &input, &output, &mask, &inner_size, &ret_code](size_t start_, size_t end_) {
+    auto start = SizeToInt(start_);
+    auto end = SizeToInt(end_);
+    auto per_input = input + start * inner_size;
+    auto per_output = output + start * inner_size;
+    auto per_mask = mask + start * inner_size;
+    for (int i = start; i < end; ++i) {
       bool drop = static_cast<float>(distribution_(generator_)) <= keep_prob_;
-      std::fill(mask + i * inner_size, mask + (i + 1) * inner_size, drop);
-    }
-  };
-  ParallelLaunchAutoSearch(task_generate_rand, channels_, this, &parallel_search_info_, pool_);
-
-  auto task = [this, &scale, &input, &output, &mask](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      if constexpr (std::is_same<T, float16>::value) {
-        output[i] = static_cast<T>(scale) * input[i] * static_cast<T>(mask[i]);
+      if (drop) {
+        std::fill(per_mask, per_mask + inner_size, drop);
+        if constexpr (std::is_same<T, float>::value) {
+          DropoutFp32(per_input, scale_, inner_size, per_output);
+        } else {
+          for (int j = 0; j < inner_size; ++j) {
+            per_output[j] = scale_ * per_input[j];
+          }
+        }
       } else {
-        output[i] = scale * input[i] * mask[i];
+        auto temp_code = memset_s(per_mask, inner_size * sizeof(bool), 0, inner_size * sizeof(bool));
+        if (temp_code != EOK) {
+          ret_code = temp_code;
+          return;
+        }
+        temp_code = memset_s(per_output, inner_size * sizeof(T), 0, inner_size * sizeof(T));
+        if (temp_code != EOK) {
+          ret_code = temp_code;
+          return;
+        }
       }
+      per_input += inner_size;
+      per_output += inner_size;
+      per_mask += inner_size;
     }
   };
-  ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
+  ParallelLaunch(task, channels_, 0, this, pool_);
+  if (ret_code != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does  parallel launch failed, error code: " << ret_code;
+  }
   return true;
 }
 
@@ -159,8 +183,6 @@ const std::vector<std::pair<KernelAttr, DropoutNdCpuKernelMod::KernelRunFunc>> &
      &DropoutNdCpuKernelMod::LaunchKernel<int>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
      &DropoutNdCpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-     &DropoutNdCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
      &DropoutNdCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
