@@ -203,6 +203,17 @@ def get_input_output_args(io_info):
     return args
 
 
+def __dynamic_range_process(info):
+    """
+    Current process need move to tbe json creator.
+    """
+    if 'range' in info:
+        for i in range(len(info['range'])):
+            if info['range'][i][1] == -1:
+                info['range'][i][1] = None
+    return info
+
+
 def get_single_io_arg(info):
     """
     Get single input/output arg from io info
@@ -216,12 +227,10 @@ def get_single_io_arg(info):
         check_arg_info(info)
         del info['valid']
         del info['name']
-        if 'range' in info:
-            for i in range(len(info['range'])):
-                if info['range'][i][1] == -1:
-                    info['range'][i][1] = None
         res = info
-    return res
+    if not res:
+        return res
+    return __dynamic_range_process(res)
 
 
 def assemble_op_args(compute_op_info, is_single_op_build=False):
@@ -298,8 +307,8 @@ def get_fuzz_build_info(job_content):
         else "accurately_build"
     fuzz_build_info["miss_support_info"] = op_compute_info["miss_support_info"]
     fuzz_build_info["max_kernel_id"] = op_compute_info["max_kernel_id"]
-    fuzz_build_info["incremental_link"] = os.path.realpath(
-        job_content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_compute_info["name"] + ".json") if \
+    json_path = os.path.join(job_content["SocInfo"]["op_debug_dir"], "kernel_meta", op_compute_info["name"] + ".json")
+    fuzz_build_info["incremental_link"] = os.path.realpath(json_path) if \
         op_compute_info["build_type"] == BuildType.FUZZILY.value else ""
     return fuzz_build_info
 
