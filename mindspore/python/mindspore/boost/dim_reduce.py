@@ -219,16 +219,7 @@ class DimReduce(Cell):
         self.dn_init = ParameterTuple(parameter_tuple).clone(prefix="dn_init", init="zeros")
 
     def construct(self, loss, old_grad, loss_scale, weight, weight_clone, *inputs):
-        weight = F.depend(weight, loss)
-        old_grad = F.depend(old_grad, weight)
-        old_grad = self.hyper_map(F.partial(_scale_grad, loss_scale), old_grad)
-        old_loss = self.allreduce(loss) // self.rank_size if self.rank_size > 1 else loss
-
-        gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
-        gk_local = F.addn(gk_local)
-        gk_pad = self.allgather(gk_local) if self.rank_size > 1 else gk_local
-        gk_pad = F.reshape(gk_pad, (-1, 1))
-        gk = gk_pad[0:self.n_components, :]
+        gk, old_loss, gk_local = self._generate_gk(weight, loss, old_grad, loss_scale)
 
         _save_weight(self.gk_last_back, self.gk_last)
         _save_weight(self.bk_back, self.bk)
@@ -256,14 +247,32 @@ class DimReduce(Cell):
             _save_weight(self.gk_last, self.gk_last_back)
             _save_weight(self.bk, self.bk_back)
 
+        clone = self._res_loss(old_grad, grad_proj, weight, weight_clone, rho)
+        return F.depend(loss, clone)
+
+    def _res_loss(self, old_grad, grad_proj, weight, weight_clone, rho):
+        """update loss"""
         update_grad = self.hyper_map(F.partial(_update_grad_res_momentum, self.gamma, self.alpha),
                                      self.grad_res_momentum, old_grad, grad_proj)
         delta_weight = self.hyper_map(F.partial(_get_delta_weight, rho), dn, update_grad)
         update = self.optimizer(delta_weight)
         weight = F.depend(weight, update)
         clone = self.hyper_map(_save_weight, weight_clone, weight)
-        loss = F.depend(loss, clone)
-        return loss
+        return clone
+
+    def _generate_gk(self, weight, loss, old_grad, loss_scale):
+        """generate gk"""
+        weight = F.depend(weight, loss)
+        old_grad = F.depend(old_grad, weight)
+        old_grad = self.hyper_map(F.partial(_scale_grad, loss_scale), old_grad)
+        old_loss = self.allreduce(loss) // self.rank_size if self.rank_size > 1 else loss
+
+        gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
+        gk_local = F.addn(gk_local)
+        gk_pad = self.allgather(gk_local) if self.rank_size > 1 else gk_local
+        gk_pad = F.reshape(gk_pad, (-1, 1))
+        gk = gk_pad[0:self.n_components, :]
+        return gk, old_loss, gk_local
 
     def _line_search(self, gk, dk, dn, old_loss, weight, weight_clone, *inputs):
         """line search rho."""

@@ -191,18 +191,18 @@ class TbeJobManager:
     def compile_handler(self, job: TbeJob):
         """ Compile job handler """
         compute_op_list = get_compute_op_list(job.content)
-        if len(compute_op_list) == 1:  # pylint: disable=no-else-return
+        if len(compute_op_list) == 1:
             return self.single_op_compile(job)
-        else:
-            before_build_process(job)
-            if self.fusion_need_sync:
-                sync_fusion_env(self.fusion_need_sync, self.imported_module)
-                self.fusion_need_sync = 0
-            res = parallel_compile_fusion_op(job)
-            if not res:
-                job.error("Parallel_compile_fusion_op Job failed, job json string:{}".format(job.json_string))
-                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-            return self.add_to_running_jobs(job)
+
+        before_build_process(job)
+        if self.fusion_need_sync:
+            sync_fusion_env(self.fusion_need_sync, self.imported_module)
+            self.fusion_need_sync = 0
+        res = parallel_compile_fusion_op(job)
+        if not res:
+            job.error("Parallel_compile_fusion_op Job failed, job json string:{}".format(job.json_string))
+            return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        return self.add_to_running_jobs(job)
 
     def single_op_compile(self, job: TbeJob):
         """Single operator compile"""
@@ -471,27 +471,27 @@ class DummyLogger:
     @staticmethod
     def debug(msg, *args, **kwargs):
         """debug method."""
-        return None
+        return True
 
     @staticmethod
     def info(msg, *args, **kwargs):
         """info method."""
-        return None
+        return True
 
     @staticmethod
     def warning(msg, *args, **kwargs):
         """warning method."""
-        return None
+        return True
 
     @staticmethod
     def error(msg, *args, **kwargs):
         """error method."""
-        return None
+        return True
 
     @staticmethod
     def exception(msg, *args, **kwargs):
         """exception method."""
-        return None
+        return False
 
 
 def get_job(jobs, source_id, job_id):

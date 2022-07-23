@@ -114,8 +114,8 @@ class GroupLossScaleManager(Cell):
             init_loss_scale (float): The initialized loss scale.
         """
         self.loss_scale_number = loss_scale_number
-        # pylint: disable=W0212
-        self.layer_loss_scale = tuple([P._DynamicLossScale(layer=x) for x in range(loss_scale_number + 1)])
+        inner_list = [P._DynamicLossScale(layer=x) for x in range(loss_scale_number + 1)] # pylint: disable=W0212
+        self.layer_loss_scale = tuple(inner_list)
         self.dynamic_loss_scale = ParameterTuple(Parameter(Tensor(1, mstype.float32),
                                                            name='layer_loss_scale_{}'.format(x), requires_grad=False)
                                                  for x in range(loss_scale_number + 2))
