@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """builtin_operations"""
+from __future__ import absolute_import
 import numpy as np
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C

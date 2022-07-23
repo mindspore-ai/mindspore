@@ -64,7 +64,7 @@ AbstractBasePtr DeformableOffsetsGradInfer(const abstract::AnalysisEnginePtr &, 
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check inputs num.
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kDeformableOffsetsGradInputSize, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kDeformableOffsetsGradInputSize, prim_name);
   auto out_grad_types = DeformableOffsetsGradInferType(primitive, input_args);
   auto out_grad_shapes = DeformableOffsetsGradInferShape(primitive, input_args);
   std::vector<abstract::AbstractBasePtr> out_grads_abs;

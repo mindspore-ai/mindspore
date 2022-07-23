@@ -16,6 +16,7 @@
 Interfaces for parser module in c++.
 """
 
+from __future__ import  absolute_import
 from .parser import (Parser, create_instance, is_supported_create_instance_type, generate_scope,
                      get_bprop_method_of_class, get_class_instance_type, get_class_member_namespace_symbol,
                      create_slice_obj, get_obj_id, get_module_namespace, get_obj_type, get_object_key,
