@@ -138,7 +138,7 @@ bool IsWhileNode(const AnfNodePtr &node) {
     return false;
   }
   const auto &cond_set = cond_graph->nodes();
-  for (auto beg = cond_set.begin(); beg != cond_set.end(); beg++) {
+  for (auto beg = cond_set.begin(); beg != cond_set.end(); ++beg) {
     if (!((*beg)->isa<CNode>())) {
       continue;
     }
