@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <limits>
 #include <vector>
+#include <algorithm>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -52,14 +53,7 @@ class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    if (k_ >= static_cast<int64_t>(inner_size_)) {
-      CHECK_CUDA_RET_WITH_EXCEPT(
-        kernel_node_, cudaMemsetAsync(output_device, true, outer_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemsetAsync failed.");
-
-      return true;
-    }
-
+    k_ = std::min(k_, static_cast<int64_t>(inner_size_));
     T *top_k_output_device = GetDeviceAddress<T>(workspace, 0);
     int32_t *top_k_indices_device = GetDeviceAddress<int32_t>(workspace, 1);
 

@@ -15,9 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/in_top_k_cpu_kernel.h"
-#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "ops/in_top_k.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,11 +28,32 @@ constexpr size_t kInTopKShapeRank = 2;
 constexpr size_t kInTopkTargetShapeSize = 1;
 }  // namespace
 
-void InTopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto prediction_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  auto target_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
+bool InTopKCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::InTopK>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  k_ = kernel_ptr->get_k();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "InTopK does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int InTopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  auto prediction_shape = Convert2SizeT(inputs.at(0)->GetShapeVector());
+  auto target_shape = Convert2SizeT(inputs.at(1)->GetShapeVector());
   if (prediction_shape.size() != kInTopKShapeRank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of the first input must be equal to "
                       << kInTopKShapeRank << ", but got " << prediction_shape.size();
@@ -47,23 +68,16 @@ void InTopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     outer_size_ *= prediction_shape[i];
   }
   inner_size_ = prediction_shape[prediction_shape.size() - 1];
-  k_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "k");
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "InTopK does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return ret;
 }
 
-template <typename T>
+template <typename T, typename S>
 bool InTopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInTopKInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInTopKOutputsNum, kernel_name_);
 
   auto predictions = reinterpret_cast<T *>(inputs[0]->addr);
-  auto targets = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto targets = reinterpret_cast<S *>(inputs[1]->addr);
   auto output = reinterpret_cast<bool *>(outputs[0]->addr);
 
   if (k_ < 1) {
@@ -75,19 +89,27 @@ bool InTopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     return true;
   }
 
-  size_t k_num = std::min<size_t>(inner_size_ - 1, LongToSize(k_ - 1));
-  const std::function<bool(size_t, size_t)> comparator = [predictions](size_t index_1, size_t index_2) {
-    return predictions[index_1] > predictions[index_2];
-  };
-
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, predictions, targets, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx(inner_size_);
       auto base_input = i * inner_size_;
-      std::iota(idx.begin(), idx.end(), base_input);
-      std::nth_element(idx.begin(), idx.begin() + SizeToLong(k_num), idx.end(), comparator);
-      size_t p_index = base_input + IntToSize(targets[i]);
-      output[i] = (predictions[p_index] >= predictions[idx[k_num]]) ? true : false;
+      auto target_pred = predictions[base_input + targets[i]];
+      bool invalid = (static_cast<size_t>(targets[i]) >= inner_size_) || !std::isfinite(target_pred);
+      int64_t pos_num = 0;
+      if (!invalid) {
+        for (size_t k = 0; k < inner_size_; k++) {
+          auto pred = predictions[base_input + k];
+          if (!std::isfinite(pred)) {
+            invalid = true;
+            break;
+          } else if (pred > target_pred) {
+            pos_num++;
+            if (pos_num > k_) {
+              break;
+            }
+          }
+        }
+      }
+      output[i] = invalid ? false : (pos_num < k_);
     }
   };
   ParallelLaunchAutoSearch(task, outer_size_, this, &parallel_search_info_);
@@ -96,9 +118,9 @@ bool InTopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 
 std::vector<std::pair<KernelAttr, InTopKCpuKernelMod::InTopKFunc>> InTopKCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   &InTopKCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   &InTopKCpuKernelMod::LaunchKernel<float16>}};
+   &InTopKCpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   &InTopKCpuKernelMod::LaunchKernel<float, int64_t>}};
 
 std::vector<KernelAttr> InTopKCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
