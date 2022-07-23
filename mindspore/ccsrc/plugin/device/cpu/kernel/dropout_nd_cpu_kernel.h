@@ -59,6 +59,7 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   size_t channels_{1};
   size_t input_elements_{1};
   float keep_prob_{0.0f};
+  float scale_{1.0f};
   std::default_random_engine generator_;
   std::bernoulli_distribution distribution_;
 };
