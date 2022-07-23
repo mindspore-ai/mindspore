@@ -25,6 +25,7 @@ constexpr size_t MAX_RECURSIVE_DEPTH = 100000;
 constexpr size_t PRELU_INPUTS_SIZE = 2;
 constexpr size_t PRELU_OUTPUTS_SIZE = 1;
 constexpr size_t PRELU_SECOND_INPUT_SIZE = 1;
+constexpr int64_t MICRO_INTERLEAVED_SIZE = 2;
 constexpr int64_t PRELU_CHANNEL_INDEX = 1;
 constexpr int64_t PRELU_CHANNEL_STRATEGY = 1;
 constexpr int64_t NO_SPLIT_MAP = -1;
@@ -520,6 +521,10 @@ constexpr char PARAMETER_START[] = "parameter_start";
 constexpr char PARAM_INDEX[] = "param_index";
 constexpr char PARAMETER[] = "parameter";
 constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
+constexpr char INTERLEAVED_NUM[] = "interleave_num";
+constexpr char FORWARD_NODE_UNIQUE_ID[] = "forward_node_unique_id";
+constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
+constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";

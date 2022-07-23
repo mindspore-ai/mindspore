@@ -515,21 +515,23 @@ class MicroBatchInterleaved(Cell):
             raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be integer, "
                             "but got the type : {}.".format(type(interleave_num)))
         if interleave_num <= 0:
-            raise ValueError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be greater than 0, "
+            raise ValueError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be large than 0, "
                              "but got {}.".format(interleave_num))
         self.network = network
         self.interleave_num = interleave_num
         self.interleave_inputs = nn.CellList()
+        self.add = P.Add().add_prim_attr("micro_interleaved_add_flag", True)
         for _ in range(interleave_num):
             interleave_data = _MicroBatch(interleave_num)
             interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
+            interleave_data.strided_slice.add_prim_attr("interleave_num", interleave_num)
             self.interleave_inputs.append(interleave_data)
 
     def construct(self, *inputs):
         output = 0.0
         for i in range(self.interleave_num):
             interleave_input = self.interleave_inputs[i](i, *inputs)
-            output += self.network(*interleave_input)
+            output = self.add(output, self.network(*interleave_input))
         return output
 
 

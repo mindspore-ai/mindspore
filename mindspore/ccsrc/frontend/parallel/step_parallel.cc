@@ -303,6 +303,10 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(scope);
     forward_node->set_scope(scope);
     forward_node->set_in_forward_flag(true);
+    forward_node->AddPrimalAttr(FORWARD_NODE_UNIQUE_ID, MakeValue<std::string>(forward_node->UniqueId()));
+    if (node_to_insert->HasPrimalAttr(MICRO)) {
+      forward_node->AddPrimalAttr(MICRO, node_to_insert->GetPrimalAttr(MICRO));
+    }
     forward_input[0]->set_scope(scope);
     (void)manager->Replace(node_to_insert, forward_node);  // using Replace function to insert node
   }
