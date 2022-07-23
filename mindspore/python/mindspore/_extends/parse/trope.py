@@ -19,6 +19,7 @@
 # This operation function is not meant to be called directly
 
 # support operator symbol, ast
+from __future__ import  absolute_import
 from operator import (  # noqa
     add, sub, mul, truediv, floordiv, mod, eq, ne, lt, gt, le, ge, pos, neg,
     not_, and_, or_, xor, lshift, rshift, invert, is_, is_not, contains,

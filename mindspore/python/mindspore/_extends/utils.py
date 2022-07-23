@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Some utils."""
+from __future__ import absolute_import
 import inspect
 from functools import wraps
 

@@ -15,6 +15,8 @@
 # limitations under the License.
 # ============================================================================
 """Resources for ast tree parse."""
+from __future__ import absolute_import
+
 import ast
 import math
 

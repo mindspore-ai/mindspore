@@ -695,7 +695,7 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   // Check whether sub loop has untraced undetermined evaluator.
   mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
   for (auto r_it = eval_trace_.crbegin(); r_it != latest_entry_iter; r_it++) {
-    undetermined_evals.insert(*r_it);
+    (void)undetermined_evals.insert(*r_it);
   }
   MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
 

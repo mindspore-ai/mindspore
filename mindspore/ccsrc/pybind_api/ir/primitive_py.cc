@@ -129,6 +129,7 @@ PrimitivePy &PrimitivePy::operator=(const PrimitivePy &other) {
   if (this == &other) {
     return *this;
   }
+  Primitive::operator=(other);
   python_obj_ = other.python_obj_;
   bprop_cls_name_ = other.bprop_cls_name_;
   adapter_ = other.adapter_;
@@ -171,12 +172,9 @@ py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
 py::function PrimitivePy::GetBpropFunction() {
   static const char *const get_bprop_func_name = "get_bprop";
   if (py::hasattr(python_obj_, get_bprop_func_name)) {
-    py::function fn = python_obj_.attr(get_bprop_func_name)().cast<py::function>();
-    return fn;
-  } else {
-    auto fn = GetBpropFunctionByObj(python_obj_);
-    return fn;
+    return python_obj_.attr(get_bprop_func_name)().cast<py::function>();
   }
+  return GetBpropFunctionByObj(python_obj_);
 }
 
 py::function PrimitivePy::GetTaylorRuleFunction() {

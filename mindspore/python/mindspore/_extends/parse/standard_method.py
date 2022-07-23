@@ -16,6 +16,7 @@
 # ============================================================================
 """standard_method"""
 
+from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor, ms_class
 from mindspore import dtype as mstype
 
@@ -219,7 +220,7 @@ def strides_(x):
     return strides
 
 
-def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
+def astype(x, dtype, copy_tensor=True):
     """
     Return a copy of the tensor, casted to a specified type.
 
@@ -227,7 +228,7 @@ def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
         dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
             of :class:`mindspore.dtype.float32` or `float32`.
             Default: :class:`mindspore.dtype.float32`.
-        copy (bool, optional): By default, astype always returns a newly allocated
+        copy_tensor (bool, optional): By default, astype always returns a newly allocated
             tensor. If this is set to false, the input tensor is returned instead
             of a copy if possible. Default: True.
 
@@ -249,7 +250,7 @@ def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
         Int32
     """
     dtype = check_astype_dtype_const(dtype)
-    if not copy and dtype == x.dtype:
+    if not copy_tensor and dtype == x.dtype:
         return x
     return F.cast(x, dtype)
 
@@ -1784,11 +1785,12 @@ def masked_fill(x, mask, value):
     return F.masked_fill(x, mask, value)
 
 
-def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
+def col2im(*inputs):
     """
+    inputs: input_x, output_size, kernel_size, dilation, padding_value, stride
     Combines an array of sliding local blocks into a large containing tensor.
     """
-    return F.col2im(input_x, output_size, kernel_size, dilation, padding_value, stride)
+    return F.col2im(*inputs)
 
 
 def narrow(x, axis, start, length):
@@ -2309,9 +2311,8 @@ def list_hasnext(xs):
     return len(xs) > 0
 
 
-# pylint: disable=redefined-outer-name
-def list_append(self_, item):
-    return _append(self_, item)
+def list_append(self_, list_item):
+    return _append(self_, list_item)
 
 
 def list_insert(self_, index, obj):

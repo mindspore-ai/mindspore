@@ -16,6 +16,7 @@
 # ============================================================================
 """The module of parser python object, called by c++."""
 
+from __future__ import absolute_import
 import os
 import sys
 import ast
