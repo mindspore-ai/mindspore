@@ -33,7 +33,7 @@ The functional operators are initialized Primitives and can be used directly as 
     # True
     # Tensor[Int32]
 
-Neural Network Layer Operators
+Neural Network Layer Functions
 ------------------------------
 
 Neural Network
@@ -47,12 +47,31 @@ Neural Network
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
+    mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
+    mindspore.ops.dropout2d
+    mindspore.ops.dropout3d
+    mindspore.ops.flatten
     mindspore.ops.interpolate
+    mindspore.ops.lrn
     mindspore.ops.max_pool3d
     mindspore.ops.kl_div
     mindspore.ops.pad
+    mindspore.ops.padding
     mindspore.ops.pdist
+
+Loss Functions
+^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.binary_cross_entropy_with_logits
+    mindspore.ops.cross_entropy
+    mindspore.ops.nll_loss
+    mindspore.ops.smooth_l1_loss
 
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^
@@ -64,26 +83,37 @@ Activation Functions
 
     mindspore.ops.celu
     mindspore.ops.fast_gelu
+    mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
     mindspore.ops.log_softmax
+    mindspore.ops.mish
+    mindspore.ops.selu
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
     mindspore.ops.tanh
 
-Loss Functions
-^^^^^^^^^^^^^^
+Sampling Functions
+^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.cross_entropy
-    mindspore.ops.nll_loss
-    mindspore.ops.smooth_l1_loss
+    mindspore.ops.uniform_candidate_sampler
 
-Mathematical Operators
+Distance Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cdist
+
+Mathematical Functions
 ----------------------
 
 Element-by-Element Operations
@@ -107,16 +137,16 @@ Element-by-Element Operations
     mindspore.ops.bernoulli
     mindspore.ops.bessel_i0
     mindspore.ops.bessel_i0e
+    mindspore.ops.bessel_i1
+    mindspore.ops.bessel_i1e
     mindspore.ops.bessel_j0
     mindspore.ops.bessel_j1
     mindspore.ops.bessel_k0
     mindspore.ops.bessel_k0e
-    mindspore.ops.bessel_y0
-    mindspore.ops.bessel_y1
-    mindspore.ops.bessel_i1
-    mindspore.ops.bessel_i1e
     mindspore.ops.bessel_k1
     mindspore.ops.bessel_k1e
+    mindspore.ops.bessel_y0
+    mindspore.ops.bessel_y1
     mindspore.ops.bitwise_and
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
@@ -124,8 +154,6 @@ Element-by-Element Operations
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.div
-    mindspore.ops.dropout2d
-    mindspore.ops.dropout3d
     mindspore.ops.erf
     mindspore.ops.erfc
     mindspore.ops.exp
@@ -145,9 +173,7 @@ Element-by-Element Operations
     mindspore.ops.logical_not
     mindspore.ops.logical_or
     mindspore.ops.log_matrix_determinant
-    mindspore.ops.lrn
     mindspore.ops.matrix_determinant
-    mindspore.ops.mish
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
@@ -199,13 +225,14 @@ Element-by-Element Operations
    * - mindspore.ops.tensor_sub
      - `tensor_sub` will be deprecated in the future. Please use `mindspore.ops.sub` instead.
 
-Reduction Operators
+Reduction Functions
 ^^^^^^^^^^^^^^^^^^^
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.argmin
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.norm
@@ -227,7 +254,7 @@ Reduction Operators
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
 
-Comparison operators
+Comparison Functions
 ^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -236,7 +263,6 @@ Comparison operators
     :template: classtemplate.rst
 
     mindspore.ops.approximate_equal
-    mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
     mindspore.ops.equal
@@ -276,7 +302,7 @@ Comparison operators
    * - mindspore.ops.tensor_lt
      - `tensor_lt` will be deprecated in the future. Please use `mindspore.ops.less` instead.
 
-Linear Algebraic Operators
+Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -284,13 +310,15 @@ Linear Algebraic Operators
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.batch_dot
+    mindspore.ops.dot
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
-    mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
+    mindspore.ops.tensor_dot
 
-Tensor Operation Operators
+Tensor Operation Functions
 --------------------------
 
 Tensor Building
@@ -305,11 +333,13 @@ Tensor Building
     mindspore.ops.fill
     mindspore.ops.fills
     mindspore.ops.linspace
+    mindspore.ops.narrow
+    mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
     mindspore.ops.zeros_like
 
-Randomly Generating Operators
+Randomly Generating Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -318,14 +348,14 @@ Randomly Generating Operators
     :template: classtemplate.rst
 
     mindspore.ops.gamma
-    mindspore.ops.random_gamma
+    mindspore.ops.laplace
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.random_categorical
+    mindspore.ops.random_gamma
     mindspore.ops.standard_laplace
-    mindspore.ops.uniform
     mindspore.ops.standard_normal
-    mindspore.ops.uniform_candidate_sampler
+    mindspore.ops.uniform
 
 Array Operation
 ^^^^^^^^^^^^^^^
@@ -338,7 +368,6 @@ Array Operation
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
-    mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
@@ -349,9 +378,11 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
-    mindspore.ops.gumbel_softmax
+    mindspore.ops.index_add
     mindspore.ops.index_fill
-    mindspore.ops.intopk
+    mindspore.ops.inplace_add
+    mindspore.ops.inplace_sub
+    mindspore.ops.inplace_update
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
@@ -359,15 +390,15 @@ Array Operation
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
+    mindspore.ops.normal
     mindspore.ops.nonzero
-    mindspore.ops.one_hot
-    mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
+    mindspore.ops.repeat_elements
     mindspore.ops.reshape
-    mindspore.ops.flatten
     mindspore.ops.scatter_nd
     mindspore.ops.select
+    mindspore.ops.sequence_mask
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.slice
@@ -385,12 +416,12 @@ Array Operation
     mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.transpose
-    mindspore.ops.unsorted_segment_min
-    mindspore.ops.unsorted_segment_max
-    mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
+    mindspore.ops.unsorted_segment_max
+    mindspore.ops.unsorted_segment_min
+    mindspore.ops.unsorted_segment_prod
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unstack
 
@@ -430,7 +461,7 @@ Type Conversion
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
-Sparse Operation
+Sparse Functions
 ^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -443,7 +474,18 @@ Sparse Operation
     mindspore.ops.csr_to_coo
     mindspore.ops.sparse_add
 
-Parameter Operation Oprators
+Gradient Clipping
+^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.clip_by_global_norm
+    mindspore.ops.clip_by_value
+
+Parameter Operation Functions
 ----------------------------
 
 .. msplatformautosummary::
@@ -454,7 +496,6 @@ Parameter Operation Oprators
     mindspore.ops.assign
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
-    mindspore.ops.index_add
     mindspore.ops.scatter_add
     mindspore.ops.scatter_div
     mindspore.ops.scatter_min
@@ -473,10 +514,23 @@ Parameter Operation Oprators
 
    * - functional
      - Description
-   * - mindspore.ops.scatter_nd_update
-     - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
 
-Debugging Operators
+Differential Functions
+----------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.derivative
+    mindspore.ops.grad
+    mindspore.ops.jet
+    mindspore.ops.jvp
+    mindspore.ops.vjp
+    mindspore.ops.vmap
+
+Debugging Functions
 -------------------
 
 .. list-table::
@@ -488,8 +542,7 @@ Debugging Operators
    * - mindspore.ops.print\_
      - Refer to :class:`mindspore.ops.Print`.
 
-
-Other Operators
+Other Functions
 ---------------
 .. list-table::
    :widths: 50 50
@@ -569,22 +622,5 @@ Other Operators
 
     mindspore.ops.arange
     mindspore.ops.batch_dot
-    mindspore.ops.clip_by_global_norm
-    mindspore.ops.clip_by_value
     mindspore.ops.core
     mindspore.ops.count_nonzero
-    mindspore.ops.ctc_greedy_decoder
-    mindspore.ops.derivative
-    mindspore.ops.dot
-    mindspore.ops.grad
-    mindspore.ops.jet
-    mindspore.ops.jvp
-    mindspore.ops.laplace
-    mindspore.ops.narrow
-    mindspore.ops.normal
-    mindspore.ops.repeat_elements
-    mindspore.ops.sequence_mask
-    mindspore.ops.tensor_dot
-    mindspore.ops.uniform
-    mindspore.ops.vjp
-    mindspore.ops.vmap
