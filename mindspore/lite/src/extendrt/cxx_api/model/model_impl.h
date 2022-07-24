@@ -51,11 +51,6 @@ class ModelImpl {
   MSTensor GetOutputByTensorName(const std::string &name);
 
  private:
-  std::vector<mindspore::tensor::TensorPtr> MSTensorToTensorPtr(const std::vector<MSTensor> &ms_tensors);
-  std::vector<MSTensor> TensorPtrToMSTensor(std::vector<mindspore::tensor::TensorPtr> tensor_ptrs,
-                                            const std::vector<std::string> &tensor_names);
-
- private:
   friend class Model;
   friend class Serialization;
   std::shared_ptr<Graph> graph_ = nullptr;

@@ -7,9 +7,6 @@ set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(ENABLE_CPU on)
-    # set(ENABLE_IBVERBS "OFF")
-    # set(ENABLE_DEBUGGER on)
-    # add_compile_definitions(ENABLE_DEBUGGER)
     add_compile_definitions(USE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -33,8 +30,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-            # ${MINDIR_MODEL_SRC}
-            # ${MINDIR_KERNEL_SRC}
             ${MSLITE_KERNEL_PLUGIN}
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
@@ -42,6 +37,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/delegate.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/session/graph_executor_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/tensorrt/graph_executor.cc
             )
 
     set(FBS_FILES
@@ -58,16 +60,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(NOT ENABLE_SECURITY)
         include_directories("${CCSRC_DIR}/profiler/device/ascend")
         file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "${CCSRC_DIR}/profiler/device/ascend/memory_profiling.proto")
-        # ms_protobuf_generate_py(PROFILER_MEM_PROTO_PY PROFILER_MEM_PROTO_HDRS_PY PROFILER_MEM_PROTO_PYS
-        #   ${PROFILER_PROTO_LIST})
+        "${CCSRC_DIR}/plugin/device/ascend/hal/profiler/memory_profiling.proto")
         ms_protobuf_generate(PROFILER_MEM_PROTO_SRC PROFILER_MEM_PROTO_HDRS ${PROFILER_PROTO_LIST})
         list(APPEND MSLITE_PROTO_SRC ${PROFILER_MEM_PROTO_SRC})
     endif()
 
     add_library(mindspore-lite-proto OBJECT ${MSLITE_PROTO_SRC})
 
-    # add_subdirectory(${CCSRC_DIR} mindspore_ccsrc)
 
     set(ANF_ALG_SRC ${ANF_ALG_SRC}
         ${CCSRC_DIR}/utils/anfalgo.cc
@@ -78,24 +77,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(KERNEL_GRAPH_SRC ${KERNEL_GRAPH_SRC}
         ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
         ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
-        ${CCSRC_DIR}/backend/common/session/session_basic.cc
-        ${CCSRC_DIR}/backend/common/session/session_factory.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
-        ${CCSRC_DIR}/backend/common/session/executor_manager.cc
         ${CCSRC_DIR}/backend/common/somas/somas.cc
         ${CCSRC_DIR}/backend/common/somas/somas_tensor.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_pre.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_core.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_alg.cc
         ${CCSRC_DIR}/backend/graph_compiler/graph_partition.cc
-        # ${CCSRC_DIR}/backend/graph_compiler/transform.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/segment_utils.cc
-        # ${CCSRC_DIR}/backend/graph_compiler/vmimpl.cc
-        # ${CCSRC_DIR}/backend/common/optimizer/helper.cc
-        # ${CCSRC_DIR}/backend/common/optimizer/const_input_to_attr.cc
-        # ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
-        # ${CCSRC_DIR}/backend/common/optimizer/visit.cc
-        # ${CCSRC_DIR}/backend/common/optimizer/common_backend_optimization.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mock/segment_runner.cc
         ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
         ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
         ${CCSRC_DIR}/runtime/device/kernel_info.cc
@@ -106,6 +94,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/runtime/device/memory_scheduler.cc
         ${CCSRC_DIR}/runtime/device/memory_offload_strategy.cc
         ${CCSRC_DIR}/runtime/device/memory_manager.cc
+        ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
         ${CCSRC_DIR}/runtime/pynative/op_executor.cc
         ${CCSRC_DIR}/runtime/pynative/op_runtime_info.cc
         ${CCSRC_DIR}/runtime/hardware/device_type.cc
@@ -120,7 +109,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc
         ${CCSRC_DIR}/utils/comm_manager.cc
-        # ${CCSRC_DIR}/plugin/device/cpu/hal/device/kernel_select_cpu.cc
         )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
     add_dependencies(mindspore-kernel-graph  mindspore-lite-proto)
@@ -133,38 +121,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
 
-    add_subdirectory(${CCSRC_DIR}/transform/graph_ir graph_ir)
-    add_subdirectory(${CCSRC_DIR}/backend/common/session common_session)
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
-    add_subdirectory(${CCSRC_DIR}/utils mindspore_ccsrc_utils)
-    add_subdirectory(${CCSRC_DIR}/runtime/device mindspore_ccsrc_runtime_device)
-    add_subdirectory(${CCSRC_DIR}/runtime/pynative mindspore_ccsrc_runtime_pynative)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
-    add_subdirectory(${CCSRC_DIR}/kernel mindspore_ccsrc_kernel)
-    add_subdirectory(${CCSRC_DIR}/backend/common/somas mindspore_ccsrc_backend_cmmon_somas)
-    add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/hal/device mindspore_ccsrc_plugin_device_cpu_hal_device)
-    add_subdirectory(${CCSRC_DIR}/common mindspore_ccsrc_common)
-    add_subdirectory(${CCSRC_DIR}/common/mem_reuse mindspore_ccsrc_common_mem_reuse)
-    add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel mindspore_ccsrc_plugin_device_cpu_kernel)
-    add_subdirectory(${CCSRC_DIR}/pybind_api mindspore_ccsrc_pybind_api)
-    add_subdirectory(${CCSRC_DIR}/ps mindspore_ccsrc_ps)
 
     target_link_libraries(mindspore-extendrt mindspore_infer_shared_lib_obj)
-    # target_link_libraries(mindspore-extendrt _mindspore_backend_common_session_obj _mindspore_transform_graph_ir_obj)
-    # target_link_libraries(mindspore-extendrt _mindspore_backend_common_session_obj
-    #                     _mindspore_backend_common_optimizer_obj _mindspore_runtime_device_obj
-    #                     _mindspore_utils_obj _mindspore_kernel_obj _mindspore_backend_common_somas_obj
-    #                     _mindspore_kernel_obj _mindspore_plugin_device_cpu_hal_device_obj
-    #                     _mindspore_runtime_pynative_obj
-    #                     _mindspore_common_obj _mindspore_common_mem_reuse_obj
-    #                     _mindspore_plugin_device_cpu_kernel_obj
-    #                     _mindspore_ps_obj ps_cache)
 
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
                           mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
                           _mindspore_backend_common_pass_obj)
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
-    # target_link_libraries(mindspore-extendrt )
 
     if(NOT WIN32)
         target_link_libraries(mindspore-extendrt dl)

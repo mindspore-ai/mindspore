@@ -86,19 +86,6 @@ void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input
   }
 }
 
-// void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr,
-//                                std::vector<std::string> *output_formats, std::vector<TypeId> *output_types) {
-//   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-//   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-//     output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).second);
-//     auto dtype = kernel_attr.GetOutputAttr(output_index).first;
-//     if (dtype == TypeId::kObjectTypeUMonad) {
-//       dtype = TypeId::kNumberTypeInt32;
-//     }
-//     output_types->emplace_back(dtype);
-//   }
-// }
-
 bool InputDtypeMatch(TypeId InputAttr, TypeId input_type, bool strict) {
   if (InputAttr == input_type) {
     return true;
@@ -189,55 +176,7 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
   builder->SetOutputsFormat(output_formats);
   builder->SetOutputsDeviceType(output_types);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
-  //   auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
-  //   MS_EXCEPTION_IF_NULL(kernel_info);
-  //   return kernel_info->set_select_kernel_build_info(builder->Build());
 }
-
-// std::pair<std::string, ExceptionType> KernelNotSupportWarning(const AnfNodePtr &kernel_node,
-//                                                               const std::vector<TypeId> &input_types,
-//                                                               const std::vector<TypeId> &infer_output_types,
-//                                                               bool is_kernel_exist) {
-//   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-//   if (!is_kernel_exist) {
-//     std::stringstream ss;
-//     ss << "Unsupported op [" << kernel_name << "] on CPU, Please confirm whether the device target setting is
-//     correct, "
-//        << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list."
-//        << trace::DumpSourceLines(kernel_node);
-//     return {ss.str(), NotSupportError};
-//   }
-
-//   std::stringstream operator_info;
-//   operator_info << "Operator[" << kernel_name << "] ";
-//   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-//   if (input_num > 0) {
-//     operator_info << " input(";
-//     for (size_t i = 0; i < input_num; ++i) {
-//       operator_info << TypeIdLabel(input_types[i]);
-//       if (i != input_num - 1) {
-//         operator_info << ",";
-//       }
-//     }
-//     operator_info << ") ";
-//   }
-//   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-//   if (output_num > 0) {
-//     operator_info << "output(";
-//     for (size_t i = 0; i < output_num; ++i) {
-//       operator_info << TypeIdLabel(infer_output_types[i]);
-//       if (i != output_num - 1) {
-//         operator_info << ",";
-//       }
-//     }
-//     operator_info << ") ";
-//   }
-//   operator_info
-//     << "is not supported. This error means the current input type is not supported, please refer to the MindSpore "
-//        "doc for supported types.";
-//   operator_info << trace::DumpSourceLines(kernel_node);
-//   return {operator_info.str(), TypeError};
-// }
 
 void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -495,7 +434,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   std::vector<TypeId> input_types;
   std::vector<size_t> input_not_cnode_indexes;
   std::vector<std::string> selected_output_formats;
-  //   std::vector<TypeId> output_types;
   std::vector<TypeId> selected_output_types;
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << op_name;
   GetInputDtypes(kernel_node, &input_types, &input_not_cnode_indexes);
@@ -503,37 +441,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   GetOutputDtypes(kernel_node, &selected_output_types);
   GetOutputFormat(kernel_node, &selected_output_formats);
 
-  //   kernel::KernelAttr selected_kernel_attr;
-  //   std::pair<bool, bool> matched = std::make_pair(false, false);
-  //   auto kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
-  //   std::vector<kernel::KernelAttr> kernel_attrs;
-  // If GetSkipCheck is true, that means we do not check the build info between input and registered.
-  // Take the input attrs to build the kernel.
-  //   if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
-  //     kernel_attrs[0] = BuildKernelFromInput(input_types, output_types, kernel_attrs[0]);
-  //     MS_LOG(DEBUG) << "Build kernel form input for " << op_name;
-  //   }
-  //   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
-  //                     output_types, &matched, true)) {
-  //     if (op_name == "Cast") {
-  //       return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
-  //     }
-  //     matched = std::make_pair(false, false);
-  //     (void)SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
-  //                        output_types, &matched, false);
-  //     if (!matched.first) {
-  //       return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
-  //     }
-  //   }
-
-  //   if (matched.first || input_types.size() == input_not_cnode_indexes.size()) {
-  //     MS_LOG(INFO) << "Input format and dtype is matched";
-  //     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
-  //     for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
-  //       input_types[index] = selected_kernel_attr.GetInputAttr(index).first;
-  //       input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
-  //     }
-  //   }
   SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());
   return {};
 }

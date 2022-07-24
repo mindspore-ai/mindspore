@@ -18,6 +18,7 @@
 
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
+#include "extendrt/utils/tensor_utils.h"
 
 namespace mindspore {
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -106,7 +107,7 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
     MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
     return MSTensor(nullptr);
   }
-  auto ms_outputs = TensorPtrToMSTensor({tensor_ptr}, {name});
+  auto ms_outputs = TensorUtils::TensorPtrToMSTensor({tensor_ptr}, {name});
   if (ms_outputs.empty()) {
     MS_LOG(ERROR) << "Tensor to ms tensor failed." << name << " .";
     return MSTensor(nullptr);
@@ -116,51 +117,19 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(session_);
-  std::vector<mindspore::tensor::TensorPtr> graph_inputs = MSTensorToTensorPtr(inputs);
+  std::vector<mindspore::tensor::TensorPtr> graph_inputs = TensorUtils::MSTensorToTensorPtr(inputs);
   std::vector<mindspore::tensor::TensorPtr> graph_outputs;
   auto ret = session_->RunGraph(graph_inputs, &graph_outputs);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
     return ret;
   }
-  auto ms_outputs = TensorPtrToMSTensor(graph_outputs, session_->GetOutputNames());
+  auto ms_outputs = TensorUtils::TensorPtrToMSTensor(graph_outputs, session_->GetOutputNames());
   (void)std::copy(ms_outputs.begin(), ms_outputs.end(), std::back_inserter(*outputs));
   // for (auto ms_output : ms_outputs) {
   //   outputs->push_back(ms_output);
   // }
   return kSuccess;
-}
-
-std::vector<mindspore::tensor::TensorPtr> ModelImpl::MSTensorToTensorPtr(const std::vector<MSTensor> &ms_tensors) {
-  std::vector<mindspore::tensor::TensorPtr> tensor_ptrs;
-
-  for (auto ms_tensor : ms_tensors) {
-    auto data_type = ms_tensor.DataType();
-    auto type_id = static_cast<mindspore::TypeId>(data_type);
-    auto shape = ms_tensor.Shape();
-    auto data = ms_tensor.MutableData();
-    auto data_size = ms_tensor.DataSize();
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape, data, data_size);
-    tensor_ptrs.push_back(tensor_ptr);
-  }
-  return tensor_ptrs;
-}
-
-std::vector<MSTensor> ModelImpl::TensorPtrToMSTensor(std::vector<mindspore::tensor::TensorPtr> tensor_ptrs,
-                                                     const std::vector<std::string> &tensor_names) {
-  std::vector<MSTensor> ms_tensors;
-
-  for (size_t i = 0; i < tensor_ptrs.size(); i++) {
-    auto graph_tensor = tensor_ptrs[i];
-    std::string graph_tensor_name = tensor_names[i];
-    auto type_id = graph_tensor->data_type_c();
-    auto data_type = static_cast<mindspore::DataType>(type_id);
-    MSTensor ms_tensor(graph_tensor_name, data_type, graph_tensor->shape_c(), graph_tensor->data_c(),
-                       graph_tensor->Size());
-    ms_tensors.push_back(ms_tensor);
-  }
-
-  return ms_tensors;
 }
 
 bool ModelImpl::HasPreprocess() { return graph_->graph_data_->GetPreprocess().empty() ? false : true; }

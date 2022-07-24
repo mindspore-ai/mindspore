@@ -162,49 +162,5 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   fg->set_output(fg_output);
   return std::make_tuple(fg, inputs, outputs);
 }
-
-// Converts the list of nodes to a runnable form.
-// All the nodes in the list must represent linear flow (no calls, branches, ...)
-// Returns:
-//  (fn, inputs, outputs):
-//  - fn: A callable function
-//  - inputs: the list of inputs nodes whose values should be
-//             provided to the function
-//  - outputs: the list of output nodes corresponding to the
-//             outputs of the function
-// Notes:
-//   This implementation will convert the nodes into a subgraph
-//   that will run using the MsVM.
-template <typename T>
-LinConvertResult Convert(const GraphSegmentPtr &segment, const std::string &) {
-  MS_EXCEPTION_IF_NULL(segment);
-  LinConvertResult result;
-
-  FuncGraphPtr fg = nullptr;
-  AnfNodePtrList inputs;
-  AnfNodePtrList outputs;
-
-  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
-
-  // Clone in case g contains subgraphs that have a different manager
-  fg = BasicClone(fg);
-
-  std::shared_ptr<VMImpl> vm = std::make_shared<T>();
-
-  result.run =
-    std::make_shared<RunFunc>([fg, vm](const VectorRef &args) -> VectorRef { return vm->RunGraph(fg, args); });
-  result.inputs = inputs;
-  result.outputs = outputs;
-  result.graph_id = UINT32_MAX;
-
-  return result;
-}
-
-LinkFuncType MsVmConvert = Convert<VM>;
-
-std::set<std::string> backend_list = {
-  kMsConvert,
-  kMsVm,
-};
 }  // namespace compile
 }  // namespace mindspore

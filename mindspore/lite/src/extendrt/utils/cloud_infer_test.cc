@@ -32,14 +32,14 @@ int main(int argc, const char **argv) {
     return mindspore::lite::RET_ERROR;
   }
   mindspore::Model ms_model;
-  ms_model.Build(flags.model_file_, mindspore::kMindIR, nullptr);
+  auto context = std::make_shared<mindspore::Context>();
+  auto &device_info = context->MutableDeviceInfo();
+  auto device_context = std::make_shared<mindspore::GPUDeviceInfo>();
+  device_context->SetProvider("tensorrt");
+  device_info.emplace_back(device_context);
+  ms_model.Build(flags.model_file_, mindspore::kMindIR, context);
 
   auto inputs = ms_model.GetInputs();
-  std::cout << inputs[0].Name() << " " << static_cast<int>(inputs[0].DataType()) << std::endl;
-  for (auto s : inputs[0].Shape()) {
-    std::cout << " " << s;
-  }
-  std::cout << std::endl;
   for (auto input : inputs) {
     auto input_data = input.MutableData();
     if (input_data == nullptr) {
@@ -62,7 +62,7 @@ int main(int argc, const char **argv) {
   }
 
   for (auto output : outputs) {
-    auto z = static_cast<bool *>(output.MutableData());
+    auto z = static_cast<int *>(output.MutableData());
     for (int i = 0; i < test_input_shape; i++) {
       std::cout << z[i] << " ";
     }

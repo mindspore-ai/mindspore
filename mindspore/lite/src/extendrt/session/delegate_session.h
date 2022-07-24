@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
-#define MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
+#define MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
 
-#include <string>
-#include <memory>
 #include <vector>
+#include <memory>
+#include <string>
 
-#include "src/extendrt/infer_session.h"
-// #include "backend/common/session/session_basic.h"
-#include "extendrt/utils/kernel_graph_utils.h"
+#include "extendrt/infer_session.h"
 
 namespace mindspore {
-class SingleOpInferSession : public InferSession {
+class DelegateSession : public InferSession {
  public:
-  SingleOpInferSession() = default;
-  virtual ~SingleOpInferSession() = default;
+  DelegateSession() = default;
+  explicit DelegateSession(std::shared_ptr<mindspore::Delegate> delegate) : delegate_(delegate) {}
+  virtual ~DelegateSession() = default;
+
   Status Init(const std::shared_ptr<Context> context) override;
   Status CompileGraph(FuncGraphPtr graph) override;
   Status RunGraph() override;
@@ -43,13 +43,8 @@ class SingleOpInferSession : public InferSession {
   tensor::TensorPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  KernelGraphUtilsPtr kernel_graph_utils_;
-  KernelGraphPtr kernel_graph_;
-  std::vector<tensor::TensorPtr> inputs_;
-  std::vector<std::string> input_names_;
-  std::vector<tensor::TensorPtr> outputs_;
-  std::vector<std::string> output_names_;
+  std::shared_ptr<mindspore::Delegate> delegate_;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
