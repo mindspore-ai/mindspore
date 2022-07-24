@@ -5804,7 +5804,7 @@ class IsClose(Primitive):
     Refer to :func:`mindspore.ops.isclose` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

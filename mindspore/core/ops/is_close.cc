@@ -68,7 +68,7 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
 TypePtr IsCloseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8};
   std::map<std::string, TypePtr> types;
   types.emplace("input", input_args[0]->BuildType());
   types.emplace("other", input_args[1]->BuildType());
