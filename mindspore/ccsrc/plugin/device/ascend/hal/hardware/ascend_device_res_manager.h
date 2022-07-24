@@ -32,7 +32,7 @@ namespace device {
 namespace ascend {
 class AscendDeviceResManager : public DeviceResManager {
  public:
-  AscendDeviceResManager() : mem_manager_(nullptr) {}
+  AscendDeviceResManager() : compute_stream_(nullptr), communication_stream_(nullptr), mem_manager_(nullptr) {}
   ~AscendDeviceResManager() override = default;
 
   void Initialize() override;
@@ -54,17 +54,17 @@ class AscendDeviceResManager : public DeviceResManager {
 
   // Create concrete device address according different device type.
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape = ShapeVector()) const override;
+                                       const ShapeVector &shape) const override;
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.
   // Devices that do not need stream could ignore the implementation of this function.
   bool SyncStream(size_t stream_id = 0) const override;
 
- protected:
   // Really create an ascend stream.
   bool CreateStream(void **stream) const override;
 
+ protected:
   // Really destroy an ascend stream.
   bool DestroyStream(void *stream) const override;
 
@@ -78,8 +78,8 @@ class AscendDeviceResManager : public DeviceResManager {
   void *compute_stream_;
   void *communication_stream_;
   // Kernel Runtime  --- only for task sink
-  AscendKernelRuntime *runtime_instance_{nullptr};
-  std::shared_ptr<MemoryManager> mem_manager_{nullptr};
+  AscendKernelRuntime *runtime_instance_{};
+  std::shared_ptr<MemoryManager> mem_manager_{};
 };
 }  // namespace ascend
 }  // namespace device

@@ -419,12 +419,12 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
     MS_EXCEPTION_IF_NULL(profiler_inst);
     std::thread::id t_id = std::this_thread::get_id();
-    (void)profiler_inst->OpDataProducerBegin(res_manager_->runtime_instance_, stream, t_id,
-                                             kernel->fullname_with_scope(), is_dynamic_shape);
+    profiler_inst->OpDataProducerBegin(res_manager_->runtime_instance_, stream, t_id, kernel->fullname_with_scope(),
+                                       is_dynamic_shape);
 #endif
     ret = kernel_mod->Launch(real_inputs, workspace, outputs, stream);
 #ifndef ENABLE_SECURITY
-    (void)profiler_inst->OpDataProducerEnd(t_id, is_dynamic_shape);
+    profiler_inst->OpDataProducerEnd(t_id, is_dynamic_shape);
 #endif
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
@@ -436,7 +436,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   if ((ascend_instance->GetNetDynamicShapeStatus() ||
        ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
       ascend_instance->GetProfilingEnableFlag()) {
-    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, device_id, kernel_type);
+    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type);
   }
 
   return PySyncRuning();
