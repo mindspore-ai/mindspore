@@ -10454,3 +10454,86 @@ class SparseApplyAdagradDA(Primitive):
                                         'grad', 'indices', 'lr', 'l1', 'l2', 'global_step'],
                                 outputs=['var'])
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
+class SparseApplyProximalGradientDescent(Primitive):
+    r"""
+    Sparse update '*var' as FOBOS algorithm with fixed learning rate.
+
+    .. math::
+        \begin{array}{ll} \\
+            \text{prox_v} = var - alpha \\
+            var = sign(\text{prox_v})/(1 + alpha * l2) * \max(\left| \text{prox_v} \right| - alpha * l1,0)
+        \end{array}
+
+    Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        use_locking (bool): If `True`, the `var` tensors will be protected from being updated.
+            Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
+          uint8, uint16, uint32, uint64, float16, float32 or float64.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **alpha** (Union[Number, Tensor]) - Scaling factor. Must be a scalar with same type as `var`.
+        - **l1** (Union[Number, Tensor]) - L1 regularization. Must be a scalar with same type as `var`.
+        - **l2** (Union[Number, Tensor]) - l2 regularization. Must be a scalar with same type as `var`.
+        - **grad** (Tensor) - A tensor for gradient, has the same type as `var`,
+          and grad.shape[1:] = var.shape[1:] if rank(var) > 1.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          If there are duplicates in `indices`, the behavior is undefined. Must be one of the
+          following types: int32, int64 and indices.shape[0] = grad.shape[0].
+
+    Outputs:
+        - **var** (Tensor) - Tensor, has the same shape and type as 'var'.
+
+    Raises:
+        TypeError: If `var`, `grad` or `indices` is not a Parameter..
+        TypeError: If `alpha`, `l1`, `l2` is neither a Number nor a Tensor.
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `alpha`, `l1`, `l2` or `grad` is not one of int8, int16,
+                   int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If the shape of `var` or `grad` is rank 0.
+        ValueError: If shape of `grad` is not same as `var`.
+        ValueError: If the shape of `alpha`, `l1` or `l2` is not rank 0.
+        ValueError: If shape of `indices` is not same as the shape of first dimension of `grad`.
+        RuntimeError: If the data type of `var`, `alpha`, `l1`, `l2`, `grad` conversion of Parameter
+                      is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops.operations.nn_ops as nn_ops
+        >>> var = Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float32))
+        >>> alpha = Tensor(1.0, mstype.float32)
+        >>> l1 = Tensor(1.0, mstype.float32)
+        >>> l2 = Tensor(0.0, mstype.float32)
+        >>> grad = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
+        >>> sparse_apply_proximal_gradient_descent = nn_ops.SparseApplyProximalGradientDescent()
+        >>> output = sparse_apply_proximal_gradient_descent(var, alpha, l1, l2, grad, indices)
+        >>> print(output)
+        [[2.1 5.2]
+         [0.  1. ]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', dtype=sig.sig_dtype.T),
+        sig.make_sig('alpha', dtype=sig.sig_dtype.T),
+        sig.make_sig('l1', dtype=sig.sig_dtype.T),
+        sig.make_sig('l2', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize SparseApplyProximalGradientDescent."""
+        self.init_prim_io_names(inputs=['var', 'alpha', 'l1', 'l2', 'grad', 'indices'],
+                                outputs=['var'])
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)

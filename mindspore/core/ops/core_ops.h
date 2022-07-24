@@ -249,6 +249,7 @@ constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 constexpr auto kUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
 constexpr auto kIFMR = "IFMR";
+constexpr auto kSparseApplyProximalGradientDescent = "SparseApplyProximalGradientDescent";
 
 // Random
 constexpr auto kStandardNormal = "StandardNormal";
@@ -814,6 +815,8 @@ GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2DGrad, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimUpsampleNearest3DGrad, std::make_shared<Primitive>("UpsampleNearest3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3DGrad, std::make_shared<Primitive>("UpsampleTrilinear3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMR));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalGradientDescent,
+         std::make_shared<Primitive>(kSparseApplyProximalGradientDescent));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

@@ -114,6 +114,7 @@ from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
+from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
@@ -1286,6 +1287,16 @@ class SparseApplyAdagradDANet(nn.Cell):
                   l1, l2, global_step):
         out = self.sparse_apply_adagrad_da(var, grad_accum, grad_square_accum, grad,
                                            indices, lr, l1, l2, global_step)
+        return out
+
+
+class SparseApplyProximalGradientDescentNet(nn.Cell):
+    def __init__(self, use_locking=False):
+        super(SparseApplyProximalGradientDescentNet, self).__init__()
+        self.sparse_apply_proximal_gradient_descent = SparseApplyProximalGradientDescent(use_locking)
+
+    def construct(self, var, alpha, l1, l2, grad, indices):
+        out = self.sparse_apply_proximal_gradient_descent(var, alpha, l1, l2, grad, indices)
         return out
 
 
@@ -3027,6 +3038,15 @@ test_case_nn_ops = [
                         Tensor(0.001, mstype.float32),
                         Tensor(0.001, mstype.float32),
                         Tensor(1, mstype.int64)],
+        'skip': ['backward']}),
+    ('SparseApplyProximalGradientDescent', {
+        'block': SparseApplyProximalGradientDescentNet(),
+        'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
+                        Tensor(0.01, mstype.float32),
+                        Tensor(0.88, mstype.float32),
+                        Tensor(0.3, mstype.float32),
+                        Tensor(np.array([[0.2, 0.5], [0.3, 0.2]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32))],
         'skip': ['backward']}),
 ]
 test_case_array_ops = [
