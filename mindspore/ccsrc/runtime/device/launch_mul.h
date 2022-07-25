@@ -40,7 +40,7 @@ class LaunchMul {
   virtual void KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) = 0;
   virtual void CopyHostMemToDevice(size_t origin_size, size_t dst_size) = 0;
 
-  std::shared_ptr<session::KernelGraph> ObtainMulKernelGraph();
+  std::shared_ptr<session::KernelGraph> ObtainMulKernelGraph() const;
   kernel::KernelMod *ObtainLaunchMulKernelMod();
   void ObtainMulInputsAddr();
   void FreeInputDeviceMemory();

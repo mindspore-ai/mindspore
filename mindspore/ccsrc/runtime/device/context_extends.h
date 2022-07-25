@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_UTILS_CONTEXT_CONTEXT_EXTENDS_H
 #define MINDSPORE_CCSRC_UTILS_CONTEXT_CONTEXT_EXTENDS_H
 
-#include <map>
-#include <string>
 #include <memory>
 #include "utils/ms_context.h"
 #include "include/common/utils/tensorprint_utils.h"

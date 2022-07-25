@@ -101,7 +101,7 @@ void Bucket::AllocateAllReduceMemory() {
   size_t item_index = 0;
   for (const auto &ar_input_address_item : ar_input_address_list_) {
     MS_EXCEPTION_IF_NULL(ar_input_address_item);
-    memcpy_output_addrs_.emplace_back(
+    (void)memcpy_output_addrs_.emplace_back(
       std::make_shared<kernel::Address>(ar_input_address_item->GetMutablePtr(), origin_size_list[item_index]));
     ++item_index;
   }
