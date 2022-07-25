@@ -18,22 +18,19 @@ mindspore.ops.batch_to_space_nd
 
     :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
 
-    **参数：**
+    参数：
+        - **input_x** (Tensor) - 输入张量，必须大于或者等于四维（Ascend平台必须为4维）。批次维度需能被 `block_shape` 整除。支持数据类型float16和float32。
+        - **block_shape** (list[int], tuple[int], int) - 分割批次维度的块的数量，取值需大于1。
+        - **crops** (tuple, list) - 空间维度的裁剪大小，包含两个长度为2的list，分别对应空间维度H和W。取值需大于或等于0，同时要求 `input_shape[i+2] * block_shape[i] > crops[i][0] + crops[i][1]` 。
 
-    - **input_x** (Tensor) - 输入张量，必须大于或者等于四维（Ascend平台必须为4维）。批次维度需能被 `block_shape` 整除。支持数据类型float16和float32。
-    - **block_shape** (list[int], tuple[int], int) - 分割批次维度的块的数量，取值需大于1。
-    - **crops** (tuple, list) - 空间维度的裁剪大小，包含两个长度为2的list，分别对应空间维度H和W。取值需大于或等于0，同时要求 `input_shape[i+2] * block_shape[i] > crops[i][0] + crops[i][1]` 。
+    返回：
+        Tensor，经过划分排列之后的结果。
 
-    **返回：**
-
-    Tensor，经过划分排列之后的结果。
-
-    **异常：**
-
-    - **TypeError** - 如果 `block_shape` 不是 list, tuple 或者 int。
-    - **TypeError** - 如果 `crops` 不是 list 或者 tuple。
-    - **ValueError** - 如果当 `block_shape` 为 list 或 tuple， `block_shape` 不是一维。
-    - **ValueError** - 如果 `block_shape` 或 `crops` 长度不是2。
-    - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
-    - **ValueError** - 如果 `crops` 的形状不是 (M, 2), 其中 M 为 `block_shape` 的长度。
-    - **ValueError** - 如果 `crops` 的元素不是非负的整数。
+    异常：
+        - **TypeError** - 如果 `block_shape` 不是 list, tuple 或者 int。
+        - **TypeError** - 如果 `crops` 不是 list 或者 tuple。
+        - **ValueError** - 如果当 `block_shape` 为 list 或 tuple， `block_shape` 不是一维。
+        - **ValueError** - 如果 `block_shape` 或 `crops` 长度不是2。
+        - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
+        - **ValueError** - 如果 `crops` 的形状不是 (M, 2), 其中 M 为 `block_shape` 的长度。
+        - **ValueError** - 如果 `crops` 的元素不是非负的整数。

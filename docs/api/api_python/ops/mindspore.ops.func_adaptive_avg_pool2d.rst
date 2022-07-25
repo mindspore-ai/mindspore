@@ -21,29 +21,26 @@ mindspore.ops.adaptive_avg_pool2d
         * (w_{end}- w_{start})}
         \end{align}
 
-    **参数：**
+    参数：
+        - **input_x** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+        - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，或代表相同H和W的一个int值，或None，如果是None，则意味着输出大小与输入相同。
 
-    - **input_x** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
-    - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，或代表相同H和W的一个int值，或None，如果是None，则意味着输出大小与输入相同。
+    返回：
+        Tensor，数据类型与 `input_x` 相同。
 
-    **返回：**
+        输出的shape为 `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape` 。
 
-    Tensor，数据类型与 `input_x` 相同。
+        .. math::
+            out\_shape = \begin{cases}
+            input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
+            output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
+            input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
+            (h, h), & \text{if output_size is h;}\\
+            (h, w), & \text{if output_size is (h, w)}
+            \end{cases}
 
-    输出的shape为 `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape` 。
-
-    .. math::
-        out\_shape = \begin{cases}
-        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
-        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
-        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
-        (h, h), & \text{if output_size is h;}\\
-        (h, w), & \text{if output_size is (h, w)}
-        \end{cases}
-
-    **异常：**
-
-    - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
-    - **ValueError** - 如果 `input_x` 的维度小于或等于 `output_size` 的维度。
-    - **TypeError** - 如果 `input_x` 不是Tensor。
-    - **TypeError** - 如果 `input_x` 的数据类型不是float16、float32或者float64。
+    异常：
+        - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
+        - **ValueError** - 如果 `input_x` 的维度小于或等于 `output_size` 的维度。
+        - **TypeError** - 如果 `input_x` 不是Tensor。
+        - **TypeError** - 如果 `input_x` 的数据类型不是float16、float32或者float64。

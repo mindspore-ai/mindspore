@@ -10,17 +10,14 @@ mindspore.ops.cummax
             y{i} = max(x{1}, x{2}, ... , x{i})
         \end{array}
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - 输入Tensor，要求维度大于0。
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
 
-    - **x** (Tensor) - 输入Tensor，要求维度大于0。
-    - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+    返回：
+        一个包含两个Tensor的元组，分别表示累积最大值和对应索引。每个输出Tensor的形状和输入Tensor的形状相同。
 
-    **返回：**
-
-    一个包含两个Tensor的元组，分别表示累积最大值和对应索引。每个输出Tensor的形状和输入Tensor的形状相同。
-
-    **异常：**
-
-    - **TypeError** - 如果 `x` 不是Tensor。
-    - **TypeError** - 如果 `axis` 不是int。
-    - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+    异常：
+        - **TypeError** - 如果 `x` 不是Tensor。
+        - **TypeError** - 如果 `axis` 不是int。
+        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。

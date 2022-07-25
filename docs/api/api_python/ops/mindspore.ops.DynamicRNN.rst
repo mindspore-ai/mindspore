@@ -24,46 +24,42 @@ mindspore.ops.DynamicRNN
 
     例如， :math:`W_{ix}和b_{ix}` 是把 :math:`x` 转换为 :math:`i` 的权重和偏置。
 
-    **参数：**
+    参数：
+        - **cell_type** (str) - 指定Cell类型。当前仅支持LSTM。默认值：LSTM。
+        - **direction** (str) - 指定单向或双向。默认值：UNIDIRECTIONAL。当前仅支持UNIDIRECTIONAL。
+        - **cell_depth** (int) - 指定cell的层数。默认值：1。
+        - **use_peephole** (bool) - 是否使用"peephole connections"。默认值：False。
+        - **keep_prob** (float) - 指定保留率，即每个元素被保留的概率。1.0表示所有元素全部保留。默认值：1.0。
+        - **cell_clip** (float) - 将Cell裁剪到指定的值，负值表示禁用。默认值：-1.0。
+        - **num_proj** (int) - 投影矩阵的输出维数。默认值：0。
+        - **time_major** (bool) - 指定输入 `x` 的数据排列格式。如果为True，格式为 :math:`(num\_step, batch\_size, input\_size)`，如果为False，格式为：:math:`(batch\_size, num\_step, input\_size)` 。默认值：True。当前仅支持True。
+        - **activation** (str) - 指定激活函数。默认值：tanh。当前仅支持tanh。
+        - **forget_bias** (float) - 指定遗忘门的偏置。默认值：0.0。
+        - **is_training** (bool) - 指定是否开启训练。默认值：True。
 
-    - **cell_type** (str) - 指定Cell类型。当前仅支持LSTM。默认值：LSTM。
-    - **direction** (str) - 指定单向或双向。默认值：UNIDIRECTIONAL。当前仅支持UNIDIRECTIONAL。
-    - **cell_depth** (int) - 指定cell的层数。默认值：1。
-    - **use_peephole** (bool) - 是否使用"peephole connections"。默认值：False。
-    - **keep_prob** (float) - 指定保留率，即每个元素被保留的概率。1.0表示所有元素全部保留。默认值：1.0。
-    - **cell_clip** (float) - 将Cell裁剪到指定的值，负值表示禁用。默认值：-1.0。
-    - **num_proj** (int) - 投影矩阵的输出维数。默认值：0。
-    - **time_major** (bool) - 指定输入 `x` 的数据排列格式。如果为True，格式为 :math:`(num\_step, batch\_size, input\_size)`，如果为False，格式为：:math:`(batch\_size, num\_step, input\_size)` 。默认值：True。当前仅支持True。
-    - **activation** (str) - 指定激活函数。默认值：tanh。当前仅支持tanh。
-    - **forget_bias** (float) - 指定遗忘门的偏置。默认值：0.0。
-    - **is_training** (bool) - 指定是否开启训练。默认值：True。
+    输入：
+        - **x** (Tensor) - 输入的词汇。shape为 :math:`(num\_step, batch\_size, input\_size)` 的Tensor。数据类型必须为float16。
+        - **w** (Tensor) - 输入的权重。shape为 :math:`(input\_size + hidden\_size, 4 * hidden\_size)` 的Tensor。数据类型必须为float16。
+        - **b** (Tensor) - 输入的偏置。shape为 :math:`(4 * hidden\_size)` 的Tensor。数据类型必须为float16或float32。
+        - **seq_length** (Tensor) - 每个批次中句子的真实长度。shape为 :math:`(batch\_size, )` 的Tensor。当前仅支持None。
+        - **init_h** (Tensor) - 在初始时刻的隐藏状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。
+        - **init_c** (Tensor) - 在初始时刻的Cell状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。
 
-    **输入：**
+    输出：
+        - **y** (Tensor) - 所有时刻输出层的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
+        - **output_h** (Tensor) - 所有时刻输出层的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型为float16。
+        - **output_c** (Tensor) - 所有时刻的Cell状态的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
+        - **i** (Tensor) - 更新输入门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
+        - **j** (Tensor) - 更新新门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
+        - **f** (Tensor) - 更新遗忘门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型输入 `b` 相同。
+        - **o** (Tensor) - 更新输出门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
+        - **tanhct** (Tensor) - 更新tanh的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
 
-    - **x** (Tensor) - 输入的词汇。shape为 :math:`(num\_step, batch\_size, input\_size)` 的Tensor。数据类型必须为float16。
-    - **w** (Tensor) - 输入的权重。shape为 :math:`(input\_size + hidden\_size, 4 * hidden\_size)` 的Tensor。数据类型必须为float16。
-    - **b** (Tensor) - 输入的偏置。shape为 :math:`(4 * hidden\_size)` 的Tensor。数据类型必须为float16或float32。
-    - **seq_length** (Tensor) - 每个批次中句子的真实长度。shape为 :math:`(batch\_size, )` 的Tensor。当前仅支持None。
-    - **init_h** (Tensor) - 在初始时刻的隐藏状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。
-    - **init_c** (Tensor) - 在初始时刻的Cell状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。
-
-    **输出：**
-
-    - **y** (Tensor) - 所有时刻输出层的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-    - **output_h** (Tensor) - 所有时刻输出层的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型为float16。
-    - **output_c** (Tensor) - 所有时刻的Cell状态的输出向量，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-    - **i** (Tensor) - 更新输入门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-    - **j** (Tensor) - 更新新门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-    - **f** (Tensor) - 更新遗忘门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型输入 `b` 相同。
-    - **o** (Tensor) - 更新输出门的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-    - **tanhct** (Tensor) - 更新tanh的权重，shape为 :math:`(num\_step, batch\_size, hidden\_size)` 的Tensor。数据类型与输入 `b` 相同。
-
-    **异常：**
-
-    - **TypeError** - `cell_type` 、 `direction` 或 `activation` 不是str。
-    - **TypeError** - `cell_Deep` 或 `num_proj` 不是int。
-    - **TypeError** - `keep_prob` 、 `cell_clip` 或 `forget_bias` 不是float。
-    - **TypeError** - `use_peehpol` 、 `time_major` 或 `is_training` 不是bool。
-    - **TypeError** - `x` 、 `w` 、 `b` 、 `seq_length` 、 `init_h` 或 `init_c` 不是Tensor。
-    - **TypeError** - `x` 、 `w` 、 `init_h` 或 `nit_c` 的数据类型不是float16。
-    - **TypeError** - `b` 的数据类型既不是float16也不是float32。
+    异常：
+        - **TypeError** - `cell_type` 、 `direction` 或 `activation` 不是str。
+        - **TypeError** - `cell_Deep` 或 `num_proj` 不是int。
+        - **TypeError** - `keep_prob` 、 `cell_clip` 或 `forget_bias` 不是float。
+        - **TypeError** - `use_peehpol` 、 `time_major` 或 `is_training` 不是bool。
+        - **TypeError** - `x` 、 `w` 、 `b` 、 `seq_length` 、 `init_h` 或 `init_c` 不是Tensor。
+        - **TypeError** - `x` 、 `w` 、 `init_h` 或 `nit_c` 的数据类型不是float16。
+        - **TypeError** - `b` 的数据类型既不是float16也不是float32。
