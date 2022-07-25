@@ -35,6 +35,8 @@ void CPUProfiler::Init(const std::string &profileDataPath = "") {
   MS_LOG(INFO) << "Initialize CPU Profiling";
   base_time_ = GetHostMonoTimeStamp();
   profile_data_path_ = profileDataPath;
+  auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
+  cpu_data_saver_inst->Clear();
   MS_LOG(INFO) << " Host start time(ns): " << base_time_ << " profile data path: " << profile_data_path_;
 }
 

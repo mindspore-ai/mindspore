@@ -112,6 +112,7 @@ class DataSaver {
   virtual ~DataSaver() = default;
 
   void ParseOpInfo(const OpInfoMap &op_info_maps);
+  void Clear();
 
   OpTimestampInfo op_timestamps_map_;
 
