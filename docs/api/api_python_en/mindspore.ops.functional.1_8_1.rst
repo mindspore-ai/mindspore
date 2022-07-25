@@ -329,12 +329,10 @@ Array Functions
     mindspore.ops.index_add
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
-    mindspore.ops.intopk
     mindspore.ops.matrix_band_part
     mindspore.ops.meshgrid
     mindspore.ops.narrow
     mindspore.ops.nonzero
-    mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements
@@ -557,8 +555,3 @@ Other Functions
     mindspore.ops.core
     mindspore.ops.count_nonzero
     mindspore.ops.cummin
-    mindspore.ops.derivative
-    mindspore.ops.grad
-    mindspore.ops.jet
-    mindspore.ops.jvp
-    mindspore.ops.sequence_mask
