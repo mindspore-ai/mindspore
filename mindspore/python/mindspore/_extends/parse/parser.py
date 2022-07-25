@@ -106,7 +106,7 @@ _unsupported_internal_type = (
 )
 
 _hybrid_type = (
-    print, len, enumerate, zip, map, filter,
+    print, len, enumerate, zip, map, filter, abs,
 )
 
 # Unsupported python builtin type in JIT Fallback.

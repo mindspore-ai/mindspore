@@ -127,6 +127,7 @@ convert_object_map = {
     T.not_contains: multitype_ops.not_in_,
 
     # system function
+    T.abs:          M.ms_abs,
     T.len:          M.ms_len,
     T.bool_:        M.bool_,
     T.map:          C.Map(),
