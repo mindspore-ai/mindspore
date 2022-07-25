@@ -382,6 +382,7 @@ set(TRAIN_SRC
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
         ${TOOLS_DIR}/common/meta_graph_utils.cc
+        ${TOOLS_DIR}/common/statistic_utils.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/dropout_node_remove_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc

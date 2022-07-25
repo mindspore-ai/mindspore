@@ -31,6 +31,7 @@
 #include "src/common/log_util.h"
 #include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"
+#include "tools/common/statistic_utils.h"
 
 namespace mindspore {
 namespace schema {
@@ -107,22 +108,17 @@ template <typename T>
 int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                     const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
                     bool symmetric = false, bool narrow_range = false) {
-  float min = FLT_MAX;
-  float max = -FLT_MIN;
-  for (uint32_t i = 0; i < elem_count; i++) {
-    min = std::min(min, raw_datas[i]);
-    max = std::max(max, raw_datas[i]);
-  }
-
+  auto min_max = GetFloatMinMaxValue(raw_datas, elem_count);
   schema::QuantParamT quant_param;
-  int status = CalQuantizationParams(&quant_param, min, max, bit_num, quant_min, quant_max, symmetric, narrow_range);
+  int status = CalQuantizationParams(&quant_param, min_max.first, min_max.second, bit_num, quant_min, quant_max,
+                                     symmetric, narrow_range);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
     return status;
   }
   quant_params->emplace_back(quant_param);
   // update data and datatype
-  for (uint32_t i = 0; i < elem_count; i++) {
+  for (size_t i = 0; i < elem_count; i++) {
     float raw_data = raw_datas[i];
     auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
     (*quant_datas)[i] = quant_data;
@@ -137,7 +133,7 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
 int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
 
 // Get the min max of each channel
-void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+void GetAllChannelMinMax(const float *raw_datas, size_t elem_count, const std::vector<int> &dims, int preferred_dim,
                          std::map<int, MinMax> *per_channel_min_max);
 
 // Calculate the distribution difference between quant and origin
