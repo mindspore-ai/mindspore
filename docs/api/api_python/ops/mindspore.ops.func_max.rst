@@ -1,5 +1,5 @@
 ﻿mindspore.ops.max
-==============================
+=================
 
 .. py:function:: mindspore.ops.max(x, axis=0, keep_dims=False)
 
