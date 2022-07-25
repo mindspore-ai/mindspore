@@ -25,7 +25,6 @@
 #include <list>
 
 #include "actor/actor.h"
-#include "actor/log.h"
 #include "async/spinlock.h"
 #include "async/status.h"
 

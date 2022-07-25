@@ -17,13 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_UNSORTED_SEGMENT_ARITHMETIC_H_
 #define MINDSPORE_CORE_OPS_UNSORTED_SEGMENT_ARITHMETIC_H_
 
-#include <set>
-#include <map>
 #include <vector>
-#include <string>
-#include <memory>
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

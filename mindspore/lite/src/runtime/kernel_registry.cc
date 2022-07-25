@@ -65,6 +65,11 @@ KernelRegistry *KernelRegistry::GetInstance() {
 }
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
+  if (desc.format != NHWC) {
+    /* nchw kernel using nnacl kernel */
+    return nullptr;
+  }
+
   if (desc.provider == kBuiltin) {
     int index = GetCreatorFuncIndex(desc);
     if (desc.type >= PrimType_MIN && desc.type < PrimType_MAX) {

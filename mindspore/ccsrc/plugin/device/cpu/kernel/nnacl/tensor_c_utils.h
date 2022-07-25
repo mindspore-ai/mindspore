@@ -30,6 +30,10 @@ int GetBatch(const TensorC *tensor);
 int GetHeight(const TensorC *tensor);
 int GetWidth(const TensorC *tensor);
 int GetChannel(const TensorC *tensor);
+void SetBatch(TensorC *tensor, int batch);
+void SetHeight(TensorC *tensor, int height);
+void SetWidth(TensorC *tensor, int width);
+void SetChannel(TensorC *tensor, int channel);
 int GetElementNum(const TensorC *tensor);
 int GetDimensionSize(const TensorC *tensor, const size_t index);
 
