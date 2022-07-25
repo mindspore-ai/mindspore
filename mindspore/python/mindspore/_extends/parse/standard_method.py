@@ -790,7 +790,7 @@ def pow(x, y):  # pylint: disable=redefined-builtin
     return F.pow(x, y)
 
 
-def round(x):  # pylint: disable=redefined-builtin
+def round_(x):
     """
     Returns half to even of a tensor element-wise.
     """
@@ -1660,7 +1660,7 @@ def hasnext(it):
 def constant_abs(x):
     """Returns the absolute value of the constant."""
     if x is None:
-        raise ValueError("For abs(), the parameter should be a constant or Tensor type.")
+        raise ValueError("For abs(), the input should be a constant or Tensor type.")
     return abs(x)
 
 
@@ -1669,6 +1669,50 @@ def ms_abs(x):
     if isinstance(x, Tensor):
         return abs_(x)
     return constant_abs(x)
+
+
+def ms_all(x):
+    """Implementation of `all`."""
+    if isinstance(x, Tensor):
+        return all_(x.astype(mstype.bool_))
+    for element in x:
+        if not element:
+            return False
+    return True
+
+
+def ms_any(x):
+    """Implementation of `any`."""
+    if isinstance(x, Tensor):
+        return any_(x.astype(mstype.bool_))
+    for element in x:
+        if element:
+            return True
+    return False
+
+
+@constexpr
+def constant_round(*data):
+    """Returns the rounded value of the constant."""
+    for x in data:
+        if x is None:
+            raise ValueError("For round(), the input should be a Tensor or 1-2 constants.")
+    return round(*data)
+
+
+def ms_round(*data):
+    """Implementation of `round`."""
+    len_data = len(data)
+    if len_data <= 0 or len_data > 2:
+        const_utils.raise_type_error("round() requires 1 or 2 arguments.")
+    if len_data == 1:
+        x = data[0]
+        if isinstance(x, Tensor):
+            return round_(x)
+        return constant_round(*data)
+    if isinstance(data[0], Tensor) or isinstance(data[1], Tensor):
+        const_utils.raise_type_error("When applying round() to tensor, only one tensor is supported as input.")
+    return constant_round(*data)
 
 
 def ms_len(data):

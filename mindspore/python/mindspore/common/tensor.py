@@ -222,6 +222,10 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__logical_not__')(self)
         return out
 
+    def __round__(self):
+        out = tensor_operator_registry.get('round')()(self)
+        return out
+
     def __bool__(self):
         data = self.asnumpy()
         if data.shape == ():
