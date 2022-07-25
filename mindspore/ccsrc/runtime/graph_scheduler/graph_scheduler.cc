@@ -203,7 +203,7 @@ bool SendFinishTransform(const std::string &actor_set_name) {
   while (!cgn->PutMetadata(key, kTransformFinishReady)) {
     if (--retry > 0) {
       MS_LOG(WARNING) << "Retry to send transform finished state to the meta server node...";
-      sleep(kInterval);
+      (void)sleep(kInterval);
     } else {
       MS_LOG(EXCEPTION) << "Failed to send transform finished state to the meta server node.";
     }
@@ -233,7 +233,7 @@ bool QueryFinishTransform(const std::string &actor_set_name) {
       }
     }
     if (!success) {
-      sleep(kInterval);
+      (void)sleep(kInterval);
     } else {
       break;
     }
@@ -562,9 +562,8 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 #endif
 }
 
-void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceContext *> &device_contexts,
-                         const std::vector<std::vector<TensorPtr>> &input_tensors,
-                         const std::vector<TensorPtr> &input_tensors_with_value_node, GraphExecutionStrategy strategy) {
+void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+                         GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
@@ -795,7 +794,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       std::vector<CNodePtr> communication_nodes;
       const auto &group_name = (parser->IsInited() ? parser->FetchGroupNameByKernelGraph(graph) : default_group_name);
       LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
-      group_name_to_communication_nodes[group_name].first.insert(
+      (void)group_name_to_communication_nodes[group_name].first.insert(
         group_name_to_communication_nodes[group_name].first.end(), communication_nodes.begin(),
         communication_nodes.end());
       (void)group_name_to_communication_nodes[group_name].second.emplace_back(graph);
@@ -820,7 +819,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 #endif
 }
 
-void GraphScheduler::Optimize(const ActorSetPtr &actor_set) {
+void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
 
   auto optimizer = std::make_shared<ActorSetOptimizer>();
@@ -854,9 +853,10 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         // In control flow, parameters from subgraph need not init in data source actor.
         if (graph_compiler_info.control_node_parser_->IsInited()) {
           auto node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input_node);
-          if (node_with_index.first != nullptr && node_with_index.first->isa<Parameter>() &&
-              find(root_parameters.begin(), root_parameters.end(), node_with_index.first) == root_parameters.end())
+          if ((node_with_index.first != nullptr) && node_with_index.first->isa<Parameter>() &&
+              (find(root_parameters.begin(), root_parameters.end(), node_with_index.first) == root_parameters.end())) {
             continue;
+          }
         }
 
         if (host_queue_ds_actor == nullptr) {
@@ -933,7 +933,7 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
       auto custom_actor = std::make_shared<CustomActor>(actor_name, node, device_context, recorder_aid_);
       MS_EXCEPTION_IF_NULL(custom_actor);
       InsertActor(custom_actor.get());
-      custom_actors.emplace_back(custom_actor);
+      (void)custom_actors.emplace_back(custom_actor);
     }
   }
   return custom_actors;
@@ -1024,7 +1024,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
   return loop_count_actor;
 }
 
-OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) {
+OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) const {
   auto actor_set = Fetch(graph_compiler_info.name_);
   if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
     return nullptr;
@@ -1089,7 +1089,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
 }
 
 std::vector<AbstractActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorSet *actor_set,
-                                                                      GraphExecutionStrategy strategy) {
+                                                                      GraphExecutionStrategy strategy) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<AbstractActorPtr> no_input_kernel_actors;
 
@@ -1381,7 +1381,7 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchNodePosition(from_kernel);
-  if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+  if ((from_actor->device_contexts_.size() <= position) || to_actor->device_contexts_.empty()) {
     MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
   }
 
@@ -1459,7 +1459,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Set the member device_contexts_ of the copy actor.
     auto position = from_actor->FetchNodePosition(from_kernel);
-    if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+    if ((from_actor->device_contexts_.size() <= position) || to_actor->device_contexts_.empty()) {
       MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
     }
     auto from_device_context = from_actor->device_contexts_[position];
@@ -1596,7 +1596,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   }
 }
 
-void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node) {
+void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node) const {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(skipped_node);
 
@@ -1613,7 +1613,7 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
   }
 }
 
-void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) {
+void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   for (auto &from_iter : graph->send_recv_pairs_for_parallel_op_inputs()) {
     auto parallel_node = from_iter.first;
@@ -1734,7 +1734,7 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   LinkControlArrowForOutputActor(actor_set->output_actor_.get(), actor_set);
 }
 
-void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
+void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
                                                     const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -1802,8 +1802,8 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
   }
 }
 
-void GraphScheduler::LinkDataArrowForCustomActor(ActorSet *const actor_set,
-                                                 const GraphCompilerInfo &graph_compiler_info) {
+void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
+                                                 const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -1820,7 +1820,7 @@ void GraphScheduler::LinkDataArrowForCustomActor(ActorSet *const actor_set,
     MS_EXCEPTION_IF_NULL(base_node);
     auto dynamic_shape_depends = abstract::GetDependsFormMap(base_node);
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
-      auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
+      auto input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
       MS_EXCEPTION_IF_NULL(input_node);
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first);
@@ -1839,8 +1839,8 @@ void GraphScheduler::LinkDataArrowForCustomActor(ActorSet *const actor_set,
       auto from_actor = FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
       // The input_node maybe a data(Tensor) and the from_actor is nullptr
       if (from_actor != nullptr) {
-        SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.second, *iter,
-                                      from_kernel_with_output_idx.first);
+        SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.second,
+                                      LongToSize(*iter), from_kernel_with_output_idx.first);
       }
     }
     // In control flow, no input actors should be linked to entrance actors.
@@ -1850,7 +1850,7 @@ void GraphScheduler::LinkDataArrowForCustomActor(ActorSet *const actor_set,
   }
 }
 
-void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) {
+void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto &execution_order = graph->execution_order();
   for (size_t i = 1; i < execution_order.size(); ++i) {
@@ -1889,7 +1889,7 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
 
 void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor,
                                                          const ActorSet *actor_set,
-                                                         const ControlNodeParserPtr &parser) {
+                                                         const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(data_prepare_actor);
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(parser);
@@ -1973,7 +1973,7 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
     std::pair(loop_count_actor->GetAID(), nullptr));
 }
 
-void GraphScheduler::LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set) {
+void GraphScheduler::LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   // There is no output actor in step mode.
   if (output_actor == nullptr) {
@@ -1986,7 +1986,7 @@ void GraphScheduler::LinkControlArrowForOutputActor(OutputActor *output_actor, c
 }
 
 void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
-                                                         const GraphCompilerInfo &graph_compiler_info) {
+                                                         const GraphCompilerInfo &graph_compiler_info) const {
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep ||
       (graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited())) {
     // In control flow, the exit actor of the root graph sends output data to the output actor.
@@ -2205,7 +2205,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
   PersistDeviceTensorForRootGraphControlNode(graph_compiler_info);
 }
 
-void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) {
+void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   if (parser == nullptr || (!parser->IsInited())) {
     return;
@@ -2374,7 +2374,7 @@ void GraphScheduler::BindNumaNode() {
 }
 
 #ifdef ENABLE_RPC_ACTOR
-bool GraphScheduler::HaveRpcActors(ActorSet *const actor_set) const {
+bool GraphScheduler::HaveRpcActors(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &rpc_actor_set = actor_set->rpc_actors_;
   if (rpc_actor_set != nullptr && (!rpc_actor_set->send_actors_.empty() || !rpc_actor_set->recv_actors_.empty())) {

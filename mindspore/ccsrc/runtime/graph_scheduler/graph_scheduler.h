@@ -72,9 +72,7 @@ class BACKEND_EXPORT GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The fourth parameter is used only in the step execution strategy.
-  void Run(ActorSet *constactor_set, const std::vector<DeviceContext *> &device_contexts,
-           const std::vector<std::vector<TensorPtr>> &input_tensors,
-           const std::vector<TensorPtr> &input_tensors_with_value_node = {},
+  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Fetch the actor set by actor info.
@@ -97,7 +95,7 @@ class BACKEND_EXPORT GraphScheduler {
   // Link actors to DAG through the edge connection of graph and graph execution strategy.
   void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   // Optimize the actor DAG. For example, erase invalid data arrow, etc.
-  void Optimize(const ActorSetPtr &actor_set);
+  void Optimize(const ActorSetPtr &actor_set) const;
 
   // The processing of actors build.
   std::vector<DataSourceActorPtr> BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -106,11 +104,12 @@ class BACKEND_EXPORT GraphScheduler {
   std::vector<CustomActorPtr> BuildCustomActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<SuperKernelActorPtr> BuildSuperKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info);
-  OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info);
+  OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) const;
   DataPrepareActorPtr BuildDataPrepareActor(const GraphCompilerInfo &graph_compiler_info,
                                             const std::vector<DataSourceActorPtr> &data_source_actors,
                                             const HostTensorQueuePtr &host_queue);
-  std::vector<AbstractActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set, GraphExecutionStrategy strategy);
+  std::vector<AbstractActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set,
+                                                        GraphExecutionStrategy strategy) const;
 
   // Generate rpc actor object inherited from kernel actor.
   KernelActorPtr GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
@@ -157,34 +156,34 @@ class BACKEND_EXPORT GraphScheduler {
   void LinkControlArrowByAutoMonad(AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph,
                                    const ControlNodeParserPtr &parser = nullptr);
   // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
-  void LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node);
+  void LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node) const;
   // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
-  void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph);
+  void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) const;
 
   // The gather of linking the global control arrows, it will call following functions:
   void LinkGlobalControlArrow(ActorSet *const actor_set, const GroupNameToCommuNodes &communication_node_groups,
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
-  void LinkDataArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
-  void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
-  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph);
+  void LinkDataArrowForCustomActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
+  void LinkControlArrowForCustomActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) const;
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                            const std::vector<KernelGraphPtr> &graphs);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<AbstractActor *> &auto_monad_actors);
   void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
-                                           const ControlNodeParserPtr &parser);
+                                           const ControlNodeParserPtr &parser) const;
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                          const ControlNodeParserPtr &parser);
-  void LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set);
+  void LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set) const;
 
   // 3. The processing of linking output result arrows.
-  void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
+  void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info) const;
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
   // When the parameters of root graph are not in backend kernel graphs, need persist device tensor by this function.
-  void PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info);
+  void PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) const;
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
@@ -208,7 +207,7 @@ class BACKEND_EXPORT GraphScheduler {
 
 #ifdef ENABLE_RPC_ACTOR
   // Return whether the actor set has rpc actors.
-  bool HaveRpcActors(ActorSet *const actor_set) const;
+  bool HaveRpcActors(const ActorSet *actor_set) const;
 
   // Used to build and link for rpc actors.
   std::unique_ptr<RpcNodeScheduler> rpc_node_scheduler_{nullptr};

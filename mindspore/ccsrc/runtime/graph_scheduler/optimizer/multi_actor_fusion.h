@@ -37,9 +37,9 @@ class MultiActorFusion : public ActorPass {
  private:
   bool AnalyzeDependency(const ActorSet *actor_set);
   bool AddDependency(std::pair<AbstractActor *, bool> *const actor_info,
-                     mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos);
+                     mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos) const;
 
-  void FuseMultiActors(ActorSet *const actor_set);
+  void FuseMultiActors(ActorSet *const actor_set) const;
 };
 }  // namespace runtime
 }  // namespace mindspore

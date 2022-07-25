@@ -35,7 +35,7 @@ bool SupportFusion(const AbstractActorPtr &actor) {
 }  // namespace
 
 // The max actors num in fusion actor.
-constexpr size_t kActorFusionMaxNum = 1000;
+constexpr int64_t kActorFusionMaxNum = 1000;
 
 void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -112,7 +112,7 @@ bool MultiActorFusion::AnalyzeDependency(const ActorSet *actor_set) {
 
 bool MultiActorFusion::AddDependency(
   std::pair<AbstractActor *, bool> *const actor_info,
-  mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos) {
+  mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos) const {
   MS_EXCEPTION_IF_NULL(actor_info);
   MS_EXCEPTION_IF_NULL(actor_infos);
   if (actor_info->second) {
@@ -253,7 +253,7 @@ std::vector<FusionActorPtr> BuildFusionActorBySeed(
 }
 }  // namespace
 
-void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
+void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
 

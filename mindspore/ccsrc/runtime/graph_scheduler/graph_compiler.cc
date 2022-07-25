@@ -118,7 +118,7 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
 }
 
 void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, const ValuePtr &node_value,
-                                       size_t output_idx, const ValueNodePtr &value_node, const KernelGraphPtr &graph) {
+                                       size_t output_idx, const ValueNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(node_value);
   MS_EXCEPTION_IF_NULL(value_node);
@@ -169,7 +169,7 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-      CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node, graph);
+      CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
@@ -402,18 +402,18 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
     return;
   }
 
-  checked_nodes->emplace(node);
+  (void)checked_nodes->emplace(node);
   const auto &inputs = node->inputs();
   std::vector<AnfNodePtr> new_inputs;
   for (auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>()) {
-      new_inputs.emplace_back(input);
+      (void)new_inputs.emplace_back(input);
       continue;
     }
 
     if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
-      new_inputs.emplace_back(input);
+      (void)new_inputs.emplace_back(input);
     } else {
       // If input is an eliminate node, replace it by its real input.
       const auto &real_input = FetchRealNodeByNopNode(input);
@@ -428,7 +428,7 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
             new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
         }
       }
-      new_inputs.emplace_back(real_input);
+      (void)new_inputs.emplace_back(real_input);
     }
     const auto &cnode = input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -478,7 +478,7 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
         if ((input_with_index.first != nullptr) && (input_with_index.first->isa<CNode>()) &&
             IsNopNode(input_with_index.first)) {
           // Collect all of the nopnode inputs.
-          invalid_nopnodes.emplace(input->cast<CNodePtr>());
+          (void)invalid_nopnodes.emplace(input->cast<CNodePtr>());
           MS_LOG(INFO) << "Add invalid nopnode:" << input->DebugString()
                        << " for node not support mulit-thread execute list.";
         }
@@ -507,12 +507,12 @@ void EliminateNopNode(KernelGraph *graph) {
     // Nopnode as graph output or has side effect cannot be eliminated.
     if (!IsNopNode(cnode) || (graph_outputs.find({cnode, 0}) != graph_outputs.end()) || HasMonadInput(cnode) ||
         (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
-      new_execution_order.emplace_back(cnode);
+      (void)new_execution_order.emplace_back(cnode);
       continue;
     }
 
     MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
-    nop_nodes.emplace(cnode);
+    (void)nop_nodes.emplace(cnode);
   }
 
   std::set<CNode *> checked_nodes;
@@ -632,7 +632,9 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
       graph->set_manager(manager);
     }
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
-    device_context->graph_executor_->CompileGraph(root_graph, {});
+    if (!device_context->graph_executor_->CompileGraph(root_graph, {})) {
+      MS_LOG(EXCEPTION) << "Compile graph failed: " << root_graph->graph_id();
+    }
     root_graph->CacheGraphOutputToFrontNodeWithIndex({root_graph->output()}, {func_graph->output()});
     return root_graph->graph_id();
   }
@@ -803,7 +805,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
 }
 
 void GraphCompiler::UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info,
-                                                    const KernelGraphPtr &graph) {
+                                                    const KernelGraphPtr &graph) const {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
   // So need to get ref info to generate output addr, before create kernel.
   if (op_run_info.device_target != kCPUDevice && op_run_info.device_target != kGPUDevice) {
@@ -820,7 +822,7 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
   std::vector<CNodePtr> node_to_build;
   for (const auto &graph : graphs) {
     const auto &nodes = graph->execution_order();
-    std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
+    (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   }
   // Kernel build
   device_context->kernel_executor_->CreateKernel(node_to_build);
