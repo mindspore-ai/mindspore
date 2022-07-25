@@ -9712,26 +9712,26 @@ class PSROIPooling(Primitive):
         >>> features = np.random.randn(4, 3 * 7 * 7, 80, 48)
         >>> features = Tensor.from_numpy(features).astype(mindspore.float32)
         >>> rois = Tensor.from_numpy(
-        >>>     np.array([[[0.0000],
-        >>>                [150.3563],
-        >>>                [200.1320],
-        >>>                [579.3563],
-        >>>                [602.3452]],
-        >>>               [[1.0000],
-        >>>                [657.1263],
-        >>>                [302.8564],
-        >>>                [762.4214],
-        >>>                [567.9854]],
-        >>>               [[2.0000],
-        >>>                [321.3122],
-        >>>                [232.2410],
-        >>>                [679.0281],
-        >>>                [587.6346]],
-        >>>               [[3.0000],
-        >>>                [664.1630],
-        >>>                [387.4919],
-        >>>                [778.7322],
-        >>>                [562.7321]]])).astype(mindspore.float32)
+        ...     np.array([[[0.0000],
+        ...                [150.3563],
+        ...                [200.1320],
+        ...                [579.3563],
+        ...                [602.3452]],
+        ...               [[1.0000],
+        ...                [657.1263],
+        ...                [302.8564],
+        ...                [762.4214],
+        ...                [567.9854]],
+        ...               [[2.0000],
+        ...                [321.3122],
+        ...                [232.2410],
+        ...                [679.0281],
+        ...                [587.6346]],
+        ...               [[3.0000],
+        ...                [664.1630],
+        ...                [387.4919],
+        ...                [778.7322],
+        ...                [562.7321]]])).astype(mindspore.float32)
         >>> psROIPooling = nn_ops.PSROIPooling(spatial_scale=1.0/16, output_dim=3,
         >>>                                       group_size=7)
         >>> out = psROIPooling(features, rois)
@@ -10048,7 +10048,7 @@ class SparseApplyAdagradDA(Primitive):
         >>> global_step=Tensor(1, mstype.int64)
         >>> sparse_apply_adagrad_da = nn_ops.SparseApplyAdagradDA()
         >>> output = sparse_apply_adagrad_da(var, grad_accum, grad_square_accum,
-                                             grad, indices, lr, l1, l2, global_step)
+        ...                                  grad, indices, lr, l1, l2, global_step)
         >>> print(output)
         [[-1.8956923 -1.1715728]
          [-2.1420605 -1.1715728]]
