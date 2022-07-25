@@ -73,7 +73,7 @@ class MS_API Serialization {
   /// \param[in] model The model.
   ///
   /// \return Status.
-  static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
+  inline static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
 
   /// \brief Export training model from memory buffer, MindSpore Lite does not provide this feature.
   ///
@@ -107,6 +107,7 @@ class MS_API Serialization {
                      const std::vector<char> &dec_mode);
   static Status Load(const std::vector<std::vector<char>> &files, ModelType model_type, std::vector<Graph> *graphs,
                      const Key &dec_key, const std::vector<char> &dec_mode);
+  static Status SetParameters(const std::map<std::vector<char>, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, const std::vector<char> &model_file,
                             QuantizationType quantization_type, bool export_inference_only,
                             const std::vector<std::vector<char>> &output_tensor_name);
@@ -125,6 +126,10 @@ Status Serialization::Load(const std::string &file, ModelType model_type, Graph 
 Status Serialization::Load(const std::vector<std::string> &files, ModelType model_type, std::vector<Graph> *graphs,
                            const Key &dec_key, const std::string &dec_mode) {
   return Load(VectorStringToChar(files), model_type, graphs, dec_key, StringToChar(dec_mode));
+}
+
+Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *model) {
+  return SetParameters(PadInfoStringToChar<Buffer>(parameters), model);
 }
 
 Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file,

@@ -44,12 +44,12 @@ class RunnerConfig {
   /// \brief Set the config before runtime. Only valid for ModelParallelRunner.
   ///
   /// \param[in] config store environment variables before runtime.
-  void SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config);
+  inline void SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config);
 
   /// \brief Get the current config setting. Only valid for ModelParallelRunner.
   ///
   /// \return The current config setting.
-  std::map<std::string, std::map<std::string, std::string>> GetConfigInfo() const;
+  inline std::map<std::string, std::map<std::string, std::string>> GetConfigInfo() const;
 
   /// \brief Get the current operators parallel workers number setting. Only valid for ModelParallelRunner.
   ///
@@ -62,8 +62,18 @@ class RunnerConfig {
   std::shared_ptr<Context> GetContext() const;
 
  private:
+  void SetConfigInfo(const std::vector<char> &section, const std::map<std::vector<char>, std::vector<char>> &config);
+  std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> GetConfigInfoChar() const;
   std::shared_ptr<Data> data_ = nullptr;
 };
+
+void RunnerConfig::SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config) {
+  SetConfigInfo(StringToChar(section), MapStringToVectorChar(config));
+}
+
+std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfigInfo() const {
+  return MapMapCharToString(GetConfigInfoChar());
+}
 
 class ModelPool;
 
@@ -80,7 +90,7 @@ class MS_API ModelParallelRunner {
   /// \param[in] runner_config Define the config used to store options during model pool init.
   ///
   /// \return Status.
-  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+  inline Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
   /// \brief Obtains all input tensors information of the model.
   ///
@@ -104,7 +114,12 @@ class MS_API ModelParallelRunner {
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
  private:
+  Status Init(const std::vector<char> &model_path, const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<ModelPool> model_pool_ = nullptr;
 };
+
+Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  return Init(StringToChar(model_path), runner_config);
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H

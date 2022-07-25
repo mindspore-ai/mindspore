@@ -77,11 +77,14 @@ void ModelPyBind(const py::module &m) {
          [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetOutputByTensorName(tensor_name); });
+}
 
+void ModelParallelRunnerPyBind(const py::module &m) {
 #ifdef PARALLEL_INFERENCE
   py::class_<RunnerConfig, std::shared_ptr<RunnerConfig>>(m, "RunnerConfigBind")
     .def(py::init<>())
-    .def("set_config_info", &RunnerConfig::SetConfigInfo)
+    .def("set_config_info", py::overload_cast<const std::string &, const std::map<std::string, std::string> &>(
+                              &RunnerConfig::SetConfigInfo))
     .def("get_config_info", &RunnerConfig::GetConfigInfo)
     .def("set_workers_num", &RunnerConfig::SetWorkersNum)
     .def("get_workers_num", &RunnerConfig::GetWorkersNum)
@@ -111,7 +114,8 @@ void ModelPyBind(const py::module &m) {
 
   py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
     .def(py::init<>())
-    .def("init", &ModelParallelRunner::Init)
+    .def("init",
+         py::overload_cast<const std::string &, const std::shared_ptr<RunnerConfig> &>(&ModelParallelRunner::Init))
     .def("get_inputs", &ModelParallelRunner::GetInputs)
     .def("get_outputs", &ModelParallelRunner::GetOutputs)
     .def("predict", [](ModelParallelRunner &runner, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
