@@ -22,6 +22,7 @@ import numpy as np
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import ms_function
 from mindspore.common import Tensor
+from mindspore.common._decorator import deprecated
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -505,44 +506,13 @@ def shard(fn, in_strategy, out_strategy, device="Ascend", level=0):
     return shard_fn(fn, in_strategy, out_strategy, device, level)
 
 
+@deprecated("1.8", "range", False)
 def arange(start=0, stop=None, step=1, rtype=None):
-    """
-    Returns evenly spaced values within a given interval.
-
-    Args:
-        start(Union[int, float]): Start value of interval. The interval includes this value. When
-            `stop` is None, `start` must be greater than 0, and the interval is :math:`[0, start)`.
-            When `stop` is not None, `start` must be less than `stop`.
-        stop(Union[int, float], optional): End value of interval. The interval does not
-            include this value. Default is None.
-        step(Union[int, float], optional): Spacing between values. For any output
-            `out`, this is the distance between two adjacent values, :math:`out[i+1] - out[i]`.
-            The default step size is 1. If `step` is specified as a position argument,
-            `start` must also be given.
-        rtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor type.
-            If rtype is None, the data type of the new tensor will be inferred from start,
-            stop and step. Default is None.
-
-    Returns:
-        Tensor with evenly spaced values.
-
-    Raises:
-        TypeError: If input arguments have types not specified above.
-        ValueError: If input arguments have values not specified above.
+    r"""
+    The ops.arange interface is deprecated, please use :class:`mindspore.ops.range`
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.ops as ops
-        >>> print(ops.arange(0, 5, 1))
-        [0 1 2 3 4]
-        >>> print(ops.arange(3))
-        [0 1 2]
-        >>> print(ops.arange(start=0, stop=3))
-        [0 1 2]
-        >>> print(ops.arange(0, stop=3, step=0.5))
-        [0.  0.5 1.  1.5 2.  2.5]
+        deprecated
     """
     if stop is None:
         start, stop = 0, start
