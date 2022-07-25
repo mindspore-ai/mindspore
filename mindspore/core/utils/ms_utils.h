@@ -22,6 +22,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <limits>
+#include <cmath>
 #include "utils/visible.h"
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
@@ -132,6 +134,14 @@ bool IsAttrsEqual(const T &a, const T &b) {
     ++iter2;
   }
   return true;
+}
+
+inline bool IsFloatEqual(const float &a, const float &b) {
+  return (std::fabs(a - b) <= std::numeric_limits<float>::epsilon());
+}
+
+inline bool IsDoubleEqual(const double &a, const double &b) {
+  return (std::fabs(a - b) <= std::numeric_limits<double>::epsilon());
 }
 }  // namespace common
 }  // namespace mindspore

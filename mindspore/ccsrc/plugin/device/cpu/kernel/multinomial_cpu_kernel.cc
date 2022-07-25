@@ -94,7 +94,7 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
     // Normalize the cumulative array.
     float sum = cumulative_value[(i + 1) * num_col - 1];
-    if (sum != 0) {
+    if (!common::IsFloatEqual(sum, 0)) {
       for (int k = 0; k < num_col; ++k) {
         size_t index = i * num_col + k;
         cumulative_value[index] /= sum;
