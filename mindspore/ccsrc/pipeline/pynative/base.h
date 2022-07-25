@@ -25,7 +25,7 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "pybind11/pybind11.h"
+#include "pybind11/pytypes.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/parse.h"
