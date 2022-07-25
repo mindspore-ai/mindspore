@@ -29,6 +29,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
+#include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
 
@@ -149,6 +150,24 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
   }
 }
 
+AnfNodePtr PoolLayoutDeco::Run(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  auto prev_node = AnfUtils::VisitKernel(node->cast<CNodePtr>()->input(1), 0).first;
+  if (prev_node != nullptr) {
+    auto sub_graph = GetCNodeFuncGraph(prev_node);
+    if (sub_graph != nullptr) {
+      auto sub_nodes = TopoSort(sub_graph->get_return());
+      for (auto sub_node : sub_nodes) {
+        if (IsPrimitiveCNode(sub_node, prim::kPrimConv2D)) {
+          AnfUtils::SetNodeAttr("layout_axis", GetCNodePrimitive(sub_node)->GetAttr("weight_coi"), cnode);
+          break;
+        }
+      }
+    }
+  }
+  return decorated_->Run(cnode);
+}
+
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
@@ -195,6 +214,8 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimConcat->name(), {ParaToTensorDeco::GetCreator({1}, true)}},
     {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
     {prim::kPrimMatMulFusion->name(), {ParaToTensorDeco::GetCreator({1}), MatmulPackB::Creator}},
+    {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},
+    {prim::kPrimMaxPoolFusion->name(), {PoolLayoutDeco::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {

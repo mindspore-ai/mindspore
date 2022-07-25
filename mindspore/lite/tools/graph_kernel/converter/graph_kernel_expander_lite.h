@@ -78,6 +78,16 @@ class InferValueDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
+class PoolLayoutDeco : public ExpanderDecorator {
+ public:
+  explicit PoolLayoutDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~PoolLayoutDeco() = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<PoolLayoutDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
 class GraphKernelExpanderLite : public GraphKernelExpander {
  public:
   GraphKernelExpanderLite() : GraphKernelExpander() {}

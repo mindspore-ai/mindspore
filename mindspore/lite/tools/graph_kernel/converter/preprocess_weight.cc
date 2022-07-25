@@ -27,6 +27,7 @@ constexpr size_t kWeightChannelOutAxis = 0;
 constexpr size_t kWeightHeightAxis = 1;
 constexpr size_t kWeightWidthAxis = 2;
 constexpr size_t kWeightChannelInAxis = 3;
+constexpr size_t kDepthWiseChannelAxis = 3;
 constexpr size_t kShapeRank = 4;
 
 std::pair<int64_t, int64_t> TilingChannel(int64_t channel) {
@@ -71,7 +72,8 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
     return nullptr;
   }
   auto c_out = weight_shape[kWeightChannelOutAxis];
-  auto c_in = weight_shape[kWeightChannelInAxis];
+  auto input_shape = cb->GetInputShape(cnode, kConv2dDataIndex - 1);
+  auto c_in = input_shape[kDepthWiseChannelAxis];
   int64_t c_out_o, c_out_i, c_in_o, c_in_i;
   std::tie(c_out_o, c_out_i) = TilingChannel(c_out);
   std::tie(c_in_o, c_in_i) = TilingChannel(c_in);
@@ -80,6 +82,10 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
   prim->AddAttr("weight_cio", MakeValue(c_in_o));
   prim->AddAttr("weight_cii", MakeValue(c_in_i));
 
+  if (prim->HasAttr("is_depth_wise")) {
+    c_in_o = 1;
+    c_in_i = 1;
+  }
   auto weight_node = cnode->input(kConv2dWeightIndex)->cast<ValueNodePtr>();
   if (weight_node == nullptr) {
     return nullptr;

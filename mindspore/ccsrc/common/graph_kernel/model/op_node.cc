@@ -46,6 +46,14 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   return list_int;
 }
 
+int64_t GetIntValue(const ValuePtr &value) {
+  if (value->isa<Int64Imm>()) {
+    return GetValue<int64_t>(value);
+  } else {
+    return IntToLong(GetValue<int>(value));
+  }
+}
+
 AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
   auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
   auto iter = frontend_infer_func.find(prim);
@@ -862,6 +870,55 @@ std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, con
   }
   MS_LOG(EXCEPTION) << "LayoutTransform only support transform between NHWC and NCHWnC now, but src_format is ["
                     << src_format << "] and dst_format is [" << dst_format << "].";
+}
+
+std::vector<DShape> Pool2DOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "global");
+  std::vector<int64_t> input_shape = inputs[0]->shape;
+  bool is_nhwc = input_shape.size() == 4;
+  int64_t n = input_shape[0];
+  int64_t c, h, w;
+  if (is_nhwc) {
+    constexpr size_t h_idx = 1;
+    constexpr size_t w_idx = 2;
+    constexpr size_t c_idx = 3;
+    h = input_shape[h_idx];
+    w = input_shape[w_idx];
+    c = input_shape[c_idx];
+  } else {
+    constexpr size_t c_idx = 1;
+    constexpr size_t h_idx = 2;
+    constexpr size_t w_idx = 3;
+    c = input_shape[c_idx];
+    h = input_shape[h_idx];
+    w = input_shape[w_idx];
+  }
+
+  if (GetValue<bool>(attrs.find("global")->second)) {
+    h = 1;
+    w = 1;
+  } else {
+    CHECK_ATTR(attrs, "strides");
+    CHECK_ATTR(attrs, "kernel_size");
+    CHECK_ATTR(attrs, "round_mode");
+    std::vector<int64_t> strides = GetListInt(attrs.find("strides")->second);
+    std::vector<int64_t> kernels = GetListInt(attrs.find("kernel_size")->second);
+    if (GetIntValue(attrs.find("round_mode")->second) == 0) {
+      // ceil mode
+      h = ((h - kernels[0] + strides[0] - 1) / strides[0]) + 1;
+      w = ((w - kernels[1] + strides[1] - 1) / strides[1]) + 1;
+    } else {
+      // round mode
+      h = ((h - kernels[0]) / strides[0]) + 1;
+      w = ((w - kernels[1]) / strides[1]) + 1;
+    }
+  }
+  if (is_nhwc) {
+    return {{n, h, w, c}};
+  } else {
+    auto ci = input_shape[4];
+    return {{n, c, h, w, ci}};
+  }
 }
 
 void ComplexOp::Check(const NodePtrList &inputs, const DAttrs &) {
