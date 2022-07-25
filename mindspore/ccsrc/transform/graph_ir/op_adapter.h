@@ -240,16 +240,16 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->SetOpSubgraphFunc(op, subgraphs);
   }
 
-  int setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) override {
-    return static_cast<int>(SetOpSubgraphFunc(op, subgraphs));
+  void setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) override {
+    (void)SetOpSubgraphFunc(op, subgraphs);
   }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) {
     return impl_->SetOpSubgraphFunc(op, index, branches);
   }
 
-  int setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) override {
-    return static_cast<int>(SetOpSubgraphFunc(op, index, branches));
+  void setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) override {
+    (void)SetOpSubgraphFunc(op, index, branches);
   }
 
   Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) {
