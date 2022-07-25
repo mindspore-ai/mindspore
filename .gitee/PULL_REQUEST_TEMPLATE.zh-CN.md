@@ -27,7 +27,7 @@ Fixes #
 
 - **典型安全编码问题 [【违反安全编码案例】](https://gitee.com/mindspore/community/blob/master/security/security_coding_violation_cases.md)**
     - [ ] 是否进行空指针校验
-    - [ ] 是否进行返回值校验 (禁止使用void屏蔽函数返回值)
+    - [ ] 是否进行返回值校验 (禁止使用void屏蔽安全函数、自研函数返回值，C++标准库函数确认无问题可以屏蔽)
     - [ ] 是否正确释放new/malloc申请的内存
 - **性能分析 (如果涉及某个子项，请概述设计思想/修改内容)**
     - [ ] 是否修改热点***函数 / 算法 / 算子***

@@ -27,7 +27,7 @@ Fixes #
 
 - **Typical problems of security coding [[historical security coding cases reference]](https://gitee.com/mindspore/community/blob/master/security/security_coding_violation_cases.md)**
     - [ ] whether to verify the pointer is null/nullptr
-    - [ ] whether to verify the function's return value
+    - [ ] whether to verify the function's return value (It is forbidden to use void to mask the return values of security functions and self-developed functions. C++ STL functions can be masked if there is no problem)
     - [ ] whether new/malloc memory is released correctly
 - **Performance analysis (if a sub-item is involved, please outline the implementation idea or modification content)**
     - [ ] whether to modify hotspot ***function / algorithm / operation***
