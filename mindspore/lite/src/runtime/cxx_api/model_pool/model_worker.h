@@ -28,12 +28,15 @@
 #include "src/runtime/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 class PredictTaskQueue;
+enum Strategy { BASE = 0, ADVANCED = 1 };
 
 struct WorkerConfig {
   std::map<std::string, std::map<std::string, std::string>> config_info;
   std::shared_ptr<Context> context = nullptr;
   int numa_id = -1;
   int worker_id = -1;
+  int task_queue_id = -1;
+  Strategy strategy;
 };
 
 class ModelWorker {

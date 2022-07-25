@@ -34,11 +34,10 @@ struct Context::Data {
 
 #ifdef PARALLEL_INFERENCE
   int affinity_mode_ = 1;
-  int32_t inter_op_parallel_num_ = 4;
 #else
   int affinity_mode_ = 0;
-  int32_t inter_op_parallel_num_ = 1;
 #endif
+  int32_t inter_op_parallel_num_ = 0;
   int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;

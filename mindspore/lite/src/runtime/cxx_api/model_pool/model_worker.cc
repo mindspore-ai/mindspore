@@ -20,10 +20,13 @@
 #include "nnacl/op_base.h"
 namespace mindspore {
 void ModelWorker::PrintWorkerInfo() {
-  MS_LOG(ERROR) << "worker id: " << worker_config_->worker_id
+  MS_LOG(ERROR) << "worker id: " << worker_config_->worker_id << " | strategy: " << worker_config_->strategy
+                << " | bind core mode: " << worker_config_->context->GetThreadAffinityMode()
                 << " | bind core id list: " << worker_config_->context->GetThreadAffinityCoreList()
+                << " | inter op parallel num: " << worker_config_->context->GetInterOpParallelNum()
                 << " | worker thread num: " << worker_config_->context->GetThreadNum()
-                << " | worker bind numa id: " << worker_config_->numa_id;
+                << " | worker bind numa id: " << worker_config_->numa_id
+                << " | worker task queue id: " << worker_config_->task_queue_id;
 }
 
 bool ModelWorker::IsAvailable() {
@@ -60,8 +63,7 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
 }
 
 void ModelWorker::Run() {
-  auto numa_node_id = worker_config_->numa_id;
-  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
+  int task_queue_id = worker_config_->task_queue_id;
   create_work_done_ = true;
   create_work_done_condition_.notify_one();
   while (!predict_task_queue_->IsPredictTaskDone()) {
