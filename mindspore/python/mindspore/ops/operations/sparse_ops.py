@@ -648,25 +648,22 @@ class SparseMatrixNNZ(Primitive):
 
 class SparseAdd(Primitive):
     """
-    Computes sum of two COOTensor.
+    Computes the sum of a COOTensor and another COOTensor.
 
     Inputs:
-        - **x1_indices** (Tensor) - represents the first input's indices in the COO sparse tensor.
-        - **x1_values** (Tensor) - represents the first input's values in the COO sparse tensor.
-        - **x1_shape** (Tensor) - represents the first input's dense shape in the COO sparse tensor.
-        - **x2_indices** (Tensor) - represents the second input's indices in the COO sparse tensor.
-        - **x2_values** (Tensor) - represents the second input's values in the COO sparse tensor.
-        - **x2_shape** (Tensor) - represents the second input's dense shape in the COO sparse tensor.
+        - **x1_indices** (Tensor) - represents the first COOTensor's indices.
+        - **x1_values** (Tensor) - represents the first COOTensor's values.
+        - **x1_shape** (Tensor) - represents the first COOTensor's dense shape.
+        - **x2_indices** (Tensor) - represents the second COOTensor's indices.
+        - **x2_values** (Tensor) - represents the second COOTensor's values.
+        - **x2_shape** (Tensor) - represents the second COOTensor's dense shape.
         - **thresh** (Tensor) - represents the magnitude threshold that determines if an output
-            value/index pair take space.
+          value/index pair take space.
 
     Outputs:
-        - **sum_indices** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the indices of output COOTensor.
-        - **sum_values** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the values of output COOTensor.
-        - **sum_shape** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the shape of output COOTensor.
+        - **sum_indices** (Tensor) - this is the indices of the sum.
+        - **sum_values** (Tensor) - this is the values of the sum.
+        - **sum_shape** (Tensor) - this is the shape of the sum.
 
     Raises:
         ValueError: If (x1_indices/x2_indices)'s dim is not equal to 2.
@@ -676,15 +673,15 @@ class SparseAdd(Primitive):
         TypeError: If (x1_indices/x2_indices)'s type is not equal to int64.
         TypeError: If (x1_shape/x2_shape)'s type is not equal to int64.
         ValueError: If (x1_indices/x2_indices)'s length is not equal to
-                    its (x1_values/x2_values)'s length.
+            (x1_values/x2_values)'s length.
         TypeError: If (x1_values/x2_values)'s type is not equal to anf of
-                   (int8/int16/int32/int64/float32/float64/complex64/complex128).
+            (int8/int16/int32/int64/float32/float64/complex64/complex128).
         TypeError: If thresh's type is not equal to anf of
-                   (int8/int16/int32/int64/float32/float64).
+            (int8/int16/int32/int64/float32/float64).
         TypeError: If x1_indices's type is not equal to x2_indices's type.
         TypeError: If x1_values's type is not equal to x2_values's type.
         TypeError: If x1_shape's type is not equal to x2_shape's type.
-        TypeError: If (x1_values/x2_values)'s type is not match to thresh's type.
+        TypeError: If (x1_values/x2_values)'s type is not matched with thresh's type.
 
     Supported Platforms:
         ``CPU`` ``GPU``

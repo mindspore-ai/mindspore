@@ -4983,12 +4983,14 @@ class COOTensor(COOTensor_):
             TypeError: If self's indices's type is not equal to other's indices's type
             TypeError: If self's values's type is not equal to other's values's type
             TypeError: If self's shape's type is not equal to other's shape's type
-            TypeError: If (self/other)'s value's type is not match to thresh's type
+            TypeError: If (self/other)'s value's type is not matched with thresh's type
 
         Supported Platforms:
             ``CPU`` ``GPU``
 
         Examples:
+            >>> from mindspore import Tensor, COOTensor
+            >>> from mindspore import dtype as mstype
             >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
             >>> values0 = Tensor([1, 2], dtype=mstype.int32)
             >>> shape0 = (3, 4)
@@ -5000,9 +5002,9 @@ class COOTensor(COOTensor_):
             >>> thres = Tensor(0, dtype=mstype.int32)
             >>> out = input0.add(input1, thres)
             >>> print(out)
-            COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[2,2],
-            dtype = Int64, value=[[0 1], [1 2]]),  values=Tensor(shape[2],
-            dtype=Int32, value=[4 6]))
+            COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[4, 2],
+            dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
+            dtype=Int32, value=[3 1 4 2]))
         """
         return tensor_operator_registry.get('coo_add')(self, other, thresh)
 
