@@ -26,7 +26,7 @@ class FSEBitStream {
   ~FSEBitStream() = default;
 
  public:
-  int Create(int bit_capacity);
+  int Create(uint64_t bit_capacity);
   void Free();
   void Empty();
   int64_t Pop(uint8_t bit_count);
@@ -51,7 +51,7 @@ class FSEBitStream {
   uint64_t curr_chunk_{0};
   int8_t curr_bit_count_{0};   // the number of bits that are currently written in the register.
   uint64_t *chunks_{nullptr};  // the actual memory
-  int chunk_count_{0};         // the number of chunks
+  uint64_t chunk_count_{0};    // the number of chunks
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_

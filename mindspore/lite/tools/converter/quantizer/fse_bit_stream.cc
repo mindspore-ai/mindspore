@@ -25,7 +25,7 @@ constexpr int8_t kCurrentBitCount = 64;
 constexpr int8_t kTableSize = 6;
 constexpr size_t kInt32Mask = 31;
 }  // namespace
-int FSEBitStream::Create(int bit_capacity) {
+int FSEBitStream::Create(uint64_t bit_capacity) {
   chunk_count_ = (bit_capacity >> kTableSize);
   chunks_ = static_cast<uint64_t *>(malloc(chunk_count_ * sizeof(uint64_t)));
   if (chunks_ == nullptr) {
@@ -51,7 +51,7 @@ void FSEBitStream::Empty() {
   curr_chunk_index_ = -1;
   curr_chunk_ = 0;
   curr_bit_count_ = 0;
-  for (int i = 0; i < chunk_count_; i++) {
+  for (uint64_t i = 0; i < chunk_count_; i++) {
     chunks_[i] = 0;
   }
 }
