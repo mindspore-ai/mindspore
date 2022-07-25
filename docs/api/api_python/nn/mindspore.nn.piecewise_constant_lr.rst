@@ -11,17 +11,14 @@ mindspore.nn.piecewise_constant_lr
     .. math::
         y[i] = x_t,\ for\ i \in [M_{t-1}, M_t)
 
-    **参数：**
+    参数：
+        - **milestone** (Union[list[int], tuple[int]]) - milestone列表。此列表是一个单调递增的列表。列表中的元素必须大于0。
+        - **learning_rates** (Union[list[float], tuple[float]]) - 学习率列表。
 
-    - **milestone** (Union[list[int], tuple[int]]) - milestone列表。此列表是一个单调递增的列表。列表中的元素必须大于0。
-    - **learning_rates** (Union[list[float], tuple[float]]) - 学习率列表。
+    返回：
+        list[float]。列表的大小为 :math:`M_N`。
 
-    **返回：**
-
-    list[float]。列表的大小为 :math:`M_N`。
-
-    **异常：**
-
-    - **TypeError** - `milestone` 或 `learning_rates` 既不是tuple也不是list。
-    - **ValueError** - `milestone` 和 `learning_rates` 的长度不相等。
-    - **ValueError** - `milestone` 中的不是单调递增的。
+    异常：
+        - **TypeError** - `milestone` 或 `learning_rates` 既不是tuple也不是list。
+        - **ValueError** - `milestone` 和 `learning_rates` 的长度不相等。
+        - **ValueError** - `milestone` 中的不是单调递增的。

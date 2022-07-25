@@ -21,14 +21,11 @@ mindspore.nn.SiLU
 
     关于SiLU的图例见 `SiLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Swish.svg>`_ 。
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - 数据类型为float16或float32的输入。任意维度的Tensor。
 
-    - **x** (Tensor) - 数据类型为float16或float32的输入。任意维度的Tensor。
+    输出：
+        Tensor，数据类型和shape与 `x` 的相同。
 
-    **输出：**
-
-    Tensor，数据类型和shape与 `x` 的相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    异常：
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。

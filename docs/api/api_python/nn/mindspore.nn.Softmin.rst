@@ -14,21 +14,17 @@ mindspore.nn.Softmin
 
     其中， :math:`x_{i}` 是输入Tensor在轴 `axis` 上的第 :math:`i` 个元素。
 
-    **参数：**
+    参数：
+        - **axis** (Union[int, tuple[int]]) - 指定Softmin运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。
 
-    - **axis** (Union[int, tuple[int]]) - 指定Softmin运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。
+    输入：
+        - **x** (Tensor) - 用于计算Softmin函数的Tensor，数据类型为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor，数据类型和shape与 `x` 相同，取值范围为[0, 1]。
 
-    - **x** (Tensor) - 用于计算Softmin函数的Tensor，数据类型为float16或float32。
-
-    **输出：**
-
-    Tensor，数据类型和shape与 `x` 相同，取值范围为[0, 1]。
-
-    **异常：**
-
-    - **TypeError** - `axis` 既不是int也不是tuple。
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-    - **ValueError** - `axis` 是长度小于1的tuple。
-    - **ValueError** - `axis` 是一个tuple，其元素不都在 `[-x.ndim, x.ndim)` 范围内。
+    异常：
+        - **TypeError** - `axis` 既不是int也不是tuple。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **ValueError** - `axis` 是长度小于1的tuple。
+        - **ValueError** - `axis` 是一个tuple，其元素不都在 `[-x.ndim, x.ndim)` 范围内。

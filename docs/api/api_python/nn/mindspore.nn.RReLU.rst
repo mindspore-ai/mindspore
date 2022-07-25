@@ -15,23 +15,19 @@ mindspore.nn.RReLU
 
    更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 
-   **参数：**
+   参数：
+       - **lower** (Union[int, float]) - x<0时激活函数的斜率的下界，默认值：1/8。
+       - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值：1/3。
 
-   - **lower** (Union[int, float]) - x<0时激活函数的斜率的下界，默认值：1/8。
-   - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值：1/3。
+   输入：
+       - **x** （Tensor） - 计算RReLU的任意维度的Tensor。
 
-   **输入：**
+   输出：
+       Tensor，数据类型和shape与 `x` 相同。
 
-   - **x** （Tensor） - 计算RReLU的任意维度的Tensor。
-
-   **输出：**
-
-   Tensor，数据类型和shape与 `x` 相同。
-
-   **异常：**
-
-   - **TypeError** - `lower` 不是浮点数或整数。
-   - **TypeError** - `upper` 不是浮点数或整数。
-   - **TypeError** - `x` 不是Tensor。
-   - **TypeError** - `x` 内的数据类型不是mindspore.float16或mindspore.float32。
-   - **ValueError** - `lower` 大于 `upper`。
+   异常：
+       - **TypeError** - `lower` 不是浮点数或整数。
+       - **TypeError** - `upper` 不是浮点数或整数。
+       - **TypeError** - `x` 不是Tensor。
+       - **TypeError** - `x` 内的数据类型不是mindspore.float16或mindspore.float32。
+       - **ValueError** - `lower` 大于 `upper`。

@@ -18,23 +18,19 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
     .. note::
         虽然目标值是互斥的，即目标值中只有一个为正，但预测的概率不为互斥。只要求输入的预测概率分布有效。
 
-    **参数：**
+    参数：
+        - **sparse** (bool) - 指定目标值是否使用稀疏格式。默认值：False。
+        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。取值为"none"，则不执行reduction。默认值："none"。
 
-    - **sparse** (bool) - 指定目标值是否使用稀疏格式。默认值：False。
-    - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。取值为"none"，则不执行reduction。默认值："none"。
+    输入：
+        - **logits** (Tensor) - shape (N, C)的Tensor。数据类型为float16或float32。
+        - **labels** (Tensor) - shape (N, )的Tensor。如果 `sparse` 为True，则 `labels` 的类型为int32或int64。否则，`labels` 的类型与 `logits` 的类型相同。
 
-    **输入：**
+    输出：
+        Tensor，一个shape和数据类型与logits相同的Tensor。
 
-    - **logits** (Tensor) - shape (N, C)的Tensor。数据类型为float16或float32。
-    - **labels** (Tensor) - shape (N, )的Tensor。如果 `sparse` 为True，则 `labels` 的类型为int32或int64。否则，`labels` 的类型与 `logits` 的类型相同。
-
-    **输出：**
-
-    Tensor，一个shape和数据类型与logits相同的Tensor。
-
-    **异常：**
-
-    - **TypeError** - `sparse` 不是bool。
-    - **TypeError** - `sparse` 为True，并且 `labels` 的dtype既不是int32，也不是int64。
-    - **TypeError** - `sparse` 为False，并且 `labels` 的dtype既不是float16，也不是float32。
-    - **ValueError** - `reduction` 不为"mean"、"sum"，或"none"。
+    异常：
+        - **TypeError** - `sparse` 不是bool。
+        - **TypeError** - `sparse` 为True，并且 `labels` 的dtype既不是int32，也不是int64。
+        - **TypeError** - `sparse` 为False，并且 `labels` 的dtype既不是float16，也不是float32。
+        - **ValueError** - `reduction` 不为"mean"、"sum"，或"none"。

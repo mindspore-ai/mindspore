@@ -10,14 +10,11 @@ mindspore.nn.ReLU6
     .. math::
         Y = \min(\max(0, x), 6).
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - ReLU6的输入，任意维度的Tensor，其数据类型为float16或float32。
 
-    - **x** (Tensor) - ReLU6的输入，任意维度的Tensor，其数据类型为float16或float32。
+    输出：
+        Tensor，数据类型与 `x` 相同。
 
-    **输出：**
-
-    Tensor，数据类型与 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    异常：
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。

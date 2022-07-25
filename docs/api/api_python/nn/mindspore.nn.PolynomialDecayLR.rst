@@ -22,25 +22,21 @@ mindspore.nn.PolynomialDecayLR
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
 
-    **参数：**
+    参数：
+        - **learning_rate** (float) - 学习率的初始值。
+        - **end_learning_rate** (float) - 学习率的最终值。
+        - **decay_steps** (int) - 进行衰减的step数。
+        - **power** (float) - 多项式的幂，必须大于0。
+        - **update_decay_steps** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
 
-    - **learning_rate** (float) - 学习率的初始值。
-    - **end_learning_rate** (float) - 学习率的最终值。
-    - **decay_steps** (int) - 进行衰减的step数。
-    - **power** (float) - 多项式的幂，必须大于0。
-    - **update_decay_steps** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
+    输入：
+        - **global_step** （Tensor）：当前step数，即current_step。
 
-    **输入：**
+    输出：
+        标量Tensor。当前step的学习率值。
 
-    - **global_step** （Tensor）：当前step数，即current_step。
-
-    **输出：**
-
-    标量Tensor。当前step的学习率值。
-
-    **异常：**
-
-    - **TypeError** - `learning_rate`, `end_learning_rate` 或 `power` 不是float。
-    - **TypeError** - `decay_steps` 不是int或 `update_decay_steps` 不是bool。
-    - **ValueError** - `end_learning_rate` 小于0或 `decay_steps` 小于1。
-    - **ValueError** - `learning_rate` 或 `power` 小于或等于0。
+    异常：
+        - **TypeError** - `learning_rate`, `end_learning_rate` 或 `power` 不是float。
+        - **TypeError** - `decay_steps` 不是int或 `update_decay_steps` 不是bool。
+        - **ValueError** - `end_learning_rate` 小于0或 `decay_steps` 小于1。
+        - **ValueError** - `learning_rate` 或 `power` 小于或等于0。

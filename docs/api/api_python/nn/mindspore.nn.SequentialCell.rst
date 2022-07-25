@@ -9,26 +9,21 @@ mindspore.nn.SequentialCell
 
     .. note:: SequentialCell 和 torch.nn.ModuleList 是不同的，ModuleList是一个用于存储模块的列表，但SequentialCell中的Cell是以级联方式连接的，不是单纯的存储。
 
-    **参数：**
+    参数：
+        - **args** (list, OrderedDict) - 仅包含Cell子类的列表或有序字典。
 
-    - **args** (list, OrderedDict) - 仅包含Cell子类的列表或有序字典。
+    输入：
+        - **x** (Tensor) - Tensor，其shape取决于序列中的第一个Cell。
 
-    **输入：**
+    输出：
+        Tensor，输出Tensor，其shape取决于输入 `x` 和定义的Cell序列。
 
-    - **x** (Tensor) - Tensor，其shape取决于序列中的第一个Cell。
-
-    **输出：**
-
-    Tensor，输出Tensor，其shape取决于输入 `x` 和定义的Cell序列。
-
-    **异常：**
-
-    - **TypeError** - `args` 的类型不是列表或有序字典。
+    异常：
+        - **TypeError** - `args` 的类型不是列表或有序字典。
 
     .. py:method:: append(cell)
 
         在容器末尾添加一个Cell。
 
-        **参数：**
-
-        - **cell** (Cell) - 要添加的Cell。
+        参数：
+            - **cell** (Cell) - 要添加的Cell。

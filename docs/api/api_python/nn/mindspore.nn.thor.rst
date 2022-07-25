@@ -35,38 +35,33 @@ mindspore.nn.thor
 
         为了提高参数组的性能，可以支持自定义参数的顺序。
 
-    **参数：**
-        
-    - **net** (Cell) - 训练网络。
-    - **learning_rate** (Tensor) - 学习率的值。
-    - **damping** (Tensor) - 阻尼值。
-    - **momentum** (float) - float类型的超参数，表示移动平均的动量。至少为0.0。
-    - **weight_decay** (int, float) - 权重衰减（L2 penalty）。必须等于或大于0.0。默认值：0.0。
-    - **loss_scale** (float) - loss损失缩放系数。必须大于0.0。一般情况下，使用默认值。默认值：1.0。
-    - **batch_size** (int) - batch的大小。默认值：32。
-    - **use_nesterov** (bool) - 启用Nesterov动量。默认值：False。
-    - **decay_filter** (function) - 用于确定权重衰减应用于哪些层的函数，只有在weight_decay>0时才有效。默认值：lambda x: x.name not in []。
-    - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。ResNet50作为一个样本，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值：None。
-    - **enable_clip_grad** (bool) - 是否剪切梯度。默认值：False。
-    - **frequency** (int) - A/G和$A^{-1}/G^{-1}$的更新间隔。每隔frequency个step，A/G和$A^{-1}/G^{-1}$将更新一次。必须大于1。默认值：100。
+    参数：
+        - **net** (Cell) - 训练网络。
+        - **learning_rate** (Tensor) - 学习率的值。
+        - **damping** (Tensor) - 阻尼值。
+        - **momentum** (float) - float类型的超参数，表示移动平均的动量。至少为0.0。
+        - **weight_decay** (int, float) - 权重衰减（L2 penalty）。必须等于或大于0.0。默认值：0.0。
+        - **loss_scale** (float) - loss损失缩放系数。必须大于0.0。一般情况下，使用默认值。默认值：1.0。
+        - **batch_size** (int) - batch的大小。默认值：32。
+        - **use_nesterov** (bool) - 启用Nesterov动量。默认值：False。
+        - **decay_filter** (function) - 用于确定权重衰减应用于哪些层的函数，只有在weight_decay>0时才有效。默认值：lambda x: x.name not in []。
+        - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。ResNet50作为一个样本，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值：None。
+        - **enable_clip_grad** (bool) - 是否剪切梯度。默认值：False。
+        - **frequency** (int) - A/G和$A^{-1}/G^{-1}$的更新间隔。每隔frequency个step，A/G和$A^{-1}/G^{-1}$将更新一次。必须大于1。默认值：100。
 
-    **输入：**
+    输入：
+        - **gradients** （tuple[Tensor]） - 训练参数的梯度，矩阵维度与训练参数相同。
 
-    - **gradients** （tuple[Tensor]） - 训练参数的梯度，矩阵维度与训练参数相同。
+    输出：
+        tuple[bool]，所有元素都为True。
 
-    **输出：**
+    异常：
+        - **TypeError** - `learning_rate` 不是张量。
+        - **TypeError** - `loss_scale` 、 `momentum` 或 `frequency` 不是浮点数。
+        - **TypeError** - `weight_decay` 既不是浮点数也不是整数。
+        - **TypeError** - `use_nesterov` 不是布尔值。
+        - **TypeError** - `frequency` 不是整数。
+        - **ValueError** - `loss_scale` 小于或等于0。
+        - **ValueError** - `weight_decay` 或 `momentum` 小于0。
+        - **ValueError** - `frequency` 小于2。
 
-    tuple[bool]，所有元素都为True。
-
-    **异常：**
-
-    - **TypeError** - `learning_rate` 不是张量。
-    - **TypeError** - `loss_scale` 、 `momentum` 或 `frequency` 不是浮点数。
-    - **TypeError** - `weight_decay` 既不是浮点数也不是整数。
-    - **TypeError** - `use_nesterov` 不是布尔值。
-    - **TypeError** - `frequency` 不是整数。
-    - **ValueError** - `loss_scale` 小于或等于0。
-    - **ValueError** - `weight_decay` 或 `momentum` 小于0。
-    - **ValueError** - `frequency` 小于2。
-
-    

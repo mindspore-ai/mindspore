@@ -19,21 +19,17 @@ mindspore.nn.MSELoss
             \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    **参数：**
+    参数：
+        - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"，或"none"。默认值："mean"。
 
-    **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"，或"none"。默认值："mean"。
+    输入：
+        - **logits** (Tensor) - 输入预测值，任意维度的Tensor。
+        - **labels** (Tensor) - 输入标签，任意维度的Tensor，在通常情况下与 `logits` 的shape相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
 
-    **输入：**
+    输出：
+        Tensor，为float类型的loss，如果 `reduction` 为"mean"或"sum"，则shape为0；
+        如果 `reduction` 为"none"，则输出的shape为输入Tensor广播后的shape。
 
-    - **logits** (Tensor) - 输入预测值，任意维度的Tensor。
-    - **labels** (Tensor) - 输入标签，任意维度的Tensor，在通常情况下与 `logits` 的shape相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
-          
-    **输出：**
-
-    Tensor，为float类型的loss，如果 `reduction` 为"mean"或"sum"，则shape为0；
-    如果 `reduction` 为"none"，则输出的shape为输入Tensor广播后的shape。
-        
-    **异常：**
-
-    - **ValueError** - `reduction` 不为"mean"，"sum"，或"none"。
-    - **ValueError** - `logits` 和 `labels` 的shape不同，且不能广播。
+    异常：
+        - **ValueError** - `reduction` 不为"mean"，"sum"，或"none"。
+        - **ValueError** - `logits` 和 `labels` 的shape不同，且不能广播。

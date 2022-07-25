@@ -10,11 +10,9 @@ mindspore.nn.RMSELoss
     .. math::
         loss = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{(x_i-y_i)^2}}
 
-    **输入：**
+    输入：
+        - **logits** (Tensor) - 输入的预测值Tensor, shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。
+        - **labels** (Tensor) - 输入的目标值Tensor，shape :math:`(N,*)` 。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
 
-    - **logits** (Tensor) - 输入的预测值Tensor, shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。
-    - **labels** (Tensor) - 输入的目标值Tensor，shape :math:`(N,*)` 。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
-
-    **输出：**
-
-    Tensor，输出值为加权损失值，其数据类型为float，其shape为()。
+    输出：
+        Tensor，输出值为加权损失值，其数据类型为float，其shape为()。

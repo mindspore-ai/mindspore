@@ -20,22 +20,18 @@ mindspore.nn.MAE
 
         计算平均绝对差（MAE）。
 
-        **返回：**
+        返回：
+            numpy.float64，计算的MAE的结果。
 
-        numpy.float64，计算的MAE的结果。
-
-        **异常：**
-
-        - **RuntimeError** - 样本总数为0。
+        异常：
+            - **RuntimeError** - 样本总数为0。
 
     .. py:method:: update(*inputs)
 
         使用预测值 :math:`y_{pred}` 和真实值 :math:`y` 更新局部变量。
 
-        **参数：**
+        参数：
+            - **inputs** - 输入 `y_pred` 和 `y` 来计算MAE，其中 `y_pred` 和 `y` 的shape都是N-D，它们的shape相同。
 
-        - **inputs** - 输入 `y_pred` 和 `y` 来计算MAE，其中 `y_pred` 和 `y` 的shape都是N-D，它们的shape相同。
-
-        **异常：**
-
-        - **ValueError** - `inputs` 的数量不等于2。
+        异常：
+            - **ValueError** - `inputs` 的数量不等于2。

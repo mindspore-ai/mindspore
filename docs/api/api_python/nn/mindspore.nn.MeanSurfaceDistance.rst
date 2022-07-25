@@ -25,10 +25,9 @@ mindspore.nn.MeanSurfaceDistance
         + \sum_{s_{B}  \in S(B)}^{} {\text{dis}  \left ( s_{B}, S(A) \right )} }{\left | S(A) \right | +
         \left | S(B) \right |}
 
-    **参数：**
-
-    - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard"或"taxicab"。默认值："euclidean"。
-    - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为  :math:`AvgSurDis(y_{pred} \rightarrow y)` , 如果为True，计算方式为 :math:`MeanSurDis(y_{pred} \leftrightarrow y)` 。默认值：False。
+    参数：
+        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard"或"taxicab"。默认值："euclidean"。
+        - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为  :math:`AvgSurDis(y_{pred} \rightarrow y)` , 如果为True，计算方式为 :math:`MeanSurDis(y_{pred} \leftrightarrow y)` 。默认值：False。
 
     .. py:method:: clear()
 
@@ -38,25 +37,21 @@ mindspore.nn.MeanSurfaceDistance
 
         计算平均表面距离。
 
-        **返回：**
+        返回：
+            numpy.float64，计算得到的平均表面距离值。
 
-        numpy.float64，计算得到的平均表面距离值。
-
-        **异常：**
-
-        - **RuntimeError** - 如果没有先调用update方法。
+        异常：
+            - **RuntimeError** - 如果没有先调用update方法。
 
     .. py:method:: update(*inputs)
 
         使用 `y_pred`、`y` 和 `label_idx` 更新内部评估结果。
 
-        **参数：**
+        参数：
+            - **inputs** - `y_pred`、`y` 和 `label_idx`。`y_pred` 和 `y` 为Tensor，list或numpy.ndarray，`y_pred` 是预测的二值图像。`y` 是实际的二值图像。`label_idx` 数据类型为int或float，表示像素点的类别值。
 
-        - **inputs** - `y_pred`、`y` 和 `label_idx`。`y_pred` 和 `y` 为Tensor，list或numpy.ndarray，`y_pred` 是预测的二值图像。`y` 是实际的二值图像。`label_idx` 数据类型为int或float，表示像素点的类别值。
-
-        **异常：**
-
-        - **ValueError** - 输入的数量不等于3。
-        - **TypeError** - `label_idx` 的数据类型不是int或float。
-        - **ValueError** - `label_idx` 的值不在y_pred或y中。
-        - **ValueError** - `y_pred` 和 `y` 的shape不同。
+        异常：
+            - **ValueError** - 输入的数量不等于3。
+            - **TypeError** - `label_idx` 的数据类型不是int或float。
+            - **ValueError** - `label_idx` 的值不在y_pred或y中。
+            - **ValueError** - `y_pred` 和 `y` 的shape不同。
