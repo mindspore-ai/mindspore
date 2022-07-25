@@ -24,7 +24,7 @@ bool TCPClient::Initialize() {
   bool rt = false;
   if (tcp_comm_ == nullptr) {
     if (enable_ssl_) {
-      ps::core::SSLClient::GetInstance().GetSSLCtx();
+      (void)ps::core::SSLClient::GetInstance().GetSSLCtx();
     }
     tcp_comm_ = std::make_unique<TCPComm>(enable_ssl_);
     MS_EXCEPTION_IF_NULL(tcp_comm_);
@@ -57,7 +57,7 @@ void TCPClient::Finalize() {
 }
 
 bool TCPClient::Connect(const std::string &dst_url, size_t retry_count) {
-  size_t interval = 5;
+  unsigned int interval = 5;
   for (size_t i = 0; i < retry_count; ++i) {
     if (tcp_comm_->Connect(dst_url)) {
       MS_LOG(INFO) << "Connected to the tcp server " << dst_url << " successfully.";
@@ -65,8 +65,8 @@ bool TCPClient::Connect(const std::string &dst_url, size_t retry_count) {
     } else {
       MS_LOG(WARNING) << "Failed to connect to the tcp server : " << dst_url << ", retry to reconnect(" << (i + 1)
                       << "/" << retry_count << ")...";
-      tcp_comm_->Disconnect(dst_url);
-      sleep(interval);
+      (void)tcp_comm_->Disconnect(dst_url);
+      (void)sleep(interval);
     }
   }
   return false;
@@ -76,7 +76,7 @@ bool TCPClient::IsConnected(const std::string &dst_url) { return tcp_comm_->IsCo
 
 bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   bool rt = false;
-  tcp_comm_->Disconnect(dst_url);
+  (void)tcp_comm_->Disconnect(dst_url);
 
   size_t timeout_in_ms = timeout_in_sec * 1000;
   size_t sleep_in_ms = 100;
@@ -102,12 +102,12 @@ int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) { return tcp_comm_->
 void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), false); }
 
 MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout) {
-  int retval = tcp_comm_->Send(msg.release(), true);
+  auto retval = tcp_comm_->Send(msg.release(), true);
   if (retval > 0) {
     std::unique_lock<std::mutex> lock(mutex_);
     bool res =
       wait_msg_cond_.wait_for(lock, std::chrono::seconds(timeout), [this] { return received_message_ != nullptr; });
-    if (res) {
+    if (res > 0) {
       // Clear the address of received message before returning this address to the caller, because the next
       // `ReceiveSync` call will block on the received message's condition variable.
       MessageBase *message = received_message_;

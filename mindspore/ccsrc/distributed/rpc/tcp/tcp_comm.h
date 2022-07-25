@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include <mutex>
 
 #include "actor/msg.h"

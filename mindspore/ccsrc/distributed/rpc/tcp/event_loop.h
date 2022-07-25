@@ -19,7 +19,6 @@
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
-#include <sys/ioctl.h>
 #include <semaphore.h>
 #include <functional>
 #include <list>

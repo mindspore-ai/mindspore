@@ -28,7 +28,7 @@ bool SSLSocketOperation::Initialize() {
   ps::core::SSLWrapper::GetInstance().InitSSL();
   return true;
 }
-ssize_t SSLSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) { return 0; }
+ssize_t SSLSocketOperation::ReceivePeek(Connection *, char *, uint32_t) { return 0; }
 
 int SSLSocketOperation::Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) {
   char *curRecvBuf = recvBuf;
@@ -169,7 +169,7 @@ void SSLSocketOperation::Close(Connection *connection) {
 void SSLSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
-  if (error) {
+  if (error > 0) {
     conn->state = ConnectionState::kDisconnecting;
     return;
   }
@@ -191,7 +191,7 @@ void SSLSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *cont
 void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
-  if (error) {
+  if (error > 0) {
     conn->state = ConnectionState::kDisconnecting;
     return;
   }
@@ -210,7 +210,7 @@ void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, vo
   Handshake(fd, conn);
 }
 
-void SSLSocketOperation::Handshake(int fd, Connection *conn) {
+void SSLSocketOperation::Handshake(int fd, Connection *conn) const {
   if (conn->state == ConnectionState::kConnected) {
     return;
   }
@@ -231,6 +231,10 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
   }
 
   int err = SSL_get_error(ssl_, retval);
+  if (err < 0) {
+    MS_LOG(ERROR) << "Invalid error code: " << err;
+    return;
+  }
   auto err_msg = ERR_reason_error_string(err);
   MS_LOG(ERROR) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
                 << ", err info: " << err_msg;
@@ -244,7 +248,7 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
       MS_LOG(ERROR) << "ssl handshake info -- retval:" << retval << ", error:" << err << ", errno:" << errno
                     << ", conn:" << conn->send_to.c_str();
       uint64_t error = 0;
-      while ((error = ERR_get_error())) {
+      while ((error = ERR_get_error()) > 0) {
         MS_LOG(ERROR) << "ssl handshake errno: " << error << ", err info: " << ERR_reason_error_string(error);
       }
       conn->error_code = err;
