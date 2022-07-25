@@ -196,6 +196,7 @@ Reduction函数
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.norm
+    mindspore.ops.min
 
 .. list-table::
    :widths: 50 50

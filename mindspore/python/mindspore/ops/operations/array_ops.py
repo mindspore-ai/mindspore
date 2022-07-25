@@ -27,7 +27,6 @@ from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
 from .._utils import get_broadcast_shape, is_shape_unknown, is_shape_known
-from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
@@ -2246,7 +2245,7 @@ class ArgMaxWithValue(Primitive):
         self.add_prim_attr('dimension', self.axis)
 
 
-class ArgMinWithValue(PrimitiveWithInfer):
+class ArgMinWithValue(Primitive):
     """
     Calculates the minimum value with corresponding index, and returns indices and values.
 
@@ -2259,6 +2258,8 @@ class ArgMinWithValue(PrimitiveWithInfer):
     .. warning::
         - If there are multiple minimum values, the index of the first minimum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
+
+    Also see: func: `mindspore.ops.arg_min_with_value`.
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
@@ -2273,10 +2274,10 @@ class ArgMinWithValue(PrimitiveWithInfer):
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
 
-        - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
+        - **index** (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - values (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -2302,17 +2303,6 @@ class ArgMinWithValue(PrimitiveWithInfer):
         self.keep_dims = keep_dims
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         validator.check_value_type('axis', axis, [int], self.name)
-
-    def infer_shape(self, x_shape):
-        axis = self.axis
-        x_rank = len(x_shape)
-        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
-        return ouput_shape, ouput_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
-        return mstype.tensor_type(mstype.int32), x_dtype
 
 
 class Tile(PrimitiveWithInfer):

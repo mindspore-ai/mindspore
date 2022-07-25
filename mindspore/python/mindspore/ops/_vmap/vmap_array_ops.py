@@ -109,6 +109,30 @@ def get_argmin_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ArgMinWithValue)
+def get_arg_min_with_value_vmap_rule(prim, axis_size):
+    """VmapRule for `ArgMinWithValue` operations."""
+    if isinstance(prim, str):
+        axis = -1
+        keep_dims = False
+    else:
+        axis = prim.axis
+        keep_dims = prim.keep_dims
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        var, x_dim = x_bdim
+        x_ndim = ops.rank(var)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+        index, out = P.ArgMinWithValue(batch_axis, keep_dims)(var)
+        out_dim = _get_reduce_out_dim(x_dim, x_ndim, batch_axis)
+        return (index, out_dim), (out, out_dim)
+
+    return vmap_rule
+
+
 @constexpr
 def _get_prefix(indices_shape, axis_size, indices_dtype):
     """

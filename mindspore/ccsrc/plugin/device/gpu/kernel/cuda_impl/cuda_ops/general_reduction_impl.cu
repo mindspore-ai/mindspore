@@ -326,6 +326,18 @@ void CalGeneralReduction(bool small, const T *input, const size_t bound, const s
   return;
 }
 
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int16_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  int16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int32_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  int32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint16_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  uint16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint32_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  uint32_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const double *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   double *output, cudaStream_t cuda_stream);

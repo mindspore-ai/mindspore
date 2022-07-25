@@ -604,3 +604,4 @@ from .hard_swish import _hard_swish_tbe
 from .hard_swish_grad import _hard_swish_grad_tbe
 from .hard_swish_ds import _hard_swish_ds_tbe
 from .hard_swish_grad_ds import _hard_swish_grad_ds_tbe
+from .arg_min_with_value_ds import _arg_min_with_value_ds_tbe
