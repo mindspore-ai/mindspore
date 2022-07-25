@@ -10456,6 +10456,93 @@ class SparseApplyAdagradDA(Primitive):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
+class SparseApplyMomentum(Primitive):
+    r"""
+    Update relevant entries in '*var' and '*accum' according to the momentum scheme.
+
+    .. math::
+        \begin{array}{ll} \\
+            accum = accum * momentum + grad \\
+            var -= lr * accum
+        \end{array}
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
+            Default: False.
+        use_nesterov (bool): If `True`, the tensor passed to compute grad will be var + momentum * accum,
+            so in the end, the var you get is actually var + momentum * accum. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
+          uint8, uint16, uint32, uint64, float16, float32 or float64.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same shape and type as `var`.
+        - **lr** (Union[Number, Tensor]) - The learning rate value. Must be a scalar with same type as `var`.
+        - **grad** (Tensor) - A tensor for gradient, has the same type as `var`,
+          and grad.shape[1:] = var.shape[1:] if rank(var) > 1.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          If there are duplicates in `indices`, the behavior is undefined. Must be one of the
+          following types: int32, int64 and indices.shape[0] = grad.shape[0].
+        - **momentum** (Union[Number, Tensor]) - Momentum. Must be a scalar with same type as `var`.
+
+    Outputs:
+        - **var** (Tensor) - Tensor, has the same shape and type as 'var'.
+
+    Raises:
+        TypeError: If `var`, `accum`, `grad` or `indices` is not a Parameter.
+        TypeError: If `lr`, `momentum` is neither a Number nor a Tensor.
+        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        TypeError: If dtype of `var`, `accum`, `lr`, `grad`, or `momentum` is not one of int8, int16,
+                   int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If the shape of `var`, `accum` or `grad` is rank 0.
+        ValueError: If shape of `accum` or `grad` is not same as `var`.
+        ValueError: If shape of `indices` is not same as the shape of first dimension of `grad`.
+        ValueError: If the shape of `lr` or `momentum` is not rank 0.
+        RuntimeError: If the data type of `var`, `accum`, `lr`, `grad` and 'momentum' conversion of Parameter
+                      is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops.operations.nn_ops as nn_ops
+        >>> var = Tensor(np.array([[4.1, 7.2], [1.1, 3.0]]).astype(np.float32))
+        >>> accum = Tensor(np.array([[2.2, 3.0], [3.1, 0.5]]).astype(np.float32))
+        >>> lr = Tensor(0.01, mstype.float32)
+        >>> grad = Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0, 1]), mstype.int32)
+        >>> momentum = Tensor(0.99, mstype.float32)
+        >>> sparse_apply_momentum = nn_ops.SparseApplyMomentum()
+        >>> output = sparse_apply_momentum(var, accum, lr, grad, indices, momentum)
+        >>> print(output)
+        [[4.07522   7.1682997]
+         [1.06531   2.99405  ]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', dtype=sig.sig_dtype.T),
+        sig.make_sig('accum', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('momentum', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize SparseApplyMomentum"""
+        self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'grad', 'indices', 'momentum'],
+                                outputs=['var'])
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
+
+
 class SparseApplyProximalGradientDescent(Primitive):
     r"""
     Sparse update '*var' as FOBOS algorithm with fixed learning rate.

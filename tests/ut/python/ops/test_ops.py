@@ -120,6 +120,7 @@ from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
 from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import HammingWindow
+from mindspore.ops.operations.nn_ops import SparseApplyMomentum
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
@@ -1297,6 +1298,16 @@ class SparseApplyProximalGradientDescentNet(nn.Cell):
 
     def construct(self, var, alpha, l1, l2, grad, indices):
         out = self.sparse_apply_proximal_gradient_descent(var, alpha, l1, l2, grad, indices)
+        return out
+
+
+class SparseApplyMomentumNet(nn.Cell):
+    def __init__(self, use_locking=False, use_nesterov=False):
+        super(SparseApplyMomentumNet, self).__init__()
+        self.sparse_apply_momentum = SparseApplyMomentum(use_locking, use_nesterov)
+
+    def construct(self, var, accum, lr, grad, indices, momentum):
+        out = self.sparse_apply_momentum(var, accum, lr, grad, indices, momentum)
         return out
 
 
@@ -3047,6 +3058,15 @@ test_case_nn_ops = [
                         Tensor(0.3, mstype.float32),
                         Tensor(np.array([[0.2, 0.5], [0.3, 0.2]]).astype(np.float32)),
                         Tensor(np.array([0, 1]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('SparseApplyMomentum', {
+        'block': SparseApplyMomentumNet(),
+        'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
+                        Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32)),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(np.array([[0.4, 0.5], [0.2, 0.1]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(0.8, mstype.float32)],
         'skip': ['backward']}),
 ]
 test_case_array_ops = [
