@@ -180,7 +180,6 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
-    MS_LOG(ERROR) << dec_key.len;
     MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
                                false);
     anf_graph = mindir_loader.LoadMindIR(file_path);

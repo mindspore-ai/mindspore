@@ -36,6 +36,7 @@ class RuntimeUtils {
 
   static kernel::AddressPtr GetAddressFromDevice(device::DeviceAddressPtr address_ptr);
 
+  static std::vector<AnfNodePtr> GetGraphDataInputs(const KernelGraphPtr &kernel_graph);
   static void CopyInputTensorsToKernelGraph(const std::vector<tensor::TensorPtr> &inputs, KernelGraphPtr kernel_graph);
   static void CopyOutputTensorsFromKernelGraph(std::vector<tensor::TensorPtr> *outputs, KernelGraphPtr kernel_graph);
 

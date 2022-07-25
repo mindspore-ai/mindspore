@@ -35,7 +35,7 @@ inline Status DLSoPath(const std::string &benchmark_so, const std::string &targe
 
   auto pos = cur_so_path.find(benchmark_so);
   if (pos == std::string::npos) {
-    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path.");
+    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path " + cur_so_path);
   }
   std::string parent_dir = cur_so_path.substr(0, pos);
   std::string found_target_so;
@@ -56,8 +56,7 @@ inline Status DLSoPath(const std::string &benchmark_so, const std::string &targe
     return Status(kMEFailed, "Could not open directory: " + parent_dir);
   }
   if (found_target_so.empty()) {
-    MS_LOG(WARNING) << target_so << "is not existed in dir " << parent_dir;
-    return kSuccess;
+    return Status(kMEFailed, "Could not find target so " + target_so + " in " + parent_dir);
   }
   std::string unreal_path = parent_dir + found_target_so;
   auto realpath = FileUtils::GetRealPath(unreal_path.c_str());

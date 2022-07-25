@@ -16,7 +16,6 @@ file(GLOB ACL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
-        ${TOP_DIR}/mindspore/lite/src/runtime/kernel/ascend/src/acl_env_guard.cc
         )
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)

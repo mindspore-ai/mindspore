@@ -46,10 +46,29 @@ void RuntimeUtils::AllocAddressPtr(device::DeviceAddressPtr address_ptr) {
   }
 }
 
+std::vector<AnfNodePtr> RuntimeUtils::GetGraphDataInputs(const KernelGraphPtr &kernel_graph) {
+  std::vector<AnfNodePtr> data_inputs;
+  auto inputs = kernel_graph->inputs();
+  for (auto &input : inputs) {
+    if (input->isa<Parameter>()) {
+      auto parameter = input->cast<ParameterPtr>();
+      if (parameter != nullptr && !parameter->has_default()) {
+        data_inputs.emplace_back(input);
+      }
+    }
+  }
+  return data_inputs;
+}
+
 void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::TensorPtr> &inputs,
                                                  KernelGraphPtr kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto graph_inputs = kernel_graph->inputs();
+  auto graph_inputs = GetGraphDataInputs(kernel_graph);
+  if (graph_inputs.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Graph inputs size[" << graph_inputs.size() << "] is not equal to User input size[ "
+                  << inputs.size() << "].";
+    return;
+  }
   for (size_t i = 0; i < graph_inputs.size(); i++) {
     auto input = inputs[i];
     auto graph_input = graph_inputs[i];

@@ -18,7 +18,7 @@
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 #include <dlfcn.h>
 #include "extendrt/cxx_api/dlutils.h"
 #endif
@@ -33,7 +33,7 @@ AclPassPlugin &AclPassPlugin::GetInstance() {
 AclPassPlugin::AclPassPlugin() : handle_(nullptr), pass_ptr_(nullptr) {}
 
 bool AclPassPlugin::HasPluginSo() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   std::string ascend_pass_plugin_path;
   auto ret = DLSoPath("libmindspore_converter.so", "libascend_pass_plugin.so", &ascend_pass_plugin_path);
   if (ret != kSuccess) {
@@ -50,7 +50,7 @@ bool AclPassPlugin::HasPluginSo() {
 }
 
 Pass *AclPassPlugin::CreateAclPass(const std::shared_ptr<ConverterPara> &param) {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   if (pass_ptr_ != nullptr) {
     MS_LOG(INFO) << "Acl pass has been created.";
     return pass_ptr_;
@@ -76,7 +76,7 @@ Pass *AclPassPlugin::CreateAclPass(const std::shared_ptr<ConverterPara> &param) 
 }
 
 void AclPassPlugin::DestroyAclPass(Pass *acl_pass) {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   if (handle_ == nullptr) {
     MS_LOG(ERROR) << "Handle is nullptr .";
     return;
@@ -96,7 +96,7 @@ void AclPassPlugin::DestroyAclPass(Pass *acl_pass) {
 }
 
 AclPassPlugin::~AclPassPlugin() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   MS_LOG(DEBUG) << "~AclPassPlugin() begin.";
   if (handle_ != nullptr) {
     (void)dlclose(handle_);

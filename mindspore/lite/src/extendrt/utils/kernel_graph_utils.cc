@@ -920,6 +920,32 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
   }
 }
 
+void KernelGraphUtils::UpdateCustomAscendOutputNames(const std::vector<AnfNodePtr> &outputs,
+                                                     std::vector<std::string> *output_names) const {
+  MS_EXCEPTION_IF_NULL(output_names);
+  for (const auto &output : outputs) {
+    std::string node_name = common::AnfAlgo::GetCNodeName(output);
+    if (node_name == "CustomAscend") {
+      if (output->isa<CNode>()) {
+        auto primitive = GetCNodePrimitive(output);
+        if (primitive != nullptr) {
+          auto val_ptr = primitive->GetAttr("outputs_names");
+          if (val_ptr != nullptr) {
+            auto real_output_names = GetValue<std::vector<std::string>>(val_ptr);
+            if (outputs.size() != real_output_names.size()) {
+              MS_LOG(ERROR) << "Output size[" << outputs.size() << "] is not equal with Output names size["
+                            << real_output_names.size() << "]";
+              return;
+            }
+            (*output_names).swap(real_output_names);
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
 void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
                                            std::vector<std::string> *output_names) const {
   std::vector<tensor::TensorPtr> inputs;
@@ -944,6 +970,7 @@ void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor
   for (size_t i = 0; i < outputs->size(); i++) {
     output_names->push_back("output" + std::to_string(i));
   }
+  UpdateCustomAscendOutputNames(anf_outputs, output_names);
 }
 
 CNodePtr KernelGraphUtils::CreateNewCNode(const CNodePtr &cnode, KernelGraphPtr graph,

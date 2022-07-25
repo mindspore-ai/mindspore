@@ -37,8 +37,15 @@ const size_t tensor_max_size = 0x1000000;
 
 Status SingleOpInferSession::Init(const std::shared_ptr<Context> context) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
+  MS_EXCEPTION_IF_NULL(context);
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
-  kernel::AscendKernelPlugin::GetInstance().Register();
+  auto device_list = context->MutableDeviceInfo();
+  for (const auto &device : device_list) {
+    MS_EXCEPTION_IF_NULL(device);
+    if (device->GetDeviceType() == DeviceType::kAscend) {
+      kernel::AscendKernelPlugin::GetInstance().Register();
+    }
+  }
   return kSuccess;
 }
 
@@ -154,6 +161,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
   }
 
   RuntimeUtils::CopyOutputTensorsFromKernelGraph(outputs, kernel_graph_);
+  outputs_ = *outputs;
 
   return kSuccess;
 }

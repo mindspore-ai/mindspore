@@ -19,7 +19,7 @@
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 #include "plugin/factory/ms_factory.h"
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
 #include <dlfcn.h>
 #include "extendrt/cxx_api/dlutils.h"
 #endif
@@ -33,7 +33,7 @@ AscendKernelPlugin &AscendKernelPlugin::GetInstance() {
 AscendKernelPlugin::AscendKernelPlugin() : handle_(nullptr), create_kernel_map_(nullptr), is_registered_(false) {}
 
 void AscendKernelPlugin::Register() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   if (is_registered_) {
     return;
   }
@@ -41,9 +41,6 @@ void AscendKernelPlugin::Register() {
   auto ret = DLSoPath("libmindspore-extendrt.so", "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
-    return;
-  }
-  if (ret == kSuccess && ascend_kernel_plugin_path.empty()) {
     return;
   }
   MS_LOG(INFO) << "Find ascend kernel plugin so success, path = " << ascend_kernel_plugin_path;
@@ -73,7 +70,7 @@ void AscendKernelPlugin::Register() {
 }
 
 void AscendKernelPlugin::DestroyAscendKernelMap() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   if (handle_ == nullptr) {
     MS_LOG(DEBUG) << "Handle is nullptr.";
     return;
@@ -89,7 +86,7 @@ void AscendKernelPlugin::DestroyAscendKernelMap() {
 }
 
 AscendKernelPlugin::~AscendKernelPlugin() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32)
   MS_LOG(DEBUG) << "~AscendKernelPlugin() begin.";
   DestroyAscendKernelMap();
   if (handle_ != nullptr) {
