@@ -115,7 +115,12 @@ function Convert() {
           --configFile=${config_file} --trainModel=${train_model} >> "$4"
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
-            model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            if [[ ${extra_info} == "parallel_predict" ]];then
+              model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
+            else
+              model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            fi
+            
             let calib_final_size=${calib_size}+50
             if [[ -n ${calib_size} ]];then
               if [ ${model_size} -gt ${calib_final_size} ]; then
@@ -239,6 +244,10 @@ function Run_Benchmark() {
         benchmark_mode="loop"
       fi
       model_file=$2"/${model_name}${infix}.ms"
+      if [[ ${use_parallel_predict} == "true" ]]; then
+        model_file=$2"/${model_name}${infix}.mindir"
+      fi
+      
       input_files=""
       output_file=""
       data_path=$3"/input_output/"
