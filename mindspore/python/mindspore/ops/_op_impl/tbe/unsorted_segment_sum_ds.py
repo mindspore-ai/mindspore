@@ -24,10 +24,10 @@ unsorted_segment_sum_ds_op_info = TBERegOp("UnsortedSegmentSum") \
     .kernel_name("unsorted_segment_sum") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .input(0, "x", False, "required", "all") \
+    .input(0, "x", False, "required", "all", reshape_type="NC") \
     .input(1, "segment_ids", False, "required", "all", "optional") \
     .input(2, "num_segments", False, "required", "all", "optional") \
-    .output(0, "y", False, "required", "all") \
+    .output(0, "y", False, "required", "all", reshape_type="NC") \
     .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
