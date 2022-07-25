@@ -30,11 +30,6 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     auto object_node = object.GetNode(node);
     auto attr_node = attr.GetNode(node);
 
-    // {prim::kPrimGetAttr, {getitem, {prim::kPrimResolve, namespace, symbol}, index}, attr}
-    // {prim::kPrimGetAttr, {getitem, {prim::kPrimGetAttr, ResolveNode, member}, index}, attr}
-    if (parse::IsGetItemCNode(object_node)) {
-      return parse::ResolveGetItemWithAttr(optimizer->manager(), object_node, attr_node, node);
-    }
     // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
     if (IsPrimitiveCNode(object_node, prim::kPrimResolve)) {
       return parse::ResolveSymbolWithAttr(optimizer->manager(), object_node, attr_node, node);

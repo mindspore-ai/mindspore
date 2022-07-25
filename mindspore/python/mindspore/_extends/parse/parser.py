@@ -457,24 +457,6 @@ def is_cell_list(obj):
     return isinstance(obj, nn.CellList)
 
 
-def convert_cell_list_to_sequence(obj):
-    """Convert nn.CellList to sequence."""
-    if not isinstance(obj, nn.CellList):
-        raise TypeError(f"Obj should be nn.CellList, but got {obj}")
-    if not hasattr(obj, "_cells"):
-        raise AttributeError(f"nn.CellList is missing _cells property.")
-    cells = getattr(obj, "_cells")
-    return list(cells.values())
-
-
-def get_obj_from_sequence(obj, index):
-    """Implement `tuple_getitem`."""
-    if not isinstance(obj, (tuple, list)):
-        raise TypeError(f"Should not get item from a object that not sequence type, obj: {obj}")
-    # Not check index out of range by self.
-    return obj[index]
-
-
 def get_module_namespace(obj):
     """Get the module's namespace."""
     logger.debug("get module namespace, module: %r", obj)
