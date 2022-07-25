@@ -214,7 +214,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
 
   fe::PlatformInfo platform_info;
   fe::OptionalInfo optional_info;
-  if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info)) {
+  if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info) != 0) {
     MS_LOG(WARNING) << "Get platform info failed, quit fusion.";
     return nullptr;
   }

@@ -101,6 +101,13 @@ bool GetAttrValue(const AnfNodePtr &avgpool, const std::vector<int64_t> &input_s
   return CheckAttrValue(avgpool, *input_c, output_w, *ksize_h, *ksize_w, *stride_h, *stride_w, *is_dynamic);
 }
 
+bool CheckOptimization(int64_t ksize_h, int64_t ksize_w, int64_t stride_h, int64_t stride_w, size_t input_num) {
+  if (ksize_h == 1 && ksize_w == 1 && stride_h == 1 && stride_w == 1 && input_num == 1) {
+    return true;
+  }
+  return false;
+}
+
 void GenerateCoffeData(const std::vector<int64_t> &coffe_shape, const std::vector<int64_t> &window,
                        const std::vector<int64_t> &stride, const std::vector<int64_t> &pad, int64_t in_h, int64_t in_w,
                        float16 *tensor_data) {
@@ -173,7 +180,6 @@ ValueNodePtr AvgPoolFusion::ConstructFilterValueNodeDynamic(const KernelGraphPtr
 }
 
 ValueNodePtr AvgPoolFusion::ConstructCoffeValueNode(const KernelGraphPtr &graph, const std::string &format,
-                                                    const std::string &pad_mode,
                                                     const std::vector<int64_t> &avg_in_shape,
                                                     const std::vector<int64_t> &avg_out_shape,
                                                     const std::vector<int64_t> &window,
@@ -263,7 +269,7 @@ const AnfNodePtr AvgPoolFusion::Process(const FuncGraphPtr &func_graph, const An
   }
 
   size_t input_num = common::AnfAlgo::GetInputTensorNum(avgpool);
-  if (ksize_h == 1 && ksize_w == 1 && stride_h == 1 && stride_w == 1 && input_num == 1) {
+  if (CheckOptimization(ksize_h, ksize_w, stride_h, stride_w, input_num)) {
     return avgpool->input(1);
   }
   int64_t input_c1 = (input_c + kCout - 1) / kCout;
@@ -285,8 +291,8 @@ const AnfNodePtr AvgPoolFusion::Process(const FuncGraphPtr &func_graph, const An
                              : ConstructFilterValueNode(kernel_graph, 1.0, assit_shape);
     if (!is_dynamic) {
       auto coffe_node =
-        ConstructCoffeValueNode(kernel_graph, format, pad_mode, input_shape, output_shape,
-                                std::vector<int64_t>{ksize_h, ksize_w}, std::vector<int64_t>{stride_h, stride_w});
+        ConstructCoffeValueNode(kernel_graph, format, input_shape, output_shape, std::vector<int64_t>{ksize_h, ksize_w},
+                                std::vector<int64_t>{stride_h, stride_w});
       auto mul = AddMul(kernel_graph, avgpool, coffe_node);
       ret_node = mul;
     }

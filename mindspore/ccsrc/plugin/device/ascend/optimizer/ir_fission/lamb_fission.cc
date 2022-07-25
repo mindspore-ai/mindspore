@@ -41,22 +41,6 @@ constexpr size_t kLambInputNumWithUMonad = 11;
 constexpr size_t kLambApplyOptimizerAssignOutputNum = 3;
 constexpr size_t kLambApplyOptimizerAssignUpdateIndex = 0;
 
-AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
-                          const AnfNodePtr &node) {
-  auto new_node = NewCNode(new_node_inputs, graph);
-  MS_EXCEPTION_IF_NULL(new_node);
-
-  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  new_node->set_scope(node->scope());
-  new_node->set_abstract(node->abstract());
-
-  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
-
-  return new_node;
-}
-
 AnfNodePtr CreateCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const TypeId dst_type) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);

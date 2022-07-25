@@ -129,7 +129,7 @@ bool NeedUpdate(const CNodePtr &getitem_cnode) {
   return index == 1;
 }
 
-bool WhetherUseDropoutV3(const CNodePtr &dropout, const abstract::ShapePtr &input_shape) {
+bool WhetherUseDropoutV3(const CNodePtr & /* dropout */, const abstract::ShapePtr & /* input_shape */) {
   // v3 will cause memory error
   return false;
 }
