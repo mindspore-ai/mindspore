@@ -25,6 +25,7 @@
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -515,13 +516,18 @@ void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t 
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";
     return;
+  } else if constexpr (std::is_same_v<T, float>) {
+    auto task = [&in, &out](size_t start, size_t end) { (void)SoftsignFp32Opt(in + start, end - start, out + start); };
+    constexpr float min_batch_size = 5000;
+    ParallelLaunch(task, size, min_batch_size);
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         out[i] = in[i] / (1.0 + abs(in[i]));
       }
     };
-    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+    constexpr float min_batch_size = 1024;
+    ParallelLaunch(task, size, min_batch_size);
   }
 }
 
