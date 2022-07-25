@@ -11,21 +11,17 @@ mindspore.nn.PSNR
         MSE&=\frac{1}{hw}\sum\limits_{i=0}^{h-1}\sum\limits_{j=0}^{w-1}[I(i,j)-K(i,j)]^2\\
         PSNR&=10*log_{10}(\frac{MAX^2}{MSE})
 
-    **参数：**
+    参数：
+        - **max_val** (Union[int, float]) - 像素的动态范围（8位灰度图像为255）。该值必须大于0。默认值：1.0。
 
-    - **max_val** (Union[int, float]) - 像素的动态范围（8位灰度图像为255）。该值必须大于0。默认值：1.0。
+    输入：
+        - **img1** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img2` 相同。
+        - **img2** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img1` 相同。
 
-    **输入：**
+    输出：
+        Tensor，使用数据类型mindspore.float32。shape为N的一维Tensor，其中N是 `img1` 的batch size。
 
-    - **img1** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img2` 相同。
-    - **img2** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img1` 相同。
-
-    **输出：**
-
-    Tensor，使用数据类型mindspore.float32。shape为N的一维Tensor，其中N是 `img1` 的batch size。
-
-    **异常：**
-
-    - **TypeError** - `max_val` 既不是int也不是float。
-    - **ValueError** - `max_val` 小于或等于0。
-    - **ValueError** - `img1` 或 `img2` 的shape长度不等于4。
+    异常：
+        - **TypeError** - `max_val` 既不是int也不是float。
+        - **ValueError** - `max_val` 小于或等于0。
+        - **ValueError** - `img1` 或 `img2` 的shape长度不等于4。

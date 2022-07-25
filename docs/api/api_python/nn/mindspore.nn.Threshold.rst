@@ -14,20 +14,16 @@ mindspore.nn.Threshold
         \text{value}, &\text{ otherwise }
         \end{cases}
 
-    **参数：**
+    参数：
+        - **threshold** (`Union[int, float]`) - 阈值。
+        - **value** (`Union[int, float]`) - 输入Tensor中element小于阈值时的填充值。
 
-    - **threshold** (`Union[int, float]`) - 阈值。
-    - **value** (`Union[int, float]`) - 输入Tensor中element小于阈值时的填充值。
+    输入：
+        - **input_x** (Tensor) - 输入Tensor，数据类型为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor，数据类型和shape与 `input_x` 的相同。
 
-    - **input_x** (Tensor) - 输入Tensor，数据类型为float16或float32。
-
-    **输出：**
-
-    Tensor，数据类型和shape与 `input_x` 的相同。
-
-    **异常：**
-
-    - **TypeError** - `threshold` 不是浮点数或整数。
-    - **TypeError** - `value` 不是浮点数或整数。
+    异常：
+        - **TypeError** - `threshold` 不是浮点数或整数。
+        - **TypeError** - `value` 不是浮点数或整数。

@@ -27,23 +27,20 @@ mindspore.nn.polynomial_decay_lr
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
 
-    **参数：**
+    参数：
+        - **learning_rate** (float) - 学习率的初始值。
+        - **end_learning_rate** (float) - 学习率的最终值。
+        - **total_step** (int) - step总数。
+        - **step_per_epoch** (int) - 每个epoch的step数。
+        - **decay_epoch** (int) - 进行衰减的epoch数。
+        - **power** (float) - 多项式的幂，必须大于0。
+        - **update_decay_epoch** (bool) - 如果为True，则更新 `decay_epoch` 。默认值：False。
 
-    - **learning_rate** (float) - 学习率的初始值。
-    - **end_learning_rate** (float) - 学习率的最终值。
-    - **total_step** (int) - step总数。
-    - **step_per_epoch** (int) - 每个epoch的step数。
-    - **decay_epoch** (int) - 进行衰减的epoch数。
-    - **power** (float) - 多项式的幂，必须大于0。
-    - **update_decay_epoch** (bool) - 如果为True，则更新 `decay_epoch` 。默认值：False。
+    返回：
+        list[float]。列表的大小为 `total_step`。
 
-    **返回：**
-
-    list[float]。列表的大小为 `total_step`。
-
-    **异常：**
-
-    - **TypeError** - `learning_rate` 或 `end_learning_rate` 或 `power` 不是float。
-    - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
-    - **TypeError** - `update_decay_epoch` 不是bool。
-    - **ValueError** - `learning_rate` 或 `power` 小于等于0。
+    异常：
+        - **TypeError** - `learning_rate` 或 `end_learning_rate` 或 `power` 不是float。
+        - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+        - **TypeError** - `update_decay_epoch` 不是bool。
+        - **ValueError** - `learning_rate` 或 `power` 小于等于0。

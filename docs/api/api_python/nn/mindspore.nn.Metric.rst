@@ -38,17 +38,14 @@ mindspore.nn.Metric
         .. note::
             在继承该类自定义评估函数时，需要用装饰器 `mindspore.nn.rearrange_inputs` 修饰 `update` 方法，否则配置的 `indexes` 值不生效。
 
-        **参数：**
+        参数：
+            - **indexes** (List(int)) - logits和标签的目标顺序。
 
-        - **indexes** (List(int)) - logits和标签的目标顺序。
+        输出：
+            :class:`.Metric` ，类实例本身。
 
-        **输出：**
-
-        :class:`.Metric` ，类实例本身。
-
-        **异常：**
-
-        - **ValueError** - 如果输入的index类型不是list或其元素类型不全为int。
+        异常：
+            - **ValueError** - 如果输入的index类型不是list或其元素类型不全为int。
 
     .. py:method:: update(*inputs)
         :abstractmethod:
@@ -58,6 +55,5 @@ mindspore.nn.Metric
         .. note::
             所有子类都必须重写此接口。
 
-        **参数：**
-
-        - **inputs** - 可变长度输入参数列表。通常是预测值和对应的真实标签。
+        参数：
+            - **inputs** - 可变长度输入参数列表。通常是预测值和对应的真实标签。

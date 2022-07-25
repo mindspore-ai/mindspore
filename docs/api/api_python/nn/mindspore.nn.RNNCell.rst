@@ -12,24 +12,20 @@ mindspore.nn.RNNCell
 
     如果 `nonlinearity` 是'relu'，则使用'relu'而不是'tanh'。
 
-    **参数：**
+    参数：
+        - **input_size** (int) - 输入层输入的特征向量维度。
+        - **hidden_size** (int) - 隐藏层输出的特征向量维度。
+        - **has_bias** (bool) - Cell是否有偏置项 `b_ih` 和 `b_hh` 。默认值：True。
+        - **nonlinearity** (str) - 用于选择非线性激活函数。取值可以是'tanh'或'relu'。默认值：'tanh'。
 
-    - **input_size** (int) - 输入层输入的特征向量维度。
-    - **hidden_size** (int) - 隐藏层输出的特征向量维度。
-    - **has_bias** (bool) - Cell是否有偏置项 `b_ih` 和 `b_hh` 。默认值：True。
-    - **nonlinearity** (str) - 用于选择非线性激活函数。取值可以是'tanh'或'relu'。默认值：'tanh'。
+    输入：
+        - **x** (Tensor) - 输入Tensor，其shape为 :math:`(batch\_size, input\_size)` 。
+        - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为 :math:`(batch\_size, hidden\_size)` 。 `hx` 的数据类型与 `x` 相同。
 
-    **输入：**
-	
-    - **x** (Tensor) - 输入Tensor，其shape为 :math:`(batch\_size, input\_size)` 。
-    - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为 :math:`(batch\_size, hidden\_size)` 。 `hx` 的数据类型与 `x` 相同。
+    输出：
+        - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。
 
-    **输出：**
-	
-    - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。
-
-    **异常：**
-	
-    - **TypeError** - `input_size` 或 `hidden_size` 不是int或不大于0。
-    - **TypeError** - `has_bias` 不是bool。
-    - **ValueError** - `nonlinearity` 不在['tanh', 'relu']中。
+    异常：
+        - **TypeError** - `input_size` 或 `hidden_size` 不是int或不大于0。
+        - **TypeError** - `has_bias` 不是bool。
+        - **ValueError** - `nonlinearity` 不在['tanh', 'relu']中。

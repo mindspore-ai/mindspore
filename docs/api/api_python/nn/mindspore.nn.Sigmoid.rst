@@ -17,14 +17,11 @@ mindspore.nn.Sigmoid
 
     关于Sigmoid的图例见 `Sigmoid <https://en.wikipedia.org/wiki/Sigmoid_function#/media/File:Logistic-curve.svg>`_ 。
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - 数据类型为float16或float32的Sgmoid输入。任意维度的Tensor。
 
-    - **x** (Tensor) - 数据类型为float16或float32的Sgmoid输入。任意维度的Tensor。
+    输出：
+        Tensor，数据类型和shape与 `x` 的相同。
 
-    **输出：**
-
-    Tensor，数据类型和shape与 `x` 的相同。
-
-    **异常：**
-
-    **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    异常：
+        **TypeError** - `x` 的数据类型既不是float16也不是float32。

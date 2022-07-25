@@ -8,7 +8,6 @@ mindspore.nn.PipelineCell
     .. note::
         micro_size必须大于或等于流水线stage的个数。
 
-    **参数：**
-
-    - **network** (Cell) - 要修饰的目标网络。
-    - **micro_size** (int) - MicroBatch大小。
+    参数：
+        - **network** (Cell) - 要修饰的目标网络。
+        - **micro_size** (int) - MicroBatch大小。

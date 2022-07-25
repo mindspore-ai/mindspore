@@ -13,27 +13,23 @@ mindspore.nn.SSIM
         s(x,y)&=\frac{\sigma_{xy}+C_3}{\sigma_x\sigma_y+C_3}, C_3=C_2/2.\\
         SSIM(x,y)&=l*c*s\\&=\frac{(2\mu_x\mu_y+C_1)(2\sigma_{xy}+C_2}{(\mu_x^2+\mu_y^2+C_1)(\sigma_x^2+\sigma_y^2+C_2)}.
 
-    **参数：**
+    参数：
+        - **max_val** (Union[int, float]) - 像素值的动态范围，即最大值和最小值之间的差值。（8bit灰度图像像素为255）。默认值：1.0。
+        - **filter_size** (int) - 高斯滤波器的大小。该值必须大于等于1。默认值：11。
+        - **filter_sigma** (float) - 高斯核的标准差。该值必须大于0。默认值：1.5。
+        - **k1** (float) - 用于在亮度比较函数中生成 :math:`C_1` 的常量。默认值：0.01。
+        - **k2** (float) - 用于在对比度比较函数中生成 :math:`C_2` 的常量。默认值：0.03。
 
-    - **max_val** (Union[int, float]) - 像素值的动态范围，即最大值和最小值之间的差值。（8bit灰度图像像素为255）。默认值：1.0。
-    - **filter_size** (int) - 高斯滤波器的大小。该值必须大于等于1。默认值：11。
-    - **filter_sigma** (float) - 高斯核的标准差。该值必须大于0。默认值：1.5。
-    - **k1** (float) - 用于在亮度比较函数中生成 :math:`C_1` 的常量。默认值：0.01。
-    - **k2** (float) - 用于在对比度比较函数中生成 :math:`C_2` 的常量。默认值：0.03。
+    输入：
+        - **img1** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img2相同。
+        - **img2** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img1相同。
 
-    **输入：**
+    输出：
+        Tensor，数据类型与 `img1` 相同。shape为N的一维Tensor，其中N是 `img1` 的批次号。
 
-    - **img1** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img2相同。
-    - **img2** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img1相同。
-
-    **输出：**
-
-    Tensor，数据类型与 `img1` 相同。shape为N的一维Tensor，其中N是 `img1` 的批次号。
-
-    **异常：**
-
-    - **TypeError** - `max_val` 既不是int也不是float。
-    - **TypeError** - `k1` 、 `k2` 或 `filter_sigma` 不是float。
-    - **TypeError** - `filter_size` 不是int。
-    - **ValueError** - `max_val` 或 `filter_sigma` 小于或等于0。
-    - **ValueError** - `filter_size` 小于0。
+    异常：
+        - **TypeError** - `max_val` 既不是int也不是float。
+        - **TypeError** - `k1` 、 `k2` 或 `filter_sigma` 不是float。
+        - **TypeError** - `filter_size` 不是int。
+        - **ValueError** - `max_val` 或 `filter_sigma` 小于或等于0。
+        - **ValueError** - `filter_size` 小于0。

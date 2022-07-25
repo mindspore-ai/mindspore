@@ -13,30 +13,26 @@
         s(x,y)&=\frac{\sigma_{xy}+C_3}{\sigma_x\sigma_y+C_3}, C_3=C_2/2.\\
         MSSSIM(x,y)&=l^\alpha_M*{\prod_{1\leq j\leq M} (c^\beta_j*s^\gamma_j)}.
 
-    **参数：**
+    参数：
+        - **max_val** (Union[int, float]) - 像素值的动态范围，即最大值和最小值之间的差值。（8bit灰度图像素为255）。默认值：1.0。
+        - **power_factors** (Union[tuple, list]) - 权重列表。默认值：(0.0448、0.2856、0.3001、0.2363、0.1333)。此处使用的默认值是由Wang等人在论文中提出。
+        - **filter_size** (int) - 高斯滤波器的尺寸大小。默认值：11。
+        - **filter_sigma** (float) - 高斯滤波器的标准差。默认值：1.5。
+        - **k1** (float) - 在亮度比较函数中，此常量用于生成 :math:`C_1` 。默认值：0.01。
+        - **k2** (float) - 在对比度比较函数中，此常量用于生成 :math:`C_2` 。默认值：0.03。
 
-    - **max_val** (Union[int, float]) - 像素值的动态范围，即最大值和最小值之间的差值。（8bit灰度图像素为255）。默认值：1.0。
-    - **power_factors** (Union[tuple, list]) - 权重列表。默认值：(0.0448、0.2856、0.3001、0.2363、0.1333)。此处使用的默认值是由Wang等人在论文中提出。
-    - **filter_size** (int) - 高斯滤波器的尺寸大小。默认值：11。
-    - **filter_sigma** (float) - 高斯滤波器的标准差。默认值：1.5。
-    - **k1** (float) - 在亮度比较函数中，此常量用于生成 :math:`C_1` 。默认值：0.01。
-    - **k2** (float) - 在对比度比较函数中，此常量用于生成 :math:`C_2` 。默认值：0.03。
+    输入：
+        - **img1** (Tensor) - 格式为'NCHW'的第一批图像。shape和数据类型必须与 `img2` 相同。
+        - **img2** (Tensor) - 格式为'NCHW'的第二批图像。shape和数据类型必须与 `img1` 相同。
 
-    **输入：**
+    输出：
+        Tensor，输入的结构相似性。取值在[0, 1]范围内。它是一个shape为N的一维Tensor，其中N是 `img1` 的batch size。
 
-    - **img1** (Tensor) - 格式为'NCHW'的第一批图像。shape和数据类型必须与 `img2` 相同。
-    - **img2** (Tensor) - 格式为'NCHW'的第二批图像。shape和数据类型必须与 `img1` 相同。
-
-    **输出：**
-
-    Tensor，输入的结构相似性。取值在[0, 1]范围内。它是一个shape为N的一维Tensor，其中N是 `img1` 的batch size。
-
-    **异常：**
-
-    - **TypeError** - 如果 `max_val` 既不是int也不是float。
-    - **TypeError** - 如果 `power_factors` 既不是tuple也不是list。
-    - **TypeError** - 如果 `k1` 、 `k2` 或 `filter_sigma` 不是float。
-    - **TypeError** - 如果 `filter_size` 不是int。
-    - **ValueError** - 如果 `max_val` 或 `filter_sigma` 小于或等于0。
-    - **ValueError** - 如果 `filter_size` 小于0。
-    - **ValueError** - 如果 `img1` 或 `img2` 的shape长度不等于4。
+    异常：
+        - **TypeError** - 如果 `max_val` 既不是int也不是float。
+        - **TypeError** - 如果 `power_factors` 既不是tuple也不是list。
+        - **TypeError** - 如果 `k1` 、 `k2` 或 `filter_sigma` 不是float。
+        - **TypeError** - 如果 `filter_size` 不是int。
+        - **ValueError** - 如果 `max_val` 或 `filter_sigma` 小于或等于0。
+        - **ValueError** - 如果 `filter_size` 小于0。
+        - **ValueError** - 如果 `img1` 或 `img2` 的shape长度不等于4。

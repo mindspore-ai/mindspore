@@ -7,10 +7,8 @@ mindspore.nn.rearrange_inputs
 
     此装饰器目前用于 :class:`mindspore.nn.Metric` 类的 `update` 方法。
 
-    **参数：**
+    参数：
+        - **func** (Callable) - 要装饰的候选函数，其输入将被重新排列。
 
-    - **func** (Callable) - 要装饰的候选函数，其输入将被重新排列。
-
-    **返回：**
-
-    Callable，用于在函数之间调换输入。
+    返回：
+        Callable，用于在函数之间调换输入。

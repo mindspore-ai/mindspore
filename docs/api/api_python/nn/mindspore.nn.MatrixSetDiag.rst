@@ -13,19 +13,16 @@ mindspore.nn.MatrixSetDiag
     .. math::
         output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n]\ for\ m != n
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - 输入的对角矩阵。秩为k+1，k大于等于1。支持如下数据类型：float32、float16、int32、int8和uint8。
+        - **diagonal** (Tensor) - 输入的对角线值。必须与输入 `x` 的shape相同。秩为k，k大于等于1。
 
-    - **x** (Tensor) - 输入的对角矩阵。秩为k+1，k大于等于1。支持如下数据类型：float32、float16、int32、int8和uint8。
-    - **diagonal** (Tensor) - 输入的对角线值。必须与输入 `x` 的shape相同。秩为k，k大于等于1。
+    输出：
+        Tensor，shape和数据类型与输入 `x` 相同。
 
-    **输出：**
+    异常：
+        - **TypeError** - `x` 或 `diagonal` 的数据类型不是float32、float16、int32、int8或uint8。
+        - **ValueError** - `x` 的shape长度小于2。
+        - **ValueError** - :math:`x\_shape[-2] < x\_shape[-1]` 且 :math:`x\_shape[:-1] != diagonal\_shape` 。
+        - **ValueError** - :math:`x\_shape[-2] >= x\_shape[-1]` 且 :math:`x\_shape[:-2] + x\_shape[-1:] != diagonal\_shape` 。 
 
-    Tensor，shape和数据类型与输入 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 或 `diagonal` 的数据类型不是float32、float16、int32、int8或uint8。
-    - **ValueError** - `x` 的shape长度小于2。
-    - **ValueError** - :math:`x\_shape[-2] < x\_shape[-1]` 且 :math:`x\_shape[:-1] != diagonal\_shape` 。
-    - **ValueError** - :math:`x\_shape[-2] >= x\_shape[-1]` 且 :math:`x\_shape[:-2] + x\_shape[-1:] != diagonal\_shape` 。 
-    
