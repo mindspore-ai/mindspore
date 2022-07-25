@@ -94,7 +94,7 @@ static const uint32_t kExecuteInterval = 3;
       success = func();                                                        \
       if (!success) {                                                          \
         MS_LOG(WARNING) << err_msg << ", retry(" << i << "/" << retry << ")."; \
-        sleep(interval);                                                       \
+        (void)sleep(interval);                                                 \
       } else {                                                                 \
         break;                                                                 \
       }                                                                        \

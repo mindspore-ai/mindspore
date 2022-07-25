@@ -40,7 +40,6 @@ class MuxSendActor : public SendActor {
                   modifiable_ref_input_indexes, modifiable_ref_output_indexes) {}
   ~MuxSendActor() override = default;
 
- public:
   // Set the MuxRecvActor paired with the MuxSendActor to get the 'from url' from the MuxRecvActor.
   void set_mux_recv_actor(const MuxRecvActorPtr &mux_recv_actor) { mux_recv_actor_ = mux_recv_actor; }
 

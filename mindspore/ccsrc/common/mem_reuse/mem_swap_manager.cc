@@ -483,7 +483,7 @@ KernelExecutionInfo &MemSwapManager::SearchKernelExecutionInfo(const AnfNodePtr 
   return const_cast<KernelExecutionInfo &>(iter->second);
 }
 
-void MemSwapManager::AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform) {
+void MemSwapManager::AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform) const {
   auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
   kernel_exec_info.execution_perform_ = perform;
 }
@@ -601,7 +601,7 @@ void MemSwapManager::AssignHostMemory() {
     auto &host_addrs_map = kernel_exec_info.host_addrs_;
     for (auto &host_addr_pair : host_addrs_map) {
       auto &host_addr = host_addr_pair.second.first;
-      auto ret = AllocHostPinnedMem(host_addr.size, reinterpret_cast<void **>(&host_addr.addr));
+      auto ret = AllocHostPinnedMem(host_addr.size, &host_addr.addr);
       if (!ret) {
         MS_LOG(EXCEPTION) << "Alloc host pinned memory[" << host_addr.size << "] failed.";
       }
@@ -620,7 +620,7 @@ const HostAddress &MemSwapManager::QueryKernelHostAddr(const AnfNodePtr &kernel,
   return (iter->second).first;
 }
 
-void MemSwapManager::AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx, bool dirty) {
+void MemSwapManager::AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx, bool dirty) const {
   auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
   auto &host_addrs = kernel_exec_info.host_addrs_;
   auto iter = host_addrs.find(output_idx);

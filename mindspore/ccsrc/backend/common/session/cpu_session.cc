@@ -82,7 +82,7 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
 }
 
 // Remove after PS feature finish adapting push/pull in auto_monad.
-void CPUSession::Reorder(std::vector<CNodePtr> *node_list) {
+void CPUSession::Reorder(std::vector<CNodePtr> *node_list) const {
   common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(node_list));
 }
 
@@ -109,7 +109,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   kernel_graph->SetExecOrderByDefault();
 }
 
-void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
 #ifdef ENABLE_AKG
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
@@ -251,14 +251,14 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
   }
 }
 
-void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node) {
+void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node) const {
   for (const auto &tensor_node : tensor_to_node) {
     if (common::AnfAlgo::IsDynamicShape(tensor_node.second.first)) {
       const auto &kernel = tensor_node.second.first;
       const auto &output_index = tensor_node.second.second;
       const auto &shape = common::AnfAlgo::GetOutputInferShape(kernel, output_index);
       MS_EXCEPTION_IF_NULL(tensor_node.first);
-      tensor_node.first->set_shape(shape);
+      (void)tensor_node.first->set_shape(shape);
     }
   }
 }
@@ -305,7 +305,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   runtime_.RunOpClearMemory(*kernel_graph);
 }
 
-void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
+void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
   for (const auto &kernel_node : kernel_nodes) {
@@ -356,7 +356,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node) {
 }
 }  // namespace
 
-void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
+void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
@@ -398,7 +398,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(kernel_node);
       }
       if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-          kernel::KRET_RESIZE_FAILED) {
+          static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());

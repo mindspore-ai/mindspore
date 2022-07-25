@@ -22,15 +22,19 @@ namespace mindspore {
 namespace runtime {
 SendActor::~SendActor() {
   if (client_) {
-    client_->Disconnect(server_url_);
-    client_->Finalize();
+    try {
+      (void)client_->Disconnect(server_url_);
+      client_->Finalize();
+    } catch (const std::exception &) {
+      MS_LOG(ERROR) << "Failed to disconnect and finalize for tcp client in send actor.";
+    }
   }
 }
 
 void SendActor::SetRouteInfo(uint32_t, const std::string &, const std::string &send_src_node_name,
                              const std::string &send_dst_node_name) {
   peer_actor_ids_ = inter_process_edge_names_;
-  rpc_output_node_name_.emplace_back(send_dst_node_name);
+  (void)rpc_output_node_name_.emplace_back(send_dst_node_name);
 }
 
 bool SendActor::ConnectServer() {
@@ -80,29 +84,29 @@ void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   AbstractActor::EraseInput(context);
   if (input_op_inter_process_.count(context->sequential_num_) != 0) {
-    input_op_inter_process_.erase(context->sequential_num_);
+    (void)input_op_inter_process_.erase(context->sequential_num_);
   }
 }
 
 void SendActor::SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec,
-                                             const TypeId &data_type, const kernel::AddressPtr &addr) {
+                                             const TypeId &data_type, const kernel::AddressPtr &addr) const {
   MS_EXCEPTION_IF_NULL(msg_body);
   MS_EXCEPTION_IF_NULL(addr);
 
   rpc::DynamicShapeMessage pb_msg;
-  pb_msg.set_type_id(data_type);
+  pb_msg.set_type_id(static_cast<int>(data_type));
   *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
   std::string pb_msg_str = pb_msg.SerializeAsString();
 
   // 1. Magic header for dynamic shape.
-  msg_body->append(kRpcDynamicShapeData);
+  (void)msg_body->append(kRpcDynamicShapeData);
   // 2. The size of the protobuf message DynamicShapeMessage.
   size_t pb_msg_size = pb_msg_str.size();
-  msg_body->append(reinterpret_cast<char *>(&pb_msg_size), sizeof(pb_msg_size));
+  (void)msg_body->append(reinterpret_cast<char *>(&pb_msg_size), sizeof(pb_msg_size));
   // 3. Protobuf message DynamicShapeMessage.
-  msg_body->append(pb_msg_str);
+  (void)msg_body->append(pb_msg_str);
   // 4. The real data buffer of the input.
-  msg_body->append(static_cast<char *>(addr->addr), addr->size);
+  (void)msg_body->append(static_cast<char *>(addr->addr), addr->size);
 }
 
 std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtrList &data_list,

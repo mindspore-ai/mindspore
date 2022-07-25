@@ -43,7 +43,7 @@ class CPUSession : public SessionBasic {
                         VectorRef *const outputs) override;
   void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
-  void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph);
+  void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
   KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                              const std::vector<tensor::TensorPtr> &input_tensors,
@@ -57,11 +57,11 @@ class CPUSession : public SessionBasic {
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
 
  private:
-  void Reorder(std::vector<CNodePtr> *node_list);
-  void SetKernelInfo(const KernelGraph *kernel_graph);
-  void BuildKernel(const KernelGraph *kernel_graph);
+  void Reorder(std::vector<CNodePtr> *node_list) const;
+  void SetKernelInfo(const KernelGraph *kernel_graph) const;
+  void BuildKernel(const KernelGraph *kernel_graph) const;
   void SetOutputFlags(const VectorRef &base_ref);
-  void UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node);
+  void UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node) const;
   device::cpu::CPUKernelRuntime runtime_;
 };
 MS_REG_SESSION(kCPUDevice, CPUSession);

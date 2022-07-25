@@ -64,7 +64,7 @@ class MemSwapManager {
 
   bool mem_swap_init() const { return mem_swap_initialized_; }
 
-  void AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform);
+  void AddKernelExecutionPerform(const AnfNodePtr &kernel, float perform) const;
 
   float QueryKernelExecutionPerform(const AnfNodePtr &kernel) const;
 
@@ -88,7 +88,7 @@ class MemSwapManager {
 
   const HostAddress &QueryKernelHostAddr(const AnfNodePtr &kernel, size_t output_idx) const;
 
-  void AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx, bool dirty);
+  void AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx, bool dirty) const;
 
   bool QueryKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t output_idx) const;
 

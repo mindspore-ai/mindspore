@@ -29,7 +29,11 @@ namespace mindspore {
 namespace runtime {
 RecvActor::~RecvActor() {
   if (server_) {
-    server_->Finalize();
+    try {
+      server_->Finalize();
+    } catch (const std::exception &) {
+      MS_LOG(ERROR) << "Failed to finalize for tcp server in recv actor.";
+    }
   }
 }
 
@@ -48,7 +52,7 @@ void RecvActor::ResetOpcontext() {
 
 void RecvActor::SetRouteInfo(uint32_t, const std::string &, const std::string &recv_src_node_name,
                              const std::string &recv_dst_node_name) {
-  rpc_input_node_name_.emplace_back(recv_src_node_name);
+  (void)rpc_input_node_name_.emplace_back(recv_src_node_name);
   input_inter_process_num_++;
 }
 
@@ -159,7 +163,7 @@ void RecvActor::Run(OpContext<DeviceTensor> *const context) {
 }
 
 void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const ShapeVector &shapes, TypeId data_type,
-                                   size_t input_index) {
+                                   size_t input_index) const {
   MS_EXCEPTION_IF_NULL(args_spec_list);
   MS_EXCEPTION_IF_NULL(kernel_);
   auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, input_index, false);
@@ -233,7 +237,7 @@ size_t RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, A
     // Step 3: deserialize the protobuf message.
     data_to_be_parsed += sizeof(pb_msg_size);
     rpc::DynamicShapeMessage pb_msg;
-    (void)pb_msg.ParseFromArray(data_to_be_parsed, pb_msg_size);
+    (void)pb_msg.ParseFromArray(data_to_be_parsed, SizeToInt(pb_msg_size));
 
     // Step 4: parse the data shape and
     ShapeVector shapes(pb_msg.shape_vector().begin(), pb_msg.shape_vector().end());
@@ -258,7 +262,6 @@ size_t RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, A
   auto recv_kernel_mod = dynamic_cast<kernel::RpcRecvKernelMod *>(kernel_info_->MutableKernelMod());
   MS_EXCEPTION_IF_NULL(recv_kernel_mod);
   recv_kernel_mod->set_real_data_offset(real_data_offsets);
-
   return offset;
 }
 
@@ -287,7 +290,8 @@ void RecvActor::PreprocessRemoteInput(MessageBase *const msg, bool *need_finaliz
   auto args = kernel::AbstractArgsFromCNode(kernel_);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (kernel_mod->Resize(args.op, args.inputs, args.outputs, args.depend_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+  if (kernel_mod->Resize(args.op, args.inputs, args.outputs, args.depend_tensor_map) ==
+      static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
     MS_LOG(EXCEPTION) << "Node " << kernel_->fullname_with_scope() << " Resize() failed.";
   }
 }

@@ -30,7 +30,7 @@ bool ActorRouteTableProxy::RegisterRoute(const std::string &actor_id, const topo
     success = cgn_->PutMetadata(actor_id, actor_addr.SerializeAsString(), false);
     if (!success) {
       MS_LOG(WARNING) << "Retry to register the address for actor: " << actor_id;
-      sleep(kInterval);
+      (void)sleep(kInterval);
     }
   }
   MS_LOG(INFO) << "The address of actor " << actor_id << " has been registered successfully.";
@@ -50,7 +50,7 @@ topology::ActorAddress ActorRouteTableProxy::LookupRoute(const std::string &acto
     if (route.length() == 0) {
       std::this_thread::sleep_for(std::chrono::milliseconds(kLookupInterval));
     } else {
-      (void)lookup_route_rsp_msg.ParseFromArray(route.c_str(), route.length());
+      (void)lookup_route_rsp_msg.ParseFromArray(route.c_str(), SizeToInt(route.size()));
       lookup_success = true;
     }
 

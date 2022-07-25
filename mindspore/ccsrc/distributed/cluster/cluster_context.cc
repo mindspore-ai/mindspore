@@ -98,10 +98,10 @@ bool ClusterContext::Finalize(uint32_t timeout) {
   MS_EXCEPTION_IF_NULL(node_base_);
 
   bool force = (timeout == 0);
-  size_t interval = 5;
+  uint32_t interval = 5;
   while (!node_base_->Finalize(force)) {
     MS_LOG(WARNING) << "Retry to finalize the node...";
-    sleep(interval);
+    (void)sleep(interval);
   }
   finalized_ = true;
   return true;
@@ -118,7 +118,6 @@ const std::string &ClusterContext::node_role() const { return node_role_; }
 uint32_t ClusterContext::node_num(const std::string &node_role) {
   if (node_num_each_role_.count(node_role) == 0) {
     MS_LOG(EXCEPTION) << "Node role " << node_role << " is invalid.";
-    return 0;
   }
   MS_LOG(INFO) << "Number of role " << node_role << " is " << node_num_each_role_[node_role];
   return node_num_each_role_[node_role];
@@ -185,14 +184,12 @@ void ClusterContext::InitNodeRole() {
   node_role_ = common::GetEnv(kEnvRole);
   if (kValidRoleName.count(node_role_) == 0) {
     MS_LOG(EXCEPTION) << "Role name '" << node_role_ << "' is invalid. " << kDetailedFailureReason;
-    return;
   }
 
   // If node role is valid, judge the execution mode.
   // MindSpore cluster does not support PyNative mode.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     MS_LOG(EXCEPTION) << "PyNative mode is not supported in MindSpore cluster.";
-    return;
   }
 
   if (common::GetEnv(kEnvWorkerNum).empty()) {

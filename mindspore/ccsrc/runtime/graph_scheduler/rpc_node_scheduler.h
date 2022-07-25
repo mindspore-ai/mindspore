@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_RPC_NODE_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_RPC_NODE_SCHEDULER_H_
 
-#include <vector>
-#include <string>
 #include <memory>
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
@@ -39,21 +37,21 @@ class RpcNodeScheduler {
   RpcActorSetPtr Build(const ActorSet *actor_set);
 
   // Link rpc actors with inter-process arrows.
-  void Link(const ActorSet *actor_set);
+  void Link(const ActorSet *actor_set) const;
 
   // This should be called by 'GraphScheduler::Scheduler()' method.
   // Used to start servers for recv actors and create connections for send actors.
-  void Schedule(const ActorSet *actor_set);
+  void Schedule(const ActorSet *actor_set) const;
 
   // Set op context to rpc actors.
-  void SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context);
+  void SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) const;
 
   // Reset op context for rpc actors.
-  void ResetOpcontext(const RpcActorSetPtr &rpc_actors);
+  void ResetOpcontext(const RpcActorSetPtr &rpc_actors) const;
 
  private:
   // Create new route table proxy.
-  ActorRouteTableProxyPtr CreateRouteTableProxy();
+  ActorRouteTableProxyPtr CreateRouteTableProxy() const;
 };
 
 // The setter of op context for rpc actors.
@@ -64,7 +62,13 @@ class RpcActorOpContextSetter {
       : rpc_node_scheduler_(rpc_node_scheduler), rpc_actors_(rpc_actors), op_context_(op_context) {
     rpc_node_scheduler_->SetOpcontext(rpc_actors_, op_context_);
   }
-  ~RpcActorOpContextSetter() { rpc_node_scheduler_->ResetOpcontext(rpc_actors_); }
+  ~RpcActorOpContextSetter() {
+    try {
+      rpc_node_scheduler_->ResetOpcontext(rpc_actors_);
+    } catch (const std::exception &) {
+      MS_LOG(ERROR) << "Failed to reset op context.";
+    }
+  }
 
  private:
   RpcNodeScheduler *rpc_node_scheduler_;
