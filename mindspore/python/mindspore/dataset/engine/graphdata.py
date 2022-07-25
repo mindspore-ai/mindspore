@@ -370,7 +370,8 @@ class GraphData:
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_nums (Union[list, numpy.ndarray]): Number of neighbors sampled per hop.
-            neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop.
+            neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
+                neighbor_types should be int.
             strategy (SamplingStrategy, optional): Sampling strategy (default=SamplingStrategy.RANDOM).
                 It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
 
@@ -620,16 +621,21 @@ class Graph(GraphData):
         node_feat = replace_none(node_feat, {})
         edge_feat = replace_none(edge_feat, {})
         graph_feat = replace_none(graph_feat, {})
-        edges = np.array(edges, dtype=np.int32)
+        edges = np.asarray(edges, dtype=np.int32)
         # infer num_nodes
         num_nodes = np.max(edges) + 1
-        if node_feat != dict():
-            num_nodes = node_feat.get(list(node_feat.keys())[0]).shape[0]
 
-        node_type = replace_none(node_type, np.array(["0"] * num_nodes))
-        node_type = np.array(node_type)
+        if node_type is not None:
+            node_type = np.asarray(node_type)
+            if len(node_type.shape) != 1 or node_type.shape[0] != num_nodes:
+                raise ValueError(
+                    "Input 'node_type' should be of 1 dimension, and its length should be {}, but got {}.".format(
+                        num_nodes, len(node_type)))
+        else:
+            node_type = np.array(["0"] * num_nodes)
+
         edge_type = replace_none(edge_type, np.array(["0"] * edges.shape[1]))
-        edge_type = np.array(edge_type)
+        edge_type = np.asarray(edge_type)
 
         self._working_mode = working_mode
         self.data_format = "array"
@@ -861,7 +867,8 @@ class Graph(GraphData):
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_nums (Union[list, numpy.ndarray]): Number of neighbors sampled per hop.
-            neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop.
+            neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
+                neighbor_types should be str.
             strategy (SamplingStrategy, optional): Sampling strategy (default=SamplingStrategy.RANDOM).
                 It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
 
@@ -1242,15 +1249,24 @@ class InMemoryGraphDataset(GeneratorDataset):
     """
     Basic Dataset for loading graph into memory.
 
-    Recommended to Implement your own dataset with inheriting this class, and implement your own method like 'process',
-    'save' and 'load'.
+    Recommended to Implement your own dataset with inheriting this class, and implement your own method like `process`,
+    `save` and `load`, refer source code of `ArgoverseDataset` for how to implement your own dataset. When init your own
+    dataset like ArgoverseDataset, The executed process like follows. Check if there are already processed data under
+    given `data_dir`, if so will call `load` method to load it directly, otherwise it will call `process` method to
+    create graphs and call `save` method to save the graphs into `save_dir`.
+
+    You can access graph in created dataset using `graphs = my_dataset.graphs` and also you can iterate dataset
+    and get data using `my_dataset.create_tuple_iterator()` (in this way you need to implement methods like
+    `__getitem__` and `__len__`), referring to the following example for detail.
 
     Args:
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
-        save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir`.
+        save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir`
+            (default="./processed").
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
-            num of column name should be equal to num of item in return data when implement method like `__getitem__`.
+            num of column name should be equal to num of item in return data when implement method like `__getitem__`,
+            (default="graph").
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all samples).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
@@ -1264,6 +1280,28 @@ class InMemoryGraphDataset(GeneratorDataset):
             option could be beneficial if the Python operation is computational heavy (default=True).
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default 6 MB).
+
+    Examples:
+        >>> from mindspore.dataset import InMemoryGraphDataset, Graph
+        >>>
+        >>> class MyDataset(InMemoryGraphDataset):
+        >>>     def __init__(self, data_dir):
+        >>>         super().__init__(data_dir)
+        >>>
+        >>>     def process(self):
+        >>>         # create graph with loading data in given data_dir
+        >>>         # here create graph with numpy array directly instead
+        >>>         edges = np.array([[0, 1], [1, 2]])
+        >>>         graph = Graph(edges=edges)
+        >>>         self.graphs.append(graph)
+        >>>
+        >>>     def __getitem__(self, index):
+        >>>         # this method and `__len__` method are required when iterating created dataset
+        >>>         graph = self.graphs[index]
+        >>>         return graph.get_all_edges("0")
+        >>>
+        >>>     def __len__(self):
+        >>>         return len(self.graphs)
     """
 
     def __init__(self, data_dir, save_dir="./processed", column_names="graph", num_samples=None, num_parallel_workers=1,
