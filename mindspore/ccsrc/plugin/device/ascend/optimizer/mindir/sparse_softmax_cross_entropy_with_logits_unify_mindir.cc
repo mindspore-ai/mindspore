@@ -226,6 +226,28 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   return reduce_node;
 }
 
+void UpdateAbstract(const CNodePtr &real_div_node, const CNodePtr &expand_dims_node) {
+  MS_EXCEPTION_IF_NULL(real_div_node);
+  MS_EXCEPTION_IF_NULL(expand_dims_node);
+  auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
+  (void)y_shape.emplace_back(1);
+  if (IsDynamic(y_shape)) {
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape.emplace_back(1);
+      max_shape.emplace_back(1);
+    }
+
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
+                                                 {std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape)},
+                                                 expand_dims_node.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
+                                                expand_dims_node.get());
+  }
+}
+
 CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_node, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(real_div_node);
@@ -249,24 +271,7 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   MS_EXCEPTION_IF_NULL(expand_dims_node);
 
   expand_dims_node->set_scope(real_div_node->scope());
-  auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
-  y_shape.emplace_back(1);
-  if (IsDynamic(y_shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape.emplace_back(1);
-      max_shape.emplace_back(1);
-    }
-
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
-                                                 {std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape)},
-                                                 expand_dims_node.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                                expand_dims_node.get());
-  }
-
+  UpdateAbstract(real_div_node, expand_dims_node);
   return expand_dims_node;
 }
 
@@ -287,23 +292,7 @@ CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &rea
   MS_EXCEPTION_IF_NULL(expand_dims_node);
 
   expand_dims_node->set_scope(real_div_node->scope());
-  auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
-  (void)y_shape.emplace_back(1);
-  if (IsDynamic(y_shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape.emplace_back(1);
-      max_shape.emplace_back(1);
-    }
-
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
-                                                 {std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape)},
-                                                 expand_dims_node.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                                expand_dims_node.get());
-  }
+  UpdateAbstract(real_div_node, expand_dims_node);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), expand_dims_node);
   return expand_dims_node;
 }
@@ -473,6 +462,38 @@ bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse, const str
     MS_LOG(EXCEPTION) << "Node of " << sparse->fullname_with_scope() << " does not have the attr " << kAttrIsGrad
                       << ", related pass: " << pass_name << trace::DumpSourceLines(sparse);
   }
+}
+
+CNodePtr CreateMulInput(const FuncGraphPtr &graph, const CNodePtr &mul_node, const AnfNodePtr &sparse_softmax_node,
+                        const std::string &pass_name, const PatternProcessPass &pass,
+                        std::vector<AnfNodePtr> *softmax_node_outputs, bool *is_sp_grad_flag) {
+  MS_EXCEPTION_IF_NULL(sparse_softmax_node);
+  MS_EXCEPTION_IF_NULL(softmax_node_outputs);
+  MS_EXCEPTION_IF_NULL(is_sp_grad_flag);
+
+  auto sparse_softmax_node_grad = sparse_softmax_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad);
+  CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
+
+  if (!IsSparseSoftmaxCrossEntropyWithLogitsGrad(sparse_softmax_node_grad, pass_name)) {
+    *is_sp_grad_flag = false;
+    return nullptr;
+  }
+
+  CNodePtr softmax_node;
+  auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad, pass);
+  softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node_grad, one_hot_node, pass);
+
+  CreateMultipleOutputsOfAnfNode(graph, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, softmax_node_outputs);
+  auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node, pass);
+  CNodePtr real_div_node;
+  if (tile_node == nullptr) {
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kIndex2), pass);
+  } else {
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node, pass);
+  }
+  auto expand_dims_node = CreateExpandDimsPynative(graph, real_div_node, pass);
+  return expand_dims_node;
 }
 }  // namespace
 
@@ -651,28 +672,13 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto sparse_softmax_node = mul_node->input(kIndex1);
-  auto sparse_softmax_node_grad = sparse_softmax_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad);
-  CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-
-  if (!IsSparseSoftmaxCrossEntropyWithLogitsGrad(sparse_softmax_node_grad, name())) {
+  bool is_sp_grad_flag = true;
+  std::vector<AnfNodePtr> softmax_node_outputs;
+  auto expand_dims_node =
+    CreateMulInput(graph, mul_node, sparse_softmax_node, name(), *this, &softmax_node_outputs, &is_sp_grad_flag);
+  if (!is_sp_grad_flag) {
     return nullptr;
   }
-
-  CNodePtr softmax_node;
-  auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad, *this);
-  softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node_grad, one_hot_node, *this);
-
-  std::vector<AnfNodePtr> softmax_node_outputs;
-  CreateMultipleOutputsOfAnfNode(graph, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
-  auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node, *this);
-  CNodePtr real_div_node;
-  if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kIndex2), *this);
-  } else {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node, *this);
-  }
-  auto expand_dims_node = CreateExpandDimsPynative(graph, real_div_node, *this);
   std::vector<AnfNodePtr> new_mul_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)),
                                             softmax_node_outputs[1], expand_dims_node};
   auto new_mul_node = NewCNode(new_mul_inputs, graph);
@@ -708,28 +714,13 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   CheckCNodeInputSize(cast_cnode, kCastInputNum);
 
   auto sparse_softmax_node = cast_cnode->input(kIndex1);
-  auto sparse_softmax_node_grad = sparse_softmax_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad);
-  CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-
-  if (!IsSparseSoftmaxCrossEntropyWithLogitsGrad(sparse_softmax_node_grad, name())) {
+  bool is_sp_grad_flag = true;
+  std::vector<AnfNodePtr> softmax_node_outputs;
+  auto expand_dims_node =
+    CreateMulInput(graph, mul_node, sparse_softmax_node, name(), *this, &softmax_node_outputs, &is_sp_grad_flag);
+  if (!is_sp_grad_flag) {
     return nullptr;
   }
-
-  CNodePtr softmax_node;
-  auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad, *this);
-  softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node_grad, one_hot_node, *this);
-
-  std::vector<AnfNodePtr> softmax_node_outputs;
-  CreateMultipleOutputsOfAnfNode(graph, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
-  auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node, *this);
-  CNodePtr real_div_node;
-  if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kIndex2), *this);
-  } else {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node, *this);
-  }
-  auto expand_dims_node = CreateExpandDimsPynative(graph, real_div_node, *this);
   auto new_cast = CreateCast(graph, cast_cnode, softmax_node_outputs[1], *this);
   std::vector<AnfNodePtr> new_mul_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)), new_cast,
                                             expand_dims_node};
