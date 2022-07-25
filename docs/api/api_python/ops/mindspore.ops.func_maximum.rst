@@ -16,16 +16,13 @@ mindspore.ops.maximum
     .. math::
         output_i = max(x_i, y_i)
 
-    **参数：**
+    参数：
+        - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
+        - **y** (Union[Tensor, Number, bool]) - 第二个输入是Number，当第一个输入是Tensor时，也可以是bool，或数据类型为Number或bool的Tensor。
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入是Number，当第一个输入是Tensor时，也可以是bool，或数据类型为Number或bool的Tensor。
+    返回：
+        Tensor的shape与广播后的shape相同，数据类型为两个输入中精度较高或数字较多的类型。
 
-    **返回：**
-
-    Tensor的shape与广播后的shape相同，数据类型为两个输入中精度较高或数字较多的类型。
-
-    **异常：**
-
-    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor，Number，bool。
-    - **ValueError** - `x` 和 `y` 的shape不相同。
+    异常：
+        - **TypeError** - `x` 和 `y` 不是以下之一：Tensor，Number，bool。
+        - **ValueError** - `x` 和 `y` 的shape不相同。

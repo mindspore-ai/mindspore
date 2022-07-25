@@ -5,14 +5,11 @@ mindspore.ops.scalar_to_array
 
     将Scalar转换为 `Tensor` 。
 
-    **参数：**
+    参数：
+        - **input_x** (Union[int, float]) - ScalarToArray的输入，是Scalar且只能是常量值。
 
-    - **input_x** (Union[int, float]) - ScalarToArray的输入，是Scalar且只能是常量值。
+    返回：
+        Tensor，0维Tensor，其值和输入一致。
 
-    **返回：**
-
-    Tensor，0维Tensor，其值和输入一致。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 既不是int也不是float。
+    异常：
+        - **TypeError** - `input_x` 既不是int也不是float。

@@ -18,16 +18,13 @@ mindspore.ops.ne
             & \text{False,   if } x_{i} = y_{i}
             \end{cases}
 
-    **参数：**
+    参数：
+        - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是数值型或bool，也可以是数据类型为数值型或bool的Tensor。
+        - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是数值型或bool。也可以是数据类型为数值型或bool的Tensor。
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是数值型或bool，也可以是数据类型为数值型或bool的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是数值型或bool。也可以是数据类型为数值型或bool的Tensor。
+    返回：
+        Tensor，输出shape与输入相同，数据类型为bool。
 
-    **返回：**
-
-    Tensor，输出shape与输入相同，数据类型为bool。
-
-    **异常：**
-
-    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、数值型、bool。
-    - **TypeError** - `x` 和 `y` 都不是Tensor。
+    异常：
+        - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、数值型、bool。
+        - **TypeError** - `x` 和 `y` 都不是Tensor。
