@@ -850,5 +850,36 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto attrs = prim->attrs();
   return OperatorInstanceByName(prim_name, attrs, shape_list);
 }
+
+bool IsPynativeParallel() {
+  auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+  return (execution_mode == kPynativeMode) && (parallel_mode == kSemiAutoParallel || parallel_mode == kAutoParallel);
+}
+
+// compile graph order:
+// 1, ParallelParameterContextInitShape/Ckpt/Restore
+// 2, PynativeShard: find 'shard' node and set 'pynative_shard' flag for root graph
+// 3, PipelineSplit: insert virtual dataset
+// 4, StepAutoParallel
+// 5, StepParallel
+// if IsPynativeParallel() is true, it maybe has some graphs that we no care, so need to check 'pynative_shard' flag
+bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->has_flag(kStandalone)) {
+    return false;
+  }
+
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kAutoParallel && parallel_mode != kSemiAutoParallel) {
+    return false;
+  }
+
+  if (IsPynativeParallel() && !func_graph->has_flag(kPynativeShard)) {
+    return false;
+  }
+  return true;
+}
 }  // namespace parallel
 }  // namespace mindspore

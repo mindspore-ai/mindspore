@@ -95,6 +95,11 @@ class MSELoss(nn.Cell):
 
 
 def test_auto_parallel_flag():
+    '''
+    Feature: remove auto_parallel flag from cell in auto parallel mode
+    Description:
+    Expectation: the network has not auto_parallel flag
+    '''
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=1)
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
@@ -107,5 +112,4 @@ def test_auto_parallel_flag():
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics=None, loss_scale_manager=scale_manager)
     model.train(2, dataset)
-    assert model._train_network.get_flags()["auto_parallel"]
     context.reset_auto_parallel_context()

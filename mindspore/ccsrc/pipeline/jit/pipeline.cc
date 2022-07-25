@@ -39,6 +39,7 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/config_manager.h"
@@ -702,14 +703,10 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   // save the graph to GraphExecutorPy
   FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   info_[phase]->func_graph = func_graph;
 
-  if ((func_graph != nullptr) && func_graph->has_flag(parallel::kAutoParallel) &&
-      ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel))) {
+  if ((func_graph != nullptr) && parallel::IsAutoParallelCareGraph(func_graph)) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
     auto res = info_[phase]->resource;
     // When using frontend compile cache, model parallel parameter layout graph is not saved.

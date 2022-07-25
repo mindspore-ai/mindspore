@@ -24,6 +24,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/comm_manager.h"
 
@@ -57,12 +58,8 @@ void AddCommOpReuseTag(const FuncGraphPtr &graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode != parallel::kAutoParallel && parallel_mode != parallel::kSemiAutoParallel) {
-    return;
-  }
-  if (!graph->has_flag(parallel::kAutoParallel) && !graph->has_flag(parallel::kSemiAutoParallel)) {
+
+  if (!parallel::IsAutoParallelCareGraph(graph)) {
     return;
   }
   AnfNodePtr return_node = graph->get_return();

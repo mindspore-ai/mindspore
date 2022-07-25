@@ -25,6 +25,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -128,7 +129,7 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
 
 static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   std::set<FuncGraphPtr> graph_sets;
-  if (!root->has_flag(parallel::kAutoParallel)) {
+  if (!parallel::IsAutoParallelCareGraph(root)) {
     return graph_sets;
   }
   std::set<AnfNodePtr> input_parameters;

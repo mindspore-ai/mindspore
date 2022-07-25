@@ -2393,12 +2393,6 @@ void StepSplitSens(const std::pair<CNodePtr, LossNodeInfo> &sens_loss_pair) {
   }
 }
 
-bool IsPynativeParallel() {
-  auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
-  auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-  return (execution_mode == kPynativeMode) && (parallel_mode == kSemiAutoParallel || parallel_mode == kAutoParallel);
-}
-
 // Sens node satisfies the following conditions: cnode(sens)-->cnode(tuple_getitem)-->cnode-->cnode(J)
 std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
@@ -3203,8 +3197,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(kAutoParallel) || ((parallel_mode != kAutoParallel) && (parallel_mode != kSemiAutoParallel)) ||
-      (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
+  if (!IsAutoParallelCareGraph(root) || (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
       MS_LOG(INFO) << "Strategies would be ignored in " << parallel_mode
                    << ", shard() only valid in [semi_]auto_parallel.";

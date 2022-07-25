@@ -21,6 +21,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_fusion.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/step_parallel.h"
@@ -32,7 +33,6 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   bool enable_all_reduce_fusion = ParallelContext::GetInstance()->enable_all_reduce_fusion();
   bool enable_all_gather_fusion = ParallelContext::GetInstance()->enable_all_gather_fusion();
   bool enable_reduce_scatter_fusion = ParallelContext::GetInstance()->enable_reduce_scatter_fusion();
@@ -40,7 +40,7 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(kAutoParallel) || ((parallel_mode != kAutoParallel) && (parallel_mode != kSemiAutoParallel)) ||
+  if (!IsAutoParallelCareGraph(root) ||
       ((!enable_all_reduce_fusion) && (!enable_all_gather_fusion) && (!enable_reduce_scatter_fusion)) ||
       (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY)) || graph_set.size() < 1) {
     return changes;

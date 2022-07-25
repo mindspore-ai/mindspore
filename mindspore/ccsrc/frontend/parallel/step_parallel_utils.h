@@ -69,6 +69,8 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
 TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map);
 void LabelGenMaskMicro(const FuncGraphPtr &root);
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes);
+bool IsPynativeParallel();
+bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
 }  // namespace parallel
 }  // namespace mindspore
 
