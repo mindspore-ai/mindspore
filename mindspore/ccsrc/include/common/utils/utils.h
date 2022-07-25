@@ -380,6 +380,7 @@ constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
+constexpr auto kResizeAreaOpName = "ResizeArea";
 constexpr auto kNonZeroOpName = "NonZero";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kConv3DTransposeOpName = "Conv3DTranspose";
@@ -894,6 +895,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentMinOpName,
                                               kSegmentSumOpName,
                                               kResizeBicubicOpName,
+                                              kResizeAreaOpName,
                                               kSegmentMeanOpName,
                                               kSegmentProdOpName,
                                               kNonZeroOpName};
