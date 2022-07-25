@@ -62,8 +62,8 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 
 // to do, now just to adapter benchmark
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-                    const std::vector<char> &cropto_lib_path) {
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
+                    const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
   return Build(model_path, model_type, model_context);
 }
 
