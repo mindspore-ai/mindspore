@@ -4,6 +4,7 @@ set(API_HEADER
         ${TOP_DIR}/include/api/format.h
         ${TOP_DIR}/include/api/status.h
         ${TOP_DIR}/include/api/types.h
+        ${TOP_DIR}/include/api/visible.h
         )
 set(ABSTRACT_HEADER
         ${CORE_DIR}/abstract/abstract_value.h

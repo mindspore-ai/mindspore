@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,7 @@
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
 #include "include/api/format.h"
-
-#ifndef MS_API
-#ifdef _WIN32
-#define MS_API __declspec(dllexport)
-#else
-#define MS_API __attribute__((visibility("default")))
-#endif
-#endif
+#include "include/api/visible.h"
 
 namespace mindspore {
 enum ModelType : uint32_t {
@@ -348,7 +341,7 @@ MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vecto
 
 std::string MSTensor::Name() const { return CharToString(CharName()); }
 
-void MSTensor::SetTensorName(const std::string &name) { return SetTensorName(StringToChar(name)); }
+void MSTensor::SetTensorName(const std::string &name) { SetTensorName(StringToChar(name)); }
 
 using Key = struct Key {
   const size_t max_key_len = 32;
