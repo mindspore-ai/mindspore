@@ -33,12 +33,12 @@ static inline int ShrinkGrad@SIMD_INSTRUCTION@(int index, const float *src0, con
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 src0_t = SIMD_LD_F32(src0 + index);
         SIMD_F32 src1_t = SIMD_LD_F32(src1 + index);
-        /* v0 = in > lamdb */
-        SIMD_MASK v0 = SIMD_CMPGT_F32(src1_t, pos_lamdb_v);
-        /* v1 = in < -lamdb */
-        SIMD_MASK v1 = SIMD_CMPLT_F32(src1_t, neg_lamdb_v);
-        /* out = (v0 | v1) & grad */
-        SIMD_ST_F32(dst + index, SIMD_AND_MASK_F32(SIMD_OR_MASK(v0, v1), src0_t));
+
+        SIMD_MASK mask0 = SIMD_CMPLE_F32(src1_t, pos_lamdb_v);
+        SIMD_MASK mask1 = SIMD_CMPLE_F32(neg_lamdb_v, src1_t);
+        SIMD_MASK mask = SIMD_AND_MASK(mask0, mask1);
+
+        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src0_t, SIMD_MOV_F32(0.0f), mask));
     }
     return index;
 }

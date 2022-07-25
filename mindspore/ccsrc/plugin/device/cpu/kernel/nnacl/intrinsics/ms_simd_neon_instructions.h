@@ -97,7 +97,6 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
 #define MS_AND128_MASK(src1, src2) vandq_u32(src1, src2)
-#define MS_OR128_MASK(src1, src2) vorrq_u32(src1, src2)
 
 #ifdef ENABLE_ARM64
 #define MS_GET_MAX128_F32 vmaxvq_f32
@@ -121,19 +120,19 @@ static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) {
 #endif
 static inline MS_FLOAT32X4 MS_OR128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
   MS_FLOAT32X4 result;
-  result[0] = (uint32_t)src1[0] | (uint32_t)src2[0];
-  result[1] = (uint32_t)src1[1] | (uint32_t)src2[1];
-  result[2] = (uint32_t)src1[2] | (uint32_t)src2[2];
-  result[3] = (uint32_t)src1[3] | (uint32_t)src2[3];
+  result[0] = (src1[0] == 0) ? src2[0] : src1[0];
+  result[1] = (src1[1] == 0) ? src2[1] : src1[1];
+  result[2] = (src1[2] == 0) ? src2[2] : src1[2];
+  result[3] = (src1[3] == 0) ? src2[3] : src1[3];
   return result;
 }
 
 static inline MS_FLOAT32X4 MS_AND128_MASK_F32(MS_UINT32X4 src1, MS_FLOAT32X4 src2) {
   MS_FLOAT32X4 result;
-  result[0] = src1[0] & (uint32_t)src2[0];
-  result[1] = src1[1] & (uint32_t)src2[1];
-  result[2] = src1[2] & (uint32_t)src2[2];
-  result[3] = src1[3] & (uint32_t)src2[3];
+  result[0] = (src1[0] == 0) ? 0.0f : src2[0];
+  result[1] = (src1[1] == 0) ? 0.0f : src2[1];
+  result[2] = (src1[2] == 0) ? 0.0f : src2[2];
+  result[3] = (src1[3] == 0) ? 0.0f : src2[3];
   return result;
 }
 
