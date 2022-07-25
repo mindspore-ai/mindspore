@@ -56,11 +56,16 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
     }
   }
 
+ private:
+  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                             int64_t unit_num) override;
+
  protected:
   float *tmp_output_ = nullptr;
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
   bool output_need_align_ = false;
+  bool use_batch_cut_flag_ = false;
 };
 }  // namespace mindspore::kernel
 

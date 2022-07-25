@@ -38,6 +38,11 @@ void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);
 
+// fp32 convolution common (im2col+gemm)
+void ConvFp32CutByBatch(const float *input_data, float *packed_input, const float *packed_weight,
+                        const float *bias_data, float *col_major_input, float *output_data, int task_id,
+                        const ConvParameter *conv_param);
+
 // common convolution output C4HW4, if out_channel mod 4 remains, just output real channel, no zeros padded.
 void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
                        float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);

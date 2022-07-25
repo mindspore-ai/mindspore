@@ -28,6 +28,7 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+#define CONV_MIN_CALC_BLOCK C32NUM
 #ifdef ENABLE_AVX
 #define OC_BLOCK C16NUM
 #elif defined(ENABLE_ARM32)
@@ -96,6 +97,40 @@ int ConvolutionCPUKernel::Prepare() {
   return RET_OK;
 }
 
+int ConvolutionCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num,
+                                                 int64_t per_unit_store_num, int64_t unit_num) {
+  if (conv_param_->input_batch_ % conv_param_->thread_num_ == 0) {
+    use_batch_cut_flag_ = true;
+    return RET_OK;
+  } else {
+    use_batch_cut_flag_ = false;
+  }
+
+  auto output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+#ifdef ENABLE_AVX
+  const int cal_num = C6NUM;
+#elif defined(ENABLE_SSE)
+  const int cal_num = C4NUM;
+#elif defined(ENABLE_ARM64)
+  int cal_num = 0;
+  if (output_hw <= C4NUM) {
+    cal_num = C4NUM;
+  } else if (output_hw <= C8NUM) {
+    cal_num = C8NUM;
+  } else {
+    cal_num = C12NUM;
+  }
+#elif defined(ENABLE_ARM32)
+  const int cal_num = C12NUM;
+#else
+  const int cal_num = C12NUM;
+#endif
+
+  conv_param_->thread_num_ = MSMIN(UP_DIV(UP_DIV(output_hw, cal_num), CONV_MIN_CALC_BLOCK), conv_param_->thread_num_);
+  thread_count_ = conv_param_->thread_num_;
+  return RET_OK;
+}
+
 int ConvolutionCPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
@@ -107,21 +142,34 @@ int ConvolutionCPUKernel::ReSize() {
     MS_LOG(ERROR) << "conv base init failed.";
     return ret;
   }
+  if (UpdateThreadNumPass(TC_PTYPE(type_), 0, 0, 0) != RET_OK) {
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
   if (out_tensors_[0]->format() != NC4HW4) {
-    ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-             reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    if (use_batch_cut_flag_) {
+      ConvFp32CutByBatch(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+                         reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    } else {
+      ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+               reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    }
   } else {
 #if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
     ConvFp32OutNC4HW4(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
                       reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
 #else
-    ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-             reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    if (use_batch_cut_flag_) {
+      ConvFp32CutByBatch(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+                         reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    } else {
+      ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+               reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
+    }
 #endif
   }
   return RET_OK;
