@@ -109,7 +109,7 @@ void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device:
       continue;
     }
 
-    auto real_input_index = AnfAlgo::GetRealInputIndex(output, 0);
+    auto real_input_index = AnfAlgo::GetInputIndexInGraph(output, 0);
     auto pre_node_out_device_address = AnfAlgo::GetPrevNodeOutputAddr(output, real_input_index);
     MS_EXCEPTION_IF_NULL(pre_node_out_device_address);
     auto ptr = pre_node_out_device_address->GetPtr();

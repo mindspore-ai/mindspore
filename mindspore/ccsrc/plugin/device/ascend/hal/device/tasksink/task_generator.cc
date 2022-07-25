@@ -191,7 +191,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       if (common::AnfAlgo::IsNoneInput(anf_node_ptr, i)) {
         continue;
       }
-      auto input_index_in_graph = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
+      auto input_index_in_graph = AnfAlgo::GetInputIndexInGraph(anf_node_ptr, i);
       auto device_address = AnfAlgo::GetPrevNodeOutputAddr(anf_node_ptr, input_index_in_graph);
       AddressPtr input = std::make_shared<Address>();
       MS_EXCEPTION_IF_NULL(input);
