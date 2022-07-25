@@ -106,6 +106,9 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(inputs[0]);
     auto input_shape = inputs[0]->GetShapeVector();
     len_ = static_cast<size_t>(input_shape.size());
+    if (len_ == 1 && input_shape[0] == ops::kDynamicRankValue) {
+      return true;
+    }
     if (len_ != ops::kFormatCHWShapeSize && len_ != ops::kFormatNCHWShapeSize) {
       MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the shape size of input argument[input_x] must "
                                   "be 3 or 4, but got:"

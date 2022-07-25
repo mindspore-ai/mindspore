@@ -30,6 +30,7 @@ constexpr size_t kFormatCHWShapeSize = 3;
 constexpr size_t kFormatNCHWShapeSize = 4;
 constexpr size_t kOutputSizeAttrSize = 2;
 constexpr int64_t kPyValueNone = -1;
+constexpr int64_t kDynamicRankValue = -2;
 
 // AdaptiveMaxPool2D operation. Refer to Python API @ref mindspore.nn.AdaptiveMaxPool2d for more details.
 class MIND_API AdaptiveMaxPool2D : public BaseOperator {
