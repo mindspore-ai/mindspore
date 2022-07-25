@@ -144,6 +144,7 @@ Element-by-Element Functions
     mindspore.ops.sinh
     mindspore.ops.sub
     mindspore.ops.tan
+    mindspore.ops.xlogy
 
 .. list-table::
    :widths: 50 50
@@ -193,6 +194,7 @@ Reduction Functions
 
     mindspore.ops.argmin
     mindspore.ops.logsumexp
+    mindspore.ops.max
     mindspore.ops.norm
 
 .. list-table::
@@ -271,6 +273,7 @@ Linear Algebraic Functions
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.ger
+    mindspore.ops.renorm
     mindspore.ops.tensor_dot
 
 Tensor Operation Functions
