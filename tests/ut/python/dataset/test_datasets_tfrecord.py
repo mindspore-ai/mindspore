@@ -362,7 +362,7 @@ def test_tfrecord_invalid_files():
     with pytest.raises(RuntimeError) as info:
         _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
     assert "cannot be opened" in str(info.value)
-    assert "not valid tfrecord files" in str(info.value)
+    assert "not valid TFRecordDataset files" in str(info.value)
     assert valid_file not in str(info.value)
     assert invalid_file in str(info.value)
     assert SCHEMA_FILE in str(info.value)

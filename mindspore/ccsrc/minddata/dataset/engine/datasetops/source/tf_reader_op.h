@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 #include <utility>
@@ -204,6 +205,7 @@ class TFReaderOp : public NonMappableLeafOp {
   std::vector<std::string> dataset_files_list_;
   std::vector<std::string> columns_to_load_;
   std::unique_ptr<DataSchema> data_schema_;
+  static std::set<std::string> large_files_;
 
   bool equal_rows_per_shard_;
 };
