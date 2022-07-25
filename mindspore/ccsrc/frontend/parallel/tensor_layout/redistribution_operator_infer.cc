@@ -73,9 +73,13 @@ Status RedistributionOperatorInfer::InferRedistributionOperator() {
         if (InferPermuteByAxis() == Status::FAILED) {
           return Status::FAILED;
         }
-        if (len_permute_by_axis == operator_list_.size()) break;
+        if (len_permute_by_axis == operator_list_.size()) {
+          break;
+        }
       }
-      if (len_split_by_axis == operator_list_.size()) break;
+      if (len_split_by_axis == operator_list_.size()) {
+        break;
+      }
     }
     // concat_by_axis operation
     if (InferConcatByAxis() == Status::FAILED) {

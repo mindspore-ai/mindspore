@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace parallel {
-using TensorLayoutPtr = std::shared_ptr<TensorLayout>;
 using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 
 typedef struct {
@@ -68,11 +67,11 @@ class PipelineTransformer {
   void RemoveMonadNode();
   std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param);
   AnfNodePtr ActualOp(const AnfNodePtr &node);
-  bool IsParameterGraph(const AnfNodePtr &node);
+  bool IsParameterGraph(const AnfNodePtr &node) const;
   AnfNodeIndexSet GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair, NodeUsersMap *node_users_map);
   AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
                                   const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> &ops);
-  ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size);
+  ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size) const;
   std::vector<AnfNodePtr> HandleSharedParameter();
   SendAttr InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage, const ValuePtr &value);
   AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
@@ -82,7 +81,7 @@ class PipelineTransformer {
   void CutBorderForNode(const FuncGraphPtr &graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *send_ops,
                         std::vector<AnfNodePtr> *receive_ops);
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
-                   const std::string &tag);
+                   const std::string &tag) const;
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
@@ -90,7 +89,7 @@ class PipelineTransformer {
   bool LabelParameterStart(const FuncGraphPtr &graph, const CNodePtr &graph_cnode);
   bool NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_cnode);
   CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
-  bool IsPipelineCareNode(const CNodePtr &cnode);
+  bool IsPipelineCareNode(const CNodePtr &cnode) const;
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter);

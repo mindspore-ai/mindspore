@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-#define MIN_SLICE_NUM 1
+constexpr int MIN_SLICE_NUM = 1;
 
 using Dimensions = Shape;
 using Strategys = std::vector<Dimensions>;
@@ -48,6 +48,17 @@ class Strategy {
     } else {
       internal_stragies_ = {};
     }
+  }
+
+  Strategy &operator=(const Strategy &another_stra) {
+    inputs_ = another_stra.GetInputDim();
+    internal_size_ = another_stra.GetInternalSize();
+    if (internal_size_ != 0) {
+      internal_stragies_ = another_stra.GetInternalStrategies();
+    } else {
+      internal_stragies_ = {};
+    }
+    return *this;
   }
 
   ~Strategy() = default;

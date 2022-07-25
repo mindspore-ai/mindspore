@@ -56,7 +56,7 @@ Status ShapeToAccumulateProductReverse(const Shape &shape, Shape *shape_accum) {
       MS_LOG(ERROR) << "element of shape should not be zero";
       return Status::FAILED;
     }
-    (void)shape_accum->insert(shape_accum->begin(), size);
+    (void)shape_accum->insert(shape_accum->cbegin(), size);
   }
   return Status::SUCCESS;
 }
@@ -104,7 +104,7 @@ Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *
       MS_LOG(DEBUG) << "shape_accum is not a accumulate product in ascending order";
       return Status::FAILED;
     }
-    (void)shape->insert(shape->begin(), static_cast<int64_t>((*iter) / value));
+    (void)shape->insert(shape->cbegin(), static_cast<int64_t>((*iter) / value));
     value = *iter;
   }
   return Status::SUCCESS;
@@ -204,19 +204,19 @@ Status ExpandAccumulateProduct(const Shape &in_accum_reverse, const Shape &expan
       return Status::FAILED;
     }
     if (*in_riter > *expand_riter) {
-      (void)out_accum_reverse->insert(out_accum_reverse->begin(), *expand_riter);
+      (void)out_accum_reverse->insert(out_accum_reverse->cbegin(), *expand_riter);
       ++expand_riter;
     } else if (*in_riter == *expand_riter) {
-      (void)out_accum_reverse->insert(out_accum_reverse->begin(), *expand_riter);
+      (void)out_accum_reverse->insert(out_accum_reverse->cbegin(), *expand_riter);
       ++in_riter;
       ++expand_riter;
     } else {
-      (void)out_accum_reverse->insert(out_accum_reverse->begin(), *in_riter);
+      (void)out_accum_reverse->insert(out_accum_reverse->cbegin(), *in_riter);
       ++in_riter;
     }
   }
   while (in_riter != in_accum_reverse.rend()) {
-    (void)out_accum_reverse->insert(out_accum_reverse->begin(), *in_riter);
+    (void)out_accum_reverse->insert(out_accum_reverse->cbegin(), *in_riter);
     ++in_riter;
   }
   return Status::SUCCESS;

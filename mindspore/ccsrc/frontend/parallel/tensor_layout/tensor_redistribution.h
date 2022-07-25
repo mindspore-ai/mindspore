@@ -17,11 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_
 
-#include <cstdint>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include "ir/value.h"

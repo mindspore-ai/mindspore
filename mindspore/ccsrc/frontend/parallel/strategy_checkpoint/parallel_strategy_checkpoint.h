@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STRATEGY_CHEKCPOINT_PARALLEL_STRATEGY_CHECKPOINT_H_
 
 #include <string>
-#include <utility>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "utils/hash_map.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
@@ -39,18 +39,14 @@ using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 class StrategyCheckpoint {
  public:
   StrategyCheckpoint() {
-    current_stage_ = 0;
     load_file_ = "";
-    load_checkpoint_on_ = false;
     save_file_ = "";
-    save_checkpoint_on_ = false;
     group_info_save_file_ = "";
-    group_info_save_on_ = false;
   }
   ~StrategyCheckpoint() = default;
 
   Status Load(StrategyMap *strategy_map);
-  Status LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map);
+  Status LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) const;
   Status Save(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map, ManualShapeMap *manual_shape_map);
   Status SaveGroupInfo(const GroupInfoMap &group_info_map, const RankList &restore_rank_list);
   bool group_info_save_on() const { return group_info_save_on_; }
@@ -62,13 +58,13 @@ class StrategyCheckpoint {
  private:
   std::string load_file_;
   std::string save_file_;
-  bool load_checkpoint_on_;
-  bool save_checkpoint_on_;
+  bool load_checkpoint_on_ = false;
+  bool save_checkpoint_on_ = false;
   bool CheckPointExit(const std::string path) const;
   bool CheckPath(const std::string path) const;
-  int64_t current_stage_;
+  int64_t current_stage_ = 0;
   std::string group_info_save_file_;
-  bool group_info_save_on_;
+  bool group_info_save_on_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore
