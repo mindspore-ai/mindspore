@@ -322,6 +322,7 @@ constexpr auto kMaxPercentile = "max_percentile";
 constexpr auto kSearchRange = "search_range";
 constexpr auto kSearchStep = "search_step";
 constexpr auto kWithOffset = "with_offset";
+constexpr auto kLinearSumAssignment = "linear_sum_assignment";
 
 enum Index : size_t {
   kInputIndex0 = 0,
