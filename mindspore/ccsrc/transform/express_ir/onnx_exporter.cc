@@ -830,7 +830,7 @@ class OpNameInfo {
 
   OpNameInfo &Attr(const std::string &attr_name, const std::string &onnx_attr_name,
                    onnx::AttributeProto_AttributeType onnx_attr_type, const GenAttrFuncType &fn_gen_attr) {
-    op_attrs_.emplace_back(OpAttrInfo(attr_name, onnx_attr_name, onnx_attr_type, fn_gen_attr));
+    (void)op_attrs_.emplace_back(OpAttrInfo(attr_name, onnx_attr_name, onnx_attr_type, fn_gen_attr));
     return *this;
   }
 
@@ -1843,7 +1843,7 @@ void OnnxExporter::ExportPrimExpandDims(const FuncGraphPtr &, const CNodePtr &no
   if (axis < 0) {
     axis = axis + kOneNumLong + SizeToLong(x_shape->shape().size());
   }
-  new_shape.insert(new_shape.begin() + axis, kOneNum);
+  (void)new_shape.insert(new_shape.begin() + axis, kOneNum);
   auto new_shape_value = MakeValue<std::vector<int64_t>>(new_shape);
   auto shape = NewValueNode(new_shape_value)->cast<AnfNodePtr>();
   std::string name_shape;
@@ -2854,8 +2854,8 @@ void ExportLSTMWeights(const CNodePtr &node, const std::string &node_name, const
   std::vector<std::string> split_outputs = {input_weights_name, hidden_weights_name};
   if (has_bias) {
     if (target_device == "GPU") {
-      split_sizes.insert(split_sizes.end(), {gate_size, gate_size});
-      split_outputs.insert(split_outputs.end(), {input_bias_name, hidden_bias_name});
+      (void)split_sizes.insert(split_sizes.end(), {gate_size, gate_size});
+      (void)split_outputs.insert(split_outputs.end(), {input_bias_name, hidden_bias_name});
     } else if (target_device == "CPU") {
       split_sizes.push_back(gate_size);
       split_outputs.push_back(input_bias_name);
@@ -2981,8 +2981,8 @@ void OnnxExporter::ExportPrimReverseV2(const FuncGraphPtr &, const CNodePtr &nod
 
   std::vector<int64_t> starts_vec(n_axes, -1);
   std::vector<int64_t> ends_vec(n_axes);
-  std::transform(axes_vec.begin(), axes_vec.end(), ends_vec.begin(),
-                 [&shape](int64_t ax) { return -shape.at(ax) - 1; });
+  (void)std::transform(axes_vec.begin(), axes_vec.end(), ends_vec.begin(),
+                       [&shape](int64_t ax) { return -shape.at(ax) - 1; });
   std::vector<int64_t> steps_vec(n_axes, -1);
 
   AddSliceOp(input, output, starts_vec, ends_vec, axes_vec, steps_vec, graph_proto);
@@ -3035,9 +3035,9 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &func_graph, co
   size_t flat_begin_index = RavelIndex(begin, x_shape);
 
   std::vector<int64_t> end_inclusive;
-  std::transform(end.begin(), end.end(), std::back_inserter(end_inclusive), [](auto x) { return x - 1; });
-  std::transform(x_shape.begin() + end.size(), x_shape.end(), std::back_inserter(end_inclusive),
-                 [](auto x) { return x - 1; });
+  (void)std::transform(end.begin(), end.end(), std::back_inserter(end_inclusive), [](auto x) { return x - 1; });
+  (void)std::transform(x_shape.begin() + end.size(), x_shape.end(), std::back_inserter(end_inclusive),
+                       [](auto x) { return x - 1; });
   size_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
   size_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
