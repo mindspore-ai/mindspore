@@ -89,6 +89,8 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::
 }
 
 std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Output node: " << node->fullname_with_scope();
   std::vector<KernelWithIndex> ret;
   std::vector<KernelWithIndex> ret_empty;
   // The MakeTuple/MakeSparse node need expand and recurse.
@@ -126,6 +128,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     } else {
       (void)ret.emplace_back(node, 0);
     }
+    MS_LOG(DEBUG) << "Output value node: " << node->fullname_with_scope() << ", value num: " << ret.size();
     return ret;
   }
 
@@ -340,6 +343,7 @@ std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithIndex(const AnfNodePtr &no
   // Unify the output of the front and back end to the ValueTuple
   for (auto &output_with_index : ret) {
     auto value_node = output_with_index.first;
+    MS_EXCEPTION_IF_NULL(value_node);
     if (!value_node->isa<ValueNode>()) {
       continue;
     }
