@@ -94,7 +94,7 @@ int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const Para
   auto weight_q_min = per_channel ? weight_channel_q_min_ : weight_layer_q_min_;
   auto weight_q_max = per_channel ? weight_channel_q_max_ : weight_layer_q_max_;
   auto symmetric = per_channel ? weight_channel_symmetric_ : weight_layer_symmetric_;
-  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max,
+  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
                                             weight_q_min, bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
                                             preferred_dim, symmetric);
   if (status != RET_OK) {
@@ -118,7 +118,7 @@ int FullQuantQuantizer::DoValueNodeWeightQuant(const CNodePtr &cnode, const Valu
   auto weight_q_min = per_channel ? weight_channel_q_min_ : weight_layer_q_min_;
   auto weight_q_max = per_channel ? weight_channel_q_max_ : weight_layer_q_max_;
   auto symmetric = per_channel ? weight_channel_symmetric_ : weight_layer_symmetric_;
-  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max,
+  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
                                             weight_q_min, bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
                                             preferred_dim, symmetric);
   if (status != RET_OK) {

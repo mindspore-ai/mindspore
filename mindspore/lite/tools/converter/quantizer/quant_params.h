@@ -41,6 +41,8 @@ constexpr float kRatio = 10.0;
 constexpr int kCpuBindMode = 1;
 constexpr int kPrimIndex = 0;
 constexpr int kPrimOffset = 1;
+constexpr int kU8ZeroPointOffset = 128;
+constexpr int kQuantRange = 127;
 
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,

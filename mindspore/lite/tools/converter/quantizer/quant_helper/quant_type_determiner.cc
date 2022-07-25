@@ -121,6 +121,7 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
 }
 
 int QuantTypeDeterminer::Determine() {
+  CHECK_NULL_RETURN(func_graph_);
   auto nodes = func_graph_->GetOrderedCnodes();
   for (auto const &cnode : nodes) {
     auto quant_holder = GetCNodeQuantHolder(cnode);
@@ -130,10 +131,10 @@ int QuantTypeDeterminer::Determine() {
     }
     if (DetermineQuantWeight(cnode)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " set QuantType_QUANT_WEIGHT";
-      quant_holder->set_quant_type(QuantType_QUANT_WEIGHT);
+      quant_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
     } else if (DetermineQuantAll(cnode)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " set QuantType_QUANT_ALL";
-      quant_holder->set_quant_type(QuantType_QUANT_ALL);
+      quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
     } else {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " Remove unused quant info";
       quant_holder->ClearQuantParams();

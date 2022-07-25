@@ -35,6 +35,7 @@
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
+#include "tools/converter/parser/tf/tf_fake_quant_adjust.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/unify_format.h"
@@ -1226,6 +1227,12 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
     MS_CHECK_TRUE_RET(functionalize_control_op_pass != nullptr, RET_ERROR);
     if (!functionalize_control_op_pass->Run(func_graph)) {
       MS_LOG(ERROR) << "functionalize control op pass failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    auto fake_quant_adjust = std::make_shared<TFFakeQuantAdjust>();
+    if (!fake_quant_adjust->Adjust(func_graph)) {
+      MS_LOG(ERROR) << "tf fake quant adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
