@@ -31,7 +31,8 @@ resize_nearest_neighbor_grad_op_info = TBERegOp("ResizeNearestNeighborGrad") \
     .input(0, "grads", False, "required", "all") \
     .input(1, "size", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F32_5HD, DataType.I32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_5HD, DataType.I32_Default, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_5HD, DataType.I64_Default, DataType.F32_5HD) \
     .get_op_info()
 
 

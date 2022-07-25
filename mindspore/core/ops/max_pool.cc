@@ -29,66 +29,20 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 constexpr size_t kSizeFour = 4;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
-void MaxPool::set_pad_mode(const PadMode &pad_mode) {
-  int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
+
+void RefreshNegativeShape(std::vector<int64_t> *shape) {
+  if (IsDynamic(*shape)) {
+    shape->clear();
+  }
 }
 
-PadMode MaxPool::get_pad_mode() const { return PadMode(GetValue<int64_t>(GetAttr(kPadMode))); }
-void MaxPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)this->AddAttr(
-    kKernelSize, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
-}
-
-std::vector<int64_t> MaxPool::get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kKernelSize)); }
-void MaxPool::set_strides(const std::vector<int64_t> &strides) {
-  (void)this->AddAttr(kStrides,
-                      api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
-}
-
-std::vector<int64_t> MaxPool::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr(kStrides)); }
-
-void MaxPool::set_format(const Format &format) {
-  int64_t f = format;
-  (void)this->AddAttr(kFormat, api::MakeValue(f));
-}
-
-Format MaxPool::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
-
-void MaxPool::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr(kPad, api::MakeValue(pad)); }
-
-std::vector<int64_t> MaxPool::get_pad() const {
-  auto value_ptr = GetAttr(kPad);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
-
-void MaxPool::set_round_mode(const RoundMode &round_mode) {
-  int64_t swi = round_mode;
-  (void)this->AddAttr(kRoundMode, api::MakeValue(swi));
-}
-
-RoundMode MaxPool::get_round_mode() const {
-  auto value_ptr = GetAttr(kRoundMode);
-  return RoundMode(GetValue<int64_t>(value_ptr));
-}
-
-void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride, const PadMode &pad_mode,
-                   const Format &format, const std::vector<int64_t> &pad, const RoundMode &round_mode) {
-  this->set_pad_mode(pad_mode);
-  this->set_kernel_size(kernel_size);
-  this->set_strides(stride);
-  this->set_format(format);
-  this->set_pad(pad);
-  this->set_round_mode(round_mode);
-}
-
-namespace {
 void ConvertShapeNHWCToNCHW(std::vector<int64_t> *nhwc_shape) {
   if (nhwc_shape->empty()) {
     return;
@@ -171,6 +125,8 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
+  RefreshNegativeShape(&min_shape);
+  RefreshNegativeShape(&max_shape);
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of input", in_shape.size(), kEqual, kSizeFour, op_name);
   if (data_format == NHWC) {
     ConvertShapeNHWCToNCHW(&in_shape);
@@ -244,6 +200,60 @@ TypePtr MaxPoolInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   return type;
 }
 }  // namespace
+
+void MaxPool::set_pad_mode(const PadMode &pad_mode) {
+  int64_t swi = pad_mode;
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
+}
+
+PadMode MaxPool::get_pad_mode() const { return PadMode(GetValue<int64_t>(GetAttr(kPadMode))); }
+void MaxPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
+  (void)this->AddAttr(
+    kKernelSize, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
+}
+
+std::vector<int64_t> MaxPool::get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kKernelSize)); }
+void MaxPool::set_strides(const std::vector<int64_t> &strides) {
+  (void)this->AddAttr(kStrides,
+                      api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
+}
+
+std::vector<int64_t> MaxPool::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr(kStrides)); }
+
+void MaxPool::set_format(const Format &format) {
+  int64_t f = format;
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
+}
+
+Format MaxPool::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
+
+void MaxPool::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr(kPad, api::MakeValue(pad)); }
+
+std::vector<int64_t> MaxPool::get_pad() const {
+  auto value_ptr = GetAttr(kPad);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void MaxPool::set_round_mode(const RoundMode &round_mode) {
+  int64_t swi = round_mode;
+  (void)this->AddAttr(kRoundMode, api::MakeValue(swi));
+}
+
+RoundMode MaxPool::get_round_mode() const {
+  auto value_ptr = GetAttr(kRoundMode);
+  return RoundMode(GetValue<int64_t>(value_ptr));
+}
+
+void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride, const PadMode &pad_mode,
+                   const Format &format, const std::vector<int64_t> &pad, const RoundMode &round_mode) {
+  this->set_pad_mode(pad_mode);
+  this->set_kernel_size(kernel_size);
+  this->set_strides(stride);
+  this->set_format(format);
+  this->set_pad(pad);
+  this->set_round_mode(round_mode);
+}
+
 MIND_API_OPERATOR_IMPL(MaxPool, BaseOperator);
 abstract::AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<abstract::AbstractBasePtr> &input_args) {

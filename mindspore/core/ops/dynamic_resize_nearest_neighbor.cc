@@ -69,6 +69,8 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
     }
   } else if (size->isa<abstract::AbstractTuple>()) {
     size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_v, prim_name);
+  } else if (size->isa<abstract::AbstractList>()) {
+    size_value = CheckAndConvertUtils::CheckListInt("size", size_v, prim_name);
   }
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_value.size()), kEqual, size_size,
                                            prim_name);
@@ -78,9 +80,13 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
   output_shape.push_back(size_value[1]);
   if (!x_shape_ptr->IsDynamic() && min_size.empty()) {
     return std::make_shared<abstract::Shape>(output_shape);
-  } else if (x_shape_ptr->IsDynamic() && min_size.empty()) {
+  }
+  if (x_shape_ptr->IsDynamic() && min_size.empty()) {
     auto x_min_shape = x_shape_ptr->min_shape();
     auto x_max_shape = x_shape_ptr->max_shape();
+    if (x_min_shape.empty() || x_max_shape.empty()) {
+      return std::make_shared<abstract::Shape>(output_shape);
+    }
     min_shape.push_back(x_min_shape[0]);
     min_shape.push_back(x_min_shape[1]);
     min_shape.push_back(size_value[0]);
@@ -101,6 +107,9 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
   } else {
     auto x_min_shape = x_shape_ptr->min_shape();
     auto x_max_shape = x_shape_ptr->max_shape();
+    if (x_min_shape.empty() || x_max_shape.empty()) {
+      return std::make_shared<abstract::Shape>(output_shape);
+    }
     min_shape.push_back(x_min_shape[0]);
     min_shape.push_back(x_min_shape[1]);
     min_shape.push_back(min_size[0]);

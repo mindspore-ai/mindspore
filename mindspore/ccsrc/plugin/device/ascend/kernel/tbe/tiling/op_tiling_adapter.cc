@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace device {
 namespace tiling {
+namespace {
 constexpr auto COMPILE_INFO_KEY = "compile_info_key";
 constexpr auto COMPILE_INFO_JSON = "compile_info_json";
 constexpr auto ATOMIC_COMPILE_INFO_KEY = "_atomic_compile_info_key";
@@ -43,6 +44,15 @@ constexpr auto CONSTANTOP = "Constant";
 constexpr auto ATTR_NAME_WEIGHTS = "value";
 constexpr auto PARAM_DYNAMIC = "dynamic";
 constexpr auto EXT_ATTR_ATOMIC_WORKSPACE_INFO = "sub_node_workspace_info";
+
+bool SkipOpConvert(const std::string &op_type) {
+  static const std::unordered_set<std::string> kSkipOpTypeSet = {"Cast", "Pad"};
+  if (kSkipOpTypeSet.count(op_type) != 0) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
 
 std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) const {
   static const std::map<std::string, std::string> kOpTypeMap = {
@@ -57,6 +67,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"IOU", "Iou"},
     {"DynamicBroadcastTo", "BroadcastTo"},
     {"DynamicResizeNearestNeighbor", "ResizeNearestNeighborV2"},
+    {"ResizeNearestNeighborGrad", "ResizeNearestNeighborV2Grad"},
     {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
     {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
     {"ResizeBilinearGrad", "ResizeBilinearV2Grad"},
@@ -82,7 +93,8 @@ std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(cons
   static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
     {"ArgMaxWithValue", {{"axis", "dimension"}}},
     {"ArgMinWithValue", {{"axis", "dimension"}}},
-    {"DepthToSpace", {{"block_size", "block_size"}}}};
+    {"DepthToSpace", {{"block_size", "block_size"}}},
+    {"Conv2D", {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}}}};
   auto iter = op_type_map.find(op_type);
   return iter == op_type_map.end() ? attrs : iter->second;
 }
@@ -161,35 +173,39 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto primitive = GetCNodePrimitive(node);
-  if (primitive == nullptr) {
+  if (primitive == nullptr || SkipOpConvert(primitive->name())) {
     return;
   }
   auto to_convert_attr = GetConvertAttr(primitive->name());
-  if (to_convert_attr.empty()) {
-    MS_LOG(DEBUG) << "The attrs of node " << primitive->name() << " does not need to be converted.";
-    return;
-  }
-  for (const auto &attr : primitive->attrs()) {
-    auto &key = attr.first;
-    auto iter = to_convert_attr.find(key);
-    if (iter == to_convert_attr.end()) {
+  auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  for (const auto &attr : op_info_ptr->attrs_ptr()) {
+    auto attr_name = attr->name();
+    auto value = primitive->GetAttr(attr_name);
+    if (value == nullptr) {
+      MS_LOG(INFO) << attr_name << "'s value is empty!";
       continue;
     }
-    auto &new_key = iter->second;
-    auto &value = attr.second;
+
+    auto iter = to_convert_attr.find(attr_name);
+    if (iter != to_convert_attr.end()) {
+      attr_name = iter->second;
+    }
     MS_EXCEPTION_IF_NULL(value);
     // Should add more types.
     if (value->isa<Int64Imm>()) {
-      (void)::ge::AttrUtils::SetInt(*(*op_desc), new_key, GetValue<int64_t>(value));
+      (void)::ge::AttrUtils::SetInt(*(*op_desc), attr_name, GetValue<int64_t>(value));
     } else if (value->isa<StringImm>()) {
-      (void)::ge::AttrUtils::SetStr(*(*op_desc), new_key, GetValue<string>(value));
+      (void)::ge::AttrUtils::SetStr(*(*op_desc), attr_name, GetValue<string>(value));
     } else if (value->isa<FP32Imm>()) {
-      (void)::ge::AttrUtils::SetFloat(*(*op_desc), new_key, GetValue<float>(value));
+      (void)::ge::AttrUtils::SetFloat(*(*op_desc), attr_name, GetValue<float>(value));
     } else if (value->isa<BoolImm>()) {
-      (void)::ge::AttrUtils::SetBool(*(*op_desc), new_key, GetValue<bool>(value));
+      (void)::ge::AttrUtils::SetBool(*(*op_desc), attr_name, GetValue<bool>(value));
+    } else if (value->isa<ValueSequence>()) {
+      (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
     } else {
-      MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << key << "' with value: " << value->ToString()
-                        << ", perhaps you should add more supported type.";
+      MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << attr_name
+                        << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";
     }
   }
 }
