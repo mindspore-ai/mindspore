@@ -58,8 +58,13 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   const auto &output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
-  if ((in_shape_vector.size() != kFormatCHWShapeSize && in_shape_vector.size() != kFormatNCHWShapeSize) ||
-      output_size.size() != kOutputSizeAttrSize) {
+  if (in_shape_vector.size() == 1) {
+    if (in_shape_vector[0] != kDynamicRankValue) {
+      MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the dynamic rank must be -2, but got:"
+                               << in_shape_vector[0];
+    }
+  } else if ((in_shape_vector.size() != kFormatCHWShapeSize && in_shape_vector.size() != kFormatNCHWShapeSize) ||
+             output_size.size() != kOutputSizeAttrSize) {
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the shape size of input argument[input_x] must be 3 "
                                 "or 4 and the size of attr[output_size] must be 2, but got shape size:"
                              << in_shape_vector.size() << " and output_size size:" << output_size.size();
@@ -67,12 +72,14 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
   }
 
   // Update the output shape by output size and input shape.
-  auto input_size_iter = in_shape_vector.rbegin();
-  auto output_size_iter = output_size.rbegin();
-  for (; output_size_iter != output_size.rend(); output_size_iter++, input_size_iter++) {
-    // If output size is none, the input shape should be used.
-    if (*output_size_iter != kPyValueNone) {
-      *input_size_iter = *output_size_iter;
+  if (in_shape_vector.size() != 1) {
+    auto input_size_iter = in_shape_vector.rbegin();
+    auto output_size_iter = output_size.rbegin();
+    for (; output_size_iter != output_size.rend(); output_size_iter++, input_size_iter++) {
+      // If output size is none, the input shape should be used.
+      if (*output_size_iter != kPyValueNone) {
+        *input_size_iter = *output_size_iter;
+      }
     }
   }
 
