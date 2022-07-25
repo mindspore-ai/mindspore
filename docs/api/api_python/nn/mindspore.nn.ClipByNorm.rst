@@ -13,20 +13,16 @@ mindspore.nn.ClipByNorm
 
     其中 :math:`L_2(X)` 是 :math:`X` 的 :math:`L_2` 范数。
 
-    **参数：**
+    参数：
+        - **axis** (Union[None, int, tuple(int)]) - 指定在哪个维度上计算 :math:`L_2` 范数。如果为None，则计算所有维度。默认值：None。
 
-    - **axis** (Union[None, int, tuple(int)]) - 指定在哪个维度上计算 :math:`L_2` 范数。如果为None，则计算所有维度。默认值：None。
+    输入：
+        - **x** (Tensor) - 输入n维的Tensor，数据类型为float32或float16。
+        - **clip_norm** (Tensor) - shape为 :math:`()` 或 :math:`(1)` 的Tensor。或者其shape可以广播到 `x` 的shape。
 
-    **输入：**
+    输出：
+        Tensor，裁剪后的Tensor与输入 `x` 的shape相同，数据类型为float32。
 
-    - **x** (Tensor) - 输入n维的Tensor，数据类型为float32或float16。
-    - **clip_norm** (Tensor) - shape为 :math:`()` 或 :math:`(1)` 的Tensor。或者其shape可以广播到 `x` 的shape。
-
-    **输出：**
-
-    Tensor，裁剪后的Tensor与输入 `x` 的shape相同，数据类型为float32。
-
-    **异常：**
-
-    - **TypeError** - `axis` 不是None、int、或tuple。
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    异常：
+        - **TypeError** - `axis` 不是None、int、或tuple。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。

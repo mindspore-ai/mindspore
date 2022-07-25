@@ -16,23 +16,19 @@ mindspore.nn.Hardtanh
 
     线性区域范围 :math:`[-1, 1]` 可以使用 `min_val` 和 `max_val` 进行调整。
 
-    **参数：**
+    参数：
+        - **min_val** (Union[int, float]) - 线性区域范围的最小值。 默认值：-1.0。
+        - **max_val** (Union[int, float]) - 线性区域范围的最大值。 默认值：1.0。
 
-    - **min_val** (Union[int, float]) - 线性区域范围的最小值。 默认值：-1.0。
-    - **max_val** (Union[int, float]) - 线性区域范围的最大值。 默认值：1.0。
+    输入：
+        - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持0-7维。在GPU平台上支持0-4维。
 
-    **输入：**
- 
-    - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持0-7维。在GPU平台上支持0-4维。
+    输出：
+        Tensor，数据类型和shape与 `x` 的相同。
 
-    **输出：**
-
-    Tensor，数据类型和shape与 `x` 的相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 不是Tensor。
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-    - **TypeError** - `min_val` 的数据类型既不是int也不是float。
-    - **TypeError** - `max_val` 的数据类型既不是int也不是float。
-    - **ValueError** - `max_val` 小于 `min_val` 。
+    异常：
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `min_val` 的数据类型既不是int也不是float。
+        - **TypeError** - `max_val` 的数据类型既不是int也不是float。
+        - **ValueError** - `max_val` 小于 `min_val` 。

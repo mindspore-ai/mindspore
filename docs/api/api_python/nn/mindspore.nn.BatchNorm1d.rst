@@ -15,29 +15,25 @@ mindspore.nn.BatchNorm1d
     .. note::
         BatchNorm的实现在图模式和PyNative模式下是不同的，因此不建议在网络初始化后更改其模式。
 
-    **参数：**
+    参数：
+        - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N, C)` 中的 `C` 。
+        - **eps** (float) - :math:`\epsilon` 加在分母上的值，以确保数值稳定。默认值：1e-5。
+        - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.9。
+        - **affine** (bool) - bool类型。设置为True时，可学习到 :math:`\gamma` 和 :math:`\beta` 值。默认值：True。
+        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
+        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
+        - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
+        - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
+        - **use_batch_statistics** (bool) - 如果为True，则使用当前批次数据的平均值和方差值。如果为False，则使用指定的平均值和方差值。如果为None，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值：None。
 
-    - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N, C)` 中的 `C` 。
-    - **eps** (float) - :math:`\epsilon` 加在分母上的值，以确保数值稳定。默认值：1e-5。
-    - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.9。
-    - **affine** (bool) - bool类型。设置为True时，可学习到 :math:`\gamma` 和 :math:`\beta` 值。默认值：True。
-    - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
-    - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
-    - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
-    - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
-    - **use_batch_statistics** (bool) - 如果为True，则使用当前批次数据的平均值和方差值。如果为False，则使用指定的平均值和方差值。如果为None，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值：None。
+    输入：
+        - **x** (Tensor) - 输入shape为 :math:`(N, C_{in})` 的Tensor。
 
-    **输入：**
+    输出：
+        Tensor，归一化后的Tensor，shape为 :math:`(N, C_{out})` 。
 
-    - **x** (Tensor) - 输入shape为 :math:`(N, C_{in})` 的Tensor。
-
-    **输出：**
-
-    Tensor，归一化后的Tensor，shape为 :math:`(N, C_{out})` 。
-
-    **异常：**
-
-    - **TypeError** - `num_features` 不是整数。
-    - **TypeError** - `eps` 不是浮点数。
-    - **ValueError** - `num_features` 小于1。
-    - **ValueError** - `momentum` 不在范围[0, 1]内。
+    异常：
+        - **TypeError** - `num_features` 不是整数。
+        - **TypeError** - `eps` 不是浮点数。
+        - **ValueError** - `num_features` 小于1。
+        - **ValueError** - `momentum` 不在范围[0, 1]内。

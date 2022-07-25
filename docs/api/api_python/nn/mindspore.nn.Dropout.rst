@@ -12,23 +12,19 @@ mindspore.nn.Dropout
     .. note::
         训练过程中每步对同一通道（或神经元）独立进行丢弃。
 
-    **参数：**
+    参数：
+        - **keep_prob** (float) - 输入神经元保留率，数值范围在0到1之间。例如，rate=0.9，删除10%的神经元。默认值：0.5。
+        - **dtype** (:class:`mindspore.dtype`) - `x` 的数据类型。默认值：mstype.float32。
 
-    - **keep_prob** (float) - 输入神经元保留率，数值范围在0到1之间。例如，rate=0.9，删除10%的神经元。默认值：0.5。
-    - **dtype** (:class:`mindspore.dtype`) - `x` 的数据类型。默认值：mstype.float32。
+    输入：
+        - **x** (Tensor) - Dropout的输入，任意维度的Tensor。数据类型必须为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor，输出为Tensor，其shape与 `x` shape相同。
 
-    - **x** (Tensor) - Dropout的输入，任意维度的Tensor。数据类型必须为float16或float32。
-
-    **输出：**
-
-    Tensor，输出为Tensor，其shape与 `x` shape相同。
-
-    **异常：**
-
-    - **TypeError** - `keep_prob` 不是浮点数。
-    - **TypeError** - `x` 的dtype既不是float16也不是float32。
-    - **ValueError** - `keep_prob` 不在范围(0, 1]内。
-    - **ValueError** - `x` 的shape长度小于1。
+    异常：
+        - **TypeError** - `keep_prob` 不是浮点数。
+        - **TypeError** - `x` 的dtype既不是float16也不是float32。
+        - **ValueError** - `keep_prob` 不在范围(0, 1]内。
+        - **ValueError** - `x` 的shape长度小于1。
 

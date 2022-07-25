@@ -21,17 +21,14 @@ mindspore.nn.AdaSumByGradWrapCell
             本接口推荐应用于半自动并行或者全自动并行模式。针对数据并行模式，推荐使用mindspore.boost功能以使用AdaSum。
             使用本接口时，训练的卡的数量必须是2的幂，并且至少需要16张卡。目前，使用本接口时不支持优化器并行和流水线并行。
 
-    **参数：**
+    参数：
+        - **optimizer** (nn.optimizer) - 必须是单输入的优化器。
 
-    - **optimizer** (nn.optimizer) - 必须是单输入的优化器。
+    输入：
+        - **grads** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同，与所传优化器的输入一致。
 
-    **输入：**
-
-    - **grads** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同，与所传优化器的输入一致。
-
-    **异常：**
-
-    - **RuntimeError** - `parallel_mode` 使用了 `stand_alone` 模式， AdaSum仅支持在分布式场景下使用。
-    - **RuntimeError** - 同时使用了优化器并行， 暂时不支持在优化器并行场景下使用AdaSum。
-    - **RuntimeError** - 同时使用了流水线并行， 暂时不支持在流水线并行场景下使用AdaSum。
-    - **RuntimeError** - `device_num` 不是2的幂，或者小于16。
+    异常：
+        - **RuntimeError** - `parallel_mode` 使用了 `stand_alone` 模式， AdaSum仅支持在分布式场景下使用。
+        - **RuntimeError** - 同时使用了优化器并行， 暂时不支持在优化器并行场景下使用AdaSum。
+        - **RuntimeError** - 同时使用了流水线并行， 暂时不支持在流水线并行场景下使用AdaSum。
+        - **RuntimeError** - `device_num` 不是2的幂，或者小于16。

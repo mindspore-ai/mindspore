@@ -7,10 +7,9 @@ mindspore.nn.ConfusionMatrix
 
     如果只想使用混淆矩阵，请使用该类。如果想计算"PPV"、"TPR"、"TNR"等，请使用'mindspore.nn.ConfusionMatrixMetric'类。
 
-    **参数：**
-
-    - **num_classes** (int) - 数据集中的类别数量。
-    - **normalize** (str) - 计算ConfsMatrix的参数支持四种归一化模式，默认值：'no_norm'。
+    参数：
+        - **num_classes** (int) - 数据集中的类别数量。
+        - **normalize** (str) - 计算ConfsMatrix的参数支持四种归一化模式，默认值：'no_norm'。
 
       - **"no_norm"** (None) - 不使用标准化。
       - **"target"** (str) - 基于目标值的标准化。
@@ -27,20 +26,17 @@ mindspore.nn.ConfusionMatrix
 
         计算混淆矩阵。
 
-        **返回：**
-
-        numpy.ndarray，计算的结果。
+        返回：
+            numpy.ndarray，计算的结果。
 
     .. py:method:: update(*inputs)
 
         使用y_pred和y更新内部评估结果。
 
-        **参数：**
+        参数：
+            - ***inputs** (tuple) - 输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是 `Tensor` 、列表或数组。
+              `y_pred` 是预测值， `y` 是真实值， `y_pred` 的shape是 :math:`(N, C, ...)` 或 :math:`(N, ...)` ， `y` 的shape是 :math:`(N, ...)` 。
 
-        - ***inputs** (tuple) - 输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是 `Tensor` 、列表或数组。
-          `y_pred` 是预测值， `y` 是真实值， `y_pred` 的shape是 :math:`(N, C, ...)` 或 :math:`(N, ...)` ， `y` 的shape是 :math:`(N, ...)` 。
-
-        **异常：**
-
-        - **ValueError** - 输入参数的数量不等于2。
-        - **ValueError** - 如果预测值和标签的维度不一致。
+        异常：
+            - **ValueError** - 输入参数的数量不等于2。
+            - **ValueError** - 如果预测值和标签的维度不一致。
