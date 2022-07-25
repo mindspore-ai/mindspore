@@ -194,6 +194,7 @@ Reduction函数
 
     mindspore.ops.argmin
     mindspore.ops.logsumexp
+    mindspore.ops.max
     mindspore.ops.norm
 
 .. list-table::
