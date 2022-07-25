@@ -626,10 +626,16 @@ class Graph(GraphData):
         if node_feat != dict():
             num_nodes = node_feat.get(list(node_feat.keys())[0]).shape[0]
 
-        node_type = replace_none(node_type, np.array(["0"] * num_nodes))
-        node_type = np.array(node_type)
+        if node_type is not None:
+            node_type = np.array(node_type)
+            if len(node_type.shape) != 1 or node_type.shape[0] != num_nodes:
+                raise ValueError(
+                    "Input 'node_type' should be 1 dimension, and its length should be {}, but got {}.".format(
+                        num_nodes, len(node_type)))
+        else:
+            node_type = np.array(["0"] * num_nodes)
+
         edge_type = replace_none(edge_type, np.array(["0"] * edges.shape[1]))
-        edge_type = np.array(edge_type)
 
         self._working_mode = working_mode
         self.data_format = "array"
