@@ -38,7 +38,7 @@ class AvgPoolFusion : public PatternProcessPass {
                                                const std::vector<int64_t> &assist_shape,
                                                const std::vector<int64_t> &host_shape) const;
   ValueNodePtr ConstructCoffeValueNode(const KernelGraphPtr &graph, const std::string &format,
-                                       const std::string &pad_mode, const std::vector<int64_t> &avg_in_shape,
+                                       const std::vector<int64_t> &avg_in_shape,
                                        const std::vector<int64_t> &avg_out_shape, const std::vector<int64_t> &window,
                                        const std::vector<int64_t> &stride) const;
   AnfNodePtr AddMul(const KernelGraphPtr &graph, const CNodePtr &avgpool, const AnfNodePtr &coffe) const;
