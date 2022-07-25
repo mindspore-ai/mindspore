@@ -20,13 +20,14 @@ from ..operations.sparse_ops import (
     DenseToCSRSparseMatrix,
     CSRSparseMatrixToSparseTensor,
     SparseConcat,
-    SparseAdd
+    SparseAdd,
+    SparseMatrixAdd
 )
 from ..operations.array_ops import GatherNd, Coalesce
 from ..operations import _csr_ops
 from ...common import CSRTensor, COOTensor, Tensor
 from ...common import dtype as mstype
-from ..composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error
+from ..composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
 
 # utility functions and values
 gather_nd = GatherNd()
@@ -516,6 +517,64 @@ def sparse_add(x1, x2, thresh):
     return COOTensor(indices, values, x1.shape)
 
 
+def csr_add(a, b, alpha, beta):
+    """
+    Returns alpha * csr_a + beta * csr_b where both csr_a and csr_b are CSRTensor, alpha and beta are both Tensor.
+
+    Args:
+        a (CSRTensor): Sparse CSR Tensor.
+        b (CSRTensor): Sparse CSR Tensor.
+        alpha(Tensor): Dense Tensor, its shape must be able to broadcast to a.
+        beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
+
+    Returns:
+        CSRTensor. a csr_tensor containing:
+        indptr: indicates the start and end point for `values` in each row.
+        indices: the column positions of all non-zero values of the input.
+        values: the non-zero values of the dense tensor.
+        shape: the shape of the csr_tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.functional import csr_add
+        >>> a_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> a_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> a_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> shape = (2, 6)
+        >>> b_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> b_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> b_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> alpha = Tensor(1, mstype.float32)
+        >>> beta = Tensor(1, mstype.float32)
+        >>> csra = CSRTensor(a_indptr, a_indices, a_values, shape)
+        >>> csrb = CSRTensor(b_indptr, b_indices, b_values, shape)
+        >>> out = csr_add(csra, csrb, alpha, beta)
+        >>> print(out)
+        CSRTensor(shape=[2,6], dtype=Float32,
+                  indptr=Tensor(shape=[3], dtype=Int32, value = [0, 1, 2]),
+                  indices=Tensor(shape=[2], dtype=Int32, value = [0, 1]),
+                  values=Tensor(shape=[2], dtype=Float32, value = [2.0, 4.0]))
+    """
+    if not isinstance(a, CSRTensor) or not isinstance(b, CSRTensor):
+        raise_type_error("For functional operator csr_add, both inputs a and b must be type of CSRTensor.")
+    if not isinstance(alpha, Tensor) or not isinstance(beta, Tensor):
+        raise_type_error("For functional operator csr_add, both inputs alpha and beta must be Tensor.")
+    csr_add_op = SparseMatrixAdd()
+    a_batch_pointers = make_tensor([0, a.values.shape[0]], dtype=mstype.int32)
+    b_batch_pointers = make_tensor([0, b.values.shape[0]], dtype=mstype.int32)
+    a_shape = make_tensor(a.shape, dtype=mstype.int32)
+    b_shape = make_tensor(b.shape, dtype=mstype.int32)
+    shape, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
+                                                   b_shape, b_batch_pointers, b.indptr, b.indices, b.values,
+                                                   alpha, beta)
+    output_shape = tuple(shape.asnumpy().tolist())
+    return CSRTensor(indptr=indptr, indices=indices, values=values, shape=output_shape)
+
+
 __all__ = [
     'coalesce',
     'coo2csr',
@@ -545,6 +604,7 @@ __all__ = [
     'row_tensor_add',
     'sparse_add',
     'sparse_concat',
+    'csr_add'
 ]
 
 __all__.sort()

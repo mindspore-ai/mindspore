@@ -5313,6 +5313,42 @@ class CSRTensor(CSRTensor_):
         return CSRTensor(self.indptr, self.indices, data, self.shape)
 
 
+    def add(self, b, alpha, beta):
+        """
+        Addition of two CSR Tensors : C = alpha * A + beta * B
+
+        Args:
+            b (CSRTensor): Sparse CSR Tensor.
+            alpha(Tensor): Dense Tensor, its shape must be able to broadcast to self.
+            beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
+
+        Returns:
+            CSRTensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, CSRTensor
+            >>> import mindspore.common.dtype as mstype
+            >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+            >>> indices = Tensor([0, 1], dtype=mstype.int32)
+            >>> values_a = Tensor([2, 1], dtype=mstype.float32)
+            >>> values_b = Tensor([1, 2], dtype=mstype.float32)
+            >>> dense_shape = (2, 4)
+            >>> alpha = Tensor(1, mstype.float32)
+            >>> beta = Tensor(1, mstype.float32)
+            >>> a = CSRTensor(indptr, indices, values_a, dense_shape)
+            >>> b = CSRTensor(indptr, indices, values_b, dense_shape)
+            >>> print(a.add(b, alpha, beta))
+                CSRTensor(shape=[2,4], dtype=Float32,
+                          indptr=Tensor(shape=[3], dtype=Int32, value = [0, 1, 2]),
+                          indices=Tensor(shape=[2], dtype=Int32, value = [0, 1]),
+                          values=Tensor(shape=[2], dtype=Float32, value = [3.0, 3.0]))
+        """
+        return tensor_operator_registry.get('csr_add')(self, b, alpha, beta)
+
+
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
     obj_str = args[-1]
