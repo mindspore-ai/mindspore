@@ -52,6 +52,10 @@ inline bool is_comm_ops(const AnfNodePtr &node) {
 }  // namespace
 
 void AddCommOpReuseTag(const FuncGraphPtr &graph) {
+  if (parallel::g_device_manager == nullptr) {
+    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
@@ -82,7 +86,6 @@ void AddCommOpReuseTag(const FuncGraphPtr &graph) {
       group_name = GetValue<std::string>(comm_prim->GetAttr(parallel::GROUP));
     }
     std::vector<unsigned int> rank_list = {};
-    MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
     auto long_rank_list = parallel::g_device_manager->FindRankListByHashName(group_name);
     std::transform(long_rank_list.begin(), long_rank_list.end(), std::back_inserter(rank_list),
                    [](int64_t d) -> unsigned int { return IntToUint(LongToInt(d)); });
