@@ -1337,19 +1337,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
     // For constant input
     if (input_tensors_mask[i] == kValueNodeTensorMask) {
       has_const_input = true;
-      auto dtype = tensor->Dtype();
-      MS_EXCEPTION_IF_NULL(dtype);
-      if (dtype->type_id() == kNumberTypeBool) {
-        buf << *reinterpret_cast<bool *>(tensor->data_c());
-      } else if (dtype->type_id() == kNumberTypeInt64) {
-        buf << *reinterpret_cast<int64_t *>(tensor->data_c());
-      } else if (dtype->type_id() == kNumberTypeFloat16) {
-        buf << *reinterpret_cast<float16 *>(tensor->data_c());
-      } else if (dtype->type_id() == kNumberTypeFloat32) {
-        buf << *reinterpret_cast<float *>(tensor->data_c());
-      } else {
-        MS_LOG(EXCEPTION) << "The dtype of the constant input is not one of them: bool, int64, Float16 or Float32.";
-      }
+      buf << common::AnfAlgo::GetTensorValueString(tensor);
     }
     buf << "_";
   }
