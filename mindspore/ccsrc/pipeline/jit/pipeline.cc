@@ -168,9 +168,9 @@ bool CheckArgValid(const py::handle &arg) {
   if (py::isinstance<Tensor>(arg)) {
     auto tensor = py::cast<TensorPtr>(arg);
     if (tensor->data_type() == kNumberTypeBool) {
-      MS_LOG(WARNING) << "The data types of Tensor:" << py::str(arg)
-                      << " is bool, which may cause SelectKernelInfo failure for operator [AddN]. "
-                         "For more details, please refer to the FAQ at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "It is not recommended to use a tensor of bool data type as network input, which may cause "
+                   << "operator compilation failure. For more details, please refer to the FAQ at "
+                   << "https://mindspore.cn/search?[AddN]%20input(kNumberTypeBool.";
     }
   }
 
