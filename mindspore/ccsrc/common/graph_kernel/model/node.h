@@ -96,7 +96,8 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
 class ConstTensorNode : public Node {
  public:
   explicit ConstTensorNode(const tensor::TensorPtr &data)
-      : Node({data->shape(), data->data_type(), kOpFormat_DEFAULT}), data_(data) {}
+      : Node({data->DataSize() == 1 ? DShape({1}) : data->shape(), data->data_type(), kOpFormat_DEFAULT}),
+        data_(data) {}
   ~ConstTensorNode() = default;
 
   NType NodeType() override { return NType::Value; }

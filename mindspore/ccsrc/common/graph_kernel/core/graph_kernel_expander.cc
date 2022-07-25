@@ -39,7 +39,6 @@ AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const s
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
-  std::reverse(todos.begin(), todos.end());
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &n : todos) {
@@ -55,7 +54,9 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;
     }
-    newnode = CreateExpandedNode(newnode->cast<CNodePtr>(), AnfUtils::GetCNodeName(node));
+    if (newnode->isa<CNode>()) {
+      newnode = CreateExpandedNode(newnode->cast<CNodePtr>(), AnfUtils::GetCNodeName(node));
+    }
     if (newnode == nullptr) {
       MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;

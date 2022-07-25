@@ -53,6 +53,7 @@ class ExpandDims : public OpDesc {
   }
 };
 EXPANDER_OP_DESC_REGISTER("ExpandDims", ExpandDims);
+EXPANDER_OP_DESC_REGISTER("Unsqueeze", ExpandDims);
 
 class Squeeze : public OpDesc {
  public:

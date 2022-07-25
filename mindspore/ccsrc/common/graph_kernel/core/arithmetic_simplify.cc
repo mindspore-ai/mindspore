@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/arithmetic_simplify.h"
+#include "common/graph_kernel/core/arithmetic_simplify.h"
 
 #include <algorithm>
 #include <list>
@@ -22,14 +22,12 @@
 #include <set>
 #include <vector>
 
+#include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "common/graph_kernel/graph_kernel_helper.h"
+#include "utils/anf_utils.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/anf.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/model/op_node.h"
 #include "common/graph_kernel/model/graph_builder.h"
@@ -173,9 +171,9 @@ PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
 
 inner::NType PatternNodeType(const std::string &n) {
   // return (Primitive， Parameter or Value)
-  if (n.length() > 0 && '0' <= n[n.length() - 1] && n[n.length() - 1] <= '9') {
+  if (n.length() > 0 && n[n.length() - 1] >= '0' && n[n.length() - 1] <= '9') {
     return inner::NType::Value;
-  } else if (n.length() == 1 && 'A' <= n[0] && n[0] <= 'Z') {
+  } else if (n.length() == 1 && n[0] >= 'A' && n[0] <= 'Z') {
     return inner::NType::Parameter;
   } else {
     return inner::NType::Primitive;
@@ -616,7 +614,7 @@ bool ArithmeticSimplify::DoConstantFold(const inner::LiteGraphPtr &litegraph) {
   auto iter = ops_list.begin();
   while (iter != ops_list.end()) {
     auto this_op = std::static_pointer_cast<inner::PrimOp>(*iter);
-    auto value = this_op->InferValue(this_op->inputs(), this_op->attrs(), this_op->op());
+    auto value = this_op->InferValue(this_op->inputs(), this_op->attrs());
     if (value != nullptr) {
       (*iter)->ReplaceWith(value);
       ops_list = litegraph->GetOrderedNodes();
@@ -634,8 +632,7 @@ void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
   for (size_t i = 0; i < outputs.size(); i++) {
     if (outputs[i]->NodeType() == inner::NType::Value) {
       inner::GraphBuilder gb;
-      std::vector<int64_t> new_shape = {1};
-      auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(new_shape)}});
+      auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
       inner::GraphBuilder gb;
@@ -651,8 +648,8 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   bool do_simplify = false;
   expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
-    if (common::AnfAlgo::IsGraphKernel(node)) {
-      auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (AnfUtils::IsGraphKernel(node)) {
+      auto sub_graph = GetCNodeFuncGraph(node);
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;

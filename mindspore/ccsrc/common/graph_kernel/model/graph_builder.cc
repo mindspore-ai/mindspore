@@ -22,9 +22,20 @@ NodePtr GraphBuilder::Reshape(const NodePtr &input, const ShapeVector &shape) co
   auto shape_value = MakeValue(shape);
   return Emit("Reshape", {input}, {{"shape", shape_value}});
 }
+
 NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape) const {
   auto shape_value = MakeValue(shape);
   return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
+}
+
+NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const {
+  auto axis_value = MakeValue(axis);
+  return Emit("Gather", {param, indice}, {{"axis", axis_value}});
+}
+
+NodePtr GraphBuilder::Concat(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const {
+  auto axis_value = MakeValue(axis);
+  return Emit("Concat", {param, indice}, {{"axis", axis_value}});
 }
 
 NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) const {

@@ -42,19 +42,20 @@ class ParaToValueDeco : public ExpanderDecorator {
 
 class ParaToTensorDeco : public ExpanderDecorator {
  public:
-  ParaToTensorDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
-      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ParaToTensorDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx, bool convert_all = false)
+      : ExpanderDecorator(decorated), input_idx_(input_idx), convert_all_(convert_all) {}
   ~ParaToTensorDeco() = default;
 
-  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
-    return [input_idx](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<ParaToTensorDeco>(decorated, input_idx));
+  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx, bool convert_all = false) {
+    return [input_idx, convert_all](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<ParaToTensorDeco>(decorated, input_idx, convert_all));
     };
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
   HashSet<size_t> input_idx_;
+  bool convert_all_;
 };
 
 class FixFormatDeco : public ExpanderDecorator {
@@ -63,6 +64,16 @@ class FixFormatDeco : public ExpanderDecorator {
   ~FixFormatDeco() = default;
   static ExpanderPtr Creator(const ExpanderPtr &decorated) {
     return std::static_pointer_cast<Expander>(std::make_shared<FixFormatDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
+class InferValueDeco : public ExpanderDecorator {
+ public:
+  explicit InferValueDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~InferValueDeco() = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<InferValueDeco>(decorated));
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };

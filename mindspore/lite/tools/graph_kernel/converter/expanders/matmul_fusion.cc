@@ -31,6 +31,15 @@ class MatMulFusion : public OpDesc {
   ~MatMulFusion() = default;
 
  protected:
+  bool CheckInputs() override {
+    const size_t kShapeSize = 2;
+    if (inputs_info_[0].shape.size() != kShapeSize || inputs_info_[1].shape.size() != kShapeSize) {
+      MS_LOG(INFO) << "Only expand MatMulFusion when its input shape size is 2, but got "
+                   << inputs_info_[0].shape.size() << " and " << inputs_info_[1].shape.size();
+      return false;
+    }
+    return true;
+  }
   NodePtrList Expand(const NodePtrList &inputs) override {
     const size_t has_bias_input_size = 3;
     auto a = inputs[0];

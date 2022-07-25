@@ -39,6 +39,9 @@ void BuildAKGKernel(const std::vector<AnfNodePtr> &node_list) {
       anf_list.push_back(node);
     }
   }
+  if (anf_list.empty()) {
+    return;
+  }
   graphkernel::AkgKernelBuilder gk;
   if (!gk.CompileJsonsInAnfnodes(anf_list)) {
     MS_LOG(EXCEPTION) << "Graph kernel compile fail";

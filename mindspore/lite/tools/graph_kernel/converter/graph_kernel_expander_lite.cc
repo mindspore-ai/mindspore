@@ -21,9 +21,13 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <unordered_set>
 
+#include "common/graph_kernel/model/node.h"
+#include "common/graph_kernel/model/op_node.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
@@ -46,7 +50,15 @@ AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
 
 AnfNodePtr ParaToTensorDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
-  for (const auto &idx : input_idx_) {
+  HashSet<size_t> ids;
+  if (convert_all_) {
+    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      (void)ids.insert(i - 1);
+    }
+  } else {
+    ids = input_idx_;
+  }
+  for (const auto &idx : ids) {
     if (cnode->input(idx + 1)->isa<Parameter>()) {
       auto default_param = cnode->input(idx + 1)->cast<ParameterPtr>()->default_param();
       if (default_param == nullptr) {
@@ -71,7 +83,6 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   cnode->AddAttr(kOutputsFormat, MakeValue(format));
   auto ret = decorated_->Run(cnode);
   if (ret == nullptr) {
-    cnode->AddAttr(kOutputsFormat, ori_format);
     return nullptr;
   }
   auto fg = GetCNodeFuncGraph(ret);
@@ -83,6 +94,61 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   return ret_cnode;
 }
 
+AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
+  std::unordered_set<std::string> akg_exclude_nodes = {prim::kPrimGather->name(), prim::kPrimShape->name(),
+                                                       prim::kPrimConcat->name()};
+  auto cnode = QuickCloneCNode(node);
+  auto ret = decorated_->Run(cnode);
+  if (ret == nullptr) {
+    return nullptr;
+  }
+  auto fg = GetCNodeFuncGraph(ret);
+
+  AnfNodePtrList inputs = ret->cast<CNodePtr>()->inputs();
+  (void)RemoveNonScalarConstTensorFromParameter(fg, &inputs);
+
+  inner::LiteGraphPtr litegraph = GkUtils::AnfGraph2LiteGraph(fg);
+  auto ops_list = litegraph->GetOrderedNodes();
+  auto iter = ops_list.begin();
+  while (iter != ops_list.end()) {
+    auto this_op = std::static_pointer_cast<inner::PrimOp>(*iter);
+    auto value = this_op->InferValue(this_op->inputs(), this_op->attrs());
+    if (value != nullptr) {
+      (*iter)->ReplaceWith(value);
+      ops_list = litegraph->GetOrderedNodes();
+      iter = ops_list.begin();
+    } else {
+      ++iter;
+    }
+  }
+  auto &outputs = litegraph->GetOutputs();
+
+  if (outputs.size() != 1) {
+    return nullptr;
+  }
+
+  if (outputs[0]->NodeType() == inner::NType::Value) {
+    auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
+    auto valuenode = NewValueNode(value);
+    valuenode->set_abstract(value->ToAbstract());
+    return valuenode;
+  } else {
+    bool cannot_expand =
+      std::any_of(ops_list.begin(), ops_list.end(), [&akg_exclude_nodes](const inner::NodePtr &node) {
+        return akg_exclude_nodes.count(std::static_pointer_cast<inner::PrimOp>(node)->op()) > 0;
+      });
+    if (cannot_expand) {
+      return nullptr;
+    } else {
+      auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
+      (void)ConvertNonscalarTensorToParameter(new_fg, &inputs);
+      AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
+      (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
+      return node->func_graph()->NewCNode(new_inputs);
+    }
+  }
+}
+
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
@@ -91,7 +157,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},    {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
     {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},    {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
     {kCPUDevice, OpLevel_1, prim::kPrimTranspose},    {kCPUDevice, OpLevel_1, prim::kPrimReshape},
-  };
+    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},    {kCPUDevice, OpLevel_1, prim::kPrimGather},
+    {kCPUDevice, OpLevel_1, prim::kPrimShape},        {kCPUDevice, OpLevel_1, prim::kPrimConcat}};
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                               flags.enable_expand_ops, flags.disable_expand_ops);
@@ -115,19 +182,24 @@ bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {
 
 ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
   auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
+  ExpanderCreatorFuncList decos = {InferValueDeco::Creator};
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimUnsqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
+    {prim::kPrimGather->name(),
+     {ParaToTensorDeco::GetCreator({1}), ParaToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2})}},
+    {prim::kPrimConcat->name(), {ParaToTensorDeco::GetCreator({1}, true)}},
     {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
     {prim::kPrimMatMulFusion->name(), {ParaToTensorDeco::GetCreator({1}), MatmulPackB::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
-    return WrapExpander(expander, iter->second);
+    (void)decos.insert(decos.end(), iter->second.begin(), iter->second.end());
   }
-  return expander;
+  return WrapExpander(expander, decos);
 }
 }  // namespace mindspore::graphkernel
