@@ -459,16 +459,16 @@ def sparse_concat(sp_input, concat_dim):
 
 def sparse_add(x1, x2, thresh):
     """
-    sum the input SparseTensor(COO format).
+    Computes the sum of x1(COOTensor) and x2(COOTensor).
 
     Args:
-        x1 (COOTensor): the first SparseTensor to sum.
-        x2 (COOTensor): the second SparseTensor to sum.
+        x1 (COOTensor): the first COOTensor to sum.
+        x2 (COOTensor): the second COOTensor to sum.
         thresh (Tensor): A 0-D Tensor, represents the magnitude threshold that determines
             if an output value/index pair pair take space.
 
     Returns:
-        A COOTensor, the result of sum the input SparseTensor.
+        A COOTensor, the result of sum.
 
     Raises:
         ValueError: If any input(x1/x2)'s indices's dim is not equal to 2.
@@ -486,12 +486,16 @@ def sparse_add(x1, x2, thresh):
         TypeError: If x1's indices's type is not equal to x2's indices's type.
         TypeError: If x1's values's type is not equal to x2's values's type.
         TypeError: If x1's shape's type is not equal to x2's shape's type.
-        TypeError: If (x1/x2)'s value's type is not match to thresh's type.
+        TypeError: If (x1/x2)'s value's type is not matched with thresh's type.
 
     Supported Platforms:
         ``CPU`` ``GPU``
 
     Examples:
+        >>> from mindspore import Tensor, COOTensor
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import context
+        >>> from mindspore.ops import functional as F
         >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = (3, 4)
@@ -503,9 +507,9 @@ def sparse_add(x1, x2, thresh):
         >>> thres = Tensor(0, dtype=mstype.int32)
         >>> out = F.sparse_add(input0, input1, thres)
         >>> print(out)
-        COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[2,2],
-        dtype = Int64, value=[[0 1], [1 2]]),  values=Tensor(shape[2],
-        dtype=Int32, value=[4 6]))
+        COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[4, 2],
+        dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
+        dtype=Int32, value=[3 1 4 2]))
     """
     x1_indices = x1.indices
     x1_values = x1.values
