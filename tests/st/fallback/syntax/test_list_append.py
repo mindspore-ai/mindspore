@@ -12,16 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test list control flow """
+""" test list append operation """
 import pytest
-import mindspore.context as context
-from mindspore import Tensor, dtype
+import numpy as np
+from mindspore import ms_function, context, Tensor, dtype
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
-import numpy as np
 
 
-@pytest.mark.skip(reason='Not support list  as parameter in while function yet')
+context.set_context(mode=context.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_append_1():
+    """
+    Feature: list append.
+    Description: support list append.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_append():
+        x = [1, 3, 4]
+        x.append(2)
+        return Tensor(x)
+
+    assert np.all(list_append().asnumpy() == np.array([1, 3, 4, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_append_2():
+    """
+    Feature: list append.
+    Description: support list append.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_append():
+        x = [1, 2, 3]
+        x.append(4)
+        x.append(6)
+        return Tensor(x)
+
+    assert np.all(list_append().asnumpy() == np.array([1, 2, 3, 4, 6]))
+
+
+@pytest.mark.skip(reason='Not support list as parameter in while function yet')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

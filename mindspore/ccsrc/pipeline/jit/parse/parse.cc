@@ -791,7 +791,13 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       // Expand the assign statement,
       // e.g.: x.append(y)  -> x = x.append(y)
       py::object target_node = expand_info[2];
-      WriteAssignVars(block, target_node, call_node);
+      if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(target_node)) {
+        // self.x = [xx, xx]
+        // self.x.append()
+        MS_LOG(DEBUG) << "The variables whose type is not parameter do not support assign operation.";
+      } else {
+        WriteAssignVars(block, target_node, call_node);
+      }
     }
   }
   return block;
@@ -1373,6 +1379,9 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     if (!is_constant) {
       UpdateInterpretForUserNode(attr_cnode, value_node);
     }
+  }
+  if (attr_str == "pop") {
+    list_pop_target_obj_ = value_body;
   }
   return attr_cnode;
 }
@@ -2718,6 +2727,31 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   return interpreted_node;
 }
 
+bool Parser::IsPopOperation(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+  auto attr_node = cnode->input(0);
+  if (IsPrimitiveCNode(attr_node, prim::kPrimGetAttr)) {
+    auto attr_cnode = attr_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(attr_cnode);
+    constexpr size_t attr_cnode_size = 3;
+    constexpr size_t member_index = 2;
+    if (attr_cnode->inputs().size() < attr_cnode_size) {
+      MS_LOG(EXCEPTION) << "The attr operate has wrong input.";
+    }
+    auto member_node = attr_cnode->input(member_index);
+    if (IsValueNode<StringImm>(member_node)) {
+      auto attr_name = GetValue<std::string>(GetValueNode(member_node));
+      if (attr_name == "pop") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Process a assign statement, such as a = b,  a, b = tuple(xx, xx)
 FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast assign";
@@ -2729,6 +2763,30 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   py::int_ pcount = python_adapter::CallPyObjMethod(targets_object, "__len__");
   size_t count = LongToSize(pcount);
   MS_LOG(DEBUG) << "The nodes count is " << count;
+
+  // b = list_x.pop(a)
+  // -->  list_x, b = list_x.pop(a) need renew the list_x.
+  if (IsPopOperation(value_node)) {
+    if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(list_pop_target_obj_)) {
+      // self.list_x = [xx, xx]
+      // y = self.list_x.pop()
+      MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
+    } else {
+      auto func_graph = block->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto new_list =
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
+      auto pop_node =
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+      WriteAssignVars(block, list_pop_target_obj_, new_list);
+      if (count != 1) {
+        MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
+      }
+      auto pop_obj = py::cast<py::list>(targets_object)[0];
+      WriteAssignVars(block, pop_obj, pop_node);
+      return block;
+    }
+  }
   for (size_t i = 0; i < count; i++) {
     auto target_node = py::cast<py::list>(targets_object)[i];
     WriteAssignVars(block, target_node, value_node);
