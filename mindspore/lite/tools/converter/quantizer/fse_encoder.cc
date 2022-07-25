@@ -30,7 +30,6 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kInt16 = 16;
 constexpr int kFseTableExtendSize = 3;
 constexpr int kFrenqTableExtendSize = 2;
 constexpr int kAlignSize = 8;
@@ -79,12 +78,12 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
     if (frequency[sym] >= kFrenqTableExtendSize) {
       int max_bits_out = table_log - FSEBitStream::CountBits(frequency[sym] - 1);
       int min_state_plus = frequency[sym] << max_bits_out;
-      delta_bit_count[sym] = (static_cast<size_t>(max_bits_out) << kInt16) - min_state_plus;
+      delta_bit_count[sym] = (static_cast<size_t>(max_bits_out) << k16Bit) - min_state_plus;
       delta_state[sym] = total - static_cast<int>(frequency[sym]);
       total += static_cast<int>(frequency[sym]);
     } else {
       // we assume minimum `frequency` is 1
-      delta_bit_count[sym] = (table_log << kInt16) - (1 << table_log);
+      delta_bit_count[sym] = (table_log << k16Bit) - (1 << table_log);
       delta_state[sym] = total - 1;
       total++;
     }
@@ -164,7 +163,8 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
     return ret;
   }
   FSEBitStream bs;
-  ret = bs.Create(kInt16 * fse_quant.symbol_table_count);
+  uint64_t bit_capacity = k16Bit * fse_quant.symbol_table_count;
+  ret = bs.Create(bit_capacity);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FSEBitStream Create failed.";
     free(fse_quant.symbol_table);
@@ -199,7 +199,7 @@ uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, 
   MS_ASSERT(coding_table != nullptr);
   // It is to determine the number of bits to flush.
   // This is basically one of 2 values, n or n+1, depending on state crossing a threshold.
-  uint8_t bits_out = (state + delta_bit_count[sym]) >> kInt16;
+  uint8_t bits_out = (state + delta_bit_count[sym]) >> k16Bit;
   bs->Push(state, bits_out);
   // subrangeID = state >> nbBitsOut
   return coding_table[(state >> bits_out) + delta_state[sym]];
