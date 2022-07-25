@@ -76,5 +76,7 @@ bool CeluCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CeLU, CeluCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

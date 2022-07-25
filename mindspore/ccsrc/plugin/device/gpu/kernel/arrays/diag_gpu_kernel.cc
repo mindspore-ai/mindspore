@@ -121,5 +121,7 @@ bool DiagGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   CalDiag(input_ptr, output_ptr, input_size_, output_size_, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Diag, DiagGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

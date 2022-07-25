@@ -179,5 +179,6 @@ std::vector<KernelAttr> DeformableOffsetsGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, LaunchKernelFunc> &item) { return item.first; });
   return support_list;
 }
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, DeformableOffsets, DeformableOffsetsGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

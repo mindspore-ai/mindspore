@@ -202,6 +202,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"expand_dims", std::string("expand_dims")},                        // P.expand_dims()
        {"squeeze", std::string("squeeze")},                                // P.squeeze()
        {"astype", std::string("astype")},                                  // P.cast()
+       {"cumsum", std::string("cumsum")},                                  // P.cumsum()
+       {"cummin", std::string("cummin")},                                  // cummin()
+       {"cummax", std::string("cummax")},                                  // cummax()
        {"index_fill", std::string("index_fill")},                          // index_fill()
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
@@ -214,6 +217,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"cosh", std::string("cosh")},                                      // P.Cosh()
        {"round", std::string("round")},                                    // P.Round()
        {"fill", std::string("fill")},                                      // P.fill()
+       {"fills", std::string("fills")},                                    // P.fills
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()
        {"clip", std::string("clip")},                                      // P.maximum(P.minimum)
        {"__bool__", std::string("tensor_bool")},                           // C.tensor_bool
@@ -253,8 +257,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"unique_with_pad", std::string("unique_with_pad")},                // P.UniqueWithPad()
+       {"diag", std::string("diag")},                                      // P.Diag()
        {"adaptive_max_pool2d", std::string("adaptive_max_pool2d")},        // P.AdaptiveMaxPool2D
-       {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"to_coo", std::string("to_coo")},                                  // dense_to_sparse_coo()
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"col2im", std::string("col2im")},                                  // P.Col2Im

@@ -118,7 +118,7 @@ class CeLU(Primitive):
         TypeError: If the dtype of 'input_x' is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
@@ -345,32 +345,7 @@ class AdaptiveMaxPool3D(Primitive):
     r"""
     Applies a 3D adaptive max pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`(D, H, W)`, for any input size.
-    The number of output features is equal to the number of input planes.
-
-    Args:
-        output_size (Union[int, tuple]): The target output size is :math:`(D, H, W)`.
-            `ouput_size` can be a tuple with 3 elements, or a single D for :math:`(D, D, D)`. :math:`D`,
-            :math:`H` and :math:`W` can be int or None which means the output size is the same as that of
-            the input.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
-
-    Inputs:
-        - **x** (Tensor) - It is a 4D or 5D Tensor with int8, int16, int32, int64, uint8, uint16, uint32,
-          uint64, float16, float32 or float64 data type.
-
-    Outputs:
-        - **y** (Tensor) - A Tensor, with the same number of dims and data type as the `x`.
-        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
-          `y` and int32 data type. It will output only when `return_indices` is True.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        ValueError: If the dimensions number of `x` is not 4 or 5.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
-                   float16, float32 or float64.
-        ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
+    Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more detail.
 
     Supported Platforms:
         ``GPU``
@@ -2074,21 +2049,7 @@ class AvgPool(_Pool):
     r"""
     Average pooling operation.
 
-    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool outputs
-    regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
-
-    .. math::
-        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
-
-    .. warning::
-        - Global pooling is supported.
-        - For Ascend, the height of "kernel_size" and the weight of "kernel_size" are positive integers
-          within the range [1, 255]. ksize_h * ksize_w < 256.
-        - For Ascend, due to instruction restrictions, the values of "strides_h" and "strides_w" are
-          positive integers within the range [1, 63].
+    Refer to :func:`mindspore.ops.avg_pool2d` for more detail.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
@@ -2097,8 +2058,8 @@ class AvgPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
-            Default: "valid".
+        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
+            Default: 'valid'.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
@@ -2118,9 +2079,9 @@ class AvgPool(_Pool):
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
-        ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:

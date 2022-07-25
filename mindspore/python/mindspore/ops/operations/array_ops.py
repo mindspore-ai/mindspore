@@ -3841,22 +3841,10 @@ class Diag(PrimitiveWithCheck):
 
     Constructs a diagonal tensor with a given diagonal values.
 
-    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
-    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
-    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. The input shape must be less than 5d.
-
-    Outputs:
-        Tensor, has the same dtype as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If rank of `input_x` is less than 1.
+    Refer to :func:`mindspore.ops.diag` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
@@ -5670,60 +5658,12 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
 class BatchToSpaceND(Primitive):
     r"""
-    Divides spatial dimensions into blocks and combines the block size with the original batch.
+    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
-    This operation will divide spatial dimensions (H, W) into blocks with block_shape, the output tensor's H and W
-    dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
-    product of the original batch and the product of `block_shape`. Before division,
-    the spatial dimensions of the input are zero padded according to paddings if necessary.
-
-    Args:
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
-            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
-            equal to `block_shape`. M must be 2.
-        paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
-            Each contains 2 integer value. All values must be greater than 0.
-            `paddings[i]` specifies the paddings for the spatial dimension i,
-            which corresponds to the input dimension i+2.
-            It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible by block_shape[i].
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
-
-    Outputs:
-        Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_shape` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
-        where
-
-        :math:`n' = n*(block\_shape[0]*block\_shape[1])`
-
-        :math:`c' = c`
-
-        :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
-
-        :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
-
-    Raises:
-        TypeError: If `block_shape` is not one of list, tuple, int.
-        TypeError: If `paddings` is neither list nor tuple.
-        ValueError: If length of shape of `block_shape` is not equal to 1.
-        ValueError: If length of `block_shape` or `paddings` is not equal to 2.
+    Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
 
     Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> block_shape = [2, 2]
-        >>> paddings = [[0, 0], [0, 0]]
-        >>> space_to_batch_nd = ops.SpaceToBatchND(block_shape, paddings)
-        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-        >>> output = space_to_batch_nd(input_x)
-        >>> print(output)
-        [[[[1.]]]
-         [[[2.]]]
-         [[[3.]]]
-         [[[4.]]]]
+        ``Ascend`` ``CPU``
     """
 
     @prim_attr_register

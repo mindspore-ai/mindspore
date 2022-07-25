@@ -15,10 +15,12 @@
 
 """sparse_ops vmap impl."""
 
+from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_general_preprocess, _raise_value_error
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
 
 
+@vmap_rules_getters.register(CSRSparseMatrixToSparseTensor)
 def get_csr_sparse_matrix_to_sparse_tensor_vmap_rule(prim, axis_size):
     """VmapRule for `CSRSparseMatrixToSparseTensor` operation."""
     if isinstance(prim, str):
@@ -43,6 +45,7 @@ def get_csr_sparse_matrix_to_sparse_tensor_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(DenseToCSRSparseMatrix)
 def get_dense_to_csr_sparse_matrix_vmap_rule(prim, axis_size):
     """VmapRule for `DenseToCSRSparseMatrix` operation."""
     if isinstance(prim, str):

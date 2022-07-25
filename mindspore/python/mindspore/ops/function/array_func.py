@@ -24,6 +24,7 @@ from ..operations.array_ops import (
     NonZero,
     MatrixDiagV3,
     MatrixDiagPartV3,
+    Fills,
     Col2Im,
     ScatterNdMax,
     ScatterNdMul,
@@ -36,6 +37,7 @@ from .._primitive_cache import _get_cache_prim
 
 eye_ = P.Eye()
 fill_ = P.Fill()
+fills_ = Fills()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 tile_ = P.Tile()
@@ -70,6 +72,7 @@ tuple_to_array_ = P.TupleToArray()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
+diag_ = P.Diag()
 range_ = P.Range()
 zeros_like_ = P.ZerosLike()
 cast_ = P.Cast()
@@ -3741,6 +3744,7 @@ __all__ = [
     'padding',
     'fill',
     'fill_',
+    'fills',
     'tile',
     'size',
     'ger',
@@ -3763,6 +3767,8 @@ __all__ = [
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',
+    'space_to_batch_nd',
+    'batch_to_space_nd',
     'tuple_to_array',
     'expand_dims',
     'transpose',
@@ -3791,6 +3797,7 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
+    'diag',
     'meshgrid',
     'adaptive_max_pool2d',
     'meshgrid',

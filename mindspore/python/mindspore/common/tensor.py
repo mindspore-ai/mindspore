@@ -2416,6 +2416,82 @@ class Tensor(Tensor_):
                             "but got {}.".format(type(value)))
         return tensor_operator_registry.get("fill")(self.dtype, self.shape, value)
 
+    def fills(self, value):
+        """
+        Create a tensor of the same shape and type as the input tensor and fill it with specified value.
+
+        Note:
+            Unlike Numpy, tensor.fills() will always returns a new tensor, instead of
+            filling the original tensor.
+
+        Args:
+            value (Union[int, float, Tensor]): All elements of the output tensor will be assigned this value. The
+                type should be int, float or 0-dimensional tensor.
+
+        Returns:
+            Tensor, with the same shape and type as input tensor.
+
+        Raises:
+            TypeError: If `value` has types not specified above.
+            RuntimeError: If `value` cannot be converted to the same type as `x`.
+            ValueError: If `value` is a tensor and the length of dimension is not 0.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.arange(4).reshape((2, 2)).astype('float32'))
+            >>> print(x.fills(1.0))
+            [[1. 1.]
+            [1. 1.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fills')(self, value)
+
+    def masked_fill(self, mask, value):
+        """
+        Fills elements of self tensor with value where mask is True.
+        The shapes of self tensor and `mask` need to be the same or broadcastable.
+
+        Args:
+            mask (Tensor[bool]): The boolean mask.
+            value (Union[float, Tensor]): The value to fill in with, which dtype is the same as self.
+
+        Returns:
+            Tensor, has the same type and shape as self.
+
+        Raises:
+            TypeError: If `mask` is not a Tensor.
+            TypeError: If dtype of `mask` is not bool.
+            ValueError: If the shapes of self tensor and `mask` could not be broadcast.
+            TypeError: If dtype of self tensor or `value` is not one of float16, float32, int8, int32.
+            TypeError: If dtype of `value` is different from that of self.
+            TypeError: If `value` is neither float number nor Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.arange(4)).astype('float32')
+            >>> print(a)
+            [0. 1. 2. 3.]
+            >>> mask = Tensor([False, False, True, True])
+            >>> print(a.masked_fill(mask, 0.0))
+            [0. 1. 0. 0.]
+        """
+        self._init_check()
+        if isinstance(value, (float, int)):
+            value = tensor_operator_registry.get("scalar_to_tensor")(value, self.dtype)
+        if not isinstance(mask, Tensor):
+            raise TypeError("For 'Tensor.masked_fill', the type of the argument 'mask' must be Tensor, but "
+                            "got {}.".format(type(mask)))
+        validator.check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
+        return tensor_operator_registry.get("masked_fill")(self, mask, value)
+
     def ptp(self, axis=None, keepdims=False):
         """
         The name of the function comes from the acronym for "peak to peak". Calculate the difference between the
@@ -3492,6 +3568,35 @@ class Tensor(Tensor_):
         validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
 
+    def masked_select(self, mask):
+        """
+        Returns a new 1-D Tensor which indexes the self tensor according to the boolean `mask`.
+        The shapes of the `mask` tensor and the self tensor don't need to match, but they must be broadcastable.
+
+        Args:
+            mask (Tensor[bool]): The boolean Tensor.
+
+        Returns:
+            A 1-D Tensor, with the same type as self.
+
+        Raises:
+            TypeError: If `mask` is not a bool Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+            >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
+            >>> output = x.masked_select(mask)
+            >>> print(output)
+            [1 3]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('masked_select')(self, mask)
+
     def nonzero(self):
         """
         Return a Tensor of the positions of all non-zero values.
@@ -3815,6 +3920,113 @@ class Tensor(Tensor_):
         if return_counts:
             return output, counts
         return output
+
+    def unique_with_pad(self, pad_num):
+        """
+        Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
+
+        The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
+        The returned tuple(`y`, `idx`) after the self tensor is processed by the unique operator,
+        in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
+        the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
+        to make it have the same shape as the Tensor `idx`.
+
+        Args:
+            pad_num (int): Pad num. The data type is an int.
+
+        Returns:
+            tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
+            - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as self tensor.
+            - idx (Tensor) - The index of each value of self tensor in the unique output `y`,
+                the shape and data type same as self tensor.
+
+        Raises:
+            TypeError: If dtype of self tensor is neither int32 nor int64.
+            ValueError: If length of shape of self tensor is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1]), mstype.int32)
+            >>> output, idx = x.unique_with_pad(pad_num=0)
+            >>> print(output)
+            [1 2 3 0 0 0]
+            >>> print(idx)
+            [0 0 1 1 2 0]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("unique_with_pad")()(self, pad_num)
+
+    def diag(self):
+        r"""
+        Constructs a diagonal tensor with a given diagonal values.
+
+        Assume self tensor has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+        rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+        :math:`output[i_1,..., i_k, i_1,..., i_k] = self[i_1,..., i_k]` and 0 everywhere else.
+
+        Returns:
+            Tensor, has the same dtype as self tensor.
+
+        Raises:
+            ValueError: If rank of self tensor is less than 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor([1, 2, 3, 4])
+            >>> output = x.diag()
+            >>> print(output)
+            [[1, 0, 0, 0],
+             [0, 2, 0, 0],
+             [0, 0, 3, 0],
+             [0, 0, 0, 4]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('diag')()(self)
+
+    def xdivy(self, y):
+        """
+        Divides self tensor by the input tensor element-wise. Returns zero when self is zero.
+
+        self and `y` comply with the implicit type conversion rules to make the data types consistent.
+        'y' must be tensor or scalar, When y is tensor, dtypes of self and y cannot be bool at the same time,
+        and the shapes of them could be broadcast. When y is scalar, the scalar could only be a constant.
+
+        Args:
+            - **y** (Union[Tensor, Number, bool]) - The second input is a number,
+              or a bool when the first input is a tensor, or a tensor whose data type is float16,
+              float32, float64, complex64, complex128 or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `y` is not one of the following: Tensor, Number, bool.
+            TypeError: If dtype of self and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+            ValueError: If self could not be broadcast to a tensor with shape of `y`.
+            RuntimeError: If the data type of `y` conversion of Parameter is given
+                          but data type conversion of Parameter is not supported.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
+            >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+            >>> output = x.xdivy(y)
+            >>> print(output)
+            [ 1.   2.  -0.5]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("xdivy")()(self, y)
 
     def split(self, axis=0, output_num=1):
         """

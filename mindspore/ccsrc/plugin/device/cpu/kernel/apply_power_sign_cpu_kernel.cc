@@ -198,5 +198,7 @@ std::vector<KernelAttr> ApplyPowerSignCpuKernelMod::GetOpSupport() {
                                                        .AddOutInRef(1, 1)};
   return kernel_attr_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyPowerSign, ApplyPowerSignCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

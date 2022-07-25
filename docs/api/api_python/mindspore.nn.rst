@@ -213,6 +213,7 @@ Dropout层
     mindspore.nn.BCELoss
     mindspore.nn.BCEWithLogitsLoss
     mindspore.nn.CosineEmbeddingLoss
+    mindspore.nn.CrossEntropyLoss
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.HuberLoss

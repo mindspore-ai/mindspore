@@ -223,5 +223,7 @@ std::vector<KernelAttr> AddcmulCpuKernelMod::GetOpSupport() {
     KernelAttr().AddInputAttr(I8).AddInputAttr(I8).AddInputAttr(I8).AddInputAttr(F32).AddOutputAttr(I8)};
   return kernel_attr_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Addcmul, AddcmulCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
