@@ -12,14 +12,11 @@
 
     其中 :math:`x` 是输入元素。
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - 计算FastGeLU的输入，数据类型为float16或者float32。
 
-    - **x** (Tensor) - 计算FastGeLU的输入，数据类型为float16或者float32。
+    返回：
+        Tensor，其shape和数据类型和 `x` 相同。
 
-    **返回：**
-
-    Tensor，其shape和数据类型和 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 数据类型不是float16或者float32。
+    异常：
+        - **TypeError** - `x` 数据类型不是float16或者float32。

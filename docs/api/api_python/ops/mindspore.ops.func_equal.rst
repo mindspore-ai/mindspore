@@ -18,15 +18,12 @@ mindspore.ops.equal
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
         - 支持广播。
 
-    **参数：**
+    参数：
+        - **x** (Union[Tensor, Number]) - 第一个输入可以是数值型，也可以是数据类型为数值型的Tensor。
+        - **y** (Union[Tensor, Number]) - 当第一个输入是Tensor时，第二个输入是数值型或数据类型为数值型的Tensor。数据类型与第一个输入相同。
 
-    - **x** (Union[Tensor, Number]) - 第一个输入可以是数值型，也可以是数据类型为数值型的Tensor。
-    - **y** (Union[Tensor, Number]) - 当第一个输入是Tensor时，第二个输入是数值型或数据类型为数值型的Tensor。数据类型与第一个输入相同。
+    返回：
+        Tensor，输出的shape与输入广播后的shape相同，数据类型为bool。
 
-    **返回：**
-
-    Tensor，输出的shape与输入广播后的shape相同，数据类型为bool。
-
-    **异常：**
-
-    - **TypeError** - `x` 和 `y` 都不是Tensor。
+    异常：
+        - **TypeError** - `x` 和 `y` 都不是Tensor。

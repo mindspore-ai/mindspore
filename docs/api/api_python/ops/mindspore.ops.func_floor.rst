@@ -8,15 +8,12 @@ mindspore.ops.floor
     .. math::
         out_i = \lfloor x_i \rfloor
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - Floor的输入，任意维度的Tensor，秩应小于8。其数据类型必须为float16、float32。
 
-    - **x** (Tensor) - Floor的输入，任意维度的Tensor，秩应小于8。其数据类型必须为float16、float32。
+    返回：
+        Tensor，shape与 `x` 相同。
 
-    **返回：**
-
-    Tensor，shape与 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 的数据类型不是Tensor。
-    - **TypeError** - `x` 的数据类型不是float16、float32、float64。
+    异常：
+        - **TypeError** - `x` 的数据类型不是Tensor。
+        - **TypeError** - `x` 的数据类型不是float16、float32、float64。

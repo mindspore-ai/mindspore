@@ -18,12 +18,10 @@
     .. note::
         `clip_value_min` 必须小于或等于 `clip_value_max` 。
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - clip_by_value的输入，任意维度的Tensor。
+        - **clip_value_min** (Tensor) - 指定最小值。
+        - **clip_value_max** (Tensor) - 指定最大值。
 
-    - **x** (Tensor) - clip_by_value的输入，任意维度的Tensor。
-    - **clip_value_min** (Tensor) - 指定最小值。
-    - **clip_value_max** (Tensor) - 指定最大值。
-
-    **返回：**
-
-    Tensor，表示裁剪后的Tensor。其shape和数据类型和 `x` 相同。
+    返回：
+        Tensor，表示裁剪后的Tensor。其shape和数据类型和 `x` 相同。

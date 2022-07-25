@@ -13,12 +13,10 @@ mindspore.ops.Depend
         b = B(y)                --->        y = Depend(y, a)
                                 --->        b = B(y)
 
-    **输入：**
+    输入：
+        - **value** (Tensor) - 应被Depend操作符返回的Tensor。
+        - **expr** (Expression) - 应被执行的无输出的表达式。
 
-    - **value** (Tensor) - 应被Depend操作符返回的Tensor。
-    - **expr** (Expression) - 应被执行的无输出的表达式。
-
-    **输出：**
-
-    Tensor，作为 `value` 传入的变量。
+    输出：
+        Tensor，作为 `value` 传入的变量。
 

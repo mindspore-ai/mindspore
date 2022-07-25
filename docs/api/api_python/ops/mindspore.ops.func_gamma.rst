@@ -3,22 +3,19 @@ mindspore.ops.gamma
 
 .. py:function:: mindspore.ops.gamma(shape, alpha, beta, seed=None)
 
-    ¸ù¾İÙ¤Âí·Ö²¼²úÉú³ÉËæ»úÊı¡£
+    æ ¹æ®ä¼½é©¬åˆ†å¸ƒäº§ç”Ÿæˆéšæœºæ•°ã€‚
 
-    **²ÎÊı£º**
+    å‚æ•°ï¼š
+        - **shape** (tuple) - æŒ‡å®šç”Ÿæˆéšæœºæ•°çš„shapeã€‚ä»»æ„ç»´åº¦çš„Tensorã€‚
+        - **alpha** (Tensor) - :math:`\alpha` åˆ†å¸ƒçš„å‚æ•°ã€‚åº”è¯¥å¤§äº0ä¸”æ•°æ®ç±»å‹ä¸ºfloat32ã€‚
+        - **beta** (Tensor) - :math:`\beta` åˆ†å¸ƒçš„å‚æ•°ã€‚åº”è¯¥å¤§äº0ä¸”æ•°æ®ç±»å‹ä¸ºfloat32ã€‚
+        - **seed** (int) - éšæœºæ•°ç”Ÿæˆå™¨çš„ç§å­ï¼Œå¿…é¡»æ˜¯éè´Ÿæ•°ï¼Œé»˜è®¤ä¸ºNoneï¼Œå°†è§†ä¸º0ã€‚
 
-    - **shape** (tuple) - Ö¸¶¨Éú³ÉËæ»úÊıµÄshape¡£ÈÎÒâÎ¬¶ÈµÄTensor¡£
-    - **alpha** (Tensor) - :math:`\alpha` ·Ö²¼µÄ²ÎÊı¡£Ó¦¸Ã´óÓÚ0ÇÒÊı¾İÀàĞÍÎªfloat32¡£
-    - **beta** (Tensor) - :math:`\beta` ·Ö²¼µÄ²ÎÊı¡£Ó¦¸Ã´óÓÚ0ÇÒÊı¾İÀàĞÍÎªfloat32¡£
-    - **seed** (int) - Ëæ»úÊıÉú³ÉÆ÷µÄÖÖ×Ó£¬±ØĞëÊÇ·Ç¸ºÊı£¬Ä¬ÈÏÎªNone£¬½«ÊÓÎª0¡£
+    è¿”å›ï¼š
+        Tensorã€‚shapeæ˜¯è¾“å…¥ `shape` ã€ `alpha` ã€ `beta` å¹¿æ’­åçš„shapeã€‚æ•°æ®ç±»å‹ä¸ºfloat32ã€‚
 
-    **·µ»Ø£º**
-
-    Tensor¡£shapeÊÇÊäÈë `shape` ¡¢ `alpha` ¡¢ `beta` ¹ã²¥ºóµÄshape¡£Êı¾İÀàĞÍÎªfloat32¡£
-
-    **Òì³££º**
-
-    - **TypeError** ¨C `shape` ²»ÊÇtuple¡£
-    - **TypeError** ¨C `alpha` »ò `beta` ²»ÊÇTensor¡£
-    - **TypeError** ¨C `seed` µÄÊı¾İÀàĞÍ²»ÊÇint¡£
-    - **TypeError** ¨C `alpha` »ò `beta` µÄÊı¾İÀàĞÍ²»ÊÇfloat32¡£
+    å¼‚å¸¸ï¼š
+        - **TypeError** - `shape` ä¸æ˜¯tupleã€‚
+        - **TypeError** - `alpha` æˆ– `beta` ä¸æ˜¯Tensorã€‚
+        - **TypeError** - `seed` çš„æ•°æ®ç±»å‹ä¸æ˜¯intã€‚
+        - **TypeError** - `alpha` æˆ– `beta` çš„æ•°æ®ç±»å‹ä¸æ˜¯float32ã€‚
