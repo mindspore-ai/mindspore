@@ -155,7 +155,7 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
   }
 }
 
-void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
+void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto primitive = GetCNodePrimitive(node);

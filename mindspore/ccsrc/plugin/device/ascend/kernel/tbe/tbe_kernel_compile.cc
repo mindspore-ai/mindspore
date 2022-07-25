@@ -787,7 +787,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
   return GetAllSuccessFusion();
 }
 
-std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) {
+std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto full_name = node->fullname_with_scope();
   MS_LOG(DEBUG) << "Op select format start for op [" << full_name << "]";
@@ -804,7 +804,7 @@ std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) {
   return ParseSelectAndCheckResult(json_ret, node);
 }
 
-bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json) {
+bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json) const {
   MS_EXCEPTION_IF_NULL(node);
   auto full_name = node->fullname_with_scope();
   MS_LOG(DEBUG) << "Check supported for op [" << full_name << "]";
