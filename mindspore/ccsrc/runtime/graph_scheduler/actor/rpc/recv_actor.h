@@ -87,7 +87,7 @@ class RecvActor : public RpcActor {
  private:
   // Create abstract and add to the abstract list.
   void AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const ShapeVector &shapes, TypeId data_type,
-                          size_t input_index);
+                          size_t input_index) const;
 
   // Parse the protobuf message from the given buffer. The format is as below.
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |

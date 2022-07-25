@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace distributed {
 namespace cluster {
-bool ActorRouteTableService::Initialize() { return true; }
+bool ActorRouteTableService::Initialize() const { return true; }
 
 bool ActorRouteTableService::RegisterRoute(const std::string &actor_id, const ActorAddress &actor_addr,
                                            std::string *error) {

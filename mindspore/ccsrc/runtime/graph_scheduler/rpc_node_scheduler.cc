@@ -15,6 +15,8 @@
  */
 
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
+#include <vector>
+#include <string>
 #include "distributed/cluster/topology/compute_graph_node.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/graph_scheduler/actor/rpc/mux_send_actor.h"
@@ -39,7 +41,7 @@ void SetMuxRecvActorForMuxSendActor(const RpcActorSetPtr &rpc_actor_set) {
     if (common::AnfAlgo::HasNodeAttr(kAttrIsMuxRpcKernel, rpc_recv_kernel) &&
         (common::AnfAlgo::GetNodeAttr<bool>(rpc_recv_kernel, kAttrIsMuxRpcKernel) == true)) {
       exist_mux_recv_actor = true;
-      recv_actors.emplace_back(recv_actor);
+      (void)recv_actors.emplace_back(recv_actor);
     }
   }
 
@@ -78,11 +80,11 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
     if (std::dynamic_pointer_cast<RpcActor>(kernel_actor) == nullptr) {
       continue;
     } else {
-      rpc_actors.emplace_back(rpc_actor);
+      (void)rpc_actors.emplace_back(rpc_actor);
       if (std::dynamic_pointer_cast<SendActor>(rpc_actor) != nullptr) {
-        rpc_actor_set->send_actors_.emplace_back(std::dynamic_pointer_cast<SendActor>(rpc_actor));
+        (void)rpc_actor_set->send_actors_.emplace_back(std::dynamic_pointer_cast<SendActor>(rpc_actor));
       } else if (std::dynamic_pointer_cast<RecvActor>(rpc_actor) != nullptr) {
-        rpc_actor_set->recv_actors_.emplace_back(std::dynamic_pointer_cast<RecvActor>(rpc_actor));
+        (void)rpc_actor_set->recv_actors_.emplace_back(std::dynamic_pointer_cast<RecvActor>(rpc_actor));
       } else {
         MS_LOG(EXCEPTION) << "Rpc actor should be either SendActor or RecvActor.";
       }
@@ -102,7 +104,7 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
   return rpc_actor_set;
 }
 
-void RpcNodeScheduler::Link(const ActorSet *actor_set) {
+void RpcNodeScheduler::Link(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   RpcActorSetPtr rpc_actor_set = actor_set->rpc_actors_;
   MS_EXCEPTION_IF_NULL(rpc_actor_set);
@@ -153,7 +155,7 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) {
   }
 }
 
-void RpcNodeScheduler::Schedule(const ActorSet *actor_set) {
+void RpcNodeScheduler::Schedule(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   RpcActorSetPtr rpc_actor_set = actor_set->rpc_actors_;
   MS_EXCEPTION_IF_NULL(rpc_actor_set);
@@ -175,7 +177,7 @@ void RpcNodeScheduler::Schedule(const ActorSet *actor_set) {
   }
 }
 
-void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) {
+void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) const {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(rpc_actors);
 
@@ -189,7 +191,7 @@ void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<
   }
 }
 
-void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
+void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
   MS_EXCEPTION_IF_NULL(rpc_actors);
 
   for (auto &recv_actor : rpc_actors->recv_actors_) {
@@ -202,7 +204,7 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
   }
 }
 
-ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() {
+ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() const {
   ActorRouteTableProxyPtr actor_route_table_proxy;
   if (!ClusterContext::instance()->IsScheduler()) {
     auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(

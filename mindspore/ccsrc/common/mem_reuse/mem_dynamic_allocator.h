@@ -207,14 +207,14 @@ class DynamicMemPoolBestFit {
   // Split the memory buf by alloc size.
   void SplitMemBuf(size_t size, const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng);
   // Find the memory block by device address.
-  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mgr);
+  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mgr) const;
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
   void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
                      const MemStatusManagerPtr &mem_mng);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
-  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng);
+  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng) const;
 
   // Support multi-thread.
   std::mutex mutex_;

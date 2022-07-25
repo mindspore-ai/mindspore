@@ -186,8 +186,8 @@ void KernelRuntime::GetCommunicationInputInfo(const AnfNodePtr &node, size_t *to
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
     *total_size += align_size;
-    address_list->emplace_back(address);
-    align_size_list->emplace_back(align_size);
+    (void)address_list->emplace_back(address);
+    (void)align_size_list->emplace_back(align_size);
   }
 }
 
@@ -556,7 +556,8 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
   }
 }
 
-void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, const session::KernelGraph &graph) {
+void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value,
+                                                const session::KernelGraph &graph) const {
   if (pre_output_value == nullptr) {
     return;
   }
@@ -744,7 +745,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
   MS_LOG(INFO) << "AssignStaticMemoryOutput end";
 }
 
-void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) {
+void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) const {
   auto &kernels = graph.execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -1266,7 +1267,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     input->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(input->addr);
     input->size = device_address->size_;
-    kernel_launch_info->inputs_.emplace_back(input);
+    (void)kernel_launch_info->inputs_.emplace_back(input);
   }
 
   for (size_t i = 0; i < kernel_mod.GetOutputSizeList().size(); ++i) {
@@ -1276,7 +1277,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     output->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(output->addr);
     output->size = device_address->size_;
-    kernel_launch_info->outputs_.emplace_back(output);
+    (void)kernel_launch_info->outputs_.emplace_back(output);
   }
 
   for (size_t i = 0; i < kernel_mod.GetWorkspaceSizeList().size(); ++i) {
@@ -1286,7 +1287,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     workspace->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(workspace->addr);
     workspace->size = device_address->size_;
-    kernel_launch_info->workspaces_.emplace_back(workspace);
+    (void)kernel_launch_info->workspaces_.emplace_back(workspace);
   }
 }
 
@@ -1323,11 +1324,11 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
     pre_event->set_record_stream(stream_);
     post_event->set_wait_stream(stream_);
     post_event->set_record_stream(communication_stream_);
-    kernel_pre_run_events[kernel].emplace_back([pre_event]() {
+    (void)kernel_pre_run_events[kernel].emplace_back([pre_event]() {
       pre_event->RecordEvent();
       pre_event->WaitEvent();
     });
-    kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
+    (void)kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
     bool found_nearest_child = false;
     for (size_t j = i + 1; j < kernels.size(); ++j) {
       auto &child = kernels[j];
@@ -1350,7 +1351,7 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
       }
     }
     if (!found_nearest_child) {
-      kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->WaitEvent(); });
+      (void)kernel_post_run_events[kernel].emplace_back([post_event]() { post_event->WaitEvent(); });
     }
   }
   graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
@@ -1473,7 +1474,7 @@ void KernelRuntime::GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_
 }
 
 void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
-                                        KernelLaunchInfo *kernel_launch_info) {
+                                        KernelLaunchInfo *kernel_launch_info) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
@@ -1496,7 +1497,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, input);
     input->size = device_address->size_;
-    kernel_launch_info->inputs_.emplace_back(input);
+    (void)kernel_launch_info->inputs_.emplace_back(input);
     if (update_parameter && input_node->isa<Parameter>()) {
       auto param = input_node->cast<ParameterPtr>();
       auto abstract = param->abstract();
@@ -1512,7 +1513,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, output);
     output->size = device_address->size_;
-    kernel_launch_info->outputs_.emplace_back(output);
+    (void)kernel_launch_info->outputs_.emplace_back(output);
   }
 
   for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
@@ -1520,7 +1521,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, workspace);
     workspace->size = device_address->size_;
-    kernel_launch_info->workspaces_.emplace_back(workspace);
+    (void)kernel_launch_info->workspaces_.emplace_back(workspace);
   }
 }
 
@@ -1573,7 +1574,7 @@ void KernelRuntime::SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &me
 }
 
 void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
-                                          const session::KernelGraph &graph) {
+                                          const session::KernelGraph &graph) const {
   MS_EXCEPTION_IF_NULL(mem_scheduler);
   auto &input_nodes = graph.input_nodes();
   auto &input_tensors = graph.input_tensors();
@@ -1604,8 +1605,8 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
     if (need_sync) {
       const auto &shape = trans::GetRuntimePaddingShape(input_node, 0);
       if (device_address->GetPtr() != nullptr) {
-        device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                         tensor->data_c(), tensor->device_info().host_format_);
+        (void)device_address->SyncHostToDevice(shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                               tensor->data_c(), tensor->device_info().host_format_);
       } else {
         mem_scheduler->AddMemNeedInit(device_address.get());
       }
@@ -1635,8 +1636,8 @@ void KernelRuntime::AddCommunicationMemInfo(const session::KernelGraph &graph) {
     GetCommunicationInputInfo(kernel, &input_total_size, &input_address_list, &input_align_size_list);
     if (input_address_list.size() > 1) {
       std::vector<const void *> input_address_key_list;
-      std::transform(input_address_list.begin(), input_address_list.end(), std::back_inserter(input_address_key_list),
-                     device_address_to_key);
+      (void)std::transform(input_address_list.begin(), input_address_list.end(),
+                           std::back_inserter(input_address_key_list), device_address_to_key);
       mem_scheduler->AddContinuousMemInfo(true, compute_index, input_total_size, input_align_size_list,
                                           input_address_key_list);
     }
@@ -1646,8 +1647,8 @@ void KernelRuntime::AddCommunicationMemInfo(const session::KernelGraph &graph) {
     GetCommunicationOutputInfo(kernel, &output_total_size, &output_address_list, &output_align_size_list);
     if (output_address_list.size() > 1) {
       std::vector<const void *> output_address_key_list;
-      std::transform(output_address_list.begin(), output_address_list.end(),
-                     std::back_inserter(output_address_key_list), device_address_to_key);
+      (void)std::transform(output_address_list.begin(), output_address_list.end(),
+                           std::back_inserter(output_address_key_list), device_address_to_key);
       mem_scheduler->AddContinuousMemInfo(false, compute_index, output_total_size, output_align_size_list,
                                           output_address_key_list);
     }
@@ -1728,7 +1729,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       opt::dynamic_shape::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
       if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-          kernel::KRET_RESIZE_FAILED) {
+          static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize  failed.";
       }
       KernelLaunchInfo kernel_launch_info;
@@ -1783,7 +1784,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
 }
 
 void KernelRuntime::SyncParameter(const session::KernelGraph &graph,
-                                  const std::shared_ptr<MemScheduler> &mem_scheduler) {
+                                  const std::shared_ptr<MemScheduler> &mem_scheduler) const {
   MS_EXCEPTION_IF_NULL(mem_scheduler);
   auto &input_nodes = graph.input_nodes();
   auto &input_tensors = graph.input_tensors();
@@ -1873,7 +1874,7 @@ void FinalizePsCache(const std::string &exception) {
 
 void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph &graph,
                                              AnfNodePtr *const first_cache_input_index,
-                                             size_t *const first_cache_size) {
+                                             size_t *const first_cache_size) const {
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
@@ -1921,7 +1922,7 @@ void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph &graph,
   }
 }
 
-void KernelRuntime::CheckSparsePSEmbeddingCache(const CNodePtr &node) {
+void KernelRuntime::CheckSparsePSEmbeddingCache(const CNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto pre_node = common::AnfAlgo::GetPrevNodeOutput(node, 1, true);
   MS_EXCEPTION_IF_NULL(pre_node.first);
