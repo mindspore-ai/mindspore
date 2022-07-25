@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/base/reduce_base.h"
+#include <set>
 #include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
@@ -182,8 +183,9 @@ int ReduceBaseCPUKernel::ReSize() {
 
 void ReduceBaseCPUKernel::DecideIfOnlyCopy() {
   auto in_shape = in_tensors_[FIRST_INPUT]->shape();
-  if (mode_ == schema::ReduceMode_ReduceSumSquare || mode_ == schema::ReduceMode_ReduceASum ||
-      mode_ == schema::ReduceMode_ReduceAll) {
+  std::set<int> can_not_copy = {schema::ReduceMode_ReduceSumSquare, schema::ReduceMode_ReduceASum,
+                                schema::ReduceMode_ReduceAll, schema::ReduceMode_ReduceL2};
+  if (can_not_copy.find(mode_) != can_not_copy.end()) {
     only_copy_ = false;
     return;
   }
