@@ -256,14 +256,11 @@ AbstractBasePtr InferImplUniqueWithPad(const AnalysisEnginePtr &, const Primitiv
   if (idx_max_shape.empty()) {
     idx_max_shape = shape->shape();
   }
-
   auto ids_idx = std::make_shared<AbstractTensor>(ids_idx_type, idx_shape);
   ids_idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
-  auto ids = std::make_shared<AbstractTensor>(ids_idx_type, idx_shape);
-  ids->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
-  // outputs: ids, ids_idx
-  AbstractBasePtrList elements = {ids, ids_idx};
-  return std::make_shared<AbstractTuple>(elements);
+
+  AbstractBasePtr ids = input->Broaden();
+  return std::make_shared<AbstractTuple>(AbstractBasePtrList({ids, ids_idx}));
 }
 
 AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

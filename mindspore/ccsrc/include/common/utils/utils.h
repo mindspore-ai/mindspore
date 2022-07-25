@@ -41,7 +41,6 @@ constexpr auto kSegmentProdOpName = "SegmentProd";
 constexpr auto kConcatOpName = "Concat";
 constexpr auto kListDiffOpName = "ListDiff";
 constexpr auto kUniqueOpName = "Unique";
-constexpr auto kUniqueWithPadOpName = "UniqueWithPad";
 constexpr auto kUniqueConsecutiveOpName = "UniqueConsecutive";
 constexpr auto kMaskedSelectOpName = "MaskedSelect";
 constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
@@ -872,7 +871,6 @@ const std::set<std::string> kHWSpecialFormatSet = {
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
 const std::set<std::string> kComputeDepend = {kUniqueOpName,
-                                              kUniqueWithPadOpName,
                                               kUniqueConsecutiveOpName,
                                               kComputeAccidentalHitsOpName,
                                               kSubAndFilterOpName,

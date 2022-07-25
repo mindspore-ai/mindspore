@@ -39,6 +39,7 @@ class UniqueWithPadGpuKernelMod : public UniqueGpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override;
 
  protected:
+  void SyncData() override{};
   std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
