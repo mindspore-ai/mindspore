@@ -22,7 +22,7 @@
 #include "include/common/utils/parallel_context.h"
 
 namespace mindspore::device {
-std::shared_ptr<session::KernelGraph> LaunchMul::ObtainMulKernelGraph() {
+std::shared_ptr<session::KernelGraph> LaunchMul::ObtainMulKernelGraph() const {
   std::vector<TypeId> input_dtypes = {dtype_, dtype_};
   std::vector<TypeId> output_dtypes = {dtype_};
   // obtain input & output shapes

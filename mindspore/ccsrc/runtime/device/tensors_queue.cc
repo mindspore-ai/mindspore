@@ -114,6 +114,10 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
     CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)], stream);
   }
   if (pop_after_get) {
+    if (size_ <= 0) {
+      MS_LOG(ERROR) << "The size is zero.";
+      return false;
+    }
     front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }
   MS_LOG(DEBUG) << "Get an element from  " << name_ << ", pop_after_get is " << pop_after_get
@@ -131,6 +135,10 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
     CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)]);
   }
   if (pop_after_get) {
+    if (size_ <= 0) {
+      MS_LOG(ERROR) << "The size is zero.";
+      return false;
+    }
     front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }
   MS_LOG(DEBUG) << "Get an element from  " << name_ << ", pop_after_get is " << pop_after_get
@@ -155,6 +163,11 @@ void TensorsQueue::Free() {
       if (addr != nullptr) {
         FreeMemory(static_cast<DeviceMemPtr>(addr->addr));
       }
+    }
+
+    if (size_ <= 0) {
+      MS_LOG(ERROR) << "The size is zero.";
+      return;
     }
     front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }

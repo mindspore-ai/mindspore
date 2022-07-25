@@ -162,7 +162,7 @@ void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem)
   return nullptr;
 }
 
-bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
+bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t,
                                                    std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
   if (device_ptr_list.empty()) {
