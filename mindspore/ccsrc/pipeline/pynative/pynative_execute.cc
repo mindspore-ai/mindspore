@@ -80,7 +80,6 @@ const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient",
 const std::set<std::string> kAxisNone = {"ReduceSum"};
 const std::set<std::string> kIgnoreInferPrim = {"mixed_precision_cast"};
 const std::set<std::string> kForceInferPrim = {"TopK", "DropoutGenMask"};
-const std::set<std::string> kSummaryOperators = {"ScalarSummary", "ImageSummary", "TensorSummary", "HistogramSummary"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 const char kGrad[] = "grad";
 const char kSensInfo[] = "SensInfo";
@@ -1318,10 +1317,6 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   MS_EXCEPTION_IF_NULL(ret);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_exec_info->op_name;
-  if (kSummaryOperators.count(op_exec_info->op_name) != 0) {
-    MS_LOG(DEBUG) << "PyNative not support Operator " << op_exec_info->op_name;
-    return;
-  }
   if (op_exec_info->op_name == prim::kPrimMixedPrecisionCast->name()) {
     RunMixedPrecisionCastOp(op_exec_info, ret);
     return;
