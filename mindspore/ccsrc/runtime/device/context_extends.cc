@@ -16,7 +16,6 @@
 
 #include "runtime/device/context_extends.h"
 #include <cstdlib>
-#include <map>
 #include <string>
 #include <memory>
 #include <thread>
@@ -60,7 +59,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
     return true;
   }
 
-  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF)) {
+  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) != 0) {
     MS_LOG(DEBUG) << "ACLTDT Dataset client is already opened.";
     ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
     return true;
@@ -139,7 +138,6 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
         MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
       }
       MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
-      return false;
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";

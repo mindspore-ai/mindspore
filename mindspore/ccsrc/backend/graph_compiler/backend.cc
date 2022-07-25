@@ -1037,7 +1037,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   // Release GIL and run actor DAG.
   mindspore::ScopedLongRunning long_running;
-  runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, input_tensors);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
@@ -1192,7 +1192,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
-  runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, input_tensors);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_OPTIMIZER_INVALID_DATA_ARROW_ELIMINATION_H_
 
 #include <memory>
-#include <utility>
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
 
 namespace mindspore {

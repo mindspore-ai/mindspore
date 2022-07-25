@@ -109,7 +109,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name() const { return device_name_; }
   uint32_t device_id() const { return device_id_; }
 
-  void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { held_by_nodes_.emplace_back(value_node); }
+  void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }
   void ClearHeldByNodes() { held_by_nodes_.clear(); }
 
