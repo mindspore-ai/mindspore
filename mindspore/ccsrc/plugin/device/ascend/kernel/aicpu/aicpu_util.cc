@@ -46,7 +46,7 @@ int AicpuOpUtil::MsTypeToProtoType(TypeId ms_type) {
     MS_LOG(ERROR) << "UnSupported ms_type value" << static_cast<int>(ms_type);
     return -1;
   }
-  return iter->second;
+  return static_cast<int>(iter->second);
 }
 
 int AicpuOpUtil::ProtoTypeToMsType(int proto_type) {
@@ -72,7 +72,7 @@ int AicpuOpUtil::ProtoTypeToMsType(int proto_type) {
     MS_LOG(ERROR) << "UnSupported proto_type value:" << proto_type;
     return -1;
   }
-  return iter->second;
+  return static_cast<int>(iter->second);
 }
 }  // namespace kernel
 }  // namespace mindspore

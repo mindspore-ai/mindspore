@@ -1206,7 +1206,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
 
 BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                                  const std::vector<tensor::TensorPtr> &output_tensors,
-                                                 size_t *output_position) {
+                                                 size_t *output_position) const {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(output_position);
 
@@ -1234,7 +1234,7 @@ BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr
 
 void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
                                      const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
-                                     VectorRef *outputs) {
+                                     VectorRef *outputs) const {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(output_position);
