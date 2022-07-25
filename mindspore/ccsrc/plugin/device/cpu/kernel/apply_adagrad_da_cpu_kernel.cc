@@ -255,6 +255,6 @@ std::vector<KernelAttr> ApplyAdagradDACpuKernelMod::GetOpSupport() {
   return kernel_attr_list;
 }
 
-// MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagradDA, ApplyAdagradDACpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagradDA, ApplyAdagradDACpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -384,6 +384,8 @@ def _vmap_clone_prim(prim):
 
 _ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
                              "ApplyAdadelta": P.ApplyAdadelta,
+                             "ApplyRMSProp": P.ApplyRMSProp,
+                             "ApplyCenteredRMSProp": P.ApplyCenteredRMSProp,
                              "ApplyFtrl": P.ApplyFtrl,
                              "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
                              "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,

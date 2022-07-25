@@ -201,6 +201,7 @@ constexpr auto kDropout3D = "Dropout3D";
 constexpr auto kPadding = "Padding";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
+constexpr auto kApplyRMSProp = "ApplyRMSProp";
 constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 constexpr auto kSparseApplyAdagrad = "SparseApplyAdagrad";
 constexpr auto kRoll = "Roll";
@@ -676,7 +677,7 @@ GVAR_DEF(PrimitivePtr, kPrimFakeLearnedScaleQuantPerLayer,
 GVAR_DEF(PrimitivePtr, kPrimFakeLearnedScaleQuantPerChannel,
          std::make_shared<Primitive>("FakeLearnedScaleQuantPerChannel"));
 GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVars, std::make_shared<Primitive>("FakeQuantWithMinMaxVars"));
-GVAR_DEF(PrimitivePtr, kPrimApplyRMSProp, std::make_shared<Primitive>("ApplyRMSProp"));
+GVAR_DEF(PrimitivePtr, kPrimApplyRMSProp, std::make_shared<Primitive>(kApplyRMSProp));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyFtrl, std::make_shared<Primitive>("SparseApplyFtrl"));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalAdagrad, std::make_shared<Primitive>("SparseApplyProximalAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimFusedAdam, std::make_shared<Primitive>("FusedAdam"));

@@ -682,6 +682,6 @@ std::vector<std::pair<KernelAttr, ApplyAdagradDAGpuKernelMod::ApplyAdagradDAFunc
      &ApplyAdagradDAGpuKernelMod::LaunchKernel<half, half, half, half, int64_t>},
 };
 
-// MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ApplyAdagradDA, ApplyAdagradDAGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ApplyAdagradDA, ApplyAdagradDAGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
