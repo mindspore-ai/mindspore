@@ -819,3 +819,11 @@ def check_dict(data, key_type, value_type, param_name):
             if not isinstance(value, value_type):
                 raise TypeError("value of '{0}' in parameter {1} should be {2} type, but got: {3}"
                                 .format(key, param_name, value_type, type(value)))
+
+
+def check_feature_shape(data, shape, param_name):
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if len(value.shape) != 2 or value.shape[0] != shape:
+                raise ValueError("Shape of item '{0}' in '{1}' should be 2 dimension, and shape of first dimension "
+                                 "should be: {2}, but got: {3}.".format(key, param_name, shape, value.shape))
