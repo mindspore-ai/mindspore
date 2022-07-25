@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.ops.functional import vmap
 
 
 class NetConv3d(nn.Cell):
@@ -154,3 +155,43 @@ def test_conv3d_grad():
     output = grad_net(x, dy)
     optimizer(output[1])
     assert np.allclose(net.cv1.weight.asnumpy(), w_exp, atol=1.0e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3d_vmap():
+    """
+    Feature: Conv3D op
+    Description: Test vmap rule for Conv3D op
+    Expectation: The dataset is processed as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    conv3d = NetConv3d()
+
+    batch_x = Tensor(np.arange(2 * 1 * 1 * 3 * 3 * 3).reshape(2, 1, 1, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.ones([4, 1, 2, 2, 2]).astype(np.float32))
+    expected1 = np.array([[[[[[52., 60.], [76., 84.]], [[124., 132.], [148., 156.]]],
+                            [[[52., 60.], [76., 84.]], [[124., 132.], [148., 156.]]],
+                            [[[52., 60.], [76., 84.]], [[124., 132.], [148., 156.]]],
+                            [[[52., 60.], [76., 84.]], [[124., 132.], [148., 156.]]]]],
+                          [[[[[268., 276.], [292., 300.]], [[340., 348.], [364., 372.]]],
+                            [[[268., 276.], [292., 300.]], [[340., 348.], [364., 372.]]],
+                            [[[268., 276.], [292., 300.]], [[340., 348.], [364., 372.]]],
+                            [[[268., 276.], [292., 300.]], [[340., 348.], [364., 372.]]]]]]).astype(np.float32)
+    output1 = vmap(conv3d, (0, None))(batch_x, w)
+    assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
+
+    x = Tensor(np.arange(1 * 1 * 3 * 3 * 3).reshape(1, 1, 3, 3, 3).astype(np.float32))
+    batch_w = Tensor(np.arange(2 * 4 * 1 * 2 * 2 * 2).reshape(2, 4, 1, 2, 2, 2).astype(np.float32))
+    expected2 = np.array([[[[[[268., 296.], [352., 380.]], [[520., 548.], [604., 632.]]],
+                            [[[684., 776.], [960., 1052.]], [[1512., 1604.], [1788., 1880.]]],
+                            [[[1100., 1256.], [1568., 1724.]], [[2504., 2660.], [2972., 3128.]]],
+                            [[[1516., 1736.], [2176., 2396.]], [[3496., 3716.], [4156., 4376.]]]]],
+                          [[[[[1932., 2216.], [2784., 3068.]], [[4488., 4772.], [5340., 5624.]]],
+                            [[[2348., 2696.], [3392., 3740.]], [[5480., 5828.], [6524., 6872.]]],
+                            [[[2764., 3176.], [4000., 4412.]], [[6472., 6884.], [7708., 8120.]]],
+                            [[[3180., 3656.], [4608., 5084.]], [[7464., 7940.], [8892., 9368.]]]]]]
+                        ).astype(np.float32)
+    output2 = vmap(conv3d, (None, 0))(x, batch_w)
+    assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)

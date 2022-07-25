@@ -26,6 +26,7 @@ from ..composite import _VmapGeneralPreprocess
 from ..primitive import Primitive
 from ..operations.random_ops import UniformCandidateSampler
 from ...common import Tensor
+from ..operations import nn_ops as nps
 
 vmap_rules_getters = Registry()
 vmap_rules = Registry()
@@ -397,4 +398,12 @@ _ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
                              "UniformCandidateSampler": UniformCandidateSampler,
                              "CdistGrad": G.CdistGrad,
                              "Cdist": P.Cdist,
-                             "STFT": math_ops.STFT}
+                             "STFT": math_ops.STFT,
+                             "Conv2D": P.Conv2D,
+                             "Conv3D": P.Conv3D,
+                             "Conv2DTranspose": P.Conv2DTranspose,
+                             "Conv2DBackpropInput": P.Conv2DBackpropInput,
+                             "Conv3DTranspose": P.Conv3DTranspose,
+                             "Conv3DBackpropInput": nps.Conv3DBackpropInput,
+                             "Conv2DBackpropFilter": G.Conv2DBackpropFilter,
+                             "Conv3DBackpropFilter": G.Conv3DBackpropFilter}

@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
@@ -70,3 +71,37 @@ def test_conv2d_backprop_filter():
                          [-104, -211, -322],
                          [-102, -144, -248]]]]).astype(np.float32)
     assert (abs(output.asnumpy() - expect) < np.ones(shape=[1, 1, 3, 3]) * 1.0e-4).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv2d_backprop_filter_vmap():
+    """
+    Feature: Conv2DBackpropFilter op
+    Description: Test vmap rule for Conv2DBackpropFilter op
+    Expectation: The dataset is processed as expected
+    """
+    conv2d_filter = Conv2dFilter()
+    batch_out = Tensor(np.arange(1 * 2 * 1 * 4 * 4).reshape(1, 2, 1, 4, 4).astype(np.float32))
+    x = Tensor(np.arange(1 * 1 * 6 * 6).reshape(1, 1, 6, 6).astype(np.float32))
+    w = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+    expected1 = np.array([[[[[1760., 1880., 2000.], [2480., 2600., 2720.], [3200., 3320., 3440.]]]],
+                          [[[[4448., 4824., 5200.], [6704., 7080., 7456.], [8960., 9336., 9712.]]]]]
+                        ).astype(np.float32)
+    output1 = vmap(conv2d_filter, (1, None, None))(batch_out, x, w)
+    assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
+
+    dout = Tensor(np.arange(1 * 1 * 4 * 4).reshape(1, 1, 4, 4).astype(np.float32))
+    batch_x = Tensor(np.arange(2 * 1 * 1 * 6 * 6).reshape(2, 1, 1, 6, 6).astype(np.float32))
+    expected2 = np.array([[[[[1760., 1880., 2000.], [2480., 2600., 2720.], [3200., 3320., 3440.]]]],
+                          [[[[6080., 6200., 6320.], [6800., 6920., 7040.], [7520., 7640., 7760.]]]]]
+                        ).astype(np.float32)
+    output2 = vmap(conv2d_filter, (None, 0, None))(dout, batch_x, w)
+    assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)
+
+    expected3 = np.array([[[[[1760., 1880., 2000.], [2480., 2600., 2720.], [3200., 3320., 3440.]]]],
+                          [[[[17984., 18360., 18736.], [20240., 20616., 20992.], [22496., 22872., 23248.]]]]]
+                        ).astype(np.float32)
+    output3 = vmap(conv2d_filter, (1, 0, None))(batch_out, batch_x, w)
+    assert np.allclose(output3.asnumpy(), expected3, 0.0001, 0.0001)
