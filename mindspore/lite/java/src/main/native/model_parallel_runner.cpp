@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/ms_log.h"
+#include "common/log.h"
 #include "include/api/model_parallel_runner.h"
 #include "include/api/context.h"
 
@@ -24,7 +24,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
                                                                                jlong runner_config_ptr) {
   auto runner = new (std::nothrow) mindspore::ModelParallelRunner();
   if (runner == nullptr) {
-    MS_LOGE("Make ModelParallelRunner failed");
+    MS_LOG(ERROR) << "Make ModelParallelRunner failed";
     return (jlong) nullptr;
   }
   auto model_path_str = env->GetStringUTFChars(model_path, JNI_FALSE);
@@ -47,7 +47,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
     auto copy_context = std::make_shared<mindspore::Context>();
     if (copy_context == nullptr) {
-      MS_LOGE("new context is nullptr.");
+      MS_LOG(ERROR) << "new context is nullptr.";
       delete runner;
       return (jlong) nullptr;
     }
@@ -62,7 +62,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
         auto origin_device_info = origin_device->Cast<mindspore::CPUDeviceInfo>();
         auto copy_device_info = std::make_shared<mindspore::CPUDeviceInfo>();
         if (copy_device_info == nullptr) {
-          MS_LOGE("new copy_device_info is nullptr.");
+          MS_LOG(ERROR) << "new copy_device_info is nullptr.";
           delete runner;
           return (jlong) nullptr;
         }
@@ -73,7 +73,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
         auto origin_device_info = origin_device->Cast<mindspore::GPUDeviceInfo>();
         auto copy_device_info = std::make_shared<mindspore::GPUDeviceInfo>();
         if (copy_device_info == nullptr) {
-          MS_LOGE("new copy_device_info is nullptr.");
+          MS_LOG(ERROR) << "new copy_device_info is nullptr.";
           delete runner;
           return (jlong) nullptr;
         }
@@ -85,7 +85,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     auto runner_config = std::make_shared<mindspore::RunnerConfig>();
     if (runner_config == nullptr) {
       delete runner;
-      MS_LOGE("Make RunnerConfig failed");
+      MS_LOG(ERROR) << "Make RunnerConfig failed";
       return (jlong) nullptr;
     }
     runner_config->SetContext(copy_context);
@@ -114,7 +114,7 @@ jobject GetParallelInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_paralle
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
   auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return ret;
   }
   std::vector<mindspore::MSTensor> tensors;
@@ -126,7 +126,7 @@ jobject GetParallelInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_paralle
   for (auto &tensor : tensors) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
     if (tensor_ptr == nullptr) {
-      MS_LOGE("Make ms tensor failed");
+      MS_LOG(ERROR) << "Make ms tensor failed";
       return ret;
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
@@ -150,7 +150,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_ModelParallelRunner_pre
   JNIEnv *env, jobject thiz, jlong model_parallel_runner_ptr, jlongArray inputs, jlongArray outputs) {
   auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model runner pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model runner pointer from java is nullptr";
     return false;
   }
 
@@ -160,7 +160,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_ModelParallelRunner_pre
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("input tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "input tensor pointer from java is nullptr";
       return false;
     }
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -174,7 +174,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_ModelParallelRunner_pre
   for (int i = 0; i < output_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(output_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("output tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "output tensor pointer from java is nullptr";
       return false;
     }
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -184,7 +184,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_ModelParallelRunner_pre
 
   auto ret = pointer->Predict(c_inputs, &c_outputs);
   if (ret != mindspore::kSuccess) {
-    MS_LOGE("predict failed.");
+    MS_LOG(ERROR) << "predict failed.";
     return false;
   }
   return true;
@@ -200,7 +200,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
   env->DeleteLocalRef(array_list);
   auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return ret;
   }
 
@@ -210,7 +210,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("Tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
       return ret;
     }
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -222,7 +222,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
   for (auto &tensor : outputs) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
     if (tensor_ptr == nullptr) {
-      MS_LOGE("Make ms tensor failed");
+      MS_LOG(ERROR) << "Make ms tensor failed";
       return ret;
     }
     jclass long_object = env->FindClass("java/lang/Long");
@@ -239,7 +239,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_ModelParallelRunner_free(JN
                                                                               jlong model_parallel_runner_ptr) {
   auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("ModelParallelRunner pointer from java is nullptr");
+    MS_LOG(ERROR) << "ModelParallelRunner pointer from java is nullptr";
     return;
   }
   delete pointer;

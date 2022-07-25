@@ -15,7 +15,6 @@
  */
 
 #include <jni.h>
-#include "common/ms_log.h"
 #include "include/api/types.h"
 
 extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_config_Version_version(JNIEnv *env, jclass thiz) {
