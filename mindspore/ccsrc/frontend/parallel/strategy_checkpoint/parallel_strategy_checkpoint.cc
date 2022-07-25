@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <vector>
+#include <utility>
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
@@ -63,7 +64,7 @@ bool StrategyCheckpoint::CheckPointExit(const std::string path) const {
   return false;
 }
 
-Status StrategyCheckpoint::LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) {
+Status StrategyCheckpoint::LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) const {
   MS_EXCEPTION_IF_NULL(group_info_map);
   if (!CheckPath(file)) {
     MS_LOG(EXCEPTION) << "CheckPoint file in invalid";
@@ -121,7 +122,7 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
     straspb::ParallelStrategyItem parallel_strategy_item = parallel_strategy_map.parallel_strategy_item(SizeToInt(i));
     std::string node_name = parallel_strategy_item.node_name();
     straspb::ParallelStrategys parallel_strategys = parallel_strategy_item.parallel_strategys();
-    auto stage = (int64_t)parallel_strategys.stage();
+    int64_t stage = SizeToLong(parallel_strategys.stage());
     size_t strategys_num = LongToSize(parallel_strategys.parallel_strategy_size());
     Strategies strategy_inputs;
     for (size_t j = 0; j < strategys_num; j++) {
@@ -136,7 +137,7 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
 
     StrategyPtr strategy = NewStrategy(stage, strategy_inputs);
     (*strategy_map)[node_name] = strategy;
-    current_stage_ = (int64_t)parallel_strategy_map.current_stage();
+    current_stage_ = SizeToLong(parallel_strategy_map.current_stage());
   }
   return SUCCESS;
 }

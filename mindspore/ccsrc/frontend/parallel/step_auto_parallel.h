@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace parallel {
 // main step of Auto-parallel
-bool StepAutoParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
+bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
 
 void InitCostGraph();
 
@@ -62,7 +62,7 @@ void AddUsersUniqueIdWhenSharingParameter(
   const std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>> &parameter_users_info);
 
 std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
-  const std::vector<std::vector<std::string>> &shared_tensors_ops_names,
+  const std::vector<std::vector<std::string>> &param_users_uniqueid_list,
   const std::vector<std::vector<std::string>> &input_tensor_names);
 }  // namespace parallel
 }  // namespace mindspore

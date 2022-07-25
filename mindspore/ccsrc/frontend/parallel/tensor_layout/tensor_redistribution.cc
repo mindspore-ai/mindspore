@@ -17,6 +17,9 @@
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include <functional>
 #include <numeric>
+#include <memory>
+#include <utility>
+#include <string>
 #include "utils/ms_utils.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
@@ -137,8 +140,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
       if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
         return Status::FAILED;
       } else {
-        (void)operator_vector->insert(operator_vector->begin(), constructor.GetOperator());
-        (void)output_info_vector->insert(output_info_vector->begin(), std::make_pair(false, 0));
+        (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
+        (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
       }
     }
     return Status::SUCCESS;
@@ -152,8 +155,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
-      (void)operator_vector->insert(operator_vector->begin(), constructor.GetOperator());
-      (void)output_info_vector->insert(output_info_vector->begin(), std::make_pair(false, 0));
+      (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
+      (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
     }
   }
 
@@ -165,8 +168,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
-      (void)operator_vector->insert(operator_vector->end(), constructor.GetOperator());
-      (void)output_info_vector->insert(output_info_vector->end(), std::make_pair(false, 0));
+      (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
+      (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
     }
   }
   return Status::SUCCESS;
@@ -187,13 +190,13 @@ Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout
     return Status::FAILED;
   } else {
     for (auto op : operator_infer.operator_vector()) {
-      (void)operator_vector->insert(operator_vector->end(), op);
+      (void)operator_vector->insert(operator_vector->cend(), op);
     }
     for (auto info : operator_infer.output_info_vector()) {
-      (void)output_info_vector->insert(output_info_vector->end(), info);
+      (void)output_info_vector->insert(output_info_vector->cend(), info);
     }
     for (auto opc : operator_infer.operator_list()) {
-      (void)operator_list_.insert(operator_list_.end(), opc);
+      (void)operator_list_.insert(operator_list_.cend(), opc);
     }
   }
   return Status::SUCCESS;

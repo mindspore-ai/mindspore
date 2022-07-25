@@ -52,7 +52,7 @@ class TensorInfo {
       if ((slice_shape_[i] == 0) || (shape_[i] % slice_shape_[i] != 0)) {
         return stra;
       }
-      int64_t dim = (int64_t)(shape_[i] / slice_shape_[i]);
+      int64_t dim = shape_[i] / slice_shape_[i];
       stra.push_back(dim);
     }
     return stra;
