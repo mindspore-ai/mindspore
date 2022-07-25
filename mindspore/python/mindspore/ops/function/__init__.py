@@ -315,6 +315,7 @@ from .sparse_func import (
     sparse_add,
     sparse_concat,
     csr_add,
+    csr_softmax,
 )
 from .random_func import (
     standard_laplace,

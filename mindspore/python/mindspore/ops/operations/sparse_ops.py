@@ -713,54 +713,39 @@ class SparseAdd(Primitive):
 
 class SparseMatrixSoftmax(Primitive):
     """
-    Calculates the softmax of a CSRTensorMatrix
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+    Calculates the softmax of a CSRTensorMatrix.
 
     Args:
-        **dtype** (dtype.Number) - The valid data type. Only constant value is allowed.
+        logits (CSRTensor): Sparse CSR Tensor.
+        dtype (dtype): Data type.
 
-    Inputs:
-        - **x_dense_shape** (Tensor) - A Tensor.
-        - **x_batch_pointers** (Tensor) - A Tensor.
-        - **x_row_pointers** (Tensor) - A Tensor.
-        - **x_col_indices** (Tensor) - A Tensor.
-        - **x_values** (Tensor) - A Tensor.
-
-    Outputs:
-        - **y_dense_shape** (Tensor) - A Tensor.
-        - **y_batch_pointers** (Tensor) - A Tensor.
-        - **y_row_pointers** (Tensor) - A Tensor.
-        - **y_col_indices** (Tensor) - A Tensor.
-        - **y_values** (Tensor) - A Tensor.
+    Returns:
+        CSRTensor. a csr_tensor containing:
+        indptr: indicates the start and end point for `values` in each row.
+        indices: the column positions of all non-zero values of the input.
+        values: the non-zero values of the dense tensor.
+        shape: the shape of the csr_tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.sparse_ops import SparseMatrixSoftmax
-        >>> from mindspore.common import dtype as mstype
-        >>> class Net(nn.Cell):
-        ...     def __init__(self, dtype):
-        ...         super(Net, self).__init__()
-        ...         self.op = SparseMatrixSoftmax(dtype)
-        ...
-        ...     def construct(self, logits_shape, logits_pointers, logits_indptr, logits_indices, logits_values):
-        ...         return self.op(logits_shape, logits_pointers, logits_indptr, logits_indices, logits_values)
-        >>> logits_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
-        >>> logits_indices = Tensor([0, 1], dtype=mstype.int32)
-        >>> logits_values = Tensor([1, 2], dtype=mstype.float32)
-        >>> logits_pointers = Tensor([0, a_values.shape[0]], dtype=mstype.int32)
-        >>> logits_shape = Tensor((2, 6), dtype=mstype.int32)
-        >>> out = Net(dtype=mstype.float32)(logits_shape, logits_pointers, logits_indptr, logits_indices,
-        ...             logits_values)
+        >>> import mindspore as ms
+        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.functional import sparse_matrix_softmax
+        >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
+        >>> logits_indices = Tensor([0, 2, 3, 4, 3, 4], dtype=mstype.int32)
+        >>> logits_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
+        >>> shape = (2, 6)
+        >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
+        >>> out = logits.sparse_matrix_softmax(dtype)
         >>> print(out)
-        (Tensor(shape=[3], dtype=Int64, values = [0, 1, 2]),
-         Tensor(shape=[2], dtype=Int64, values = [0, 1]),
-         Tensor(shape=[2], dtype=Float32, values = [2.0, 4.0]))
+        CSRTensor(shape=[2,6], dtype=Float32,
+                  indptr=Tensor(shape=[3], dtype=Int64, value = [0, 4, 6]),
+                  indices=Tensor(shape=[2], dtype=Int64, value = [0, 2, 3, 4, 3, 4]),
+                  values=Tensor(shape=[2], dtype=Float32,
+                  value = [3.2058e-02, 8.7144e-02, 2.3688e-01, 6.4391e-01, 2.6894e-01, 7.310e-01]))
     """
 
     @prim_attr_register

@@ -21,7 +21,8 @@ from ..operations.sparse_ops import (
     CSRSparseMatrixToSparseTensor,
     SparseConcat,
     SparseAdd,
-    SparseMatrixAdd
+    SparseMatrixAdd,
+    SparseMatrixSoftmax
 )
 from ..operations.array_ops import GatherNd, Coalesce
 from ..operations import _csr_ops
@@ -111,12 +112,9 @@ def coalesce(x_indices, x_values, x_shape):
 
 coo2csr = _csr_ops.COO2CSR()
 
-
 coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 
-
 coo_tensor_get_indices = Primitive('COOTensorGetIndices')
-
 
 coo_tensor_get_values = Primitive('COOTensorGetValues')
 
@@ -259,15 +257,11 @@ def csr_to_coo(tensor):
 # deprecated, will be removed once `csr_to_coo` supports all backends.
 csr2coo = _csr_ops.CSR2COO()
 
-
 csr_tensor_get_dense_shape = Primitive('CSRTensorGetDenseShape')
-
 
 csr_tensor_get_indices = Primitive('CSRTensorGetIndices')
 
-
 csr_tensor_get_indptr = Primitive('CSRTensorGetIndptr')
-
 
 csr_tensor_get_values = Primitive('CSRTensorGetValues')
 
@@ -362,21 +356,15 @@ def make_sparse_tensor(indices, values, dense_shape):
 
 make_coo_tensor = Primitive('MakeCOOTensor')
 
-
 make_csr_tensor = Primitive('MakeCSRTensor')
-
 
 make_row_tensor = Primitive('MakeRowTensor')
 
-
 row_tensor_get_values = Primitive('RowTensorGetValues')
-
 
 row_tensor_get_indices = Primitive('RowTensorGetIndices')
 
-
 row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
-
 
 row_tensor_add = Primitive('RowTensorAdd')
 
@@ -521,6 +509,53 @@ def sparse_add(x1, x2, thresh):
     return COOTensor(indices, values, x1.shape)
 
 
+def csr_softmax(logits, dtype):
+    """
+    Calculates the softmax of a CSRTensorMatrix.
+
+    Args:
+        logits (CSRTensor): Sparse CSR Tensor.
+        dtype (dtype): Data type.
+
+    Returns:
+        CSRTensor. a csr_tensor containing:
+        indptr: indicates the start and end point for `values` in each row.
+        indices: the column positions of all non-zero values of the input.
+        values: the non-zero values of the dense tensor.
+        shape: the shape of the csr_tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.functional import sparse_matrix_softmax
+        >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
+        >>> logits_indices = Tensor([0, 2, 3, 4, 3, 4], dtype=mstype.int32)
+        >>> logits_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
+        >>> shape = (2, 6)
+        >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
+        >>> out = logits.sparse_matrix_softmax(dtype)
+        >>> print(out)
+        CSRTensor(shape=[2,6], dtype=Float32,
+                  indptr=Tensor(shape=[3], dtype=Int64, value = [0, 4, 6]),
+                  indices=Tensor(shape=[2], dtype=Int64, value = [0, 2, 3, 4, 3, 4]),
+                  values=Tensor(shape=[2], dtype=Float32,
+                  value = [3.2058e-02, 8.7144e-02, 2.3688e-01, 6.4391e-01, 2.6894e-01, 7.310e-01]))
+    """
+    if not isinstance(logits, CSRTensor):
+        raise_type_error("For functional operator sparse_matrix_softmax, logits must be type of CSRTensor.")
+    sparse_matrix_softmax_op = SparseMatrixSoftmax(dtype)
+    logits_batch_pointers = make_tensor([0, logits.values.shape[0]], dtype=mstype.int32)
+    logits_shape = make_tensor(logits.shape, dtype=mstype.int32)
+    shape, _, indptr, indices, values = sparse_matrix_softmax_op(logits_shape, logits_batch_pointers, logits.indptr,
+                                                                 logits.indices, logits.values)
+    output_shape = tuple(shape.asnumpy().tolist())
+    return CSRTensor(indptr=indptr, indices=indices, values=values, shape=output_shape)
+
+
 def csr_add(a, b, alpha, beta):
     """
     Returns alpha * csr_a + beta * csr_b where both csr_a and csr_b are CSRTensor, alpha and beta are both Tensor.
@@ -608,7 +643,8 @@ __all__ = [
     'row_tensor_add',
     'sparse_add',
     'sparse_concat',
-    'csr_add'
+    'csr_add',
+    'csr_softmax'
 ]
 
 __all__.sort()
