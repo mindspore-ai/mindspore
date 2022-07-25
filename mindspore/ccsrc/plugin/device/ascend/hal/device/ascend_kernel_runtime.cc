@@ -529,7 +529,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   auto model = std::make_shared<ge::model_runner::DavinciModel>(
-    task_info_list, wait_active_stream_list, force_copy_stream_list, 0, 0, 0, 0, 0, 0,
+    task_info_list, wait_active_stream_list, force_copy_stream_list, stream_, 0, 0, 0, 0, 0, 0,
     resource_manager.cur_stream_num(), graph.label_num(), resource_manager.cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph.graph_id(), model));
   if (!ret.second) {

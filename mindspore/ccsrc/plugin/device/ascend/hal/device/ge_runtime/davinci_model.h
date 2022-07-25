@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include "runtime/base.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 
 namespace mindspore::ge::model_runner {
@@ -26,13 +27,14 @@ class DavinciModel {
  public:
   DavinciModel(const std::vector<std::shared_ptr<TaskInfo>> &task_info_list,
                const std::vector<uint32_t> &wait_active_stream_list,
-               const std::vector<uint32_t> &force_copy_stream_list, uint64_t mem_size = 0, uint64_t weight_size = 0,
-               uint64_t var_size = 0, uintptr_t logic_mem_base = 0, uintptr_t logic_weight_base = 0,
-               uintptr_t logic_var_base = 0, uint32_t stream_num = 0, uint32_t batch_num = 0, uint32_t event_num = 0,
-               int32_t priority = 0)
+               const std::vector<uint32_t> &force_copy_stream_list, rtStream_t model_stream, uint64_t mem_size = 0,
+               uint64_t weight_size = 0, uint64_t var_size = 0, uintptr_t logic_mem_base = 0,
+               uintptr_t logic_weight_base = 0, uintptr_t logic_var_base = 0, uint32_t stream_num = 0,
+               uint32_t batch_num = 0, uint32_t event_num = 0, int32_t priority = 0)
       : task_info_list_(task_info_list),
         wait_active_stream_list_(wait_active_stream_list),
         force_copy_stream_list_(force_copy_stream_list),
+        model_stream_(model_stream),
         mem_size_(mem_size),
         weight_size_(weight_size),
         var_size_(var_size),
@@ -44,6 +46,8 @@ class DavinciModel {
         event_num_(event_num),
         priority_(priority) {}
   ~DavinciModel() {}
+
+  rtStream_t model_stream() const { return model_stream_; }
 
   uint64_t GetMemSize() const { return mem_size_; }
   uint64_t GetWeightSize() const { return weight_size_; }
@@ -69,6 +73,8 @@ class DavinciModel {
 
   std::vector<uint32_t> wait_active_stream_list_;
   std::vector<uint32_t> force_copy_stream_list_;
+
+  rtStream_t model_stream_;
 
   uint64_t mem_size_;
   uint64_t weight_size_;
