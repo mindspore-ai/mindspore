@@ -204,6 +204,16 @@ inline bool IsDynamicShape(const OpExecInfoPtr &op_exec_info) {
   return op_exec_info->has_dynamic_input || op_exec_info->has_dynamic_output;
 }
 
+bool IsParameter(const py::object &inp_obj) {
+  bool ret = false;
+  if (py::isinstance<tensor::MetaTensor>(inp_obj)) {
+    auto meta_tensor = inp_obj.cast<tensor::MetaTensorPtr>();
+    MS_EXCEPTION_IF_NULL(meta_tensor);
+    ret = meta_tensor->is_parameter();
+  }
+  return ret;
+}
+
 void GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
                   mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) {
   MS_EXCEPTION_IF_NULL(type_indexes);
@@ -1543,14 +1553,7 @@ CNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_inf
   inputs.emplace_back(NewValueNode(prim));
   for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
     const auto &obj = op_exec_info->op_inputs[i];
-    bool op_mask = false;
-    tensor::MetaTensorPtr meta_tensor = nullptr;
-    if (py::isinstance<tensor::MetaTensor>(obj)) {
-      meta_tensor = obj.cast<tensor::MetaTensorPtr>();
-      if (meta_tensor) {
-        op_mask = meta_tensor->is_parameter();
-      }
-    }
+    bool op_mask = IsParameter(obj);
     MS_LOG(DEBUG) << "Args i " << i << ", op mask " << op_mask;
     op_masks.emplace_back(static_cast<int64_t>(op_mask));
 
@@ -1980,7 +1983,8 @@ AnfNodePtr GradExecutor::GetInput(const py::object &obj, bool op_mask) const {
     args.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     auto tuple_size = tuple.size();
     for (size_t i = 0; i < tuple_size; i++) {
-      args.emplace_back(GetInput(tuple[i], false));
+      bool is_parameter = IsParameter(tuple[i]);
+      args.emplace_back(GetInput(tuple[i], is_parameter));
     }
     auto cnode = curr_g()->NewCNode(args);
     SetNodeMapInGraphInfoMap(curr_g(), obj_id, cnode);
