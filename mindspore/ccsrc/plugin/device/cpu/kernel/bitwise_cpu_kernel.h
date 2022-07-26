@@ -82,7 +82,6 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   bool LaunchNoBroadcast(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
-  std::string kernel_name_;
   TypeId input_type_1_{kTypeUnknown};
   TypeId input_type_2_{kTypeUnknown};
   ShapeVector input_shape_1_;

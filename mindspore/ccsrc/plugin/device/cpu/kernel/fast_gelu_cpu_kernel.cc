@@ -91,9 +91,9 @@ int FastGeLUCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
   auto in_shape_size = input_shape.size();
   if (in_shape_size > max_dims_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input should be less than or equal to max_dims 7, but got "
-                      << in_shape_size << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of input should be less than or equal to max_dims 7, but got " << in_shape_size
+                  << ".";
     return KRET_RESIZE_FAILED;
   }
   auto output_shape_size = output_shape.size();

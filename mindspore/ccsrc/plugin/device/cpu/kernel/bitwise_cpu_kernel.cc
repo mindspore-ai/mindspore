@@ -35,17 +35,17 @@ const size_t kMinThreadNum = 1;
 
 template <class T>
 struct BitwiseAndFunc {
-  T operator()(const T a, const T b) const { return a & b; }
+  T operator()(T a, T b) const { return a & b; }
 };
 
 template <class T>
 struct BitwiseOrFunc {
-  T operator()(const T a, const T b) const { return a | b; }
+  T operator()(T a, T b) const { return a | b; }
 };
 
 template <class T>
 struct BitwiseXorFunc {
-  T operator()(const T a, const T b) const { return a ^ b; }
+  T operator()(T a, T b) const { return a ^ b; }
 };
 }  // namespace
 
@@ -85,9 +85,9 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   input_shape_2_ = inputs[kIndex1]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   if (output_shape_.size() > max_dims_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be less than or equal to max_dims 7, but got "
-                      << output_shape_.size() << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of output should be less than or equal to max_dims 7, but got "
+                  << output_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
   }
 
@@ -124,14 +124,14 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
       break;
     default:
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', does not support " << TypeIdToString(input_type_1_);
-      return false;
+      return KRET_RESIZE_FAILED;
   }
 
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= output_shape_[i];
+    output_size_ *= static_cast<size_t>(output_shape_[i]);
   }
 
   if (output_size_ > kBitwiseBigShapeNum) {

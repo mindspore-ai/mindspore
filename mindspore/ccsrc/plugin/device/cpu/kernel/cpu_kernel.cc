@@ -354,14 +354,14 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, Thr
 
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
                               ParallelSearchInfo *parallel_search_info, ThreadPool *pool) {
-  if (parallel_search_info->kernel_thread_num_set == false) {
+  if (!parallel_search_info->kernel_thread_num_set) {
     auto thread_pool = pool == nullptr ? GetActorMgrInnerThreadPool() : pool;
-    float kernel_thread_float_num = static_cast<float>(thread_pool->GetKernelThreadNum());
-    if (kernel_thread_float_num == 0) {
+    size_t kernel_thread_num = thread_pool->GetKernelThreadNum();
+    if (kernel_thread_num == 0) {
       MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
     }
     size_t max_pow_current = parallel_search_info->max_pow - 1;
-    while (std::pow(2.0f, max_pow_current) <= kernel_thread_float_num) {
+    while (std::pow(2.0f, max_pow_current) <= static_cast<float>(kernel_thread_num)) {
       max_pow_current++;
     }
     parallel_search_info->max_pow = max_pow_current + 1;
