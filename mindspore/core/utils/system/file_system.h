@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 #define MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 
-#include <errno.h>
 #include <sys/param.h>
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>

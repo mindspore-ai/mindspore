@@ -192,9 +192,9 @@ void Profile::Pop(void) noexcept {
   ctx_ptr_ = ctx_ptr_->parent_;
 }
 
-ProfContext::ProfContext(const std::string &name, ProfileBase *const prof) : name_(name), prof_(prof) {
+ProfContext::ProfContext(const std::string &name, ProfileBase *const prof)
+    : name_(name), prof_(prof), time_info_(nullptr) {
   // Initialize a subcontext.
-  time_info_ = nullptr;
   if (prof == nullptr || IsTopContext()) {
     parent_ = nullptr;
   } else {

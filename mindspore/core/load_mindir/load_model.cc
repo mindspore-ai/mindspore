@@ -61,8 +61,8 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
-        ret = static_cast<int>(get_all_files(name, files));
-        if (!ret) {
+        ret = get_all_files(name, files);
+        if (ret) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
           closedir(open_dir);
           return false;
@@ -183,7 +183,7 @@ std::vector<std::string> MindIRLoader::LoadPreprocess(const std::string &file_na
   return map_jsons;
 }
 
-std::vector<FuncGraphPtr> MindIRLoader::LoadMindIRs(std::vector<std::string> file_names) {
+std::vector<FuncGraphPtr> MindIRLoader::LoadMindIRs(const std::vector<std::string> &file_names) {
   std::vector<FuncGraphPtr> funcgraph_vec;
   MS_LOG(DEBUG) << "Load multiple MindIR files.";
   for (const auto &file_name : file_names) {
@@ -246,12 +246,12 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
     return nullptr;
   }
   // Load parameter into graph
-  if (endsWith(std::string(abs_path_buff), "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
+  if (endsWith(std::string(abs_path_buff), "_graph.mindir") && (origin_model.graph().parameter_size() == 0)) {
     if (strlen(abs_path_buff) < strlen("graph.mindir")) {
       MS_LOG(ERROR) << "The abs_path_buff length is less than 'graph.mindir'.";
       return nullptr;
     }
-    int path_len = SizeToInt(strlen(abs_path_buff) - strlen("graph.mindir"));
+    size_t path_len = strlen(abs_path_buff) - strlen("graph.mindir");
     string var_path = std::string(abs_path_buff).substr(0, path_len);
     var_path += "variables";
     std::ifstream ifs(var_path);
@@ -271,10 +271,6 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
         return nullptr;
       }
 
-      if (param_graph.parameter_size() < 0 || param_graph.parameter_size() > INT_MAX) {
-        MS_LOG(ERROR) << "param_graph.parameter_size() is : " << param_graph.parameter_size();
-        return nullptr;
-      }
       for (int param_index = 0; param_index < param_graph.parameter_size(); param_index++) {
         mind_ir::TensorProto *param_proto = mod_graph->add_parameter();
         param_proto->set_name(param_graph.parameter(param_index).name());

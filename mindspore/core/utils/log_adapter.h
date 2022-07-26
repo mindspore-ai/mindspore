@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CORE_UTILS_LOG_ADAPTER_H_
 #define MINDSPORE_CORE_UTILS_LOG_ADAPTER_H_
 
-#include <stdarg.h>
-#include <stdint.h>
+#include <cstdarg>
+#include <cstdint>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -45,7 +45,6 @@
 static constexpr size_t GetRelPathPos() noexcept {
   return sizeof(__FILE__) > sizeof(LOG_HDR_FILE_REL_PATH) ? sizeof(__FILE__) - sizeof(LOG_HDR_FILE_REL_PATH) : 0;
 }
-
 namespace mindspore {
 /// \brief The handler map for ACL.
 MS_CORE_API extern std::map<void **, std::thread *> acl_handle_map;
@@ -230,11 +229,7 @@ MS_EXPORT extern enum MsLogLevel this_thread_max_log_level;
 MS_EXPORT extern thread_local enum MsLogLevel this_thread_max_log_level;
 class TryCatchGuard {
  public:
-  TryCatchGuard() {
-    origin_log_level_ = this_thread_max_log_level;
-    this_thread_max_log_level = MsLogLevel::WARNING;
-  }
-
+  TryCatchGuard() : origin_log_level_(this_thread_max_log_level) { this_thread_max_log_level = MsLogLevel::WARNING; }
   ~TryCatchGuard() { this_thread_max_log_level = origin_log_level_; }
 
  private:
@@ -329,11 +324,11 @@ inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
     }                                                                  \
   } while (0)
 
-#define MS_EXCEPTION_IF_ZERO(name, value)                   \
-  do {                                                      \
-    if (value == 0) {                                       \
-      MS_LOG(EXCEPTION) << ": The " << name << " is zero."; \
-    }                                                       \
+#define MS_EXCEPTION_IF_ZERO(name, value)                     \
+  do {                                                        \
+    if ((value) == 0) {                                       \
+      MS_LOG(EXCEPTION) << ": The " << (name) << " is zero."; \
+    }                                                         \
   } while (0)
 
 #define MS_ERROR_IF_NULL(ptr)                                    \

@@ -15,10 +15,8 @@
  */
 
 #include "utils/info.h"
-#include <utility>
 #include <fstream>
 #include <sstream>
-#include <climits>
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "ir/func_graph.h"

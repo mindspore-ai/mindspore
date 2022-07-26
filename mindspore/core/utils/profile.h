@@ -35,6 +35,7 @@ class ProfileBase;
 struct TimeInfo {
   explicit TimeInfo(double time = -1.0) : time_(time), dict_(nullptr), actionNum_(0) {}
   TimeInfo(const TimeInfo &) = delete;
+  TimeInfo &operator=(const TimeInfo &) = delete;
   ~TimeInfo();
 
   double time_;
@@ -49,7 +50,7 @@ class MS_CORE_API ProfContext {
   friend class ProfTransaction;
 
  public:
-  ProfContext(const std::string &name, ProfileBase *prof);
+  ProfContext(const std::string &name, ProfileBase *const prof);
   ~ProfContext();
 
   ProfContext(const ProfContext &) = delete;
@@ -103,6 +104,7 @@ class MS_CORE_API ProfTransaction {
   explicit ProfTransaction(const ProfileBase *prof);
   explicit ProfTransaction(ProfContext *const ctx) : ctx_(ctx) {}
   ProfTransaction(const ProfTransaction &) = delete;
+  ProfTransaction &operator=(const ProfTransaction &) = delete;
   ~ProfTransaction();
 
   template <class Function>
@@ -146,7 +148,7 @@ class MS_CORE_API DumpTime {
   DumpTime &operator=(const DumpTime &) = delete;
   static DumpTime &GetInstance();
   void set_file_path(const std::string &save_path) { file_path_ = save_path; }
-  void Record(const std::string &name, const double time, const bool is_start);
+  void Record(const std::string &step_name, const double time, const bool is_start);
   void Save();
 
  private:
@@ -157,10 +159,7 @@ class MS_CORE_API DumpTime {
 };
 
 struct TimeStat {
-  TimeStat() {
-    time_ = 0.0;
-    count_ = 0;
-  }
+  TimeStat() : time_(0.0), count_(0) {}
   ~TimeStat() = default;
 
   void operator+=(double t) {

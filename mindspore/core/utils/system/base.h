@@ -97,7 +97,7 @@ class Platform {
 // check the null point
 #define MS_EXCEPT_CHECK_NULL(value)              \
   do {                                           \
-    if (value == nullptr) {                      \
+    if ((value) == nullptr) {                    \
       MS_LOG(EXCEPTION) << "The value is null."; \
     }                                            \
   } while (0)

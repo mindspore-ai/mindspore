@@ -195,7 +195,7 @@ void GetFusedDebugInfos(const NodeDebugInfoSet &fused_debug_infos, std::vector<s
     std::vector<std::string> debug_info_vec_str;
     GetSourceLineFromDebugInfo(debug_info, &debug_info_vec_str, kSectionPrefix);
     if (!debug_info_vec_str.empty()) {
-      (void)result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
+      (void)result->insert(result->cend(), debug_info_vec_str.cbegin(), debug_info_vec_str.cend());
       is_empty = false;
     }
   }
@@ -215,7 +215,7 @@ void GetPrimalDebugInfos(const CNodePtr &cnode, std::vector<std::string> *result
       std::vector<std::string> debug_info_vec_str;
       GetSourceLineFromDebugInfo(primal_debug_info, &debug_info_vec_str, kSectionPrefix);
       if (!debug_info_vec_str.empty()) {
-        (void)result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
+        (void)result->insert(result->cend(), debug_info_vec_str.cbegin(), debug_info_vec_str.cend());
       }
     }
   }
