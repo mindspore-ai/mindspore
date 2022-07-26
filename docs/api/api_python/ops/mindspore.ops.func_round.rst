@@ -8,14 +8,11 @@ mindspore.ops.round
     .. math::
         out_i \approx x_i
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - 输入Tensor。
 
-    - **x** (Tensor) - 输入Tensor。
+    返回：
+        Tensor，shape和数据类型与输入 `x` 相同。
 
-    **返回：**
-
-    Tensor，shape和数据类型与输入 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 不是Tensor。
+    异常：
+        - **TypeError** - `x` 不是Tensor。

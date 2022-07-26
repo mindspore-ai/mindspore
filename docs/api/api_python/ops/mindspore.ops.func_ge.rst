@@ -19,15 +19,12 @@ mindspore.ops.ge
             & \text{False,   if } x_{i}<y_{i}
             \end{cases}
 
-    **参数：**
+    参数：
+        - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number，也可以是数据类型为Number的Tensor。
+        - **y** (Union[Tensor, Number, bool]) - 第二个输入是Number，当第一个输入是Tensor时，也可以是bool，或数据类型为Number或bool的Tensor。
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number，也可以是数据类型为Number的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入是Number，当第一个输入是Tensor时，也可以是bool，或数据类型为Number或bool的Tensor。
+    返回：
+        Tensor，输出的shape与输入广播后的shape相同，数据类型为bool。
 
-    **返回：**
-
-    Tensor，输出的shape与输入广播后的shape相同，数据类型为bool。
-
-    **异常：**
-
-    - **TypeError** - `x` 和 `y` 都不是Tensor。
+    异常：
+        - **TypeError** - `x` 和 `y` 都不是Tensor。

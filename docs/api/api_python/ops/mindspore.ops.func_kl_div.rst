@@ -28,22 +28,19 @@ mindspore.ops.kl_div
         - 目前Ascend平台不支持数据类型float64。
         - 仅当 `reduction` 设置为"batchmean"时输出才与KL散度的数学定义一致。
 
-    **参数：**
+    参数：
+        - **logits** (Tensor) - 数据类型支持float16、float32或float64。
+        - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
+        - **reduction** (str) - 指定输出结果的计算方式。默认值: "mean"。
 
-    - **logits** (Tensor) - 数据类型支持float16、float32或float64。
-    - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
-    - **reduction** (str) - 指定输出结果的计算方式。默认值: "mean"。
+          - 在Ascend平台上， `reduction` 的可选值为"batchmean"、"none"或"sum"。
+          - 在GPU平台上， `reduction` 的可选值为"mean"、"batchmean"、"none"或"sum"。
+          - 在CPU平台上， `reduction` 的可选值为"mean"、"batchmean"、"none"或"sum"。
 
-      - 在Ascend平台上， `reduction` 的可选值为"batchmean"、"none"或"sum"。
-      - 在GPU平台上， `reduction` 的可选值为"mean"、"batchmean"、"none"或"sum"。
-      - 在CPU平台上， `reduction` 的可选值为"mean"、"batchmean"、"none"或"sum"。
+    返回：
+        Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
 
-    **返回：**
-
-    Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
-
-    **异常：**
-
-    - **TypeError** - `reduction` 不是str。
-    - **TypeError** - `logits` 或 `labels` 不是Tensor。
-    - **TypeError** - `logits` 或 `labels` 的数据类型不是支持的类型。
+    异常：
+        - **TypeError** - `reduction` 不是str。
+        - **TypeError** - `logits` 或 `labels` 不是Tensor。
+        - **TypeError** - `logits` 或 `labels` 的数据类型不是支持的类型。

@@ -12,14 +12,11 @@ mindspore.ops.mish
 
     更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - shape: :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，数据类型支持float16或float32。
 
-    - **x** (Tensor) - shape: :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，数据类型支持float16或float32。
+    返回：
+        Tensor，与 `x` 的shape和数据类型相同。
 
-    **返回：**
-
-    Tensor，与 `x` 的shape和数据类型相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 的数据类型非float16或float32。
+    异常：
+        - **TypeError** - `x` 的数据类型非float16或float32。

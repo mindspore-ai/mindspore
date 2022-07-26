@@ -21,17 +21,14 @@ mindspore.ops.scatter_nd
 
     .. image:: ScatterNd.png
 
-    **参数：**
+    参数：
+        - **indices** (Tensor) - 指定新Tensor中散布的索引，数据类型为int32或int64。索引的秩须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
+        - **updates** (Tensor) - 指定更新Tensor，shape为 `indices.shape[:-1] + shape[indices.shape[-1]:]` 。
+        - **shape** (tuple[int]) - 指定输出Tensor的shape，数据类型与 `indices` 相同。 `shape` 不能为空，且 `shape` 中的任何元素的值都必须大于等于1。
 
-    - **indices** (Tensor) - 指定新Tensor中散布的索引，数据类型为int32或int64。索引的秩须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
-    - **updates** (Tensor) - 指定更新Tensor，shape为 `indices.shape[:-1] + shape[indices.shape[-1]:]` 。
-    - **shape** (tuple[int]) - 指定输出Tensor的shape，数据类型与 `indices` 相同。 `shape` 不能为空，且 `shape` 中的任何元素的值都必须大于等于1。
+    返回：
+        Tensor，更新后的Tensor，数据类型与输入 `update` 相同，shape与输入 `shape` 相同。
 
-    **返回：**
-
-    Tensor，更新后的Tensor，数据类型与输入 `update` 相同，shape与输入 `shape` 相同。
-
-    **异常：**
-
-    - **TypeError** - `shape` 不是tuple。
-    - **ValueError** - `shape` 的任何元素小于1。
+    异常：
+        - **TypeError** - `shape` 不是tuple。
+        - **ValueError** - `shape` 的任何元素小于1。
