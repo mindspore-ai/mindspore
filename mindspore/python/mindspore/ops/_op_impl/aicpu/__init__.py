@@ -50,6 +50,7 @@ from .gather_nd import _gather_nd_aicpu
 from .scatter_nd import _scatter_nd_aicpu
 from .scatter_nd_update import _scatter_nd_update_aicpu
 from .scatter import _scatter_aicpu
+from .scatter_add_with_axis import _scatter_add_with_axis_aicpu
 from .exp import _exp_aicpu
 from .expm1 import _expm1_aicpu
 from .identity import _identity_aicpu

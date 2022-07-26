@@ -7127,6 +7127,65 @@ class ExtractVolumePatches(Primitive):
         self.add_prim_attr("padding", self.padding)
 
 
+class ScatterAddWithAxis(Primitive):
+    """
+    ScatterAddWithAxis takes three inputs input_x, updates, and indices of the same rank r >= 1
+    and an optional attribute axis that identifies an axis of input_x (default is 0).
+    The output of the operation is produced by creating a copy of the input input_x, and then
+    add updating its value to values specified by updates at specific index positions specified
+    by indices.
+
+    Args:
+        axis (int): which axis to scatter, default is 0.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor.
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape should be equal to indices.shape.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If the shape of `indices` is not equal to the shape of `update`
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> op = ops.ScatterAddWithAxis(0)
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[1, 1, 1], [1, 1, 1]]), mindspore.float32)
+        >>> output = op(input_x, indices, updates)
+        >>> print(output)
+        [[ 2.  3.  3.]
+         [ 5.  5.  7.]
+         [ 7.  9.  10.]]
+        >>> op = ops.ScatterAddWithAxis(1)
+        >>> input_x = Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
+        >>> output = op(input_x, indices, updates)
+        >>> print(output)
+        [[ 1  2  11  4  13]]
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """Initialize ScatterAddWithAxis"""
+        validator.check_value_type("axis", axis, [int], self.name)
+        self.init_prim_io_names(
+            inputs=['input_x', 'indices', 'updates'], outputs=['y'])
+
+
 class Lstsq(Primitive):
     r"""
     Computes the solutions of the least squares and minimum norm problems of full-rank

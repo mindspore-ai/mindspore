@@ -63,6 +63,7 @@ from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import SegmentProd
+from mindspore.ops.operations.array_ops import ScatterAddWithAxis
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
@@ -627,6 +628,19 @@ class ScatterNdAdd(nn.Cell):
 
     def construct(self, indices, updates):
         out = self.scatter_nd_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterAddWithAxisNet(nn.Cell):
+    """ScatterAddWithAxis net definition"""
+
+    def __init__(self, ref_shape, axis, dtype=np.float32):
+        super(ScatterAddWithAxisNet, self).__init__()
+        self.scatter_add_with_axis = ScatterAddWithAxis(axis)
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_add_with_axis(self.ref, indices, updates)
         return out
 
 
@@ -3657,6 +3671,12 @@ test_case_array_ops = [
                         Tensor(np.array([[True, True, False]]), mstype.bool_),
                         Tensor(4.0, mstype.float32)],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32)],
+    }),
+    ('ScatterAddWithAxis', {
+        'block': ScatterAddWithAxisNet((3, 3), 0),
+        'desc_inputs': [Tensor(np.array([[0, 1], [1, 2]]), mstype.int32),
+                        Tensor(np.ones([2, 2]), mstype.float32)],
+        'desc_bprop': [Tensor(np.ones([3, 3]), mstype.float32)],
     }),
     ('MatrixDiag', {
         'block': inner.MatrixDiag(),

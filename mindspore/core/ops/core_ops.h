@@ -198,6 +198,7 @@ constexpr auto kIndexFill = "IndexFill";
 constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
+constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
 constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
 constexpr auto kSlice = "Slice";
 constexpr auto kAffineGrid = "AffineGrid";
@@ -520,6 +521,7 @@ GVAR_DEF(PrimitivePtr, kPrimScatterNdMin, std::make_shared<Primitive>("ScatterNd
 GVAR_DEF(PrimitivePtr, kPrimScatterNdMul, std::make_shared<Primitive>("ScatterNdMul"));
 GVAR_DEF(PrimitivePtr, kPrimScatterNdDiv, std::make_shared<Primitive>("ScatterNdDiv"));
 GVAR_DEF(PrimitivePtr, kPrimScatterUpdate, std::make_shared<Primitive>("ScatterUpdate"));
+GVAR_DEF(PrimitivePtr, kPrimScatterAddWithAxis, std::make_shared<Primitive>(kScatterAddWithAxis));
 GVAR_DEF(PrimitivePtr, kPrimTensorScatterElements, std::make_shared<Primitive>("TensorScatterElements"));
 GVAR_DEF(PrimitivePtr, kPrimTensorScatterUpdate, std::make_shared<Primitive>("TensorScatterUpdate"));
 GVAR_DEF(PrimitivePtr, kPrimTensorScatterAdd, std::make_shared<Primitive>("TensorScatterAdd"));
