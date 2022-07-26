@@ -13,16 +13,13 @@ mindspore.ops.ReLUV2
 
         \text{ReLU}(x) = (x)^+ = \max(0, x)，
 
-    **输入：**
+    输入：
+        - **input_x** (Tensor) - 输入Tensor必须是4-D Tensor。
 
-    - **input_x** (Tensor) - 输入Tensor必须是4-D Tensor。
+    输出：
+        - **output** (Tensor) - 数据类型和shape与 `input_x` 的相同。
+        - **mask** (Tensor) - 保留输出，无实际意义。
 
-    **输出：**
-
-    - **output** (Tensor) - 数据类型和shape与 `input_x` 的相同。
-    - **mask** (Tensor) - 保留输出，无实际意义。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 不是Tensor。
-    - **ValueError** - `input_x` 的shape不是4-D。
+    异常：
+        - **TypeError** - `input_x` 不是Tensor。
+        - **ValueError** - `input_x` 的shape不是4-D。

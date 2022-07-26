@@ -9,6 +9,5 @@ mindspore.ops.PrimitiveWithInfer
 
     如果未定义__infer__()，则可以定义infer_shape()和infer_dtype()来描述shape和类型的推断逻辑。infer_value()用于常量传播。
 
-    **参数：**
-
-    - **name** (str) - 当前Primitive的名称。
+    参数：
+        - **name** (str) - 当前Primitive的名称。

@@ -9,21 +9,18 @@ mindspore.ops.PrimitiveWithCheck
 
     如果未定义__check__()，则可以定义check_shape()和check_dtype()来描述形状和类型的检查逻辑。可以定义infer_value()方法（如PrimitiveWithInfer），用于常量传播。
 
-    **参数：**
-
-    - **name** (str) - 当前Primitive的名称。
+    参数：
+        - **name** (str) - 当前Primitive的名称。
 
     .. py:method:: check_dtype(*args)
 
         检查输入参数的数据类型。
 
-        **参数：**
+        参数：
+            - **args** (:class:`mindspore.dtype`) - 输入的数据类型。
 
-        - **args** (:class:`mindspore.dtype`) - 输入的数据类型。
-
-        **返回：**
-
-        None。
+        返回：
+            None。
 
     .. py:method:: check_shape(*args)
 
@@ -32,10 +29,8 @@ mindspore.ops.PrimitiveWithCheck
         .. note::
             Scalar的shape是一个空元组。
 
-        **参数：**
+        参数：
+            - **args** (tuple(int)) - 输入tensor的shape。
 
-        - **args** (tuple(int)) - 输入tensor的shape。
-
-        **返回：**
-
-        None。
+        返回：
+            None。
