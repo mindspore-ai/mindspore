@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <optional>
 #include "profiler/device/profiling.h"
 #include "actor/actormgr.h"
 #include "backend/common/session/kernel_graph.h"
@@ -69,6 +70,7 @@ class CPUProfiler : public Profiler {
   void SetRunTimeData(const std::string &op_name, const uint32_t pid, bool is_parallel = false);
   void SaveProfileData() override;
   void ClearInst() override;
+  void SetGpuHeteroStatus();
 
   uint64_t base_time_;
   std::string op_name_;
@@ -77,6 +79,8 @@ class CPUProfiler : public Profiler {
   uint64_t op_time_start_;
   uint64_t op_time_mono_start_;
   uint64_t op_time_stop_;
+
+  std::optional<bool> is_gpu_hetero_ = {};
 };
 }  // namespace cpu
 }  // namespace profiler

@@ -122,7 +122,7 @@ class Profiler {
   std::string profiling_options_;
 
  private:
-  inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
+  inline static HashMap<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
 };
 }  // namespace profiler
 }  // namespace mindspore

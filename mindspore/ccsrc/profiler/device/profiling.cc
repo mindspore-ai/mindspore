@@ -31,7 +31,6 @@ std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcep
     return iter->second;
   }
 
-  MS_LOG(WARNING) << "Profiler instance " << name << " not found.";
   return nullptr;
 }
 
