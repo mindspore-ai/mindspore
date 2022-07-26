@@ -23,10 +23,8 @@ size_t GetBaseTypeSize(TypeId type_id) {
   switch (type_id) {
     case kNumberTypeFloat16:
       return sizeof(half);
-      break;
     case kNumberTypeFloat32:
       return sizeof(float);
-      break;
     default:
       MS_LOG(EXCEPTION) << "For Scale Grad input type is error: " << type_id;
   }
@@ -35,7 +33,7 @@ size_t GetBaseTypeSize(TypeId type_id) {
 size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
   size_t input_size = GetBaseTypeSize(type_id);
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= input_shape[i];
+    input_size *= LongToSize(input_shape[i]);
   }
   return input_size;
 }
@@ -44,7 +42,8 @@ size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_
 template <typename T>
 void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr,
-                                                   half *scale_addr_half, float *scale_addr_float, size_t index) {
+                                                   const half *scale_addr_half, const float *scale_addr_float,
+                                                   size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
   T *output_addr = GetDeviceAddress<T>(outputs, index);
   if (scale_addr_half != nullptr) {
