@@ -38,7 +38,7 @@ class Array {
   size_t GetDimSize() const { return array_.size(); }
   int64_t GetDimByIdx(size_t idx) const;
   int64_t GetDimByReverseIdx(size_t idx) const;
-  bool operator==(const Array &a1) const;
+  bool operator==(const Array &shape) const;
 
  protected:
   Shape array_;

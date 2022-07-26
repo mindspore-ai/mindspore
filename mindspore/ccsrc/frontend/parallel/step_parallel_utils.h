@@ -26,10 +26,10 @@
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/graph_util/node_info.h"
 
 namespace mindspore {
 namespace parallel {
-using OperatorInfoPtr = std::shared_ptr<OperatorInfo>;
 const int64_t TWO_INPUT_SIZE = 2;
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
@@ -57,7 +57,7 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
 AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node = nullptr);
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
-void RedistributionNextNode(const AnfNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
+void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
                             int64_t get_item_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes);
 

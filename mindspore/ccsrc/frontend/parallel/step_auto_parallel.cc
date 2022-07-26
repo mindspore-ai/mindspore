@@ -70,7 +70,7 @@ void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncG
   }
 }
 
-bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
+bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #ifdef WITH_BACKEND
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
@@ -158,7 +158,7 @@ bool IsElementWiseOperator(const std::string &op_name) {
                                                        REPEAT_ELEMENTS};
   // clang-format on
   auto iter = elementwise_op.find(op_name);
-  return (iter != elementwise_op.end());
+  return (iter != elementwise_op.cend());
 }
 
 // Recording the operators appearing in a for-loop.
@@ -225,13 +225,11 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
 
   if (prim->name() == RESHAPE) {
     MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
-    return;
   }
 
   // Set cost for this configured strategy
   if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
-    return;
   }
 
   const auto fully_use_devices = CostModelContext::GetInstance()->fully_use_device();
@@ -292,8 +290,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   auto outputs_type = ExtractOutputTypeByNode(cnode);
   std::vector<size_t> outputs_type_length;
   outputs_type_length.reserve(outputs_type.size());
-  std::transform(outputs_type.begin(), outputs_type.end(), std::back_inserter(outputs_type_length),
-                 GetLengthOfDataType);
+  (void)std::transform(outputs_type.begin(), outputs_type.end(), std::back_inserter(outputs_type_length),
+                       GetLengthOfDataType);
   if (operator_info->SetInputAndOutputTypeLength(inputs_type_length, outputs_type_length) != SUCCESS) {
     MS_LOG(ERROR) << "Setting the lengths of inputs and outputs failed for operator: " << operator_info->name();
     return nullptr;
@@ -310,7 +308,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     if (inputs[index]->isa<ValueNode>()) {
       input_value.push_back(GetValueNode(inputs[index]));
     } else {
-      input_value.emplace_back(nullptr);
+      (void)input_value.emplace_back(nullptr);
     }
   }
   operator_info->set_input_value(input_value);
@@ -396,7 +394,7 @@ void AddUsersUniqueIdWhenSharingParameter(
 }
 
 // Using CNode's UniqueIds to construct nodes
-Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueId to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
@@ -434,7 +432,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     MS_EXCEPTION_IF_NULL(prim);
 
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
-    if (search_cnode == from_cnode_to_info.end()) {
+    if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
       const auto single_loop = CostModelContext::GetInstance()->dp_algo_single_loop();
@@ -473,7 +471,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
       (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
-        ops_in_a_loop_.insert(operator_info->name());
+        (void)ops_in_a_loop_.insert(operator_info->name());
         loop_to_ops[loop_index]++;
       }
       // Needed by rec_parser
@@ -520,7 +518,7 @@ void SetOperatorToCNode(const OperatorInfoPtr &current_op_ptr, const PrimitivePt
 }
 
 // Using CNode's UniqueIdThroughCopys to construct nodes
-Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueIdThroughCopy to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
@@ -556,7 +554,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
 
     // Find the operatorInfo if it exists
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
-    if (search_cnode == from_cnode_to_info.end()) {
+    if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
       const auto single_loop = CostModelContext::GetInstance()->dp_algo_single_loop();
@@ -596,7 +594,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
-        ops_in_a_loop_.insert(operator_info->name());
+        (void)ops_in_a_loop_.insert(operator_info->name());
         loop_to_ops[loop_index]++;
       }
       // Needed by rec_parser
@@ -803,13 +801,11 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
     // Here, it is sure that this Parameter (RefKey) is being used by multiple Operators.
     OperatorInfoPtr tmp_identity_ptr;
     bool new_identity = false;
-    std::string tmp_identity_name;
     auto returned_identity = entire_costgraph->FindTmpIdentityByParameterName(parameter_name);
     if (returned_identity != nullptr) {
       // In this case, the TmpIdentityInfo instance has already been created
       new_identity = false;
       tmp_identity_ptr = returned_identity;
-      tmp_identity_name = tmp_identity_ptr->name();
     } else {
       // In the case, the TmpIdentityInfo instance has NOT been created. Thus, a new one is created.
       new_identity = true;
@@ -949,8 +945,8 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
 }
 
 Status IgnoreOperatorsInCostGraph() {
-  for (const auto &op : ignore_candidate_) {
-    auto cnodes = op->cnodes();
+  for (auto op = ignore_candidate_.cbegin(); op != ignore_candidate_.cend(); ++op) {
+    auto cnodes = (*op)->cnodes();
     for (auto &cnode : cnodes) {
       MS_EXCEPTION_IF_NULL(cnode);
       cnode->set_user_data<OperatorInfo>(nullptr);

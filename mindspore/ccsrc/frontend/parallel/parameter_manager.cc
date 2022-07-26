@@ -16,8 +16,7 @@
 
 #include "frontend/parallel/parameter_manager.h"
 
-#include <inttypes.h>
-#include <sys/time.h>
+#include <cinttypes>
 #include <algorithm>
 
 #include <map>
@@ -25,7 +24,6 @@
 #include <set>
 #include <string>
 #include <utility>
-#include <cmath>
 
 #include "utils/hash_map.h"
 #include "mindspore/core/ops/core_ops.h"
@@ -688,7 +686,9 @@ std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, c
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t index = 0; index < cnode->inputs().size(); ++index) {
-    if (index != 1) continue;
+    if (index != 1) {
+      continue;
+    }
     auto res = FindParameterWithAllgather(cnode->input(index), func_graph, name);
     if (!res.first) {
       continue;
@@ -729,7 +729,7 @@ Shape ValueSequeueScaleToShape(const ValuePtr &value_seq, const Shape &scale, si
   for (size_t i = 0; i < scale.size(); ++i) {
     origin_value_vector[i] = origin_value_vector[i] / scale[i];
     if (i == 0) {
-      origin_value_vector[i] = origin_value_vector[i] * expand_ratio;
+      origin_value_vector[i] = origin_value_vector[i] * SizeToLong(expand_ratio);
     }
   }
   return origin_value_vector;
@@ -775,14 +775,14 @@ std::vector<bool> IsBorderAdaSumSendReceive(const AnfNodePtr &node, const RankLi
   PrimitivePtr send_rec_prim = GetCNodePrimitive(node);
   int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr(OPPOSITE_RANK));
   int64_t rank = g_device_manager->global_rank();
-  int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
+  int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / SizeToLong(group_devices.size() - 1);
   if (adasum_rank_distance < ADASUM_MIN_DIS) {
     adasum_rank_distance = ADASUM_MIN_DIS;
   }
   size_t border_step = size_t(log2(adasum_rank_distance / ADASUM_MIN_DIS));
   int64_t fusion_id = GetValue<int64_t>(send_rec_prim->GetAttr("origin_fusion"));
   // when cuting nodes, the fusion id should change.
-  int64_t new_fusion_id = fusion_id + g_device_manager->DeviceNum() * (border_step + 1);
+  int64_t new_fusion_id = fusion_id + SizeToLong(g_device_manager->DeviceNum() * (border_step + IntToSize(1)));
   send_rec_prim->set_attr(FUSION, MakeValue(new_fusion_id));
   std::vector<int64_t> group_list;
   int64_t new_dest_src_rank;
@@ -852,14 +852,15 @@ void RemoveAdasumRedundantNodes(const FuncGraphManagerPtr &manager,
     std::string target_param = node.first;
     CNodePtr rollback_origin_last_node = node.second;
     CNodePtr rollback_new_last_node = (*rollback_new_last_node_map)[target_param];
-    manager->Replace(rollback_origin_last_node, rollback_new_last_node);
+    (void)manager->Replace(rollback_origin_last_node, rollback_new_last_node);
   }
 }
 
 void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devices) {
   size_t step = size_t(GetValue<int64_t>(prim->GetAttr("step")));
   std::vector<int64_t> neighbor_ids;
-  int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
+  int64_t adasum_rank_distance =
+    SizeToLong((group_devices.back() - group_devices.front()) / (group_devices.size() - 1));
   if (adasum_rank_distance < ADASUM_MIN_DIS) {
     adasum_rank_distance = ADASUM_MIN_DIS;
   }
@@ -869,10 +870,11 @@ void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devic
     return;
   }
   int64_t rank = g_device_manager->global_rank();
-  size_t double_d = size_t(2 << step);
+  size_t double_d = size_t(IntToSize(2) << step);
   for (size_t index = 0; index < double_d; ++index) {
     int64_t node_rank = rank / ADASUM_MIN_DIS;
-    int64_t neighbor_id = (node_rank / double_d * double_d + index) * ADASUM_MIN_DIS + rank % ADASUM_MIN_DIS;
+    int64_t neighbor_id =
+      (node_rank / SizeToLong(double_d) * double_d + index) * ADASUM_MIN_DIS + rank % ADASUM_MIN_DIS;
     neighbor_ids.push_back(neighbor_id);
   }
   Group adasum_allreduce_group;
@@ -881,13 +883,13 @@ void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devic
   }
   auto new_group_name = MakeValue(adasum_allreduce_group.name());
   int64_t fusion_id = GetValue<int64_t>(prim->GetAttr("origin_fusion"));
-  int64_t new_fusion_id = fusion_id + g_device_manager->DeviceNum() * (border_step + 1);
+  int64_t new_fusion_id = fusion_id + SizeToLong(g_device_manager->DeviceNum() * (border_step + IntToSize(1)));
   prim->set_attr(GROUP, new_group_name);
   prim->set_attr(FUSION, MakeValue(new_fusion_id));
 }
 
 void HandleAdasumSlice(const AnfNodePtr &stridedslice_node1, const std::shared_ptr<TensorLayout> &target_param_layout,
-                       const std::string &target_param, size_t slice_expand_ratio) {
+                       size_t slice_expand_ratio) {
   auto stridedslice_cnode1 = stridedslice_node1->cast<CNodePtr>();
   ReplaceAdaSumStridedSliceValue(stridedslice_cnode1, target_param_layout, slice_expand_ratio);
   auto squeeze_node = RealInputNode(stridedslice_cnode1, 1);
@@ -968,7 +970,7 @@ void HandleAdaSumPureModelParallel(const AnfNodePtr &node) {
           IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimMakeTuple)) {
         continue;
       }
-      manager->Replace(squeeze_input_user.first, squeeze_input);
+      (void)manager->Replace(squeeze_input_user.first, squeeze_input);
     }
   }
 }
@@ -1003,14 +1005,16 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
       continue;
     }
 
-    int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
+    int64_t adasum_rank_distance =
+      SizeToLong((group_devices.back() - group_devices.front()) / (group_devices.size() - 1));
     // when the repeat dim is right, the parameter do not enable adasum.
     if (adasum_rank_distance == 1 && group_devices.size() < size_t(g_device_manager->stage_device_num())) {
       continue;
     }
     MS_LOG(INFO) << "Apply adasum in auto parallel, current dealing node is: " << node->fullname_with_scope();
     is_adasum = true;
-    size_t slice_expand_ratio = adasum_rank_distance / ADASUM_MIN_DIS > 0 ? adasum_rank_distance / ADASUM_MIN_DIS : 1;
+    size_t slice_expand_ratio =
+      LongToSize(adasum_rank_distance / ADASUM_MIN_DIS) > 0 ? LongToSize(adasum_rank_distance / ADASUM_MIN_DIS) : 1;
     if (is_reshape) {
       HandleAdaSumReshape(cnode, (*adasum_param_tensor_layout_map)[target_param]);
     }
@@ -1036,7 +1040,7 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
       if (!IsPrimitiveCNode(stridedslice_node1, prim::kPrimStridedSlice)) {
         continue;
       }
-      HandleAdasumSlice(stridedslice_node1, target_param_layout, target_param, slice_expand_ratio);
+      HandleAdasumSlice(stridedslice_node1, target_param_layout, slice_expand_ratio);
       HandleAdaSumSqueeze(stridedslice_node1, border_info, target_param, &forward_origin_first_node_map,
                           &forward_new_first_node_map);
     }
@@ -1048,7 +1052,7 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
 
 void ResetMirrorAttr(const PrimitivePtr &prim, const RankList &new_group) {
   if (new_group.size() == 1) {
-    prim->set_attr(DEV_NUM, MakeValue<int64_t>(new_group.size()));
+    prim->set_attr(DEV_NUM, MakeValue<int64_t>(SizeToLong(new_group.size())));
     prim->set_attr(GROUP, MakeValue("one_rank_group"));
     prim->set_attr(GROUP_RANKS, MakeValue(std::to_string(new_group[0])));
     return;
@@ -1059,7 +1063,7 @@ void ResetMirrorAttr(const PrimitivePtr &prim, const RankList &new_group) {
   }
   auto new_group_name = MakeValue(adasum_mirror_group.name());
   prim->set_attr(GROUP, new_group_name);
-  prim->set_attr(DEV_NUM, MakeValue<int64_t>(new_group.size()));
+  prim->set_attr(DEV_NUM, MakeValue<int64_t>(SizeToLong(new_group.size())));
   std::string rank_list_name = g_device_manager->FindRankListNameByHashName(adasum_mirror_group.name());
   prim->set_attr(GROUP_RANKS, MakeValue(rank_list_name));
 }
@@ -1086,9 +1090,9 @@ void HandleMirrorInAdaSum(
     // Change mirror group
     RankList group_devices = GetRankListByLayout(target_param_layout);
     int64_t rank = g_device_manager->global_rank();
-    size_t group_dis = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
+    size_t group_dis = LongToSize(group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
     auto prim = GetCNodePrimitive(node);
-    if (group_dis < ADASUM_MIN_DIS) {
+    if (group_dis < ADASUM_MIN_DIS && group_dis > 0) {
       size_t new_group_size = size_t(ADASUM_MIN_DIS) / group_dis;
       // compute new group range
       size_t group_begin = 0;
@@ -1097,7 +1101,8 @@ void HandleMirrorInAdaSum(
         int64_t max_group_value =
           group_end >= group_devices.size() ? (group_devices.back() + 1) : group_devices[group_end];
         if (group_devices[group_begin] <= rank && rank < max_group_value) {
-          std::vector<int64_t> new_group(group_devices.begin() + group_begin, group_devices.begin() + group_end);
+          std::vector<int64_t> new_group(group_devices.begin() + SizeToLong(group_begin),
+                                         group_devices.begin() + SizeToLong(group_end));
           MS_LOG(INFO) << "Find new mirror group in adasum: " << new_group << " target_param:" << target_param;
           ResetMirrorAttr(prim, new_group);
           break;
@@ -1172,10 +1177,10 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
         tensor_map.pop_back();
         row_col_count++;
       } else if (row_col_param_name == exp_col_name) {
-        (void)opt_shard_slice_shape.erase(opt_shard_slice_shape.begin() +
+        (void)opt_shard_slice_shape.erase(opt_shard_slice_shape.cbegin() +
                                           static_cast<different_type>(SECOND_FROM_END(shape_size)));
-        (void)origin_shape.erase(origin_shape.begin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
-        (void)tensor_map.erase(tensor_map.begin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
+        (void)origin_shape.erase(origin_shape.cbegin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
+        (void)tensor_map.erase(tensor_map.cbegin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
         row_col_count++;
       } else {
         exp_avg_sq_count++;

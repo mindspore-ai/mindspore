@@ -261,7 +261,8 @@ void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func
 
 // Restore the parameters' shape for evaluation/prediction in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph,
-                                                           const ParameterPtr &param_node, const AbstractBasePtr &ptr) {
+                                                           const ParameterPtr &param_node,
+                                                           const AbstractBasePtr &ptr) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
@@ -273,7 +274,9 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
     return;
   }
   auto param_info = param_node->param_info();
-  if (!param_info) return;
+  if (!param_info) {
+    return;
+  }
   auto shape = param_info->parameter_shape();
   if (shape.empty()) {
     MS_LOG(WARNING) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
@@ -287,7 +290,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
 // Checkpoint the parameters' shape for training in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                                        const AbstractBasePtr &ptr) {
+                                                        const AbstractBasePtr &ptr) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
