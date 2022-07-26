@@ -117,8 +117,8 @@ void IndexAddCpuKernelMod::CheckParams() {
       inner_size_ *= LongToSize(x_shape_[i]);
     }
   }
-  x_axis_size_ = LongToSize(x_shape_[axis_]);
-  y_axis_size_ = LongToSize(y_shape_[axis_]);
+  x_axis_size_ = LongToSize(x_shape_[axis]);
+  y_axis_size_ = LongToSize(y_shape_[axis]);
 }
 
 template <typename T>
@@ -133,7 +133,7 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;
 
-  auto task = [&](const size_t start, const size_t end) {
+  auto task = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size](const size_t start, const size_t end) {
     for (size_t i = start; i < end; ++i) {
       // calc idx_y in y.shape[axis]
       const size_t y_axis_idx = (i / inner_size_) % y_axis_size_;
@@ -149,7 +149,8 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     }
   };
 
-  auto task_block = [&](const size_t start, const size_t end) {
+  auto task_block = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size](const size_t start,
+                                                                                     const size_t end) {
     for (size_t i = start; i < end; ++i) {
       const size_t y_outer_idx = i / y_axis_size_;
       const size_t y_axis_idx = i - y_outer_idx * y_axis_size_;
