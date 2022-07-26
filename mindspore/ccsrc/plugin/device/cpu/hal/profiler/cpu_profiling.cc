@@ -109,6 +109,11 @@ void CPUProfiler::OpDataProducerBeginParallel(const std::string op_name, const u
   SetRunTimeData(op_name, pid, true);
   SetRuntimeStart(op_name, start_timestamp);
 
+  SetGpuHeteroStatus();
+  if (!is_gpu_hetero_.value()) {
+    return;
+  }
+
   if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
       gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
       gpu_instance->GetEnableFlag()) {
@@ -149,6 +154,11 @@ void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t 
   op_time_mono_start_ = GetHostMonoTimeStamp();
   SetRunTimeData(op_name, pid);
 
+  SetGpuHeteroStatus();
+  if (!is_gpu_hetero_.value()) {
+    return;
+  }
+
   if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
       gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
       gpu_instance->GetEnableFlag()) {
@@ -182,6 +192,12 @@ void CPUProfiler::SaveProfileData() {
     if (!all_kernel_info_.empty()) {
       cpu_data_saver_inst->WriteFrameWork(profile_data_path_, all_kernel_info_);
     }
+  }
+}
+
+void CPUProfiler::SetGpuHeteroStatus() {
+  if (!is_gpu_hetero_.has_value()) {
+    is_gpu_hetero_ = Profiler::GetInstance(kGPUDevice) != nullptr;
   }
 }
 
