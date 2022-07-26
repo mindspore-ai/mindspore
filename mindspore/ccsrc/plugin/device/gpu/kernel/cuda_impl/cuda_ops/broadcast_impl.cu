@@ -360,16 +360,103 @@ struct XDivyFunc<half2> {
   __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
     float2 l = __half22float2(lhs);
     float2 r = __half22float2(rhs);
-    if ((l.x < kFloatEplison && l.x > -kFloatEplison) || (l.y < kFloatEplison && l.y > -kFloatEplison)) {
-      l.x = 0.0;
-      l.y = 0.0;
+    float2 res;
+    if ((l.x < kFloatEplison && l.x > -kFloatEplison) && (l.y < kFloatEplison && l.y > -kFloatEplison)) {
+      res.x = 0.0;
+      res.y = 0.0;
+    } else if ((l.x < kFloatEplison && l.x > -kFloatEplison)) {
+      res.x = 0.0;
+      res.y = l.y / r.y;
+    } else if (l.y < kFloatEplison && l.y > -kFloatEplison) {
+      res.x = l.x / r.x;
+      res.y = 0.0;
     } else {
-      l.x = l.x / r.x;
-      l.y = l.y / r.y;
+      res.x = l.x / r.x;
+      res.y = l.y / r.y;
     }
+    return __float22half2_rn(res);
+  }
+};
+
+
+// complex64
+template <>
+struct XDivyFunc<Complex<float>> {
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
+};
+// complex128
+template <>
+struct XDivyFunc<Complex<double>> {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
+};
+
+// XLogy check if lhs is less than epsilon, XLogy support half, float, double
+template <typename T>
+struct XLogyFunc {
+  // default T is float
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    return lhs < kFloatEplison && lhs > -kFloatEplison ? 0.0 : (lhs * log(rhs));
+  }
+};
+
+template <>
+struct XLogyFunc<half> {
+  __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    return __float2half_rn(__half2float(lhs) * log(__half2float(rhs)));
+  }
+};
+
+template <>
+struct XLogyFunc<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 l = __half22float2(lhs);
+    float2 r = __half22float2(rhs);
+    l.x = (l.x * log(r.x));
+    l.y = (l.y * log(r.y));
     return __float22half2_rn(l);
   }
 };
+
+// complex64
+template <>
+struct XLogyFunc<Complex<float>> {
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs.real(), rhs.imag());
+    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+};
+// complex128
+template <>
+struct XLogyFunc<Complex<double>> {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs.real(), rhs.imag());
+    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+};
+
+
 
 // convert to float to fix accuracy issue
 // MulNoNan
@@ -847,6 +934,8 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, XDivyFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_MULNONAN:
       return ElewiseArithKernel<T, MulNoNanFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XLOGY:
+      return ElewiseArithKernel<T, XLogyFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -858,6 +947,12 @@ void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const C
   switch (op) {
     case BROADCAST_TYPE_MULNONAN:
       return ElewiseArithComplexKernel<T, MulNoNanFunc<Complex<T>>>
+            <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XDIVY:
+      return ElewiseArithComplexKernel<T, XDivyFunc<Complex<T>>>
+            <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XLOGY:
+      return ElewiseArithComplexKernel<T, XLogyFunc<Complex<T>>>
             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
@@ -1321,6 +1416,11 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_XLOGY:
+      return BroadcastArithKernel<T, XLogyFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     default:
       break;
   }
@@ -1385,6 +1485,18 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
       x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
       y_dims[5], y_dims[6], x0, x1, y);
   }
+  if (op == BROADCAST_TYPE_XDIVY) {
+    return BroadcastComplexArithKernel<T, T, T, XDivyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
+      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
+      y_dims[5], y_dims[6], x0, x1, y);
+  }
+  if (op == BROADCAST_TYPE_XLOGY) {
+    return BroadcastComplexArithKernel<T, T, T, XLogyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
+      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
+      y_dims[5], y_dims[6], x0, x1, y);
+  }
 }
 
 template <typename T>
@@ -1397,6 +1509,18 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
   }
   if (op == BROADCAST_TYPE_MULNONAN) {
     return BroadcastComplexArithKernel<T, MulNoNanFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
+      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
+      y_dims[5], y_dims[6], x0, x1, y);
+  }
+  if (op == BROADCAST_TYPE_XDIVY) {
+    return BroadcastComplexArithKernel<T, XDivyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
+      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
+      y_dims[5], y_dims[6], x0, x1, y);
+  }
+  if (op == BROADCAST_TYPE_XLOGY) {
+    return BroadcastComplexArithKernel<T, XLogyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
       x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
       x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
       y_dims[5], y_dims[6], x0, x1, y);

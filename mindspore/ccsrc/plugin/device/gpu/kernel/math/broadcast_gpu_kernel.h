@@ -68,12 +68,14 @@ static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap
   {"BitwiseAnd", BROADCAST_TYPE_BITWISEAND},
   {"BitwiseOr", BROADCAST_TYPE_BITWISEOR},
   {"BitwiseXor", BROADCAST_TYPE_BITWISEXOR},
+  {"Xdivy", BROADCAST_TYPE_XDIVY},
+  {"Xlogy", BROADCAST_TYPE_XLOGY},
 };
 
 static const std::map<std::string, BroadcastOpType> kBroadcastComplexAndRealTypeMap = {
-  {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL}, {"Sub", BROADCAST_TYPE_SUB},
-  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV}, {"MulNoNan", BROADCAST_TYPE_MULNONAN},
-};
+  {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL},    {"Sub", BROADCAST_TYPE_SUB},
+  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV},    {"MulNoNan", BROADCAST_TYPE_MULNONAN},
+  {"Xdivy", BROADCAST_TYPE_XDIVY},     {"Xlogy", BROADCAST_TYPE_XLOGY}};
 
 static const std::map<std::string, BroadcastOpType> kBroadcastComplexOnlyTypeMap = {
   {"Complex", BROADCAST_TYPE_COMPLEX},
