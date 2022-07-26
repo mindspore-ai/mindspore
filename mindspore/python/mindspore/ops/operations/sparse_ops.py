@@ -234,7 +234,7 @@ class CSRSparseMatrixToSparseTensor(Primitive):
         >>> x_values = Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))
         >>> csr_sparse_matrix_to_sparse_tensor = ops.CSRSparseMatrixToSparseTensor()
         >>> out = csr_sparse_matrix_to_sparse_tensor(x_dense_shape, x_batch_pointers, x_row_pointers,
-                                                     x_col_indices, x_values)
+        ...                                          x_col_indices, x_values)
         >>> print(out[0])
         [[0 0 1]
          [0 1 2]
