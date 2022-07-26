@@ -122,5 +122,7 @@ std::vector<KernelAttr> TruncateModCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, TruncateModFunc> &pair) { return pair.first; });
   return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TruncateMod, TruncateModCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -159,5 +159,7 @@ std::vector<std::pair<KernelAttr, ApplyAdagradV2CpuKernelMod::ApplyAdagradV2Func
        .AddOutputAttr(kNumberTypeFloat16),
      &ApplyAdagradV2CpuKernelMod::LaunchKernel<float16>},
 };
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagradV2, ApplyAdagradV2CpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

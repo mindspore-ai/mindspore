@@ -5809,7 +5809,7 @@ class ApplyAdagradV2(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5896,7 +5896,7 @@ class SparseApplyAdagrad(Primitive):
 
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -6751,7 +6751,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class SparseApplyFtrlNet(nn.Cell):
@@ -9302,7 +9302,7 @@ class GridSampler3D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> gridsampler = GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
@@ -9805,7 +9805,9 @@ class GridSampler2D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
         >>> gridsampler = GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
@@ -9928,6 +9930,79 @@ class UpsampleTrilinear3D(Primitive):
         self.add_prim_attr('output_size', output_size)
         self.add_prim_attr('scales', scales)
         self.add_prim_attr('align_corners', align_corners)
+
+
+class UpsampleNearest3D(Primitive):
+    r"""
+    Performs nearest neighbor upsampling operation.
+
+    This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
+    neighbor algorithm.
+
+    One of `output_size` or `scales` must be given, and cannot specify both.
+
+    Args:
+        output_size (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
+            Default: None.
+        scales (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
+            Default: None.
+
+    Inputs:
+        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        - **y** (Tensor) - Upsampled output with the same data type as `x`.
+          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `x` is not a 5D tensor.
+        TypeError: If data type of `x` is not float16, float32.
+        TypeError: If data type of `output_size` is not list(int).
+        TypeError: If data type of `scales` is not list(float).
+        ValueError: If `output_size` is a list and if `output_size` length is not 3.
+        ValueError: If `scales` is a list and if `scales` length is not 3.
+        ValueError: If both `output_size` and `scales` are None.
+        ValueError: If both `output_size` and `scales` are non-empty lists.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+        ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
+        >>> output_size = [3, 4, 5]
+        >>> net = ops.UpsampleNearest3D(output_size = output_size)
+        >>> output = net(x)
+        >>> print(output)
+        [[[[[ 1.  1.  2.  3.  4.]
+            [ 1.  1.  2.  3.  4.]
+            [ 5.  5.  6.  7.  8.]
+            [ 5.  5.  6.  7.  8.]]
+           [[ 1.  1.  2.  3.  4.]
+            [ 1.  1.  2.  3.  4.]
+            [ 5.  5.  6.  7.  8.]
+            [ 5.  5.  6.  7.  8.]]
+           [[ 9.  9. 10. 11. 12.]
+            [ 9.  9. 10. 11. 12.]
+            [13. 13. 14. 15. 16.]
+            [13. 13. 14. 15. 16.]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, output_size=None, scales=None):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        if output_size is None:
+            output_size = []
+        if scales is None:
+            scales = []
+        validator.check_value_type('output_size', output_size, [tuple, list], self.name)
+        for item in output_size:
+            validator.check_int(item, 0, Rel.GT, 'output_size_item', self.name)
+        validator.check_value_type('scales', scales, [tuple, list], self.name)
+        for item in scales:
+            validator.check_float(item, 0, Rel.GT, 'scales_item', self.name)
+        self.add_prim_attr('output_size', output_size)
+        self.add_prim_attr('scales', scales)
 
 
 class SparseApplyAdagradDA(Primitive):

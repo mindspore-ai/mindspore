@@ -47,7 +47,6 @@ class NetGridSampler3DGrad(nn.Cell):
         return self.grid_sampler_3d_grad(grad, x, grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -81,7 +80,6 @@ def test_grid_sampler_2d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -115,7 +113,6 @@ def test_grid_sampler_2d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -148,7 +145,6 @@ def test_grid_sampler_2d_grad_float64():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -188,7 +184,6 @@ def test_grid_sampler_3d_grad_float16():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -228,7 +223,6 @@ def test_grid_sampler_3d_grad_float32():
     assert np.all(np.abs(diff_grid) < error_grid)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

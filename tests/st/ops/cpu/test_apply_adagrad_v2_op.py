@@ -39,7 +39,6 @@ class Net(nn.Cell):
         return self.apply_adagrad_v2(self.var, self.accum, lr, grad)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

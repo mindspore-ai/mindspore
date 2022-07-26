@@ -154,5 +154,7 @@ std::vector<KernelAttr> SparseApplyAdagradGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, SparseApplyAdagradFunc> &pair) { return pair.first; });
   return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SparseApplyAdagrad, SparseApplyAdagradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

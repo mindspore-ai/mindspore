@@ -17,5 +17,30 @@
 #include "plugin/device/gpu/kernel/nn/grid_sampler_gpu_kernel.h"
 
 namespace mindspore {
-namespace kernel {}  // namespace kernel
+namespace kernel {
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler2D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  GridSampler2DGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler2D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  GridSampler2DGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler2D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  GridSampler2DGpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler3D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  GridSampler3DGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler3D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  GridSampler3DGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(
+  GridSampler3D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  GridSampler3DGpuKernelMod, double)
+}  // namespace kernel
 }  // namespace mindspore

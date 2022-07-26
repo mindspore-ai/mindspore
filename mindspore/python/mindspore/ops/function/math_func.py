@@ -2162,7 +2162,7 @@ def truncate_div(x, y):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2202,7 +2202,7 @@ def truncate_mod(x, y):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
