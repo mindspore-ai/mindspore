@@ -20,6 +20,7 @@
 #include <cfloat>
 #include <algorithm>
 #include <string>
+#include <atomic>
 #include <iostream>
 #include "src/runtime/kernel_exec.h"
 #include "include/errorcode.h"
@@ -217,7 +218,7 @@ class OptimizerKernel : public LiteKernel {
   int lr_idx_ = 0;
   int grad_idx_ = 0;
   float *grad_sum_ = nullptr;
-  bool valid_grad_sum_ = false;
+  std::atomic_bool valid_grad_sum_ = false;
 
  private:
   WeightUpdateMode weight_update_mod_ = WeightUpdateMode::NORMAL;
