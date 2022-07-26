@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/string_ops_declare.h"
 #include <vector>
+#include <string>
 
 namespace mindspore::transform {
 INPUT_MAP(StringLength) = {{1, INPUT_DESC(x)}};

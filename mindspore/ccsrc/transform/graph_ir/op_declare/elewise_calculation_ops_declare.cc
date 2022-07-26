@@ -17,6 +17,7 @@
 #include "transform/graph_ir/op_declare/elewise_calculation_ops_declare.h"
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace mindspore::transform {
 // Assign
