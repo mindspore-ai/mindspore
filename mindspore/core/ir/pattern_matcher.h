@@ -44,7 +44,9 @@ namespace mindspore {
 template <typename T>
 class PBase {
  public:
-  bool CheckFunc(const PredicateFuncType &func, const AnfNodePtr &node) { return func(get_object().GetNode(node)); }
+  bool CheckFunc(const PredicateFuncType &func, const AnfNodePtr &node) const {
+    return func(get_object().GetNode(node));
+  }
 
   const T &get_object() const { return *static_cast<const T *>(this); }
 
@@ -249,7 +251,7 @@ class PCNode : public PBase<PCNode<TArgs...> > {
     // If it could capture the initial set of nodes specified in the Pattern
     // and there are enough extra inputs to add.
     if (captured && inputs_size > pattern_arg_len) {
-      (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + pattern_arg_len, inputs.end());
+      (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + SizeToLong(pattern_arg_len), inputs.end());
     }
     return captured;
   }
@@ -289,12 +291,12 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     const auto n_extra_nodes = extra_nodes_.size();
     inputs.reserve(1 + n_args + n_extra_nodes);
     // The first input is the value of primitive.
-    inputs.emplace_back(NewValueNode(prim_));
+    (void)inputs.emplace_back(NewValueNode(prim_));
     // Get nodes from input patterns.
     tuple_utils::ForEach(args_, [&inputs, &node](auto &arg) { (void)inputs.emplace_back(arg.GetNode(node)); });
     if (n_extra_nodes > 0) {
       // In case this PPrimitive has captured extra nodes.
-      inputs.insert(inputs.begin(), extra_nodes_.begin(), extra_nodes_.end());
+      (void)inputs.insert(inputs.begin(), extra_nodes_.begin(), extra_nodes_.end());
     }
     return NewCNode(std::move(inputs), node->func_graph());
   }
@@ -335,7 +337,7 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     if (captured) {
       captured_prim_node_ = node;
       if (inputs_size > pattern_arg_len + 1) {
-        (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
+        (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + SizeToLong(pattern_arg_len), inputs.end());
       }
     }
     return captured;
@@ -509,7 +511,7 @@ class PConstant : public PBase<PConstant<T> > {
     auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
     TypeId tensor_type = tensor_ptr->Dtype()->type_id();
     if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
-      float *data2 = reinterpret_cast<float *>(tensor_ptr->data_c());
+      float *data2 = static_cast<float *>(tensor_ptr->data_c());
       auto threshold = FLT_MIN;
       for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
@@ -518,7 +520,7 @@ class PConstant : public PBase<PConstant<T> > {
       }
       return true;
     } else if (tensor_type == TypeId::kNumberTypeFloat64) {
-      double *data2 = reinterpret_cast<double *>(tensor_ptr->data_c());
+      double *data2 = static_cast<double *>(tensor_ptr->data_c());
       auto threshold = DBL_MIN;
       for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (fabs(data2[i] - check_value_) > threshold) {
@@ -527,7 +529,7 @@ class PConstant : public PBase<PConstant<T> > {
       }
       return true;
     } else if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
-      int *data2 = reinterpret_cast<int *>(tensor_ptr->data_c());
+      int *data2 = static_cast<int *>(tensor_ptr->data_c());
       for (size_t i = 0; i < tensor_ptr->DataSize(); i++) {
         if (data2[i] != check_value_) {
           return false;
@@ -577,7 +579,7 @@ class PConstant : public PBase<PConstant<T> > {
     ShapeVector tensor_shape = tensor_abstract->shape()->shape();
     if (x == nullptr) {
       auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+      char *data = static_cast<char *>(new_tensor_ptr->data_c());
       if (memset_s(data, new_tensor_ptr->Size(), 0, new_tensor_ptr->Size()) != 0) {
         return nullptr;
       }
@@ -611,7 +613,7 @@ class PConstant : public PBase<PConstant<T> > {
       return nullptr;
     }
     int ret = 0;
-    char *source_data = reinterpret_cast<char *>(GetPointerToTensorData(x));
+    char *source_data = static_cast<char *>(GetPointerToTensorData(x));
     MS_EXCEPTION_IF_NULL(source_data);
     if (x_tensor_ptr->DataSize() == 1) {
       auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
@@ -659,7 +661,7 @@ class PConstant : public PBase<PConstant<T> > {
   }
 
   enum BinOperator {
-    ADD = 0,
+    ADD,
     MULTIPLY,
   };
 
@@ -670,8 +672,8 @@ class PConstant : public PBase<PConstant<T> > {
     if (out_data_size <= 0) {
       MS_EXCEPTION(ValueError) << "out_data_size should be greater than zeros";
     }
-    TM *data_1 = reinterpret_cast<TM *>(in_data_1);
-    TM *data_2 = reinterpret_cast<TM *>(in_data_2);
+    TM *data_1 = static_cast<TM *>(in_data_1);
+    TM *data_2 = static_cast<TM *>(in_data_2);
     TM *data_out = new TM[out_data_size];
 
     if (in_data_1_size == 1) {
@@ -713,8 +715,7 @@ class PConstant : public PBase<PConstant<T> > {
         // if operator is ADD, data_out[i] += 0, => data_out[i] = data_out[i], => NoChange.
       }
     }
-    *out_data = reinterpret_cast<void *>(data_out);
-    return;
+    *out_data = static_cast<void *>(data_out);
   }
 
   AnfNodePtr MulByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
@@ -748,29 +749,29 @@ class PConstant : public PBase<PConstant<T> > {
     ShapeVector tensor_out_shape = new_tensor_ptr->shape();
     int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
     size_t mem_size = GetTypeByte(new_tensor_ptr->Dtype()) * IntToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+    char *data = static_cast<char *>(new_tensor_ptr->data_c());
 
     int ret = 0;
     void *data_out = nullptr;
     if ((new_tensor_ptr->data_type() == TypeId::kNumberTypeFloat32) ||
         (new_tensor_ptr->data_type() == TypeId::kNumberTypeFloat)) {
-      CalcByOperator<float>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                            tensor_ptr_2->DataSize(), &data_out, data_out_size, bin_operator);
+      CalcByOperator<float>(tensor_ptr_1->data_c(), SizeToInt(tensor_ptr_1->DataSize()), tensor_ptr_2->data_c(),
+                            SizeToInt(tensor_ptr_2->DataSize()), &data_out, data_out_size, bin_operator);
       ret = memcpy_s(data, mem_size, data_out, mem_size);
-      delete[] reinterpret_cast<float *>(data_out);
+      delete[] static_cast<float *>(data_out);
     } else {
       if (new_tensor_ptr->data_type() == TypeId::kNumberTypeFloat64) {
-        CalcByOperator<double>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                               tensor_ptr_2->DataSize(), &data_out, data_out_size, bin_operator);
+        CalcByOperator<double>(tensor_ptr_1->data_c(), SizeToInt(tensor_ptr_1->DataSize()), tensor_ptr_2->data_c(),
+                               SizeToInt(tensor_ptr_2->DataSize()), &data_out, data_out_size, bin_operator);
         ret = memcpy_s(data, mem_size, data_out, mem_size);
-        delete[] reinterpret_cast<double *>(data_out);
+        delete[] static_cast<double *>(data_out);
       } else {
         if ((new_tensor_ptr->data_type() == TypeId::kNumberTypeInt32) ||
             (new_tensor_ptr->data_type() == TypeId::kNumberTypeInt)) {
-          CalcByOperator<int>(tensor_ptr_1->data_c(), tensor_ptr_1->DataSize(), tensor_ptr_2->data_c(),
-                              tensor_ptr_2->DataSize(), &data_out, data_out_size, bin_operator);
+          CalcByOperator<int>(tensor_ptr_1->data_c(), SizeToInt(tensor_ptr_1->DataSize()), tensor_ptr_2->data_c(),
+                              SizeToInt(tensor_ptr_2->DataSize()), &data_out, data_out_size, bin_operator);
           ret = memcpy_s(data, mem_size, data_out, mem_size);
-          delete[] reinterpret_cast<int *>(data_out);
+          delete[] static_cast<int *>(data_out);
         } else {
           // Unsupported data types
           return nullptr;
@@ -826,7 +827,7 @@ class PConstant : public PBase<PConstant<T> > {
       }
       auto tensor_out_shape = tensor_3_abstract->shape()->shape();
       size_t data_out_size =
-        std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<size_t>());
+        LongToSize(std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int64_t>()));
       if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
         return nullptr;
       }

@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_IR_SIGNATURE_H_
 
 #include <string>
-#include <vector>
 #include "ir/value.h"
 
 namespace mindspore {

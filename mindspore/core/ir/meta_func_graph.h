@@ -88,7 +88,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   std::shared_ptr<Derived> shared_from_base() {
     return std::static_pointer_cast<Derived>(shared_from_this());
   }
-  FuncGraphPtr GenerateStubFunc(const TypePtrList &types);
+  FuncGraphPtr GenerateStubFunc(const TypePtrList &types) const;
   std::string name_;
   std::vector<Signature> signatures_;
   std::unordered_map<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;

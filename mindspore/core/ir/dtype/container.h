@@ -60,7 +60,7 @@ class MS_CORE_API List final : public Object {
   ///
   /// \param[in] dim Define the index of List element.
   /// \return TypePtr of List element.
-  const TypePtr operator[](size_t dim) const;
+  const TypePtr operator[](std::size_t dim) const;
 
   TypeId generic_type_id() const override { return kObjectTypeList; }
   TypePtr DeepCopy() const override;
@@ -120,7 +120,7 @@ class MS_CORE_API Tuple final : public Object {
   ///
   /// \param[in] dim Define the index of Tuple element.
   /// \return TypePtr of Tuple element.
-  const TypePtr operator[](size_t dim) const;
+  const TypePtr operator[](std::size_t dim) const;
 
   bool operator==(const Type &other) const override;
 
@@ -171,7 +171,7 @@ class MS_CORE_API Dictionary final : public Object {
   ///
   /// \param[in] is_dumptext whether to show each element DumpText
   /// \return The description of the Dictionary object.
-  std::string DumpContent(bool is_dumptext) const;
+  std::string DumpContent(bool) const;
   std::vector<std::pair<std::string, TypePtr>> key_values_;
 };
 using DictionaryPtr = std::shared_ptr<Dictionary>;

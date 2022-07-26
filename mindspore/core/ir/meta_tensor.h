@@ -260,6 +260,12 @@ class MS_CORE_API MetaSparseTensor : public Value {
   /// \param[in] meta_tensor An existing MetaSparseTensor object.
   MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor);
 
+  /// \brief Copy assignment operator.
+  ///
+  /// \param[in] meta_sparse_tensor An existing MetaSparseTensor object.
+  /// \return A MetaSparseTensor object set with the same data type and shape as the meta_sparse_tensor.
+  MetaSparseTensor &operator=(const MetaSparseTensor &meta_sparse_tensor);
+
   /// \brief Destrustor of MetaSparseTensor.
   ~MetaSparseTensor() override = default;
   MS_DECLARE_PARENT(MetaSparseTensor, Value)

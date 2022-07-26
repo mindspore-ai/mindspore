@@ -56,12 +56,12 @@ Cloner::Cloner(const FuncGraphVector &func_graphs, bool clone_all_valuenodes, bo
       clone_all_child_graphs_(clone_all_child_graphs),
       clone_all_used_graphs_(clone_all_used_graphs),
       relation_(relation),
-      target_relation_(target_relation == nullptr ? relation : target_relation) {
+      target_relation_(target_relation == nullptr ? relation : target_relation),
+      scope_(kDefaultScope),
+      type_(kBasic) {
   for (auto &func_graph : func_graphs) {
     AddClone(func_graph);
   }
-  scope_ = kDefaultScope;
-  type_ = kBasic;
 }
 
 void Cloner::AddClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
@@ -248,7 +248,7 @@ void Cloner::InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNode
   }
 }
 
-void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
+void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   target_func_graph->set_attrs(func_graph->attrs());
@@ -313,7 +313,7 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
   }
 }
 
-void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) {
+void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) const {
   param->set_abstract(node->abstract());
   if (node->isa<Parameter>()) {
     ParameterPtr old_param = node->cast<ParameterPtr>();

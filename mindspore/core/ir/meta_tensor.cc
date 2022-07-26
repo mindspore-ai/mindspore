@@ -25,14 +25,8 @@ MetaTensor::MetaTensor() : data_type_(TypeId::kTypeUnknown) {}
 
 MetaTensor::MetaTensor(TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}
 
-MetaTensor::MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape) {
-  TypeId data_type = TypeId::kTypeUnknown;
-  if (type_ptr != nullptr) {
-    data_type = type_ptr->type_id();
-  }
-  data_type_ = data_type;
-  shape_ = shape;
-}
+MetaTensor::MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape)
+    : data_type_(type_ptr != nullptr ? type_ptr->type_id() : TypeId::kTypeUnknown), shape_(shape) {}
 
 MetaTensor::MetaTensor(const MetaTensor &meta_tensor)
     : Value(meta_tensor), data_type_(meta_tensor.data_type()), shape_(meta_tensor.shape()) {}
@@ -57,7 +51,7 @@ bool MetaTensor::operator==(const MetaTensor &meta_tensor) const {
 // The given index number should be in [0, shape_.size()).
 // param index Dimension index number.
 // return The size of the dimension if succeed, or -1 if failed.
-int64_t MetaTensor::DimensionSize(const size_t index) const {
+int64_t MetaTensor::DimensionSize(size_t index) const {
   int64_t dim_size = -1;
   if (index < shape_.size()) {
     dim_size = shape_[index];
@@ -109,6 +103,16 @@ MetaSparseTensor::MetaSparseTensor(TypeId data_type, const ShapeVector &shape) :
 
 MetaSparseTensor::MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor)
     : Value(meta_sparse_tensor), data_type_(meta_sparse_tensor.data_type()), shape_(meta_sparse_tensor.shape()) {}
+
+MetaSparseTensor &MetaSparseTensor::operator=(const MetaSparseTensor &meta_sparse_tensor) {
+  if (this == &meta_sparse_tensor) {
+    return *this;
+  }
+  Value::operator=(meta_sparse_tensor);
+  data_type_ = meta_sparse_tensor.data_type();
+  shape_ = meta_sparse_tensor.shape();
+  return *this;
+}
 
 TypePtr MetaSparseTensor::Dtype() const { return TypeIdToType(data_type_); }
 }  // namespace tensor

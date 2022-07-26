@@ -16,9 +16,7 @@
 
 #include "ir/anf.h"
 
-#include <algorithm>
 #include <sstream>
-#include <vector>
 
 #include "utils/hash_map.h"
 #include "ir/visitor.h"

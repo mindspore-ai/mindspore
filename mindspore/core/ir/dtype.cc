@@ -136,7 +136,9 @@ bool Function::operator==(const Type &other) const {
   for (size_t i = 0; i < args_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(args_[i]);
     MS_EXCEPTION_IF_NULL(other_function.args_[i]);
-    if (*args_[i] != *other_function.args_[i]) return false;
+    if (*args_[i] != *other_function.args_[i]) {
+      return false;
+    }
   }
   return true;
 }

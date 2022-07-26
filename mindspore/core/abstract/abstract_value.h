@@ -27,7 +27,6 @@
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
 #include "utils/any.h"
-#include "utils/flags.h"
 #include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/dtype.h"
@@ -694,7 +693,7 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   /// \param[in] other The other instance of AbstractTensor.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractTensor &other) const;
+  virtual bool operator==(const AbstractTensor &other) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1145,7 +1144,7 @@ class MS_CORE_API AbstractNone final : public AbstractBase {
   /// \param[in] other The other instance of AbstractNone.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractNone &other) const;
+  bool operator==(const AbstractNone &) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1178,7 +1177,7 @@ class MS_CORE_API AbstractNull final : public AbstractBase {
   /// \param[in] other The other instance of AbstractNull.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractNull &other) const;
+  bool operator==(const AbstractNull &) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1208,7 +1207,7 @@ class MS_CORE_API AbstractTimeOut final : public AbstractBase {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractTimeOut &other) const;
+  bool operator==(const AbstractTimeOut &) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1235,7 +1234,7 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractEllipsis &other) const;
+  bool operator==(const AbstractEllipsis &) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1430,10 +1429,12 @@ class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
   std::string ToString() const override;
 
  private:
+  std::shared_ptr<AbstractRowTensor> MakeAbstract(const BaseShapePtr &shp) const;
   AbstractTensorPtr indices_;
   AbstractTensorPtr values_;
   AbstractTuplePtr dense_shape_;
 };
+using AbstractRowTensorPtr = std::shared_ptr<AbstractRowTensor>;
 
 // COOTensor is a Tuple with fixed number of elements and specific meaning of each position.
 class MS_CORE_API AbstractCOOTensor : public AbstractSparseTensor {
@@ -1519,7 +1520,7 @@ class MS_CORE_API AbstractUMonad final : public AbstractMonad {
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractUMonad>(GetValueTrack()); }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-  bool operator==(const AbstractUMonad &other) const;
+  bool operator==(const AbstractUMonad &) const;
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
@@ -1532,7 +1533,7 @@ class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractIOMonad>(GetValueTrack()); }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-  bool operator==(const AbstractIOMonad &other) const;
+  bool operator==(const AbstractIOMonad &) const;
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;

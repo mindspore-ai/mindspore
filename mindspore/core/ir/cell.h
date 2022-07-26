@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_IR_CELL_H_
 #define MINDSPORE_CCSRC_IR_CELL_H_
 
-#include <vector>
 #include <memory>
 #include <string>
 #include <tuple>

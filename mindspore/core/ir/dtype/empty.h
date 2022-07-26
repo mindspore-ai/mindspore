@@ -17,17 +17,11 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_EMPTY_H_
 #define MINDSPORE_CORE_IR_DTYPE_EMPTY_H_
 
-#include <cstddef>
 #include <iostream>
-#include <initializer_list>
 #include <map>
 #include <memory>
-#include <utility>
 #include <sstream>
 #include <string>
-#include <vector>
-#include <type_traits>
-#include <algorithm>
 
 #include "utils/hash_map.h"
 #include "base/base.h"

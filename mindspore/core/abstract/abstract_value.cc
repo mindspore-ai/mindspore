@@ -1407,7 +1407,6 @@ const T AbstractSparseTensor::GetAbsPtrAt(size_t index) const {
   if (index >= size()) {
     MS_LOG(EXCEPTION) << "Index should be in range of [0, " << size() << "), but got " << index
                       << " for abstract: " << ToString();
-    return nullptr;
   }
   AbstractBasePtr base = elements()[index];
   MS_EXCEPTION_IF_NULL(base);
@@ -1491,12 +1490,10 @@ AbstractBasePtr AbstractRowTensor::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractRowTensor::Broaden() const {
+AbstractRowTensorPtr AbstractRowTensor::MakeAbstract(const BaseShapePtr &shp) const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
-  auto shp = shape();
-  MS_EXCEPTION_IF_NULL(shp);
-  broaden->set_shape(shp->Clone());
+  broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
   MS_EXCEPTION_IF_NULL(indices_);
   MS_EXCEPTION_IF_NULL(values_);
@@ -1513,27 +1510,17 @@ AbstractBasePtr AbstractRowTensor::Broaden() const {
   return broaden;
 }
 
+AbstractBasePtr AbstractRowTensor::Broaden() const {
+  auto shp = shape()->Clone();
+  MS_EXCEPTION_IF_NULL(shp);
+  return MakeAbstract(shp);
+}
+
 AbstractBasePtr AbstractRowTensor::BroadenWithShape() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape()->Clone();
   MS_EXCEPTION_IF_NULL(shp);
   shp->Broaden();
-  broaden->set_shape(shp);
-  broaden->set_value(kAnyValue);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return broaden;
+  return MakeAbstract(shp);
 }
 
 std::string AbstractRowTensor::ToString() const {
@@ -1560,8 +1547,8 @@ TypePtr AbstractCOOTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(values());
   MS_EXCEPTION_IF_NULL(shape());
   TypePtrList elements{indices()->element()->BuildType(), values()->element()->BuildType()};
-  std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
-                 [](AbstractBasePtr p) { return p->BuildType(); });
+  (void)std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
+                       [](const AbstractBasePtr &p) { return p->BuildType(); });
   return std::make_shared<COOTensorType>(elements);
 }
 
@@ -1611,8 +1598,8 @@ TypePtr AbstractCSRTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(shape());
   TypePtrList elements{indptr()->element()->BuildType(), indices()->element()->BuildType(),
                        values()->element()->BuildType()};
-  std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
-                 [](AbstractBasePtr p) { return p->BuildType(); });
+  (void)std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
+                       [](const AbstractBasePtr &p) { return p->BuildType(); });
   return std::make_shared<CSRTensorType>(elements);
 }
 
