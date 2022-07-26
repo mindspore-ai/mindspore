@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <vector>
 #include <memory>
 #include "ops/sparse_to_dense.h"
 #include "ops/op_utils.h"

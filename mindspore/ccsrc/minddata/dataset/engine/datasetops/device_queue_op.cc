@@ -677,7 +677,9 @@ Status DeviceQueueOp::SendDataToCPU() {
         MS_LOG(DEBUG) << "Feature size is " << tensor->SizeInBytes() << ".";
       }
       total_batch++;
-      if (stop_send_) break;
+      if (stop_send_) {
+        break;
+      }
     }
   }
 

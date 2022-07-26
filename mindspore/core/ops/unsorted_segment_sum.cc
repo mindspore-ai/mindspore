@@ -155,8 +155,8 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kMinInputNum = 2;
   const int64_t kMaxInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kMinInputNum, primitive->name());
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kLessEqual, kMaxInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kMinInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kLessEqual, kMaxInputNum, primitive->name());
   auto infer_type = UnsortedSegmentSumInferType(primitive, input_args);
   auto infer_shape = UnsortedSegmentSumInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
