@@ -36,7 +36,7 @@ class EmbeddingLookUpProxyKernel : public EmbeddingLookUpCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    static const std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }

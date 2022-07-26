@@ -89,7 +89,6 @@ std::string GetSupportedTypesStr(const CNodePtr &kernel_node, KernelType kernel_
   // Custom op gets reg info from OpLib instead of NativeGpuKernelMod.
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
     if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
       auto kernel_attr_list = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
       if (!kernel_attr_list.empty()) {
@@ -257,7 +256,6 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
       std::vector<TypeId> output_type;
-      // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the false branch.
       auto reduce_flag = kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_;
       if (std::find(reduce_flag.first.begin(), reduce_flag.first.end(), input_index) != reduce_flag.first.end()) {
         output_type = {reduce_flag.second};
@@ -276,7 +274,6 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
   }
-  // TODO(tronzhang): When old kernel has been rectified, remove the call of NativeGpuKernelModFactory.
   kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_.first.clear();
 }
 
@@ -555,7 +552,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
   } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
     if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
       result = kernel::NativeGpuKernelMod::GpuCheckSupport(kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
       if (!result) {

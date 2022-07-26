@@ -63,7 +63,7 @@ void CPUDeviceContext::Initialize() {
 
 #ifndef ENABLE_SECURITY
   // Dump json config file if dump is enabled.
-  auto rank_id = 0;
+  uint32_t rank_id = 0;
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   json_parser.CopyDumpJsonToDir(rank_id);
@@ -263,7 +263,7 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
 #ifdef ENABLE_AKG
   if (do_expand) {
-    graphkernel::BindValueToGraph().Run(graph);
+    (void)graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
 #endif
@@ -272,7 +272,6 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
-  MS_EXCEPTION_IF_NULL(bin_map);
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -382,7 +381,6 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
     MS_EXCEPTION_IF_NULL(loader);
     if (!loader->Initialize()) {
       MS_LOG(EXCEPTION) << "Failed to load mpi collective library.";
-      return false;
     }
 
     void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();

@@ -66,9 +66,9 @@ class CPUKernelRuntime : public KernelRuntime {
                                      std::set<DeviceAddressPtr> *bound_addresses);
   void BindInputTensorAddressPtr(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &inputs);
   void BindOutputTensorAddressPtr(const VectorRef *outputs);
-  void AssignValueNodeAddress(session::KernelGraph *kernel_graph);
-  void AssignInputNodeAddress(const session::KernelGraph *kernel_graph);
-  void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph);
+  void AssignValueNodeAddress(const session::KernelGraph *kernel_graph);
+  void AssignInputNodeAddress(const session::KernelGraph *kernel_graph) const;
+  void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph) const;
   void AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list);
   void GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::AddressPtr> *inputs,
                                  std::vector<kernel::AddressPtr> *outputs, std::vector<kernel::AddressPtr> *workspaces);

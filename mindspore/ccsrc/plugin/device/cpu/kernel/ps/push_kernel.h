@@ -92,7 +92,7 @@ class PushKernelMod : public DeprecatedNativeCpuKernelMod {
     for (auto input : inputs) {
       keys.push_back(key_);
       addrs.push_back(reinterpret_cast<uintptr_t>(input->addr));
-      sizes.push_back(SizeToLong(input->size) / sizeof(T));
+      sizes.push_back(SizeToLong(input->size) / SizeToLong(sizeof(T)));
     }
     mindspore::ps::Worker::GetInstance().Push(keys, addrs, sizes);
     auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));

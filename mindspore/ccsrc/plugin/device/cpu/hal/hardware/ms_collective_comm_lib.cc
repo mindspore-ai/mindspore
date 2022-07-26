@@ -85,7 +85,7 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
   while (!success) {
     auto hostnames = cgn_->GetHostNames(role);
     if (hostnames.size() < host_hash_names->size()) {
-      sleep(interval);
+      (void)sleep(interval);
       continue;
     } else if (hostnames.size() > host_hash_names->size()) {
       MS_LOG(ERROR) << "Invalid number of hostnames, expected number of hostnames: " << host_hash_names->size()
@@ -150,7 +150,8 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   std::string node_role_prefix = cgn_->role() + "_";
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
   if (!cgn_->PutMetadata(group_info_key, root_info, root_info_size)) {
-    MS_LOG(EXCEPTION) << "Failed to send unique id to the meta server.";
+    MS_LOG(WARNING) << "Failed to send unique id to the meta server.";
+    return false;
   }
   MS_LOG(INFO) << "The unique id for group " << group_name << " has been registered to the meta server.";
   return true;
@@ -179,7 +180,7 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
       success = true;
     } else {
       MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name << " from the meta server node...";
-      sleep(interval);
+      (void)sleep(interval);
     }
   }
   if (!success) {
@@ -223,7 +224,6 @@ bool MsCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size
     default:
       return false;
   }
-  return true;
 }
 
 bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
@@ -250,6 +250,7 @@ bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size
       return CollectiveOpsImpl::GetInstance().Broadcast<char>(send_buff, recv_buff, send_count, root_rank, node_,
                                                               group_info);
     case TypeId::kNumberTypeInt32:
+      [[fallthrough]];
     case TypeId::kNumberTypeInt:
       return CollectiveOpsImpl::GetInstance().Broadcast<int32_t>(send_buff, recv_buff, send_count, root_rank, node_,
                                                                  group_info);
@@ -257,13 +258,13 @@ bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size
       return CollectiveOpsImpl::GetInstance().Broadcast<uint64_t>(send_buff, recv_buff, send_count, root_rank, node_,
                                                                   group_info);
     case TypeId::kNumberTypeFloat32:
+      [[fallthrough]];
     case TypeId::kNumberTypeFloat:
       return CollectiveOpsImpl::GetInstance().Broadcast<float>(send_buff, recv_buff, send_count, root_rank, node_,
                                                                group_info);
     default:
       return false;
   }
-  return true;
 }
 }  // namespace cpu
 }  // namespace device

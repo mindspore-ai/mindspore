@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-void PServerKernel::Shard(ShapeVector *shape, int axis) {
+void PServerKernel::Shard(ShapeVector *shape, int axis) const {
   MS_EXCEPTION_IF_NULL(shape);
   if ((*shape).size() <= IntToSize(axis)) {
     MS_LOG(EXCEPTION) << "Shape size is invalid.";

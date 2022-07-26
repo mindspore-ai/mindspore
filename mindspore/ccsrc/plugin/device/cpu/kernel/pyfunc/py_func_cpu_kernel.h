@@ -55,7 +55,7 @@ class PyFuncCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   // Analyse PyFunc input/output spec.
   void BuildFuncInfo(const CNodePtr &kernel_node);
   // Get Python function from anchor.
-  py::function GetPythonFunc();
+  py::function GetPythonFunc() const;
   bool ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   bool init_;

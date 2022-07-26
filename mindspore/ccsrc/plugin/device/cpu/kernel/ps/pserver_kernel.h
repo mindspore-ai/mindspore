@@ -46,7 +46,7 @@ class PServerKernel {
 
  protected:
   virtual void ReInit(const std::vector<AddressPtr> &) {}
-  void Shard(ShapeVector *shape, int axis);
+  void Shard(ShapeVector *shape, int axis) const;
 
   size_t rank_id_;
   size_t pserver_num_;
