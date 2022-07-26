@@ -68,6 +68,9 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
     case schema::ActivationType_HSIGMOID:
       code.CodeFunction("HSigmoid", input_tensor_, count, output_tensor_);
       break;
+    case schema::ActivationType_ELU:
+      code.CodeFunction("Elu", input_tensor_, count, output_tensor_, activation_parameter->alpha_);
+      break;
     default:
       MS_LOG(ERROR) << "Activation type error";
       return RET_ERROR;
