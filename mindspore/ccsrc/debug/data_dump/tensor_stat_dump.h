@@ -30,7 +30,7 @@ class TensorData;
 class CsvWriter {
  public:
   static CsvWriter &GetInstance() {
-    static CsvWriter instance;
+    static CsvWriter instance = CsvWriter();
     return instance;
   }
 

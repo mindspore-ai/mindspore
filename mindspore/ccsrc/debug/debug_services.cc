@@ -259,7 +259,7 @@ const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tens
                      std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
                      &processed_npy_files, &result_list_prev, false);
     tensor_prev = result_list_prev[0];
-    if (!tensor_prev->GetByteSize()) {
+    if (tensor_prev->GetByteSize() == 0) {
       tensor_prev.reset();
     } else {
       previous_tensor_ptr = tensor_prev->GetDataPtr();
@@ -377,7 +377,7 @@ void DebugServices::CheckOutofMemoryandNoValue(const bool no_mem_to_read, const 
                                                const std::string time_stamp, const std::string &qualified_tensor_name,
                                                const std::string &tensor_slot, const unsigned int device_id_val,
                                                const unsigned int root_graph_id_val,
-                                               const std::vector<parameter_t> &parameter_list) {
+                                               const std::vector<parameter_t> &parameter_list) const {
   bool set_is_needed = no_mem_to_read || error_on_no_value;
   int32_t error_code_to_set = 0;
   if (no_mem_to_read) {
@@ -481,8 +481,7 @@ void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_foun
  * watchpoint hit result. Checkwatchpoint process might be affected by memory limit, whether the read tensor was
  * successfully and whether we have a multi root graph scenario. All of aforementioned checks are done in this function.
  */
-void DebugServices::CheckWatchpointsForTensor(ChunkData *chunk_data, const std::vector<std::string> &op_overflows,
-                                              ProcessedNPYFiles *const processed_npy_files,
+void DebugServices::CheckWatchpointsForTensor(ChunkData *chunk_data, ProcessedNPYFiles *const processed_npy_files,
                                               std::vector<std::shared_ptr<TensorData>> *const tensor_list, int begin,
                                               int end, int chunk_id, const bool init_dbg_suspend, const bool step_end,
                                               const bool recheck, std::vector<unsigned int> *const device_id,
@@ -515,7 +514,7 @@ void DebugServices::CheckWatchpointsForTensor(ChunkData *chunk_data, const std::
                      std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
                      processed_npy_files, &result_list, false, &no_mem_to_read);
     tensor = result_list[0];
-    if (!tensor->GetByteSize()) {
+    if (tensor->GetByteSize() == 0) {
       CheckOutofMemoryandNoValue(no_mem_to_read, error_on_no_value, watchpoints_to_check, chunk_id, chunk_data,
                                  device_id, root_graph_id, tensor->GetExecutionOrder(), tensor->GetTimeStamp(),
                                  qualified_tensor_name, tensor_slot, tensor->GetDeviceId(), tensor->GetRootGraphId(),
@@ -569,7 +568,7 @@ void DebugServices::CheckWatchpointsForTensor(ChunkData *chunk_data, const std::
         parameter_list = std::get<ITensorSummary::eParamListPos>(item);
       }
       AddAnalyzedTensorToCache(recheck, wp.id, tensor_name);
-      if (is_hit || error_code) {
+      if (is_hit || error_code != 0) {
         SetCheckWatchpointsResult(chunk_id, chunk_data, device_id, root_graph_id, tensor->GetExecutionOrder(),
                                   tensor->GetTimeStamp(), qualified_tensor_name, tensor_slot, wp, tensor->GetDeviceId(),
                                   tensor->GetRootGraphId(), parameter_list, error_code);
@@ -592,13 +591,15 @@ void DebugServices::CheckWatchpointsForTensor(ChunkData *chunk_data, const std::
  * Each chunk is handled by a separate thread and then the result of check watchpoint for each thread is gathered and
  * sorted. In the end, the time for checking the watchpoint in the current step is reported.
  */
-void DebugServices::CheckWatchpoints(
-  std::vector<std::string> *const name, std::vector<std::string> *const slot, std::vector<int> *const condition,
-  std::vector<unsigned int> *const watchpoint_id, std::vector<std::vector<parameter_t>> *const parameters,
-  std::vector<int32_t> *const error_codes, const std::vector<std::string> &op_overflows,
-  ProcessedNPYFiles *const processed_npy_files, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
-  const bool init_dbg_suspend, const bool step_end, const bool recheck, std::vector<unsigned int> *const device_id,
-  std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
+void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::vector<std::string> *const slot,
+                                     std::vector<int> *const condition, std::vector<unsigned int> *const watchpoint_id,
+                                     std::vector<std::vector<parameter_t>> *const parameters,
+                                     std::vector<int32_t> *const error_codes,
+                                     ProcessedNPYFiles *const processed_npy_files,
+                                     std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+                                     const bool init_dbg_suspend, const bool step_end, const bool recheck,
+                                     std::vector<unsigned int> *const device_id,
+                                     std::vector<unsigned int> *const root_graph_id, bool error_on_no_value) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
   if (watchpoint_table_.empty()) {
@@ -628,8 +629,8 @@ void DebugServices::CheckWatchpoints(
     max_thread_num = tensor_list_size;
   }
   MS_LOG(INFO) << "Number of threads used for checkwatchpoint: " << max_thread_num;
-  int chunk_size = tensor_list_size / max_thread_num;
-  int remainder = tensor_list_size % max_thread_num;
+  size_t chunk_size = tensor_list_size / max_thread_num;
+  size_t remainder = tensor_list_size % max_thread_num;
   ChunkData chunk_data;
   chunk_data.chunk_exec_orders.resize(max_thread_num);
   chunk_data.chunk_names.resize(max_thread_num);
@@ -653,10 +654,9 @@ void DebugServices::CheckWatchpoints(
       end++;
       remainder--;
     }
-    (void)tensor_future_vec.emplace_back(std::async(std::launch::async, &DebugServices::CheckWatchpointsForTensor, this,
-                                                    &chunk_data, op_overflows, processed_npy_files, tensor_list, begin,
-                                                    end, i, init_dbg_suspend, step_end, recheck, device_id,
-                                                    root_graph_id, error_on_no_value));
+    (void)tensor_future_vec.emplace_back(std::async(
+      std::launch::async, &DebugServices::CheckWatchpointsForTensor, this, &chunk_data, processed_npy_files,
+      tensor_list, begin, end, i, init_dbg_suspend, step_end, recheck, device_id, root_graph_id, error_on_no_value));
     begin = end;
   }
 
@@ -831,9 +831,9 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   }
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
-  if (!data_size || is_base_request) {
+  *size = data_size;
+  if (data_size == 0 || is_base_request) {
     // for base request, reading the header is enough.
-    *size = data_size;
     return;
   }
   // Check memory available before loading tensor into host.
@@ -850,7 +850,6 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     if ((*data_buffer) == nullptr || !infile.read(*data_buffer, data_size)) {
       MS_LOG(ERROR) << "Unable to get tensor data from npy";
     }
-    *size = data_size;
   }
 }
 
@@ -911,7 +910,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFileP
  * append into NPYFilePool. It's for Ascend async dump only.
  */
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                               const std::string &dump_key, NPYFilePool *const result_list) {
+                                               const std::string &dump_key, NPYFilePool *const result_list) const {
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
@@ -977,14 +976,15 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     std::size_t found_colon = dump_style_kernel_name.find_last_of(":");
     dump_style_kernel_name = dump_style_kernel_name.substr(0, found_colon);
 
+    MS_LOG(INFO) << "Dump style kernel_name: " << dump_style_kernel_name << ", slot is: " << slot[i];
     std::string prefix_dump_file_name = GetNodeNameWithoutScope(dump_style_kernel_name);
 
     std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // if node name is constant, skip
-    if (prefix_dump_file_name.length() > (unsigned)strlen(constant_prefix) &&
-        prefix_dump_file_name.substr(0, (unsigned)strlen(constant_prefix)).compare(constant_prefix) == 0) {
+    if (prefix_dump_file_name.length() > strlen(constant_prefix) &&
+        prefix_dump_file_name.substr(0, strlen(constant_prefix)).compare(constant_prefix) == 0) {
       continue;
     }
     // search files in dir for the one that meets the filename prefix and read the file into memory
@@ -1521,8 +1521,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     // prefix_dump_to_check is node name used to find corresponding dump file.
     std::string prefix_dump_to_check = GetNodeNameWithoutScope(dump_style_kernel_name);
     // if node name has prefix of "Default--data-", consider as constant, search in cst folder
-    if (prefix_dump_to_check.length() > (unsigned)strlen(constant_prefix) &&
-        prefix_dump_to_check.substr(0, (unsigned)strlen(constant_prefix)).compare(constant_prefix) == 0) {
+    if (prefix_dump_to_check.length() > strlen(constant_prefix) &&
+        prefix_dump_to_check.substr(0, strlen(constant_prefix)).compare(constant_prefix) == 0) {
       specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
                           std::to_string(root_graph_id[i]) + "/constants";
       is_cst = true;
@@ -1704,7 +1704,9 @@ void DebugServices::ProcessTensorDataSync(const std::vector<ProtoDump> &proto_to
                                           bool error_on_no_value) {
   ProcessedNPYFiles::const_iterator it = processed_npy_files.find(specific_dump_dir);
   if (it == processed_npy_files.end()) {
-    MS_LOG(WARNING) << "no npy files was found for dump directory: " << specific_dump_dir;
+    if (error_on_no_value) {
+      MS_LOG(ERROR) << "no npy files was found for dump directory: " << specific_dump_dir;
+    }
     return;
   }
   auto processed_files_for_dir = it->second;
@@ -1921,7 +1923,8 @@ std::string GetOnlineOpOverflowDir() {
   return overflow_bin_path;
 }
 
-void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names) {
+void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path,
+                                         std::vector<std::string> *op_names) const {
   MS_EXCEPTION_IF_NULL(op_names);
   std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
   std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;

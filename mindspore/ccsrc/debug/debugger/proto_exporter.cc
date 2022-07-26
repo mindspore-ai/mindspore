@@ -264,7 +264,7 @@ void DebuggerProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val,
 }
 
 void DebuggerProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const AnfNodePtr &node,
-                                                  debugger::NodeProto *node_proto) {
+                                                  debugger::NodeProto *node_proto) const {
   if (node == nullptr || node_proto == nullptr) {
     return;
   }
@@ -375,7 +375,7 @@ void DebuggerProtoExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, debu
   ExportValueNodes(const_map, graph_proto);
 }
 
-void DebuggerProtoExporter::ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto) {
+void DebuggerProtoExporter::ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto) const {
   if (func_graph == nullptr || graph_proto == nullptr) {
     return;
   }
@@ -473,7 +473,7 @@ void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CN
 void DebuggerProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
                                                   const std::map<AnfNodePtr, size_t> &apply_map,
                                                   std::map<AnfNodePtr, size_t> *const_map_ptr,
-                                                  debugger::GraphProto *graph_proto) {
+                                                  debugger::GraphProto *graph_proto) const {
   if (ret_node == nullptr || !ret_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Graph return node is illegal";
   }
@@ -495,7 +495,7 @@ static bool CompareValue(const std::pair<AnfNodePtr, size_t> &x, const std::pair
 }
 
 void DebuggerProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_map,
-                                             debugger::GraphProto *graph_proto) {
+                                             debugger::GraphProto *graph_proto) const {
   std::vector<std::pair<AnfNodePtr, size_t>> nodes;
   (void)std::transform(const_map.cbegin(), const_map.cend(), std::back_inserter(nodes),
                        [](const std::pair<AnfNodePtr, size_t> &item) { return item; });

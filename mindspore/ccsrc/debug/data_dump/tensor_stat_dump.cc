@@ -137,7 +137,7 @@ bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
     }
     retry--;
   }
-  if (!retry) {
+  if (retry == 0) {
     MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
     return false;
   }
@@ -174,7 +174,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   std::ostringstream shape;
   shape << "\"(";
   for (size_t i = 0; i < stat.shape.size(); i++) {
-    shape << (i ? "," : "") << stat.shape[i];
+    shape << (i > 0 ? "," : "") << stat.shape[i];
   }
   shape << ")\"";
   CsvWriter &csv = CsvWriter::GetInstance();

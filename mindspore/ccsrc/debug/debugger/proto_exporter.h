@@ -40,7 +40,8 @@ class DebuggerProtoExporter {
 
  private:
   void InitModelInfo();
-  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, debugger::NodeProto *node_proto);
+  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                             debugger::NodeProto *node_proto) const;
   std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr) const;
@@ -51,7 +52,7 @@ class DebuggerProtoExporter {
   void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto) const;
   void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                        LocDebugDumpMode dump_location = kDebugWholeStack);
-  void ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto);
+  void ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto) const;
   void ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                     std::map<AnfNodePtr, size_t> *const_map_ptr, LocDebugDumpMode dump_location = kDebugWholeStack);
   void ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node, std::map<AnfNodePtr, size_t> *apply_map_ptr,
@@ -59,8 +60,8 @@ class DebuggerProtoExporter {
                    LocDebugDumpMode dump_location);
   void ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
                              const std::map<AnfNodePtr, size_t> &apply_map, std::map<AnfNodePtr, size_t> *const_map_ptr,
-                             debugger::GraphProto *graph_proto);
-  void ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_map, debugger::GraphProto *graph_proto);
+                             debugger::GraphProto *graph_proto) const;
+  void ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_map, debugger::GraphProto *graph_proto) const;
 
   static std::string GetConstNodeId(size_t idx) { return std::string("cst") + std::to_string(idx); }
 

@@ -42,8 +42,6 @@ using debugger::WatchCondition;
 using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
-using DeviceTensor = mindspore::device::DeviceAddress;
-using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 using mindspore::kernel::KernelLaunchInfo;
 
 template <class T>

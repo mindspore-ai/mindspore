@@ -211,7 +211,6 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<std::string> slot;
   std::vector<int> condition;
   std::vector<unsigned int> watchpoint_id;
-  std::vector<std::string> overflow_ops;
   std::vector<std::vector<DebugServices::parameter_t>> parameters;
   std::vector<int32_t> error_codes;
   std::vector<unsigned int> rank_id;
@@ -229,8 +228,8 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
                << (ms_double.count()) / ms_to_s << "s";
   total_tensor_count_ = tensor_list.size();
   check_wp_in_progress_ = true;
-  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    &file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, &file_paths,
+                                    &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
                                     error_on_no_value);
   auto t3 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms_double2 = t3 - t1;
@@ -366,7 +365,7 @@ std::vector<TensorBaseData> DbgServices::ReadTensorsBase(const std::vector<tenso
   std::vector<std::shared_ptr<TensorData>> result_list;
   result_list = ReadTensorsUtil(info, true);
   for (auto result : result_list) {
-    if (!result->GetByteSize()) {
+    if (result->GetByteSize() == 0) {
       // tensor not found, adding empty tensor base.
       TensorBaseData tensor_data_item(0, 0, {});
       tensors_read_base.push_back(tensor_data_item);
@@ -397,7 +396,7 @@ std::vector<TensorStatData> DbgServices::ReadTensorsStat(const std::vector<tenso
   std::vector<std::shared_ptr<TensorData>> result_list;
   result_list = ReadTensorsUtil(info);
   for (auto result : result_list) {
-    if (!result->GetByteSize()) {
+    if (result->GetByteSize() == 0) {
       DebugServices::TensorStat tensor_statistics;
       AddTensorStatInfo(tensor_statistics, &tensors_read_stat);
       continue;

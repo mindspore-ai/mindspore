@@ -39,7 +39,8 @@ using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *>;
 class DataDumper {
  public:
   DataDumper(const session::KernelGraph *kernel_graph, NotNull<std::function<void *()>> model_handle)
-      : model_handle_(model_handle),
+      : kernel_graph_(kernel_graph),
+        model_handle_(model_handle),
         debug_task_id_(0U),
         debug_stream_id_(0U),
         op_debug_buffer_addr_(nullptr),
@@ -48,7 +49,6 @@ class DataDumper {
         dev_load_mem_(nullptr),
         dev_unload_mem_(nullptr),
         graph_id_(UINT32_MAX),
-        kernel_graph_(kernel_graph),
         is_op_debug_(false) {}
   ~DataDumper();
   void set_runtime_info(const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info) {
@@ -77,6 +77,7 @@ class DataDumper {
   static std::string StripUniqueId(const std::string node_name);
   static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 
+  const session::KernelGraph *kernel_graph_;
   std::function<void *()> model_handle_;
   uint32_t debug_task_id_;
   uint32_t debug_stream_id_;
@@ -87,7 +88,6 @@ class DataDumper {
   void *dev_unload_mem_;
   uint32_t graph_id_;
   std::vector<std::string> dump_kernel_names_;
-  const session::KernelGraph *kernel_graph_;
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
   bool is_op_debug_;
 };
