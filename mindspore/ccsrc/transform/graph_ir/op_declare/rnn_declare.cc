@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/rnn_declare.h"
+#include <string>
 
 namespace mindspore::transform {
 // BasicLSTMCell
