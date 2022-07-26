@@ -75,8 +75,8 @@ void EmbeddingCacheTableManager::ReInsertHashTableSize(const std::string &new_pa
   }
   auto iter = hash_tables_.find(cur_param_name);
   if (iter != hash_tables_.end()) {
-    hash_tables_.emplace(new_param_name, iter->second);
-    hash_tables_.erase(iter);
+    (void)hash_tables_.emplace(new_param_name, iter->second);
+    (void)hash_tables_.erase(iter);
   } else {
     hash_tables_[new_param_name].cache_vocab_size = cache_vocab_size;
     hash_tables_[new_param_name].embedding_size = embedding_size;
@@ -93,7 +93,7 @@ void EmbeddingCacheTableManager::CloneHashTable(const std::string &dest_param_na
   if (iter == hash_tables_.end()) {
     MS_LOG(EXCEPTION) << "The source hash table[" << src_param_name << "] does not exist, clone failed.";
   }
-  hash_tables_.emplace(dest_param_name, iter->second);
+  (void)hash_tables_.emplace(dest_param_name, iter->second);
   hash_tables_[src_param_name].param_key_ = src_param_key;
   hash_tables_[dest_param_name].param_key_ = dest_param_key;
 }
@@ -165,7 +165,7 @@ void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
   local_embedding_slice_bounds_.first = local_shard_size * UintToInt(rank_id);
   local_embedding_slice_bounds_.second =
     std::min(local_embedding_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
-  local_device_cache_bounds_.first = SizeToInt(device_cache_size_) * rank_id;
+  local_device_cache_bounds_.first = SizeToInt(device_cache_size_) * UintToInt(rank_id);
   local_device_cache_bounds_.second = local_device_cache_bounds_.first + SizeToInt(device_cache_size_);
   MS_LOG(INFO) << "Worker num:" << worker_num << ", rank id:" << rank_id
                << ", id begin:" << local_embedding_slice_bounds_.first

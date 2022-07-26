@@ -163,7 +163,7 @@ class DeviceResManager {
   // The collective communication library.
   CollectiveCommunicationLib *collective_comm_lib_;
 
-  DeviceContext *device_context_;
+  DeviceContext *device_context_{nullptr};
 
  private:
   template <class... Args>
@@ -246,7 +246,7 @@ class DeviceInterface<> : public DeviceContext {
   explicit DeviceInterface(const DeviceContextKey &key) : DeviceContext(key) {}
 
  protected:
-  void CheckUnset(void *ptr, const std::string &error_msg) {
+  void CheckUnset(void *ptr, const std::string &error_msg) const {
     if (ptr != nullptr) {
       MS_LOG(EXCEPTION) << error_msg;
     }

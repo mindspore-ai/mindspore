@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_CONSTANTS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_CONSTANTS_H_
 
+#include <stddef.h>
+
 namespace mindspore {
 namespace distributed {
 namespace storage {

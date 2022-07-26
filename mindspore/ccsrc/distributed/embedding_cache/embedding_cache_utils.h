@@ -147,7 +147,7 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   size_t QueryHashTableSize(const std::string &param_name) const;
 
   // Check whether a parameter is cache enabled embedding table.
-  bool IsEmbeddingCacheTable(const std::string &param_name) { return hash_tables_.count(param_name) != 0; }
+  bool IsEmbeddingCacheTable(const std::string &param_name) const { return hash_tables_.count(param_name) != 0; }
 
   // Set ids number of a batchsize.
   void set_batch_ids_num(size_t batch_ids_num) { batch_ids_num_ = batch_ids_num; }

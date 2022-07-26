@@ -116,7 +116,7 @@ void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream)
     MS_LOG(WARNING) << "Alloc continuous memory failed, size: " << continuous_mem_info->total_size_;
     return nullptr;
   }
-  cur_step_allocated_continuous_mem_.insert(continuous_mem_info);
+  (void)cur_step_allocated_continuous_mem_.insert(continuous_mem_info);
   return auto_mem_offload_->Get(event->key);
 }
 
