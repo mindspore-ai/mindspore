@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/diag_impl.cuh"
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 // Assume input has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
 // rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where
@@ -73,3 +74,8 @@ template CUDA_LIB_EXPORT void CalDiag<int32_t>(const int32_t *input_ptr, int32_t
                                                size_t output_size, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDiag<int64_t>(const int64_t *input_ptr, int64_t *output_ptr, size_t input_size,
                                                size_t output_size, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalDiag<Complex<float>>(const Complex<float> *input_ptr, Complex<float> *output_ptr,
+                                               size_t input_size, size_t output_size, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalDiag<Complex<double>>(const Complex<double> *input_ptr, Complex<double> *output_ptr,
+                                               size_t input_size, size_t output_size, cudaStream_t cuda_stream);

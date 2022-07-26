@@ -55,9 +55,12 @@ class DiagGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, DiagLaunchFunc>> diag_func_list_;
   DiagLaunchFunc kernel_launch_func_;
 
+  // Support the batch calculation of vmap.
+  int64_t batch_rank_{0};
+  size_t batch_size_{0};
+
   size_t input_size_{0};
   size_t output_size_{0};
-  size_t data_taye_size_{0};  // sizeof(DataType).
 };
 }  // namespace kernel
 }  // namespace mindspore
