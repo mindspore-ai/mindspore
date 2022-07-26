@@ -1,5 +1,5 @@
-mindspore.ops.reshape
-======================
+mindspore.ops.reverse_sequence
+==============================
 
 .. py:function:: mindspore.ops.reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0)
 

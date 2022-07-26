@@ -59,20 +59,25 @@ abstract::ShapePtr ReverseSequenceInferShape(const PrimitivePtr &primitive,
   auto batch_dim = GetValue<int64_t>(batch_dim_ptr);
 
   if (seq_dim >= SizeToLong(x_shape.size())) {
-    MS_LOG(EXCEPTION) << "For 'ReverseSequence', the 'seq_dim' should be < x rank: " << x_shape.size() << ", but got "
-                      << seq_dim << ".";
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'seq_dim' should be < x rank: " << x_shape.size()
+                             << ", but got " << seq_dim << ".";
   }
   if (batch_dim >= SizeToLong(x_shape.size())) {
-    MS_LOG(EXCEPTION) << "For 'ReverseSequence', the 'batch_dim' should be < x rank: " << x_shape.size() << ", but got "
-                      << batch_dim << ".";
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'batch_dim' should be < x rank: " << x_shape.size()
+                             << ", but got " << batch_dim << ".";
   }
   if (batch_dim == seq_dim) {
-    MS_LOG(EXCEPTION) << "For 'ReverseSequence', the 'batch_dim' should be != 'seq_dim': " << seq_dim << ", but got "
-                      << batch_dim << ".";
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'batch_dim' should be != 'seq_dim': " << seq_dim
+                             << ", but got " << batch_dim << ".";
   }
   if (seq_lengths_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "For 'ReverseSequence', the 'seq_lengths vector size' should be = input size along batch_dim: "
-                      << x_shape[batch_dim] << ", but got " << seq_lengths_shape[0] << ".";
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'seq_lengths rank' should be = 'expected': 1 , but got "
+                             << seq_lengths_shape.size() << ".";
+  }
+  if (seq_lengths_shape[0] != x_shape[batch_dim]) {
+    MS_EXCEPTION(ValueError)
+      << "For 'ReverseSequence', the 'seq_lengths vector size' should be = input size along batch_dim: "
+      << x_shape[batch_dim] << ", but got " << seq_lengths_shape[0] << ".";
   }
   return std::make_shared<abstract::Shape>(x_shape);
 }
