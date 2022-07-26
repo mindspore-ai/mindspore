@@ -161,13 +161,13 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
    ./benchmark mnist.tflite.ms.bin net.bin mnist.tflite.ms.out
    ```
 
-   > mnist_input.bin在`example/mnist_x86`目录下，`net.bin`为模型参数文件，在`example/mnist_x86/src`目录下。
+   > mnist.tflite.ms.bin在`example/mnist_x86`目录下，`net.bin`为模型参数文件，在`example/mnist_x86/src`目录下。
 
    生成结果如下：
 
    ```text
    start run benchmark
-   input 0: mnist_input.bin
+   input 0: mnist.tflite.ms.bin
    output size: 1
    uint8:
    Name: Softmax-7, DataType: 43, Size: 40, Shape: 1 10, Data:
@@ -260,6 +260,7 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
    ```
 
 ## 更多详情
+
 ### [Android平台编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/README.md)
 
 ### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
