@@ -649,7 +649,7 @@ class CallInfoFinder {
   }
 
   // Create CallSite for Call node.
-  void MakeCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) {
+  void MakeCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) const {
     auto &call_site = call_info->call_sites.emplace_back();
     call_site.cnode = cnode;
     call_site.last_monad = last_monad;
@@ -657,7 +657,7 @@ class CallInfoFinder {
   }
 
   // Create CallSite for Switch/SwitchLayer node.
-  void MakeSwitchCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) {
+  void MakeSwitchCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) const {
     auto &call_site = call_info->call_sites.emplace_back();
     call_site.cnode = cnode;
     call_site.last_monad = last_monad;
