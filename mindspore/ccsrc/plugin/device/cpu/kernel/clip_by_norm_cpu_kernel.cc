@@ -64,7 +64,7 @@ bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   InitAxisAndEpsilon(prim);
   // Init the `l2_norm` reduce shape according to `axis`
   l2_norm_output_shape_ = x_shape_;
-  std::for_each(axis_.begin(), axis_.end(), [this](const size_t &idx) { l2_norm_output_shape_[idx] = 1; });
+  (void)std::for_each(axis_.begin(), axis_.end(), [this](const size_t &idx) { l2_norm_output_shape_[idx] = 1; });
   return true;
 }
 
@@ -150,22 +150,22 @@ void ClipByNormCpuKernelMod::InitAxisAndEpsilon(const ops::ClipByNormPtr &prim) 
   if (axis_value->isa<api::ValueSequence>()) {
     temp_axis = api::GetValue<std::vector<int64_t>>(axis_value);
   } else if (axis_value->isa<api::Int64Imm>()) {
-    temp_axis.emplace_back(api::GetValue<int64_t>(axis_value));
+    (void)temp_axis.emplace_back(api::GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For `" << kernel_name_ << "`, the type of attribute `axis` is invalid.";
   }
   // Init `axis_`
   if (temp_axis.empty()) {
     for (size_t i = 0; i < x_dim_; ++i) {
-      axis_.emplace_back(i);  // Reduce for all dimensions.
+      (void)axis_.emplace_back(i);  // Reduce for all dimensions.
     }
   } else {  // Convert negative `axis` to positive `axis` and keep number unique
     int64_t temp_x_dim = SizeToLong(x_dim_);
-    std::for_each(temp_axis.begin(), temp_axis.end(), [this, &temp_x_dim](const int64_t &value) {
+    (void)std::for_each(temp_axis.begin(), temp_axis.end(), [this, &temp_x_dim](const int64_t &value) {
       value < 0 ? axis_.emplace_back(LongToSize(value + temp_x_dim)) : axis_.emplace_back(LongToSize(value));
     });
     std::sort(axis_.begin(), axis_.end());
-    axis_.erase(std::unique(axis_.begin(), axis_.end()), axis_.end());
+    (void)axis_.erase(std::unique(axis_.begin(), axis_.end()), axis_.end());
   }
 }
 
@@ -177,24 +177,24 @@ void ClipByNormCpuKernelMod::InitSizeLists() {
   size_t clip_norm_type_size = GetTypeByte(TypeIdToType(data_type_.second));
   size_t clip_norm_size = SizeOf(clip_norm_shape_);
   clip_norm_size = std::max(clip_norm_size, clip_norm_type_size);
-  input_size_list_.emplace_back(x_size);
-  input_size_list_.emplace_back(clip_norm_size);
+  (void)input_size_list_.emplace_back(x_size);
+  (void)input_size_list_.emplace_back(clip_norm_size);
   // Init workspace size list
   size_t float_type_size = sizeof(float);
   auto l2_norm_out_size = float_type_size * SizeOf(l2_norm_output_shape_);
   l2_norm_out_size = std::max(l2_norm_out_size, float_type_size);
   // This workspace size used for l2_norm calculation
-  workspace_size_list_.emplace_back(l2_norm_out_size);
+  (void)workspace_size_list_.emplace_back(l2_norm_out_size);
   // This workspace size used for `x/l2_norm(x)` calculation
-  workspace_size_list_.emplace_back((x_size / x_type_size) * float_type_size);
+  (void)workspace_size_list_.emplace_back((x_size / x_type_size) * float_type_size);
   // Init output size list
   auto output_size = float_type_size * SizeOf(output_shape_);
   output_size = std::max(output_size, float_type_size);
-  output_size_list_.emplace_back(output_size);
+  (void)output_size_list_.emplace_back(output_size);
 }
 
 template <typename T, typename S>
-bool ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+void ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs) {
   // Launch `l2_norm(x)` calculate function
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
@@ -210,7 +210,6 @@ bool ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, c
   float *output_addr = GetDeviceAddress<float>(outputs, 0);
   size_t output_size = GetDeviceSize(outputs, 0);
   ClipNormMulAndCmpLaunch<T, S>(x_addr, div_output_addr, clip_norm_addr, output_addr, output_size);
-  return true;
 }
 
 template <typename T>
