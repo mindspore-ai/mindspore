@@ -75,7 +75,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
-    mindspore.ops.PSROIPooling
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeLinear1D
