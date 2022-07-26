@@ -17,20 +17,21 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_FUSION_H_
 
 #include <vector>
+#include <string>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
 class DeformableOffsetsFusion : public PatternProcessPass {
  public:
-  explicit DeformableOffsetsFusion(bool multigraph = true)
-      : PatternProcessPass("deformable_offsets_fusion", multigraph) {}
+  explicit DeformableOffsetsFusion(std::string pass_name = "deformable_offsets_fusion", bool multigraph = true)
+      : PatternProcessPass(pass_name, multigraph) {}
   ~DeformableOffsetsFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
- private:
-  ValueNodePtr CreateHelperNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const ShapeVector &offset_shape,
+ protected:
+  ValueNodePtr CreateHelperNode(const FuncGraphPtr &func_graph, const ShapeVector &offset_shape,
                                 const std::vector<int64_t> &kernel_sizes, const std::vector<int64_t> &strides,
                                 const std::vector<int64_t> &pads, const std::vector<int64_t> &dilations,
                                 const size_t axis_h, const size_t axis_w, const size_t axis_c) const;

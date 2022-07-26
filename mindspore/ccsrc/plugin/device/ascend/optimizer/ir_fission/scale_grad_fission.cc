@@ -27,19 +27,6 @@ namespace {
 constexpr size_t kScaleGradInputSize = 3;
 constexpr double kFloatMinimal = 1e-7;
 
-AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
-                          const AnfNodePtr &node) {
-  auto new_node = graph->NewCNode(new_node_inputs);
-  MS_EXCEPTION_IF_NULL(new_node);
-  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  new_node->set_scope(node->scope());
-  new_node->set_abstract(node->abstract());
-  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
-  return new_node;
-}
-
 AnfNodePtr CreateNodeOfBinaryOp(const FuncGraphPtr &graph, const string &op_name, const AnfNodePtr &node1,
                                 const AnfNodePtr &node2) {
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(std::make_shared<Primitive>(op_name)), node1, node2};
