@@ -64,14 +64,6 @@ OpAdapterPtr FindAdapter(const std::string &name, bool train) {
   MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
 }
 
-void EraseGeResource() {
-  DfGraphManager::GetInstance().DeleteGraphRunner();
-  DfGraphManager::GetInstance().EraseAnfGraph();
-  DfGraphManager::GetInstance().DeleteGeSession();
-}
-
-void ClearGraphWrapper() { DfGraphManager::GetInstance().ClearGraph(); }
-
 void ClearGeSessionAndRunner() {
   DfGraphManager::GetInstance().DeleteGraphRunner();
   DfGraphManager::GetInstance().DeleteGeSession();
@@ -212,9 +204,8 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const std::vector<transform::GeTensorPtr> &inputs,
-                const OptionMap &options) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, inputs, options);
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
+  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
 }
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
@@ -254,19 +245,6 @@ int ErrCode(DfGraphConvertorPtr converter) {
   return converter->ErrCode();
 }
 
-void DrawComputeGraph(DfGraphConvertorPtr converter, const std::string &name) {
-  MS_EXCEPTION_IF_NULL(converter);
-  return converter->DrawComputeGraph(name);
-}
-void DrawInitGraph(DfGraphConvertorPtr converter, const std::string &name) {
-  MS_EXCEPTION_IF_NULL(converter);
-  return converter->DrawInitGraph(name);
-}
-void DrawSaveCheckpointGraph(DfGraphConvertorPtr converter, const std::string &name) {
-  MS_EXCEPTION_IF_NULL(converter);
-  return converter->DrawSaveCheckpointGraph(name);
-}
-
 DfGraphPtr GetComputeGraph(DfGraphConvertorPtr converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetComputeGraph();
@@ -299,8 +277,6 @@ Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOption
   MS_EXCEPTION_IF_NULL(runner);
   return runner->RunGraphAsync(options, inputs, outputs);
 }
-
-void ClearOpAdapterMap() { transform::OpAdapterMap::get().clear(); }
 
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase) {
   return BuildDatasetGraph(param, phase);

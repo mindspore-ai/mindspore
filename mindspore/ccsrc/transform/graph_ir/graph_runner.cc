@@ -28,7 +28,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/callbacks.h"
 #ifdef ENABLE_D
-#include "include/common/utils/callbacks_ge.h"
+#include "transform/graph_ir/callbacks_ge.h"
 #include "common/ge_inner_error_codes.h"
 #endif
 #include "utils/ms_context.h"

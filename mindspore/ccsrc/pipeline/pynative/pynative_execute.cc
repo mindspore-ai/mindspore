@@ -2501,16 +2501,16 @@ MsBackendPolicy ForwardExecutor::GetBackendPolicy(const OpExecInfoPtr &op_exec_i
   MS_EXCEPTION_IF_NULL(ms_context);
 
   MsBackendPolicy backend_policy = kMsBackendVmOnly;
-#ifdef ENABLE_D
-  if (ms_context->backend_policy() == "ge") {
-    MS_LOG(EXCEPTION) << "In PyNative mode, not support ge backend!";
-  }
-  if (!context::IsTsdOpened(ms_context)) {
-    if (!context::OpenTsd(ms_context)) {
-      MS_LOG(EXCEPTION) << "Open tsd failed";
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    if (ms_context->backend_policy() == "ge") {
+      MS_LOG(EXCEPTION) << "In PyNative mode, not support ge backend!";
+    }
+    if (!context::IsTsdOpened(ms_context)) {
+      if (!context::OpenTsd(ms_context)) {
+        MS_LOG(EXCEPTION) << "Open tsd failed";
+      }
     }
   }
-#endif
   return backend_policy;
 }
 

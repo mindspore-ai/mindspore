@@ -132,6 +132,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Fetch the inputs of Conv or Matmul for quant export.")
     .def("build_data_graph", &GraphExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
+    .def("export_graph", &GraphExecutorPy::ExportGraph, py::arg("file_name"), py::arg("model_type"), py::arg("phase"),
+         py::arg("encrypt") = py::none(), py::arg("key") = nullptr, "Export Graph.")
     .def("has_compiled", &GraphExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "Get if cell compiled.")
     .def("set_py_exe_path", &GraphExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""),
          "Set python executable path.")
@@ -164,8 +166,6 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
   (void)m.def("init_pipeline", &mindspore::pipeline::InitPipeline, "Init Pipeline.");
 
-  (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, py::arg("file_name"), py::arg("model_type"),
-              py::arg("phase"), py::arg("encrypt") = py::none(), py::arg("key") = nullptr, "Export Graph.");
   (void)m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
               py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"),
               py::arg("decrypt") = py::none(), "Load model as Graph.");

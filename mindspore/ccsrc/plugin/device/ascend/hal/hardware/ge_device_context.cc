@@ -73,31 +73,6 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   }
 }
 
-transform::Status CreateSessionAndGraphRunner(bool is_training = true) {
-  std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
-  if (sess == nullptr) {
-    transform::SessionOptions options;
-    if (is_training) {
-      options["ge.trainFlag"] = "1";
-      options["ge.streamNum"] = "100";
-      options["ge.enabledLocalFmkop"] = "1";
-      options["ge.hcomParallel"] = "1";
-    } else {
-      options["ge.trainFlag"] = "0";
-    }
-
-    options["ge.enablePrintOpPass"] = "0";
-    sess = transform::NewSession(options);
-    transform::SetGeSession(sess);
-  }
-
-  transform::GraphRunnerOptions options;
-  options.sess_ptr = sess;
-  auto graph_runner = transform::NewGraphRunner(options);
-  transform::SetGraphRunner(graph_runner);
-  return transform::Status::SUCCESS;
-}
-
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
@@ -151,11 +126,13 @@ std::tuple<std::vector<transform::GeTensorPtr>, std::vector<transform::GeTensorP
           transform::ConvertInputTensors(compute_input, kOpFormat_NCHW)};
 }
 
-bool AddDFGraph(const FuncGraphPtr &anf_graph) {
+bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph);
-  auto [init_inputs, compute_inputs] = GetInputTensor(anf_graph);
-  transform::TensorOrderMap init_inputs_map = GetParams(anf_graph);
+  if (export_air) {
+    MS_LOG(INFO) << "Set DfGraphConvertor training : false";
+    transform::SetTraining(converter, false);
+  }
   transform::BuildGraph(converter, init_inputs_map);
   transform::GenerateBroadcastGraph(converter, init_inputs_map);
   transform::GenerateCheckpointGraph(converter);
@@ -170,62 +147,19 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph) {
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
   if (common::GetEnv("GE_TRAIN") == "1") {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), compute_inputs,
-                              {{"ge.exec.variable_acc", "1"}});
+    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
   } else {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), compute_inputs);
+    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
   }
-  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter), init_inputs);
-  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter), init_inputs);
+  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
-  transform::Status ret =
-    transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter), init_inputs);
+  transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
   if (ret == transform::Status::SUCCESS) {
     transform::SetAnfGraph(checkpoint_name, anf_graph);
   }
 
   return true;
-}
-
-FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-#ifdef ENABLE_DUMP_IR
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    draw::Draw("anf_graph.dot", anf_graph);  // for debug
-    DumpIR("anf_graph.ir", anf_graph, true);
-  }
-#endif
-  // if queue name is not empty, set datasink mode
-  string queue_name = ConfigManager::GetInstance().dataset_param().queue_name();
-  if (queue_name != "") {
-    ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  }
-
-  if (!AddDFGraph(anf_graph)) {
-    MS_LOG(ERROR) << "GenConvertor failed";
-    return nullptr;
-  }
-
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  bool training = false;
-  if (env_ge == "1" && env_training == "1") {
-    training = true;
-  }
-  if (training) {
-    (void)setenv("GE_TRAIN", "1", 1);
-  } else {
-    (void)setenv("GE_TRAIN", "0", 1);
-  }
-
-  (void)CreateSessionAndGraphRunner(training);
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return nullptr;
-  }
-
-  return anf_graph;
 }
 
 void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
@@ -388,7 +322,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   FuncGraphPtr origin_graph = kg->GetFuncGraph();
   MS_EXCEPTION_IF_NULL(origin_graph);
   ReorderInputsAsFrontGraph(kg, origin_graph);
-  BuildDFGraph(origin_graph);
+  BuildDFGraph(origin_graph, GetParams(origin_graph), false);
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);
   kg->set_run_mode(RunMode::kGraphMode);
@@ -743,6 +677,80 @@ bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &ms_context_pt
                  << ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   }
   return true;
+}
+
+void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
+  std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
+  if (sess == nullptr) {
+    transform::SessionOptions options;
+    if (is_training) {
+      options["ge.trainFlag"] = "1";
+      options["ge.streamNum"] = "100";
+      options["ge.enabledLocalFmkop"] = "1";
+      options["ge.hcomParallel"] = "1";
+    } else {
+      options["ge.trainFlag"] = "0";
+    }
+
+    options["ge.enablePrintOpPass"] = "0";
+    sess = transform::NewSession(options);
+    transform::SetGeSession(sess);
+  }
+
+  transform::GraphRunnerOptions options;
+  options.sess_ptr = sess;
+  auto graph_runner = transform::NewGraphRunner(options);
+  transform::SetGraphRunner(graph_runner);
+}
+
+FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
+                                           const transform::TensorOrderMap &init_inputs_map, bool export_air) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+#ifdef ENABLE_DUMP_IR
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    draw::Draw("anf_graph.dot", anf_graph);  // for debug
+    DumpIR("anf_graph.ir", anf_graph, true);
+  }
+#endif
+  // if queue name is not empty, set datasink mode
+  string queue_name = ConfigManager::GetInstance().dataset_param().queue_name();
+  if (queue_name != "") {
+    ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
+  }
+
+  if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
+    MS_LOG(ERROR) << "GenConvertor failed";
+    return nullptr;
+  }
+
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
+  auto env_training = common::GetEnv("MS_GE_TRAIN");
+  bool training = false;
+  if (env_ge == "1" && env_training == "1") {
+    training = true;
+  }
+  if (training) {
+    (void)setenv("GE_TRAIN", "1", 1);
+  } else {
+    (void)setenv("GE_TRAIN", "0", 1);
+  }
+
+  GeDeviceResManager::CreateSessionAndGraphRunner(training);
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(ERROR) << "Can not found GraphRunner";
+    return nullptr;
+  }
+
+  return anf_graph;
+}
+
+DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
+  // need lock when multi-threads
+  if (deprecated_interface_ == nullptr) {
+    deprecated_interface_ = std::make_unique<GeDeprecatedInterface>(this);
+  }
+  return deprecated_interface_.get();
 }
 
 constexpr auto kGeDevice = "GE";

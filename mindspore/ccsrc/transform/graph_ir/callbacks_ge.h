@@ -15,22 +15,19 @@
  */
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
-#ifdef ENABLE_D
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
 #include "include/transform/graph_ir/types.h"
 #include "ir/tensor.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace callbacks {
 using mindspore::tensor::TensorPtr;
 
 uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-COMMON_EXPORT uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
+uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
 }  // namespace callbacks
 }  // namespace mindspore
-#endif
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_

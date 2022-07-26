@@ -35,8 +35,7 @@ class DfGraphManager {
   void ClearGraph() noexcept;
 
   static DfGraphManager &GetInstance();
-  Status AddGraph(const std::string &name, const DfGraphPtr &graph,
-                  const std::vector<transform::GeTensorPtr> &inputs = {}, const OptionMap &options = {});
+  Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
   std::vector<DfGraphWrapperPtr> GetAllGraphs();
   std::set<string> GetSavedGraphs();
   void AddSavedGraphs(const std::string &id);

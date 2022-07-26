@@ -66,12 +66,6 @@
 #include "runtime/device/stream_synchronizer.h"
 #include "distributed/collective/collective_manager.h"
 
-#ifndef ENABLE_SECURITY
-#ifdef ENABLE_D
-#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#endif
-#endif
-
 #ifdef WITH_BACKEND
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -83,14 +77,6 @@
 #include "distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
-
-#ifdef ENABLE_D
-#include "pipeline/jit/pipeline_ge.h"
-#include "transform/graph_ir/op_adapter_map.h"
-#include "include/transform/graph_ir/utils.h"
-#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
-#endif
-
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"
 #include "include/common/debug/rdr/recorder_manager.h"
@@ -105,14 +91,11 @@ using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaSparseTensor = mindspore::tensor::MetaSparseTensor;
 using CSRTensor = mindspore::tensor::CSRTensor;
 using COOTensor = mindspore::tensor::COOTensor;
-using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
-#ifdef ENABLE_D
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
-#endif
+
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
 const char IR_TYPE_MINDIR[] = "mind_ir";
@@ -557,10 +540,13 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   for (auto item : id) {
     DelOneNetRes(item);
   }
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   if (backend == "ge" && !id.empty() && info_.size() == 0) {
+    DeviceContext *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     // because Ge only support one Session exist at the same time ,so we delete the old one
-    transform::EraseGeResource();
+    device_context->GetDeprecatedInterface()->EraseGeResource();
   }
 #endif
 }
@@ -1139,9 +1125,15 @@ void Pipeline::Run() {
         CheckInterpretNodeLineInfos();
         CacheValidateFuncGraph(resource_);
 #ifndef ENABLE_SECURITY
-#ifdef ENABLE_D
-        FuncGraphPtr graph = resource_->func_graph();
-        profiler::ascend::DumpProfileParallelStrategy(graph);
+#ifdef WITH_BACKEND
+        MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+        if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+          const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+            {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+          MS_EXCEPTION_IF_NULL(device_context);
+          MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+          device_context->GetDeprecatedInterface()->DumpProfileParallelStrategy(resource_->func_graph());
+        }
 #endif
 #endif
       }
@@ -1251,7 +1243,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   auto phase = py::cast<std::string>(phase_obj);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
     std::string phase_prefix = GetPhasePrefix(phase);
     if (phase_prefix == "save") {
@@ -1259,7 +1251,13 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
       std::string origin_phase = phase.substr(pos + 1);
       FuncGraphPtr func_graph = info_["train." + origin_phase]->func_graph;
       MS_EXCEPTION_IF_NULL(func_graph);
-      DoExecNonInputGraph("save." + func_graph->ToString());
+      MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+      auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET),
+         MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      MS_EXCEPTION_IF_NULL(device_context);
+      MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+      device_context->GetDeprecatedInterface()->DoExecNonInputGraph("save." + func_graph->ToString());
       ConfigManager::GetInstance().ResetConfig();
       return py::none();
     }
@@ -1271,7 +1269,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
       return *ret_val;
     }
   }
-#ifndef ENABLE_D
+#ifndef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
     // Virtual output constructed for test cases.
     if (!args.empty()) {
@@ -1321,11 +1319,19 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
                                          const py::object &broadcast_params) const {
-#ifdef ENABLE_D
-  return BuildDFGraph(info_, init_params, phase, broadcast_params);
-#else
-  return nullptr;
-#endif
+  MS_LOG(INFO) << "Start build df graph, phase = " << phase;
+  if (info_.count(phase) == 0) {
+    MS_LOG(EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
+  }
+  DeviceContext *device_context = nullptr;
+  try {
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+  } catch (const std::exception &) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+  return device_context->GetDeprecatedInterface()->BuildDFGraph(info_.at(phase)->func_graph, init_params);
 }
 
 void GraphExecutorPy::UpdataParamNodeDefaultInput(
@@ -1382,9 +1388,17 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }
   std::string backend = ms_context->backend_policy();
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   if (backend == "ge") {
-    return InitExecDatasetGe(queue_name, iter_num, batch_size, types, shapes, input_indexes, phase);
+    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET),
+       MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+
+    return device_context->GetDeprecatedInterface()->InitExecDataset(queue_name, iter_num, batch_size, types, shapes,
+                                                                     input_indexes, phase);
   }
 #endif
   return backend == "ge" ? true : false;
@@ -1506,7 +1520,7 @@ void ResetOpIdWithOffset() { mindspore::id_generator::reset_id_with_offset(); }
 void InitHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     InitPipeline();
@@ -1516,21 +1530,13 @@ void InitHccl() {
 
   mindspore::python_adapter::set_python_env_flag(true);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-#if ENABLE_D
-  if (common::UseMPI()) {
-    MS_LOG(INFO) << "The process are launched with OpenMPI, the environment variable for rank table will be ignored "
-                    "even if set by users.";
-    MS_LOG(INFO) << "mpi collective init.";
-    if (!HcclCollectiveGroup::instance().InitCollective()) {
-      MS_LOG(EXCEPTION) << "Mpi init failed, please check if mpirun is used correctly.";
-    }
-    auto rank_id = HcclCollectiveGroup::instance().GetRankId(kHcclWorldGroup);
-    (void)common::SetEnv(kRankID, std::to_string(rank_id).c_str());
-    device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
-    (void)common::SetEnv("DEVICE_ID", std::to_string(device_id).c_str());
-    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  if (common::UseMPI() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    device_id = device_context->GetDeprecatedInterface()->InitCollective();
   }
-#endif
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   if (ms_context->backend_policy() == "ms" &&
@@ -1552,7 +1558,7 @@ void InitHccl() {
 void FinalizeHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     FinalizeBackend();
@@ -1582,13 +1588,19 @@ uint32_t GetHcclRankSize() {
   return rank_size;
 }
 
-void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
-                 const py::object encrypt, char *key) {
-#ifdef ENABLE_D
-  ExportDFGraph(file_name, phase, encrypt, key);
-#else
-  MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
-#endif
+void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
+                                  const py::object encrypt, char *key) {
+  DeviceContext *device_context = nullptr;
+  try {
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+  } catch (const std::exception &) {
+    MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
+  }
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+  FuncGraphPtr func_graph = info_[phase]->func_graph;
+  MS_EXCEPTION_IF_NULL(func_graph);
+  device_context->GetDeprecatedInterface()->ExportDFGraph(file_name, func_graph->ToString(), encrypt, key);
 }
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
@@ -1629,7 +1641,7 @@ void InitPipeline() {
   mindspore::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -1698,10 +1710,6 @@ void ClearResAtexit() {
   session::ExecutorManager::Instance().Clear();
   runtime::GraphScheduler::GetInstance().Clear();
 
-  MS_LOG(INFO) << "Start clear device context...";
-  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
-  MS_LOG(INFO) << "End clear device context.";
-
   MS_LOG(INFO) << "Start clear kernel runtime...";
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   MS_LOG(INFO) << "End clear kernel runtime.";
@@ -1731,12 +1739,15 @@ void ClearResAtexit() {
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();
   MS_LOG(INFO) << "End clear PyPassManager.";
 
-#ifdef ENABLE_D
+#ifdef WITH_BACKEND
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
-    transform::ClearGraphWrapper();
-    transform::ClearOpAdapterMap();
+    DeviceContext *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    device_context->GetDeprecatedInterface()->ClearGraphWrapper();
+    device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
   } else {
     MS_LOG(INFO) << "Start clear ConfigManager...";
     ConfigManager::GetInstance().ResetIterNum();
@@ -1747,6 +1758,10 @@ void ClearResAtexit() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
+
+  MS_LOG(INFO) << "Start clear device context...";
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
+  MS_LOG(INFO) << "End clear device context.";
 
   ReleaseGeTsd();
 

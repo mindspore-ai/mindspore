@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
+#include <memory>
 #include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -95,6 +96,14 @@ RunMode AscendDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   } else {
     return RunMode::kKernelMode;
   }
+}
+
+DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
+  // need lock when multi-threads
+  if (deprecated_interface_ == nullptr) {
+    deprecated_interface_ = std::make_unique<AscendDeprecatedInterface>(this);
+  }
+  return deprecated_interface_.get();
 }
 
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);

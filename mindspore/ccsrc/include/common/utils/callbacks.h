@@ -32,10 +32,8 @@ extern const char PYTHON_MOD_CALLBACK_MODULE[];
 extern const char PYTHON_FUN_PROCESS_CHECKPOINT[];
 extern const char PYTHON_FUN_PROCESS_SUMMARY[];
 
-extern const char kSummary[];
-extern const char kCheckPoint[];
-extern const std::string kPythonCheckpointModuleName;
-extern const std::string kPythonCheckpointFuncName;
+COMMON_EXPORT extern const char kSummary[];
+COMMON_EXPORT extern const char kCheckPoint[];
 
 const int kCallbackOk = 0;
 const int kCallbackFalied = 1;
