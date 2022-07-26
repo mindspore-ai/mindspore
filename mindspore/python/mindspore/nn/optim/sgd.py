@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """sgd"""
+from __future__ import absolute_import
+
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor

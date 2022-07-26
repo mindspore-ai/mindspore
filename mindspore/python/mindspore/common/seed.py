@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Provide random seed api."""
+from __future__ import absolute_import
+
 import numpy as np
 from mindspore._checkparam import Validator
 

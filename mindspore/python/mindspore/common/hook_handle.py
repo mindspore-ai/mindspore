@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """The removable handle for cell hook function."""
+from __future__ import absolute_import
 import weakref
 from .api import _pynative_executor
 

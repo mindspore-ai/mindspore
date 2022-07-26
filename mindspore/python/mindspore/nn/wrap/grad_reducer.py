@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """grad reducer cell for distributed training"""
+from __future__ import absolute_import
+
 from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.cell import Cell

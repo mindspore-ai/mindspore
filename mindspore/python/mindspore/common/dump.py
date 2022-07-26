@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Controlling dump behavior."""
+from __future__ import absolute_import
 from warnings import warn
 
 import mindspore.context as context

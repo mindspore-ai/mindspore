@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Dynamic Learning Rate"""
+from __future__ import absolute_import
+
 import math
 
 from mindspore._checkparam import Validator as validator

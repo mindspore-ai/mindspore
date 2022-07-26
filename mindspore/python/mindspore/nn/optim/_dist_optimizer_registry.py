@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """_dist_optimizer_registry"""
+from __future__ import absolute_import
+
 from inspect import isfunction
+
 from mindspore.parallel._ps_context import _get_ps_context, _is_ps_mode, _enable_distributed_mindrt
 
 
@@ -32,12 +35,9 @@ def _register_dist_optimizer(optimizer_type, creating_func):
     _create_func_map[optimizer_type] = creating_func
 
 
-
 def empty_creating_func(*args, **kwargs):
-    """
-    Empty function as placeholder.
-    """
-    return None
+    """Empty function as placeholder."""
+    return
 
 
 _pserver_optmizer_attrs = {

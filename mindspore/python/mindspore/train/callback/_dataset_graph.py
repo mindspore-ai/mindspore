@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Define dataset graph related operations."""
+from __future__ import absolute_import
+
 import json
 from importlib import import_module
 

@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Perplexity"""
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 from mindspore._checkparam import Validator as validator
 from .metric import Metric, rearrange_inputs
 

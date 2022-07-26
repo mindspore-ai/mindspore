@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """cell"""
+from __future__ import absolute_import
+
 import gc
 import inspect
 import os

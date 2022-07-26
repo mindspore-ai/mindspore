@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """LossMonitor Callback class."""
+from __future__ import absolute_import
 
 import numpy as np
 
-from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
-from ._callback import Callback
+from ._callback import Callback, _handle_loss
 
 
 class LossMonitor(Callback):
@@ -67,16 +67,8 @@ class LossMonitor(Callback):
         """
         cb_params = run_context.original_args()
 
-
         cur_epoch_num = cb_params.get("cur_epoch_num", 1)
-        loss = cb_params.net_outputs
-
-        if isinstance(loss, (tuple, list)):
-            if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
-                loss = loss[0]
-
-        if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
-            loss = float(np.mean(loss.asnumpy()))
+        loss = _handle_loss(cb_params.net_outputs)
 
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
 

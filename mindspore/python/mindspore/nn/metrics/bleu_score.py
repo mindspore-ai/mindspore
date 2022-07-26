@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """BleuScore."""
+from __future__ import absolute_import
+
 from collections import Counter
 import numpy as np
 from mindspore._checkparam import Validator as validator

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Summary collector callback."""
+from __future__ import absolute_import
 
 import os
 import stat

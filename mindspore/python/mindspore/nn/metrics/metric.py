@@ -13,9 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Metric base class."""
+from __future__ import absolute_import
+
 from abc import ABCMeta, abstractmethod
 import functools
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 
 _eval_types = {'classification', 'multilabel'}

@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """FederatedLearningManager related class and functions."""
+from __future__ import absolute_import
 
 from copy import deepcopy
 import numpy as np
+
 from mindspore import context, nn
 from mindspore.common import Parameter, ParameterTuple
 from mindspore.train.callback import Callback

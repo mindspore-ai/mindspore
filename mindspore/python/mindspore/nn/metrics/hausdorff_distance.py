@@ -13,11 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """HausdorffDistance."""
+from __future__ import absolute_import
 
 from collections import abc
 from abc import ABCMeta
 from scipy.ndimage import morphology
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from .metric import Metric, rearrange_inputs
