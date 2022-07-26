@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include "pipeline/jit/parse/parse.h"
+#include "pybind11/pytypes.h"
 
 namespace mindspore::parse {
 

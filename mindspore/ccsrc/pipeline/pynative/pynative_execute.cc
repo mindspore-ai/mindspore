@@ -848,9 +848,9 @@ void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
                       << op_info << " in op_info_with_tensor_id map";
   }
   // Record the relationship between the forward op and its output tensor id
-  std::for_each(op_out_tensors.begin(), op_out_tensors.end(), [&top_cell, &op_info](const tensor::TensorPtr &tensor) {
-    top_cell->SetOpInfoWithTensorId(op_info, tensor->id());
-  });
+  (void)std::for_each(
+    op_out_tensors.begin(), op_out_tensors.end(),
+    [&top_cell, &op_info](const tensor::TensorPtr &tensor) { top_cell->SetOpInfoWithTensorId(op_info, tensor->id()); });
 }
 
 void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) {
@@ -1532,7 +1532,7 @@ AnfNodePtr ForwardExecutor::GetRealInputNodeBySkipHook(const AnfNodePtr &input_n
         auto out_idx = GetValue<int64_t>(value_node->value());
         auto backward_hook_op = inp_in_tuple->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(backward_hook_op);
-        return backward_hook_op->input(1 + out_idx);
+        return backward_hook_op->input(1 + LongToSize(out_idx));
       }
     }
   }
@@ -2378,7 +2378,7 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
 // Make adjoint for ms_function fprop graph and connect it with previous op
 CNodePtr GradExecutor::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
                                                 const py::object &actual_out, const py::args &args,
-                                                const ValuePtr &actual_out_v) {
+                                                const ValuePtr &actual_out_v) const {
   ValuePtrList input_values;
   CNodePtr ms_function_cnode = nullptr;
   MakeCNodeForMsFunction(ms_func_graph, args, &input_values, &ms_function_cnode);
@@ -4278,9 +4278,9 @@ ForwardExecutorPtr PynativeExecutor::forward_executor() const {
 
 bool PynativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); }
 
-void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag(flag); }
+void PynativeExecutor::set_grad_flag(bool flag) const { grad_executor()->set_grad_flag(flag); }
 
-void PynativeExecutor::SetHookChanged(const py::object &cell) {
+void PynativeExecutor::SetHookChanged(const py::object &cell) const {
   if (!py::isinstance<Cell>(cell)) {
     MS_LOG(EXCEPTION) << "The 'set_hook_changed' function is only supported on Cell object!";
   }

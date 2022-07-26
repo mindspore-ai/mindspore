@@ -226,7 +226,7 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
       auto v_node = tuple_get_item->input(idx)->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(v_node);
       auto out_idx = GetValue<int64_t>(v_node->value());
-      return inp->cast<CNodePtr>()->input(out_idx + 1);
+      return inp->cast<CNodePtr>()->input(LongToSize(out_idx) + 1);
     }
   }
   return node;

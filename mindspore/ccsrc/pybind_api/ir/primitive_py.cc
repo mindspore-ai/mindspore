@@ -244,7 +244,7 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
 
 void PrimitivePy::AddBpropCutPrim(const PrimitivePyPtr &bprop_cut_prim) {
   MS_EXCEPTION_IF_NULL(bprop_cut_prim);
-  bprop_cut_prims_.emplace_back(bprop_cut_prim);
+  (void)bprop_cut_prims_.emplace_back(bprop_cut_prim);
 }
 
 void PrimitivePy::AddBackwardHookFn(const int &key, const py::function &backward_hook_fn) {
@@ -260,7 +260,7 @@ void PrimitivePy::AddBackwardHookFn(const int &key, const py::function &backward
 void PrimitivePy::RemoveBackwardHookFn(const int &key) {
   auto iter = backward_hook_fn_.find(key);
   if (iter != backward_hook_fn_.end()) {
-    backward_hook_fn_.erase(key);
+    (void)backward_hook_fn_.erase(key);
   }
   // Remove hook_fn for bprop cut prim on grad graph.
   for (const auto &elem : bprop_cut_prims_) {
