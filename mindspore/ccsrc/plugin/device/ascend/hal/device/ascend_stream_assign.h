@@ -87,7 +87,7 @@ class AscendStreamAssign {
   ~AscendStreamAssign() = default;
 
   void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
-  std::set<uint32_t> AssignNodeStreamInOrder(const std::vector<CNodePtr> node_list);
+  std::set<uint32_t> AssignNodeStreamInOrder(const std::vector<CNodePtr> node_list) const;
   void ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<CNodePtr> *common_list,
                             std::vector<CNodePtr> *hcom_list, std::vector<CNodePtr> *independent_list,
                             std::vector<CNodePtr> *comm_sub_graph_list) const;
@@ -124,8 +124,9 @@ class AscendStreamAssign {
   void InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr,
                               const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index) const;
   void InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr) const;
-  void InsertEventHcomDependHcomAtSameGroup(const NotNull<KernelGraphPtr> &graph_ptr,
-                                            std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item);
+  void InsertEventHcomDependHcomAtSameGroup(
+    const NotNull<KernelGraphPtr> &graph_ptr,
+    std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item) const;
   void InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
                              uint32_t cur_event_id, uint32_t graph_id) const;
   void InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
@@ -134,7 +135,7 @@ class AscendStreamAssign {
                                                                       const std::string group, size_t graph_id) const;
 
   void AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) const;
-  vector<CNodePtr> GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr);
+  vector<CNodePtr> GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr) const;
   vector<CNodePtr> GetIndependentNodesNeedsInsertActive(const std::vector<CNodePtr> exe_orders,
                                                         const uint32_t graph_id) const;
   bool IsSatisfiedHcom(const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index, const CNodePtr &node_ptr,
@@ -148,8 +149,8 @@ class AscendStreamAssign {
   CNodePtr GetCNodesNeededMoved(vector<CNodePtr> *moved_backward_cnodes, vector<CNodePtr> *moved_forward_cnodes,
                                 const vector<CNodePtr> &last_grad_and_status, const NotNull<KernelGraphPtr> &graph_ptr);
   CNodePtr GetTargetOutputNode(const vector<CNodePtr> &moved_backward_cnodes, const CNodePtr first_node,
-                               const NotNull<KernelGraphPtr> &graph_ptr);
-  bool FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes);
+                               const NotNull<KernelGraphPtr> &graph_ptr) const;
+  bool FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) const;
   void TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr);
 
   uint32_t GetMaxIndexTarget(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -185,7 +186,7 @@ class AscendStreamAssign {
 
   bool ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id) const;
   void GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id);
-  void GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id);
+  void GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id) const;
 
   void InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr) const;
 
@@ -231,11 +232,11 @@ class AscendStreamAssign {
 
   void InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                              const NodeIoExecInfoPtr &io_exec_info, HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
-                             HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+                             HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv) const;
 
   void InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                               const NodeIoExecInfoPtr &io_exec_info, HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
-                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv) const;
 
   void InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &parallel_cnode,
                     const AnfNodePtr &node_before_send, HashMap<mindspore::AnfNodePtr, vector<CNodePtr>> *kernel_send,
