@@ -441,13 +441,6 @@ Parameter操作函数
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-
 微分函数
 ------------
 
