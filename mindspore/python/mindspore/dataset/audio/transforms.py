@@ -824,6 +824,41 @@ class Fade(AudioTensorOperation):
         return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADE_SHAPE.get(self.fade_shape))
 
 
+class Filtfilt(AudioTensorOperation):
+    """
+    Apply an IIR filter forward and backward to a waveform.
+
+    Args:
+        a_coeffs (Sequence): denominator coefficients of difference equation of dimension of (n_order + 1).
+            Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
+            Must be same size as b_coeffs (pad with 0's as necessary).
+        b_coeffs (Sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
+            Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
+            Must be same size as a_coeffs (pad with 0's as necessary).
+        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default=True.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> a_coeffs = [0.1, 0.2, 0.3]
+        >>> b_coeffs = [0.1, 0.2, 0.3]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Filtfilt(a_coeffs, b_coeffs)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_lfilter
+    def __init__(self, a_coeffs, b_coeffs, clamp=True):
+        super().__init__()
+        self.a_coeffs = a_coeffs
+        self.b_coeffs = b_coeffs
+        self.clamp = clamp
+
+    def parse(self):
+        return cde.FiltfiltOperation(self.a_coeffs, self.b_coeffs, self.clamp)
+
+
 DE_C_MODULATION = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
                    Modulation.TRIANGULAR: cde.Modulation.DE_MODULATION_TRIANGULAR}
 

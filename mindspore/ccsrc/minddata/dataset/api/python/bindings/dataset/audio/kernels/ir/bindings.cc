@@ -38,6 +38,7 @@
 #include "minddata/dataset/audio/ir/kernels/dither_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
+#include "minddata/dataset/audio/ir/kernels/filtfilt_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
@@ -287,6 +288,17 @@ PYBIND_REGISTER(FadeOperation, 1, ([](const py::module *m) {
                       THROW_IF_ERROR(fade->ValidateParams());
                       return fade;
                     }));
+                }));
+
+PYBIND_REGISTER(FiltfiltOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::FiltfiltOperation, TensorOperation, std::shared_ptr<audio::FiltfiltOperation>>(
+                      *m, "FiltfiltOperation")
+                      .def(py::init([](const std::vector<float> &a_coeffs, std::vector<float> &b_coeffs, bool clamp) {
+                        auto filtfilt = std::make_shared<audio::FiltfiltOperation>(a_coeffs, b_coeffs, clamp);
+                        THROW_IF_ERROR(filtfilt->ValidateParams());
+                        return filtfilt;
+                      }));
                 }));
 
 PYBIND_REGISTER(Modulation, 0, ([](const py::module *m) {

@@ -21,6 +21,7 @@ add_library(audio-kernels OBJECT
         dither_op.cc
         equalizer_biquad_op.cc
         fade_op.cc
+        filtfilt_op.cc
         flanger_op.cc
         frequency_masking_op.cc
         gain_op.cc

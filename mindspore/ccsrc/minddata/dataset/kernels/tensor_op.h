@@ -168,6 +168,7 @@ constexpr char kDetectPitchFrequencyOp[] = "DetectPitchFrequencyOp";
 constexpr char kDitherOp[] = "DitherOp";
 constexpr char kEqualizerBiquadOp[] = "EqualizerBiquadOp";
 constexpr char kFadeOp[] = "FadeOp";
+constexpr char kFiltfiltOp[] = "FiltfiltOp";
 constexpr char kFlangerOp[] = "FlangerOp";
 constexpr char kFrequencyMaskingOp[] = "FrequencyMaskingOp";
 constexpr char kGainOp[] = "GainOp";
