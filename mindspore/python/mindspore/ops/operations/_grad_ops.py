@@ -2614,6 +2614,234 @@ class HShrinkGrad(Primitive):
             self.add_prim_attr('lambd', lambd)
 
 
+class Dilation2DBackpropInput(Primitive):
+    """
+    Computes the gradient of morphological 2-D dilation with respect to the input.
+
+    .. warning::
+        This operator is an experimental operator, which has some accuracy problems for some inputs.
+
+    Args:
+        stride (Union[int, tuple[int]]): The distance of filter moving, an int number that represents
+            the height and width of movement are both strides, a tuple of two int numbers that
+            represent height and width of movement respectively, or a tuple of four int numbers which
+            should be :math:`(1, 1, H_{stride}, W_{stride})`.
+        dilation (Union[int, tuple[int]]): The input stride for atrous morphological dilation.The data
+            type is int or a tuple of 2 or 4 integers. Its value must be greater or equal to 1 and bounded
+            by the height and width of the input `x`.
+        pad_mode (str): Specifies padding mode. The optional values are "same", "valid".
+            Default: "same". Both upper and lower case are supported.
+        data_format (str): The format of input and output data. Only NCHW format is supported at present.
+            Default:'NCHW'
+
+    Inputs:
+        - **x** (Tensor) - Input data. A four dimension tensor with float16 or float32 data type. The shape must be
+          :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **filter** (Tensor) - A three dimension tensor with the same type as input. The shape must be
+          :math:`(C_{in}, H_{filter}, W_{filter})`.
+        - **out_backprop** (Tensor) - The gradients with respect to the output of the convolution.
+          A four dimension tensor with float16 or float32 data type. The shape must be
+          :math:`(N, C_{in}, H_{out}, W_{out})`.
+
+    outputs:
+        Tensor, the gradients with respect to the input of convolution. It has the same shape and type as the input `x`.
+
+    Raises:
+        TypeError: If type of `x` or `filter` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+                                  int32, int64, float16, float32, float64].
+        TypeError: If type of `out_backprop` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+                                  int32, int64, float16, float32, float64].
+        TypeError: If `stride` or `dilation` is not an int number or a tuple of two or four int numbers.
+        ValueError: If the length of `stride` or `dilation` is neither two nor four when they are tuples.
+        ValueError: If `stride` or `dilation` is not (1, 1, height, width) when it is a tuple of four int numbers.
+        ValueError: If `stride` is not in the range of [1, 255].
+        ValueError: If `dilation` is less than 1.
+        ValueError: If `pad_mode` is not a str of 'same', 'valid', 'SAME' or 'VALID'.
+        ValueError: If `data_format` is not the str of 'NCHW'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        (pad_mode="SAME", data_format="NCHW")
+        >>> out_backprop = Tensor(np.ones([1, 3, 4, 4]), mstype.float32)
+        >>> filter = Tensor(np.ones([3 , 2 , 2]), mstype.float32)
+        >>> x = Tensor(np.ones([1, 3, 4, 4]), mstype.float32)
+        >>> dilation_backprop_input = G.Dilation2DBackpropInput(stride=1, dilation=1)
+        >>> output = dilation_backprop_input(x, filter, out_backprop)
+        >>> print(output)
+        [[[[1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]]
+          [[1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]]
+          [[1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]
+           [1. 1. 1. 1.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, stride, dilation, pad_mode="SAME", data_format="NCHW"):
+        """Initialize Dilation2DBackpropInput"""
+
+        def _check_format_stride_or_dilation(arg_name, arg_value, prim_name, data_format):
+            validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+            if isinstance(arg_value, int):
+                ret_value = (1, arg_value, arg_value, 1) if data_format == "NHWC" else (1, 1, arg_value, arg_value)
+            elif len(arg_value) == 2:
+                ret_value = (1, arg_value[0], arg_value[1], 1) if data_format == "NHWC" else \
+                    (1, 1, arg_value[0], arg_value[1])
+            elif len(arg_value) == 4:
+                if data_format == "NHWC" and (arg_value[0] != 1 or arg_value[3] != 1):
+                    raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be "
+                                     f"[1, {arg_name}_height, {arg_name}_weigth, 1] when data_format is 'NHWC', "
+                                     f"but got {arg_value}")
+                if data_format == "NCHW" and (arg_value[0] != 1 or arg_value[1] != 1):
+                    raise ValueError(
+                        f"For '{prim_name}' attr '{arg_name}' should be [1, 1, {arg_name}_height, {arg_name}_weigth]"
+                        f"when data_format is 'NCHW', but got {arg_value}")
+                ret_value = arg_value
+            else:
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            for item in ret_value:
+                if isinstance(item, int) and not isinstance(item, bool) and item > 0:
+                    continue
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            return ret_value
+
+        if data_format == 'NHWC':
+            raise ValueError(f"For '{self.name}', NHWC format is not supported at present.")
+        self.data_format = validator.check_string(self.data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        self.add_prim_attr("data_format", self.data_format)
+        self.pad_mode = validator.check_string(self.pad_mode, ["SAME", "VALID", 'same', "valid"], "pad_mode", self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode.upper())
+        self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+        self.add_prim_attr("stride", self.stride)
+        self.dilation = _check_format_stride_or_dilation("dilation", dilation, self.name, self.data_format)
+        self.add_prim_attr("dilation", self.dilation)
+
+
+class Dilation2DBackpropFilter(Primitive):
+    """
+    Computes the gradient of morphological 2-D dilation with respect to the filter.
+
+    .. warning::
+        This operator is an experimental operator, which has some accuracy problems for some inputs.
+
+    Args:
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, a tuple of two int numbers that
+            represent height and width of movement respectively, or a tuple of four int numbers which
+            should be :math:`(1, 1, H_{stride}, W_{stride})`.
+        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers or a tuple of 4 integers.
+            Specifies the dilation rate to use for dilated convolution.
+            If set to be :math:`k > 1`, there will be :math:`k - 1` pixels skipped for each sampling location.
+            Its value must be greater or equal to 1 and bounded by the height and width of the input `x`.
+        pad_mode (str): Specifies padding mode. The optional values are "same", "valid".
+            Default: "same". Both upper and lower case are supported.
+        data_format (str): The format of input and output data. Only NCHW format is supported at present.
+            Default:'NCHW'
+
+    Inputs:
+        - **x** (Tensor) - Input data. A four dimension tensor with float16 or float32 data type. The shape must be
+          :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **filter** (Tensor) - A three dimension tensor with the same type as input. The shape must be
+          :math:`(C_{in}, H_{filter}, W_{filter})`.
+        - **out_backprop** (Tensor) - The gradients with respect to the output of the convolution.
+          A four dimension tensor with float16 or float32 data type. The shape must be
+          :math:`(N, C_{in}, H_{out}, W_{out})`.
+
+    outputs:
+        Tensor, the gradients with respect to the input of convolution. It has the same shape and type as the input `x`.
+
+    Raises:
+        TypeError: If type of `x` or `filter` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+                                  int32, int64, float16, float32, float64].
+        TypeError: If type of `out_backprop` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+                                  int32, int64, float16, float32, float64].
+        TypeError: If `stride` or `dilation` is not an int number or a tuple of two or four int numbers.
+        ValueError: If the length of `stride` or `dilation` is neither two nor four when they are tuples.
+        ValueError: If `stride` or `dilation` is not (1, 1, height, width) when it is a tuple of four int numbers.
+        ValueError: If `stride` is not in the range of [1, 255].
+        ValueError: If `dilation` is less than 1.
+        ValueError: If `pad_mode` is not a str of 'same', 'valid', 'SAME' or 'VALID'.
+        ValueError: If `data_format` is not the str of 'NCHW'.
+
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        (pad_mode="SAME", data_format="NCHW")
+        >>> x = Tensor(np.ones([2, 3, 4, 4]), mstype.float32)
+        >>> filter = Tensor(np.ones([3,2,2]), mstype.float32)
+        >>> out_backprop = Tensor(np.ones([2,3,2,2]), mstype.float32)
+        >>> dilation_backprop_filter = G.Dilation2DBackpropFilter(stride=2, dilation=1)
+        >>> output = dilation_backprop_filter(x, filter, out_backprop)
+        >>> print(output)
+        [[[8. 8. 8.]
+          [0. 0. 0.]]
+         [[0. 0. 0.]
+          [0. 0. 0.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, stride, dilation, pad_mode="SAME", data_format="NCHW"):
+        """Initialize Dilation2DBackpropFilter"""
+
+        def _check_format_stride_or_dilation(arg_name, arg_value, prim_name, data_format):
+            validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+            if isinstance(arg_value, int):
+                ret_value = (1, arg_value, arg_value, 1) if data_format == "NHWC" else (1, 1, arg_value, arg_value)
+            elif len(arg_value) == 2:
+                ret_value = (1, arg_value[0], arg_value[1], 1) if data_format == "NHWC" else \
+                    (1, 1, arg_value[0], arg_value[1])
+            elif len(arg_value) == 4:
+                if data_format == "NHWC" and (arg_value[0] != 1 or arg_value[3] != 1):
+                    raise ValueError(
+                        f"For '{prim_name}' attr '{arg_name}' should be [1, {arg_name}_height, {arg_name}_weigth, 1]"
+                        f"when data_format is 'NHWC', but got {arg_value}")
+                if data_format == "NCHW" and (arg_value[0] != 1 or arg_value[1] != 1):
+                    raise ValueError(
+                        f"For '{prim_name}' attr '{arg_name}' should be [1, 1, {arg_name}_height, {arg_name}_weigth]"
+                        f"when data_format is 'NCHW', but got {arg_value}")
+                ret_value = arg_value
+            else:
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            for item in ret_value:
+                if isinstance(item, int) and not isinstance(item, bool) and item > 0:
+                    continue
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            return ret_value
+
+        if data_format == 'NHWC':
+            raise ValueError(f"For '{self.name}', NHWC format is not supported at present.")
+        self.data_format = validator.check_string(self.data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        self.add_prim_attr("data_format", self.data_format)
+        self.pad_mode = validator.check_string(self.pad_mode, ["SAME", "VALID", 'same', "valid"], "pad_mode", self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode.upper())
+        self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+        if self.stride[2] < 1 or self.stride[2] > 255 or self.stride[3] < 1 or self.stride[3] > 255:
+            raise ValueError(f"For '{self.name}', size of stride is not supported, "
+                             f'stride should be in the range of [1, 255], '
+                             f'but got stride_h: `{self.stride[2]}`, stride_w: `{self.stride[3]}`.')
+        self.add_prim_attr("stride", self.stride)
+        self.dilation = _check_format_stride_or_dilation("dilation", dilation, self.name, self.data_format)
+        self.add_prim_attr("dilation", self.dilation)
+
+
 class ParallelResizeBilinearGrad(PrimitiveWithInfer):
     """ParallelResizeBilinearGrad ops"""
 

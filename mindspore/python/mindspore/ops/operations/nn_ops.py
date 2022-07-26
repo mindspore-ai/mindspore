@@ -8851,6 +8851,128 @@ class Conv3DTranspose(PrimitiveWithInfer):
         return out
 
 
+class Dilation2D(Primitive):
+    r"""
+    Computes the grayscale dilation of 4-D input and 3-D filters tensors.
+
+    Applies a 2D dilation over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`H` is height, :math:`W` is width, :math:`C` is channel number.
+    Given kernel size :math:`ks = (h_{ker}, w_{ker})`, stride :math:`s = (s_0, s_1)` and
+    dilation :math:`d = (d_0, d_1)`, the operation is as follows:
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + d_0 \times m, s_1 \times w + d_1 \times n) + \text{filter}(C_j, m, n)
+
+    .. warning::
+        This operator is an experimental operator, which has some accuracy problems for some inputs.
+        If the input data type is float32, this operator is still executed in float16 mode.
+
+    Args:
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively, or a tuple of four int numbers when
+            data_format is 'NCHW' represents [1, 1, stride_height, stride_width].
+
+        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers or a tuple of 4 integers.
+                                      Specifies the dilation rate to use for dilated convolution.
+                                      If set to be :math:`k > 1`, there will be :math:`k - 1` pixels skipped for
+                                      each sampling location. Its value must be greater or equal to 1 and bounded by
+                                      the height and width of the input `x`.
+
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid". Default: "same". Both upper and lower case are supported.
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input `x`.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
+              without padding. Extra pixels will be discarded.
+        data_format (str): The value for data format, only 'NCHW' is supported at present. Default: "NCHW".
+
+    Inputs:
+        - **x** (Tensor) - Input data. A four dimension tensor with float16 or float32 data type. The shape must be
+          :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **filter** (Tensor) - A three dimension tensor with the same type as input. The shape must be
+          :math:`(C_{in}, H_{filter}, W_{filter})`.
+
+    Outputs:
+        Tensor, the value that applied 2D dilation. The shape is :math:`(N, C_{out}, H_{out}, W_{out})` which
+        is not necessarily the same as the input x, the type is the same as the input x.
+
+    Raises:
+        TypeError: If type of `x` or `filter` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+                                  int32, int64, float16, float32, float64].
+        TypeError: If `stride` or `dilation` is not an int number or a tuple of two or four int numbers.
+        ValueError: If the length of `stride` or `dilation` is neither two nor four when they are tuple.
+        ValueError: If `stride` or `dilation` shape is not (1, 1, height, width) when it is a tuple of four int numbers.
+        ValueError: If `stride` is not in the range of [1, 255].
+        ValueError: If `dilation` is less than 1.
+        ValueError: If `pad_mode` is not a str of 'same', 'valid', 'SAME' or 'VALID'.
+        ValueError: If `data_format` is not the str of 'NCHW'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.ones([10, 5, 32, 32]), mindspore.float16)
+        >>> filter = Tensor(np.ones([5, 3, 3]), mindspore.float16)
+        >>> dilation2d = ops.Dilation2D(stride=1, dilation=1, pad_mode='VALID')
+        >>> output = dilation2d(x, filter)
+        >>> print(output.shape)
+        (10, 5, 30, 30)
+    """
+
+    @prim_attr_register
+    def __init__(self, stride, dilation, pad_mode="SAME", data_format="NCHW"):
+        """Initialize Dilation2D."""
+        self.init_prim_io_names(inputs=['x', 'filter'], outputs=['y'])
+
+        def _check_format_stride_or_dilation(arg_name, arg_value, prim_name, data_format):
+            validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+            if isinstance(arg_value, int):
+                ret_value = (1, arg_value, arg_value, 1) if data_format == "NHWC" else (1, 1, arg_value, arg_value)
+            elif len(arg_value) == 2:
+                ret_value = (1, arg_value[0], arg_value[1], 1) if data_format == "NHWC" else \
+                    (1, 1, arg_value[0], arg_value[1])
+            elif len(arg_value) == 4:
+                if data_format == "NHWC" and (arg_value[0] != 1 or arg_value[3] != 1):
+                    raise ValueError(
+                        f"For '{prim_name}' attr '{arg_name}' should be [1, {arg_name}_height, {arg_name}_weigth, 1]"
+                        f"when data_format is 'NHWC', but got {arg_value}")
+                if data_format == "NCHW" and (arg_value[0] != 1 or arg_value[1] != 1):
+                    raise ValueError(
+                        f"For '{prim_name}' attr '{arg_name}' should be [1, 1, {arg_name}_height, {arg_name}_weigth]"
+                        f"when data_format is 'NCHW', but got {arg_value}")
+                ret_value = arg_value
+            else:
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            for item in ret_value:
+                if isinstance(item, int) and not isinstance(item, bool) and item > 0:
+                    continue
+                raise ValueError(
+                    f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+                    f"or four positive int numbers, but got {arg_value}")
+            return ret_value
+
+        if data_format == 'NHWC':
+            raise ValueError(f"For '{self.name}', NHWC format is not supported at present.")
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        self.add_prim_attr('data_format', self.data_format)
+        self.pad_mode = validator.check_string(pad_mode, ['VALID', 'SAME', 'valid', 'same'], 'pad_mode', self.name)
+        self.add_prim_attr('pad_mode', self.pad_mode.upper())
+        self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+        if self.stride[2] < 1 or self.stride[2] > 255 or self.stride[3] < 1 or self.stride[3] > 255:
+            raise ValueError(f'For Dilation2D, size of stride is not supported, '
+                             f'stride should be in the range of [1, 255], '
+                             f'but got stride_h: `{self.stride[2]}`, stride_w: `{self.stride[3]}`.')
+        self.add_prim_attr('stride', self.stride)
+        self.dilation = _check_format_stride_or_dilation("dilation", dilation, self.name, self.data_format)
+        self.add_prim_attr('dilation', self.dilation)
+
+
 class SoftShrink(Primitive):
     r"""
     Applies the SoftShrink function element-wise.
