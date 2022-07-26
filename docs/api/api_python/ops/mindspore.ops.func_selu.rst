@@ -19,14 +19,11 @@ mindspore.ops.selu
 
     更多详细信息，请参见 `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_ 。
 
-    **参数：**
+    参数：
+        - **input_x** (Tensor) - 任意维度的Tensor，数据类型为int8、int32、float16、float32、float64（仅CPU、GPU）。
 
-    - **input_x** (Tensor) - 任意维度的Tensor，数据类型为int8、int32、float16、float32、float64（仅CPU、GPU）。
+    返回：
+        Tensor，数据类型和shape与 `input_x` 的相同。
 
-    **返回：**
-
-    Tensor，数据类型和shape与 `input_x` 的相同。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 的数据类型不是int8、int32、float16、float32、float64。
+    异常：
+        - **TypeError** - `input_x` 的数据类型不是int8、int32、float16、float32、float64。

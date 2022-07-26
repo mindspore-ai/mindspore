@@ -11,14 +11,11 @@ mindspore.ops.unique
     .. warning::
         此算子为实验性算子，将来可能面临更改或删除。
 
-    **参数：**
-    
-    - **x** (Tensor) - 需要被去重的Tensor。shape： :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+    参数：
+        - **x** (Tensor) - 需要被去重的Tensor。shape： :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
 
-    **返回：**
-    
-    Tuple， `(y, idx)` 。 `y` 是与 `x` 数据类型相同的Tensor，包含 `x` 中去重后的元素。 `idx` 为索引Tensor，包含 `x` 中的元素在 `y` 中的索引，与 `x` 的shape相同。
+    返回：
+        Tuple， `(y, idx)` 。 `y` 是与 `x` 数据类型相同的Tensor，包含 `x` 中去重后的元素。 `idx` 为索引Tensor，包含 `x` 中的元素在 `y` 中的索引，与 `x` 的shape相同。
 
-    **异常：**
-    
-    - **TypeError** - `x` 不是Tensor。
+    异常：
+        - **TypeError** - `x` 不是Tensor。

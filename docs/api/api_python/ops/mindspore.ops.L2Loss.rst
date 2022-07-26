@@ -10,15 +10,12 @@ mindspore.ops.L2Loss
     .. math::
         loss = \frac{\sum x ^ 2}{2}
 
-    **输入：**
+    输入：
+        - **input_x** (Tensor) - 用于计算L2范数的Tensor。数据类型必须为float16或float32。
 
-    - **input_x** (Tensor) - 用于计算L2范数的Tensor。数据类型必须为float16或float32。
+    输出：
+        Tensor，具有与 `input_x` 相同的数据类型的Scalar Tensor。
 
-    **输出：**
-
-    Tensor，具有与 `input_x` 相同的数据类型的Scalar Tensor。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 不是Tensor。
-    - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
+    异常：
+        - **TypeError** - `input_x` 不是Tensor。
+        - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。

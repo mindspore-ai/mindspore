@@ -8,14 +8,11 @@ mindspore.ops.tan
     .. math::
         out_i = tan(x_i)
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - Tan的输入，任意维度的Tensor。
 
-    - **x** (Tensor) - Tan的输入，任意维度的Tensor。
+    返回：
+        Tensor，数据类型和shape与 `x` 相同。
 
-    **返回：**
-
-    Tensor，数据类型和shape与 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 不是Tensor。
+    异常：
+        - **TypeError** - `x` 不是Tensor。

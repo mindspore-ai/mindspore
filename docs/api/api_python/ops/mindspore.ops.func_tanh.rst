@@ -12,15 +12,12 @@
 
     其中 :math:`x_i` 是输入Tensor的元素。
 
-    **参数：**
+    参数：
+        - **input_x** (Tensor) - Tanh的输入，任意维度的Tensor，其数据类型为float16或float32。
 
-    - **input_x** (Tensor) - Tanh的输入，任意维度的Tensor，其数据类型为float16或float32。
+    返回：
+        Tensor，数据类型和shape与 `input_x` 相同。
 
-    **返回：**
-
-    Tensor，数据类型和shape与 `input_x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
-    - **TypeError** - `input_x` 不是Tensor。
+    异常：
+        - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `input_x` 不是Tensor。
