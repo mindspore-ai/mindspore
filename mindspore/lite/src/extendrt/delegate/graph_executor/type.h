@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_TYPE_H_
+#define MINDSPORE_LITE_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_TYPE_H_
 
 #include <memory>
 #include <vector>
 
-#include "include/api/delegate.h"
+#include "extendrt/delegate/type.h"
 
 namespace mindspore {
-enum SessionType { kDefaultSession = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneSession };
-
-struct SessionConfig {
-  SessionType type_;
-  std::shared_ptr<Context> context_;
-  std::vector<std::shared_ptr<Delegate>> delegates_;
+class GraphExecutorConfig : public DelegateConfig {
+ public:
+  GraphExecutorConfig() = default;
+  explicit GraphExecutorConfig(const std::shared_ptr<Context> &context) : DelegateConfig(context) {}
+  ~GraphExecutorConfig() = default;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_TYPE_H_

@@ -89,19 +89,21 @@ std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<
   return SessionRegistry::GetInstance()->GetSession(config.type_, config);
 }
 
-SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> context) {
+SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> &context) {
   SessionConfig config;
+  config.context_ = context;
   if (context != nullptr) {
     if (context->GetDelegate() != nullptr) {
       config.delegates_.emplace_back(context->GetDelegate());
     }
+    auto delegate_config = std::make_shared<mindspore::DelegateConfig>(context);
     auto &device_contexts = context->MutableDeviceInfo();
     for (auto device_context : device_contexts) {
       // delegate init
       MS_EXCEPTION_IF_NULL(device_context);
       // get graph executor delegate
-      auto delegate = mindspore::DelegateRegistry::GetInstance()->GetDelegate(device_context->GetDeviceType(),
-                                                                              device_context->GetProvider());
+      auto delegate = mindspore::DelegateRegistry::GetInstance()->GetDelegate(
+        device_context->GetDeviceType(), device_context->GetProvider(), delegate_config);
       if (delegate == nullptr) {
         continue;
       }

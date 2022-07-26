@@ -21,9 +21,12 @@
 #include <memory>
 
 #include "extendrt/delegate/graph_executor/delegate.h"
+#include "extendrt/delegate/graph_executor/type.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
+typedef std::shared_ptr<device::GraphExecutor> (*GraphExecutorCreator)(
+  const std::shared_ptr<mindspore::DelegateConfig> &config);
 class GraphExecutorRegistry {
  public:
   GraphExecutorRegistry() = default;
@@ -35,10 +38,10 @@ class GraphExecutorRegistry {
   }
 
   void RegGraphExecutor(const mindspore::DeviceType &device_type, const std::string &provider,
-                        std::function<std::shared_ptr<device::GraphExecutor>()> creator) {
+                        GraphExecutorCreator creator) {
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
-      HashMap<std::string, std::function<std::shared_ptr<device::GraphExecutor>()>> map;
+      HashMap<std::string, GraphExecutorCreator> map;
       map[provider] = creator;
       creator_map_[device_type] = map;
       return;
@@ -47,7 +50,8 @@ class GraphExecutorRegistry {
   }
 
   std::shared_ptr<device::GraphExecutor> GetGraphExecutor(const mindspore::DeviceType &device_type,
-                                                          const std::string &provider) {
+                                                          const std::string &provider,
+                                                          const std::shared_ptr<mindspore::DelegateConfig> &config) {
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
       return nullptr;
@@ -56,12 +60,13 @@ class GraphExecutorRegistry {
     if (creator_it == it->second.end()) {
       return nullptr;
     }
-    return creator_it->second();
+    return creator_it->second(config);
   }
 
   std::shared_ptr<GraphExecutorDelegate> GetDelegate(const mindspore::DeviceType &device_type,
-                                                     const std::string &provider) {
-    auto graph_executor = GetGraphExecutor(device_type, provider);
+                                                     const std::string &provider,
+                                                     const std::shared_ptr<mindspore::DelegateConfig> &config) {
+    auto graph_executor = GetGraphExecutor(device_type, provider, config);
     if (graph_executor == nullptr) {
       return nullptr;
     }
@@ -72,15 +77,13 @@ class GraphExecutorRegistry {
   }
 
  private:
-  mindspore::HashMap<DeviceType,
-                     mindspore::HashMap<std::string, std::function<std::shared_ptr<device::GraphExecutor>()>>>
-    creator_map_;
+  mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, GraphExecutorCreator>> creator_map_;
 };
 
 class GraphExecutorRegistrar {
  public:
   GraphExecutorRegistrar(const mindspore::DeviceType &device_type, const std::string &provider,
-                         std::function<std::shared_ptr<device::GraphExecutor>()> creator) {
+                         GraphExecutorCreator creator) {
     GraphExecutorRegistry::GetInstance()->RegGraphExecutor(device_type, provider, creator);
   }
   ~GraphExecutorRegistrar() = default;

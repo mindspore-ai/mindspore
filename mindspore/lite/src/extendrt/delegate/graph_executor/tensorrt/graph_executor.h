@@ -22,15 +22,21 @@
 #include <map>
 
 #include "runtime/hardware/device_context.h"
+#include "include/api/context.h"
 
 namespace mindspore {
 using GraphExecutor = mindspore::device::GraphExecutor;
 class TensorRTGraphExecutor : public GraphExecutor {
  public:
   TensorRTGraphExecutor() = default;
+  explicit TensorRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context) : context_(context) {}
+  ~TensorRTGraphExecutor() = default;
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
+
+ private:
+  const std::shared_ptr<mindspore::Context> context_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_TENSORRT_GRAPH_EXECUTOR_H_
