@@ -33,7 +33,6 @@ class TensorsQueueCreateCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
     return support_list;
@@ -56,7 +55,6 @@ class TensorsQueuePutCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
     return support_list;
@@ -76,7 +74,6 @@ class TensorsQueueGetCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
     return support_list;
@@ -96,7 +93,6 @@ class TensorsQueueClearCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
@@ -113,7 +109,6 @@ class TensorsQueueCloseCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
@@ -130,7 +125,6 @@ class TensorsQueueSizeCpuKernelMod : public TensorsQueueCPUBaseMod {
               const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
