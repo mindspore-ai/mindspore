@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """internal graph-compatible utility functions"""
+from __future__ import absolute_import
 from types import FunctionType
 from collections.abc import Iterable
 from .. import context

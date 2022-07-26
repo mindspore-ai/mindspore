@@ -73,10 +73,12 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
   int64_t max_diag_len = x_shape.back();
   int64_t min_num_rows = max_diag_len - std::min(upper_diag_index, int64_t(0));
   int64_t min_num_cols = max_diag_len + std::max(lower_diag_index, int64_t(0));
-  if (row_val != -1 && row_val < min_num_rows)
+  if (row_val != -1 && row_val < min_num_rows) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows is too small.";
-  if (col_val != -1 && col_val < min_num_cols)
+  }
+  if (col_val != -1 && col_val < min_num_cols) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of columns is too small.";
+  }
   if (row_val == -1 && col_val == -1) {
     row_val = std::max(min_num_rows, min_num_cols);
     col_val = row_val;

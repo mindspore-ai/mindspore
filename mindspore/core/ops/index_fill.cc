@@ -79,7 +79,7 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
   // Input 'index' must be a scalar/vector.
   auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto index_rank = SizeToLong(index_shape.size());
-  (void)CheckAndConvertUtils::CheckInRange("rank of 'index'", index_rank, kIncludeBoth, {0, 1}, prim_name);
+  CheckAndConvertUtils::CheckInRange("rank of 'index'", index_rank, kIncludeBoth, {0, 1}, prim_name);
 
   // Input 'value' must be a tensor with a value or a scalar.
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
