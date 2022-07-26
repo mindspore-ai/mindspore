@@ -21,6 +21,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
@@ -39,7 +40,6 @@ class PartialEliminater : public AnfVisitor {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
       return nullptr;
     }
-
     X_ = nullptr;
     Xs_.clear();
     auto &inputs = node->cast<CNodePtr>()->inputs();
@@ -51,7 +51,7 @@ class PartialEliminater : public AnfVisitor {
 
     // {X, Xs, Ys}
     std::vector<AnfNodePtr> args{};
-    const auto &xs_size = Xs_.size();
+    const auto xs_size = Xs_.size();
     // Xs_ don't have monad or Ys_ is 0.
     if (!HasAbstractMonad(Xs_.back()) || inputs.empty()) {
       args.push_back(X_);
@@ -167,142 +167,130 @@ class ChoicePartialEliminater : public AnfVisitor {
         auto manager = fg->manager();
         MS_EXCEPTION_IF_NULL(manager);
         manager->AddFuncGraph(new_fg);
-        fg_node->cast<ValueNodePtr>()->set_value(new_fg);
+        fg_list_[i] = NewValueNode(new_fg);
       }
     }
     return true;
   }
 
-  // f(x1, x2, x3, z1, z2)
-  // g(x4, x2, z1, z2)
-  // h(x5, x2, x7, x8, z1, z2)
-  // --> anchor_fg = h
-  // h(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // f(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // g(x5, x2, x7, x8, x1, x3, x4, z1, z2)
-  // as z1, z2 maybe U or IO monad.
-  AnfNodePtrList UnifyParameters(const size_t &anchor_index, const AnfNodePtrList &fg_list,
-                                 const std::vector<AnfNodePtrList> args_list) {
-    std::vector<std::vector<size_t>> inputs_index_list(args_list.size());
-    AnfNodePtrList extra_inputs;
-    const auto &anchor_args = args_list[anchor_index];
-    size_t anchor_args_size = anchor_args.size();
-    auto anchor_fg = GetValueNode<FuncGraphPtr>(fg_list[anchor_index]);
-    MS_EXCEPTION_IF_NULL(anchor_fg);
-    size_t extra_input_counter = FindNewLocation(args_list, anchor_index, &inputs_index_list[0], &extra_inputs);
-
-    auto manager = anchor_fg->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    auto txn = manager->Transact();
-
-    size_t anchor_params_size = anchor_fg->parameters().size();
-    const auto &anchor_fg_params = anchor_fg->parameters();
-    for (size_t i = 0; i < args_list.size(); ++i) {
-      if (i == anchor_index) {
-        continue;
-      }
-      AnfNodePtrList new_params;
-      new_params.resize(anchor_params_size + extra_input_counter);
-
-      const auto &curr_inputs_index = inputs_index_list[i];
-      auto another_fg = GetValueNode<FuncGraphPtr>(fg_list[i]);
-      MS_EXCEPTION_IF_NULL(another_fg);
-      const auto &old_params = another_fg->parameters();
-      const auto &old_args = args_list[i];
-      for (size_t j = 0; j < old_args.size(); j++) {
-        new_params[curr_inputs_index[j]] = old_params[j];
-      }
-      // Zs_
-      for (size_t j = old_args.size(), k = 0; j < old_params.size(); ++j, ++k) {
-        new_params[anchor_args_size + extra_input_counter + k] = old_params[j];
-      }
-      // unused inputs
-      for (size_t j = 0; j < anchor_args_size; ++j) {
-        if (new_params[j] == nullptr) {
-          TraceGuard guard(std::make_shared<TraceCopy>(anchor_fg_params[j]->debug_info()));
-          ParameterPtr param = std::make_shared<Parameter>(another_fg);
-          auto new_abs =
-            anchor_fg_params[j]->abstract() == nullptr ? nullptr : anchor_fg_params[j]->abstract()->Clone();
-          param->set_abstract(new_abs);
-          new_params[j] = param;
-        }
-      }
-      // extra inputs used by another func_graph;
-      for (size_t j = 0; j < extra_inputs.size(); ++j) {
-        if (new_params[anchor_args_size + j] == nullptr) {
-          TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[j]->debug_info()));
-          ParameterPtr param = std::make_shared<Parameter>(another_fg);
-          auto new_abs = extra_inputs[j]->abstract() == nullptr ? nullptr : extra_inputs[j]->abstract()->Clone();
-          param->set_abstract(new_abs);
-          new_params[anchor_args_size + j] = param;
-        }
-      }
-      // set the parameter for another_fg and replace it's parameters;
-      txn.SetParameters(another_fg, new_params);
+  // Merge partial's args and call's args
+  // branch1: {{primPartial, Xs}, Zs} -> {{primPartial, Xs, Zs}}
+  // branch2: {{primPartial, Ys}, Zs} -> {{primPartial, Ys, Zs}}
+  void MergeArgs(const CNodePtr &call_node) {
+    for (auto &args : args_list_) {
+      (void)args.insert(args.end(), call_node->inputs().begin() + 1, call_node->inputs().end());
     }
-    // Reorder Zs_ and add extra parameters for anchor_fg;
-    // add extra parameter for anchor_fg;
-    AnfNodePtrList new_params;
-    new_params.reserve(anchor_params_size + extra_input_counter);
-    // reuse parameters for anchor_args;
-    (void)std::copy(anchor_fg_params.cbegin(), anchor_fg_params.cbegin() + SizeToLong(anchor_args_size),
-                    std::back_inserter(new_params));
-    // Extra parameters;
-    for (size_t i = 0; i < extra_inputs.size(); ++i) {
-      TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[i]->debug_info()));
-      ParameterPtr param = std::make_shared<Parameter>(anchor_fg);
-      auto new_abs = extra_inputs[i]->abstract() == nullptr ? nullptr : extra_inputs[i]->abstract()->Clone();
-      param->set_abstract(new_abs);
-      new_params.push_back(param);
-    }
-    // Reorder Zs_ to last;
-    for (size_t i = anchor_args_size; i < anchor_params_size; ++i) {
-      new_params.push_back(anchor_fg_params[i]);
-    }
-    txn.SetParameters(anchor_fg, new_params);
-    txn.Commit();
-
-    return extra_inputs;
   }
 
-  // Find the new location of the old_inputs except Zs.
-  size_t FindNewLocation(const std::vector<AnfNodePtrList> &args_list, size_t anchor_index,
-                         std::vector<size_t> *inputs_index_list, AnfNodePtrList *extra_inputs_ptr) const {
-    const auto &anchor_args = args_list[anchor_index];
-    auto &extra_inputs = *extra_inputs_ptr;
-    size_t extra_input_counter = 0;
-    size_t anchor_args_size = anchor_args.size();
-    for (size_t i = 0; i < args_list.size(); ++i) {
-      if (i == anchor_index) {
-        continue;
-      }
-      const auto &another_args = args_list[i];
-      auto &curr_inputs_index = inputs_index_list[i];
-      for (size_t j = 0; j < another_args.size(); ++j) {
-        size_t k;
-        for (k = 0; k < anchor_args_size; ++k) {
-          if (another_args[j] == anchor_args[k]) {
-            curr_inputs_index.push_back(k);
-            break;
-          }
+  // f(x1, x2, x3, z1, z2 ,monad1)
+  // g(x4, x2, z1, z2, monad2)
+  // h(x5, x2, x7, x8, z1, z2, monad3)
+  // --> union_args = (x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
+  // h(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
+  // f(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
+  // g(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
+  AnfNodePtrList UnifyParameters(const AnfNodePtrList &fg_list, const std::vector<AnfNodePtrList> args_list) {
+    if (fg_list.empty()) {
+      return {};
+    }
+    auto first_func_graph = GetValueNode<FuncGraphPtr>(fg_list[0]);
+    MS_EXCEPTION_IF_NULL(first_func_graph);
+    const auto manager = first_func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto txn = manager->Transact();
+    // Get all new args, new args is the union set of old args.
+    auto new_args = ArgsUnion(args_list);
+    auto old_args_index_map = GenOldArgsIndexes(fg_list, args_list);
+    for (size_t branch_index = 0; branch_index < fg_list.size(); ++branch_index) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(fg_list[branch_index]);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto new_parameters = GetFuncGraphNewParameters(func_graph, new_args, old_args_index_map);
+      txn.SetParameters(func_graph, new_parameters);
+    }
+    txn.Commit();
+    return new_args;
+  }
+
+ private:
+  std::vector<AnfNodePtr> ArgsUnion(const std::vector<AnfNodePtrList> args_list) {
+    std::set<AnfNodePtr> no_monad_args;
+    std::set<AnfNodePtr> monad_args;
+    for (const auto &args : args_list) {
+      for (const auto &arg : args) {
+        if (HasAbstractMonad(arg)) {
+          (void)monad_args.insert(arg);
+          continue;
         }
-        if (k == anchor_args_size) {
-          // check if used by another func_graph;
-          for (k = 0; k < extra_input_counter; ++k) {
-            if (another_args[j] == extra_inputs[k]) {
-              curr_inputs_index.push_back(anchor_args_size + k);
-              break;
-            }
-          }
-          if (k == extra_input_counter) {
-            extra_inputs.push_back(another_args[j]);
-            curr_inputs_index.push_back(anchor_args_size + extra_input_counter);
-            extra_input_counter++;
-          }
-        }
+        (void)no_monad_args.insert(arg);
       }
     }
-    return extra_input_counter;
+    // Keep monad args after no monad args.
+    std::vector<AnfNodePtr> union_args(no_monad_args.cbegin(), no_monad_args.cend());
+    (void)union_args.insert(union_args.cend(), monad_args.cbegin(), monad_args.cend());
+    return union_args;
+  }
+
+  HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> GenOldArgsIndexes(const AnfNodePtrList &fg_list,
+                                                                       const std::vector<AnfNodePtrList> &args_list) {
+    HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> old_args_indexes;
+    for (size_t i = 0; i < fg_list.size(); ++i) {
+      const auto func_graph = GetValueNode<FuncGraphPtr>(fg_list[i]);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      const auto &args = args_list[i];
+      HashMap<AnfNodePtr, size_t> args_indexes;
+      size_t arg_index = 0;
+      std::for_each(args.cbegin(), args.cend(), [&args_indexes, &arg_index](const AnfNodePtr &arg) {
+        (void)args_indexes.emplace(arg, arg_index++);
+      });
+      old_args_indexes[func_graph] = args_indexes;
+    }
+    return old_args_indexes;
+  }
+
+  AnfNodePtr GetParameterByArg(const HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> &all_old_args_index_map,
+                               const AnfNodePtr &arg) {
+    MS_LOG(DEBUG) << "Get parameter by arg:" << arg->DebugString();
+    for (const auto &[fg, old_args_index] : all_old_args_index_map) {
+      auto it = old_args_index.find(arg);
+      if (it == old_args_index.end()) {
+        continue;
+      }
+      size_t arg_index = it->second;
+      if (arg_index >= fg->parameters().size()) {
+        MS_LOG(EXCEPTION) << "Index:" << arg_index << " out of range:" << fg->parameters().size();
+      }
+      return fg->parameters()[arg_index];
+    }
+    MS_LOG(EXCEPTION) << "Can't find parameter of arg:" << arg->DebugString();
+  }
+
+  std::vector<AnfNodePtr> GetFuncGraphNewParameters(
+    const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &new_args,
+    const HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> &all_old_args_index_map) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    const auto &old_parameters = func_graph->parameters();
+    std::vector<AnfNodePtr> new_parameters(new_args.size());
+    const auto &old_args_index_map = all_old_args_index_map.find(func_graph)->second;
+    for (size_t new_arg_index = 0; new_arg_index < new_args.size(); ++new_arg_index) {
+      const auto &new_arg = new_args[new_arg_index];
+      auto arg_old_index_it = old_args_index_map.find(new_arg);
+      // The new_arg is the arg of current func graph.
+      if (arg_old_index_it != old_args_index_map.end()) {
+        auto arg_old_index = arg_old_index_it->second;
+        new_parameters[new_arg_index] = old_parameters[arg_old_index];
+        MS_LOG(DEBUG) << "Find exist parameter:" << new_parameters[new_arg_index]->DebugString()
+                      << ", arg_old_index:" << arg_old_index;
+        continue;
+      }
+      // The new_arg is the arg of other func graph.
+      const auto other_fg_parameter = GetParameterByArg(all_old_args_index_map, new_arg);
+      MS_LOG(DEBUG) << "Get other fg's parameter:" << other_fg_parameter->DebugString();
+      TraceGuard guard(std::make_shared<TraceCopy>(other_fg_parameter->debug_info()));
+      ParameterPtr param = std::make_shared<Parameter>(func_graph);
+      param->set_abstract(other_fg_parameter->abstract());
+      new_parameters[new_arg_index] = param;
+    }
+    return new_parameters;
   }
 };
 
@@ -318,20 +306,19 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
       return nullptr;
     }
-    auto cnode = node->cast<CNodePtr>();
-    if (!IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
+    auto switch_call = node->cast<CNodePtr>();
+    if (!IsPrimitiveCNode(switch_call->input(0), prim::kPrimSwitch)) {
       return nullptr;
     }
-    auto input0_cnode = cnode->input(0)->cast<CNodePtr>();
-    if (input0_cnode->size() != kSwitchInputSize) {
+    auto switch_node = switch_call->input(0)->cast<CNodePtr>();
+    if (switch_node->size() != kSwitchInputSize) {
       return nullptr;
     }
-
     fg_list_.clear();
     args_list_.clear();
-    auto &maybe_partial_1 = input0_cnode->input(kSwitchTrueBranchIndex);
+    const auto maybe_partial_1 = switch_node->input(kSwitchTrueBranchIndex);
     Visit(maybe_partial_1);
-    auto &maybe_partial_2 = input0_cnode->input(kSwitchFalseBranchIndex);
+    const auto maybe_partial_2 = switch_node->input(kSwitchFalseBranchIndex);
     Visit(maybe_partial_2);
 
     // Either one should be {Partial, G, X}
@@ -342,46 +329,33 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     if (!CheckFuncGraphAndArgs()) {
       return nullptr;
     }
-
+    MergeArgs(switch_call);
     if (args_list_[0] == args_list_[1]) {
-      auto new_node =
-        BuildNewSwitchNode(cnode, input0_cnode, fg_list_[0], fg_list_[1], args_list_[0], AnfNodePtrList{});
-      return new_node;
+      return BuildNewSwitchNode(switch_call, args_list_[0]);
     } else {
-      // find partial funcgraph with the longest args as anchor;
-      size_t max_args_pos = 0;
-      if (args_list_[0].size() > args_list_[1].size()) {
-        max_args_pos = 0;
-      } else {
-        max_args_pos = 1;
-      }
-
-      auto extra_inputs = UnifyParameters(max_args_pos, fg_list_, args_list_);
-      auto new_node =
-        BuildNewSwitchNode(cnode, input0_cnode, fg_list_[0], fg_list_[1], args_list_[max_args_pos], extra_inputs);
-      return new_node;
+      const auto new_args = UnifyParameters(fg_list_, args_list_);
+      return BuildNewSwitchNode(switch_call, new_args);
     }
   }
 
  private:
-  AnfNodePtr BuildNewSwitchNode(const CNodePtr &old_cnode, const CNodePtr input0_cnode, const AnfNodePtr &G1,
-                                const AnfNodePtr &G2, const AnfNodePtrList &partial_args,
-                                const AnfNodePtrList &extra_args) const {
-    TraceGuard guard1(std::make_shared<TraceCopy>(input0_cnode->debug_info()));
+  AnfNodePtr BuildNewSwitchNode(const CNodePtr &switch_call, const std::vector<AnfNodePtr> &new_args) {
+    const auto input0 = switch_call->input(0);
+    MS_EXCEPTION_IF_NULL(input0);
+    const auto switch_node = input0->cast<CNodePtr>();
+    TraceGuard guard1(std::make_shared<TraceCopy>(switch_node->debug_info()));
     // {Switch, cond, G1, G2}
-    auto switch_cnode = old_cnode->func_graph()->NewCNode({input0_cnode->input(0), input0_cnode->input(1), G1, G2});
-    switch_cnode->set_abstract(input0_cnode->abstract());
-    AnfNodePtrList args{switch_cnode};
-    (void)std::copy(partial_args.begin(), partial_args.end(), std::back_inserter(args));
-    (void)std::copy(extra_args.begin(), extra_args.end(), std::back_inserter(args));
-    // Zs
-    if (old_cnode->size() >= kMinInputSizeOfCallWithArgs) {
-      (void)std::copy(old_cnode->inputs().begin() + 1, old_cnode->inputs().end(), std::back_inserter(args));
-    }
-    TraceGuard guard2(std::make_shared<TraceCopy>(old_cnode->debug_info()));
-    auto new_node = old_cnode->func_graph()->NewCNode(args);
-    new_node->set_abstract(old_cnode->abstract());
-    return new_node;
+    std::vector<AnfNodePtr> switch_inputs = {switch_node->input(0), switch_node->input(1)};
+    (void)switch_inputs.insert(switch_inputs.end(), fg_list_.begin(), fg_list_.end());
+    const auto new_switch_cnode = switch_call->func_graph()->NewCNode(std::move(switch_inputs));
+    new_switch_cnode->set_abstract(switch_node->abstract());
+    // Create switch call.
+    TraceGuard guard2(std::make_shared<TraceCopy>(switch_call->debug_info()));
+    AnfNodePtrList switch_call_inputs{new_switch_cnode};
+    switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
+    const auto new_call_node = switch_call->func_graph()->NewCNode(std::move(switch_call_inputs));
+    new_call_node->set_abstract(switch_call->abstract());
+    return new_call_node;
   }
 };
 
@@ -397,12 +371,13 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
       return nullptr;
     }
-    auto cnode = node->cast<CNodePtr>();
+    auto switch_layer_call = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_layer_call);
     // {SwitchLayer{}, Zs}
-    if (!IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitchLayer)) {
+    if (!IsPrimitiveCNode(switch_layer_call->input(0), prim::kPrimSwitchLayer)) {
       return nullptr;
     }
-    auto switch_layer_cnode = cnode->input(0)->cast<CNodePtr>();
+    auto switch_layer_cnode = switch_layer_call->input(0)->cast<CNodePtr>();
     // {SwitchLayer, cond, MakeTuple{}}
     if (switch_layer_cnode->size() != kSwitchLayerInputSize) {
       return nullptr;
@@ -425,52 +400,39 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
     if (!CheckFuncGraphAndArgs()) {
       return nullptr;
     }
+    MergeArgs(switch_layer_call);
     // All have the same args;
     auto args_equal =
       std::all_of(args_list_.cbegin() + 1, args_list_.cend(), [this](auto &args) { return args == args_list_[0]; });
     if (args_equal) {
-      auto new_node = BuildNewSwitchLayerNode(cnode, switch_layer_cnode, args_list_[0], AnfNodePtrList{});
-      return new_node;
+      return BuildNewSwitchLayerNode(switch_layer_call, args_list_[0]);
     } else {
-      // find partial funcgraph with the longest args as anchor;
-      size_t max_args_pos = 0, max_args_len = 0;
-      for (size_t i = 0; i < args_list_.size(); ++i) {
-        if (max_args_len < args_list_[i].size()) {
-          max_args_len = args_list_[i].size();
-          max_args_pos = i;
-        }
-      }
-      auto extra_inputs = UnifyParameters(max_args_pos, fg_list_, args_list_);
-      auto new_node = BuildNewSwitchLayerNode(cnode, switch_layer_cnode, args_list_[max_args_pos], extra_inputs);
-      return new_node;
+      const auto new_args = UnifyParameters(fg_list_, args_list_);
+      return BuildNewSwitchLayerNode(switch_layer_call, new_args);
     }
   }
 
  private:
-  AnfNodePtr BuildNewSwitchLayerNode(const CNodePtr &old_cnode, const CNodePtr switch_layer_cnode,
-                                     const AnfNodePtrList &anchor_partial_args,
-                                     const AnfNodePtrList &extra_args) const {
-    auto make_tuple_cnode = switch_layer_cnode->input(kSwitchLayerBranchesIndex)->cast<CNodePtr>();
+  AnfNodePtr BuildNewSwitchLayerNode(const CNodePtr &switch_layer_call_node, const AnfNodePtrList &new_args) {
+    const auto switch_layer = switch_layer_call_node->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_layer);
+    auto make_tuple_cnode = switch_layer->input(kSwitchLayerBranchesIndex)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+    // {primMakeTuple, G1, G2, ...}
     AnfNodePtrList make_tuple_args{make_tuple_cnode->input(0)};
-    make_tuple_args.insert(make_tuple_args.end(), fg_list_.begin(), fg_list_.end());
+    (void)make_tuple_args.insert(make_tuple_args.end(), fg_list_.begin(), fg_list_.end());
     TraceGuard guard1(std::make_shared<TraceCopy>(make_tuple_cnode->debug_info()));
-    // {MakeTuple, G1, G2, ...}
-    auto new_make_tuple_cnode = old_cnode->func_graph()->NewCNode(make_tuple_args);
-
-    TraceGuard guard2(std::make_shared<TraceCopy>(switch_layer_cnode->debug_info()));
-    // {SwitchLayer, cond, MakeTuple{}}
-    auto new_switch_layer_cnode = old_cnode->func_graph()->NewCNode(
-      {switch_layer_cnode->input(0), switch_layer_cnode->input(1), new_make_tuple_cnode});
-    AnfNodePtrList args{new_switch_layer_cnode};
-    (void)std::copy(anchor_partial_args.begin(), anchor_partial_args.end(), std::back_inserter(args));
-    (void)std::copy(extra_args.begin(), extra_args.end(), std::back_inserter(args));
-    // Zs
-    if (old_cnode->size() >= kMinInputSizeOfCallWithArgs) {
-      (void)std::copy(old_cnode->inputs().begin() + 1, old_cnode->inputs().end(), std::back_inserter(args));
-    }
-    TraceGuard guard3(std::make_shared<TraceCopy>(old_cnode->debug_info()));
-    auto new_node = old_cnode->func_graph()->NewCNode(args);
-    new_node->set_abstract(old_cnode->abstract());
+    auto new_make_tuple_cnode = make_tuple_cnode->func_graph()->NewCNode(std::move(make_tuple_args));
+    // {primSwitchLayer, cond, MakeTuple{}}
+    TraceGuard guard2(std::make_shared<TraceCopy>(switch_layer->debug_info()));
+    auto new_switch_layer =
+      switch_layer->func_graph()->NewCNode({switch_layer->input(0), switch_layer->input(1), new_make_tuple_cnode});
+    // Create new switch_layer call node.
+    TraceGuard guard3(std::make_shared<TraceCopy>(switch_layer_call_node->debug_info()));
+    AnfNodePtrList switch_layer_call_inputs{new_switch_layer};
+    (void)switch_layer_call_inputs.insert(switch_layer_call_inputs.cend(), new_args.cbegin(), new_args.cend());
+    auto new_node = switch_layer_call_node->func_graph()->NewCNode(std::move(switch_layer_call_inputs));
+    new_node->set_abstract(switch_layer_call_node->abstract());
     return new_node;
   }
 };

@@ -402,13 +402,11 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " pred_blocks_ "
                   << (pred->func_graph_ ? pred->func_graph_->ToString() : "FG(Null)");
     AnfNodePtr arg_node = pred->ReadVariable(var);
-    auto jump_iter = pred->jumps_.find(this);
-    if (jump_iter == pred->jumps_.end()) {
+    auto jump = pred->GetJumpNode(this);
+    if (jump == nullptr) {
       // If prev block is a switch call's prev block, no jumps here.
       continue;
     }
-    CNodePtr jump = jump_iter->second;
-    MS_EXCEPTION_IF_NULL(jump);
     jump->add_input(arg_node);
   }
 }
@@ -449,7 +447,7 @@ std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &va
 // Args: phi: This parameter node is functioning as a phi node.
 void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
-  std::string var_name = phi_nodes_[phi];
+  const auto &var_name = phi_nodes_[phi];
   MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var_name;
   if (prev_blocks_.empty()) {
     MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var_name;
