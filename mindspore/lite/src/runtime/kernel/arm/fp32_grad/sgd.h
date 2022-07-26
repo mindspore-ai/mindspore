@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SGD_H_
 
 #include <vector>
+#include <atomic>
 #include "src/train/optimizer_kernel.h"
 #include "nnacl/fp32_grad/optimizer.h"
 
@@ -46,6 +47,7 @@ class SgdCPUKernel : public OptimizerKernel {
  private:
   int thread_count_;
   SgdParameter *sgd_param_;
+  std::atomic<float> sgd_stat_{0.0f};
 };
 }  // namespace mindspore::kernel
 

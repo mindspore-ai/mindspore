@@ -52,8 +52,8 @@ int DoSgd(float *weight, float *accumulate, const float *gradient, float learnin
   return RET_OK;
 }
 
-int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, float learning_rate, float moment,
-              bool nesterov, int start, int end) {
+int DoSgdInit(float *weight, float *accumulate, float *gradient, float learning_rate, float moment, bool nesterov,
+              int start, int end) {
   std::copy(&(gradient[start]), &(gradient[end]), &(accumulate[start]));
   if (nesterov) {
     for (int i = start; i < end; ++i) {
@@ -64,7 +64,6 @@ int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, fl
       weight[i] -= accumulate[i] * learning_rate;
     }
   }
-  *stat = 1.0f;
   return RET_OK;
 }
 
@@ -86,8 +85,8 @@ int SgdCPUKernel::Execute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_, start,
-        end);
+  (void)DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
+              start, end);
 
   return RET_OK;
 }
@@ -113,7 +112,8 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
   int end = start + count;
 
   if (count > 0) {
-    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+    (void)DoSgdInit(weight, accumulate, gradient, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+    sgd_stat_ = 0.0f;
   }
   return RET_OK;
 }
@@ -155,9 +155,11 @@ int SgdRunInit(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int SgdCPUKernel::Run() {
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
   CHECK_NULL_RETURN(stat);
+  sgd_stat_ = *stat;
   auto error_code = RET_OK;
-  if (*stat > 0.0f) {
+  if (sgd_stat_ > 0.0f) {
     error_code = ParallelLaunch(this->ms_context_, SgdRunInit, this, thread_count_);
+    *stat = sgd_stat_;
   } else {
     error_code = ParallelLaunch(this->ms_context_, SgdRun, this, thread_count_);
   }
@@ -215,10 +217,11 @@ int SgdCPUKernel::OptimizerStep() {
     size_t start = 0;
     size_t end = length;
     if (*stat > 0) {
-      DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
-            start, end);
+      (void)DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment,
+                  sgd_param_->use_nesterov_, start, end);
     } else {
-      DoSgdInit(weight, accumulate, grad_sum_, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+      (void)DoSgdInit(weight, accumulate, grad_sum_, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+      *stat = 0.0f;
     }
     std::fill(grad_sum_, grad_sum_ + length, 0);
     OptimizerKernel::OptimizerStep();
