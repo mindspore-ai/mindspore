@@ -116,8 +116,8 @@ class BaseOpAdapter {
   virtual OperatorPtr generate(const std::string &type) { return std::make_shared<::ge::Operator>(type); }
   virtual OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) { return nullptr; }
   virtual void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) { return; }
-  virtual int setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;
-  virtual int setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) = 0;
+  virtual void setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;
+  virtual void setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
   virtual int setInput(const OperatorPtr &op, int index,

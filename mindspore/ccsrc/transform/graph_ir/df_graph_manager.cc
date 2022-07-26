@@ -93,7 +93,7 @@ std::vector<DfGraphWrapperPtr> DfGraphManager::GetAllGraphs() {
   ss << "{ ";
   for (auto it = graphs_.begin(); it != graphs_.end(); ++it) {
     ss << it->first << ", ";
-    ret.emplace_back(it->second);
+    (void)ret.emplace_back(it->second);
   }
   ss << "}";
   MS_LOG(INFO) << "Return graphs: " << ss.str();

@@ -211,7 +211,7 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
                                                                    std::vector<ge::Tensor> &ge_outputs) {
     if (ge_status == Status::SUCCESS) {
       for (size_t i = 0; i < ge_outputs.size(); ++i) {
-        outputs->emplace_back(std::make_shared<ge::Tensor>(ge_outputs[i]));
+        (void)outputs->emplace_back(std::make_shared<ge::Tensor>(ge_outputs[i]));
       }
       is_finished = true;
     } else if (ge_status == ge::END_OF_SEQUENCE) {
@@ -272,7 +272,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
 
     auto ge_tensor_ptr = TransformUtil::ConvertTensor(it, kOpFormat_NCHW);
     if (ge_tensor_ptr != nullptr) {
-      ge_inputs.emplace_back(ge_tensor_ptr);
+      (void)ge_inputs.emplace_back(ge_tensor_ptr);
     } else {
       MS_LOG(INFO) << "Convert input Me tensor to Ge tensor failed. Abort this graph";
       return Status::FAILED;
