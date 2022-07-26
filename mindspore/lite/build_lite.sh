@@ -176,7 +176,11 @@ build_python_wheel_package() {
     fi
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
-    cp src/*.so package/mindspore_lite/lib/
+    if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
+      cp src/extendrt/*.so package/mindspore_lite/lib/
+    else
+      cp src/*.so package/mindspore_lite/lib/
+    fi
     local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
     if [[ "$1" == "x86_64" ]]; then
       local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
