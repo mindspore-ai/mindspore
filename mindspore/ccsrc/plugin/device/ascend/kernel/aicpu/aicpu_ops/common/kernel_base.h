@@ -33,7 +33,7 @@ class KernelBase {
  public:
   explicit KernelBase(const std::string &kernel_name);
 
-  ~KernelBase() = default;
+  virtual ~KernelBase() = default;
 
   uint32_t Compute(void *param);
   size_t GetDataTypeSize(::aicpuops::DataType data_type);

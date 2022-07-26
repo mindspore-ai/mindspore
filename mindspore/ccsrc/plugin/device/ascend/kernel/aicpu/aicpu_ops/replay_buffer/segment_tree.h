@@ -64,7 +64,7 @@ class SegmentTree {
   }
 
   // Get root node information.
-  const T &Root() { return buffer_[kRootIndex]; }
+  const T &Root() const { return buffer_[kRootIndex]; }
 
   // Get leaf node information with index.
   const T &GetByIndex(size_t idx) {

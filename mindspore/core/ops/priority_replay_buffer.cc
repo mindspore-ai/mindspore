@@ -42,7 +42,7 @@ void PriorityReplayBufferCreate::set_shapes(const std::vector<std::vector<int64_
 void PriorityReplayBufferCreate::set_types(const std::vector<TypePtr> &types) {
   auto res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
   MS_EXCEPTION_IF_NULL(res);
-  res->AddAttr(kTypes, MakeValue(types));
+  (void)res->AddAttr(kTypes, MakeValue(types));
 }
 
 void PriorityReplayBufferCreate::set_schema(const std::vector<int64_t> &schema) {
@@ -155,7 +155,7 @@ void PriorityReplayBufferSample::set_shapes(const std::vector<std::vector<int64_
 void PriorityReplayBufferSample::set_types(const std::vector<TypePtr> &types) {
   auto res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
   MS_EXCEPTION_IF_NULL(res);
-  res->AddAttr(kTypes, MakeValue(types));
+  (void)res->AddAttr(kTypes, MakeValue(types));
 }
 
 void PriorityReplayBufferSample::set_schema(const std::vector<int64_t> &schema) {

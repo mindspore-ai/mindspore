@@ -70,14 +70,14 @@ uint32_t PriorityReplayBufferPush::ParseKernelParam() {
 
   const size_t &num_input = node_def_.inputs_size();
   for (size_t i = 0; i < num_input; i++) {
-    ::aicpuops::Tensor input = node_def_.inputs(i);
+    ::aicpuops::Tensor input = node_def_.inputs(static_cast<int>(i));
     const auto &dtype = static_cast<::aicpuops::DataType>(input.tensor_type());
     size_t len = GetDataTypeSize(dtype);
     ::aicpuops::TensorShape shape = input.tensor_shape();
     for (int j = 0; j < shape.dim_size(); j++) {
-      len *= shape.dim(j).size();
+      len *= static_cast<size_t>(shape.dim(j).size());
     }
-    inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
+    (void)inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
   }
 
   return AICPU_KERNEL_STATE_SUCCESS;
@@ -87,7 +87,7 @@ uint32_t PriorityReplayBufferPush::DoCompute() {
   AICPU_LOGI("Do compute start");
 
   auto buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
-  buffer->Push(inputs_);
+  (void)buffer->Push(inputs_);
 
   const size_t &num_input = node_def_.inputs_size();
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[num_input]);
@@ -156,21 +156,21 @@ uint32_t PriorityReplayBufferUpdate::ParseKernelParam() {
     return AICPU_KERNEL_STATE_INTERNAL_ERROR;
   }
   for (size_t i = 0; i < num_input; i++) {
-    ::aicpuops::Tensor input = node_def_.inputs(i);
+    ::aicpuops::Tensor input = node_def_.inputs(static_cast<int>(i));
     const auto &dtype = static_cast<::aicpuops::DataType>(input.tensor_type());
     size_t len = GetDataTypeSize(dtype);
     ::aicpuops::TensorShape shape = input.tensor_shape();
     for (int j = 0; j < shape.dim_size(); j++) {
-      len *= shape.dim(j).size();
+      len *= static_cast<size_t>(shape.dim(j).size());
     }
-    inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
+    (void)inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
   }
 
   return AICPU_KERNEL_STATE_SUCCESS;
 }
 
 uint32_t PriorityReplayBufferUpdate::DoCompute() {
-  batch_size_ = node_def_.inputs(0).tensor_shape().dim(0).size();
+  batch_size_ = static_cast<size_t>(node_def_.inputs(0).tensor_shape().dim(0).size());
   std::vector<size_t> indices(batch_size_);
   std::vector<float> priorities(batch_size_);
 
@@ -189,7 +189,7 @@ uint32_t PriorityReplayBufferUpdate::DoCompute() {
   }
 
   auto prioriory_replay_buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
-  prioriory_replay_buffer->UpdatePriorities(indices, priorities);
+  (void)prioriory_replay_buffer->UpdatePriorities(indices, priorities);
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[inputs_.size()]);
