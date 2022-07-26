@@ -28,7 +28,6 @@ mindspore.ops.interpolate
 
               old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
 
-
         - **mode** (str) - 所使用的插值方式。目前支持"linear"和"bilinear"插值方式。默认值: "linear"。
 
     返回：

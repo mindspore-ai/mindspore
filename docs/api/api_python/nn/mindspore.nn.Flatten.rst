@@ -12,4 +12,4 @@ mindspore.nn.Flatten
         Tensor，shape为 :math:`(N, X)`，其中 :math:`X` 是输入 `x` 的shape除N之外的其余维度的乘积。
 
     异常：
-        **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `x` 不是Tensor。
