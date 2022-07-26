@@ -24,7 +24,9 @@
 #include "utils/overload.h"
 
 // NOTICE: when relative path of 'log.h' changed, macro 'LITE_LOG_HEAR_FILE_REL_PATH' must be changed
+#ifndef LITE_LOG_HEAR_FILE_REL_PATH
 #define LITE_LOG_HEAR_FILE_REL_PATH "mindspore/lite/src/common/log.h"
+#endif
 
 // Get start index of file relative path in __FILE__
 static constexpr size_t GetRealPathPos() noexcept {

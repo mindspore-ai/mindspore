@@ -19,20 +19,20 @@
 #include <cstdlib>
 #include <climits>
 #include <memory>
-#include "common/ms_log.h"
+#include "common/log.h"
 
 std::string RealPath(const char *path) {
   if (path == nullptr) {
-    MS_LOGE("path is nullptr");
+    MS_LOG(ERROR) << "path is nullptr";
     return "";
   }
   if ((strlen(path)) >= PATH_MAX) {
-    MS_LOGE("path is too long");
+    MS_LOG(ERROR) << "path is too long";
     return "";
   }
   auto resolved_path = std::make_unique<char[]>(PATH_MAX);
   if (resolved_path == nullptr) {
-    MS_LOGE("new resolved_path failed");
+    MS_LOG(ERROR) << "new resolved_path failed";
     return "";
   }
 #ifdef _WIN32
@@ -41,7 +41,7 @@ std::string RealPath(const char *path) {
   char *real_path = realpath(path, resolved_path.get());
 #endif
   if (real_path == nullptr || strlen(real_path) == 0) {
-    MS_LOGE("file path is not valid : %s", path);
+    MS_LOG(ERROR) << "file path is not valid : " << path;
     return "";
   }
   std::string res = resolved_path.get();

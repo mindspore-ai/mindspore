@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class MSContext {
     private long msContextPtr;
     private static final long EMPTY_CONTEXT_PTR_VALUE = 0;
     private static final int ERROR_VALUE = -1;
-    private static final String NULLPTR_ERROR_MESSAGE="msContext is a nullptr.\n";
+    private static final String NULLPTR_ERROR_MESSAGE="Context pointer from java is nullptr.\n";
 
     /**
      * Construct function.
