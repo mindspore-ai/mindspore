@@ -33,9 +33,12 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
-  auto idx_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex1);
-  auto y_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex2);
+  const size_t x_index = 0;
+  const size_t idx_index = 1;
+  const size_t y_index = 2;
+  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, x_index);
+  auto idx_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, idx_index);
+  auto y_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, y_index);
   auto x_is_dynamic = x_shape_ptr->IsDynamic();
   auto idx_is_dynamic = idx_shape_ptr->IsDynamic();
   auto y_is_dynamic = y_shape_ptr->IsDynamic();
@@ -63,11 +66,12 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
     return x_shape_ptr;
   }
   if (!idx_is_dynamic) {
-    (void)CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, y_shape[axis_rank], prim_name);
+    size_t axis_value = static_cast<size_t>(axis_rank);
+    CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, y_shape[axis_value], prim_name);
   }
   for (int dim = 0; dim < x_rank; dim = dim + 1) {
     if (dim != axis_rank) {
-      (void)CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, y_shape[dim], prim_name);
+      CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, y_shape[dim], prim_name);
     }
   }
   return x_shape_ptr;

@@ -1052,6 +1052,17 @@ def pdist(x, p=2.0):
     return pdist_(x)
 
 
+@constexpr
+def _check_pad_inputs(x_shape, paddings):
+    """check the input of pad"""
+    for _, pd in enumerate(paddings):
+        if not isinstance(pd, (list, tuple)) or len(pd) != 2 or not isinstance(pd[0], int) or \
+                not isinstance(pd[1], int):
+            raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
+    if len(x_shape) != len(paddings):
+        raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
+
+
 def pad(input_x, paddings):
     r"""
     Pads the input tensor according to the paddings.
@@ -1105,13 +1116,8 @@ def pad(input_x, paddings):
         raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
     if not isinstance(paddings, tuple):
         raise TypeError(f"For 'pad', the type of 'paddings' must be tuple, but got {type(paddings)}.")
-    for _, pd in enumerate(paddings):
-        if not isinstance(pd, (list, tuple)) or len(pd) != 2 or not isinstance(pd[0], int) or \
-                not isinstance(pd[1], int):
-            raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
     x_shape = input_x.shape
-    if len(x_shape) != len(paddings):
-        raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
+    _check_pad_inputs(x_shape, paddings)
     pad_all_non_negative = True
     pad_all_non_positive = True
     slice_begin = []
