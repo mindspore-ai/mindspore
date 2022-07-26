@@ -140,6 +140,7 @@ name: Softmax-65, ,DataType: 43, Size: 4004, Shape:1 1001, Data:
 ```
 
 ## 更多详情
-### [Linux_x86_64编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
 
-### [STM32F746编译部署](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/examples/quick_start_micro/mnist_stm32f746)
+### [Linux_x86_64编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/examples/quick_start_micro/mnist_x86/README.md)
+
+### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
