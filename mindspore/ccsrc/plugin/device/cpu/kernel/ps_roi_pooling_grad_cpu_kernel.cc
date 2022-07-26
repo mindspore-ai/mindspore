@@ -293,7 +293,13 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     MS_EXCEPTION_IF_NULL(rois);
     auto output_diff = reinterpret_cast<float *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
-    (void)memset_s(output_diff, outputs[0]->size, '\0', outputs[0]->size);
+
+    constexpr size_t unit_size = sizeof(float);
+    auto memset_task = [&](size_t start, size_t end) {
+      (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+    };
+    ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+
     auto task = [&](size_t start, size_t end) {
       return PSROIPoolBackward<float>(start, end, top_diff, output_diff, rois);
     };
@@ -308,7 +314,13 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     MS_EXCEPTION_IF_NULL(rois);
     auto output_diff = reinterpret_cast<float16 *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
-    (void)memset_s(output_diff, outputs[0]->size, '\0', outputs[0]->size);
+
+    constexpr size_t unit_size = sizeof(float16);
+    auto memset_task = [&](size_t start, size_t end) {
+      (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+    };
+    ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+
     auto task = [&](size_t start, size_t end) {
       return PSROIPoolBackward<float16>(start, end, top_diff, output_diff, rois);
     };
