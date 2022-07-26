@@ -64,6 +64,7 @@
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
 #include "tools/optimizer/fusion/activation_fusion.h"
+#include "tools/optimizer/fusion/reshape_reduce_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -244,11 +245,19 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
     MS_LOG(ERROR) << "run op fusion failed.";
     return RET_ERROR;
   }
-  auto mul_reduce_fusion = std::make_shared<opt::MulReduceFusion>();  // the pass needs to check the return value.
-  MS_CHECK_TRUE_MSG(mul_reduce_fusion != nullptr, RET_ERROR, "mul-reduce-fusion create failed.");
-  if (!mul_reduce_fusion->Run(old_graph)) {
-    MS_LOG(ERROR) << "mul-reduce-fusion running failed.";
-    return RET_ERROR;
+
+  // the following pass needs to check the return value.
+  fusions = {std::make_shared<opt::MulReduceFusion>(), std::make_shared<opt::ReshapeReduceFusion>()};
+  for (auto &pass : fusions) {
+    MS_CHECK_TRUE_MSG(pass != nullptr, RET_ERROR, "pass is a nullptr.");
+    if (param->fusion_blacklists.find(pass->name()) != param->fusion_blacklists.end()) {
+      MS_LOG(INFO) << "Disable fusion: " << pass->name();
+      continue;
+    }
+    if (!pass->Run(old_graph)) {
+      MS_LOG(ERROR) << pass->name() << " running failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
