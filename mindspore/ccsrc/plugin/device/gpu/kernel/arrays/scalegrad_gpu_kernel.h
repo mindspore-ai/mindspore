@@ -40,7 +40,8 @@ class ScaleGradGpuKernelMod : public NativeGpuKernelMod {
  private:
   template <typename T>
   void LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                              void *stream_ptr, half *scale_addr_half, float *scale_addr_float, size_t index);
+                              void *stream_ptr, const half *scale_addr_half, const float *scale_addr_float,
+                              size_t index);
   std::string kernel_name_;
   std::vector<TypeId> input_info_;
 };

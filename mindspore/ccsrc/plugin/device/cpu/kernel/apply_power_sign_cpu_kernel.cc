@@ -19,7 +19,6 @@
 #include <map>
 #include <functional>
 #include "kernel/common_utils.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -38,7 +37,7 @@ constexpr size_t kIndexBeta = 5;
 constexpr size_t kIndexGrad = 6;
 
 template <typename T>
-int Sgn(T x) {
+int Sgn(const T &x) {
   if (x > T(0)) {
     return 1;
   }
