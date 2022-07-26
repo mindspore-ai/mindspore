@@ -107,6 +107,8 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
     FloatToHalf(host_ptr, ptr_, size >> 1);
   } else if (type == kNumberTypeFloat64 && type_id_ == kNumberTypeFloat32) {
     FloatToDouble(host_ptr, ptr_, size / sizeof(double));
+  } else if (type == kNumberTypeFloat32 && type_id_ == kNumberTypeFloat64) {
+    DoubleToFloat(host_ptr, ptr_, size >> 1);
   } else if (type == kNumberTypeInt16 && type_id_ == kNumberTypeInt32) {
     IntToShort(host_ptr, ptr_, size >> 1);
   } else if (type == kNumberTypeInt64 && type_id_ == kNumberTypeInt32) {
