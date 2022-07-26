@@ -22,6 +22,23 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
+class CheckDepthWise : public Validator {
+ public:
+  bool Check(const OpDesc &e) override {
+    if (e.Attrs().count("is_depth_wise") != 0) {
+      if (e.Attrs().count("group") == 0) {
+        return false;
+      }
+      const auto group = GetValue<int64_t>(e.Attrs().find("group")->second);
+      const auto c_in = e.InputsInfo()[0].shape[3];
+      if (group != c_in) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
 class Conv2DFusion : public OpDesc {
  public:
   Conv2DFusion() {
@@ -29,6 +46,7 @@ class Conv2DFusion : public OpDesc {
                                              "in_channel",  "pad_list",    "pad_mode",  "weight_coo",
                                              "weight_coi",  "weight_cio",  "weight_cii"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+    (void)validators_.emplace_back(std::make_unique<CheckDepthWise>());
   }
   ~Conv2DFusion() = default;
 
@@ -80,28 +98,28 @@ class Conv2DFusion : public OpDesc {
     updated_attrs["conv_out_format"] = MakeValue(conv_out_format);
     auto result_nchwc = gb.Emit("Conv2D", {data_pad, weight}, updated_attrs);
 
-    inner::NodePtr result_nchwc_act;
-    if (attrs_.find("activation_type") != attrs_.end()) {
-      auto act_type = GetValue<int64_t>(attrs_["activation_type"]);
-      result_nchwc_act = GetActivationExpander(gb, {result_nchwc}, act_type);
-    } else {
-      result_nchwc_act = result_nchwc;
-    }
-
     inner::NodePtr result_nchwc_bias;
     constexpr size_t has_bias_inputs_size = 3;
     if (inputs.size() == has_bias_inputs_size) {
       const auto &bias = inputs[2];
       auto bias_dim = bias->shape[0];
-      auto conv_c = result_nchwc_act->shape[4];
+      auto conv_c = result_nchwc->shape[4];
       ShapeVector bias_shape{1, bias_dim / conv_c, 1, 1, conv_c};
       auto bias_nchwc = gb.Reshape(bias, bias_shape);
-      result_nchwc_bias = gb.Add(result_nchwc_act, bias_nchwc);
+      result_nchwc_bias = gb.Add(result_nchwc, bias_nchwc);
     } else {
-      result_nchwc_bias = result_nchwc_act;
+      result_nchwc_bias = result_nchwc;
     }
 
-    auto result_rs = gb.Emit("LayoutTransform", {result_nchwc_bias},
+    inner::NodePtr result_nchwc_act;
+    if (attrs_.find("activation_type") != attrs_.end()) {
+      auto act_type = GetValue<int64_t>(attrs_["activation_type"]);
+      result_nchwc_act = GetActivationExpander(gb, {result_nchwc_bias}, act_type);
+    } else {
+      result_nchwc_act = result_nchwc_bias;
+    }
+
+    auto result_rs = gb.Emit("LayoutTransform", {result_nchwc_act},
                              {{"src_format", MakeValue(conv_out_format)}, {"dst_format", MakeValue(data_format)}});
 
     return {result_rs};

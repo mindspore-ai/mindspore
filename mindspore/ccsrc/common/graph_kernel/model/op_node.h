@@ -266,6 +266,16 @@ class CImagRealOp : public ElemwiseOp {
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
 };
 
+class Pool2DOp : public OpaqueOp {
+ public:
+  explicit Pool2DOp(const std::string &op) : OpaqueOp(op) {}
+  ~Pool2DOp() = default;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
+};
+
 class ComplexOp : public ElemwiseOp {
  public:
   explicit ComplexOp(const std::string &op) : ElemwiseOp(op) {}

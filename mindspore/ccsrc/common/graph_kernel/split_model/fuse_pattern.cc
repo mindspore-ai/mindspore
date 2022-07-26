@@ -143,7 +143,7 @@ bool FuseElemwiseBroadcastBwd::Match(const AreaPtr &dom) {
         return false;
       }
       if (HasCircle(dom, a)) {
-        return false;
+        continue;
       }
     }
     if (a->pattern() == NodePattern::REDUCE) {

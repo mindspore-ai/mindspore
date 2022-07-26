@@ -22,6 +22,45 @@ SPLIT_MODEL_REGISTER(kCPUDevice, SplitModelCpu);
 constexpr size_t kReduceFusionDepth = 20;
 constexpr size_t kBroadcastFusionDepth = 20;
 
+class FuseElemwiseFwd : public FusePattern {
+ public:
+  explicit FuseElemwiseFwd(FuseType fuse_type) : FusePattern("elemwise_fwd"), fuse_type_(fuse_type) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseElemwiseFwd() = default;
+  static FusePatternPtr CreateDepthMatcher() { return std::make_shared<FuseElemwiseFwd>(FuseType::kDepth); }
+  static FusePatternPtr CreateWidthMatcher() { return std::make_shared<FuseElemwiseFwd>(FuseType::kWidth); }
+
+ protected:
+  bool Check(const AreaPtr &dom) override {
+    if (dom->pattern() != NodePattern::ELEMWISE) {
+      return false;
+    }
+    return fuse_type_ == FuseType::kWidth || dom->input_num() == 1;
+  }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &[a, r] : dom->inputs_with_relation()) {
+      // depth match only support one to one pattern
+      if (fuse_type_ == FuseType::kDepth && a->user_num() != 1) {
+        continue;
+      }
+      if (a->pattern() <= NodePattern::ELEMWISE && r == EdgeRelation::INJECTIVE) {
+        // it's unnecessary to check circle for depth match
+        if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
+          continue;
+        }
+        if (a->compute_size() == dom->compute_size()) {
+          (void)fused_areas_.emplace_back(a);
+        }
+      }
+    }
+    return !fused_areas_.empty();
+  }
+
+  FuseType fuse_type_;
+};
+
 class FuseConv : public FusePattern {
  public:
   FuseConv() : FusePattern("conv") { direction_ = FuseDirection::BACKWARD; }
@@ -29,7 +68,7 @@ class FuseConv : public FusePattern {
 
  protected:
   bool Check(const AreaPtr &dom) override {
-    if (dom->ops()[0]->op() != "Conv2D") {
+    if (dom->dom()->op() != "Conv2D") {
       return false;
     }
     return true;
@@ -38,9 +77,10 @@ class FuseConv : public FusePattern {
     for (auto d : dom->users_with_relation()) {
       auto a = d.first;
       if (HasCircle(dom, a)) {
-        return false;
+        continue;
       }
-      if (a->pattern() <= NodePattern::BROADCAST) {
+      if (a->pattern() < NodePattern::BROADCAST ||
+          (a->pattern() == NodePattern::BROADCAST && a->dom()->shape == dom->dom()->shape)) {
         (void)fused_areas_.emplace_back(a);
       }
     }
@@ -53,13 +93,15 @@ class FuseConv : public FusePattern {
 void SplitModelCpu::InitFusePatterns() {
   AddPattern(std::make_shared<FuseVirtualNode>(), true);
   AddPattern(std::make_shared<FuseReshape>(), true);
+  AddPattern(FuseElemwiseFwd::CreateDepthMatcher(), true);
+  AddPattern(FuseElemwiseFwd::CreateWidthMatcher(), true);
+  AddPattern(std::make_shared<FuseConv>(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
   AddPattern(FuseReduceFwd::CreateDepthMatcher(kReduceFusionDepth), true);
   AddPattern(FuseReduceFwd::CreateWidthMatcher(kReduceFusionDepth), true);
   AddPattern(FuseElemwiseBroadcastBwd::CreateDepthMatcher(kBroadcastFusionDepth), true);
   AddPattern(FuseElemwiseBroadcastBwd::CreateWidthMatcher(kBroadcastFusionDepth), true);
-  AddPattern(std::make_shared<FuseConv>(), true);
   AddPattern(std::make_shared<FuseIsolateReshape>(), true);
 }
 
