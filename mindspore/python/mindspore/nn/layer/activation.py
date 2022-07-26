@@ -592,6 +592,8 @@ class SiLU(Cell):
         >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> silu = nn.SiLU()
         >>> output = silu(x)
+        >>> print(output)
+        [-0.269  1.762  -0.1423  1.762  -0.269]
     """
 
     def __init__(self):
