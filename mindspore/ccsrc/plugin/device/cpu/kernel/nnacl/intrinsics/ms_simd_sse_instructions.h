@@ -28,6 +28,9 @@
 #define MS128_F32_GETI(src, i) src[i]
 #endif
 
+#define PI 3.1415926f
+#define LN2 0.693147f
+
 #define MS_FLOAT32X4 __m128
 #define MS_FLOAT128_F32 __m128
 #define MS_INT32X4 __m128i
@@ -62,8 +65,6 @@
 #define MS_MINQ_EPI32 _mm_min_epi32
 #define MS_SQRT128_F32 _mm_sqrt_ps
 #define MS_RSQRT128_F32 _mm_rsqrt_ps
-#define MS_LOG128_F32 _mm_log_ps
-#define MS_COS128_F32 _mm_cos_ps
 #define MS_SIN128_F32 _mm_sin_ps
 #define MS_ERF128_F32 _mm_erf_ps
 #define MS_ROUND128_F32(src) _mm_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
@@ -100,21 +101,19 @@
 #define MS_OR128_F32(src1, src2) _mm_or_ps(src1, src2)
 #define MS_AND128_MASK_F32(src1, src2) _mm_and_ps(src1, src2)
 
+#define MS128_ANDNOT_F32(src1, src2) _mm_andnot_ps(src1, src2)
+#define MS128_SRLI_EPI32(src1, src2) _mm_srli_epi32(src1, src2)
+#define MS128_AND_EPI32(src1, src2) _mm_and_si128(src1, src2)
+#define MS128_CASTPS_EPI32(src) _mm_castps_si128(src)
+#define MS_CVT128EPI32_PS(src) _mm_cvtepi32_ps(src)
+#define MS_CAST128_F32_S32(src) _mm_castsi128_ps(src)
+
 static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = powf(MS_F32X4_GETI(src1, 0), MS_F32X4_GETI(src2, 0));
   MS_F32X4_GETI(dst, 1) = powf(MS_F32X4_GETI(src1, 1), MS_F32X4_GETI(src2, 1));
   MS_F32X4_GETI(dst, 2) = powf(MS_F32X4_GETI(src1, 2), MS_F32X4_GETI(src2, 2));
   MS_F32X4_GETI(dst, 3) = powf(MS_F32X4_GETI(src1, 3), MS_F32X4_GETI(src2, 3));
-  return dst;
-}
-
-static inline MS_FLOAT32X4 MS128_LOG_F32(MS_FLOAT32X4 src) {
-  MS_FLOAT32X4 dst;
-  MS_F32X4_GETI(dst, 0) = logf(MS_F32X4_GETI(src, 0));
-  MS_F32X4_GETI(dst, 1) = logf(MS_F32X4_GETI(src, 1));
-  MS_F32X4_GETI(dst, 2) = logf(MS_F32X4_GETI(src, 2));
-  MS_F32X4_GETI(dst, 3) = logf(MS_F32X4_GETI(src, 3));
   return dst;
 }
 
@@ -161,6 +160,66 @@ static inline MS_FLOAT32X4 MS_ABS128_F32(MS_FLOAT32X4 src) {
   MS_F32X4_GETI(dst, 2) = fabsf(MS_F32X4_GETI(src, 2));
   MS_F32X4_GETI(dst, 3) = fabsf(MS_F32X4_GETI(src, 3));
   return dst;
+}
+
+static inline MS_FLOAT32X4 MS_COS128_F32(MS_FLOAT32X4 src) {
+  static const MS_FLOAT32X4 pi = {PI, PI, PI, PI};
+  static const MS_FLOAT32X4 pi2_neg = {-2 * PI, -2 * PI, -2 * PI, -2 * PI};
+  static const MS_FLOAT32X4 div_pi2 = {1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI)};
+  MS_FLOAT128_F32 src_abs = MS_ABS128_F32(src);
+  MS_FLOAT128_F32 src_cycle =
+    MS_ADD128_F32(MS_MUL128_F32(MS_FLOOR128_F32(MS_MUL128_F32(MS_ADD128_F32(src_abs, pi), div_pi2)), pi2_neg), src_abs);
+  static const MS_FLOAT128_F32 data0 = {1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90};
+  static const MS_FLOAT128_F32 data1 = {1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56};
+  static const MS_FLOAT128_F32 data2 = {1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30};
+  static const MS_FLOAT128_F32 data3 = {1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12};
+  static const MS_FLOAT128_F32 data4 = {0.5f, 0.5f, 0.5f, 0.5f};
+  static const MS_FLOAT32X4 neg = {-1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X4 pos = {1.0f, 1.0f, 1.0f, 1.0f};
+  MS_FLOAT32X4 square = MS_MUL128_F32(src_cycle, src_cycle);
+
+  MS_FLOAT32X4 tmp =
+    MS_MUL128_F32(MS_MUL128_F32(MS_ADD128_F32(MS_MUL128_F32(MS_MUL128_F32(neg, square), data0), pos), square), data1);
+  MS_FLOAT32X4 tmp1 = MS_MUL128_F32(MS_MUL128_F32(MS_ADD128_F32(tmp, neg), square), data2);
+  MS_FLOAT128_F32 res = MS_ADD128_F32(
+    MS_MUL128_F32(
+      MS_MUL128_F32(MS_ADD128_F32(MS_MUL128_F32(MS_MUL128_F32(MS_ADD128_F32(tmp1, pos), square), data3), neg), square),
+      data4),
+    pos);
+  return res;
+}
+
+static inline MS_FLOAT32X4 MS128_LOG_F32(MS_FLOAT32X4 src) {
+  const MS_INT128_EPI32 gFloatExpMask = MS_MOV128_EPI32(0xffULL << 23);
+  const MS_INT128_EPI32 gFloatExp0 = MS_MOV128_EPI32(127ULL << 23);
+  const MS_INT128_EPI32 gExpNormalizer = MS_MOV128_EPI32(127);
+  static const MS_FLOAT128_F32 data0 = {1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11};
+  static const MS_FLOAT128_F32 data1 = {1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9};
+  static const MS_FLOAT128_F32 data2 = {1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7};
+  static const MS_FLOAT128_F32 data3 = {0.2f, 0.2f, 0.2f, 0.2f};
+  static const MS_FLOAT128_F32 data4 = {1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3};
+  static const MS_FLOAT128_F32 data5 = {1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT128_F32 data6 = {2.0f, 2.0f, 2.0f, 2.0f};
+  static const MS_FLOAT32X4 neg = {-1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X4 pos = {1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT32X4 ln2 = {LN2, LN2, LN2, LN2};
+
+  const MS_INT128_EPI32 exps32 = MS128_SRLI_EPI32(MS128_AND_EPI32(gFloatExpMask, MS128_CASTPS_EPI32(src)), 23);
+  const MS_INT128_EPI32 normExps = MS_SUB128_EPI32(exps32, gExpNormalizer);
+  const MS_FLOAT32X4 expsPD = MS_CVT128EPI32_PS(normExps);
+  const MS_FLOAT32X4 y =
+    MS_OR128_F32(MS_CAST128_F32_S32(gFloatExp0), MS128_ANDNOT_F32(MS_CAST128_F32_S32(gFloatExpMask), src));
+  MS_FLOAT32X4 div = MS_DIV128_F32(MS_ADD128_F32(y, neg), MS_ADD128_F32(y, pos));
+  MS_FLOAT32X4 square = MS_MUL128_F32(div, div);
+
+  MS_FLOAT32X4 tmp = MS_ADD128_F32(
+    MS_MUL128_F32(MS_ADD128_F32(MS_MUL128_F32(square, MS_ADD128_F32(MS_MUL128_F32(square, data0), data1)), data2),
+                  square),
+    data3);
+  MS_FLOAT32X4 tmp1 = MS_MUL128_F32(square, MS_ADD128_F32(MS_MUL128_F32(square, tmp), data4));
+  MS_FLOAT32X4 res =
+    MS_ADD128_F32(MS_MUL128_F32(ln2, expsPD), MS_MUL128_F32(MS_MUL128_F32(div, MS_ADD128_F32(tmp1, data5)), data6));
+  return res;
 }
 
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {

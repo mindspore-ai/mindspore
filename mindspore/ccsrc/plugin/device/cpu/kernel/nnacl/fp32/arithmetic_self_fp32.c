@@ -43,7 +43,9 @@ int ElementAbsInt(const int *input, int *output, const int element_size) {
 
 // cos
 int ElementCos(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+  SIMD_RUN_X86_NO_SCALAR(ElementCos, i, input, output, element_size);
+  for (; i < element_size; i++) {
     output[i] = cosf(input[i]);
   }
   return NNACL_OK;
@@ -51,7 +53,10 @@ int ElementCos(const float *input, float *output, const int element_size) {
 
 // log:
 int ElementLog(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  SIMD_RUN_X86_NO_SCALAR(ElementLog, i, input, output, element_size);
+  for (; i < element_size; i++) {
     if (input[i] < 0) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
     }

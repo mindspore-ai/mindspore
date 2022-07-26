@@ -28,6 +28,9 @@
 #define MS256_F32_GETI(src, i) src[i]
 #endif
 
+#define PI 3.1415926f
+#define LN2 0.693147f
+
 #define MS_FLOAT32X8 __m256
 #define MS_FLOAT256_F32 __m256
 #define MS_INT32X8 __m256i
@@ -51,8 +54,6 @@
 #define MS_MIN256_EPI32 _mm256_min_epi32
 #define MS_SQRT256_F32 _mm256_sqrt_ps
 #define MS_RSQRT256_F32 _mm256_rsqrt_ps
-#define MS_LOG256_F32 _mm256_log_ps
-#define MS_COS256_F32 _mm256_cos_ps
 #define MS_SIN256_F32 _mm256_sin_ps
 #define MS_ERF256_F32 _mm256_erf_ps
 #define MS_ROUND256_F32(src) _mm256_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
@@ -81,6 +82,11 @@
 #define MS_OR256_F32(src1, src2) _mm256_or_ps(src1, src2)
 #define MS_AND256_MASK_F32(src1, src2) _mm256_and_ps(src1, src2)
 
+#define MS256_ANDNOT_F32(src1, src2) _mm256_andnot_ps(src1, src2)
+#define MS256_SRLI_EPI32(src1, src2) _mm256_srli_epi32(src1, src2)
+#define MS256_AND_EPI32(src1, src2) _mm256_and_si256(src1, src2)
+#define MS256_CASTPS_EPI32(src) _mm256_castps_si256(src)
+
 static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
   MS_FLOAT32X8 dst;
   MS_F32X8_GETI(dst, 0) = powf(MS_F32X8_GETI(src1, 0), MS_F32X8_GETI(src2, 0));
@@ -91,19 +97,6 @@ static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
   MS_F32X8_GETI(dst, 5) = powf(MS_F32X8_GETI(src1, 5), MS_F32X8_GETI(src2, 5));
   MS_F32X8_GETI(dst, 6) = powf(MS_F32X8_GETI(src1, 6), MS_F32X8_GETI(src2, 6));
   MS_F32X8_GETI(dst, 7) = powf(MS_F32X8_GETI(src1, 7), MS_F32X8_GETI(src2, 7));
-  return dst;
-}
-
-static inline MS_FLOAT32X8 MS256_LOG_F32(MS_FLOAT32X8 src) {
-  MS_FLOAT32X8 dst;
-  MS_F32X8_GETI(dst, 0) = logf(MS_F32X8_GETI(src, 0));
-  MS_F32X8_GETI(dst, 1) = logf(MS_F32X8_GETI(src, 1));
-  MS_F32X8_GETI(dst, 2) = logf(MS_F32X8_GETI(src, 2));
-  MS_F32X8_GETI(dst, 3) = logf(MS_F32X8_GETI(src, 3));
-  MS_F32X8_GETI(dst, 4) = logf(MS_F32X8_GETI(src, 4));
-  MS_F32X8_GETI(dst, 5) = logf(MS_F32X8_GETI(src, 5));
-  MS_F32X8_GETI(dst, 6) = logf(MS_F32X8_GETI(src, 6));
-  MS_F32X8_GETI(dst, 7) = logf(MS_F32X8_GETI(src, 7));
   return dst;
 }
 
@@ -118,6 +111,76 @@ static inline MS_FLOAT32X8 MS_ABS256_F32(MS_FLOAT32X8 src) {
   MS_F32X8_GETI(dst, 6) = fabsf(MS_F32X8_GETI(src, 6));
   MS_F32X8_GETI(dst, 7) = fabsf(MS_F32X8_GETI(src, 7));
   return dst;
+}
+
+static inline MS_FLOAT32X8 MS_COS256_F32(MS_FLOAT32X8 src) {
+  static const MS_FLOAT32X8 pi = {PI, PI, PI, PI, PI, PI, PI, PI};
+  static const MS_FLOAT32X8 pi2_neg = {
+    -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI,
+  };
+  static const MS_FLOAT32X8 div_pi2 = {1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI),
+                                       1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI)};
+  MS_FLOAT256_F32 src_abs = MS_ABS256_F32(src);
+  MS_FLOAT256_F32 src_cycle =
+    MS_ADD256_F32(MS_MUL256_F32(MS_FLOOR256_F32(MS_MUL256_F32(MS_ADD256_F32(src_abs, pi), div_pi2)), pi2_neg), src_abs);
+
+  static const MS_FLOAT256_F32 data0 = {1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90,
+                                        1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90};
+  static const MS_FLOAT256_F32 data1 = {1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56,
+                                        1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56};
+  static const MS_FLOAT256_F32 data2 = {1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30,
+                                        1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30};
+  static const MS_FLOAT256_F32 data3 = {1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12,
+                                        1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12};
+  static const MS_FLOAT256_F32 data4 = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+  static const MS_FLOAT32X8 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X8 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
+  MS_FLOAT32X8 square = MS_MUL256_F32(src_cycle, src_cycle);
+
+  MS_FLOAT32X8 tmp =
+    MS_MUL256_F32(MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(MS_MUL256_F32(neg, square), data0), pos), square), data1);
+  MS_FLOAT32X8 tmp1 = MS_MUL256_F32(MS_MUL256_F32(MS_ADD256_F32(tmp, neg), square), data2);
+  MS_FLOAT256_F32 res = MS_ADD256_F32(
+    MS_MUL256_F32(
+      MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(MS_MUL256_F32(MS_ADD256_F32(tmp1, pos), square), data3), neg), square),
+      data4),
+    pos);
+  return res;
+}
+
+static inline MS_FLOAT32X8 MS256_LOG_F32(MS_FLOAT32X8 src) {
+  const MS_INT256_EPI32 gFloatExpMask = MS_MOV256_EPI32(0xffULL << 23);
+  const MS_INT256_EPI32 gFloatExp0 = MS_MOV256_EPI32(127ULL << 23);
+  const MS_INT256_EPI32 gExpNormalizer = MS_MOV256_EPI32(127);
+  static const MS_FLOAT256_F32 data0 = {1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11,
+                                        1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11};
+  static const MS_FLOAT256_F32 data1 = {1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9};
+  static const MS_FLOAT256_F32 data2 = {1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7};
+  static const MS_FLOAT256_F32 data3 = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
+  static const MS_FLOAT256_F32 data4 = {1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3};
+  static const MS_FLOAT256_F32 data5 = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT256_F32 data6 = {2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f};
+  static const MS_FLOAT32X8 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X8 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT32X8 ln2 = {LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2};
+
+  const MS_INT256_EPI32 exps32 = MS256_SRLI_EPI32(MS256_AND_EPI32(gFloatExpMask, MS256_CASTPS_EPI32(src)), 23);
+  const MS_INT256_EPI32 normExps = MS_SUB256_EPI32(exps32, gExpNormalizer);
+  const MS_FLOAT32X8 expsPD = MS_CVT256EPI32_PS(normExps);
+  const MS_FLOAT32X8 y =
+    MS_OR256_F32(MS_CAST256_F32_S32(gFloatExp0), MS256_ANDNOT_F32(MS_CAST256_F32_S32(gFloatExpMask), src));
+  MS_FLOAT32X8 div = MS_DIV256_F32(MS_ADD256_F32(y, neg), MS_ADD256_F32(y, pos));
+  MS_FLOAT32X8 square = MS_MUL256_F32(div, div);
+
+  MS_FLOAT32X8 tmp = MS_ADD256_F32(
+    MS_MUL256_F32(MS_ADD256_F32(MS_MUL256_F32(square, MS_ADD256_F32(MS_MUL256_F32(square, data0), data1)), data2),
+                  square),
+    data3);
+  MS_FLOAT32X8 tmp1 = MS_MUL256_F32(square, MS_ADD256_F32(MS_MUL256_F32(square, tmp), data4));
+  MS_FLOAT32X8 res =
+    MS_ADD256_F32(MS_MUL256_F32(ln2, expsPD), MS_MUL256_F32(MS_MUL256_F32(div, MS_ADD256_F32(tmp1, data5)), data6));
+  return res;
 }
 
 static inline float MS_GET_MAX256_F32(__m256 src) {

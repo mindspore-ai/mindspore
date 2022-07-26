@@ -42,6 +42,25 @@ static inline int ElementAbsInt@SIMD_INSTRUCTION@(int index, const int *input, i
 }
 #endif
 
+#if !defined(MS_SIMD_NEON)
+// not support neon
+  static inline int ElementCos@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
+    for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vin = SIMD_LD_F32(input + index);
+      SIMD_ST_F32(output + index, SIMD_COS_F32(vin));
+    }
+    return index;
+  }
+
+  static inline int ElementLog@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
+    for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vin = SIMD_LD_F32(input + index);
+      SIMD_ST_F32(output + index, SIMD_LOG_F32(vin));
+    }
+    return index;
+  }
+#endif
+
 static inline int ElementSquare@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
   for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_F32 vin = SIMD_LD_F32(input + index);
