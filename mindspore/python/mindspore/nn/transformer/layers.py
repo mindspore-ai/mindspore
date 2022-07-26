@@ -373,7 +373,7 @@ class _Linear(Cell):
                 raise ValueError("The shape of parameter 'bias_init' is error, please check shape of 'bias_init'.")
             if self.expert_flag:
                 self.bias = Parameter(initializer(bias_init,
-                                                  [self.outer_batch, self.expert_num, 1, out_channels],
+                                                  [1, self.expert_num, 1, out_channels],
                                                   param_init_type), name="bias")
             else:
                 self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
