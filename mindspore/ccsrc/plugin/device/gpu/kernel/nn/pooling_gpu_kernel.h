@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kNumberFive = 5;
 constexpr auto kAvgPool = "AvgPool";
 constexpr auto kAvgPool3D = "AvgPool3D";
 
@@ -72,14 +73,21 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    const float alpha = 1;
-    const float beta = 0;
-
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_, input_addr, &beta,
-                          output_descriptor_, output_addr),
-      "cudnnPoolingForward failed");
-
+    T alpha = static_cast<T>(1.0f);
+    T beta = static_cast<T>(0.0f);
+    if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_, input_addr, &beta,
+                            output_descriptor_, output_addr),
+        "cudnnPoolingForward failed");
+    } else {
+      const float alphaf = static_cast<float>(alpha);
+      const float betaf = static_cast<float>(beta);
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alphaf, input_descriptor_, input_addr, &betaf,
+                            output_descriptor_, output_addr),
+        "cudnnPoolingForward failed");
+    }
     if (divisor_override_ != 0) {
       T *work_addr = GetDeviceAddress<T>(workspace, 0);
       size_t output_num = output_size_ / sizeof(T);
@@ -128,6 +136,12 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
     if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
       return ret;
+    }
+    for (const auto &input : inputs) {
+      auto input_shape = input->GetShapeVector();
+      if (!IsValidShape(input_shape)) {
+        return KRET_UNKNOWN_SHAPE;
+      }
     }
     ResetResource();
     auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
@@ -299,7 +313,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
                          [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[3] = {window_depth, window_height, window_width};
     int paddingA[3] = {0, 0, 0};
-    if (stride_.size() < 5) {
+    if (stride_.size() < kNumberFive) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 5, but got "
                         << stride_.size();
     }

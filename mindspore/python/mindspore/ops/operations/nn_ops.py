@@ -1978,7 +1978,7 @@ class MaxPoolWithArgmax(Primitive):
         self.add_prim_attr("strides", self.strides)
 
 
-class MaxPool3D(PrimitiveWithInfer):
+class MaxPool3D(Primitive):
     r"""
     3D max pooling operation.
 
@@ -2025,7 +2025,7 @@ class MaxPool3D(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-          Data type must be float16 or float32.
+          Data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the data type of `x`.
@@ -2091,45 +2091,6 @@ class MaxPool3D(PrimitiveWithInfer):
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad_list item', self.name)
         self.add_prim_attr("pad_list", self.pad_list)
-
-    def infer_shape(self, x_shape):
-        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
-        batch, channel, input_d, input_h, input_w = x_shape
-        self.add_prim_attr("x_shape", x_shape)
-        _, _, kernel_d, kernel_h, kernel_w = self.kernel_size
-        _, _, stride_d, stride_h, stride_w = self.strides
-
-        if self.pad_mode == "VALID":
-            out_d = math.ceil((input_d - (kernel_d - 1)) / stride_d)
-            out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
-            out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
-        elif self.pad_mode == "SAME":
-            out_d = math.ceil(input_d / stride_d)
-            out_h = math.ceil(input_h / stride_h)
-            out_w = math.ceil(input_w / stride_w)
-        else:
-            out_d = ((input_d + self.pad_list[0] + self.pad_list[1] -
-                      (kernel_d - 1) - 1) / stride_d) + 1
-            out_h = ((input_h + self.pad_list[2] + self.pad_list[3] -
-                      (kernel_h - 1) - 1) / stride_h) + 1
-            out_w = ((input_w + self.pad_list[4] + self.pad_list[5] -
-                      (kernel_w - 1) - 1) / stride_w) + 1
-            if self.ceil_mode:
-                out_d = math.ceil(out_d)
-                out_h = math.ceil(out_h)
-                out_w = math.ceil(out_w)
-            else:
-                out_d = math.floor(out_d)
-                out_h = math.floor(out_h)
-                out_w = math.floor(out_w)
-        out_shape = [batch, channel, out_d, out_h, out_w]
-
-        _check_shape('output', out_shape, self.name)
-        return out_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class MaxUnpool2D(Primitive):

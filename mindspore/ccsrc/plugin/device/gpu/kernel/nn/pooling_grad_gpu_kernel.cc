@@ -138,10 +138,8 @@ bool PoolingGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     dy = GetDeviceAddress<T>(inputs, kIndex2);
     dx = GetDeviceAddress<T>(outputs, kIndex0);
   }
-
-  const float alpha = 1;
-  const float beta = 0;
-
+  T alpha = static_cast<T>(1.0f);
+  T beta = static_cast<T>(0.0f);
   if (divisor_override_ != 0) {
     T *work_addr = GetDeviceAddress<T>(workspace, kIndex2);
     T *dy_work_addr = GetDeviceAddress<T>(workspace, kIndex3);
@@ -163,18 +161,36 @@ bool PoolingGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
     ElewiseArith(output_num, BROADCAST_TYPE_MUL, dy_work_addr, work_addr, dy_work_addr,
                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+    if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alpha, y_descriptor_, y, dy_descriptor_, dy_work_addr,
+                             x_descriptor_, x_data, &beta, dx_descriptor_, dx),
+        "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
+    } else {
+      const float alphaf = static_cast<float>(alpha);
+      const float betaf = static_cast<float>(beta);
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alphaf, y_descriptor_, y, dy_descriptor_,
+                             dy_work_addr, x_descriptor_, x_data, &betaf, dx_descriptor_, dx),
+        "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
+    }
 
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alpha, y_descriptor_, y, dy_descriptor_, dy_work_addr,
-                           x_descriptor_, x_data, &beta, dx_descriptor_, dx),
-      "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
     return true;
   }
+  if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alpha, y_descriptor_, y, dy_descriptor_, dy,
+                           x_descriptor_, x_data, &beta, dx_descriptor_, dx),
+      "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
+  } else {
+    const float alphaf = static_cast<float>(alpha);
+    const float betaf = static_cast<float>(beta);
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alphaf, y_descriptor_, y, dy_descriptor_, dy,
+                           x_descriptor_, x_data, &betaf, dx_descriptor_, dx),
+      "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
+  }
 
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alpha, y_descriptor_, y, dy_descriptor_, dy,
-                         x_descriptor_, x_data, &beta, dx_descriptor_, dx),
-    "For '" + kernel_name_ + "', cudnnPoolingBackward failed");
   return true;
 }
 
@@ -497,7 +513,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
          .AddInputAttr(kNumberTypeFloat16)
          .AddInputAttr(kNumberTypeFloat16)
          .AddOutputAttr(kNumberTypeFloat16),
-       &PoolingGradGpuKernelMod::LaunchKernel<half>}}},
+       &PoolingGradGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &PoolingGradGpuKernelMod::LaunchKernel<double>}}},
     {kAvgPoolGrad,
      {{KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
