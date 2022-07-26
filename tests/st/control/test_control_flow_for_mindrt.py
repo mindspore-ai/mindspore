@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 import mindspore
-from mindspore import context, nn, ops, Tensor, Parameter, ms_function
+from mindspore import context, nn, ops, Tensor, CSRTensor, Parameter, ms_function, mutable
 from mindspore.ops import functional as F
 
 
@@ -85,3 +85,83 @@ def test_switch_op():
     y = Tensor(1, mindspore.int32)
     out = switch_op(x, y)
     assert out == 5
+
+
+@ms_function
+def switch_single_op(x, y, z):
+    return F.switch(x, y, z)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_switch_single_op():
+    """
+    Feature: Runtime.
+    Description: Test switch single op.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(False, mindspore.bool_)
+    y = Tensor(1, mindspore.int32)
+    z = Tensor(2, mindspore.int32)
+    out = switch_single_op(x, y, z)
+    assert out == 2
+
+
+class TupleNet(nn.Cell):
+    def construct(self, x, y, z):
+        while x < y:
+            z = (z[0] + 3, z[1] + 2)
+            x = x + 1
+        return z
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tuple_parameter():
+    """
+    Feature: Runtime.
+    Description: input a tuple parameter for root graph.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.array([2]), mindspore.int32)
+    y = Tensor(np.array([4]), mindspore.int32)
+    z1 = Tensor(np.array([8]), mindspore.int32)
+    z2 = Tensor(np.array([4]), mindspore.int32)
+    z = mutable((z1, z2))
+    net = TupleNet()
+    out = net(x, y, z)
+    assert out == (14, 8)
+
+
+class CSRNet(nn.Cell):
+    def construct(self, x, y, z):
+        while x < y:
+            z = CSRTensor(z.indptr, z.indices, z.values + x, z.shape)
+            x = x + 1
+        return z
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_parameter():
+    """
+    Feature: Runtime.
+    Description: input a tuple parameter for root graph.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(2, mindspore.float32)
+    y = Tensor(4, mindspore.float32)
+    indptr = Tensor([0, 1, 2], mindspore.int32)
+    indices = Tensor([0, 1], mindspore.int32)
+    values = Tensor([1, 2], mindspore.float32)
+    shape = (2, 4)
+    z = CSRTensor(indptr, indices, values, shape)
+    net = CSRNet()
+    out = net(x, y, z)
+    assert np.all(out.values.asnumpy() == [6., 7.])
