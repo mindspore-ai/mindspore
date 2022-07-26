@@ -168,7 +168,7 @@ std::vector<GeTensorPtr> TransformUtil::ConvertInputTensors(const std::vector<Me
 
     auto ge_tensor_ptr = TransformUtil::ConvertTensor(me_tensors[index], format);
     if (ge_tensor_ptr != nullptr) {
-      ge_tensors.emplace_back(ge_tensor_ptr);
+      (void)ge_tensors.emplace_back(ge_tensor_ptr);
     } else {
       MS_LOG(ERROR) << "Convert me_tensor " << index << " to Ge Tensor failed!";
       ge_tensors.clear();
@@ -215,10 +215,10 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
         }
       }
       std::string string_to_add(string_element, string_length);
-      string_vector.emplace_back(string_to_add);
+      (void)string_vector.emplace_back(string_to_add);
     }
     tensor_ptr = make_shared<GeTensor>(*desc);
-    tensor_ptr->SetData(string_vector);
+    (void)tensor_ptr->SetData(string_vector);
   } else {
     auto string_length = LongToSize(std::stol(buf.format.substr(0, buf.format.length() - 1)));
     if (string_length == 0) {
@@ -231,7 +231,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     }
     std::string string_to_add(string_element, string_length);
     tensor_ptr = make_shared<GeTensor>(*desc);
-    tensor_ptr->SetData(string_to_add);
+    (void)tensor_ptr->SetData(string_to_add);
   }
   return tensor_ptr;
 }
@@ -285,7 +285,7 @@ std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTen
     }
 
     if (me_tensor_ptr != nullptr) {
-      outputs.emplace_back(me_tensor_ptr);
+      (void)outputs.emplace_back(me_tensor_ptr);
     } else {
       MS_LOG(ERROR) << "Convert Ge Tensor " << index << " to Me Tensor failed!";
       return outputs;
@@ -300,7 +300,7 @@ std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTen
   for (size_t index = 0; index < ge_tensors.size(); index++) {
     MeTensorPtr me_tensor_ptr = ConvertGeTensor(ge_tensors[index]);
     if (me_tensor_ptr != nullptr) {
-      outputs.emplace_back(me_tensor_ptr);
+      (void)outputs.emplace_back(me_tensor_ptr);
     } else {
       MS_LOG(ERROR) << "Convert Ge Tensor " << index << " to Me Tensor failed!";
       return outputs;
