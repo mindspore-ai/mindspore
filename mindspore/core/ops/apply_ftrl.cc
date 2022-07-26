@@ -41,16 +41,19 @@ abstract::ShapePtr ApplyFtrlInferShape(const PrimitivePtr &primitive, const std:
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   auto lr_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  size_t batch_rank = 0;
+  int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kGreaterEqual, batch_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kGreaterEqual, batch_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kGreaterEqual, batch_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("lr_power_shape size", lr_power_shape.size(), kGreaterEqual, batch_rank,
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kGreaterEqual, batch_rank,
                                            prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kGreaterEqual, batch_rank,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kGreaterEqual, batch_rank,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_power_shape size", SizeToLong(lr_power_shape.size()), kGreaterEqual,
+                                           batch_rank, prim_name);
 
   if (var_shape->IsDynamic() || accum_shape->IsDynamic() || linear_shape->IsDynamic() || grad_shape->IsDynamic()) {
     return var_shape->cast<abstract::ShapePtr>();
