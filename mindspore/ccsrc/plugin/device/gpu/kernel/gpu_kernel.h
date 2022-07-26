@@ -138,7 +138,6 @@ class NativeGpuKernelMod : public GpuKernelMod {
     }
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->GetAllSupportedList(kernel_name);
   }
-  void SetDevicedId(uint32_t device_id) { device_id_ = device_id; }
   static bool GpuCheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
 
   static ReducePrecisonRes GpuReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr) {
@@ -149,7 +148,6 @@ class NativeGpuKernelMod : public GpuKernelMod {
 
  protected:
   virtual void InitResource() {}
-  uint32_t device_id_;
   static mindspore::HashMap<std::string, std::vector<KernelAttr>> support_map_;
 };
 
