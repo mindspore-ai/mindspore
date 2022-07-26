@@ -33,6 +33,7 @@ from ..operations import _grad_ops as G
 from ..operations import math_ops as math
 from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
+from ..operations.math_ops import NextAfter
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import MatrixSolve
@@ -909,7 +910,7 @@ def get_bprop_cholesky_solve(self):
     return bprop
 
 
-@bprop_getters.register(P.NextAfter)
+@bprop_getters.register(NextAfter)
 def get_bprop_nextafter(self):
     """Grad definition for 'NextAfter' operation"""
     shape = P.Shape()
