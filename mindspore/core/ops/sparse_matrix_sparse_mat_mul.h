@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "ops/op_utils.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -39,6 +40,22 @@ class MIND_API SparseMatrixSparseMatMul : public BaseOperator {
     InitIOName({"x1_dense_shape", "x1_batch_pointers", "x1_row_pointers", "x1_col_indices", "x1_values",
                 "x2_dense_shape", "x2_batch_pointers", "x2_row_pointers", "x2_col_indices", "x2_values"},
                {"y_dense_shape", "y_batch_pointers", "y_row_pointers", "y_col_indices", "y_values"});
+  }
+  bool get_transpose_a() const {
+    auto value_ptr = GetAttr(kTransposeA);
+    return GetValue<bool>(value_ptr);
+  }
+  bool get_transpose_b() const {
+    auto value_ptr = GetAttr(kTransposeB);
+    return GetValue<bool>(value_ptr);
+  }
+  bool get_adjoint_a() const {
+    auto value_ptr = GetAttr(kAdjointA);
+    return GetValue<bool>(value_ptr);
+  }
+  bool get_adjoint_b() const {
+    auto value_ptr = GetAttr(kAdjointB);
+    return GetValue<bool>(value_ptr);
   }
   /// \brief Init.
   void Init() const {}
