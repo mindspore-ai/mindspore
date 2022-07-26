@@ -440,7 +440,7 @@ class AssignSub(Primitive):
     Refer to :func:`mindspore.ops.assign_sub` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -1285,29 +1285,10 @@ class Cdist(Primitive):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
 
-    Args:
-        p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.
-          Letter :math:`B` represents 0 or positive int number.
-          When :math:`B` is equal to 0, it means this dimension can be ignored,
-          i.e. shape of the tensor is :math:`(P, M)`.
-        - **input_y** (Tensor) - Input tensor of shape :math:`(B, R, M)`.
-
-    Outputs:
-        Tensor, has the same dtype as `input_x`, which shape is :math:`(B, P, R)`.
-
-    Raises:
-        TypeError: If `input_x` or `input_y` is not a Tensor.
-        TypeError: If dtype of `input_x` or `input_y` is neither float16 nor float32.
-        TypeError: If `p` is not a float.
-        ValueError: If `p` is a negative float.
-        ValueError: If dimension of `input_x` is not the same as `input_y`.
-        ValueError: If dimension of `input_x` or `input_y` is neither 2 nor 3.
+    Refer to :func:`mindspore.ops.cdist` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
@@ -3614,7 +3595,7 @@ class ApproximateEqual(_LogicBinaryOp):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)

@@ -45,7 +45,10 @@ Neural Network
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avg_pool2d
+    mindspore.ops.adaptive_max_pool3d
+    mindspore.ops.avg_pool2d
     mindspore.ops.ctc_greedy_decoder
+    mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
@@ -61,6 +64,7 @@ Loss Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.cross_entropy
     mindspore.ops.smooth_l1_loss
 
 Activation Functions
@@ -71,6 +75,7 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.celu
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
@@ -273,6 +278,7 @@ Linear Algebraic Functions
     mindspore.ops.dot
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
+    mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
     mindspore.ops.tensor_dot
@@ -290,6 +296,7 @@ Tensor Building
 
     mindspore.ops.eye
     mindspore.ops.fill
+    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.ones
     mindspore.ops.ones_like
@@ -320,9 +327,11 @@ Array Functions
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
+    mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -372,6 +381,8 @@ Array Functions
      - Refer to :class:`mindspore.ops.Cast`.
    * - mindspore.ops.cumprod
      - Refer to :class:`mindspore.ops.CumProd`.
+   * - mindspore.ops.cumsum
+     - Refer to :class:`mindspore.ops.CumSum`.
    * - mindspore.ops.dtype
      - Refer to :class:`mindspore.ops.DType`.
    * - mindspore.ops.sort

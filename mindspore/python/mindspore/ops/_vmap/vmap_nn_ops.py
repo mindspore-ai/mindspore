@@ -28,6 +28,7 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_u
     _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
 
 
+@vmap_rules_getters.register(P.ApplyAdaMax)
 def get_apply_ada_max_rule(prim, axis_size):
     """VmapRule for `ApplyAdaMax` operation."""
     if hasattr(prim, 'batch_rank'):
@@ -119,6 +120,7 @@ def get_apply_adadelta_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyFtrl)
 def get_apply_ftrl_rule(prim, axis_size):
     """VmapRule for `ApplyFtrl` operation"""
     if hasattr(prim, "batch_rank"):
@@ -423,6 +425,7 @@ def get_pdist_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.DeformableOffsets)
 def get_matmul_vmap_rule(prim, axis_size):
     """VmapRule for `DeformableOffsets` operation."""
     nchw_size = 4
@@ -484,6 +487,7 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.AvgPool)
 def get_avgpool_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPool`."""
     chw_reverse_index = -3
@@ -904,6 +908,7 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyPowerSign)
 def get_apply_power_sign_rule(prim, axis_size):
     """VmapRule for `ApplyPowerSign` operation."""
     if hasattr(prim, 'batch_rank'):

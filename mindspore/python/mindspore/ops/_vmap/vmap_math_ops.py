@@ -91,6 +91,7 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Cdist)
 def get_cdist_vmap_rule(prim, axis_size):
     """VmapRule for `cdist` operation."""
     if hasattr(prim, 'batch_rank'):
@@ -658,6 +659,8 @@ def get_log_matrix_determinant_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Cummax)
+@vmap_rules_getters.register(_inner_ops.Cummin)
 def get_cum_min_max_vmap_rule(prim, axis_size):
     """VmapRule for `Cummax` and `Cummin` operation."""
 

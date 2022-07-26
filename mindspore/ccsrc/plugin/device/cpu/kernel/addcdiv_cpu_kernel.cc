@@ -223,5 +223,7 @@ std::vector<KernelAttr> AddcdivCpuKernelMod::GetOpSupport() {
     ADD_KERNEL(Int64, Int64, Int64, Int32, Int64),           ADD_KERNEL(Int64, Int64, Int64, Int64, Int64)};
   return kernel_attr_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Addcdiv, AddcdivCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

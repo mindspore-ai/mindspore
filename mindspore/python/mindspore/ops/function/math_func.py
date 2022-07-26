@@ -2575,7 +2575,7 @@ def approximate_equal(x, y, tolerance=1e-5):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> from mindspore.ops.function.math_func import approximate_equal
@@ -4517,6 +4517,7 @@ __all__ = [
     'invert',
     'erf',
     'erfc',
+    'cdist',
     'ceil',
     'bernoulli',
     'bessel_j0',

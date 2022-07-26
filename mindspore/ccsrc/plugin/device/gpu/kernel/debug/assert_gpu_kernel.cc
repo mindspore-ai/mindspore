@@ -68,5 +68,7 @@ int AssertGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 
   return KRET_OK;
 }
+
+MS_REG_GPU_KERNEL(Assert, AssertGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -1622,7 +1622,11 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
 
 __all__ = [
     'adaptive_avg_pool2d',
+    'adaptive_max_pool3d',
+    'avg_pool2d',
     'max_pool3d',
+    'celu',
+    'deformable_conv2d',
     'dropout2d',
     'dropout3d',
     'fast_gelu',
@@ -1635,6 +1639,8 @@ __all__ = [
     'lrn',
     'softsign',
     'selu',
+    'pad',
+    'cross_entropy',
     'grid_sample',
     'ctc_greedy_decoder'
 ]

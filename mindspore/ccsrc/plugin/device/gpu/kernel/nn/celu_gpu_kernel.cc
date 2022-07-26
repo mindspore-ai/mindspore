@@ -83,5 +83,6 @@ const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> &CeluG
   };
   return func_list;
 }
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CeLU, CeluGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
