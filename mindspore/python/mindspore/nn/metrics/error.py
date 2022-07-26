@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Error."""
+from __future__ import absolute_import
+
 import numpy as np
+
 from .metric import Metric, rearrange_inputs
 
 

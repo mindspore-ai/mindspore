@@ -17,6 +17,8 @@ High-Level training interfaces.
 
 Helper functions in train pipelines.
 """
+from __future__ import absolute_import
+
 from .model import Model
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
@@ -30,7 +32,6 @@ from .callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, Summa
     ReduceLROnPlateau, EarlyStopping
 from .summary import SummaryRecord
 from .train_thor import ConvertNetUtils, ConvertModelUtils
-
 
 __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "build_train_network", "LossScaleManager",
            "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",

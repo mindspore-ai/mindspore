@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """rprop"""
+from __future__ import absolute_import
+
 from mindspore import ops
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype

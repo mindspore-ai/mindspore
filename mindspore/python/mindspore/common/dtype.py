@@ -15,6 +15,7 @@
 # limitations under the License.
 # ============================================================================
 """Data type for MindSpore."""
+from __future__ import absolute_import
 
 from inspect import isfunction
 import numpy as np

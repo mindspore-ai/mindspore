@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """optimizer"""
+from __future__ import absolute_import
+
 import inspect
 from typing import Iterable
-
 import numpy as np
 
 import mindspore

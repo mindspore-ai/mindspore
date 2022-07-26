@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """adafactor"""
+from __future__ import absolute_import
+
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.log import logging

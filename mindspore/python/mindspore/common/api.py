@@ -15,6 +15,8 @@
 # limitations under the License.
 # ============================================================================
 """Providing interface methods."""
+from __future__ import absolute_import
+
 import types
 import sys
 import os

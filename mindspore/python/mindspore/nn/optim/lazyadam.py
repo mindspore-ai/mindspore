@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """lazy adam"""
+from __future__ import absolute_import
+
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.common.api import ms_function

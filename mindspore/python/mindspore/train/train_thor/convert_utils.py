@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-Conversion interface for second-order optimizer thor
-"""
+"""Conversion interface for second-order optimizer thor."""
+from __future__ import absolute_import
+
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -139,7 +139,7 @@ class ConvertNetUtils:
             elif isinstance(subcell, (nn.Embedding, nn.Dense, nn.Conv2d, nn.EmbeddingLookup)):
                 prefix = subcell.param_prefix
                 if self._need_change(subcell, prefix):
-                    new_subcell = self._convert_method_map[type(subcell)](subcell)
+                    new_subcell = self._convert_method_map.get(type(subcell))(subcell)
                     new_subcell.update_parameters_name(prefix + '.')
                     net.insert_child_to_cell(name, new_subcell)
                     change = True

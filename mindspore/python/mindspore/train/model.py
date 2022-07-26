@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Model."""
+from __future__ import absolute_import
+
 from collections.abc import Iterable
 from functools import wraps
 
@@ -23,8 +25,7 @@ import numpy as np
 
 from mindspore import log as logger
 from .serialization import save_checkpoint, load_checkpoint
-from .callback._checkpoint import ModelCheckpoint
-from .callback._checkpoint import _chg_ckpt_file_name_if_same_exist
+from .callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics, get_metric_fn
 from .._checkparam import check_input_data, check_output_data, Validator
@@ -46,6 +47,7 @@ from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
 from ..common.api import _pynative_executor
 from ..dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
+
 
 def _transfer_tensor_to_tuple(inputs):
     """
@@ -71,7 +73,7 @@ def _save_final_ckpt(func):
     def wrapper(self, *args, **kwargs):
         obj = None
         if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), ModelCheckpoint):
-            obj = kwargs['callbacks']
+            obj = kwargs.get('callbacks')
         if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), list):
             for item in kwargs.get('callbacks'):
                 if isinstance(item, ModelCheckpoint):
@@ -224,6 +226,7 @@ class Model:
         self.epoch_iter = 0
         self.enable_recovery = False
         self._backbone_is_train = True
+        self.need_load_ckpt = False
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -452,7 +455,6 @@ class Model:
 
         return dataset_helper, network
 
-
     def _check_network_mode(self, network, is_train):
         """
         Change network mode if modes of backbone network and current network are not matching.
@@ -461,7 +463,6 @@ class Model:
             network.set_train(is_train)
             self._backbone_is_train = is_train
         return network
-
 
     def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
         """
@@ -712,31 +713,7 @@ class Model:
 
             dataset_helper.continue_send()
 
-            valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
-            if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
-
-                train_cur_step_num = cb_params.cur_step_num
-                train_batch_num = cb_params.batch_num
-                train_dataset_sink_mode = cb_params.dataset_sink_mode
-                train_net_outputs = cb_params.net_outputs
-
-                eval_callback = []
-                for cb in list_callback._callbacks:
-                    if cb.__class__.__name__ in internal_cb_names:
-                        if isinstance(cb, TimeMonitor):
-                            eval_callback.append(cb)
-                    else:
-                        eval_callback.append(cb)
-
-                self._eval_in_fit(valid_dataset,
-                                  callbacks=eval_callback,
-                                  dataset_sink_mode=valid_dataset_sink_mode,
-                                  cb_params=cb_params)
-                cb_params.mode = "train"
-                cb_params.cur_step_num = train_cur_step_num
-                cb_params.batch_num = train_batch_num
-                cb_params.dataset_sink_mode = train_dataset_sink_mode
-                cb_params.net_outputs = train_net_outputs
+            self._eval_durning_train(valid_infos, cb_params, list_callback)
 
             # In disaster recovery scenarios, need not to execute callbacks if this epoch executes failed.
             # Embedding cache server need not do epoch end callback, this process only run one step.
@@ -764,6 +741,33 @@ class Model:
         dataset_helper.release()
 
         list_callback.on_train_end(run_context)
+
+    def _eval_durning_train(self, valid_infos, cb_params, list_callback):
+        """Exec eval durnning train process."""
+        valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
+        if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
+            train_cur_step_num = cb_params.cur_step_num
+            train_batch_num = cb_params.batch_num
+            train_dataset_sink_mode = cb_params.dataset_sink_mode
+            train_net_outputs = cb_params.net_outputs
+
+            eval_callback = []
+            for cb in list_callback._callbacks:
+                if cb.__class__.__name__ in internal_cb_names:
+                    if isinstance(cb, TimeMonitor):
+                        eval_callback.append(cb)
+                else:
+                    eval_callback.append(cb)
+
+            self._eval_in_fit(valid_dataset,
+                              callbacks=eval_callback,
+                              dataset_sink_mode=valid_dataset_sink_mode,
+                              cb_params=cb_params)
+            cb_params.mode = "train"
+            cb_params.cur_step_num = train_cur_step_num
+            cb_params.batch_num = train_batch_num
+            cb_params.dataset_sink_mode = train_dataset_sink_mode
+            cb_params.net_outputs = train_net_outputs
 
     def _check_enable_recovery(self):
         """
@@ -917,31 +921,7 @@ class Model:
                 if should_stop:
                     break
 
-            valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
-            if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
-                train_cur_step_num = cb_params.cur_step_num
-                train_batch_num = cb_params.batch_num
-                train_dataset_sink_mode = cb_params.dataset_sink_mode
-                train_net_outputs = cb_params.net_outputs
-
-                eval_callback = []
-                for cb in list_callback._callbacks:
-                    if cb.__class__.__name__ in internal_cb_names:
-                        if isinstance(cb, TimeMonitor):
-                            eval_callback.append(cb)
-                    else:
-                        eval_callback.append(cb)
-
-                self._eval_in_fit(valid_dataset,
-                                  callbacks=eval_callback,
-                                  dataset_sink_mode=valid_dataset_sink_mode,
-                                  cb_params=cb_params)
-
-                cb_params.mode = "train"
-                cb_params.cur_step_num = train_cur_step_num
-                cb_params.batch_num = train_batch_num
-                cb_params.dataset_sink_mode = train_dataset_sink_mode
-                cb_params.net_outputs = train_net_outputs
+            self._eval_durning_train(valid_infos, cb_params, list_callback)
 
             train_dataset.reset()
 

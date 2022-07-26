@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Loss scale manager abstract class."""
+from __future__ import absolute_import
 
 from .._checkparam import Validator as validator
 from .. import nn

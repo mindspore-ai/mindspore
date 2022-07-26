@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Fbeta."""
+from __future__ import absolute_import
+
 import sys
 import numpy as np
+
 from mindspore._checkparam import Validator as validator
 from .metric import Metric, rearrange_inputs, _check_onehot_data
 

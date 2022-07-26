@@ -13,9 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """adasum"""
+from __future__ import absolute_import
+
 import copy
 import hashlib
 import math
+
 import mindspore.nn as nn
 import mindspore.log as logger
 from mindspore import context

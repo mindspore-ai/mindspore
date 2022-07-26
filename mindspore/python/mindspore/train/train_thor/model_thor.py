@@ -19,7 +19,10 @@ frequency of updating the second-order matrix. In order to optimize the overall 
 is redefined to inherit the Model class provided by MindSpore. The parameter of THOR for controlling the frequency
 of updating the second-order matrix can be obtained by the ModelThor class.
 """
+from __future__ import absolute_import
+
 import math
+
 from mindspore.train.callback import RunContext
 from mindspore import context
 from mindspore import nn

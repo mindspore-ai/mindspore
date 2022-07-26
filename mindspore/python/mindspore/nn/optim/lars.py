@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """lars optimizer"""
+from __future__ import absolute_import
+
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -124,13 +126,11 @@ class LARS(Optimizer):
         self.weight_decay = optimizer.weight_decay
         self.global_step = optimizer.global_step
         self.parameters = optimizer.parameters
-        self._parameters = optimizer._parameters  # pylint: disable=W0212
-        self._use_flattened_params = optimizer._use_flattened_params  # pylint: disable=W0212
-        if self._use_flattened_params:
+        if optimizer._use_flattened_params:  # pylint: disable=W0212
             self.opt._use_flattened_params = False  # pylint: disable=W0212
-        self._user_parameters += [param.name for param in self._parameters]
+        self._user_parameters += [param.name for param in self.parameters]
         self.use_clip = use_clip
-        self.lars_flag = tuple(lars_filter(x) for x in self._parameters)
+        self.lars_flag = tuple(lars_filter(x) for x in self.parameters)
         self.is_group = optimizer.is_group
         self.learning_rate = Parameter(Tensor(0.0, dtype=mstype.float32), name="fake_lr")
         self.decay_flags = optimizer.decay_flags
@@ -173,7 +173,7 @@ class LARS(Optimizer):
 
     @ms_function
     def construct(self, gradients):
-        params = self._parameters
+        params = self.parameters
         gradients = self.flatten_gradients(gradients)
         if self.use_clip:
             lr = self._get_lr()

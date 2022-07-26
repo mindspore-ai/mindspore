@@ -13,9 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Callback related classes and functions."""
+from __future__ import absolute_import
 
 from contextlib import ExitStack
+import numpy as np
 
+from mindspore.common.tensor import Tensor
 from mindspore import log as logger
 from mindspore.train.serialization import _fill_param_into_net
 from mindspore.train.summary.summary_record import _cache_summary_tensor_data
@@ -521,3 +524,13 @@ class RunContext:
             bool, if true, model.train() stops iterations.
         """
         return self._stop_requested
+
+
+def _handle_loss(loss):
+    """Handle loss."""
+    if isinstance(loss, (tuple, list)):
+        if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
+            loss = loss[0]
+    elif isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
+        loss = float(np.mean(loss.asnumpy()))
+    return loss
