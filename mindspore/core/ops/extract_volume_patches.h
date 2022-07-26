@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "ir/anf.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,6 +36,32 @@ class MIND_API ExtractVolumePatches : public BaseOperator {
   MIND_API_BASE_MEMBER(ExtractVolumePatches);
   /// \brief Constructor.
   ExtractVolumePatches() : BaseOperator(kNameExtractVolumePatches) { InitIOName({"x"}, {"y"}); }
+
+  void Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &strides, const std::string &padding);
+
+  /// \brief Set kernel_size.
+  void set_kernel_size(const std::vector<int64_t> &kernel_size);
+
+  /// \brief Set strides.
+  void set_strides(const std::vector<int64_t> &strides);
+
+  /// \brief Set padding.
+  void set_padding(const std::string &padding);
+
+  /// \brief Get kernel_size.
+  ///
+  /// \return kernel_size.
+  std::vector<int64_t> get_kernel_size() const;
+
+  /// \brief Get strides.
+  ///
+  /// \return strides.
+  std::vector<int64_t> get_strides() const;
+
+  /// \brief Get padding.
+  ///
+  /// \return padding.
+  std::string get_padding() const;
 };
 
 abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
