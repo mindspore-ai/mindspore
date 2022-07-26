@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/apply_ftrl_cpu_kernel.h"
 #include <map>
 #include <functional>
-#include <cmath>
 #include <algorithm>
 #include "utils/ms_utils.h"
 #include "mindspore/core/ops/apply_ftrl.h"
@@ -137,15 +136,14 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
-  input_elements_ = input_elements_ / batch_size_;
+  int64_t temp_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = static_cast<size_t>(temp_elements_ / batch_size_);
 
   return 0;
 }
 
 template <typename T>
-void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
   T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
   T *accum = reinterpret_cast<T *>(inputs[kIndexAcc]->addr);
   T *linear = reinterpret_cast<T *>(inputs[kIndexLinear]->addr);
@@ -183,7 +181,7 @@ void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<AddressPtr> &input
 }
 
 bool ApplyFtrlCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
+                                   const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs[kIndexVar]->size != inputs[kIndexAcc]->size) {
     MS_LOG(ERROR) << "For '" << kernel_name_
