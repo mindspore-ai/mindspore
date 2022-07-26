@@ -72,7 +72,6 @@ std::mutex PynativeExecutor::instance_lock_;
 namespace {
 const size_t ARG_SIZE = 2;
 const size_t MAX_TOP_CELL_COUNTS = 20;
-const size_t kThreshold = 3;
 
 // primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "mixed_precision_cast", "HookBackward",
@@ -369,36 +368,6 @@ void PynativeInfer(const PrimitivePyPtr &prim, OpExecInfo *const op_exec_info,
   MS_LOG(DEBUG) << "Prim " << prim->name() << " infer result: " << op_exec_info->abstract->ToString();
 }
 
-void GetValueNodeString(std::ostringstream &buf, const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto dtype = tensor->Dtype();
-  MS_EXCEPTION_IF_NULL(dtype);
-  size_t data_size = std::min(tensor->DataSize(), kThreshold);
-  auto fn = [&buf, data_size](auto addr) {
-    for (size_t i = 0; i < data_size; ++i) {
-      buf << *(addr + i);
-    }
-  };
-
-  if (dtype->type_id() == kNumberTypeBool) {
-    fn(reinterpret_cast<bool *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt16) {
-    fn(reinterpret_cast<int16_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt32) {
-    fn(reinterpret_cast<int32_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt64) {
-    fn(reinterpret_cast<int64_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeFloat16) {
-    buf << *reinterpret_cast<float16 *>(tensor->data_c());
-  } else if (dtype->type_id() == kNumberTypeFloat32) {
-    buf << *reinterpret_cast<float *>(tensor->data_c());
-  } else if (dtype->type_id() == kNumberTypeFloat64) {
-    buf << *reinterpret_cast<double *>(tensor->data_c());
-  } else {
-    MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
-  }
-}
-
 bool ValueHasDynamicShape(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
@@ -447,7 +416,7 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     // For constant input
     if (tensors_mask[index] == kValueNodeTensorMask) {
       has_const_input = true;
-      GetValueNodeString(buf, input_tensor);
+      buf << common::AnfAlgo::GetTensorValueString(input_tensor);
     }
     buf << "_";
   }
@@ -1389,6 +1358,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) const {
   if (args.size() != PY_ARGS_NUM) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
+  python_adapter::set_python_env_flag(true);
   const auto &op_exec_info = std::make_shared<OpExecInfo>();
   const auto &op_name = py::cast<std::string>(args[PY_NAME]);
   op_exec_info->op_name = op_name;
@@ -2534,7 +2504,6 @@ py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_ex
 MsBackendPolicy ForwardExecutor::GetBackendPolicy(const OpExecInfoPtr &op_exec_info) const {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
-  python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
@@ -2632,6 +2601,13 @@ void ForwardExecutor::SetDynamicInput(const py::object &cell, const py::args &ar
     auto abstract = value->ToAbstract()->Broaden();
     MS_EXCEPTION_IF_NULL(abstract);
     dynamic_index[i] = abstract;
+  }
+}
+
+void ForwardExecutor::ResetDynamicAbsMap() {
+  if (IsFirstCell()) {
+    // Clean up some resources for dynamic shape
+    dynamic_shape_info_ptr()->reset();
   }
 }
 
@@ -4433,8 +4409,6 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
 
   // Do some finishing work before end graph
   if (forward_executor()->IsFirstCell()) {
-    // Clean up some resources for dynamic shape
-    forward_executor()->dynamic_shape_info_ptr()->reset();
     // Reset lazy build
     SetLazyBuild(false);
     // Finish lazy task
@@ -4442,11 +4416,13 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   }
 
   if (!grad_flag()) {
+    forward_executor()->ResetDynamicAbsMap();
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
   const py::object ret;
   PynativeExecutorTry(grad_executor()->LinkGraph, &ret, cell, out, args);
+  forward_executor()->ResetDynamicAbsMap();
 }
 
 py::object PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) {

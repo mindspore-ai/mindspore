@@ -429,6 +429,7 @@ class ForwardExecutor {
   DynamicShapeInfoPtr dynamic_shape_info_ptr();
   void SetDynamicInput(const py::object &cell, const py::args &args);
   void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
+  void ResetDynamicAbsMap();
   py::object GetDynamicInput(const py::object &actual_input);
   bool IsFirstCell() const { return cell_depth_ == 0; }
   void IncreaseCellDepth() { ++cell_depth_; }

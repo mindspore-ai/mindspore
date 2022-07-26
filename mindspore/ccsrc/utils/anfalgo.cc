@@ -1672,5 +1672,41 @@ TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
   MS_LOG_WARNING << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
   return kTypeUnknown;
 }
+
+std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto dtype = tensor->Dtype();
+  MS_EXCEPTION_IF_NULL(dtype);
+  size_t data_size = tensor->DataSize();
+  std::ostringstream buf;
+  auto fn = [&buf, data_size](auto addr) {
+    for (size_t i = 0; i < data_size; ++i) {
+      buf << *(addr + i);
+    }
+  };
+
+  if (dtype->type_id() == kNumberTypeBool) {
+    fn(reinterpret_cast<bool *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt) {
+    fn(reinterpret_cast<int *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt8) {
+    fn(reinterpret_cast<int8_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt16) {
+    fn(reinterpret_cast<int16_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt32) {
+    fn(reinterpret_cast<int32_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt64) {
+    fn(reinterpret_cast<int64_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeFloat16) {
+    fn(reinterpret_cast<float16 *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeFloat64) {
+    fn(reinterpret_cast<double *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeFloat || dtype->type_id() == kNumberTypeFloat32) {
+    fn(reinterpret_cast<float *>(tensor->data_c()));
+  } else {
+    MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
+  }
+  return buf.str();
+}
 }  // namespace common
 }  // namespace mindspore
