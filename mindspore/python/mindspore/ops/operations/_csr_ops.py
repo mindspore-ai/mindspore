@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """csr_ops"""
-from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
+from ..primitive import prim_attr_register, Primitive
 
 
-class CSRReduceSum(PrimitiveWithInfer):
+class CSRReduceSum(Primitive):
     """
     Reduces a dimension of a CSRTensor (composed of `indptr`, `indices`, `values` and `shape`) by summing all elements
     in the dimension.
@@ -67,7 +67,7 @@ class CSRReduceSum(PrimitiveWithInfer):
                                 outputs=['output'])
 
 
-class CSRMV(PrimitiveWithInfer):
+class CSRMV(Primitive):
     """
     Sparse matrix-vector multiplication.
 
@@ -118,7 +118,7 @@ class CSRMV(PrimitiveWithInfer):
                                 outputs=['output'])
 
 
-class CSRMul(PrimitiveWithInfer):
+class CSRMul(Primitive):
     """
     Elemwise multiplication of a CSRTensor (composed of `indptr`, `indices`, `values` and `shape`) and a dense tensor.
 
@@ -172,7 +172,7 @@ class CSRMul(PrimitiveWithInfer):
                                 outputs=['output'])
 
 
-class CSRGather(PrimitiveWithInfer):
+class CSRGather(Primitive):
     """
     Returns the values of a CSRTensor indexed from a dense tensor using indptr and indices.
 
@@ -220,7 +220,7 @@ class CSRGather(PrimitiveWithInfer):
                                 outputs=['output'])
 
 
-class CSR2COO(PrimitiveWithInfer):
+class CSR2COO(Primitive):
     """
     Converts the indptr of a CSRTensor to the row indices of a COOTensor.
 
@@ -260,7 +260,7 @@ class CSR2COO(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['indptr', 'nnz'], outputs=['output'])
 
 
-class COO2CSR(PrimitiveWithInfer):
+class COO2CSR(Primitive):
     """
     Converts the row indices of a COOTensor to the indptr of a CSRTensor.
 
@@ -301,7 +301,7 @@ class COO2CSR(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['row_indices', 'height'], outputs=['output'])
 
 
-class CSRDiv(PrimitiveWithInfer):
+class CSRDiv(Primitive):
     """
     Elemwise division on a CSRTensor and a dense tensor.
 

@@ -3733,16 +3733,6 @@ class Diag(PrimitiveWithCheck):
     def __init__(self):
         """Initialize Diag"""
 
-    def infer_dtype(self, x_type):
-        validator.check_subclass('input_x', x_type, mstype.tensor, self.name)
-        return x_type
-
-    def infer_shape(self, x_shape):
-        validator.check("x rank", len(x_shape), "", 1, Rel.GE)
-        ret_shape = copy.deepcopy(x_shape)
-        ret_shape = ret_shape + ret_shape
-        return ret_shape
-
     def infer_value(self, x):
         if x is None:
             return None

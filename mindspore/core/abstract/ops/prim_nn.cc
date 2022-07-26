@@ -243,32 +243,6 @@ AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractTuple>(args_list);
 }
 
-AbstractBasePtr InferImplDropout(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector shape = x->shape()->shape();
-  ShapeVector min_shape = x->shape()->min_shape();
-  ShapeVector max_shape = x->shape()->max_shape();
-  auto output_shape =
-    std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
-  AbstractBasePtrList ret = {output_shape, output_shape};
-  return std::make_shared<AbstractTuple>(ret);
-}
-
-AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list) {
-  CheckRequiredArgsSize(primitive->name(), args_spec_list, 5);
-  AbstractBasePtrList elements;
-  for (size_t i = 0; i < 3; ++i) {
-    elements.push_back(args_spec_list[i]->Clone()->Broaden());
-  }
-  return std::make_shared<AbstractTuple>(elements);
-}
-
 AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_spec_list) {
   CheckRequiredArgsSize(primitive->name(), args_spec_list, 7);
@@ -285,43 +259,6 @@ AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &prim
   CheckRequiredArgsSize(primitive->name(), args_spec_list, 6);
   AbstractBasePtrList elements;
   elements.push_back(args_spec_list[0]->Clone()->Broaden());
-  return std::make_shared<AbstractTuple>(elements);
-}
-
-AbstractBasePtr InferImplCTCGreedyDecoder(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
-  // inputs: inputs, sequence_length
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-
-  constexpr size_t size_expected = 3;
-  auto shape = input->shape();
-  if (shape->shape().size() != size_expected) {
-    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 3.";
-  }
-
-  ShapeVector indices_shape = {Shape::SHP_ANY, 2};
-  ShapeVector min_shape = {1, 2};
-  ShapeVector max_shape = {shape->shape()[0] * shape->shape()[1], 2};
-  auto decoded_indices =
-    std::make_shared<AbstractTensor>(kInt64, std::make_shared<Shape>(indices_shape, min_shape, max_shape));
-
-  ShapeVector values_shape = {Shape::SHP_ANY};
-  ShapeVector values_min_shape = {1};
-  ShapeVector values_max_shape = {shape->shape()[0] * shape->shape()[1]};
-  ShapePtr values_shapes = std::make_shared<Shape>(values_shape, values_min_shape, values_max_shape);
-  auto decoded_values = std::make_shared<AbstractTensor>(kInt64, values_shapes);
-
-  ShapeVector decoded_shape_shape = {2};
-  auto decoded_shape = std::make_shared<AbstractTensor>(kInt64, decoded_shape_shape);
-
-  ShapeVector log_probability_shape = {shape->shape()[1], 1};
-  auto log_probability =
-    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(log_probability_shape));
-
-  // outputs: decoded_indices, decoded_values, decoded_shape, log_probability
-  AbstractBasePtrList elements = {decoded_indices, decoded_values, decoded_shape, log_probability};
   return std::make_shared<AbstractTuple>(elements);
 }
 
