@@ -16,25 +16,25 @@
 
 #include "include/api/model.h"
 #include <jni.h>
-#include "common/ms_log.h"
+#include "common/log.h"
 #include "include/api/serialization.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv *env, jobject thiz, jlong graph_ptr,
                                                                          jlong context_ptr, jlong cfg_ptr) {
   auto *c_graph_ptr = reinterpret_cast<mindspore::Graph *>(graph_ptr);
   if (c_graph_ptr == nullptr) {
-    MS_LOGE("Graph pointer from java is nullptr");
+    MS_LOG(ERROR) << "Graph pointer from java is nullptr";
     return jlong(nullptr);
   }
 
   auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
   if (c_context_ptr == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return jlong(nullptr);
   }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
-    MS_LOGE("Make context failed");
+    MS_LOG(ERROR) << "Make context failed";
     return jlong(nullptr);
   }
   context.reset(c_context_ptr);
@@ -42,7 +42,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv 
   auto *c_cfg_ptr = reinterpret_cast<mindspore::TrainCfg *>(cfg_ptr);
   auto cfg = std::make_shared<mindspore::TrainCfg>();
   if (cfg == nullptr) {
-    MS_LOGE("Make train config failed");
+    MS_LOG(ERROR) << "Make train config failed";
     return jlong(nullptr);
   }
   if (c_cfg_ptr != nullptr) {
@@ -52,13 +52,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv 
   }
   auto model = new (std::nothrow) mindspore::Model();
   if (model == nullptr) {
-    MS_LOGE("Model new failed");
+    MS_LOG(ERROR) << "Model new failed";
     return jlong(nullptr);
   }
 
   auto status = model->Build(mindspore::GraphCell(*c_graph_ptr), context, cfg);
   if (status != mindspore::kSuccess) {
-    MS_LOGE("Error (%d) during build of model", static_cast<int>(status));
+    MS_LOG(ERROR) << "Error " << static_cast<int>(status) << " during build of model";
     delete model;
     return jlong(nullptr);
   }
@@ -70,14 +70,14 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
                                                                           jlong context_ptr, jcharArray key_str,
                                                                           jstring dec_mod, jstring cropto_lib_path) {
   if (model_buffer == nullptr) {
-    MS_LOGE("Buffer from java is nullptr");
+    MS_LOG(ERROR) << "Buffer from java is nullptr";
     return reinterpret_cast<jlong>(nullptr);
   }
   mindspore::ModelType c_model_type;
   if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
     c_model_type = static_cast<mindspore::ModelType>(model_type);
   } else {
-    MS_LOGE("Invalid model type : %d", model_type);
+    MS_LOG(ERROR) << "Invalid model type : " << model_type;
     return (jlong) nullptr;
   }
   jlong buffer_len = env->GetDirectBufferCapacity(model_buffer);
@@ -85,19 +85,19 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
 
   auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
   if (c_context_ptr == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return jlong(nullptr);
   }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
-    MS_LOGE("Make context failed");
+    MS_LOG(ERROR) << "Make context failed";
     return jlong(nullptr);
   }
   context.reset(c_context_ptr);
 
   auto model = new (std::nothrow) mindspore::Model();
   if (model == nullptr) {
-    MS_LOGE("Model new failed");
+    MS_LOG(ERROR) << "Model new failed";
     return jlong(nullptr);
   }
   auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
@@ -107,7 +107,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
     char *dec_key_data = new (std::nothrow) char[key_len];
     if (dec_key_data == nullptr) {
-      MS_LOGE("Dec key new failed");
+      MS_LOG(ERROR) << "Dec key new failed";
       delete model;
       return jlong(nullptr);
     }
@@ -122,7 +122,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
     status = model->Build(model_buf, buffer_len, c_model_type, context);
   }
   if (status != mindspore::kSuccess) {
-    MS_LOGE("Error (%d) during build of model", static_cast<int>(status));
+    MS_LOG(ERROR) << "Error " << static_cast<int>(status) << " during build of model";
     delete model;
     return jlong(nullptr);
   }
@@ -138,24 +138,24 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
   if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
     c_model_type = static_cast<mindspore::ModelType>(model_type);
   } else {
-    MS_LOGE("Invalid model type : %d", model_type);
+    MS_LOG(ERROR) << "Invalid model type : " << model_type;
     return (jlong) nullptr;
   }
   auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
   if (c_context_ptr == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return jlong(nullptr);
   }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
-    MS_LOGE("Make context failed");
+    MS_LOG(ERROR) << "Make context failed";
     return jlong(nullptr);
   }
   context.reset(c_context_ptr);
 
   auto model = new (std::nothrow) mindspore::Model();
   if (model == nullptr) {
-    MS_LOGE("Model new failed");
+    MS_LOG(ERROR) << "Model new failed";
     return jlong(nullptr);
   }
   auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
@@ -165,7 +165,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
     char *dec_key_data = new (std::nothrow) char[key_len];
     if (dec_key_data == nullptr) {
-      MS_LOGE("Dec key new failed");
+      MS_LOG(ERROR) << "Dec key new failed";
       delete model;
       return jlong(nullptr);
     }
@@ -180,7 +180,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
     status = model->Build(c_model_path, c_model_type, context);
   }
   if (status != mindspore::kSuccess) {
-    MS_LOGE("Error (%d) during build of model", static_cast<int>(status));
+    MS_LOG(ERROR) << "Error (%d) during build of model" << static_cast<int>(status);
     delete model;
     return jlong(nullptr);
   }
@@ -197,7 +197,7 @@ jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_in
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
   auto *pointer = reinterpret_cast<mindspore::Model *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return ret;
   }
   std::vector<mindspore::MSTensor> tensors;
@@ -209,7 +209,7 @@ jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_in
   for (auto &tensor : tensors) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
     if (tensor_ptr == nullptr) {
-      MS_LOGE("Make ms tensor failed");
+      MS_LOG(ERROR) << "Make ms tensor failed";
       return ret;
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
@@ -221,7 +221,7 @@ jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_in
 jlong GetTensorByInOutName(JNIEnv *env, jlong model_ptr, jstring tensor_name, bool is_input) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return jlong(nullptr);
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -236,7 +236,7 @@ jlong GetTensorByInOutName(JNIEnv *env, jlong model_ptr, jstring tensor_name, bo
   }
   auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
   if (tensor_ptr == nullptr) {
-    MS_LOGE("Make ms tensor failed");
+    MS_LOG(ERROR) << "Make ms tensor failed";
     return jlong(nullptr);
   }
   return jlong(tensor_ptr.release());
@@ -270,7 +270,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputTensorNam
 
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Session pointer from java is nullptr");
+    MS_LOG(ERROR) << "Session pointer from java is nullptr";
     return ret;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -292,7 +292,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Session pointer from java is nullptr");
+    MS_LOG(ERROR) << "Session pointer from java is nullptr";
     return ret;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -300,7 +300,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
   for (auto &tensor : tensors) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
     if (tensor_ptr == nullptr) {
-      MS_LOGE("Make ms tensor failed");
+      MS_LOG(ERROR) << "Make ms tensor failed";
       return ret;
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
@@ -313,7 +313,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_getTrainMode(JNIE
                                                                             jlong model_ptr) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -324,7 +324,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setTrainMode(JNIE
                                                                             jboolean train_mode) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return jlong(false);
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -335,7 +335,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setTrainMode(JNIE
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *env, jobject thiz, jlong model_ptr) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -350,7 +350,7 @@ std::vector<mindspore::MSTensor> convertArrayToVector(JNIEnv *env, jlongArray in
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("Tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
       return c_inputs;
     }
     auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -363,7 +363,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_predict(JNIEnv *e
                                                                        jlongArray inputs, jlongArray outputs) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -378,7 +378,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
   std::vector<std::vector<int64_t>> c_dims;
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -389,7 +389,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("Tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
       return (jboolean) false;
     }
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -418,7 +418,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
                                                                       jobjectArray tensorNames) {
   auto *model_pointer = reinterpret_cast<void *>(model_ptr);
   if (model_pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
@@ -437,7 +437,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
       quantization_type <= static_cast<int>(mindspore::kFullQuant)) {
     quant_type = static_cast<mindspore::QuantizationType>(quantization_type);
   } else {
-    MS_LOGE("Invalid quantization_type : %d", quantization_type);
+    MS_LOG(ERROR) << "Invalid quantization_type : " << quantization_type;
     return (jlong) nullptr;
   }
   auto ret = mindspore::Serialization::ExportModel(*lite_model_ptr, mindspore::kMindIR, model_path, quant_type,
@@ -453,7 +453,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateFeatureMaps
   for (int i = 0; i < size; ++i) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
-      MS_LOGE("Tensor pointer from java is nullptr");
+      MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
       return (jboolean) false;
     }
     auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -475,7 +475,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNI
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return ret;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -483,7 +483,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNI
   for (auto &feature : features) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(feature);
     if (tensor_ptr == nullptr) {
-      MS_LOGE("Make ms tensor failed");
+      MS_LOG(ERROR) << "Make ms tensor failed";
       return ret;
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
@@ -496,7 +496,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setLearningRate(J
                                                                                jfloat learning_rate) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -508,7 +508,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setupVirtualBatch
   JNIEnv *env, jobject thiz, jlong model_ptr, jint virtual_batch_factor, jfloat learning_rate, jfloat momentum) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
@@ -519,7 +519,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setupVirtualBatch
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {
   auto *pointer = reinterpret_cast<void *>(model_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);

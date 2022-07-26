@@ -15,14 +15,14 @@
  */
 
 #include <jni.h>
-#include "common/ms_log.h"
+#include "common/log.h"
 #include "include/api/model_parallel_runner.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_createRunnerConfig(JNIEnv *env,
                                                                                              jobject thiz) {
   auto runner_config = new (std::nothrow) mindspore::RunnerConfig();
   if (runner_config == nullptr) {
-    MS_LOGE("new RunnerConfig fail!");
+    MS_LOG(ERROR) << "new RunnerConfig fail!";
     return (jlong) nullptr;
   }
   return (jlong)runner_config;
@@ -32,19 +32,19 @@ extern "C" JNIEXPORT jlong JNICALL
 Java_com_mindspore_config_RunnerConfig_createRunnerConfigWithContext(JNIEnv *env, jobject thiz, jlong context_ptr) {
   auto runner_config = new (std::nothrow) mindspore::RunnerConfig();
   if (runner_config == nullptr) {
-    MS_LOGE("new RunnerConfig fail!");
+    MS_LOG(ERROR) << "new RunnerConfig fail!";
     return (jlong) nullptr;
   }
   auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
   if (c_context_ptr == nullptr) {
     delete runner_config;
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return (jlong) nullptr;
   }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
     delete runner_config;
-    MS_LOGE("Make context failed");
+    MS_LOG(ERROR) << "Make context failed";
     return (jlong) nullptr;
   }
   context.reset(c_context_ptr);
@@ -57,7 +57,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setWork
                                                                                        jint workers_num) {
   auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("runner config pointer from java is nullptr");
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
     return;
   }
   pointer->SetWorkersNum(workers_num);
@@ -69,7 +69,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConf
                                                                                        jobject hashMapConfig) {
   auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("runner config pointer from java is nullptr");
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
     return;
   }
   const char *c_section = env->GetStringUTFChars(section, nullptr);
@@ -123,7 +123,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_free(JN
                                                                               jlong runner_config_ptr) {
   auto *pointer = reinterpret_cast<void *>(runner_config_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return;
   }
   auto *runner_config = static_cast<mindspore::RunnerConfig *>(pointer);

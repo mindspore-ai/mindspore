@@ -56,6 +56,7 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(NEW_NATIVE_DIR ${LITE_DIR}/java/src/main/native)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../src)##for common/log.h
 include_directories(${LITE_DIR}) ## lite include
 include_directories(${TOP_DIR}) ## api include
 include_directories(${TOP_DIR}/mindspore/core/) ## core include
@@ -81,6 +82,7 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/ms_context.cpp
         ${NEW_NATIVE_DIR}/ms_tensor.cpp
         ${NEW_NATIVE_DIR}/version.cpp
+        ${TOP_DIR}/mindspore/lite/src/common/log.cc
   )
 
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)
@@ -93,6 +95,8 @@ endif()
 
 set(LITE_SO_NAME mindspore-lite)
 
+set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
+        LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -106,7 +110,10 @@ if(SUPPORT_TRAIN)
     set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
         ${NEW_NATIVE_DIR}/train_config.cpp
+        ${TOP_DIR}/mindspore/lite/src/common/log.cc
     )
+    set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
+            LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
     if(PLATFORM_ARM64 OR PLATFORM_ARM32)
         find_library(log-lib log)
