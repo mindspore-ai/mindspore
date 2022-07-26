@@ -47,6 +47,7 @@ from . import amp
 from ..common.api import _pynative_executor
 from ..dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 
+
 def _transfer_tensor_to_tuple(inputs):
     """
     If the input is a tensor, convert it to a tuple. If not, the output is unchanged.
@@ -71,7 +72,7 @@ def _save_final_ckpt(func):
     def wrapper(self, *args, **kwargs):
         obj = None
         if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), ModelCheckpoint):
-            obj = kwargs['callbacks']
+            obj = kwargs.get('callbacks')
         if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), list):
             for item in kwargs.get('callbacks'):
                 if isinstance(item, ModelCheckpoint):
