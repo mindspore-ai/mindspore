@@ -312,6 +312,7 @@ constexpr auto kNumSample = "num_samples";
 constexpr auto kMergeRepeated = "merge_repeated";
 constexpr auto kCount = "count";
 constexpr auto kDim = "dim";
+constexpr auto kLinearSumAssignment = "linear_sum_assignment";
 
 enum Index : size_t {
   kInputIndex0 = 0,

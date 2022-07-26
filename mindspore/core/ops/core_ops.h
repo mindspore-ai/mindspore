@@ -269,6 +269,7 @@ constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironAdd = "EnvironAdd";
 constexpr auto kPopulationCount = "PopulationCount";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
+constexpr auto kLinearSumAssignment = "LinearSumAssignment";
 
 //
 // Here list all primitives used in backend or some special primitives used by core.
@@ -1205,6 +1206,9 @@ GVAR_DEF(PrimitivePtr, kPrimAdamApplyOneWithDecayAssign, std::make_shared<Primit
 
 // OCR Ops
 GVAR_DEF(PrimitivePtr, kPrimOCRRecognitionPreHandle, std::make_shared<Primitive>("OCRRecognitionPreHandle"));
+
+// Linear Programming
+GVAR_DEF(PrimitivePtr, kPrimLinearSumAssignment, std::make_shared<Primitive>(kLinearSumAssignment));
 
 class DoSignaturePrimitive : public Primitive {
  public:
