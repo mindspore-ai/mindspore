@@ -261,7 +261,9 @@ static Status BuildShape(const nlohmann::json &shapeVal, std::vector<dsize_t> *o
   if (outShape == nullptr) {
     RETURN_STATUS_UNEXPECTED("outShape can not be nullptr.");
   }
-  if (shapeVal.empty()) return Status::OK();
+  if (shapeVal.empty()) {
+    return Status::OK();
+  }
 
   // Iterate over the integer list and add those values to the output shape tensor
   auto items = shapeVal.items();
@@ -313,22 +315,25 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
     }
   }
   // data type is mandatory field
-  if (type_str.empty())
+  if (type_str.empty()) {
     RETURN_STATUS_UNEXPECTED("Invalid data, \"type\" field is missing for column " + col_name +
                              " in JSON schema file.");
+  }
 
   // rank number is mandatory field
-  if (rank_value <= -1)
+  if (rank_value <= -1) {
     RETURN_STATUS_UNEXPECTED("Invalid data, \"rank\" field of column " + col_name +
                              " must have value >= 0 in JSON schema file.");
+  }
 
   // Create the column descriptor for this column from the data we pulled from the json file
   TensorShape col_shape = TensorShape(tmp_shape);
-  if (shape_field_exists)
+  if (shape_field_exists) {
     RETURN_IF_NOT_OK(this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value, &col_shape)));
-  else
+  } else {
     // Create a column descriptor that doesn't have a shape
     RETURN_IF_NOT_OK(this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value)));
+  }
   return Status::OK();
 }
 
@@ -444,8 +449,9 @@ Status DataSchema::AddColumn(const ColDescriptor &cd) {
 // Internal helper function. Performs sanity checks on the json file setup.
 Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
   // Check if columns node exists.  It is required for building schema from file.
-  if (js.find("columns") == js.end())
+  if (js.find("columns") == js.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid data, \"columns\" field is missing in the JSON schema file.");
+  }
   return Status::OK();
 }
 

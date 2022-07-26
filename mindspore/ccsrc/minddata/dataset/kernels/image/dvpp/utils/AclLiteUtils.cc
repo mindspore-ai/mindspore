@@ -215,12 +215,15 @@ aclrtMemcpyKind GetCopyPolicy(aclrtRunMode srcDev, CopyDirection direct, MemoryT
   aclrtMemcpyKind policy = ACL_MEMCPY_HOST_TO_HOST;
 
   if (direct == CopyDirection::TO_DEVICE) {
-    if (srcDev == ACL_HOST)
+    if (srcDev == ACL_HOST) {
       policy = ACL_MEMCPY_HOST_TO_DEVICE;
-    else
+    } else {
       policy = ACL_MEMCPY_DEVICE_TO_DEVICE;
+    }
   } else {  // TO_HOST
-    if (srcDev == ACL_DEVICE) policy = ACL_MEMCPY_DEVICE_TO_HOST;
+    if (srcDev == ACL_DEVICE) {
+      policy = ACL_MEMCPY_DEVICE_TO_HOST;
+    }
   }
 
   return policy;

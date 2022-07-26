@@ -259,10 +259,14 @@ int32_t CachePerfRun::ProcessArgs(int argc, char **argv) {
     PrintHelp();
     rc = -1;
   }
-  if (rc < 0) return rc;
+  if (rc < 0) {
+    return rc;
+  }
 
   rc = SanityCheck(seen_opts);
-  if (rc < 0) return rc;
+  if (rc < 0) {
+    return rc;
+  }
 
   pid_lists_.reserve(num_pipelines_);
   return 0;

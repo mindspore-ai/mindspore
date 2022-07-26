@@ -812,7 +812,9 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
 
 ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
   auto enabled = (profiling_ || autotuning_);
-  if (!enabled) return kNotEnabled;
+  if (!enabled) {
+    return kNotEnabled;
+  }
   if (tree_ == nullptr) {
     return kEnabledTreeNotRegistered;
   } else {

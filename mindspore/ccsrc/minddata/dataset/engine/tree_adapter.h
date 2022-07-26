@@ -94,7 +94,9 @@ class TreeAdapter {
   Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
                                 std::shared_ptr<Tracing> tracing_node = nullptr) {
     profiling_manager_ = profiling_manager;
-    if (tracing_node != nullptr) tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(tracing_node);
+    if (tracing_node != nullptr) {
+      tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(tracing_node);
+    }
     return Status::OK();
   }
 

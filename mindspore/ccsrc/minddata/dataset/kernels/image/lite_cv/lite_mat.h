@@ -197,10 +197,11 @@ class LDataType {
   /// \brief Function to return the length of data type.
   /// \return Memory length of data type.
   uint8_t SizeInBytes() const {
-    if (type_ < LDataType::NUM_OF_TYPES)
+    if (type_ < LDataType::NUM_OF_TYPES) {
       return SIZE_IN_BYTES[type_];
-    else
+    } else {
       return 0;
+    }
   }
 
  public:

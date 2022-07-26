@@ -17,10 +17,11 @@
 #ifndef IMAGE_PROCESS_H_
 #define IMAGE_PROCESS_H_
 
-#include <math.h>
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <limits>
+#include <cmath>
+#include <vector>
 
 #include "lite_cv/lite_mat.h"
 

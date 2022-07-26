@@ -178,7 +178,9 @@ Status BuildVocabOp::CollectorThread() {
                     });
 
   if (special_first_) {
-    for (const std::string &sp_tk : special_tokens_) vocab_->AppendWord(sp_tk);
+    for (const std::string &sp_tk : special_tokens_) {
+      vocab_->AppendWord(sp_tk);
+    }
   }
 
   for (int64_t i = 0; i < num_words; i++) {
@@ -186,7 +188,9 @@ Status BuildVocabOp::CollectorThread() {
   }
 
   if (!special_first_) {
-    for (const std::string &sp_tk : special_tokens_) vocab_->AppendWord(sp_tk);
+    for (const std::string &sp_tk : special_tokens_) {
+      vocab_->AppendWord(sp_tk);
+    }
   }
 
   RETURN_IF_NOT_OK(out_connector_->SendEOE());

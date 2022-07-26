@@ -458,19 +458,19 @@ int64_t ShardColumn::BytesLittleToMinIntType(const std::vector<uint8_t> &bytes_a
   int64_t i_out;
   switch (src_i_type) {
     case kInt8Type: {
-      i_out = (int8_t)(u_temp & std::numeric_limits<uint8_t>::max());
+      i_out = static_cast<int8_t>(u_temp & std::numeric_limits<uint8_t>::max());
       break;
     }
     case kInt16Type: {
-      i_out = (int16_t)(u_temp & std::numeric_limits<uint16_t>::max());
+      i_out = static_cast<int16_t>(u_temp & std::numeric_limits<uint16_t>::max());
       break;
     }
     case kInt32Type: {
-      i_out = (int32_t)(u_temp & std::numeric_limits<uint32_t>::max());
+      i_out = static_cast<int32_t>(u_temp & std::numeric_limits<uint32_t>::max());
       break;
     }
     case kInt64Type: {
-      i_out = (int64_t)(u_temp & std::numeric_limits<uint64_t>::max());
+      i_out = static_cast<int64_t>(u_temp & std::numeric_limits<uint64_t>::max());
       break;
     }
     default: {

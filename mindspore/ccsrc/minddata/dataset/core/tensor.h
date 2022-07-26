@@ -330,7 +330,9 @@ class Tensor {
 
   /// \return the number of bytes this tensor is needs
   dsize_t SizeInBytes() const {
-    if (data_end_ == nullptr) return type_.SizeInBytes() * shape_.NumOfElements();
+    if (data_end_ == nullptr) {
+      return type_.SizeInBytes() * shape_.NumOfElements();
+    }
     return data_end_ - data_;
   }
 
@@ -829,7 +831,9 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
     num_bytes -= kOffsetSize;
     // insert actual string
     int ret_code = memcpy_s((*out)->data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
-    if (ret_code != 0) MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    if (ret_code != 0) {
+      MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    }
     //  next string will be stored right after the current one.
     offset = offset + str.length() + 1;
     // total bytes are reduced by the length of the string

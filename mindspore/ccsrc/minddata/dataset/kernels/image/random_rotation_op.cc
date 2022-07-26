@@ -76,9 +76,15 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
     outputW = inputs[0][1];
   }
   TensorShape out = TensorShape{outputH, outputW};
-  if (inputs[0].Rank() == 2) outputs.emplace_back(out);
-  if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
-  if (!outputs.empty()) return Status::OK();
+  if (inputs[0].Rank() == 2) {
+    (void)outputs.emplace_back(out);
+  }
+  if (inputs[0].Rank() == 3) {
+    (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
+  }
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError,
                 "RandomRotation: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
                   std::to_string(inputs[0].Rank()));

@@ -209,7 +209,9 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
   MS_LOG(INFO) << "JiebaTokenizer::AddDict: The size of user input dictionary is: " << user_dict->size();
   MS_LOG(INFO) << "Valid rows in input dictionary (Maximum of first 10 rows are shown.):";
   for (std::size_t i = 0; i != user_dict->size(); ++i) {
-    if (i >= kMaxLoggedRows) break;
+    if (i >= kMaxLoggedRows) {
+      break;
+    }
     MS_LOG(INFO) << user_dict->at(i).first << " " << user_dict->at(i).second;
   }
   return Status::OK();

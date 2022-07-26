@@ -239,7 +239,9 @@ Status MnistOp::WalkAllFiles() {
   Path dir(real_path);
   auto dir_it = Path::DirIterator::OpenDirectory(&dir);
   std::string prefix;  // empty string, used to match usage = "" (default) or usage == "all"
-  if (usage_ == "train" || usage_ == "test") prefix = (usage_ == "test" ? test_prefix : train_prefix);
+  if (usage_ == "train" || usage_ == "test") {
+    prefix = (usage_ == "test" ? test_prefix : train_prefix);
+  }
   if (dir_it != nullptr) {
     while (dir_it->HasNext()) {
       Path file = dir_it->Next();

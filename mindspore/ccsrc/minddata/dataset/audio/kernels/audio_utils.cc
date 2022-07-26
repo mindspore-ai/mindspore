@@ -227,7 +227,7 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   TensorShape toShape({input->Size() / (input_shape[-1] * input_shape[-2] * input_shape[-3]), input_shape[-3],
                        input_shape[-2], input_shape[-1]});
   RETURN_IF_NOT_OK(input->Reshape(toShape));
-  if (rate == 1.0) {
+  if (std::fabs(rate - 1.0) <= std::numeric_limits<float>::epsilon()) {
     *output = input;
     return Status::OK();
   }

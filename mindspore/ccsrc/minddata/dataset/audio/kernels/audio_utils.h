@@ -68,7 +68,9 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     *itr -= multiplier * db_multiplier;
     // calculate max by axis
     cnt++;
-    if ((*itr) > temp_max) temp_max = *itr;
+    if ((*itr) > temp_max) {
+      temp_max = *itr;
+    }
     if (cnt % step == 0) {
       max_val.push_back(temp_max);
       temp_max = std::numeric_limits<T>::lowest();
@@ -186,7 +188,8 @@ Status DBToAmplitude(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 template <typename T>
 Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float shift, float limiter_gain) {
   float limiter_threshold = 0.0;
-  if (shift != limiter_gain && shift != 0) {
+  if (std::fabs(shift - limiter_gain) > std::numeric_limits<float>::epsilon() &&
+      std::fabs(shift) > std::numeric_limits<float>::epsilon()) {
     limiter_threshold = 1.0 - (std::abs(shift) - limiter_gain);
     for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
       if (*itr > limiter_threshold && shift > 0) {
@@ -299,7 +302,9 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
       } else {
         out_vect[i] = m_py[m_num_order];
       }
-      if (i + 1 == x_idx) continue;
+      if (i + 1 == x_idx) {
+        continue;
+      }
       for (size_t j = 0; j < m_num_order; j++) {
         m_px[j] = m_px[j + 1];
       }
@@ -375,16 +380,19 @@ Status CreateTriangularFilterbank(std::shared_ptr<Tensor> *output, const std::sh
   // calculate up and down slopes for creating overlapping triangles.
   std::vector<T> down_slopes;
   TensorShape down_slopes_shape({all_freqs->Size(), f_pts->Size() - 2});
-  for (size_t row = 0; row < down_slopes_shape[0]; row++)
+  for (size_t row = 0; row < down_slopes_shape[0]; row++) {
     for (size_t col = 0; col < down_slopes_shape[1]; col++) {
       down_slopes.push_back(-slopes[col + row * f_pts->Size()] / f_diff[col]);
     }
+  }
+
   std::vector<T> up_slopes;
   TensorShape up_slopes_shape({all_freqs->Size(), f_pts->Size() - 2});
-  for (size_t row = 0; row < up_slopes_shape[0]; row++)
+  for (size_t row = 0; row < up_slopes_shape[0]; row++) {
     for (size_t col = 2; col < f_pts->Size(); col++) {
       up_slopes.push_back(slopes[col + row * f_pts->Size()] / f_diff[col - 1]);
     }
+  }
 
   // clip the value of triangles and save into fb.
   std::vector<T> fb;

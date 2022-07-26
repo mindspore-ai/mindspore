@@ -72,9 +72,15 @@ std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &sha
     if (shape.Rank() == 3) {
       ch = static_cast<uint16_t>(shape[2]);
     }
-    if (shape.Rank() > 0) size[0] = static_cast<int>(shape[0]);
-    if (shape.Rank() > 1) size[1] = static_cast<int>(shape[1]);
-    if (type.AsCVType() == kCVInvalidType) return std::make_pair(size, -1);
+    if (shape.Rank() > 0) {
+      size[0] = static_cast<int>(shape[0]);
+    }
+    if (shape.Rank() > 1) {
+      size[1] = static_cast<int>(shape[1]);
+    }
+    if (type.AsCVType() == kCVInvalidType) {
+      return std::make_pair(size, -1);
+    }
     int cv_type = CV_MAKETYPE(type.AsCVType(), ch);
     return std::make_pair(size, cv_type);
   }

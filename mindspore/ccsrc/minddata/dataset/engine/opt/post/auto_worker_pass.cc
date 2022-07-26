@@ -34,7 +34,9 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
   OpWeightPass pass(kOpWeightConfigs[config < kOpWeightConfigs.size() ? config : 0]);
 
   std::string weight_str;
-  for (const auto &p : pass.weight_profile_) weight_str += ("(" + p.first + "=" + std::to_string(p.second) + ")");
+  for (const auto &p : pass.weight_profile_) {
+    weight_str += ("(" + p.first + "=" + std::to_string(p.second) + ")");
+  }
   int32_t num_shards = GlobalContext::config_manager()->get_num_shards_for_auto_num_workers();
   num_shards = std::min(std::max(1, num_shards), thread_cnt_);
 
@@ -47,9 +49,12 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
 
   // get the maximum weight of all the ops, this value is used to ensure the ratio of num_workers between ops
   float max_weight = 0;
-  for (const auto &p : pass.weight_profile_) max_weight = std::max(max_weight, p.second);
+  for (const auto &p : pass.weight_profile_) {
+    max_weight = std::max(max_weight, p.second);
+  }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(max_weight != 0, "Internal error, doesn't allow divide zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(std::fabs(max_weight) > std::numeric_limits<float>::epsilon(),
+                               "Internal error, doesn't allow divide zero.");
   RETURN_IF_NOT_OK(pass.Run(root_ir, modified));
   constexpr size_t max_num_ops = 3;
   if (pass.parallel_ops_.size() > max_num_ops) {

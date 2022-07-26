@@ -427,7 +427,7 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
     "Invalid parameter, size of column_name_id_map must be equal to num of data columns. map size: " +
       std::to_string(column_name_id_map.size()) + ", column nums: " + std::to_string((*table)->front().size()));
   std::vector<std::shared_ptr<Tensor>> pad_vals(column_name_id_map.size(),
-                                                0);  // value to pad each column's tensor with, default 0
+                                                nullptr);  // value to pad each column's tensor with, default nullptr
   std::set<int32_t> pad_cols;
   // padded_shape provided by user, maximum shapes of current batch of tensors
   std::vector<std::vector<dsize_t>> pad_shapes(column_name_id_map.size()), max_shapes(column_name_id_map.size());
@@ -436,7 +436,9 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
   // init each shape in max_shape to {-1,-1...} init each unspecified shape in pad_shape to -1 as well
   for (size_t col_id : pad_cols) {
     max_shapes[col_id] = std::vector<dsize_t>((*table)->front()[col_id]->Rank(), -1);
-    if (pad_shapes[col_id].empty()) pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
+    if (pad_shapes[col_id].empty()) {
+      pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
+    }
     CHECK_FAIL_RETURN_UNEXPECTED(
       pad_shapes[col_id].size() == max_shapes[col_id].size(),
       "Invalid pad_info, rank of pad_shape must be equal to rank of specified column. pad_shapes rank:" +
@@ -459,7 +461,9 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
   // if user sets a dimension to -1 (None in python), use the max value for current dimension
   for (size_t col_id : pad_cols) {
     for (size_t dim = 0; dim < pad_shapes[col_id].size(); dim++) {
-      if (pad_shapes[col_id][dim] < 0) pad_shapes[col_id][dim] = max_shapes[col_id][dim];
+      if (pad_shapes[col_id][dim] < 0) {
+        pad_shapes[col_id][dim] = max_shapes[col_id][dim];
+      }
     }
   }
 
@@ -620,7 +624,9 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
     if (!new_row.empty()) {
       table->emplace_back(new_row);
-      if (table->size() == static_cast<size_t>(cur_batch_size)) break;
+      if (table->size() == static_cast<size_t>(cur_batch_size)) {
+        break;
+      }
     } else {
       if (drop_ || table->empty()) {
         table = std::make_unique<TensorQTable>();  // this drops when drop == true
@@ -628,7 +634,9 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     }
   }
   RETURN_UNEXPECTED_IF_NULL(table);
-  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));  // do padding if needed
+  if (pad_) {
+    RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));  // do padding if needed
+  }
   if (!table->empty()) {
     RETURN_IF_NOT_OK(BatchRows(&table, row, table->size()));
     batch_cnt_++;

@@ -83,7 +83,9 @@ void TaskManager::interrupt_all() noexcept {
     if (svc) {
       // Stop the interrupt service. No new request is accepted.
       Status rc = svc->ServiceStop();
-      if (rc.IsError()) MS_LOG(ERROR) << "Error while stopping the service. Message: " << rc;
+      if (rc.IsError()) {
+        MS_LOG(ERROR) << "Error while stopping the service. Message: " << rc;
+      }
       svc->InterruptAll();
     }
   }

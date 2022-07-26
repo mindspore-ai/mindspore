@@ -26,7 +26,9 @@ namespace dataset {
 Status DatasetCacheImpl::Build() {
   // The same DatasetCache instance can be re-used for multiple pipelines for cache sharing,
   // in this case, cache_client_ object might have been created.
-  if (cache_client_) return Status::OK();
+  if (cache_client_) {
+    return Status::OK();
+  }
 
   CacheClient::Builder builder;
   builder.SetSessionId(session_id_).SetCacheMemSz(cache_mem_sz_).SetSpill(spill_);
@@ -84,10 +86,18 @@ Status DatasetCacheImpl::to_json(nlohmann::json *out_json) {
   args["session_id"] = session_id_;
   args["cache_memory_size"] = cache_mem_sz_;
   args["spill"] = spill_;
-  if (hostname_) args["hostname"] = hostname_.value();
-  if (port_) args["port"] = port_.value();
-  if (num_connections_) args["num_connections"] = num_connections_.value();
-  if (prefetch_sz_) args["cache_prefetch_size"] = prefetch_sz_.value();
+  if (hostname_) {
+    args["hostname"] = hostname_.value();
+  }
+  if (port_) {
+    args["port"] = port_.value();
+  }
+  if (num_connections_) {
+    args["num_connections"] = num_connections_.value();
+  }
+  if (prefetch_sz_) {
+    args["cache_prefetch_size"] = prefetch_sz_.value();
+  }
   *out_json = args;
   return Status::OK();
 }

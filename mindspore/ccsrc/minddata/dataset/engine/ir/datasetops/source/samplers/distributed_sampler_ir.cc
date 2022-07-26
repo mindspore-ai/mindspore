@@ -135,7 +135,9 @@ std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
     std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

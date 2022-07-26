@@ -87,8 +87,6 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
 ComputeReturn:
   return ret;
 
-  goto ComputeReturn;
-
 TimeoutError:
   ret = STATUS_ERROR(StatusCode::kMDTimeOut,
                      "Expected that PyFunc should return numpy array, got None. If \'python_multiprocessing\' is True, "
@@ -147,8 +145,9 @@ Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<
 
 bool PyFuncOp::IsRandom() {
   bool random = true;
-  if (py::hasattr(py_func_ptr_, "random") && py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random")) == false)
+  if (py::hasattr(py_func_ptr_, "random") && py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random")) == false) {
     random = false;
+  }
   return random;
 }
 }  // namespace dataset

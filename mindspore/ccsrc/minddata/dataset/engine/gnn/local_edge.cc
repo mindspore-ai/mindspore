@@ -41,7 +41,6 @@ Status LocalEdge::UpdateFeature(const std::shared_ptr<Feature> &feature) {
   auto itr = std::find_if(
     features_.begin(), features_.end(),
     [feature](std::pair<FeatureType, std::shared_ptr<Feature>> item) { return item.first == feature->type(); });
-
   if (itr != features_.end()) {
     RETURN_STATUS_UNEXPECTED("Feature already exists");
   } else {

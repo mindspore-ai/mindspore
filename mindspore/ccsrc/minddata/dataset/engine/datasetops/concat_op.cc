@@ -167,7 +167,9 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
   RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row));
 
   if (!row->eoe() && !row->eof()) {
-    if (!verified_) RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+    if (!verified_) {
+      RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+    }
 
     if (IgnoreSample()) {
       RETURN_IF_NOT_OK(GetNextRow(row));

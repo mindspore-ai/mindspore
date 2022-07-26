@@ -79,7 +79,9 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   }
   try {
     dsize_t num_elements = 1;
-    if (input->Rank() == 1) num_elements = input->shape()[0];
+    if (input->Rank() == 1) {
+      num_elements = input->shape()[0];
+    }
     TensorShape out_shape({num_elements, num_classes});
     std::shared_ptr<Tensor> out;
     mindspore::dataset::DataType type = input->type();
@@ -254,7 +256,9 @@ void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output)
   auto out_itr = (*output)->begin<TO>();
   auto out_end = (*output)->end<TO>();
 
-  for (; out_itr != out_end; ++in_itr, ++out_itr) *out_itr = static_cast<TO>(*in_itr);
+  for (; out_itr != out_end; ++in_itr, ++out_itr) {
+    *out_itr = static_cast<TO>(*in_itr);
+  }
 }
 
 template <typename T>
@@ -434,7 +438,7 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
                                    ", and rank of pad value: " + std::to_string(pad_shape.size()));
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(pad_shape), src->type(), dst));
     auto tensor_type = src->type().value();
-    if (pad_val == 0) {  // if pad with zero, don't care what type it is
+    if (std::fabs(pad_val) <= std::numeric_limits<float>::epsilon()) {  // if pad with zero, don't care what type it is
       RETURN_IF_NOT_OK((*dst)->Zero());
     } else if (tensor_type == DataType::DE_INT8) {
       RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(static_cast<int8_t>(pad_val)));

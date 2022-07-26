@@ -125,7 +125,9 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
 }
 
 Status VOCOp::ParseImageIds() {
-  if (!image_ids_.empty()) return Status::OK();
+  if (!image_ids_.empty()) {
+    return Status::OK();
+  }
   std::string image_sets_file;
   if (task_type_ == TaskType::Segmentation) {
     image_sets_file = folder_path_ + std::string(kImageSetsSegmentation) + usage_ + std::string(kImageSetsExtension);
@@ -234,7 +236,9 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     std::string label_name;
     float xmin = 0.0, ymin = 0.0, xmax = 0.0, ymax = 0.0, truncated = 0.0, difficult = 0.0;
     XMLElement *name_node = object->FirstChildElement("name");
-    if (name_node != nullptr && name_node->GetText() != 0) label_name = name_node->GetText();
+    if (name_node != nullptr && name_node->GetText() != nullptr) {
+      label_name = name_node->GetText();
+    }
     ParseNodeValue(object, "difficult", &difficult);
     ParseNodeValue(object, "truncated", &truncated);
 

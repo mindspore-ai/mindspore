@@ -145,7 +145,9 @@ void ConfigManager::set_sending_batches(int64_t sending_batches) { sending_batch
 uint32_t ConfigManager::seed() const { return seed_; }
 
 void ConfigManager::set_rank_id(int32_t rank_id) {
-  if (rank_id_ == kCfgDefaultRankId) rank_id_ = rank_id;
+  if (rank_id_ == kCfgDefaultRankId) {
+    rank_id_ = rank_id;
+  }
 }
 
 void ConfigManager::set_numa_enable(bool numa_enable) { numa_enable_ = numa_enable; }

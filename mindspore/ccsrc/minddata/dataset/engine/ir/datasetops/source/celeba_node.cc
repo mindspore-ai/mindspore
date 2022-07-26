@@ -156,10 +156,11 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
       if (usage_ == "valid") {
         usage_type = '1';
       } else {
-        if (usage_ == "test")
+        if (usage_ == "test") {
           usage_type = '2';
-        else
+        } else {
           RETURN_STATUS_UNEXPECTED("Invalid usage.");
+        }
       }
     }
     if (!partition_file.is_open()) {

@@ -1042,7 +1042,7 @@ std::vector<std::pair<int, int>> ShardWriter::BreakIntoShards() {
     int start_row = 0;
     for (int i = 0; i < shard_count_; ++i) {
       int end_row = start_row + row_in_shard;
-      if (set.count(i)) {
+      if (set.count(i) == 1) {
         end_row++;
       }
       shards.emplace_back(start_row, end_row);

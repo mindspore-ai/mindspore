@@ -45,8 +45,9 @@ Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::s
 bool IsTypeNumeric(const std::string &data_type) {
   if (data_type == "int8" || data_type == "uint8" || data_type == "int16" || data_type == "uint16" ||
       data_type == "int32" || data_type == "uint32" || data_type == "int64" || data_type == "uint64" ||
-      data_type == "float16" || data_type == "float32" || data_type == "float64")
+      data_type == "float16" || data_type == "float32" || data_type == "float64") {
     return true;
+  }
   return false;
 }
 

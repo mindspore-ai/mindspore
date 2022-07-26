@@ -38,10 +38,11 @@ Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output
 
   dsize_t total = length1 + length2;
   while (total > max_length_) {
-    if (outLength1 > outLength2)
+    if (outLength1 > outLength2) {
       outLength1--;
-    else
+    } else {
       outLength2--;
+    }
     total--;
   }
   std::shared_ptr<Tensor> outSeq1;

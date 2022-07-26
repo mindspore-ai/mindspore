@@ -45,10 +45,11 @@ Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
 Status PreBuiltSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *const sampler) {
   Status s = BuildChildren(&sp_);
-  if (s.IsOk())
+  if (s.IsOk()) {
     *sampler = sp_;
-  else
+  } else {
     *sampler = nullptr;
+  }
   return s;
 }
 
