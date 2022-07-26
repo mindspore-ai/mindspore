@@ -18,7 +18,6 @@
 #include <utility>
 #include <map>
 
-#include "securec/include/securec.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #ifndef ENABLE_LITE_ACL

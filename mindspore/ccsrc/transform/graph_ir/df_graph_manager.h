@@ -22,7 +22,6 @@
 #include <vector>
 #include <mutex>
 #include <map>
-#include <utility>
 #include "include/transform/graph_ir/types.h"
 #include "ir/anf.h"
 
