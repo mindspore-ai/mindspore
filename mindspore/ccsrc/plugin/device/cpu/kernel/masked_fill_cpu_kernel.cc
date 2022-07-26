@@ -51,9 +51,9 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   std::vector<int64_t> mask_shape = inputs.at(kIndex1)->GetShapeVector();
   std::vector<int64_t> value_shape = inputs.at(kIndex2)->GetShapeVector();
   std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(mask_shape_), LongToSize);
-  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  (void)std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(mask_shape_), LongToSize);
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
   need_broadcast_ = (input_shape_ == mask_shape_) ? false : true;
   size_t batch_size = value_shape.size();
   if (input_shape.size() < batch_size || mask_shape.size() < batch_size) {

@@ -171,7 +171,7 @@ bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
                   reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_ + weight_h_size_);
   } else {
     auto size = GetSize(bias_desc_);
-    if (memset_s(GetDataHandle(bias_memory_), size, 0, size)) {
+    if (memset_s(GetDataHandle(bias_memory_), size, 0, size) != EOK) {
       MS_LOG(EXCEPTION) << "Bias memset error";
     }
   }

@@ -16,6 +16,7 @@
 
 #include "ops/grad/max_pool3d_grad_with_argmax.h"
 #include <map>
+#include <algorithm>
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 
@@ -88,7 +89,7 @@ Format MaxPool3DGradWithArgmax::get_format() const {
     {"NCDHW", Format::NCDHW},
   };
   auto attr_value_str = GetValue<std::string>(value_ptr);
-  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = valid_dataformat.find(attr_value_str);
   if (iter == valid_dataformat.end()) {
     MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << ", use NCDHW";
@@ -123,7 +124,7 @@ abstract::AbstractBasePtr MaxPool3DGradWithArgmaxInfer(const abstract::AnalysisE
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<abstract::AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MaxPool3DGradWithArgmaxInferType(primitive, input_args);
   auto infer_shape = MaxPool3DGradWithArgmaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

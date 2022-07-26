@@ -207,7 +207,7 @@ void LSTMGradCpuKernelMod::ResetMemory(const dnnl::memory &mem, const string nam
   auto dst_ptr = GetDataHandle(mem);
   auto mem_desc = GetMemDesc(mem);
   auto size = GetSize(mem_desc);
-  if (memset_s(dst_ptr, size, 0, size)) {
+  if (memset_s(dst_ptr, size, 0, size) != EOK) {
     MS_LOG(EXCEPTION) << name << " memset error";
   }
 }
@@ -227,7 +227,7 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else {
     auto dst_ptr = GetDataHandle(bias_memory_);
     auto size = GetSize(bias_desc_);
-    if (memset_s(dst_ptr, size, 0, size)) {
+    if (memset_s(dst_ptr, size, 0, size) != EOK) {
       MS_LOG(EXCEPTION) << "Bias memset error";
     }
   }
@@ -245,7 +245,7 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   }
   auto dst_ptr = GetDataHandle(diff_bias_memory_);
   auto size = GetSize(diff_bias_desc_);
-  if (memset_s(dst_ptr, size, 0, size)) {
+  if (memset_s(dst_ptr, size, 0, size) != EOK) {
     MS_LOG(EXCEPTION) << "Bias grad memset error";
   }
   SetArgumentHandleOp(inputs, outputs);
