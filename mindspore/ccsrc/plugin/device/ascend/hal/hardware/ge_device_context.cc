@@ -623,9 +623,13 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
-  if (!(env_table_file.empty() || env_rank_id.empty())) {
+  auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
+  if (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty())) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
-    MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
+    if (!env_table_file.empty()) {
+      MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
+      (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
+    }
     auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
     if (!env_hccl_flag.empty()) {
       (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
@@ -634,13 +638,12 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
     (*ge_options)["ge.exec.podName"] = env_rank_id;
-    (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
     (*ge_options)["ge.graphRunMode"] = "1";
   } else {
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     MS_LOG(INFO) << "No hccl mode. "
-                    "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
+                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
   }
 
   auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
