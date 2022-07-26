@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_INPLACE_ADD_H_
 #define MINDSPORE_CORE_OPS_INPLACE_ADD_H_
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -35,7 +34,7 @@ class MIND_API InplaceAdd : public BaseOperator {
   /// \brief Constructor.
   InplaceAdd() : BaseOperator(kNameInplaceAdd) { InitIOName({"x", "v"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.InplaceAdd for the inputs.
-  void Init(std::vector<int64_t> indices) { set_indices(indices); }
+  void Init(const std::vector<int64_t> indices) { set_indices(indices); }
   /// \brief Set indices.
   void set_indices(std::vector<int64_t> indices);
   /// \brief Get indices.

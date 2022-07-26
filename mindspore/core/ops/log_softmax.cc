@@ -65,7 +65,7 @@ TypePtr LogSoftmaxInferType(const PrimitivePtr &prim, const std::vector<Abstract
 
 AbstractBasePtr LogSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, primitive->name());
   auto type = LogSoftmaxInferType(primitive, input_args);
   auto shape = LogSoftmaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

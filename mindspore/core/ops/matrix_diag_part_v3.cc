@@ -176,8 +176,8 @@ AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const
   auto align_ptr = primitive->GetAttr(kAlign);
   MS_EXCEPTION_IF_NULL(align_ptr);
   auto align = GetValue<std::string>(align_ptr);
-  CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
-                                    primitive->name());
+  (void)CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                          primitive->name());
   auto infer_type = MatrixDiagPartV3InferType(primitive, input_args);
   auto infer_shape = MatrixDiagPartV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

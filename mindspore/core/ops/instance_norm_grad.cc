@@ -55,10 +55,10 @@ abstract::TupleShapePtr InstanceNormGradInferShape(const PrimitivePtr &primitive
   constexpr size_t minimum_input_x_rank = 3;
   (void)CheckAndConvertUtils::CheckValue<size_t>("x rank", x_shape.size(), kGreaterEqual, minimum_input_x_rank,
                                                  prim_name);
-  (void)CheckAndConvertUtils::Check("x shape", x_shape, kEqual, y_backprop_shape, prim_name);
+  CheckAndConvertUtils::Check("x shape", x_shape, kEqual, y_backprop_shape, prim_name);
 
-  const size_t batch = x_shape[kInputIndex0];
-  const size_t channel = x_shape[kInputIndex1];
+  const size_t batch = LongToSize(x_shape[kInputIndex0]);
+  const size_t channel = LongToSize(x_shape[kInputIndex1]);
   const size_t batch_channel = batch * channel;
 
   (void)CheckAndConvertUtils::CheckValue<size_t>("gamma rank", gamma_shape.size(), kEqual, 1, prim_name);
@@ -66,11 +66,12 @@ abstract::TupleShapePtr InstanceNormGradInferShape(const PrimitivePtr &primitive
   (void)CheckAndConvertUtils::CheckValue<size_t>("save_variance rank", save_variance_shape.size(), kEqual, 1,
                                                  prim_name);
 
-  (void)CheckAndConvertUtils::CheckValue<size_t>("gamma shape", gamma_shape[0], kEqual, "(C, )", channel, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("save_mean shape", save_mean_shape[0], kEqual, "(B*C, )",
+  (void)CheckAndConvertUtils::CheckValue<size_t>("gamma shape", LongToSize(gamma_shape[0]), kEqual, "(C, )", channel,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("save_mean shape", LongToSize(save_mean_shape[0]), kEqual, "(B*C, )",
                                                  batch_channel, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("save_variance shape", save_variance_shape[0], kEqual, "(B*C, )",
-                                                 batch_channel, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("save_variance shape", LongToSize(save_variance_shape[0]), kEqual,
+                                                 "(B*C, )", batch_channel, prim_name);
 
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{x_shape_ptr, gamma_shape_ptr, gamma_shape_ptr});
@@ -123,7 +124,7 @@ AbstractBasePtr InstanceNormGradInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 5;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto type = InstanceNormGradInferType(primitive, input_args);
   auto shape = InstanceNormGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

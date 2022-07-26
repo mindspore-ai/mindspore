@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/linspace_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
@@ -54,7 +53,7 @@ int LinSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 
   // Deal with workspace_size_list_
   workspace_size_list_.clear();
-  workspace_size_list_ = {batch_num_ * dtype_size};
+  workspace_size_list_ = {LongToSize(batch_num_) * dtype_size};
 
   return KRET_OK;
 }
@@ -93,7 +92,7 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     }
   };
 
-  ParallelLaunchAutoSearch(task, batch_num_ * num, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, LongToSize(batch_num_ * num), this, &parallel_search_info_);
 
   return true;
 }

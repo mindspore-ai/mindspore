@@ -20,6 +20,7 @@
 #include <string>
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 #include "mindspore/core/ops/inplace_add.h"
 #include "mindspore/core/ops/inplace_sub.h"
 #include "mindspore/core/ops/inplace_update.h"
@@ -30,13 +31,13 @@ namespace {
 struct Add {
   template <typename T>
   inline T operator()(const T &lhs, const T &rhs) const {
-    return lhs + rhs;
+    return static_cast<T>(lhs + rhs);
   }
 };
 struct Sub {
   template <typename T>
   inline T operator()(const T &lhs, const T &rhs) const {
-    return lhs - rhs;
+    return static_cast<T>(lhs - rhs);
   }
 };
 
@@ -70,7 +71,7 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
  public:
   InplaceOpCpuTypeFunc() = default;
   ~InplaceOpCpuTypeFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
                 const std::vector<KernelTensorPtr> &) override {
     MS_EXCEPTION_IF_NULL(base_operator);
     kernel_name_ = base_operator->GetPrim()->name();
@@ -116,11 +117,9 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     }
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    auto v_shape = inputs.at(1)->GetShapeVector();
+  int Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &,
+             const std::map<uint32_t, tensor::TensorPtr> &) override {
+    auto v_shape = inputs.at(kIndex1)->GetShapeVector();
 
     // x_shape_.size() == v_shape.size() is checked at front end
     // x_shape_[1:] == v_shape[1:] is checked at front end
@@ -137,22 +136,24 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     const int64_t band_size = band_size_;
     const int64_t *indices = indices_.data();
     auto task = [band_size, indices, x, v](size_t start, size_t end) {
-      while (start < end) {
-        const int64_t v_row = SizeToLong(start) / band_size;
+      int64_t start_long = SizeToLong(start);
+      const int64_t end_long = SizeToLong(end);
+      while (start_long < end_long) {
+        const int64_t v_row = start_long / band_size;
         const int64_t x_row = indices[v_row];
 
-        size_t offset = SizeToLong(start) % band_size;
-        size_t up_bound = (LongToSize((v_row + 1) * band_size) > end) ? end % band_size : band_size;
+        int64_t offset = start_long % band_size;
+        int64_t up_bound = (((v_row + 1) * band_size) > end_long) ? end_long % band_size : band_size;
 
-        size_t x_offset = x_row * band_size;
-        size_t v_offset = v_row * band_size;
-        for (size_t j = offset; j < up_bound; ++j) {
+        int64_t x_offset = x_row * band_size;
+        int64_t v_offset = v_row * band_size;
+        for (int64_t j = offset; j < up_bound; ++j) {
           Op::compute(x, x_offset + j, v, v_offset + j);
         }
-        start = v_row * band_size + up_bound;
+        start_long = v_row * band_size + up_bound;
       }
     };
-    ParallelLaunchAutoSearch(task, v_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(v_size_), this, &parallel_search_info_);
   }
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

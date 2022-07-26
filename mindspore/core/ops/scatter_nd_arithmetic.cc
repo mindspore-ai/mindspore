@@ -53,26 +53,26 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
   const int64_t updates_size = SizeToLong(updates_shape.size());
   const int64_t last_dim = indices_shape.back();
 
-  CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,
-                                   "the dimension of 'input_x'", input_x_size, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,
+                                         "the dimension of 'input_x'", input_x_size, prim_name);
 
-  CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
 
-  CheckAndConvertUtils::CheckValue("len(updates.shape)'", updates_size, kEqual,
-                                   "len(indices.shape) - 1 + len(input_x.shape) - indices.shape[-1]",
-                                   indices_size - 1 + input_x_size - last_dim, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("len(updates.shape)'", updates_size, kEqual,
+                                         "len(indices.shape) - 1 + len(input_x.shape) - indices.shape[-1]",
+                                         indices_size - 1 + input_x_size - last_dim, prim_name);
 
-  for (int i = 0; i < indices_size - 1; ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of indices", indices_shape[i], kEqual,
-                                              std::to_string(i) + "th dimension of updates", updates_shape[i],
-                                              prim_name);
+  for (size_t i = 0; i < LongToSize(indices_size - 1); ++i) {
+    (void)CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of indices", indices_shape[i],
+                                                    kEqual, std::to_string(i) + "th dimension of updates",
+                                                    updates_shape[i], prim_name);
   }
   for (int64_t i = indices_size - 1; i < updates_size; ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(
-      std::to_string(i) + "th dimension of updates", updates_shape[i], kEqual,
+    (void)CheckAndConvertUtils::CheckValue<int64_t>(
+      std::to_string(i) + "th dimension of updates", updates_shape[LongToSize(i)], kEqual,
       std::to_string(i - (indices_size - 1) + last_dim) + "th dimension of input_x.shape[indices.shape[-1]:]",
-      input_x_shape[i - (indices_size - 1) + last_dim], prim_name);
+      input_x_shape[LongToSize(i - (indices_size - 1) + last_dim)], prim_name);
   }
   auto output_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
   return output_shape;
@@ -181,7 +181,7 @@ AbstractBasePtr ScatterNdArithmeticInfer(const abstract::AnalysisEnginePtr &, co
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = ScatterNdArithmeticInferType(primitive, input_args);
   auto infer_shape = ScatterNdArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
