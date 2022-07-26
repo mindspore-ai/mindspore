@@ -19,6 +19,7 @@
 #include "minddata/dataset/engine/perf/profiling.h"
 #endif
 #include "minddata/dataset/util/log_adapter.h"
+#include "minddata/dataset/util/task_manager.h"
 #if ENABLE_D
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #endif
@@ -84,6 +85,14 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool profiling, int32_t *time, aclt
   auto status = acltdtSendTensor(acl_handle_, acl_dataset, -1);
   DestroyAclDataset(acl_dataset);
   if (status != ACL_SUCCESS) {
+    // if the device_queue thread had been interrupted by master, just print warning and return success
+    if (mindspore::dataset::this_thread::is_interrupted()) {
+      MS_LOG(WARNING) << "Device queue thread had been interrupted by TdtHandle::DestroyHandle, you can ignore "
+                      << "the above error: 'failed to send...'. In this scenario, the training ends first without "
+                      << "using all epoch(s) data, and the data preprocessing is blocked by the data "
+                      << "transmission channel on the device side. So we force the data transmission channel to stop.";
+      return Status::OK();
+    }
     ReportErrorMessage();
     RETURN_STATUS_UNEXPECTED("Tdt Send data failed.");
   }
