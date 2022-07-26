@@ -17,6 +17,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/padding_impl.cuh"
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void CalculatePaddingKernel(const T *input_ptr, size_t output_outer_size_, size_t pad_dim_size,
@@ -66,6 +70,14 @@ template CUDA_LIB_EXPORT void CalculatePadding<float>(const float *input_ptr, si
 template CUDA_LIB_EXPORT void CalculatePadding<double>(const double *input_ptr, size_t output_outer_size_,
                                                        size_t pad_dim_size, double *output_ptr,
                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalculatePadding<Complex<float>>(const Complex<float> *input_ptr,
+                                                               size_t output_outer_size_, size_t pad_dim_size,
+                                                               Complex<float> *output_ptr, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalculatePadding<Complex<double>>(const Complex<double> *input_ptr,
+                                                                size_t output_outer_size_, size_t pad_dim_size,
+                                                                Complex<double> *output_ptr, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalculatePadding<bool>(const bool *input_ptr, size_t output_outer_size_,
                                                      size_t pad_dim_size, bool *output_ptr, const uint32_t &device_id,
                                                      cudaStream_t cuda_stream);

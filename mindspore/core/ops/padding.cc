@@ -23,6 +23,7 @@
 #include "utils/tensor_construct_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,8 +31,16 @@ namespace {
 TypePtr PaddingInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
-                                         kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool};
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  std::set<TypePtr> valid_types{};
+  if (is_gpu || is_cpu) {
+    valid_types = common_valid_types_with_complex_and_bool;
+  } else {
+    valid_types = common_valid_types_with_bool;
+  }
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, name);
 }
 

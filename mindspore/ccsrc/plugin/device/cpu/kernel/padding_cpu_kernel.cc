@@ -19,10 +19,16 @@
 #include <algorithm>
 #include <utility>
 #include <memory>
+#include <complex>
 #include "mindspore/core/ops/padding.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+}  // namespace
+
 bool PaddingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -114,6 +120,10 @@ const std::vector<std::pair<KernelAttr, PaddingCpuKernelMod::KernelRunFunc>> &Pa
      &PaddingCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &PaddingCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &PaddingCpuKernelMod::LaunchKernel<complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &PaddingCpuKernelMod::LaunchKernel<complex128>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      &PaddingCpuKernelMod::LaunchKernel<bool>},
   };
