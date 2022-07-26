@@ -40,7 +40,7 @@ constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
 const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm, ops::kNameFusedBatchNorm};
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
-                                                      acl::kNameConcatV2D};
+                                                      acl::kNameConcatV2};
 }  // namespace
 
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode) {
@@ -115,13 +115,24 @@ static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const C
   MS_CHECK_TRUE_MSG(make_tuple_val_node != nullptr, lite::RET_ERROR, "New make tuple val node failed.");
   AnfNodePtrList new_inputs = {make_tuple_val_node};
   auto cnode_inputs = cnode->inputs();
-  if (cnode_inputs.size() >= kCnodeInputMinNum) {
+  if (cnode_inputs.size() < kCnodeInputMinNum) {
+    MS_LOG(ERROR) << "Input size " << cnode_inputs.size() << " is less than " << kCnodeInputMinNum;
+    return lite::RET_ERROR;
+  }
+  if (cnode_func_name == acl::kNameConcatV2) {
+    new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end() - 1);
+  } else {
     new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end());
   }
   auto make_tuple_cnode = func_graph->NewCNode(new_inputs);
   MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, lite::RET_ERROR, "New make tuple cnode failed.");
 
-  const std::vector<AnfNodePtr> replace_node = {cnode_inputs[0], make_tuple_cnode};
+  std::vector<AnfNodePtr> replace_node;
+  if (cnode_func_name == acl::kNameConcatV2) {
+    replace_node = std::vector<AnfNodePtr>({cnode_inputs[0], make_tuple_cnode, cnode_inputs[cnode_inputs.size() - 1]});
+  } else {
+    replace_node = std::vector<AnfNodePtr>({cnode_inputs[0], make_tuple_cnode});
+  }
   cnode->set_inputs(replace_node);
   return lite::RET_OK;
 }

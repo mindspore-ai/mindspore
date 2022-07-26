@@ -346,7 +346,7 @@ constexpr const char kNameConv2DTransposeD[] = "Conv2DTransposeD";
 constexpr const char kNameArgMaxV2[] = "ArgMaxV2";
 constexpr const char kNameResizeNearestNeighborV2[] = "ResizeNearestNeighborV2";
 constexpr const char kNameConv2DBackpropInputV2[] = "Conv2DBackpropInputV2";
-constexpr const char kNameConcatV2D[] = "ConcatV2D";
+constexpr const char kNameConcatV2[] = "ConcatV2";
 constexpr const char kNameFillV1[] = "FillV1";
 constexpr const char kNameTensorArray[] = "TensorArray";
 constexpr const char kNameTensorArrayWrite[] = "TensorArrayWrite";
@@ -361,6 +361,8 @@ constexpr const char kNameGetShape[] = "GetShape";
 constexpr const char kNameKlDivLossGrad[] = "KLDivLossGrad";
 constexpr const char kNameRandomStandardNormal[] = "RandomStandardNormal";
 constexpr const char kNameUnsortedSegmentSum[] = "UnsortedSegmentSum";
+constexpr const char kNameSpaceToBatchTF[] = "SpaceToBatchTF";
+constexpr const char kNameBatchToSpaceTF[] = "BatchToSpaceTF";
 
 class OpAdapterDesc;
 

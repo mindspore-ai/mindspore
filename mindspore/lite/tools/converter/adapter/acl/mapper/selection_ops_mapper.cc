@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_
-
-#include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
+#include "tools/converter/adapter/acl/mapper/selection_ops_mapper.h"
+#include <memory>
+#include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "src/common/log_util.h"
+#include "ops/slice.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
-class ConcatV2Mapper : public PrimitiveMapper {
- public:
-  ConcatV2Mapper() : PrimitiveMapper(acl::kNameConcatV2) {}
+STATUS SliceFusionMapper::Mapper(const CNodePtr &cnode) {
+  ops::Slice slice_op;
+  auto dst_prim = slice_op.GetPrim();
+  if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
+    MS_LOG(ERROR) << "SliceFusionMapper mapper failed.";
+    return RET_ERROR;
+  }
+  return lite::RET_OK;
+}
 
-  ~ConcatV2Mapper() override = default;
-
-  STATUS Mapper(const CNodePtr &cnode) override;
-};
+REGISTER_PRIMITIVE_MAPPER(kNameSliceFusion, SliceFusionMapper)
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_

@@ -68,11 +68,12 @@ ATTR_MAP(SpaceToBatchD) = {
 OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatchD, kNameSpaceToBatch, ADPT_DESC(SpaceToBatchD))
 
-// SpaceToBatchNDD
+// SpaceToBatchND
 INPUT_MAP(SpaceToBatchND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(paddings)}};
 ATTR_MAP(SpaceToBatchND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SpaceToBatchND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatchND, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchND))
+REG_ADPT_DESC(SpaceToBatchTF, kNameSpaceToBatchTF, ADPT_DESC(SpaceToBatchND))
 
 // BatchToSpaceD
 INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
@@ -87,4 +88,5 @@ INPUT_MAP(BatchToSpaceND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {
 ATTR_MAP(BatchToSpaceND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
+REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform

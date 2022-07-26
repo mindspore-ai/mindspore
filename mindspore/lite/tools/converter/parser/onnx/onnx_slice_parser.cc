@@ -33,6 +33,8 @@ PrimitiveCPtr OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const o
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  int64_t fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   std::vector<int32_t> starts;
   std::vector<int32_t> ends;
   std::vector<int32_t> axes;
@@ -92,9 +94,6 @@ PrimitiveCPtr OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const o
   prim_c->AddAttr("axes", MakeValue(axes));
   prim_c->AddAttr("ends", MakeValue(ends));
   prim_c->AddAttr("steps", MakeValue(steps));
-  int64_t fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-
   return prim->GetPrim();
 }
 

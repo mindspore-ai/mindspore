@@ -47,11 +47,14 @@ ADD_CONVERTER_TBE_OP(Conv2DTransposeD)
 ADD_CONVERTER_TBE_OP(DepthwiseConv2dNative)
 ADD_CONVERTER_TBE_OP(ArgMaxV2)
 ADD_CONVERTER_TBE_OP(ResizeNearestNeighborV2)
+ADD_CONVERTER_TBE_OP(ResizeBilinearV2)
 ADD_CONVERTER_TBE_OP(Conv2DBackpropInputV2)
-ADD_CONVERTER_TBE_OP(ConcatV2D)
+ADD_CONVERTER_TBE_OP(ConcatV2)
 ADD_CONVERTER_TBE_OP(FillV1)
 ADD_CONVERTER_TBE_OP(Quant)
 ADD_CONVERTER_TBE_OP(Dequant)
+ADD_CONVERTER_TBE_OP(SpaceToBatchTF)
+ADD_CONVERTER_TBE_OP(BatchToSpaceTF)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
