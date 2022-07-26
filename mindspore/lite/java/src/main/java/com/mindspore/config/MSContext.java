@@ -30,7 +30,7 @@ public class MSContext {
     private long msContextPtr;
     private static final long EMPTY_CONTEXT_PTR_VALUE = 0;
     private static final int ERROR_VALUE = -1;
-    private static final String NULLPTR_ERROR_MESSAGE="msContext is a nullptr.\n";
+    private static final String NULLPTR_ERROR_MESSAGE="Context pointer from java is nullptr.\n";
 
     /**
      * Construct function.

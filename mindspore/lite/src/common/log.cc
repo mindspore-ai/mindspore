@@ -17,15 +17,13 @@
 #include <cstring>
 #include <cstdio>
 
-#ifdef ENABLE_ARM
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
 #include <android/log.h>
-#endif
 #endif
 
 // namespace to support utils module definition namespace mindspore constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 namespace mindspore {
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
 
@@ -57,8 +55,7 @@ bool IsPrint(int level) {
   return level >= ms_level;
 }
 
-#ifdef ENABLE_ARM
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
 static int GetAndroidLogLevel(LiteLogLevel level) {
   switch (level) {
     case LiteLogLevel::DEBUG:
@@ -72,7 +69,6 @@ static int GetAndroidLogLevel(LiteLogLevel level) {
       return ANDROID_LOG_ERROR;
   }
 }
-#endif
 #endif
 
 const char *EnumStrForMsLogLevel(LiteLogLevel level) {

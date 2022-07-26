@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/ms_log.h"
+#include "common/log.h"
 #include "include/api/graph.h"
 #include "include/api/serialization.h"
 #include "include/api/types.h"
@@ -23,13 +23,13 @@
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Graph_loadModel(JNIEnv *env, jobject thiz, jstring ms_file) {
   auto graph = new (std::nothrow) mindspore::Graph();
   if (graph == nullptr) {
-    MS_LOGE("Model new failed");
+    MS_LOG(ERROR) << "Model new failed";
     return jlong(nullptr);
   }
   auto status =
     mindspore::Serialization::Load(env->GetStringUTFChars(ms_file, JNI_FALSE), mindspore::ModelType::kMindIR, graph);
   if (status != mindspore::kSuccess) {
-    MS_LOGE("Load graph from file failed");
+    MS_LOG(ERROR) << "Load graph from file failed";
     delete graph;
     return jlong(nullptr);
   }
@@ -39,7 +39,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Graph_loadModel(JNIEnv *en
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_Graph_free(JNIEnv *env, jobject thiz, jlong graph_ptr) {
   auto *pointer = reinterpret_cast<void *>(graph_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Model pointer from java is nullptr");
+    MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return;
   }
   auto *lite_graph_ptr = static_cast<mindspore::Graph *>(pointer);

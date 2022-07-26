@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/ms_log.h"
+#include "common/log.h"
 #include "include/api/types.h"
 #include "include/api/cfg.h"
 
@@ -41,12 +41,12 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_TrainCfg_createTrai
       ol = mindspore::OptimizationLevel::kAuto;
       break;
     default:
-      MS_LOGE("Invalid optimization_type : %d", optimizationLevel);
+      MS_LOG(ERROR) << "Invalid optimization_type : " << optimizationLevel;
       return (jlong) nullptr;
   }
   auto *traincfg_ptr = new (std::nothrow) mindspore::TrainCfg();
   if (traincfg_ptr == nullptr) {
-    MS_LOGE("new train config fail!");
+    MS_LOG(ERROR) << "new train config fail!";
     return (jlong) nullptr;
   }
   if (loss_name != nullptr) {
@@ -68,7 +68,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_TrainCfg_addMixPrec
   mix_precision_cfg.num_of_not_nan_iter_th_ = thresholdIterNum;
   auto *pointer = reinterpret_cast<void *>(train_cfg_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return jboolean(false);
   }
   auto *c_train_cfg_ptr = static_cast<mindspore::TrainCfg *>(pointer);
@@ -80,7 +80,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_TrainCfg_free(JNIEnv
                                                                           jlong train_cfg_ptr) {
   auto *pointer = reinterpret_cast<void *>(train_cfg_ptr);
   if (pointer == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return;
   }
   auto *c_cfg_ptr = static_cast<mindspore::TrainCfg *>(pointer);
