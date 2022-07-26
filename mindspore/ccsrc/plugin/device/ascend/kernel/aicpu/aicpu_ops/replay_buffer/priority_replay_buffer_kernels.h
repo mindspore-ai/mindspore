@@ -64,7 +64,7 @@ class PriorityReplayBufferSample : public KernelBase {
 
  private:
   int64_t handle_{-1};
-  int64_t batch_size_{0};
+  size_t batch_size_{0};
   std::vector<size_t> schema_;
 };
 
