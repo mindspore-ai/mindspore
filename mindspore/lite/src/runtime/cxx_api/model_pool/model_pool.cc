@@ -448,6 +448,7 @@ ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<Runner
   if (runner_config != nullptr) {
     worker_config->config_info = runner_config->GetConfigInfo();
   }
+  init_context->SetInterOpParallelNum(1);
   worker_config->worker_id = 0;
   worker_config->context = init_context;
   worker_config->numa_id = -1;
