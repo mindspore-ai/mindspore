@@ -25,8 +25,8 @@ namespace ops {
 void Squeeze::Init(const std::vector<int64_t> &axis) { set_axis(axis); }
 void Squeeze::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 std::vector<int64_t> Squeeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
-
 namespace {
+constexpr auto kSqueezedDim = 1;
 abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
@@ -41,13 +41,13 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
   auto min_shape = shape_infos[kMinShape];
 
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
   }
 
-  auto len = SizeToLong(in_shape.size());
+  auto rank = SizeToLong(in_shape.size());
   if (axis.empty()) {
-    for (int64_t i = 0; i < len; i++) {
-      if (in_shape[i] != 1) {
+    for (int64_t i = 0; i < rank; i++) {
+      if (in_shape[i] != kSqueezedDim) {
         ret_shape.push_back(in_shape[LongToSize(i)]);
         if (!min_shape.empty() && !max_shape.empty()) {
           ret_min_shape.push_back(min_shape[LongToSize(i)]);
@@ -57,16 +57,17 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
     }
   } else {
     for (auto &item : axis) {
-      CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
-      auto idx = item >= 0 ? item : len + item;
-      if ((in_shape[LongToSize(idx)] >= 0) && (in_shape[LongToSize(idx)] != 1L)) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name << ", input_x shape[" << LongToSize(idx)
-                                 << "] must be equal to one, but got " << in_shape[LongToSize(idx)] << ".";
+      CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeLeft, {-rank, rank}, op_name);
+      auto idx = item >= 0 ? item : rank + item;
+      // If shape dims contain unknown dim, ignore it.
+      if (in_shape[LongToSize(idx)] != UNKNOWN_DIM) {
+        const std::string ith_shape = "input_x.shape[" + std::to_string(idx) + "]";
+        CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, in_shape[LongToSize(idx)], kEqual, kSqueezedDim, op_name);
       }
     }
-    for (int64_t i = 0; i < len; i++) {
+    for (int64_t i = 0; i < rank; i++) {
       auto it = std::find(axis.begin(), axis.end(), i);
-      auto it2 = std::find(axis.begin(), axis.end(), i - len);
+      auto it2 = std::find(axis.begin(), axis.end(), i - rank);
       if (!(it != axis.end() || it2 != axis.end())) {
         ret_shape.push_back(in_shape[LongToSize(i)]);
         if (!min_shape.empty() && !max_shape.empty()) {
@@ -80,27 +81,20 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
 }
 
 TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << ", the input args used for infer shape and type is necessary, but missing it.";
-  }
-  auto name = prim->name();
-  MS_LOG(DEBUG) << "Inferring data type for '" << name << "'.";
-  return input_args[0]->BuildType();
+  const auto prim_name = prim->name();
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Squeeze, BaseOperator);
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  const size_t x_index = 0;
-  auto x_type = input_args[x_index]->BuildType();
-  if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "For 'Squeeze', the " << x_index << "'s input must be a Tensor, but got "
-                            << x_type->ToString() << ".";
-  }
-
-  return abstract::MakeAbstract(SqueezeInferShape(primitive, input_args), SqueezeInferType(primitive, input_args));
+  constexpr int64_t squeeze_input_length = 1;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, squeeze_input_length, primitive->name());
+  auto type = SqueezeInferType(primitive, input_args);
+  auto shape = SqueezeInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Squeeze, prim::kPrimSqueeze, SqueezeInfer, nullptr, true);
 }  // namespace ops
