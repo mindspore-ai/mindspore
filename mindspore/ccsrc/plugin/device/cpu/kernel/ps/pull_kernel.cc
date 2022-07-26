@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 std::vector<KernelAttr> PullKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }

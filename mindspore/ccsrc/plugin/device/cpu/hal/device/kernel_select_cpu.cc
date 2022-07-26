@@ -509,7 +509,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
     for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
       input_types[index] = selected_kernel_attr.GetInputAttr(index).first;
-      input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
+      (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
     }
   }
   SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());
@@ -519,7 +519,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
 void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
-  if (msg.empty()) return;
+  if (msg.empty()) {
+    return;
+  }
   MS_EXCEPTION(etype) << msg;
 }
 }  // namespace cpu

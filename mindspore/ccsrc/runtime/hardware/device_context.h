@@ -91,7 +91,7 @@ using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 
 class DeviceResManager {
  public:
-  DeviceResManager() : collective_comm_lib_(nullptr) {}
+  DeviceResManager() : collective_comm_lib_(nullptr), device_context_(nullptr) {}
   virtual ~DeviceResManager() = default;
 
   // Initialize the device resource manager.

@@ -39,11 +39,11 @@ class CPUMemoryManager : public MemoryManager {
   void ResetDynamicMemory() override;
 
   void AssignMemory(const session::KernelGraph *graph);
-  void IncreaseAddressRefCount(const session::KernelGraph *graph);
+  void IncreaseAddressRefCount(const session::KernelGraph *graph) const;
   void DecreaseAddressRefCount(const AnfNodePtr &kernel);
   void *StaticMemMalloc(size_t mem_size);
   void MemFree(void *ptr);
-  void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+  void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) const;
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override {

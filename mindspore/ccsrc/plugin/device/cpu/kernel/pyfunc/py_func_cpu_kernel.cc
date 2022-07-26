@@ -330,7 +330,7 @@ bool PyFuncCpuKernelMod::ExecuteKernel(const std::vector<AddressPtr> &inputs, co
   return true;
 }
 
-py::function PyFuncCpuKernelMod::GetPythonFunc() {
+py::function PyFuncCpuKernelMod::GetPythonFunc() const {
   py::gil_scoped_acquire gil_acquire;
   static const std::string &module_name = "mindspore.ops.operations._pyfunc_registry";
   static const std::string &entrance = "get_pyfunc";
