@@ -32,7 +32,7 @@ class BACKEND_EXPORT ExecutorManager {
   void OnEvent(const ExecutorEvent &event);
   void Clear();
   void ClearDoneTasks() {
-    for (auto &item : executors_) {
+    for (const auto &item : executors_) {
       auto &executor = item.second;
       if (executor != nullptr) {
         executor->ClearDoneTasks();

@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <exception>
 #include <set>
+#include <utility>
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/scoped_long_running.h"
@@ -143,7 +144,7 @@ void RunGraphTask::Run() {
   graph->OnRunGraphFinished();
   std::set<TensorPtr> need_notify_tensors(input_need_lock_tensors_.begin(), input_need_lock_tensors_.end());
   GetNeedNotifyTensors(&outputs_, &need_notify_tensors);
-  for (auto &tensor : need_notify_tensors) {
+  for (const auto &tensor : need_notify_tensors) {
     if (tensor != nullptr) {
       tensor->SetNeedWait(false);
     }
@@ -164,12 +165,6 @@ void RunOpsInGraphTask::Run() {
 void CreateCommGroupTask::Run() { result_ = CommManager::GetInstance().CreateGroupSync(group_name_, ranks_); }
 
 void DestroyCommGroupTask::Run() { result_ = CommManager::GetInstance().DestroyGroup(group_name_); }
-
-Executor::Executor(const std::string &device_name, uint32_t device_id) {
-  device_name_ = device_name;
-  device_id_ = device_id;
-  worker_ = std::make_shared<std::thread>(&Executor::WorkerLoop, this);
-}
 
 Executor::~Executor() {
   try {
@@ -286,7 +281,7 @@ void Executor::OnException() {
   }
   {
     std::lock_guard<std::mutex> lock(done_task_mutex_);
-    (void)done_tasks_.insert(done_tasks_.end(), done_tasks.begin(), done_tasks.end());
+    (void)done_tasks_.insert(done_tasks_.cend(), done_tasks.cbegin(), done_tasks.cend());
   }
 }
 
@@ -406,7 +401,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     return;
   }
   WaitLockedInputs(task);
-  for (auto &tensor_node : task->tensor_to_node_) {
+  for (const auto &tensor_node : task->tensor_to_node_) {
     tensor_node.first->SetNeedWait(true);
   }
   {
@@ -437,7 +432,7 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
     }
     {
       // Release GIL before calling into (potentially long-running) C++ code
-      if (Py_IsInitialized()) {
+      if (Py_IsInitialized() != 0) {
         py::gil_scoped_release release;
         session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
       } else {

@@ -37,20 +37,21 @@ constexpr int LEN_IMAGE_SIZE_5D = 5;
 constexpr int RANK_GRID_4D = 4;
 constexpr int RANK_GRID_5D = 5;
 
-bool PreLaunchKernel4D(const std::vector<int64_t>& theta_shape, const std::vector<int64_t>& grid_shape,
-                       const int32_t* image_size_d, int32_t* image_size_h,
-                       cudaStream_t cuda_stream, const std::string& kernel_name) {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t)*kDim4,
-                                                     cudaMemcpyDeviceToHost, cuda_stream),
-                                     "For '" << kernel_name << "', " << "cudaMemcpy input 'size' to host failed.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(),
-                                     "For '" << kernel_name << "', " << "cudaDeviceSyncFailed");
+bool PreLaunchKernel4D(const std::vector<int64_t> &theta_shape, const std::vector<int64_t> &grid_shape,
+                       const int32_t *image_size_d, int32_t *image_size_h, cudaStream_t cuda_stream,
+                       const std::string &kernel_name) {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t) * kDim4, cudaMemcpyDeviceToHost, cuda_stream),
+    "For '" << kernel_name << "', "
+            << "cudaMemcpy input 'size' to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name << "', "
+                                                                      << "cudaDeviceSyncFailed");
   int32_t N = image_size_h[kIndex0];
   int32_t C = image_size_h[kIndex1];
   int32_t H = image_size_h[kIndex2];
   int32_t W = image_size_h[kIndex3];
-  bool is_valid = (N == theta_shape[kIndex0]) && (N == grid_shape[kIndex0]) &&
-                  (H == grid_shape[kIndex1]) && (W == grid_shape[kIndex2]);
+  bool is_valid = (N == theta_shape[kIndex0]) && (N == grid_shape[kIndex0]) && (H == grid_shape[kIndex1]) &&
+                  (W == grid_shape[kIndex2]);
   if (is_valid) {
     return true;
   } else {
@@ -63,21 +64,22 @@ bool PreLaunchKernel4D(const std::vector<int64_t>& theta_shape, const std::vecto
   }
 }
 
-bool PreLaunchKernel5D(const std::vector<int64_t>& theta_shape, const std::vector<int64_t>& grid_shape,
-                       const int32_t* image_size_d, int32_t* image_size_h,
-                       cudaStream_t cuda_stream, const std::string& kernel_name) {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t)*kDim5,
-                                                     cudaMemcpyDeviceToHost, cuda_stream),
-                                     "For '" << kernel_name << "', " << "cudaMemcpy input 'size' to host failed.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(),
-                                     "For '" << kernel_name << "', " << "cudaDeviceSyncFailed");
+bool PreLaunchKernel5D(const std::vector<int64_t> &theta_shape, const std::vector<int64_t> &grid_shape,
+                       const int32_t *image_size_d, int32_t *image_size_h, cudaStream_t cuda_stream,
+                       const std::string &kernel_name) {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(image_size_h, image_size_d, sizeof(int32_t) * kDim5, cudaMemcpyDeviceToHost, cuda_stream),
+    "For '" << kernel_name << "', "
+            << "cudaMemcpy input 'size' to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name << "', "
+                                                                      << "cudaDeviceSyncFailed");
   int32_t N = image_size_h[kIndex0];
   int32_t C = image_size_h[kIndex1];
   int32_t D = image_size_h[kIndex2];
   int32_t H = image_size_h[kIndex3];
   int32_t W = image_size_h[kIndex4];
-  bool is_valid = (N == theta_shape[kIndex0]) && (N == grid_shape[kIndex0]) &&
-                  (D == grid_shape[kIndex1]) && (H == grid_shape[kIndex2]) && (W == grid_shape[kIndex3]);
+  bool is_valid = (N == theta_shape[kIndex0]) && (N == grid_shape[kIndex0]) && (D == grid_shape[kIndex1]) &&
+                  (H == grid_shape[kIndex2]) && (W == grid_shape[kIndex3]);
   if (is_valid) {
     return true;
   } else {
@@ -85,8 +87,8 @@ bool PreLaunchKernel5D(const std::vector<int64_t>& theta_shape, const std::vecto
                   << "the inferred shape of sampling grids (N×D×H×W×3) must match the value of 'size' (N×C×D×H×W). "
                   << "The inferred shape is (" << grid_shape[kIndex0] << ", " << grid_shape[kIndex1] << ", "
                   << grid_shape[kIndex2] << ", " << grid_shape[kIndex3] << ", " << grid_shape[kIndex4] << "), "
-                  << "while the value of 'size' is ("
-                  << N << ", " << C << ", " << D << ", " << H << ", " << W << ").\n";
+                  << "while the value of 'size' is (" << N << ", " << C << ", " << D << ", " << H << ", " << W
+                  << ").\n";
     return false;
   }
 }
@@ -184,7 +186,7 @@ int AffineGridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   if (grid_dim_ == AffineGridDim::spatial) {
     // We use cudnn here. However, cudnn does not support align_corners, we transform thetas as an alternative.
-    workspace_size_list_ = { input_size_list_[0] };
+    workspace_size_list_ = {input_size_list_[0]};
   } else {
     size_t base_grid_size = std::accumulate(grid_shape_.begin() + 1, grid_shape_.end() - 1, 0L);  // H+W or D+H+W
     size_t wrapped_grid_size = grid_shape_.front() * base_grid_size * grid_shape_.back();  // N*(H+W)*2 or N*(D+H+W)*3
@@ -218,19 +220,16 @@ bool AffineGridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     if (!PreLaunchKernel4D(theta_shape_, grid_shape_, image_size_ptr, image_size, cuda_stream, kernel_name_)) {
       return false;
     }
-    CalculateAffineGrid4D(theta_ptr, workspace_ptr, grid_ptr,
-                          image_size[kIndex0], image_size[kIndex1],
-                          image_size[kIndex2], image_size[kIndex3],
-                          align_corners_, device_id_, cuda_stream);
+    CalculateAffineGrid4D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
+                          image_size[kIndex2], image_size[kIndex3], align_corners_, device_id_, cuda_stream);
   } else if (grid_dim_ == AffineGridDim::volumetric) {
     int32_t image_size[kDim5];
     if (!PreLaunchKernel5D(theta_shape_, grid_shape_, image_size_ptr, image_size, cuda_stream, kernel_name_)) {
       return false;
     }
-    CalculateAffineGrid5D(theta_ptr, workspace_ptr, grid_ptr,
-                          image_size[kIndex0], image_size[kIndex1],
-                          image_size[kIndex2], image_size[kIndex3], image_size[kIndex4],
-                          align_corners_, device_id_, cuda_stream);
+    CalculateAffineGrid5D(theta_ptr, workspace_ptr, grid_ptr, image_size[kIndex0], image_size[kIndex1],
+                          image_size[kIndex2], image_size[kIndex3], image_size[kIndex4], align_corners_, device_id_,
+                          cuda_stream);
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', grid_dim_ is not properly set in KernelMod::Resize";
     return false;

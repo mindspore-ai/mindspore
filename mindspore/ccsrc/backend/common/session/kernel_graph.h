@@ -132,13 +132,13 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs) override;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
   CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
-  void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
+  void CreateKernelInfoFromNewParameter(const CNodePtr &cnode) const;
   CNodePtr NewCNode(const CNodePtr &cnode);
   void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
-  ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);
+  ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
@@ -289,16 +289,16 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     }
     tuple_parameter_to_make_tuple_map_[param] = make_tuple;
   }
-  AnfNodePtr FindTupleParameterToMakeTupleMap(const AnfNodePtr &param) {
+  AnfNodePtr FindTupleParameterToMakeTupleMap(const AnfNodePtr &param) const {
     if (tuple_parameter_to_make_tuple_map_.find(param) != tuple_parameter_to_make_tuple_map_.end()) {
-      return tuple_parameter_to_make_tuple_map_[param];
+      return tuple_parameter_to_make_tuple_map_.at(param);
     } else {
       return nullptr;
     }
   }
   void RemoveNodeFromGraph(const AnfNodePtr &node);
-  void EnableRuntimeCache();
-  void DisableRuntimeCache();
+  void EnableRuntimeCache() const;
+  void DisableRuntimeCache() const;
   void UpdateGraphDynamicAttr();
   void SetGraphDynamicAttr(bool is_dynamic_shape) { is_dynamic_shape_ = is_dynamic_shape; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
@@ -361,7 +361,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     post_graph_finished_count_ = 0;
     pre_graph_finished_count_ = 0;
   }
-  void OnRunGraphFinished() {
+  void OnRunGraphFinished() const {
     for (auto post_graph : post_graphs_) {
       auto post_graph_ptr = post_graph.second.lock();
       if (post_graph_ptr != nullptr) {
