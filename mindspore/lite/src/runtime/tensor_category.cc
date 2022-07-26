@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace lite {
 Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type, const size_t data_size) {
-  return (node_type == NodeType_ValueNode && data_size != 0)
+  return (node_type == NodeType_ValueNode)
            ? (shape_num == 0 && data_size == DataTypeSize(data_type) ? Category::CONST_SCALAR : Category::CONST_TENSOR)
            : Category::VAR;
 }
