@@ -1279,9 +1279,8 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
   }
 
   if (backend_output_nodes.size() != front_output_nodes.size()) {
-    MS_LOG(WARNING) << "The size(" << backend_output_nodes.size() << ") of backend outputs: "
-                    << " is not equal to the size(" << front_output_nodes.size()
-                    << ") of front outputs for graph:" << ToString();
+    MS_LOG(WARNING) << "The size(" << backend_output_nodes.size() << ") of backend outputs is not equal to the size("
+                    << front_output_nodes.size() << ") of front outputs for graph:" << ToString();
     return;
   }
 
