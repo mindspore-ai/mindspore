@@ -103,6 +103,7 @@ from .ctcloss import _ctcloss_aicpu
 from .multi_margin_loss import _multi_margin_loss_aicpu
 from .multi_margin_loss_grad import _multi_margin_loss_grad_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
+from .reversev2 import _reversev2_aicpu
 from .matrix_inverse import _matrix_inverse_aicpu
 from .matrix_determinant import _matrix_determinant_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu

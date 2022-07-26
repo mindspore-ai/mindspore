@@ -18,7 +18,6 @@ import copy
 import functools
 import itertools
 import numbers
-from collections import Counter
 
 import numpy as np
 
@@ -3076,7 +3075,7 @@ class Coalesce(Primitive):
                                 outputs=['y_indices', 'y_values', 'y_shape'])
 
 
-class ReverseV2(PrimitiveWithInfer):
+class ReverseV2(Primitive):
     """
     Reverses specific dimensions of a tensor.
 
@@ -3098,7 +3097,7 @@ class ReverseV2(PrimitiveWithInfer):
         TypeError: If element of `axis` is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
@@ -3122,28 +3121,6 @@ class ReverseV2(PrimitiveWithInfer):
             validator.check_value_type(f'axis[{i}]', each, [int], self.name)
         self.axis = axis
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        dim = len(x_shape)
-        for i, each in enumerate(self.axis):
-            validator.check_int_range(each, -dim, dim, Rel.INC_LEFT, f'axis[{i}]', self.name)
-        normalized_axis = []
-        for i, v in enumerate(self.axis):
-            if v < 0:
-                normalized_axis.append(v + dim)
-            else:
-                normalized_axis.append(v)
-
-        if len(normalized_axis) != len(set(normalized_axis)):
-            duplicated = [item for item, count in Counter(normalized_axis).items() if count > 1]
-            raise ValueError(f"For '{self.name}', the 'axis' cannot contain duplicate dimensions,"
-                             f" but got duplicated elements {duplicated}.")
-
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, (mstype.bool_,) + mstype.number_type, self.name)
-        return x_dtype
 
 
 class Rint(Primitive):
