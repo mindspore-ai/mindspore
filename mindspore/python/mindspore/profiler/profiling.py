@@ -457,13 +457,13 @@ class Profiler:
         else:
             self._ascend_graph_analyse()
 
-        # Call msadvisor function
+        # Call MSAdvisor function
         try:
             msadvisor = Msadvisor(self._get_profiling_job_id(), self._rank_id, self._output_path)
-            logger.info("Msadvisor is running")
+            logger.info("MSAdvisor starts running.")
             msadvisor.analyse()
-        except (ProfilerFileNotFoundException, ValueError) as err:
-            logger.warning("Running Msadvisor failed. %s", err)
+        except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
+            logger.warning("MSAdvisor running failed. %s", err)
         finally:
             pass
 

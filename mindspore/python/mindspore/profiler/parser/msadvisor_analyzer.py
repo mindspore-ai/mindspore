@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-The msadvisor analyzer.
+The MSAdvisor analyzer.
 """
 
 import os
@@ -26,7 +26,7 @@ from mindspore.profiler.parser.msadvisor_parser import MsadvisorParser
 
 class Msadvisor:
     """
-    The interface to call msadvisor(CANN) by command line.
+    The interface to call MSAdvisor(CANN) by command line.
     """
     def __init__(self, job_id, rank_id, output_path):
         self._job_id, self._device_id = job_id.split("/")
@@ -35,19 +35,32 @@ class Msadvisor:
 
     def call_msadvisor(self):
         """
-        Call Msadvisor by command line.
+        Call MSAdvisor by command line.
         """
         output_path = os.path.join(self._output_path, "msadvisor")
         output_path = os.path.join(output_path, self._rank_id)
         output_path = validate_and_normalize_path(output_path)
-        logger.info("Msadvisor is running. Log and result files are saved in %s", output_path)
-        subprocess.run(["msadvisor", "-d", output_path, "-c", "all"])
-        logger.info("Msadvisor is over. If command not found, please check if intalled ascend-toolkit"
-                    "and add environment path.")
+        logger.info("MSAdvisor is running. Log and result files are saved in %s", output_path)
+        try:
+            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"])
+        except FileNotFoundError as err:
+            logger.warning("MSAdvisor: command not found,"
+                           "please check if installed ascend-toolkit and set environment path correctly.")
+            raise err
+        except OSError as err:
+            logger.warning("Cannot execute binary file: Exec format error.")
+            raise err
+        finally:
+            pass
+        if running_result.returncode == 0:
+            logger.info("MSAdvisor process finished.")
+        else:
+            logger.info("MSAdvisor running failed,"
+                        "please check MSAdvisor running log.")
 
     def analyse(self):
         """
-        Execute the msadvisor parser, generate timeline file and call msadvisor by command line.
+        Execute the MSAdvisor parser, generate timeline file and call MSAdvisor by command line.
         """
         reformater = MsadvisorParser(self._job_id, self._device_id, self._rank_id, self._output_path)
         reformater.parse()
