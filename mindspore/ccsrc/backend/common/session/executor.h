@@ -25,7 +25,6 @@
 #include <queue>
 #include <string>
 #include <thread>
-#include <utility>
 #include <vector>
 #include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
@@ -155,7 +154,9 @@ enum class ExecutorEvent { kClear, kRunGraphFinished, kException };
 
 class BACKEND_EXPORT Executor {
  public:
-  Executor(const std::string &device_name, uint32_t device_id);
+  Executor(const std::string &device_name, uint32_t device_id) : device_name_(device_name), device_id_(device_id) {
+    worker_ = std::make_shared<std::thread>(&Executor::WorkerLoop, this);
+  }
   ~Executor();
   void WorkerLoop();
   void WorkerJoin();
@@ -184,8 +185,8 @@ class BACKEND_EXPORT Executor {
   void OnRunGraphFinished();
   void OnException();
 
-  uint32_t device_id_;
   std::string device_name_;
+  uint32_t device_id_;
   std::mutex task_mutex_;
   std::mutex done_task_mutex_;
   std::mutex pending_task_mutex_;
