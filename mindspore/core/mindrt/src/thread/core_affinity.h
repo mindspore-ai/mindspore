@@ -20,7 +20,7 @@
 #include <vector>
 #include <thread>
 
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 #define BIND_CORE
 #endif
 #ifdef __ANDROID__

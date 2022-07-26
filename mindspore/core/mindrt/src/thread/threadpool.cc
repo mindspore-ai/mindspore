@@ -76,11 +76,9 @@ void Worker::InitWorkerMask(const std::vector<int> &core_list, const size_t work
   static uint32_t windows_core_index = 0;
   core_id_ = windows_core_index++;
 #elif defined(BIND_CORE)
-#ifdef SERVER_INFERENCE
   if (core_list.empty()) {
     return;
   }
-#endif
   cpu_set_t mask;
   CPU_ZERO(&mask);
   if (core_list.size() > 0) {
@@ -422,7 +420,7 @@ int ThreadPool::InitAffinityInfo() {
   }
 #endif
 
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   server_cpu_frequence = CoreAffinity::GetServerFrequency() / 1000.0f;  // 1GHz = 1000MHz
 #endif
 

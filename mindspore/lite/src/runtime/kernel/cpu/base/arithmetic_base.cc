@@ -203,7 +203,7 @@ int ArithmeticBaseCPUKernel::UpdateParameter() {
 
 int ArithmeticBaseCPUKernel::BroadCastConstTensor() {
   CalcMultiplesAndStrides(param_);
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   bool prefer_explicit_broadcast = false;
 #else
   bool prefer_explicit_broadcast = param_->ndim_ != 1;
