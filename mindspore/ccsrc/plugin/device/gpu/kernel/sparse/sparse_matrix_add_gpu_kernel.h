@@ -222,6 +222,18 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
+    auto alpha = GetDeviceAddress<T>(inputs, InputList::ALPHA);
+    auto beta = GetDeviceAddress<T>(inputs, InputList::BETA);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&alpha_host_, alpha, sizeof(T), cudaMemcpyDeviceToHost, stream),
+                                       "cudaMemcpy failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&beta_host_, beta, sizeof(T), cudaMemcpyDeviceToHost, stream),
+                                       "cudaMemcpy failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+
+    if (x1_dense_shape_host_ != x2_dense_shape_host_) {
+      MS_LOG(EXCEPTION) << "The inputs dense shape should be same";
+    }
+
     if (x1_batch_pointer_host_.size() != x2_batch_pointer_host_.size()) {
       MS_LOG(EXCEPTION) << "The batch pointer dim should be same. x1 batch dim: " << x1_batch_pointer_host_.size()
                         << "x2 batch dim: " << x2_batch_pointer_host_.size();
@@ -236,14 +248,6 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
       row_ = x1_dense_shape_host_[kIndex1];
       col_ = x1_dense_shape_host_[kIndex2];
     }
-
-    auto alpha = GetDeviceAddress<T>(inputs, InputList::ALPHA);
-    auto beta = GetDeviceAddress<T>(inputs, InputList::BETA);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&alpha_host_, alpha, sizeof(T), cudaMemcpyDeviceToHost, stream),
-                                       "cudaMemcpy failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&beta_host_, beta, sizeof(T), cudaMemcpyDeviceToHost, stream),
-                                       "cudaMemcpy failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
   }
 
   size_t GetBufferSize(int *x1_rows, int *x1_cols, T *x1_values, int *x2_rows, int *x2_cols, T *x2_values,
