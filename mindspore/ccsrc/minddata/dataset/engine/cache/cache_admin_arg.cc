@@ -495,7 +495,9 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   int32_t num_workers = server_cfg_info.num_workers;
   int8_t log_level = server_cfg_info.log_level;
   std::string spill_dir = server_cfg_info.spill_dir;
-  if (spill_dir.empty()) spill_dir = "None";
+  if (spill_dir.empty()) {
+    spill_dir = "None";
+  }
 
   int name_w = 20;
   int value_w = 50;

@@ -240,7 +240,9 @@ static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const
     return;
   }
   if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
-    for (int k = 0; k < cn; k++) dst_ptr[k] = borderValue[k];
+    for (int k = 0; k < cn; k++) {
+      dst_ptr[k] = borderValue[k];
+    }
   } else {
     int sv0;
     int sv1;
@@ -256,9 +258,10 @@ static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const
     const uint8_t *v2 = sv0 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv0 * cn : &borderValue[0];
     const uint8_t *v3 = sv1 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv1 * cn : &borderValue[0];
 
-    for (int k = 0; k < cn; k++)
+    for (int k = 0; k < cn; k++) {
       dst_ptr[k] =
         CastToFixed(reinterpret_cast<int>(v0[k] * w_ptr[0] + v1[k] * w_ptr[1] + v2[k] * w_ptr[2] + v3[k] * w_ptr[3]));
+    }
   }
 }
 
@@ -282,7 +285,9 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
     for (int dx = 0; dx <= _dst.width_; dx++) {
       bool curLine =
         dx < _dst.width_ ? (unsigned)HW[dx * 2] < src_width && (unsigned)HW[dx * 2 + 1] < src_height : !prevLine;
-      if (curLine == prevLine) continue;
+      if (curLine == prevLine) {
+        continue;
+      }
 
       int H1 = dx;
       dx = tt;
@@ -399,7 +404,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
   }
 
   double D = IM[0] * IM[4] - IM[1] * IM[3];
-  D = D != 0 ? 1.0f / D : 0;
+  D = std::fabs(D) > std::numeric_limits<double>::epsilon() ? 1.0f / D : 0;
   double A11 = IM[4] * D, A22 = IM[0] * D;
   IM[0] = A11;
   IM[1] *= -D;
@@ -460,7 +465,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
 
 static void PerspectiveInvert(double *src, double *dst) {
   double value = GetDet3(src);
-  if (value != 0.) {
+  if (std::fabs(value) > std::numeric_limits<double>::epsilon()) {
     value = 1. / value;
     double v[9];
 

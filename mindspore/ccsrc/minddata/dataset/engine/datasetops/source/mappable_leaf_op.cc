@@ -134,7 +134,9 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty()) return Status::OK();  // empty key is a quit signal for workers
+      if (keys.empty()) {
+        return Status::OK();  // empty key is a quit signal for workers
+      }
       TensorRow trow;
       RETURN_IF_NOT_OK(this->LoadTensorRow(keys[0], &trow));
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(trow)));

@@ -31,7 +31,9 @@ std::vector<TensorRow> PullBasedIteratorConsumer::GetRows(int64_t num_rows) {
   for (int i = 0; i < num_rows; i++) {
     TensorRow row;
     RETURN_SECOND_IF_ERROR(tree_adapter_lite_->GetNextRow(&row), {});
-    if (row.empty()) break;
+    if (row.empty()) {
+      break;
+    }
     rows.push_back(row);
   }
 

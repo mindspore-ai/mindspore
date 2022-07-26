@@ -281,7 +281,9 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     Path subdir = dir_itr->Next();
     if (subdir.IsDirectory()) {
       folder_paths.push(subdir.ToString());
-      if (!class_index.empty()) folder_names.insert(subdir.Basename());
+      if (!class_index.empty()) {
+        folder_names.insert(subdir.Basename());
+      }
     }
   }
   if (num_classes != nullptr) {

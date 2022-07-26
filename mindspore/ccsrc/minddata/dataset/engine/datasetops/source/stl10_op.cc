@@ -187,7 +187,7 @@ Status STL10Op::ParseSTLData() {
     } else {  // unlabeled data -> no labels.
       image_reader.open(image_names_[i], std::ios::binary | std::ios::ate);
 
-      Status s = ReadImageAndLabel(&image_reader, NULL, i);
+      Status s = ReadImageAndLabel(&image_reader, nullptr, i);
       // Close the readers.
       image_reader.close();
 

@@ -114,7 +114,7 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, const struc
       mm += m;
     }
     for (x = 0; x < x_max; x++) {
-      if (mm != 0.0) {
+      if (std::fabs(mm) > std::numeric_limits<double>::epsilon()) {
         coeff[x] /= mm;
       }
     }

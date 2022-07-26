@@ -42,7 +42,7 @@ namespace mindrecord {
 void BindSchema(py::module *m) {
   (void)py::class_<Schema, std::shared_ptr<Schema>>(*m, "Schema", py::module_local())
     .def_static("build",
-                [](const std::string &desc, const pybind11::handle &schema) {
+                [](std::string desc, const pybind11::handle &schema) {
                   json schema_json = nlohmann::detail::ToJsonImpl(schema);
                   return Schema::Build(std::move(desc), schema_json);
                 })
@@ -59,7 +59,7 @@ void BindSchema(py::module *m) {
 void BindStatistics(const py::module *m) {
   (void)py::class_<Statistics, std::shared_ptr<Statistics>>(*m, "Statistics", py::module_local())
     .def_static("build",
-                [](const std::string desc, const pybind11::handle &statistics) {
+                [](std::string desc, const pybind11::handle &statistics) {
                   json statistics_json = nlohmann::detail::ToJsonImpl(statistics);
                   return Statistics::Build(std::move(desc), statistics_json);
                 })

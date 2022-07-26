@@ -142,8 +142,12 @@ Status DvppCropJpegOp::OutputShape(const std::vector<TensorShape> &inputs, std::
   if (inputs.size() < 1) {
     RETURN_STATUS_UNEXPECTED("DvppCropJpegOp::OutputShape inputs is null");
   }
-  if (inputs[0].Rank() == 1) outputs.emplace_back(out);
-  if (!outputs.empty()) return Status::OK();
+  if (inputs[0].Rank() == 1) {
+    (void)outputs.emplace_back(out);
+  }
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 

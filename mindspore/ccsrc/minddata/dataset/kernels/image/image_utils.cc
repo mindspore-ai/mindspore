@@ -1248,7 +1248,9 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       std::vector<int32_t> hist_vec;
       hist.col(0).copyTo(hist_vec);
       // Ignore values in ignore
-      for (const auto &item : ignore) hist_vec[item] = 0;
+      for (const auto &item : ignore) {
+        hist_vec[item] = 0;
+      }
       int32_t hi = kMaxBitValue;
       int32_t lo = 0;
       RETURN_IF_NOT_OK(ComputeUpperAndLowerPercentiles(&hist_vec, cutoff, cutoff, &hi, &lo));
@@ -1561,8 +1563,9 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, input_cv->Rank(), &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
     if (input_cv->Rank() == kDefaultImageRank && input_cv->shape()[kChannelIndexHWC] == kMinImageChannel &&
-        output_cv->Rank() == kMinImageRank)
+        output_cv->Rank() == kMinImageRank) {
       RETURN_IF_NOT_OK(output_cv->ExpandDim(kChannelIndexHWC));
+    }
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {

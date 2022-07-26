@@ -432,11 +432,14 @@ Status CocoOp::DetectionColumnLoad(const nlohmann::json &annotation_tree, const 
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoBbox), &node_bbox));
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoCategoryId), &category_id));
   auto search_category = category_set_.find(category_id);
-  if (search_category == category_set_.end())
+  if (search_category == category_set_.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation, the attribute of 'category_id': " + std::to_string(category_id) +
                              " is missing in the node of 'categories' from annotation file: " + annotation_path_);
+  }
   auto node_iscrowd = annotation_tree.find(kJsonAnnoIscrowd);
-  if (node_iscrowd != annotation_tree.end()) iscrowd = *node_iscrowd;
+  if (node_iscrowd != annotation_tree.end()) {
+    iscrowd = *node_iscrowd;
+  }
   bbox.insert(bbox.end(), node_bbox.begin(), node_bbox.end());
   coordinate_map_[image_file].push_back(bbox);
   simple_item_map_[image_file].push_back(category_id);
@@ -454,7 +457,9 @@ Status CocoOp::StuffColumnLoad(const nlohmann::json &annotation_tree, const std:
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoSegmentation), &segmentation));
   if (iscrowd == 0) {
     for (auto item : segmentation) {
-      if (!bbox.empty()) bbox.clear();
+      if (!bbox.empty()) {
+        bbox.clear();
+      }
       bbox.insert(bbox.end(), item.begin(), item.end());
       coordinate_map_[image_file].push_back(bbox);
     }
@@ -470,14 +475,16 @@ Status CocoOp::StuffColumnLoad(const nlohmann::json &annotation_tree, const std:
 Status CocoOp::KeypointColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file,
                                   const int32_t &unique_id) {
   auto itr_num_keypoint = annotation_tree.find(kJsonAnnoNumKeypoints);
-  if (itr_num_keypoint == annotation_tree.end())
+  if (itr_num_keypoint == annotation_tree.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation, the 'num_keypoint' node is missing in annotation file: " +
                              annotation_path_ + " where 'image_id': " + std::to_string(unique_id) + ".");
+  }
   simple_item_map_[image_file].push_back(*itr_num_keypoint);
   auto itr_keypoint = annotation_tree.find(kJsonAnnoKeypoints);
-  if (itr_keypoint == annotation_tree.end())
+  if (itr_keypoint == annotation_tree.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation, the 'keypoint' node is missing in annotation file: " +
                              annotation_path_ + " where 'image_id': " + std::to_string(unique_id) + ".");
+  }
   coordinate_map_[image_file].push_back(*itr_keypoint);
   return Status::OK();
 }
@@ -485,35 +492,40 @@ Status CocoOp::KeypointColumnLoad(const nlohmann::json &annotation_tree, const s
 Status CocoOp::PanopticColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file,
                                   const int32_t &image_id) {
   auto itr_segments = annotation_tree.find(kJsonAnnoSegmentsInfo);
-  if (itr_segments == annotation_tree.end())
+  if (itr_segments == annotation_tree.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation, the 'segments_info' node is missing in annotation file: " +
                              annotation_path_ + " where 'image_id': " + std::to_string(image_id) + ".");
+  }
   for (auto info : *itr_segments) {
     std::vector<float> bbox;
     uint32_t category_id = 0;
     auto itr_bbox = info.find(kJsonAnnoBbox);
-    if (itr_bbox == info.end())
+    if (itr_bbox == info.end()) {
       RETURN_STATUS_UNEXPECTED(
         "Invalid annotation, the 'bbox' attribute is missing in the node of 'segments_info' where 'image_id': " +
         std::to_string(image_id) + " from annotation file: " + annotation_path_ + ".");
+    }
     bbox.insert(bbox.end(), itr_bbox->begin(), itr_bbox->end());
     coordinate_map_[image_file].push_back(bbox);
 
     RETURN_IF_NOT_OK(SearchNodeInJson(info, std::string(kJsonAnnoCategoryId), &category_id));
     auto search_category = category_set_.find(category_id);
-    if (search_category == category_set_.end())
+    if (search_category == category_set_.end()) {
       RETURN_STATUS_UNEXPECTED("Invalid annotation, the attribute of 'category_id': " + std::to_string(category_id) +
                                " is missing in the node of 'categories' from " + annotation_path_ + ".");
+    }
     auto itr_iscrowd = info.find(kJsonAnnoIscrowd);
-    if (itr_iscrowd == info.end())
+    if (itr_iscrowd == info.end()) {
       RETURN_STATUS_UNEXPECTED(
         "Invalid annotation, the attribute of 'iscrowd' is missing in the node of 'segments_info' where 'image_id': " +
         std::to_string(image_id) + " from annotation file: " + annotation_path_ + ".");
+    }
     auto itr_area = info.find(kJsonAnnoArea);
-    if (itr_area == info.end())
+    if (itr_area == info.end()) {
       RETURN_STATUS_UNEXPECTED(
         "Invalid annotation, the attribute of 'area' is missing in the node of 'segments_info' where 'image_id': " +
         std::to_string(image_id) + " from annotation file: " + annotation_path_ + ".");
+    }
     simple_item_map_[image_file].push_back(category_id);
     simple_item_map_[image_file].push_back(*itr_iscrowd);
     simple_item_map_[image_file].push_back(*itr_area);

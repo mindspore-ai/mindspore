@@ -108,7 +108,9 @@ int32_t CachePipelineRun::ProcessArgs(int argc, char **argv) {
     return -1;
   }
   int32_t rc = ProcessPipelineArgs(argv[1]);
-  if (rc < 0) return rc;
+  if (rc < 0) {
+    return rc;
+  }
   rc = ProcessClientArgs(argv[2]);
   return rc;
 }

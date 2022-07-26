@@ -92,6 +92,11 @@ static bool ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
   if (dst_height >= (INT_MAX / 3 / dst_width)) {
     return false;
   }
+
+  // The allocate memory cannot exceed 2GB.
+  if ((2 * sizeof(int) * (2 * dst_width + dst_height)) > INT_MAX) {
+    return false;
+  }
   int *data_buf = new (std::nothrow) int[2 * sizeof(int) * (2 * dst_width + dst_height)];
   if (data_buf == nullptr) {
     return false;
@@ -188,6 +193,10 @@ static bool ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     return false;
   }
 
+  // The allocate memory cannot exceed 2GB.
+  if ((2 * sizeof(int) * (2 * dst_width + dst_height)) > INT_MAX) {
+    return false;
+  }
   int *data_buf = new (std::nothrow) int[2 * sizeof(int) * (2 * dst_width + dst_height)];
   if (data_buf == nullptr) {
     return false;
@@ -965,7 +974,9 @@ inline void MergeImpl(const std::vector<LiteMat> &mv, T *dst_ptr, int height, in
 }
 
 bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
-  if (mv.size() != 1 && mv.size() != 3 && mv.size() != 4) return false;
+  if (mv.size() != 1 && mv.size() != 3 && mv.size() != 4) {
+    return false;
+  }
 
   int width = mv[0].width_;
   int height = mv[0].height_;
@@ -1121,6 +1132,9 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes) {
+  if (all_boxes.size() != all_scores.size()) {
+    return {};
+  }
   size_t boxes_num = all_boxes.size();
   std::vector<float> areas(boxes_num);
   std::vector<int> order(boxes_num);
@@ -1183,7 +1197,7 @@ bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vec
   }
 
   double D = IM[0] * IM[4] - IM[1] * IM[3];
-  D = D != 0 ? 1.0f / D : 0;
+  D = std::fabs(D) > std::numeric_limits<double>::epsilon() ? 1.0f / D : 0;
   double A11 = IM[4] * D, A22 = IM[0] * D;
   IM[0] = A11;
   IM[1] *= -D;
@@ -1804,7 +1818,7 @@ void ImageToolsConvertImage(const LiteMat &src, const LiteMat &dst, imageToolsIm
 
 int InvAffine2x3(float M[2][3], float invM[][3]) {
   float inv_det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
-  if (inv_det == 0.0) {
+  if (std::fabs(inv_det) <= std::numeric_limits<float>::epsilon()) {
     return IM_TOOL_RETURN_STATUS_FAILED;
   }
   invM[1][1] = M[0][0] / inv_det;

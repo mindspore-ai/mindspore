@@ -439,7 +439,9 @@ Status CacheClient::AsyncBufferStream::SyncFlush(AsyncFlushFlag flag) {
       for (auto i = 0; i < kNumAsyncBuffer; ++i) {
         if (buf_arr_[i].rq) {
           Status rc = buf_arr_[i].rq->Wait();
-          if (rc.IsError()) flush_rc_ = rc;
+          if (rc.IsError()) {
+            flush_rc_ = rc;
+          }
           buf_arr_[i].rq.reset();
         }
       }

@@ -661,7 +661,9 @@ int ShardReader::SelectCallback(void *p_data, int num_fields, char **p_fields, c
   auto *records = static_cast<std::vector<std::vector<std::string>> *>(p_data);
   if (num_fields > 0 && num_fields <= kMaxFieldCount) {
     for (int i = 0; i < num_fields; ++i) {
-      if (p_fields[i] == nullptr) p_fields[i] = const_cast<char *>("");
+      if (p_fields[i] == nullptr) {
+        p_fields[i] = const_cast<char *>("");
+      }
     }
   }
   records->emplace_back(p_fields, p_fields + num_fields);
