@@ -1269,3 +1269,46 @@ class SparseMatrixAdd(Primitive):
                                         'x2_col_indices', 'x2_values', 'alpha', 'beta'],
                                 outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices',
                                          'y_values'])
+
+
+class SparseSplit(Primitive):
+    """
+    Split a `SparseTensor` into `num_split` tensors along one dimension.
+    If the `shape[split_dim]` is not an integer multiple of `num_split`. Slices
+    `[0 : shape[split_dim] % num_split]` gets one extra dimension.
+
+    Args:
+        num_split (int): An `int` that is `>= 1`. The number of ways to split. Default: 1.
+
+    Inputs:
+        - **split_dim** (Tensor) -A 0-D Tensor of type `int64`.
+          The dimension along which to split.  Must be in the range `[0, rank(shape))`.
+        - **indices** (Tensor) - A 2-D Tensor of type `int64`, represents the indices of the sparse tensor.
+        - **values** (Tensor) - A 1-D Tensor, represents the values of the sparse tensor.
+          Support float16, float32, float64, int32, int64, int8, int16, uint8, uint16, uint32,
+          uint64, complex64, complex128, bool.
+        - **shape** (Tensor) - A 1-D Tensor of type `int64`, represents the shape of the sparse tensor.
+
+    Outputs:
+          A tuple of `Tensor` objects (y_indices, y_values, y_shape).
+        - **y_indices** (Tensor) - A 2-D Tensor of type `int64`.
+        - **y_values** (Tensor) - A 1-D Tensor. The type is the same as input Tensor "values".
+        - **y_shape** (Tensor) - A 1-D Tensor of type `int64`.
+
+    Raises:
+        TypeError: If the type of `split_dim` or `indices` or `shape` is not int64.
+            If the type of `values` is not valid.
+            If the type of `num_split` is not int.
+        ValueError: If the num_element of `split_dim` is not 1.
+            If the rank of `values` or `shape` is not 1.
+            If the rank of `indices` is not 1.
+
+    Supported Platforms:
+
+    """
+    @prim_attr_register
+    def __init__(self, num_split=1):
+        """Initialize SparseSplit."""
+        self.init_prim_io_names(inputs=['split_dim', 'indices', 'values', 'shape'],
+                                outputs=['y_indices', 'y_values', 'y_shape'])
+        validator.check_value_type("num_split", num_split, [int], self.name)
