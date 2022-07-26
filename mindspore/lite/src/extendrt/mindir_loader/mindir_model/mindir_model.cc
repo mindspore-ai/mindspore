@@ -25,6 +25,9 @@
 #include "extendrt/mindir_loader/mindir_model/kernel_mod_util.h"
 #include "src/runtime/kernel_exec.h"
 #include "extendrt/mindir_loader/mindir_model/inner_kernel.h"
+#include "extendrt/mock/lite_runtime/populate/base_operator_populate_register.h"
+
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore::infer::mindir {
 #define IS_LITTLE_ENDIAN (uint8_t)1U
@@ -77,12 +80,44 @@ mindspore::kernel::KernelExec *MindirModel::FindBackendKernel(const std::vector<
                                                               const std::vector<mindspore::lite::Tensor *> &out_tensors,
                                                               const LiteGraph::Node *node, lite::Context *context,
                                                               TypeId prefer_data_type) {
+  if (select_lite_kernel_) {
+    return FindLiteKernel(in_tensors, out_tensors, node, context, prefer_data_type);
+  }
   std::shared_ptr<kernel::InnerKernel> inner_kernel =
     mindspore::kernel::KernelModUtil::GetInnerKernel(in_tensors, out_tensors, node, context);
   kernel::KernelExec *kernel_exec = new kernel::KernelExec(inner_kernel);
   auto desc = kernel_exec->desc();
   desc.data_type = in_tensors.front()->data_type();
   kernel_exec->set_desc(desc);
+  return kernel_exec;
+}
+
+mindspore::kernel::KernelExec *MindirModel::FindLiteKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
+                                                           const std::vector<mindspore::lite::Tensor *> &out_tensors,
+                                                           const LiteGraph::Node *node, lite::Context *context,
+                                                           TypeId prefer_data_type) {
+  mindspore::kernel::KernelExec *kernel_exec = nullptr;
+  auto op_type_str = node->op_type_;
+  auto op_type = BaseOperatorPopulateRegistry::GetInstance()->TypeStrToType(op_type_str);
+  auto parame_gen = BaseOperatorPopulateRegistry::GetInstance()->GetParameterCreator(op_type);
+  if (parame_gen == nullptr) {
+    MS_LOG(ERROR) << "parameter generator is nullptr.";
+    return nullptr;
+  }
+  OpParameter *op_parameter = parame_gen(node->base_operator_.get());
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, NHWC, op_type, "", kernel::kBuiltin};
+  auto inner_context = static_cast<mindspore::lite::InnerContext *>(context);
+  // mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
+  if (inner_context == nullptr) {
+    MS_LOG(ERROR) << "new inner context failed";
+    return nullptr;
+  }
+  auto ret = lite::KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, inner_context, nullptr, desc,
+                                                                op_parameter, &kernel_exec, node->primitive_);
+  if (ret != lite::RET_OK || kernel_exec == nullptr) {
+    MS_LOG(ERROR) << "find lite kernel failed with code " << ret;
+    return nullptr;
+  }
   return kernel_exec;
 }
 

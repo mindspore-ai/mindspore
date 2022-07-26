@@ -25,7 +25,7 @@
 
 namespace mindspore {
 Status DelegateSession::Init(const std::shared_ptr<Context> context) { return kSuccess; }
-Status DelegateSession::CompileGraph(FuncGraphPtr graph) { return kSuccess; }
+Status DelegateSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) { return kSuccess; }
 
 Status DelegateSession::RunGraph() { return kSuccess; }
 Status DelegateSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,

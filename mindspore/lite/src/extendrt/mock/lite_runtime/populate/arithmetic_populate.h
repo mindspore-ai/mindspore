@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_
 
-#include <memory>
-#include <vector>
-
-#include "include/api/delegate.h"
+#include "nnacl/arithmetic.h"
 
 namespace mindspore {
-enum SessionType { kDefaultSession = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneSession };
-
-struct SessionConfig {
-  SessionType type_;
-  const std::shared_ptr<Context> context_;
-  std::vector<std::shared_ptr<Delegate>> delegates_;
-};
+ArithmeticParameter *PopulateArithmeticCommonPara(void *prim);
+OpParameter *PopulateArithmetic(void *primitive);
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_

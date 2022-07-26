@@ -49,7 +49,7 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> context) {
   return kSuccess;
 }
 
-Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
+Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);

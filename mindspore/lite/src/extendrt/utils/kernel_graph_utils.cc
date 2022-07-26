@@ -123,7 +123,6 @@ KernelGraphPtr KernelGraphUtils::ConstructKernelGraphFromNodeList(const AnfNodeP
   }
   graph->set_device_target(device_target);
   // add a make_tuple at the end of graph as output
-  // graph->set_output(ConstructOutput(outputs, graph));
   FuncGraphManagerPtr manager = MakeManager({graph});
   if (manager) {
     manager->AddFuncGraph(graph);
