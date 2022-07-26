@@ -18,6 +18,7 @@
 
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
+#include "extendrt/cxx_api/file_utils.h"
 #include "extendrt/utils/tensor_utils.h"
 
 namespace mindspore {
@@ -29,20 +30,19 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     return ret;
   }
   session_ = InferSession::CreateSession(model_context);
+  if (session_ == nullptr) {
+    return kLiteNullptr;
+  }
   session_->Init(model_context);
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
+  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_data, data_size);
 }
+
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
-  graph_ = std::make_shared<Graph>();
-  auto ret = Serialization::Load(model_path, model_type, graph_.get());
-  if (ret != kSuccess) {
-    return ret;
-  }
-  session_ = InferSession::CreateSession(model_context);
-  session_->Init(model_context);
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
+  auto buffer = ReadFile(model_path);
+  return this->Build(buffer.Data(), buffer.DataSize(), model_type, model_context);
 }
+
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
@@ -126,9 +126,6 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   }
   auto ms_outputs = TensorUtils::TensorPtrToMSTensor(graph_outputs, session_->GetOutputNames());
   (void)std::copy(ms_outputs.begin(), ms_outputs.end(), std::back_inserter(*outputs));
-  // for (auto ms_output : ms_outputs) {
-  //   outputs->push_back(ms_output);
-  // }
   return kSuccess;
 }
 

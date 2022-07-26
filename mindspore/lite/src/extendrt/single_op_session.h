@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "src/extendrt/infer_session.h"
-// #include "backend/common/session/session_basic.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
@@ -30,7 +29,7 @@ class SingleOpInferSession : public InferSession {
   SingleOpInferSession() = default;
   virtual ~SingleOpInferSession() = default;
   Status Init(const std::shared_ptr<Context> context) override;
-  Status CompileGraph(FuncGraphPtr graph) override;
+  Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) override;
   Status Resize(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;

@@ -35,7 +35,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   static std::shared_ptr<InferSession> CreateSession(const std::shared_ptr<Context> context);
   static SessionConfig SelectSessionArg(const std::shared_ptr<Context> context);
   virtual Status Init(const std::shared_ptr<Context> context) = 0;
-  virtual Status CompileGraph(FuncGraphPtr graph) = 0;
+  virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) = 0;
   virtual Status RunGraph() = 0;
   virtual Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) = 0;
   virtual Status Resize(const std::vector<tensor::TensorPtr> &inputs,

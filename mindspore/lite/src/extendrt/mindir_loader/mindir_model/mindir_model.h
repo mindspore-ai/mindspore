@@ -63,6 +63,10 @@ class MindirModel : public AbstractBaseModel {
   mindspore::lite::Tensor *ConvertTensor(TensorProtoWrap mindir_tensor);
   int LoadTensorData(mindspore::lite::Tensor *lite_tensor, const mind_ir::TensorProto &mindir_tensor);
   int CheckTensorValid(lite::Tensor *dst_tensor);
+  mindspore::kernel::KernelExec *FindLiteKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
+                                                const std::vector<mindspore::lite::Tensor *> &out_tensors,
+                                                const LiteGraph::Node *node, lite::Context *context,
+                                                TypeId prefer_data_type);
 
  public:
   std::vector<TensorProtoWrap> all_mindir_tensors_;
@@ -70,6 +74,7 @@ class MindirModel : public AbstractBaseModel {
 
  private:
   std::string model_path_;
+  bool select_lite_kernel_ = true;
 };
 }  // namespace mindspore::infer::mindir
 

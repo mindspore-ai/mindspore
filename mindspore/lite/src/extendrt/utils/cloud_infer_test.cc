@@ -34,8 +34,9 @@ int main(int argc, const char **argv) {
   mindspore::Model ms_model;
   auto context = std::make_shared<mindspore::Context>();
   auto &device_info = context->MutableDeviceInfo();
-  auto device_context = std::make_shared<mindspore::GPUDeviceInfo>();
+  auto device_context = std::make_shared<mindspore::CPUDeviceInfo>();
   device_context->SetProvider("tensorrt");
+  device_context->SetAllocator(nullptr);
   device_info.emplace_back(device_context);
   ms_model.Build(flags.model_file_, mindspore::kMindIR, context);
 
@@ -62,7 +63,7 @@ int main(int argc, const char **argv) {
   }
 
   for (auto output : outputs) {
-    auto z = static_cast<int *>(output.MutableData());
+    auto z = static_cast<bool *>(output.MutableData());
     for (int i = 0; i < test_input_shape; i++) {
       std::cout << z[i] << " ";
     }

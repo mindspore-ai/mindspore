@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
+#define MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
 
-#include <vector>
-#include <memory>
 #include <string>
+#include <memory>
+#include <vector>
 
-#include "extendrt/infer_session.h"
+#include "src/extendrt/infer_session.h"
+#include "runtime/lite_session.h"
 
 namespace mindspore {
-class DelegateSession : public InferSession {
+class LiteInferSession : public InferSession {
  public:
-  DelegateSession() = default;
-  explicit DelegateSession(std::shared_ptr<mindspore::Delegate> delegate) : delegate_(delegate) {}
-  virtual ~DelegateSession() = default;
-
+  LiteInferSession() = default;
+  explicit LiteInferSession(const std::shared_ptr<Context> context) : context_(context) {}
+  virtual ~LiteInferSession() = default;
   Status Init(const std::shared_ptr<Context> context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
@@ -43,8 +43,22 @@ class DelegateSession : public InferSession {
   tensor::TensorPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  std::shared_ptr<mindspore::Delegate> delegate_;
+  std::shared_ptr<lite::LiteSession> CreateLiteSession(lite::InnerContext *context);
+  std::vector<MSTensor> GetLiteSessionOutputs();
+  void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
+  std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                     bool verify_size);
+  std::vector<std::string> ConvertToTensorNames(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
+  std::vector<tensor::TensorPtr> ConvertToTensors(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
+
+ private:
+  std::shared_ptr<lite::LiteSession> lite_session_;
+  std::shared_ptr<Context> context_;
+  std::vector<tensor::TensorPtr> inputs_;
+  std::vector<std::string> input_names_;
+  std::vector<tensor::TensorPtr> outputs_;
+  std::vector<std::string> output_names_;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_DELEGATE_SESSION_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_

@@ -23,6 +23,7 @@
 #include "extendrt/cxx_api/dlutils.h"
 #endif
 #include "utils/crypto.h"
+#include "extendrt/cxx_api/file_utils.h"
 
 namespace mindspore {
 static Status RealPath(const std::string &file, std::string *realpath_str) {
@@ -40,7 +41,7 @@ static Status RealPath(const std::string &file, std::string *realpath_str) {
   return kSuccess;
 }
 
-static Buffer ReadFile(const std::string &file) {
+Buffer ReadFile(const std::string &file) {
   Buffer buffer;
   if (file.empty()) {
     MS_LOG(ERROR) << "Pointer file is nullptr";

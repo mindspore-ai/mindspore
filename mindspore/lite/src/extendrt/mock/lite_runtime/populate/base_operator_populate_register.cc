@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
 
-#include <memory>
-#include <vector>
-
-#include "include/api/delegate.h"
+#include "extendrt/mock/lite_runtime/populate/base_operator_populate_register.h"
 
 namespace mindspore {
-enum SessionType { kDefaultSession = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneSession };
-
-struct SessionConfig {
-  SessionType type_;
-  const std::shared_ptr<Context> context_;
-  std::vector<std::shared_ptr<Delegate>> delegates_;
-};
+BaseOperatorPopulateRegistry *BaseOperatorPopulateRegistry::GetInstance() {
+  static BaseOperatorPopulateRegistry registry;
+  return &registry;
+}
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_

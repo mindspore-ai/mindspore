@@ -33,13 +33,14 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static bool is_infer_single_op = true;
+static bool is_use_lite_session = false;
 
 class DefaultInferSession : public InferSession {
  public:
   DefaultInferSession() = default;
   virtual ~DefaultInferSession() = default;
   Status Init(const std::shared_ptr<Context> context) override;
-  Status CompileGraph(FuncGraphPtr graph) override;
+  Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) override;
   Status Resize(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
@@ -63,7 +64,7 @@ Status DefaultInferSession::Init(const std::shared_ptr<Context> context) {
   partition_ = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, "ms");
   return kSuccess;
 }
-Status DefaultInferSession::CompileGraph(FuncGraphPtr graph) {
+Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
   return kSuccess;
 }
@@ -115,6 +116,10 @@ SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> cont
   }
   if (is_infer_single_op) {
     config.type_ = kSingleOpSession;
+    return config;
+  }
+  if (is_use_lite_session) {
+    config.type_ = kLiteInferSession;
     return config;
   }
   config.type_ = kDefaultSession;

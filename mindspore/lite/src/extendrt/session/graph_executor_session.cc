@@ -28,7 +28,8 @@ Status GraphExecutorSession::Init(const std::shared_ptr<Context> context) {
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
   return kSuccess;
 }
-Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph) {
+
+Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphExecutorSession::CompileGraph";
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);

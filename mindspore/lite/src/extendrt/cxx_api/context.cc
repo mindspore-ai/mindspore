@@ -62,21 +62,6 @@ constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.asce
 constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
 constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
 
-// class Allocator {};
-
-// struct Context::Data {
-//   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
-//   int32_t thread_num;
-//   bool enable_parallel_ = false;
-//   std::vector<int32_t> affinity_core_list_;
-//   int affinity_mode_ = 2;
-//   std::shared_ptr<Delegate> delegate = nullptr;
-// };
-
-// struct DeviceInfoContext::Data {
-//   std::map<std::string, std::any> params;
-// };
-
 Context::Context() : data_(std::make_shared<Data>()) {}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
@@ -229,6 +214,22 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
 
 DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
 
+void DeviceInfoContext::SetProvider(const std::vector<char> &provider) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionProvider] = CharToString(provider);
+}
+
+void DeviceInfoContext::SetProviderDevice(const std::vector<char> &device) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionProviderDevice] = CharToString(device);
+}
+
 std::vector<char> DeviceInfoContext::GetProviderChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -238,14 +239,6 @@ std::vector<char> DeviceInfoContext::GetProviderChar() const {
   return StringToChar(ref);
 }
 
-void DeviceInfoContext::SetProvider(const std::vector<char> &provider) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionProvider] = CharToString(provider);
-}
-
 std::vector<char> DeviceInfoContext::GetProviderDeviceChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -253,14 +246,6 @@ std::vector<char> DeviceInfoContext::GetProviderDeviceChar() const {
   }
   const std::string &ref = GetValue<std::string>(data_, kModelOptionProviderDevice);
   return StringToChar(ref);
-}
-
-void DeviceInfoContext::SetProviderDevice(const std::vector<char> &device) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionProviderDevice] = CharToString(device);
 }
 
 void DeviceInfoContext::SetAllocator(const std::shared_ptr<Allocator> &allocator) {

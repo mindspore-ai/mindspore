@@ -46,6 +46,14 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/tensorrt/graph_executor.cc
             )
 
+    if(NOT MSLITE_ENABLE_ACL)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+            ${MINDIR_KERNEL_SRC}
+            ${MINDIR_MODEL_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
+            )
+    endif()
+
     set(FBS_FILES
             ${CCSRC_DIR}/../schema/cipher.fbs
             ${CCSRC_DIR}/../schema/fl_job.fbs
@@ -66,7 +74,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     endif()
 
     add_library(mindspore-lite-proto OBJECT ${MSLITE_PROTO_SRC})
-
 
     set(ANF_ALG_SRC ${ANF_ALG_SRC}
         ${CCSRC_DIR}/utils/anfalgo.cc
@@ -121,11 +128,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
 
+    if(NOT MSLITE_ENABLE_ACL)
+        add_subdirectory(mock/lite_runtime)
+        add_dependencies(mindspore-extendrt mindspore-infer-lite)
+        target_link_libraries(mindspore-extendrt mindspore-infer-lite)
+    endif()
+
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
-
     target_link_libraries(mindspore-extendrt mindspore_infer_shared_lib_obj)
-
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
                           mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
                           _mindspore_backend_common_pass_obj)
