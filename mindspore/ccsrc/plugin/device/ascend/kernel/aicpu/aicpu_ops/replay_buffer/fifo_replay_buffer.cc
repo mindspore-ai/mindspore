@@ -34,7 +34,7 @@ FIFOReplayBuffer::FIFOReplayBuffer(size_t capacity, const std::vector<size_t> &s
 
     void *ptr = malloc(alloc_size);
     AddressPtr item = std::make_shared<Address>(ptr, alloc_size);
-    buffer_.emplace_back(item);
+    (void)buffer_.emplace_back(item);
   }
 }
 

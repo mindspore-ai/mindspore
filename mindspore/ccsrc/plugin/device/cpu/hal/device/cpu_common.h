@@ -26,7 +26,7 @@ namespace cpu {
   {                                                        \
     auto ret = (expression);                               \
     if (ret != (status)) {                                 \
-      MS_LOG(EXCEPTION) << message;                        \
+      MS_LOG(EXCEPTION) << (message);                      \
     }                                                      \
   }
 }  // namespace cpu
