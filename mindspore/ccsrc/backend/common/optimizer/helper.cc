@@ -558,6 +558,22 @@ CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, cons
   return new_cast;
 }
 
+AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
+                          const AnfNodePtr &node) {
+  auto new_node = graph->NewCNode(new_node_inputs);
+  MS_EXCEPTION_IF_NULL(new_node);
+
+  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  new_node->set_scope(node->scope());
+  new_node->set_abstract(node->abstract());
+
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+
+  return new_node;
+}
+
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
     auto a_node = utils::cast<AnfNodePtr>(a);

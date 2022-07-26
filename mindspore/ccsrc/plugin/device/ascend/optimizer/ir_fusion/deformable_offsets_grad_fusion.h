@@ -18,22 +18,17 @@
 
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_fusion.h"
 
 namespace mindspore {
 namespace opt {
-class DeformableOffsetsGradFusion : public PatternProcessPass {
+class DeformableOffsetsGradFusion : public DeformableOffsetsFusion {
  public:
   explicit DeformableOffsetsGradFusion(bool multigraph = true)
-      : PatternProcessPass("deformable_offsets_fission", multigraph) {}
+      : DeformableOffsetsFusion("deformable_offsets_fission", multigraph) {}
   ~DeformableOffsetsGradFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
-
- private:
-  ValueNodePtr CreateHelperNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const ShapeVector &offset_shape,
-                                const std::vector<int64_t> &kernel_sizes, const std::vector<int64_t> &strides,
-                                const std::vector<int64_t> &pads, const std::vector<int64_t> &dilations,
-                                const size_t axis_h, const size_t axis_w, const size_t axis_c) const;
 };
 }  // namespace opt
 }  // namespace mindspore

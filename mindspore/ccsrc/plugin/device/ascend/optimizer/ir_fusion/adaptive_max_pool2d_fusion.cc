@@ -52,7 +52,7 @@ std::vector<int64_t> ComputeKernelAttr(int64_t input_size, int64_t output_size) 
   while (padding_size >= 0) {
     for (kernel_size = padding_size + 1; kernel_size <= input_size + pad_default_val * padding_size; ++kernel_size) {
       for (int64_t stride_size = 1; stride_size <= kernel_size; ++stride_size) {
-        int res0 = (input_size + double_val * padding_size - kernel_size) / stride_size + 1;
+        int64_t res0 = (input_size + double_val * padding_size - kernel_size) / stride_size + 1;
         if (res0 == output_size) {
           return std::vector<int64_t>{pad_default_val, kernel_size, stride_size, padding_size, ceil_mode};
         }
@@ -112,8 +112,8 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   if (output_size.size() != kShape2dDims) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size shape should equal to 2.";
   }
-  int64_t height = SizeToLong(input_shape.at(kDim2));
-  int64_t width = SizeToLong(input_shape.at(kDim3));
+  int64_t height = input_shape.at(kDim2);
+  int64_t width = input_shape.at(kDim3);
   int64_t output_h = (output_size[kDim0] == -1) ? height : output_size[kDim0];
   int64_t output_w = (output_size[kDim1] == -1) ? width : output_size[kDim1];
   if (output_h <= 0 || output_w <= 0) {
