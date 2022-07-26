@@ -1686,23 +1686,23 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   };
 
   if (dtype->type_id() == kNumberTypeBool) {
-    fn(reinterpret_cast<bool *>(tensor->data_c()));
+    fn(static_cast<bool *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt) {
-    fn(reinterpret_cast<int *>(tensor->data_c()));
+    fn(static_cast<int *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt8) {
-    fn(reinterpret_cast<int8_t *>(tensor->data_c()));
+    fn(static_cast<int8_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt16) {
-    fn(reinterpret_cast<int16_t *>(tensor->data_c()));
+    fn(static_cast<int16_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt32) {
-    fn(reinterpret_cast<int32_t *>(tensor->data_c()));
+    fn(static_cast<int32_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt64) {
-    fn(reinterpret_cast<int64_t *>(tensor->data_c()));
+    fn(static_cast<int64_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat16) {
-    fn(reinterpret_cast<float16 *>(tensor->data_c()));
+    fn(static_cast<float16 *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat64) {
-    fn(reinterpret_cast<double *>(tensor->data_c()));
+    fn(static_cast<double *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat || dtype->type_id() == kNumberTypeFloat32) {
-    fn(reinterpret_cast<float *>(tensor->data_c()));
+    fn(static_cast<float *>(tensor->data_c()));
   } else {
     MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }
