@@ -115,7 +115,7 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
   return (data_index / stride) % bucket_count;
 }
 
-void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+void GetAllChannelMinMax(const float *raw_datas, size_t elem_count, const std::vector<int> &dims, int preferred_dim,
                          std::map<int, MinMax> *per_channel_min_max) {
   MS_ASSERT(raw_datas != nullptr);
   MS_ASSERT(per_channel_min_max != nullptr);
@@ -123,11 +123,24 @@ void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vect
   for (int i = 0; i < dims[preferred_dim]; ++i) {
     per_channel_min_max->insert({i, {FLT_MAX, -FLT_MAX}});
   }
-  for (int i = 0; i < elem_count; ++i) {
-    auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
-    auto iter = per_channel_min_max->find(bucket_index);
-    iter->second.min = std::min(iter->second.min, raw_datas[i]);
-    iter->second.max = std::max(iter->second.max, raw_datas[i]);
+  // the first dim.
+  if (preferred_dim == 0) {
+    auto bucket_size = elem_count / dims[preferred_dim];
+    for (int i = 0; i < dims[preferred_dim]; ++i) {
+      auto mim_max = GetFloatMinMaxValue(raw_datas + i * bucket_size, bucket_size);
+      auto iter = per_channel_min_max->find(i);
+      MS_ASSERT(iter != per_channel_min_max->end());
+      iter->second.min = mim_max.first;
+      iter->second.max = mim_max.second;
+    }
+  } else {
+    for (size_t i = 0; i < elem_count; ++i) {
+      auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
+      auto iter = per_channel_min_max->find(bucket_index);
+      MS_ASSERT(iter != per_channel_min_max->end());
+      iter->second.min = std::min(iter->second.min, raw_datas[i]);
+      iter->second.max = std::max(iter->second.max, raw_datas[i]);
+    }
   }
 }
 
