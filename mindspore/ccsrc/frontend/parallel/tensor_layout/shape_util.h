@@ -17,12 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
 
-#include <cstdint>
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/device_matrix.h"
 

@@ -93,7 +93,7 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListRemoveLeft
     if (expand_shape.empty()) {
       new_shape.push_back(GetDimByIdx(i));
     } else {
-      (void)new_shape.insert(new_shape.end(), expand_shape.begin(), expand_shape.end());
+      (void)new_shape.insert(new_shape.cend(), expand_shape.cbegin(), expand_shape.cend());
     }
   }
   Arrangement arrangement_new;

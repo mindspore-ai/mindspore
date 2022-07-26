@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STATUS_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STATUS_H_
 
-#include <cstdint>
-
 namespace mindspore {
 namespace parallel {
 enum Status {

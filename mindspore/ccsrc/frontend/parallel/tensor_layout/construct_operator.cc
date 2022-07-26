@@ -31,7 +31,7 @@ Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix
 }
 
 // skip redistribution for reshape operator
-OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) {
+OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) const {
   OperatorAttrs attrs;
   ValuePtr param_value = MakeValue(shape);
   Attr param = std::make_pair(SHAPE, param_value);

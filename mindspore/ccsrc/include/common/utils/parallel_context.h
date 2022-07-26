@@ -86,16 +86,16 @@ class COMMON_EXPORT ParallelContext {
 
   int64_t dp_fusion_threshold_mb() const { return dp_fusion_threshold_mb_; }
 
-  void set_allgather_fusion_threshold_mb(int64_t allgather_fusion_threshold);
+  void set_allgather_fusion_threshold_mb(int64_t fusion_threshold);
   int64_t allgather_fusion_threshold_mb() const { return allgather_fusion_threshold_mb_; }
 
-  void set_reducescatter_fusion_threshold_mb(int64_t rs_fusion_threshold);
+  void set_reducescatter_fusion_threshold_mb(int64_t fusion_threshold);
   int64_t reducescatter_fusion_threshold_mb() const { return reducescatter_fusion_threshold_mb_; }
 
   bool set_fusion_mode(const std::string &fusion_mode);
   std::string get_fusion_mode() const { return fusion_mode_; }
 
-  void set_pipeline_stage_split_num(const int64_t stages);
+  void set_pipeline_stage_split_num(const int64_t stage_num);
   int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
 
   void set_global_rank(int64_t global_rank);
@@ -164,7 +164,7 @@ class COMMON_EXPORT ParallelContext {
 
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
-  void set_enable_all2all(const bool);
+  void set_enable_all2all(const bool enable);
   bool enable_all2all() const { return enable_all2all_; }
   void set_dataset_repeat_dim_right(const bool dataset_repeat_dim_right) {
     dataset_repeat_dim_right_ = dataset_repeat_dim_right;
@@ -174,10 +174,10 @@ class COMMON_EXPORT ParallelContext {
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                            const AbstractBasePtr &ptr);
+                                            const AbstractBasePtr &ptr) const;
   void ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                         const AbstractBasePtr &ptr);
-  void set_sharding_propagation(const bool);
+                                         const AbstractBasePtr &ptr) const;
+  void set_sharding_propagation(const bool stra_pto);
   bool sharding_propagation() const { return sharding_propagation_; }
 
  private:

@@ -16,8 +16,8 @@
 
 #include "frontend/parallel/step_parallel.h"
 
-#include <inttypes.h>
 #include <sys/time.h>
+#include <cinttypes>
 #include <algorithm>
 
 #include <map>
@@ -75,7 +75,7 @@ void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_
   auto attrs = prim->attrs();
   attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
   attrs[ADD_ACCU] = MakeValue<bool>(accu_flag);
-  prim->SetAttrs(attrs);
+  (void)prim->SetAttrs(attrs);
 }
 
 void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
@@ -94,7 +94,7 @@ void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, co
   auto node_attrs = prim_node->attrs();
   if (node_attrs.find(RECOMPUTE_COMM_OP) != node_attrs.end() && !GetValue<bool>(node_attrs[RECOMPUTE_COMM_OP])) {
     attrs[RECOMPUTE] = MakeValue<bool>(false);
-    prim->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
     MS_LOG(INFO) << "Do not recompute the forward communication operator of " << prim_node->ToString();
   }
 }
@@ -112,7 +112,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, 
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
       int64_t position = param.second;
-      (void)new_node_input.insert(new_node_input.begin() + position, val);
+      (void)new_node_input.insert(new_node_input.cbegin() + position, val);
     }
   }
 
@@ -183,7 +183,7 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
       int64_t position = param.second;
-      (void)new_node_input.insert(new_node_input.begin() + position, val);
+      (void)new_node_input.insert(new_node_input.cbegin() + position, val);
     }
   }
 
@@ -259,7 +259,7 @@ static CNodePtr ReplaceNode(const Operator &op, const AnfNodePtr &pre_node, cons
   }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
-  manager->Replace(pre_node, new_node);
+  (void)manager->Replace(pre_node, new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
   return new_node;
 }
@@ -402,7 +402,7 @@ TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
       MS_LOG(EXCEPTION) << "The index out of range. Node: " << pre_node->DebugString() << " index: " << get_item_index
                         << " outputs_tensor_info's size: " << distribute_operator->outputs_tensor_info().size();
     }
-    tensorinfo_in = distribute_operator->outputs_tensor_info()[get_item_index];
+    tensorinfo_in = distribute_operator->outputs_tensor_info()[IntToSize(get_item_index)];
   } else {
     if (distribute_operator->outputs_tensor_info().empty()) {
       MS_LOG(EXCEPTION) << "The outputs tensor info is empty."
@@ -657,7 +657,7 @@ void SplitTensorList(const AnfNodePtr &node, const CNodePtr &next_node, int inde
     make_tuple_inputs.push_back(new_node);
   }
   CNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
-  manager->Replace(node, make_tuple);
+  (void)manager->Replace(node, make_tuple);
 }
 
 void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
@@ -706,10 +706,10 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimReshape) && reshape_type_str.find(BOOL) != std::string::npos) {
     auto cast_int = CreateCastOp(kInt32);
     auto cast_bool = CreateCastOp(kBool);
-    (void)replace_op.insert(replace_op.begin(), cast_int);
-    (void)replace_op.insert(replace_op.end(), cast_bool);
-    (void)replace_op_info.insert(replace_op_info.begin(), {false, 1});
-    (void)replace_op_info.insert(replace_op_info.end(), {false, 1});
+    (void)replace_op.insert(replace_op.cbegin(), cast_int);
+    (void)replace_op.insert(replace_op.cend(), cast_bool);
+    (void)replace_op_info.insert(replace_op_info.cbegin(), {false, 1});
+    (void)replace_op_info.insert(replace_op_info.cend(), {false, 1});
   }
 
   // step2:traverse op_list and insert node
@@ -843,7 +843,7 @@ void InsertRealDivOpToNodeInput(const CNodePtr &node, int64_t scale, const strin
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   // instance the real div operator
-  Operator div_op = CreateDivOp(scale);
+  Operator div_op = CreateDivOp(LongToFloat(scale));
 
   // Insert it as the input of the node
   for (size_t index = 1; index < node_size; ++index) {
@@ -1519,7 +1519,9 @@ void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &paramete
   for (auto &param_pair : user_set) {
     CNodePtr cnode = param_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->in_forward_flag()) user_count++;
+    if (cnode->in_forward_flag()) {
+      user_count++;
+    }
   }
   if (user_count > 1) {
     auto tensor_layout = parameter_ptr->user_data<TensorLayout>();
@@ -1593,7 +1595,7 @@ void CoverSliceShape(const FuncGraphPtr &root) {
     MS_EXCEPTION_IF_NULL(parameter->Shape());
 
     auto iter = g_RefMap.find(parameter);
-    if (iter != g_RefMap.end()) {
+    if (iter != g_RefMap.cend()) {
       std::string group = SetParallelShape(parameter, g_RefMap[parameter], root);
       // find all forward nodes that use parameter in graphs and insert allgather if group is not empty
       SetSharedParameterFlag(root, parameter);
@@ -1830,7 +1832,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
         input_value.push_back(GetValueNode(inputs[index]));
         continue;
       }
-      input_value.emplace_back(nullptr);
+      (void)input_value.emplace_back(nullptr);
     }
 
     (*operator_).set_input_value(input_value);
@@ -1988,7 +1990,7 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
   // create tensor_map
   size_t shape_size = input_shape_array.size();
   TensorMap input_tensor_map_array(SizeToLong(shape_size) - 1, -1);
-  input_tensor_map_array.insert(input_tensor_map_array.begin(), 0);
+  (void)input_tensor_map_array.insert(input_tensor_map_array.cbegin(), 0);
   // create dev_matrix
   Shape dev_matrix_array = {dev_num};
   if (input_tensor_layout.InitFromVector(dev_matrix_array, input_tensor_map_array, input_shape_array) != SUCCESS) {
@@ -2374,12 +2376,12 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_no
     if (IsValueNode<FuncGraph>(cnode->input(1))) {
       auto graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
       MS_LOG(DEBUG) << "Find the forward graph success";
-      graph_set.insert(graph);
+      (void)graph_set.insert(graph);
       auto manager = graph->manager();
       MS_EXCEPTION_IF_NULL(manager);
       auto graph_used = manager->func_graphs_used_total(graph);
-      for (auto &sub_graph : graph_used) {
-        graph_set.insert(sub_graph);
+      for (auto iter = graph_used.cbegin(); iter != graph_used.cend(); ++iter) {
+        (void)graph_set.insert(*iter);
       }
     }
   }
@@ -2546,7 +2548,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
       }
       if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
         auto input_param_names = NodeParameterName(cnode, idx, 0);
-        param_names.insert(param_names.end(), input_param_names.begin(), input_param_names.end());
+        (void)param_names.insert(param_names.cend(), input_param_names.cbegin(), input_param_names.cend());
       }
     }
   }
@@ -2774,17 +2776,17 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
   if (graph_set.empty()) {
     MS_LOG(INFO) << "Can not find the forward graph, so mark the ops in root graph";
     auto fgs = root->manager()->func_graphs();
-    for (auto &fg : fgs) {
-      SetForwardFlag(fg->nodes());
+    for (auto fg = fgs.cbegin(); fg != fgs.cend(); ++fg) {
+      SetForwardFlag((*fg)->nodes());
     }
   } else {
-    for (auto &func_graph : graph_set) {
+    for (auto func_graph = graph_set.cbegin(); func_graph != graph_set.cend(); ++func_graph) {
       MS_LOG(INFO) << "The sub graph size of root is " << root->func_graphs_used().size();
-      auto return_node = func_graph->get_return();
+      auto return_node = (*func_graph)->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
       auto all_dfs_nodes = DeepLinkedGraphSearch(return_node);
       SetForwardFlag(all_dfs_nodes);
-      auto root_forward_nodes = FindRootForwardCNode(func_graph, all_nodes);
+      auto root_forward_nodes = FindRootForwardCNode(*func_graph, all_nodes);
       if (root_forward_nodes.empty()) {
         continue;
       }
@@ -3039,7 +3041,9 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
   uint32_t limits = 0;
   while (!IsSomePrimitive(find_node->cast<CNodePtr>(), SQRT) && limits < MAX_BFS_DEPTH) {
     auto users = node_user_map.at(find_node);
-    if (users.empty()) return;
+    if (users.empty()) {
+      return;
+    }
     find_node = users.front().first;
     ++limits;
   }
@@ -3064,7 +3068,7 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
     MS_LOG(INFO) << "Insert the AllReduce for global norm value between stages succeed.";
     auto ranks_between_stages = g_device_manager->GetDeviceListBetweenStage();
     Group group_between_stages;
-    if (g_device_manager->CreateGroup(ranks_between_stages, &group_between_stages)) {
+    if (g_device_manager->CreateGroup(ranks_between_stages, &group_between_stages) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Create the communication group for allreduce in calculating global norm "
                            "with pipeline parallel failed, the rank_list is: "
                         << cur_stage_rank_list;
@@ -3122,9 +3126,13 @@ static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, cons
       continue;
     }
     auto expand_dims_node = FindExpanDimsWIthGradScale(cnode, node_user_map, MAX_BFS_DEPTH);
-    if (!expand_dims_node) continue;
+    if (!expand_dims_node) {
+      continue;
+    }
     auto value = GetAttrsFromAnfNode(expand_dims_node, GRAD_SCALE);
-    if (!value || !GetValue<bool>(value)) continue;
+    if (!value || !GetValue<bool>(value)) {
+      continue;
+    }
     if (dev_num > 0) {
       InsertRealDivOpToNodeInput(expand_dims_node->cast<CNodePtr>(), dev_num, PARALLEL_GLOBALNORM_DIV);
       MS_LOG(INFO) << "Insert the realdiv with " << dev_num << " for the parameter " << parameter->fullname_with_scope()
@@ -3145,8 +3153,8 @@ static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePt
     }
     if (IsInTrivialNodeList(cnode) || IsSomePrimitive(cnode, LOAD)) {
       auto load_users = node_user_map.at(param_pair.first);
-      std::transform(load_users.begin(), load_users.end(), std::back_inserter(candidate),
-                     [](const auto &v) { return v.first; });
+      (void)std::transform(load_users.begin(), load_users.end(), std::back_inserter(candidate),
+                           [](const auto &v) { return v.first; });
     }
     for (auto &node : candidate) {
       auto local_cnode = node->cast<CNodePtr>();
@@ -3161,21 +3169,22 @@ static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePt
   return nullptr;
 }
 
-static void HandlGlobalNormScale(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
-                                 const FuncGraphManagerPtr &manager) {
+static void HandlGlobalNormScale(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   auto parameters = root->parameters();
   auto node_user_map = manager->node_users();
   MS_LOG(INFO) << "Start to process the global norm";
 
   for (auto &parameter : parameters) {
     int64_t dev_num = 0;
-    if (!ParameterRequireGrad(parameter)) continue;
+    if (!ParameterRequireGrad(parameter)) {
+      continue;
+    }
     auto mirror_node = GetMirrorOp(node_user_map, parameter);
     auto device_num_ptr = GetAttrsFromAnfNode(mirror_node, DEV_NUM);
     if (device_num_ptr && device_num_ptr->isa<Int64Imm>()) {
       dev_num = GetValue<int64_t>(device_num_ptr);
     }
-    InsertDivAndAllReduceForNorm(node_user_map, parameter, dev_num);
+    InsertDivAndAllReduceForNorm(node_user_map, parameter, LongToUint(dev_num));
   }
 }
 
@@ -3287,7 +3296,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // handle full split parammeters in grad accumulation, do not contain optimizer-sharding's parameter
   HandleFullySplitParameters(root);
 
-  HandlGlobalNormScale(root, all_nodes, manager);
+  HandlGlobalNormScale(root, manager);
 
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 

@@ -91,10 +91,10 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
                                     std::vector<Shapes> shape_list);
 
 // Extract strategy from attr
-StrategyPtr ExtractStrategy(const ValuePtr &strategy);
+StrategyPtr ExtractStrategy(const ValuePtr &stra);
 
 // Find finally sub graph
-std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);
+std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, const AnfNodePtr &parameter);
 
 // Set distribute shape for parameters abstract
 std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res);
@@ -135,7 +135,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 // main step of Parallel
-bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
+bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
 
 Status ParallelInit();
 

@@ -16,8 +16,7 @@
 
 #include "frontend/parallel/step_parallel_utils.h"
 
-#include <inttypes.h>
-#include <sys/time.h>
+#include <cinttypes>
 #include <algorithm>
 
 #include <map>
@@ -57,11 +56,17 @@ size_t TOTAL_OPS = 0;
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
-  if (!cnode) return false;
+  if (!cnode) {
+    return false;
+  }
   ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
-  if (!anf_node) return false;
+  if (!anf_node) {
+    return false;
+  }
   PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
-  if (!prim) return false;
+  if (!prim) {
+    return false;
+  }
   return (prim->name() == name);
 }
 
@@ -255,7 +260,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       auto fg = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
       MS_EXCEPTION_IF_NULL(fg);
       auto fg_parameters = fg->parameters();
-      auto param = fg_parameters[node_pair.second - 1];
+      auto param = fg_parameters[IntToSize(node_pair.second - 1)];
       MS_EXCEPTION_IF_NULL(param);
       RedistributionNextNode(param, manager, node_users_map, get_item_index, next_nodes);
       continue;
@@ -475,7 +480,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
         MS_LOG(EXCEPTION) << "Failure:val is nullptr";
       }
       int64_t position = param.second;
-      (void)replace_input.insert(replace_input.begin() + position, val);
+      (void)replace_input.insert(replace_input.cbegin() + position, val);
     }
   } else if (replace_op.first == SYNC_BATCH_NORM) {
     for (size_t i = 2; i < node->inputs().size(); ++i) {
