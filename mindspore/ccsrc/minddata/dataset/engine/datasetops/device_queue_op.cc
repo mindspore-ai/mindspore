@@ -79,7 +79,7 @@ DeviceQueueOp::~DeviceQueueOp() {
 
 #ifdef ENABLE_GPUQUE
 void DeviceQueueOp::ReleaseData(void *addr, int32_t worker_id) {
-  if (addr != nullptr) {
+  if (addr != nullptr && worker_id >= 0 && worker_id < pool_.size()) {
     pool_[worker_id]->Deallocate(addr);
   }
 }
@@ -267,7 +267,7 @@ Status DeviceQueueOp::SendDataToAscend() {
 #endif
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
     }
-    if (curr_row.eoe() && send_epoch_end_) {
+    if (curr_row.eoe() && send_epoch_end_ && tdtInstancePtr->acl_handle_ != nullptr) {
       TensorRow dummy_row;
       auto status = tdtInstancePtr->hostPush(dummy_row, true, channel_name_, is_profiling_enable, tdt_cost,
                                              ACL_TENSOR_DATA_END_OF_SEQUENCE);
