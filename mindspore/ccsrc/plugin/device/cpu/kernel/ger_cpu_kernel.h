@@ -80,16 +80,15 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
                        const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
-  std::string kernel_name_;
   TypeId input_type_1_{kTypeUnknown};
   TypeId input_type_2_{kTypeUnknown};
   std::vector<size_t> input_shape_1_;
   std::vector<size_t> input_shape_2_;
   std::vector<size_t> output_shape_;
   size_t batches_{1};
-  size_t in1dim_;
-  size_t in2dim_;
-  size_t outdim_;
+  size_t in1dim_{1};
+  size_t in2dim_{1};
+  size_t outdim_{1};
   const size_t max_dims_{7};
 };
 }  // namespace kernel

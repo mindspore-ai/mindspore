@@ -46,7 +46,8 @@ bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   T number_four = static_cast<T>(kNumberFour);
   auto task = [this, &input, &output, number_four](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      output[i] = static_cast<T>(this->dim_map_[(input[i] % number_four + number_four) % number_four]);
+      output[i] =
+        static_cast<T>(this->dim_map_[static_cast<size_t>((input[i] % number_four + number_four) % number_four)]);
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
@@ -111,9 +112,9 @@ int DataFormatDimMapCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
   auto in_shape_size = input_shape.size();
   if (in_shape_size > max_dims_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be less than or equal to max_dims 7, but got "
-                      << in_shape_size << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of output should be less than or equal to max_dims 7, but got " << in_shape_size
+                  << ".";
     return KRET_RESIZE_FAILED;
   }
   auto output_shape_size = output_shape.size();
