@@ -964,5 +964,4 @@ class _WrappedWeightDecay(Cell):
         self.loss_scale = Tensor(loss_scale, mstype.float32)
 
     def construct(self, global_step):
-        global_step = P.Reshape()(global_step, (()))
         return self.weight_decay(global_step) * self.loss_scale
