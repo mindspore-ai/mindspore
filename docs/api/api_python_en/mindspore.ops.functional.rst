@@ -441,13 +441,6 @@ Parameter Operation Functions
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-
 Differential Functions
 ------------------------
 

@@ -193,7 +193,7 @@ mindspore.dataset.Graph
         异常：
             - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
 
-    .. py:method:: get_graph_feature(edge_list, feature_types)
+    .. py:method:: get_graph_feature(feature_types)
 
         依据给定的 `feature_types` 获取存储在Graph中对应的特征。
 

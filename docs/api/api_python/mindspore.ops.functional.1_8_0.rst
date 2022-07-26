@@ -343,12 +343,10 @@ Array操作
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.slice
-    mindspore.ops.space_to_batch_nd
     mindspore.ops.split
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
-    mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tile
@@ -358,7 +356,6 @@ Array操作
     mindspore.ops.unsorted_segment_max
     mindspore.ops.unsorted_segment_min
     mindspore.ops.unsorted_segment_prod
-    mindspore.ops.unsorted_segment_sum
 
 .. list-table::
    :widths: 50 50
@@ -438,13 +435,6 @@ Parameter操作函数
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
-
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
 
 微分函数
 ------------

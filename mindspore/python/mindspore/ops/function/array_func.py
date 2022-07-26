@@ -2667,7 +2667,7 @@ def nonzero(x):
        ValueError: If 'x' dim equal to 0.
 
     Supported Platforms:
-       ``GPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore
