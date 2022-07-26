@@ -341,7 +341,7 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
-  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position);
+  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, const bool get_by_position);
   void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const;
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
@@ -513,6 +513,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
   void set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position);
+  void set_weights_id(const prim::GradOperationPtr &grad, const py::object &weights_id);
   py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args);
 
   // Used by graph clean

@@ -298,8 +298,8 @@ class KPynativeCellImpl : public KPynativeCell {
   void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sens_out) override;
   // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
   // can be grad again.
-  FuncGraphPtr Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, bool grad_inputs,
-                      bool grad_weights, bool has_sens_arg, bool build_formal_param);
+  FuncGraphPtr Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
+                      const GradAttr &grad_attr, bool build_formal_param);
 
  private:
   bool need_propagate_stop_gradient_{false};
@@ -346,13 +346,16 @@ class KPynativeCellImpl : public KPynativeCell {
                                     AnfNodePtrList *grad_inputs_list);
   // Set return node according to grad flag
   void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, bool grad_inputs,
-                 bool grad_weights);
+                 bool grad_weights, const bool get_by_position);
 
   // for higher order gradient;
   // Build k mapped node owned by tape_ for each cnode in primal funcgraph, so these node can be
   // used in tape_ to keep tracking the cnode dependency.
   bool BuildKNode();
   CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args);
+  AnfNodePtr GetTapeOutputForPosition(const AnfNodePtrList &grad_inputs_list, const AbstractBasePtr &grad_inputs_spec,
+                                      const AnfNodePtrList &grad_weights_list, const AbstractBasePtr &grad_weights_spec,
+                                      const std::vector<size_t> &grad_position, const bool grad_weights);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -371,19 +374,18 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 }
 
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights,
-                                 const std::vector<size_t> &grad_position, bool grad_inputs, bool grad_weights,
-                                 bool has_sens_arg, bool build_formal_param) {
+                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
+                                 bool build_formal_param) {
   auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
-  return k_cell_impl->Finish(weights, grad_position, grad_inputs, grad_weights, has_sens_arg, build_formal_param);
+  return k_cell_impl->Finish(weights, grad_position, grad_attr, build_formal_param);
 }
 
 FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
-                                       bool grad_inputs, bool grad_weights, bool has_sens_arg,
-                                       bool build_formal_param) {
+                                       const GradAttr &grad_attr, bool build_formal_param) {
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
   // Set sens node and weights node
-  SetSensAndWeights(weights, has_sens_arg);
+  SetSensAndWeights(weights, grad_attr.has_sens);
   // Build forward CNode;
   if (build_formal_param) {
     (void)BuildKNode();
@@ -393,12 +395,12 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std:
     (void)BackPropagate(!build_formal_param);
   }
   // Return the gradient;
-  if (grad_position.empty()) {
-    MS_LOG(EXCEPTION) << "grad_position in F.grad is empty!";
+  if (grad_attr.get_by_position && grad_position.empty()) {
+    MS_LOG(EXCEPTION) << "grad_position in F.grad is empty when grad by position!";
   }
-  SetOutput(weights, grad_position, grad_inputs, grad_weights);
+  SetOutput(weights, grad_position, grad_attr.grad_all_inputs, grad_attr.grad_weights, grad_attr.get_by_position);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
-  ReplacePrimalParameter(weights, has_sens_arg);
+  ReplacePrimalParameter(weights, grad_attr.has_sens);
 #ifdef ENABLE_DUMP_IR
   auto save_graphs_flg = MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs_flg) {
@@ -1068,7 +1070,7 @@ AbstractBasePtr KPynativeCellImpl::GetGradInputsSpec(const std::vector<size_t> &
 }
 
 void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
-                                  bool grad_inputs, bool grad_weights) {
+                                  bool grad_inputs, bool grad_weights, const bool get_by_position) {
   AnfNodePtrList grad_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
   AbstractBasePtr grad_inputs_spec = GetGradInputsSpec(grad_position, grad_inputs, &grad_inputs_list);
   AnfNodePtrList grad_weights_list{NewValueNode(prim::kPrimMakeTuple)};
@@ -1095,13 +1097,20 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vect
     grad_weights_spec = std::make_shared<abstract::AbstractTuple>(grad_weights_abs_list);
   }
 
+  if (get_by_position) {
+    auto tape_output = GetTapeOutputForPosition(grad_inputs_list, grad_inputs_spec, grad_weights_list,
+                                                grad_weights_spec, grad_position, grad_weights);
+    tape_->set_output(tape_output);
+    return;
+  }
+
   AnfNodePtr tape_output;
   if (grad_inputs && grad_weights) {
     tape_output = tape_->NewCNode(
       {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
     tape_output->set_abstract(
       std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
-  } else if (grad_inputs || (grad_position.size() > 1)) {
+  } else if (grad_inputs) {
     tape_output = tape_->NewCNode(grad_inputs_list);
     tape_output->set_abstract(grad_inputs_spec);
   } else if (grad_weights) {
@@ -1111,15 +1120,11 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vect
     tape_output = tape_->NewCNode(grad_inputs_list);
     tape_output->set_abstract(grad_inputs_spec);
   } else {
-    size_t index = grad_position[0];
-    if (index >= cell_inputs_.size()) {
-      MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size!";
-    }
-    auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[index]);
+    auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[0]);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
       // If input is not used in the network, just return zeros_like() as dout;
-      MS_LOG(WARNING) << "Input is not used in network, input: " << cell_inputs_[index]->ToString();
-      tape_output = BuildZerosLikeNode(tape_, cell_inputs_[index]);
+      MS_LOG(WARNING) << "Input is not used in network, input: " << cell_inputs_[0]->ToString();
+      tape_output = BuildZerosLikeNode(tape_, cell_inputs_[0]);
     } else {
       tape_output = input_adjoint_iter->second->RealDout();
     }
@@ -1196,6 +1201,54 @@ void ClearKPynativeCellStaticRes() {
   bprop_func_graph_cache.clear();
   zeros_like_funcgraph_cache.clear();
   ones_like_funcgraph_cache.clear();
+}
+
+// Support both grad_position and weight options in grad.
+AnfNodePtr KPynativeCellImpl::GetTapeOutputForPosition(const AnfNodePtrList &grad_inputs_list,
+                                                       const AbstractBasePtr &grad_inputs_spec,
+                                                       const AnfNodePtrList &grad_weights_list,
+                                                       const AbstractBasePtr &grad_weights_spec,
+                                                       const std::vector<size_t> &grad_position,
+                                                       const bool grad_weights) {
+  MS_EXCEPTION_IF_NULL(tape_);
+
+  AnfNodePtr tape_output;
+  if (grad_position.size() == 1) {
+    AnfNodePtr first_tape_output;
+    size_t index = grad_position[0];
+    if (index >= cell_inputs_.size()) {
+      MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size!";
+    }
+    auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[index]);
+    if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+      MS_LOG(WARNING) << "Input is not used in network, input: " << cell_inputs_[index]->ToString();
+      first_tape_output = BuildZerosLikeNode(tape_, cell_inputs_[index]);
+    } else {
+      first_tape_output = input_adjoint_iter->second->RealDout();
+    }
+
+    MS_EXCEPTION_IF_NULL(first_tape_output);
+    if (grad_weights) {
+      tape_output =
+        tape_->NewCNode({NewValueNode(prim::kPrimMakeTuple), first_tape_output, tape_->NewCNode(grad_weights_list)});
+      MS_EXCEPTION_IF_NULL(tape_output);
+      tape_output->set_abstract(std::make_shared<abstract::AbstractTuple>(
+        abstract::AbstractBasePtrList{first_tape_output->abstract(), grad_weights_spec}));
+      return tape_output;
+    }
+    return first_tape_output;
+  }
+
+  if (grad_weights) {
+    tape_output = tape_->NewCNode(
+      {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
+    tape_output->set_abstract(
+      std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
+  } else {
+    tape_output = tape_->NewCNode(grad_inputs_list);
+    tape_output->set_abstract(grad_inputs_spec);
+  }
+  return tape_output;
 }
 }  // namespace ad
 }  // namespace mindspore

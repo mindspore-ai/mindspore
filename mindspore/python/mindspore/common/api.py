@@ -760,6 +760,19 @@ class _PynativeExecutor:
         """
         return self._executor.set_grad_position(grad, grad_position)
 
+    def set_weights_id(self, grad, weights_id):
+        """
+        Set weights id of grad.
+
+        Args:
+            grad (GradOperation): The gradoperation object.
+            weights_id (str): The id of weights that consists of names of all Parameters.
+
+        Return:
+            None.
+        """
+        return self._executor.set_weights_id(grad, weights_id)
+
     def grad(self, grad, obj, weights, grad_position, *args, **kwargs):
         """
         Get grad graph.

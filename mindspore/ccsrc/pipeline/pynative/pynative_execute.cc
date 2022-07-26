@@ -3579,7 +3579,7 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
 
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
-  auto p_args = GetGradPositionArgs(grad_position);
+  auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   if (w_args.empty() && !df_builder->parameters().empty()) {
     MS_LOG(DEBUG) << "Add weights params to w_args";
     w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
@@ -3664,15 +3664,19 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
-std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position) {
+std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position, const bool get_by_position) {
   std::vector<size_t> pos_args;
+  if (!get_by_position) {
+    return pos_args;
+  }
+
   if (py::isinstance<py::tuple>(grad_position)) {
     const auto &tuple = grad_position.cast<py::tuple>();
     (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(pos_args),
                          [](const py::handle &elem) { return py::cast<int64_t>(elem); });
     return pos_args;
   }
-  MS_LOG(EXCEPTION) << "Grad position only support tuple.";
+  MS_LOG(EXCEPTION) << "Grad position only support tuple when grad by position.";
 }
 
 void GradExecutor::ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const {
@@ -3792,8 +3796,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
   MS_EXCEPTION_IF_NULL(grad);
-  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad->get_all_,
-                                                     grad->get_by_list_, grad->sens_param_, build_formal_param);
+  ad::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_);
+  FuncGraphPtr bprop_graph =
+    ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad_attr, build_formal_param);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;
@@ -3867,7 +3872,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   // Get cell id and input args info
   const auto &cell_id = GetCellId(cell, args);
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
-                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad->grad_position_;
+                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad->grad_position_ + grad->weights_id_;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
@@ -4336,6 +4341,14 @@ void PynativeExecutor::set_grad_position(const prim::GradOperationPtr &grad, con
   grad->set_grad_position(std::string(py::str(grad_position)));
 }
 
+void PynativeExecutor::set_weights_id(const prim::GradOperationPtr &grad, const py::object &weights_id) {
+  if (!py::isinstance<py::str>(weights_id)) {
+    MS_LOG(EXCEPTION) << "Failed, weights_id is not a str";
+  }
+  std::string weights_id_s = py::cast<std::string>(weights_id);
+  grad->set_weights_id(weights_id_s);
+}
+
 py::object PynativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
                                              const py::args &args) {
   return grad_executor()->CheckAlreadyRun(grad, cell, args);
@@ -4490,6 +4503,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("grad_flag", &PynativeExecutor::grad_flag, "pynative grad flag")
                            .def("set_hook_changed", &PynativeExecutor::SetHookChanged, "set pynative hook changed")
                            .def("set_grad_position", &PynativeExecutor::set_grad_position, "set pynative grad position")
+                           .def("set_weights_id", &PynativeExecutor::set_weights_id, "set pynative grad weights id")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")
                            .def("set_dynamic_input", &PynativeExecutor::SetDynamicInput, "set dynamic input")
