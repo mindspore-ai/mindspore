@@ -138,6 +138,10 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kRandomGamma, ShapeSet{0, 1}},
                                          {kDynamicBroadcastTo, ShapeSet{1}},
                                          {kNonDeterministicInts, ShapeSet{0}},
+                                         {prim::kPrimReduceMean->name(), ShapeSet{1}},
+                                         {prim::kPrimReduceMax->name(), ShapeSet{1}},
+                                         {prim::kPrimReduceMin->name(), ShapeSet{1}},
+                                         {prim::kPrimReduceProd->name(), ShapeSet{1}},
                                          {prim::kPrimArgminV2->name(), ShapeSet{1}},
                                          {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
                                          {kTruncatedNormal, ShapeSet{0}},
@@ -151,7 +155,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStandardNormal, ShapeSet{0}}};
   return host_depends;
 }
-
 std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -347,7 +350,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimReduceProd, R{ops::ReduceProdInfer, nullptr, true}},
     {prim::kPrimReduceAll, R{InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAny, R{InferImplReduceFunc, nullptr, true}},
-    {prim::kPrimReduceMax, R{InferImplReduceFunc, nullptr, true}},
+    {prim::kPrimReduceMax, R{ops::ReduceMaxInfer, nullptr, true}},
     {prim::kPrimReduceMin, R{ops::ReduceMinInfer, nullptr, true}},
     {prim::kPrimBiasAddGrad, R{InferImplBiasAddGrad, nullptr, true}},
     {prim::kPrimReduceScatter, R{InferImplReduceScatter, nullptr, true}},
