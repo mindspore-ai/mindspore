@@ -22,72 +22,11 @@
 #include <string>
 #include <iostream>
 #include "mindspore/core/utils/log_adapter.h"
+#include "mindspore/core/mindapi/base/type_id.h"
 #ifdef ONLINE_DBG_MODE
 #include "ir/tensor.h"
 #endif
-
 namespace mindspore {
-namespace MsTypeId {
-typedef enum MsTypeId : unsigned int {
-  kTypeUnknown = 0,
-  kMetaTypeBegin = kTypeUnknown,
-  kMetaTypeType,  // Type
-  kMetaTypeAnything,
-  kMetaTypeObject,
-  kMetaTypeTypeType,  // TypeType
-  kMetaTypeProblem,
-  kMetaTypeExternal,
-  kMetaTypeNone,
-  kMetaTypeNull,
-  kMetaTypeEllipsis,
-  kMetaTypeEnd,
-  //
-  // Object types
-  //
-  kObjectTypeBegin = kMetaTypeEnd,
-  kObjectTypeNumber,
-  kObjectTypeString,
-  kObjectTypeList,
-  kObjectTypeTuple,
-  kObjectTypeSlice,
-  kObjectTypeKeyword,
-  kObjectTypeTensorType,
-  kObjectTypeRowTensorType,
-  kObjectTypeCOOTensorType,
-  kObjectTypeUndeterminedType,
-  kObjectTypeClass,
-  kObjectTypeDictionary,
-  kObjectTypeFunction,
-  kObjectTypeJTagged,
-  kObjectTypeSymbolicKeyType,
-  kObjectTypeEnvType,
-  kObjectTypeRefKey,
-  kObjectTypeRef,
-  kObjectTypeEnd,
-  //
-  // Number Types
-  //
-  kNumberTypeBegin = kObjectTypeEnd,
-  kNumberTypeBool,
-  kNumberTypeInt,
-  kNumberTypeInt8,
-  kNumberTypeInt16,
-  kNumberTypeInt32,
-  kNumberTypeInt64,
-  kNumberTypeUInt,
-  kNumberTypeUInt8,
-  kNumberTypeUInt16,
-  kNumberTypeUInt32,
-  kNumberTypeUInt64,
-  kNumberTypeFloat,
-  kNumberTypeFloat16,
-  kNumberTypeFloat32,
-  kNumberTypeFloat64,
-  kNumberTypeComplex64,
-  kNumberTypeEnd
-} MsTypeId;
-}  // namespace MsTypeId
-
 typedef enum DbgDataType : unsigned int {
   DT_UNDEFINED = 0,
   // Basic types.
@@ -173,7 +112,27 @@ class TensorData {
 #endif
   }
 
-  TensorData operator=(const TensorData &obj) { return TensorData(obj); }
+  TensorData &operator=(const TensorData &other) {
+    if (this != &other) {
+      MS_LOG(INFO) << "Copy Constructor";
+      this->name_ = other.name_;
+      this->execution_order_ = other.execution_order_;
+      this->slot_ = other.slot_;
+      this->size_ = other.size_;
+      this->data_type_ = other.data_type_;
+      this->data_type_size_ = other.data_type_size_;
+      this->shape_ = other.shape_;
+      this->iteration_ = other.iteration_;
+      this->device_id_ = other.device_id_;
+      this->data_ptr_ = other.data_ptr_;
+      this->root_graph_id_ = other.root_graph_id_;
+      this->is_output_ = other.is_output_;
+#ifdef ONLINE_DBG_MODE
+      this->tensor_ptr_ = other.tensor_ptr_;
+#endif
+    }
+    return *this;
+  }
 
   ~TensorData() { DeleteDataPtr(); }
 
@@ -269,63 +228,63 @@ class TensorData {
 
   void ConvertMsToDbgType(uint32_t type) {
     switch (type) {
-      case MsTypeId::kNumberTypeBool:
+      case TypeId::kNumberTypeBool:
         this->data_type_ = DbgDataType::DT_BOOL;
         this->data_type_size_ = 1;
         break;
-      case MsTypeId::kNumberTypeInt8:
+      case TypeId::kNumberTypeInt8:
         this->data_type_ = DbgDataType::DT_INT8;
         this->data_type_size_ = 1;
         break;
-      case MsTypeId::kNumberTypeInt16:
+      case TypeId::kNumberTypeInt16:
         this->data_type_ = DbgDataType::DT_INT16;
         this->data_type_size_ = 2;
         break;
-      case MsTypeId::kNumberTypeInt32:
+      case TypeId::kNumberTypeInt32:
         this->data_type_ = DbgDataType::DT_INT32;
         this->data_type_size_ = 4;
         break;
-      case MsTypeId::kNumberTypeInt64:
+      case TypeId::kNumberTypeInt64:
         this->data_type_ = DbgDataType::DT_INT64;
         this->data_type_size_ = 8;
         break;
-      case MsTypeId::kNumberTypeUInt8:
+      case TypeId::kNumberTypeUInt8:
         this->data_type_ = DbgDataType::DT_UINT8;
         this->data_type_size_ = 1;
         break;
-      case MsTypeId::kNumberTypeUInt16:
+      case TypeId::kNumberTypeUInt16:
         this->data_type_ = DbgDataType::DT_UINT16;
         this->data_type_size_ = 2;
         break;
-      case MsTypeId::kNumberTypeUInt32:
+      case TypeId::kNumberTypeUInt32:
         this->data_type_ = DbgDataType::DT_UINT32;
         this->data_type_size_ = 4;
         break;
-      case MsTypeId::kNumberTypeUInt64:
+      case TypeId::kNumberTypeUInt64:
         this->data_type_ = DbgDataType::DT_UINT64;
         this->data_type_size_ = 8;
         break;
-      case MsTypeId::kNumberTypeFloat16:
+      case TypeId::kNumberTypeFloat16:
         this->data_type_ = DbgDataType::DT_FLOAT16;
         this->data_type_size_ = 2;
         break;
-      case MsTypeId::kNumberTypeFloat32:
+      case TypeId::kNumberTypeFloat32:
         this->data_type_ = DbgDataType::DT_FLOAT32;
         this->data_type_size_ = 4;
         break;
-      case MsTypeId::kNumberTypeFloat64:
+      case TypeId::kNumberTypeFloat64:
         this->data_type_ = DbgDataType::DT_FLOAT64;
         this->data_type_size_ = 8;
         break;
-      case MsTypeId::kNumberTypeInt:
+      case TypeId::kNumberTypeInt:
         this->data_type_ = DbgDataType::DT_BASE_INT;
         this->data_type_size_ = 4;
         break;
-      case MsTypeId::kNumberTypeUInt:
+      case TypeId::kNumberTypeUInt:
         this->data_type_ = DbgDataType::DT_BASE_UINT;
         this->data_type_size_ = 4;
         break;
-      case MsTypeId::kNumberTypeFloat:
+      case TypeId::kNumberTypeFloat:
         this->data_type_ = DbgDataType::DT_BASE_FLOAT;
         this->data_type_size_ = 4;
         break;

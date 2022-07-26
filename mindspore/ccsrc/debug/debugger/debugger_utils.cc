@@ -246,7 +246,8 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
  */
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   std::string error_info = "";
-  bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
+  bool sink_mode =
+    ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph_ptr->IsDatasetGraph();
   auto debugger = Debugger::GetInstance();
   if (debugger->CheckDebuggerDumpEnabled() && sink_mode && IsDeviceTargetGPU()) {
     error_info = "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";

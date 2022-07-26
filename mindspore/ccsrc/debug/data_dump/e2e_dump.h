@@ -118,11 +118,11 @@ class E2eDump {
                                       const Debugger *debugger);
 
 #ifdef ENABLE_D
-  static nlohmann::json ParseOverflowInfo(char *data_ptr);
+  static nlohmann::json ParseOverflowInfo(const char *data_ptr);
 
   static bool ConvertFormatForOneTensor(dump_data_t *dump_tensor_info);
 
-  static void ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, uint32_t start_idx, uint32_t end_idx);
+  static void ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, size_t start_idx, size_t end_idx);
 
   static bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info);
 

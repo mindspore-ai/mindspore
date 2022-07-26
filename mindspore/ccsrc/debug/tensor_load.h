@@ -76,7 +76,9 @@ class TensorLoader {
 
   bool IsPrevTensor(std::string tensor_name) const {
     const std::string suffix = ":prev";
-    if (tensor_name.length() <= suffix.length()) return false;
+    if (tensor_name.length() <= suffix.length()) {
+      return false;
+    }
     return std::equal(suffix.rbegin(), suffix.rend(), tensor_name.rbegin());
   }
 
@@ -115,15 +117,19 @@ class TensorLoader {
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() {
     std::vector<std::shared_ptr<TensorData>> tensor_list;
-    for (auto it = tensor_list_map_.cbegin(); it != tensor_list_map_.cend(); it++) {
-      if (!IsPrevTensor(it->first)) tensor_list.push_back(it->second);
+    for (auto it = tensor_list_map_.cbegin(); it != tensor_list_map_.cend(); ++it) {
+      if (!IsPrevTensor(it->first)) {
+        tensor_list.push_back(it->second);
+      }
     }
     return tensor_list;
   }
 
   std::shared_ptr<TensorData> GetTensor(const std::string &tensor_name) const {
     auto iter = tensor_list_map_.find(tensor_name);
-    if (iter != tensor_list_map_.end()) return iter->second;
+    if (iter != tensor_list_map_.end()) {
+      return iter->second;
+    }
     return nullptr;
   }
 
