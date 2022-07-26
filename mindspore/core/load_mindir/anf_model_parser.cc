@@ -406,16 +406,16 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
 abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const mind_ir::TensorProto &tensor_proto) {
   ShapeVector shape;
   for (int i = 0; i < tensor_proto.dims_size(); ++i) {
-    shape.emplace_back(tensor_proto.dims(i));
+    (void)shape.emplace_back(tensor_proto.dims(i));
   }
   ShapeVector min_shape;
   for (int i = 0; i < tensor_proto.min_dims_size(); ++i) {
-    min_shape.emplace_back(tensor_proto.min_dims(i));
+    (void)min_shape.emplace_back(tensor_proto.min_dims(i));
   }
 
   ShapeVector max_shape;
   for (int i = 0; i < tensor_proto.max_dims_size(); ++i) {
-    max_shape.emplace_back(tensor_proto.max_dims(i));
+    (void)max_shape.emplace_back(tensor_proto.max_dims(i));
   }
 
   if (!tensor_proto.has_data_type()) {
@@ -504,36 +504,38 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
         return false;
       }
       data = plain_data.get();
-      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
+      (void)tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
     } else {
       // Read file
       std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
       if (!fid) {
         MS_LOG(EXCEPTION) << "Open file '" << file << "' failed, please check the correct of the file.";
       }
-      fid.seekg(0, std::ios_base::end);
+      (void)fid.seekg(0, std::ios_base::end);
       size_t file_size = static_cast<size_t>(fid.tellg());
       fid.clear();
-      fid.seekg(0);
+      (void)fid.seekg(0);
       auto plain_data = std::make_unique<char[]>(file_size);
       constexpr Byte is_little_endian = 1;
       constexpr int byte_order_index = 0;
-      fid.read(plain_data.get(), file_size);
+      (void)fid.read(plain_data.get(), SizeToLong(file_size));
       fid.close();
       // if byte order is not same return false
-      if ((plain_data[byte_order_index] == is_little_endian) != little_endian()) {
+      if ((plain_data[byte_order_index] == is_little_endian) ^ little_endian()) {
         MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
         return false;
       }
       data = reinterpret_cast<const unsigned char *>(plain_data.get());
-      tenor_data_.emplace(tensor_proto.external_data().location(),
-                          std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())));
+      (void)tenor_data_.emplace(tensor_proto.external_data().location(),
+                                std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())));
     }
   }
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
-  auto ret = common::huge_memcpy(tensor_data_buf, tensor_info->data().nbytes(),
-                                 data + tensor_proto.external_data().offset(), tensor_proto.external_data().length());
+  MS_EXCEPTION_IF_NULL(data);
+  auto ret =
+    common::huge_memcpy(tensor_data_buf, tensor_info->data().nbytes(), data + tensor_proto.external_data().offset(),
+                        LongToSize(tensor_proto.external_data().length()));
   if (ret != 0) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
@@ -1065,15 +1067,15 @@ bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value
       mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
       if (tensor_proto.has_raw_data()) {
         // For real tensor.
-        ObtainValueNodeInTensorForm(value_node_name, tensor_proto);
+        (void)ObtainValueNodeInTensorForm(value_node_name, tensor_proto);
       } else {
         // For data type.
-        ObtainValueNodeInTypeForm(value_node_name, tensor_proto);
+        (void)ObtainValueNodeInTypeForm(value_node_name, tensor_proto);
       }
       break;
     }
     case mind_ir::AttributeProto_AttributeType_NONE: {
-      ObtainValueNodeInNoneForm(value_node_name);
+      (void)ObtainValueNodeInNoneForm(value_node_name);
       break;
     }
     case mind_ir::AttributeProto_AttributeType_UMONAD: {
@@ -1158,7 +1160,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_NONE: {
-      ObtainValueNodeInNoneForm(value_node_name);
+      (void)ObtainValueNodeInNoneForm(value_node_name);
       break;
     }
     case FORM_PARSE_MONAD: {
@@ -1350,10 +1352,6 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
                                                const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (importProto.output_size() <= 0 || importProto.output_size() > INT_MAX) {
-    MS_LOG(ERROR) << "importProto.output_size is: " << importProto.output_size();
-    return false;
-  }
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
     inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
@@ -1402,10 +1400,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
                                            const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (importProto.node_size() < 0 || importProto.node_size() > INT_MAX) {
-    MS_LOG(ERROR) << "importProto.node_size is: " << importProto.node_size();
-    return false;
-  }
   MS_LOG(DEBUG) << "The node size: " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
@@ -1514,11 +1508,10 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
                                                     const std::map<std::string, ValuePtr> &weights) {
   size_t fv_param_count = 0;
   auto parameters = topGraph->parameters();
-  for (int i = parameters.size() - 1; i >= 0; --i) {
-    size_t index = IntToSize(i);
-    auto parameter = parameters[index]->cast<ParameterPtr>();
+  for (int64_t i = SizeToLong(parameters.size()) - 1; i >= 0; --i) {
+    auto parameter = parameters[i]->cast<ParameterPtr>();
     if (parameter == nullptr) {
-      MS_LOG(ERROR) << "AnfNode " << parameters[index]->DebugString() << " should be Parameter.";
+      MS_LOG(ERROR) << "AnfNode " << parameters[i]->DebugString() << " should be Parameter.";
       return false;
     }
     auto type = parameter->Type();
@@ -1633,7 +1626,7 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
     }
     std::vector<int64_t> tensor_map;
     for (int num = 0; num < layout_proto.tensor_map_int_size(); ++num) {
-      tensor_map.emplace_back(layout_proto.tensor_map_int(num));
+      (void)tensor_map.emplace_back(layout_proto.tensor_map_int(num));
     }
     std::vector<int64_t> slice_shape;
     for (int num = 0; num < layout_proto.slice_shape_int_size(); ++num) {
@@ -1759,7 +1752,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
           MS_LOG(WARNING) << "Can't get the abstract of function union closure: " << item_proto.DebugString();
           return nullptr;
         }
-        func_list.emplace_back(item_abstract->cast<abstract::AbstractFuncAtomPtr>());
+        (void)func_list.emplace_back(item_abstract->cast<abstract::AbstractFuncAtomPtr>());
       }
       return std::make_shared<abstract::AbstractFuncUnion>(func_list);
     }
@@ -1777,7 +1770,7 @@ void MSANFModelParser::CorrectFuncGraph(const FuncGraphPtr &root) {
   auto valid =
     std::all_of(inputs.begin(), inputs.end(), [](const AnfNodePtr &arg) -> bool { return arg->abstract() != nullptr; });
   if (valid) {
-    ValidMindir(root);
+    (void)ValidMindir(root);
   } else {
     MS_LOG(INFO) << "There are some nullptr of abstract in the top function graph parameters." << root->DumpText();
   }

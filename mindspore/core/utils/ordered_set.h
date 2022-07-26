@@ -98,9 +98,9 @@ class OrderedSet {
   // insert an element to the end of OrderedSet.
   std::pair<iterator, bool> insert(const element_type &e) { return insert(ordered_data_.end(), e); }
 
-  void push_back(const element_type &e) { (void)insert(ordered_data_.end(), e); }
+  void push_back(const element_type &e) const { (void)insert(ordered_data_.end(), e); }
 
-  void push_front(const element_type &e) { (void)insert(ordered_data_.begin(), e); }
+  void push_front(const element_type &e) const { (void)insert(ordered_data_.begin(), e); }
 
   // Remove an element, if removed return true, otherwise return false
   bool erase(const element_type &e) {
@@ -428,7 +428,7 @@ class OrderedSet<std::shared_ptr<T>> {
   const element_type &front() const { return ordered_data_.front(); }
 
   // Return true if there are no common elements.
-  bool is_disjoint(const OrderedSet &other) {
+  bool is_disjoint(const OrderedSet &other) const {
     return std::all_of(begin(), end(), [&other](const auto &e) { return !other.contains(e); });
   }
 

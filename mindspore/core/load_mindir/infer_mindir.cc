@@ -50,7 +50,7 @@ class MindIREngine {
   void InferParameter(const AnfNodePtr &node);
   void InferValueNode(const AnfNodePtr &node);
   void InferCNode(const AnfNodePtr &node);
-  void EvalAbstractFunction(const abstract::AbstractFuncAtomPtr &abstractFunc, const CNodePtr &node,
+  void EvalAbstractFunction(const abstract::AbstractFuncAtomPtr &func, const CNodePtr &node,
                             const AbstractBasePtrListPtr &args);
   void EvalPrimitiveAbastract(const abstract::PrimitiveAbstractClosurePtr &func, const CNodePtr &node,
                               const AbstractBasePtrListPtr &args);
