@@ -51,7 +51,7 @@ class MS_CORE_API AnalysisContext {
   AnalysisContextPtr NewContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
 
   // Return a context restricted to a graph and its parent.
-  AnalysisContextPtr FindOwnOrParentContext(const FuncGraphPtr &graph);
+  AnalysisContextPtr FindOwnOrParentContext(const FuncGraphPtr &func_graph);
   bool operator==(const AnalysisContext &other) const;
   std::size_t hash();
   static AnalysisContextPtr DummyContext();

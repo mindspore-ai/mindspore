@@ -57,6 +57,22 @@ Primitive::Primitive(const Primitive &prim)
       is_const_prim_(false),
       id_(prim.id_) {}
 
+Primitive &Primitive::operator=(const Primitive &other) {
+  if (this == &other) {
+    return *this;
+  }
+  Named::operator=(other);
+  attrs_ = other.attrs_;
+  instance_name_ = other.instance_name_;
+  is_base_ = other.is_base_;
+  has_signature_ = other.has_signature_;
+  prim_type_ = other.prim_type_;
+  record_evaluate_add_attr_ = false;
+  is_const_prim_ = false;
+  id_ = other.id_;
+  return *this;
+}
+
 abstract::AbstractBasePtr Primitive::ToAbstract() {
   return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<Primitive>(), nullptr);
 }

@@ -716,7 +716,7 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     if (!shape_types[i]->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << shape_types[i]->ToString();
     }
-    shape_size *= shape_vec[i];
+    shape_size *= LongToSize(shape_vec[i]);
   }
   if (static_cast<int64_t>(shape_size) < values_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "Shape total size: " << shape_size << " is too small to hold " << values_shp[kIndexZero]
@@ -780,7 +780,7 @@ AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &
   MS_EXCEPTION_IF_NULL(recv_size_value_ptr);
   auto recv_size_tensor = recv_size_value_ptr->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(recv_size_tensor);
-  auto data_pos = reinterpret_cast<int64_t *>(recv_size_tensor->data_c());
+  auto data_pos = static_cast<int64_t *>(recv_size_tensor->data_c());
   MS_EXCEPTION_IF_NULL(data_pos);
   int64_t infer_max_size = 0;
   for (size_t i = 0; i < recv_size_tensor->DataSize(); ++i) {

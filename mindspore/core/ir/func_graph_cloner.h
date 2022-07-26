@@ -101,10 +101,10 @@ class MS_CORE_API Cloner {
   void CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphDefaultValues(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
-  void SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
+  void SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) const;
   void CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void GenParameters(const FuncGraphPtr &func_graph);
-  void CloneParameter(const ParameterPtr &param, const AnfNodePtr &node);
+  void CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) const;
   ParameterPtr AddParameter(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_add = true);
   void AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params, AnfNodePtrList *const lift_params,
                      AnfNodePtrList *const input_params);
@@ -115,7 +115,7 @@ class MS_CORE_API Cloner {
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                       const AnfNodePtrList &params);
   void Lift(const std::vector<FuncGraphPtr> &sorted);
-  void LiftParameters(const FuncGraphVector &func_graphs);
+  void LiftParameters(const FuncGraphVector &todo_func_graphs);
   bool IsLiftTopFuncGraph(const FuncGraphPtr &func_graph);
 
   bool clone_all_valuenodes_;

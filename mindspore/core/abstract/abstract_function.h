@@ -42,7 +42,7 @@ class MS_CORE_API AbstractFuncAtom : public AbstractFunction {
 
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
 
-  void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
+  void Visit(std::function<void(const AbstractFuncAtomPtr &)> visit_func) const final;
 
   bool operator==(const AbstractFunction &other) const override;
 
@@ -82,7 +82,7 @@ class MS_CORE_API AbstractFuncUnion final : public AbstractFunction {
 
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
 
-  void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
+  void Visit(std::function<void(const AbstractFuncAtomPtr &)> visit_func) const final;
 
   bool operator==(const AbstractFunction &other) const override;
 

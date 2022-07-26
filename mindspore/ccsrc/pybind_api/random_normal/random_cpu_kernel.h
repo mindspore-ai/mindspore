@@ -17,8 +17,8 @@
 #define PYBIND_API_API_IR_RANDOM_NORMAL_RANDOM_CPU_KERNEL_H_
 #include <vector>
 #include "include/common/utils/philox_generator.h"
-#include "pybind11/pybind11.h"
 #include "include/common/pybind_api/api_register.h"
+#include "pybind11/pytypes.h"
 #include "utils/log_adapter.h"
 
 namespace py = pybind11;
@@ -29,7 +29,7 @@ class NormalDistribution;
 template <class T>
 class NormalDistribution<T, float> {
  public:
-  bool UInt32ToFloat32(uint32_t input, float *output) {
+  bool UInt32ToFloat32(uint32_t input, float *output) const {
     const uint32_t temp_value = input & 0x7fffffu;
     const uint32_t exp = static_cast<uint32_t>(127);
     const uint32_t val = (exp << 23) | temp_value;

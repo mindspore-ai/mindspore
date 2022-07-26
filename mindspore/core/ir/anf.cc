@@ -301,7 +301,7 @@ ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node) {
   return GetValueWithoutDoSignature(cnode->input(0));
 }
 
-std::string GetCNodeFuncName(const CNodePtr cnode) {
+std::string GetCNodeFuncName(const CNodePtr &cnode) {
   if (cnode->inputs().empty()) {
     return "";
   }
@@ -454,7 +454,7 @@ auto constexpr kTargetUnDefined = "kTargetUnDefined";
 auto constexpr kPrimitiveTarget = "primitive_target";
 auto constexpr kNotSupportOpForDevice = "not_support_op_for_device";
 namespace {
-__attribute__((unused)) void SetCNodeNotSupported(const CNodePtr &node, std::string device_name) {
+__attribute__((unused)) void SetCNodeNotSupported(const CNodePtr &node, const std::string &device_name) {
   MS_EXCEPTION_IF_NULL(node);
   auto primitive = GetCNodePrimitive(node);
   if (primitive != nullptr) {

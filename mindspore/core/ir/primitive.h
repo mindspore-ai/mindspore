@@ -51,6 +51,11 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] prim The input primitive.
   Primitive(const Primitive &prim);
+  /// \brief The copy assignment operator for Primitive.
+  ///
+  /// \param[in] other An existing Primitive object.
+  /// \return A Primitive object set with the same members as other.
+  Primitive &operator=(const Primitive &other);
   MS_DECLARE_PARENT(Primitive, Named);
   abstract::AbstractBasePtr ToAbstract() override;
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);

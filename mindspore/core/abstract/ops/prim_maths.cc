@@ -83,8 +83,10 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
   if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
-    if (!axis_ptr_list.size()) {
-      if (keep_dims_value) (void)shape->insert(shape->end(), x_shape.size(), 1);
+    if (axis_ptr_list.empty()) {
+      if (keep_dims_value) {
+        (void)shape->insert(shape->end(), x_shape.size(), 1);
+      }
     } else {
       if (keep_dims_value) {
         *shape = x_shape;

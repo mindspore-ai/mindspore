@@ -415,7 +415,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Check whether this cnode has the same primitive value as the first input.
   ///
   /// \return True if they have the same primitive value, otherwise false.
-  bool IsApply(const PrimitivePtr &) const;
+  bool IsApply(const PrimitivePtr &value) const;
 
   /// \brief Obtain the size of input nodes of this CNode.
   ///
@@ -442,7 +442,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] i The given index.
   /// \param[in] input Node.
-  void set_input(size_t i, const AnfNodePtr &input);
+  void set_input(size_t i, const AnfNodePtr &new_input);
 
   /// \brief Set the input nodes for this CNode.
   ///
@@ -1056,7 +1056,7 @@ static S GetValue(const ValuePtr &value) {
   return v;
 }
 
-MS_CORE_API std::string GetCNodeFuncName(CNodePtr cnode);
+MS_CORE_API std::string GetCNodeFuncName(const CNodePtr &cnode);
 
 // Used to get FuncGraphPtr from a cnode first input
 MS_CORE_API FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
