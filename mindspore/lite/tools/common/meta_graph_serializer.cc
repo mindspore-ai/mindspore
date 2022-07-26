@@ -70,11 +70,21 @@ bool MetaGraphSerializer::InitPath(const std::string &output_path) {
     return false;
   }
 #ifdef _WIN32
+#ifdef SERVER_INFERENCE
+  save_model_path_ = save_path_ + "\\" + model_name_ + ".mindir";
+  save_data_path_ = save_path_ + "\\" + model_name_ + ".msw";
+#else
   save_model_path_ = save_path_ + "\\" + model_name_ + ".ms";
   save_data_path_ = save_path_ + "\\" + model_name_ + ".msw";
+#endif
+#else
+#ifdef SERVER_INFERENCE
+  save_model_path_ = save_path_ + "/" + model_name_ + ".mindir";
+  save_data_path_ = save_path_ + "/" + model_name_ + ".msw";
 #else
   save_model_path_ = save_path_ + "/" + model_name_ + ".ms";
   save_data_path_ = save_path_ + "/" + model_name_ + ".msw";
+#endif
 #endif
   return true;
 }

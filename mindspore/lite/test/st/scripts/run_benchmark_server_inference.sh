@@ -161,7 +161,7 @@ echo "Push files and run benchmark"
 benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
-cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
+cp -a ${ms_models_path}/*.mindir ${benchmark_test_path} || exit 1
 
 backend=${backend:-"all"}
 isFailed=0
