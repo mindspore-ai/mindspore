@@ -22,24 +22,20 @@ mindspore.ops.NLLLoss
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
 
-    **参数：**
+    参数：
+        - **reduction** (str) - 指定应用于输出结果的计算方式，比如'none'、'mean'，'sum'，默认值："mean"。
 
-    - **reduction** (str) - 指定应用于输出结果的计算方式，比如'none'、'mean'，'sum'，默认值："mean"。
+    输入：
+        - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 。数据类型仅支持float32或float16。
+        - **labels** (Tensor) - 输入目标值，shape为 :math:`(N,)` 。数据类型仅支持int32。
+        - **weight** (Tensor) - 指定各类别的权重，shape为 :math:`(C,)` ，数据类型仅支持float32或float16。
 
-    **输入：**
+    输出：
+        由 `loss` 和 `total_weight` 组成的2个Tensor的tuple。
 
-    - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 。数据类型仅支持float32或float16。
-    - **labels** (Tensor) - 输入目标值，shape为 :math:`(N,)` 。数据类型仅支持int32。
-    - **weight** (Tensor) - 指定各类别的权重，shape为 :math:`(C,)` ，数据类型仅支持float32或float16。
+        - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为2维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `logits` 相同。
+        - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight` 相同。
 
-    **输出：**
-
-    由 `loss` 和 `total_weight` 组成的2个Tensor的tuple。
-
-    - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为2维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `logits` 相同。
-    - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight` 相同。
-
-    **异常：**
-
-    - **TypeError** - `logits` 或 `weight` 的数据类型既不是float16也不是float32， `labels` 不是int32。
-    - **ValueError** - `logits` 不是一维或二维Tensor， `labels` 和 `weight` 不是一维Tensor。 `logits` 是二维Tensor时， `logits` 的第一个维度不等于 `labels` ， `logits` 的第二个维度不等于 `weight` 。 `logits` 是一维Tensor时， `logits` 、 `labels` 和 `weight` 的维度应该相同。
+    异常：
+        - **TypeError** - `logits` 或 `weight` 的数据类型既不是float16也不是float32， `labels` 不是int32。
+        - **ValueError** - `logits` 不是一维或二维Tensor， `labels` 和 `weight` 不是一维Tensor。 `logits` 是二维Tensor时， `logits` 的第一个维度不等于 `labels` ， `logits` 的第二个维度不等于 `weight` 。 `logits` 是一维Tensor时， `logits` 、 `labels` 和 `weight` 的维度应该相同。

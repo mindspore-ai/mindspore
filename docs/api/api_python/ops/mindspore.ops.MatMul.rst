@@ -14,22 +14,18 @@ mindspore.ops.MatMul
     .. note::
         对于 :math:`N * M` 不能被16整除的情况下，在Ascend环境上性能会比较差。
 
-    **参数：**
+    参数：
+        - **transpose_a** (bool) - 如果为True，则在相乘之前转置 `a`。默认值：False。
+        - **transpose_b** (bool) - 如果为True，则在相乘之前转置 `b`。默认值：False。
 
-    - **transpose_a** (bool) - 如果为True，则在相乘之前转置 `a`。默认值：False。
-    - **transpose_b** (bool) - 如果为True，则在相乘之前转置 `b`。默认值：False。
+    输入：
+        - **a** (Tensor) - 要相乘的第一个Tensor。如果 `transpose_a` 为False，则该Tensor的shape为 :math:`(N, C)` ；否则，该Tensor的shape为 :math:`(C, N)` 。
+        - **b** (Tensor) - 要相乘的第二个Tensor。如果 `transpose_b` 为False，则该Tensor的shape为 :math:`(C, M)` ；否则，该Tensor的shape为 :math:`(M, C)` 。
 
-    **输入：**
+    输出：
+        Tensor，输出Tensor的shape为 :math:`(N, M)` 。
 
-    - **a** (Tensor) - 要相乘的第一个Tensor。如果 `transpose_a` 为False，则该Tensor的shape为 :math:`(N, C)` ；否则，该Tensor的shape为 :math:`(C, N)` 。
-    - **b** (Tensor) - 要相乘的第二个Tensor。如果 `transpose_b` 为False，则该Tensor的shape为 :math:`(C, M)` ；否则，该Tensor的shape为 :math:`(M, C)` 。
-
-    **输出：**
-
-    Tensor，输出Tensor的shape为 :math:`(N, M)` 。
-
-    **异常：**
-
-    - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
-    - **ValueError** - 矩阵 `a` 的列不等于矩阵 `b` 的行。
-    - **ValueError** - `a` 或 `b` 的维度不等于2。
+    异常：
+        - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
+        - **ValueError** - 矩阵 `a` 的列不等于矩阵 `b` 的行。
+        - **ValueError** - `a` 或 `b` 的维度不等于2。

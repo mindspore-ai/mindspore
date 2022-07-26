@@ -16,17 +16,14 @@
         - 由于架构的差异，在NPU和CPU上生成的结果可能不一致。
         - 如果shape表示为 :math:`(D1、D2...、Dn)` ，则D1\*D2... \*DN<=1000000,n<=8。
 
-    **输入：**
+    输入：
+        - **x** (Union[Tensor, numbers.Number, bool]) - 第一个输入是数值型、bool，或数据类型为数值型的Tensor。
+        - **y** (Union[Tensor, numbers.Number, bool]) - 当第一个输入是Tensor时，第二个输入可以是数值型、bool，或数据类型为数值型的Tensor。当第一个输入是数值型或bool时，第二个输入必须是数据类型为数值型的Tensor。
 
-    - **x** (Union[Tensor, numbers.Number, bool]) - 第一个输入是数值型、bool，或数据类型为数值型的Tensor。
-    - **y** (Union[Tensor, numbers.Number, bool]) - 当第一个输入是Tensor时，第二个输入可以是数值型、bool，或数据类型为数值型的Tensor。当第一个输入是数值型或bool时，第二个输入必须是数据类型为数值型的Tensor。
+    输出：
+        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数据类型相对最高的类型。
 
-    **输出：**
-
-    Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数据类型相对最高的类型。
-
-    **异常：**
-
-    - **TypeError** - 如果 `x` 和 `y` 都不是以下之一：Tensor、数值型、bool。
-    - **TypeError** - 如果 `x` 和 `y` 都不是Tensor。
-    - **ValueError** - 如果 `x` 和 `y` 的shape不能相互广播。
+    异常：
+        - **TypeError** - 如果 `x` 和 `y` 都不是以下之一：Tensor、数值型、bool。
+        - **TypeError** - 如果 `x` 和 `y` 都不是Tensor。
+        - **ValueError** - 如果 `x` 和 `y` 的shape不能相互广播。

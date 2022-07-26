@@ -13,14 +13,11 @@
 
     其中 :math:`Inf` 表示不是一个数字。
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
-    - **x** (Tensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+    输出：
+        Tensor，shape与相同的输入，数据的类型为bool。
 
-    **输出：**
-
-    Tensor，shape与相同的输入，数据的类型为bool。
-
-    **异常：**
-
-    - **TypeError** - 如果 `x` 不是Tensor。
+    异常：
+        - **TypeError** - 如果 `x` 不是Tensor。

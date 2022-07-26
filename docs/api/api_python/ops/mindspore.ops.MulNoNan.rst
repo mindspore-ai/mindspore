@@ -16,16 +16,13 @@
     .. note::
         `x` 和 `y` 的shape应该相同，或者可以广播。如果 `y` 是NaN或为无限的，并且 `x` 是0，结果将是NaN。
 
-    **输入：**
+    输入：
+        - **x** (Union[Tensor]) - 第一个输入是Tensor，其数据类型为int32、int64、float16、float32、float64、complex64、complex128或Scalar。
+        - **y** (Union[Tensor]) - 第二个输入是Tensor，其数据类型为int32、int64、float16、float32、float64、complex64、complex128或Scalar。
 
-    - **x** (Union[Tensor]) - 第一个输入是Tensor，其数据类型为int32、int64、float16、float32、float64、complex64、complex128或Scalar。
-    - **y** (Union[Tensor]) - 第二个输入是Tensor，其数据类型为int32、int64、float16、float32、float64、complex64、complex128或Scalar。
+    输出：
+        Tensor，shape与广播后的shape相同，数据类型是两个输入中精度较高的类型。
 
-    **输出：**
+    异常：
+        - **TypeError** - 如果 `x` 和 `y` 都不是Tensor。
 
-    Tensor，shape与广播后的shape相同，数据类型是两个输入中精度较高的类型。
-
-    **异常：**
-
-    - **TypeError** - 如果 `x` 和 `y` 都不是Tensor。
-    
