@@ -30,9 +30,9 @@ namespace mindspore::kernel {
 int AssignCPUKernel::ReSize() { return RET_OK; }
 
 int AssignCPUKernel::Execute(int task_id) {
-  auto x = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto x = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(x);
-  auto y = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto y = reinterpret_cast<float *>(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(y);
   int length = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);

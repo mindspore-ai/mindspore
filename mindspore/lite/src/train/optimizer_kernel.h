@@ -20,6 +20,7 @@
 #include <cfloat>
 #include <algorithm>
 #include <string>
+#include <atomic>
 #include <iostream>
 #include "src/lite_kernel.h"
 #include "include/ms_tensor.h"
@@ -215,7 +216,7 @@ class OptimizerKernel : public InnerKernel {
   int lr_idx_ = 0;
   int grad_idx_ = 0;
   float *grad_sum_ = nullptr;
-  bool valid_grad_sum_ = false;
+  std::atomic_bool valid_grad_sum_ = false;
 
  private:
   WeightUpdateMode weight_update_mod_ = WeightUpdateMode::NORMAL;
