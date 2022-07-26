@@ -14,11 +14,9 @@ approvers:
 - HilbertDavid
 - hwhewei
 - jjfeing
-- john_tzanakakis
 - jpc_chenjianping
 - kingxian
 - liangchenghui
-- lilongfei15
 - limingqi107
 - linqingke
 - liucunwei
@@ -35,7 +33,6 @@ approvers:
 - wilfchen
 - wuxuejian
 - xu-yfei
-- yelihua
 - yuchaojie
 - zh_qh
 - zhaizhiqiang
@@ -61,6 +58,8 @@ approvers:
 - zichun_ye
 - h.farahat
 - dessyang
+- zangqx
+- maning202007
 reviewers:
 - nicholas_yhr
 - liubuyu
