@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_BN_GRAD_H_
 #define MINDSPORE_CORE_OPS_BN_GRAD_H_
-#include <vector>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 

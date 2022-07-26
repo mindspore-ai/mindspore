@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <functional>
-
 #include "ops/tensor_list_stack.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

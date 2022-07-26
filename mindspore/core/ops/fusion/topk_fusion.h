@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_TOPK_FUSION_H_
 #define MINDSPORE_CORE_OPS_TOPK_FUSION_H_
-#include <vector>
 
 #include "ops/topk.h"
 #include "mindapi/base/types.h"
