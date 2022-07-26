@@ -182,3 +182,67 @@ def test_tensor_csr_add():
     assert np.allclose(c.indptr.asnumpy(), c_indptr_expected)
     assert np.allclose(c.indices.asnumpy(), c_indices_expected)
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_add_3d():
+    """
+    Feature: Test 3D Tensor csr_add.
+    Description: Test CSRTensor matrix add.
+    Expectation: Success.
+    """
+    alpha = Tensor(1, mstype.complex64)
+    beta = Tensor(1, mstype.complex64)
+    dense_shape = Tensor((2, 3, 4), mstype.int32)
+    x1_batch_pointer = Tensor((0, 3, 5), mstype.int32)
+    x1_row_pointer = Tensor((0, 2, 2, 3, 0, 1, 2, 2), mstype.int32)
+    x1_col_indices = Tensor((0, 2, 3, 3, 0), mstype.int32)
+    x1_value = Tensor((1, 2, 3, 4, 5), mstype.complex64)
+
+    x2_batch_pointer = Tensor((0, 2, 5), mstype.int32)
+    x2_row_pointer = Tensor((0, 1, 2, 2, 0, 2, 2, 3), mstype.int32)
+    x2_col_indices = Tensor((3, 0, 0, 2, 3), mstype.int32)
+    x2_value = Tensor((4, 5, 1, 2, 3), mstype.complex64)
+
+    add_op = SparseMatrixAdd()
+    c = add_op(dense_shape, x1_batch_pointer, x1_row_pointer, x1_col_indices, x1_value,
+               dense_shape, x2_batch_pointer, x2_row_pointer, x2_col_indices, x2_value,
+               alpha, beta)
+
+    assert np.allclose(c[0].asnumpy(), (2, 3, 4))
+    assert np.allclose(c[1].asnumpy(), (0, 5, 10))
+    assert np.allclose(c[2].asnumpy(), (0, 3, 4, 5, 0, 3, 4, 5))
+    assert np.allclose(c[3].asnumpy(), (0, 2, 3, 0, 3, 0, 2, 3, 0, 3))
+    assert np.allclose(c[4].asnumpy(), (1, 2, 4, 5, 3, 1, 2, 4, 5, 3))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_add_abnormal():
+    """
+    Feature: Test abnormal csr_add.
+    Description: Test CSRTensor matrix add.
+    Expectation: Success.
+    """
+    alpha = Tensor(1, mstype.float32)
+    beta = Tensor(1, mstype.float32)
+    x1_dense_shape = Tensor((2, 3, 4), mstype.int32)
+    x1_batch_pointer = Tensor((0, 3, 5), mstype.int32)
+    x1_row_pointer = Tensor((0, 2, 2, 3, 0, 1, 2, 2), mstype.int32)
+    x1_col_indices = Tensor((0, 2, 3, 3, 0), mstype.int32)
+    x1_value = Tensor((1, 2, 3, 4, 5), mstype.float32)
+
+    x2_dense_shape = Tensor((2, 3, 1), mstype.int32)
+    x2_batch_pointer = Tensor((0, 2, 5), mstype.int32)
+    x2_row_pointer = Tensor((0, 1, 2, 2, 0, 2, 2, 3), mstype.int32)
+    x2_col_indices = Tensor((3, 0, 0, 2, 3), mstype.int32)
+    x2_value = Tensor((4, 5, 1, 2, 3), mstype.float32)
+
+    add_op = SparseMatrixAdd()
+    with pytest.raises(RuntimeError, match="The inputs dense shape should be same"):
+        add_op(x1_dense_shape, x1_batch_pointer, x1_row_pointer, x1_col_indices, x1_value,
+               x2_dense_shape, x2_batch_pointer, x2_row_pointer, x2_col_indices, x2_value,
+               alpha, beta)
