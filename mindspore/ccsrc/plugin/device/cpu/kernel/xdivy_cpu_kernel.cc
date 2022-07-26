@@ -23,6 +23,7 @@ namespace mindspore {
 namespace kernel {
 static constexpr size_t INPUT_NUM = 2;
 static constexpr size_t OUTPUT_NUM = 1;
+static constexpr int MAX_DIMS = 7;
 template <typename T>
 T GetDivZeroVal(const T &v) {
   auto zero = static_cast<T>(0.0);
@@ -206,6 +207,11 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   auto x_shape = inputs[0]->GetShapeVector();
   auto y_shape = inputs[1]->GetShapeVector();
   auto out_shape = outputs[0]->GetShapeVector();
+  if (out_shape.size() > MAX_DIMS || out_shape.size() < x_shape.size() || out_shape.size() < y_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
+                      << ", and output dimension can't less than input; but got x_shape dimension:" << x_shape.size()
+                      << " ,y_shape dimension:" << y_shape.size() << " ,out_shape dimension:" << out_shape.size();
+  }
   is_need_broadcast_ = x_shape != y_shape;
   if (is_need_broadcast_) {
     GetBroadCastIndex(x_shape, out_shape, &index_listx_);
