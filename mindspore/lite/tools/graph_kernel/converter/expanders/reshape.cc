@@ -48,13 +48,13 @@ class Reshape : public OpDesc {
           (void)shape.emplace_back(*(data + elem));
         }
       } else {
-        MS_LOG_EXCEPTION << "Type of reshape's shape tensor is neither int64_t nor int32_t. Expand failed";
+        MS_LOG(INFO) << "Type of reshape's shape tensor is neither int64_t nor int32_t. Expand failed";
         return {};
       }
     } else if (shp_ptr->isa<ValueTuple>()) {
       shape = GetValue<ShapeVector>(shp_ptr);
     } else {
-      MS_LOG_EXCEPTION << "Reshape's attr shape is neither Tensor nor ValueTuple. Expand failed";
+      MS_LOG(INFO) << "Reshape's attr shape is neither Tensor nor ValueTuple. Expand failed";
       return {};
     }
     auto result = gb.Reshape(input_x, shape);

@@ -223,11 +223,6 @@ template <typename TM>
 tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs &) {
   const size_t unary_input_num = 1;
   const size_t binary_input_num = 2;
-  for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
-      return nullptr;
-    }
-  }
   if (inputs.size() > 0) {
     bool all_shape_equal =
       std::all_of(inputs.begin(), inputs.end(), [&inputs](const NodePtr &t) { return t->shape == inputs[0]->shape; });
@@ -296,6 +291,11 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
 }
 
 NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
+  }
   TypeId output_type = this->type;
   tensor::TensorPtr res = nullptr;
   switch (static_cast<int>(output_type)) {
