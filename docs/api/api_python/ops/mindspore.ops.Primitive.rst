@@ -5,47 +5,41 @@ mindspore.ops.Primitive
 
     Primitive是Python中算子原语的基类。
 
-    **参数：**
-
-    - **name** (str) - 当前Primitive的名称。
+    参数：
+        - **name** (str) - 当前Primitive的名称。
 
     .. py:method:: add_prim_attr(name, value)
 
         添加Primitive的属性。
 
-        **参数：**
-
-        - **name** (str) - 属性名称。
-        - **value** (Any) - 属性值。
+        参数：
+            - **name** (str) - 属性名称。
+            - **value** (Any) - 属性值。
 
     .. py:method:: check_elim(*args)
 
         检查是否可以消除此Primitive。有需要的子类可以重写该方法。
 
-        **参数：**
+        参数：
+            - **args** (Primitive参数的类型) - 与当前Primitive的参数相同。
 
-        - **args** (Primitive参数的类型) - 与当前Primitive的参数相同。
-
-        **返回：**
-
-        由两个元素组成的元组。第一个元素是指是否能在编译阶段计算Primitive，第二个元素是计算结果。
+        返回：
+            由两个元素组成的元组。第一个元素是指是否能在编译阶段计算Primitive，第二个元素是计算结果。
 
     .. py:method:: del_prim_attr(name)
 
         删除Primitive的属性。
 
-        **参数：**
-
-        - **name** (str) - 属性名称。
+        参数：
+            - **name** (str) - 属性名称。
 
     .. py:method:: init_prim_io_names(inputs, outputs)
 
         初始化Tensor或属性的输入输出的名称。
 
-        **参数：**
-
-        - **inputs** (list[str]) - 输入名称的列表。
-        - **outputs** (list[str]) - 输出名称的列表。
+        参数：
+            - **inputs** (list[str]) - 输入名称的列表。
+            - **outputs** (list[str]) - 输出名称的列表。
 
     .. py:method:: recompute(mode=True)
 
@@ -57,9 +51,8 @@ mindspore.ops.Primitive
             - 如果计算涉及随机化或全局变量，则暂无法保证等效性。
             - 在PyNative模式下不支持。
 
-        **参数：**
-
-        - **mode** (bool) - Primitive是否设置了重计算。默认值：True。
+        参数：
+            - **mode** (bool) - Primitive是否设置了重计算。默认值：True。
 
     .. py:method:: set_prim_instance_name(instance_name)
 
@@ -68,9 +61,8 @@ mindspore.ops.Primitive
         .. note::
             当用户定义Primitive算子时，默认调用它。
 
-        **参数：**
-
-        - **instance_name** (str) - 用户设置的Primitive算子的实例的名称。
+        参数：
+            - **instance_name** (str) - 用户设置的Primitive算子的实例的名称。
 
     .. py:method:: set_stage(stage)
 
@@ -79,9 +71,8 @@ mindspore.ops.Primitive
         .. note::
             仅在半自动并行模式下有效。在其他并行模式下，请将其设置为0。
 
-        **参数：**
-
-        - **stage** (int) - 当前stage的ID。
+        参数：
+            - **stage** (int) - 当前stage的ID。
 
     .. py:method:: shard(in_strategy=None, out_strategy=None)
 
@@ -90,10 +81,9 @@ mindspore.ops.Primitive
         .. note::
             仅在半自动并行或自动并行模式下有效。在其他并行模式中，将忽略此处设置的策略。
 
-        **参数：**
-
-        - **in_strategy** (tuple) - 描述算子输入的切分策略。默认值：None。
-        - **out_strategy** (tuple) - 描述算子输出的切分策略，仅针对某些算子，如MatMul。默认值：None。
+        参数：
+            - **in_strategy** (tuple) - 描述算子输入的切分策略。默认值：None。
+            - **out_strategy** (tuple) - 描述算子输出的切分策略，仅针对某些算子，如MatMul。默认值：None。
 
     .. py:method:: update_parameter()
         :property:

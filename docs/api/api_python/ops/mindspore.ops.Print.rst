@@ -10,16 +10,13 @@ mindspore.ops.Print
     .. note::
         在PyNative模式下，请使用Python print函数。在Graph模式下，bool、int和float将被转换为Tensor进行打印，str保持不变。
         该方法用于代码调试，当同时print大量数据时，为了保证主进程不受影响，可能会丢失一些数据，这时推荐使用 `Summary` 功能，具体可查看
-        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
+        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_。
 
-    **输入：**
+    输入：
+        - **input_x** (Union[Tensor, bool, int, float, str]) - Print的输入。支持多个输入，用'，'分隔。
 
-    - **input_x** (Union[Tensor, bool, int, float, str]) - Print的输入。支持多个输入，用'，'分隔。
+    输出：
+        Tensor，数据类型和shape与 `input_x` 相同。
 
-    **输出：**
-
-    Tensor，数据类型和shape与 `input_x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 不是Tensor、bool、int、float或str。
+    异常：
+        - **TypeError** - `input_x` 不是Tensor、bool、int、float或str。

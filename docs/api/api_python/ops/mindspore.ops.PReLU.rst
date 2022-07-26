@@ -16,20 +16,17 @@ mindspore.ops.PReLU
 
         Ascend不支持标量和1维向量的输入x。
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, C, *)` ，其中 :math:`*` 表示任意的附加维度。
+        - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。weight只可以是向量，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为1。
 
-    - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, C, *)` ，其中 :math:`*` 表示任意的附加维度。
-    - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。weight只可以是向量，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为1。
+    输出：
+        Tensor，数据类型与 `x` 的相同。
 
-    **输出：**
+        有关详细信息，请参考 :class:`mindspore.nn.PReLU` 。
 
-    Tensor，数据类型与 `x` 的相同。
-
-    有关详细信息，请参考 :class:`mindspore.nn.PReLU` 。
-
-    **异常：**
-
-    - **TypeError** - `x` 或  `weight` 的数据类型既不是float16也不是float32。
-    - **TypeError** - `x` 或  `weight` 不是Tensor。
-    - **ValueError** - `x` 是Ascend上的0-D或1-D Tensor。
-    - **ValueError** - `weight` 不是1-D Tensor。
+    异常：
+        - **TypeError** - `x` 或  `weight` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `x` 或  `weight` 不是Tensor。
+        - **ValueError** - `x` 是Ascend上的0-D或1-D Tensor。
+        - **ValueError** - `weight` 不是1-D Tensor。
