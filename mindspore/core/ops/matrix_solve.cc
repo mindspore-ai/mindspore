@@ -48,13 +48,13 @@ abstract::ShapePtr MatrixSolveInferShape(const PrimitivePtr &primitive,
   constexpr int64_t kIndex1 = 1;
   constexpr int64_t kIndex2 = 2;
   (void)CheckAndConvertUtils::CheckValue("M in the shape of 'matrix' [..., M, M]",
-                                         matrix_shape.at(matrix_dim - kIndex1), kEqual,
-                                         matrix_shape.at(matrix_dim - kIndex2), prim_name);
+                                         matrix_shape.at(LongToSize(matrix_dim - kIndex1)), kEqual,
+                                         matrix_shape.at(LongToSize(matrix_dim - kIndex2)), prim_name);
   (void)CheckAndConvertUtils::CheckValue(
-    "M in the shape of 'matrix' [..., M, M]", matrix_shape.at(matrix_dim - kIndex2), kEqual,
-    "M in the shape of 'rhs' [..., M, K]", rhs_shape.at(matrix_dim - kIndex2), prim_name);
+    "M in the shape of 'matrix' [..., M, M]", matrix_shape.at(LongToSize(matrix_dim - kIndex2)), kEqual,
+    "M in the shape of 'rhs' [..., M, K]", rhs_shape.at(LongToSize(matrix_dim - kIndex2)), prim_name);
 
-  for (int64_t i = 0; i < matrix_dim - kIndex2; ++i) {
+  for (size_t i = 0; i < LongToSize(matrix_dim - kIndex2); ++i) {
     (void)CheckAndConvertUtils::CheckValue(std::to_string(i) + "th dimension of 'matrix'", matrix_shape.at(i), kEqual,
                                            std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(i), prim_name);
   }

@@ -53,19 +53,22 @@ abstract::TupleShapePtr InstanceNormInferShape(const PrimitivePtr &primitive,
   constexpr size_t minimum_input_x_rank = 3;
   (void)CheckAndConvertUtils::CheckValue<size_t>("input_x rank", input_x_shape.size(), kGreaterEqual,
                                                  minimum_input_x_rank, prim_name);
-  const size_t batch = input_x_shape[kInputIndex0];
-  const size_t channel = input_x_shape[kInputIndex1];
+  const size_t batch = LongToSize(input_x_shape[kInputIndex0]);
+  const size_t channel = LongToSize(input_x_shape[kInputIndex1]);
 
   (void)CheckAndConvertUtils::CheckValue<size_t>("gamma rank", gamma_shape.size(), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("beta rank", beta_shape.size(), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("mean rank", mean_shape.size(), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("variance rank", variance_shape.size(), kEqual, 1, prim_name);
 
-  (void)CheckAndConvertUtils::CheckValue<size_t>("gamma shape", gamma_shape[0], kEqual, "(C, )", channel, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("beta shape", beta_shape[0], kEqual, "(C, )", channel, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("mean shape", mean_shape[0], kEqual, "(C, )", channel, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<size_t>("variance shape", variance_shape[0], kEqual, "(C, )", channel,
+  (void)CheckAndConvertUtils::CheckValue<size_t>("gamma shape", LongToSize(gamma_shape[0]), kEqual, "(C, )", channel,
                                                  prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("beta shape", LongToSize(beta_shape[0]), kEqual, "(C, )", channel,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("mean shape", LongToSize(mean_shape[0]), kEqual, "(C, )", channel,
+                                                 prim_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("variance shape", LongToSize(variance_shape[0]), kEqual, "(C, )",
+                                                 channel, prim_name);
 
   const int64_t batch_channel = SizeToLong(batch * channel);
   abstract::ShapePtr save_mean_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{batch_channel});
@@ -110,7 +113,7 @@ AbstractBasePtr InstanceNormInfer(const abstract::AnalysisEnginePtr &, const Pri
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 5;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto type = InstanceNormInferType(primitive, input_args);
   auto shape = InstanceNormInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
