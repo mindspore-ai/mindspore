@@ -193,20 +193,27 @@ _grad_weight = _Grad(get_by_list=True, get_by_position=False)
 
 
 def grad(fn, grad_position=0, weights=None, has_aux=False):
-    r"""
+    """
     A wrapper function to generate the gradient function for the input function.
+
+    As for gradient, three typical cases are included:
+        1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+        2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+        3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
         grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0.
             If None, none derivative of any input will be figured out, and in this case, `weights` is required.
+            Default: 0.
         weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
-            calculate the gradient. `weights` can be got through `weights = ParameterTuple(net.trainable_params())`.
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()`.
             Default: None.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False. Specially, this is an experimental feature and is subjected to change.
+            Specially, this is an experimental feature and is subjected to change.
+            Default: False.
 
     Returns:
         Function, the gradient function to calculate gradient for the input function or cell.
@@ -222,32 +229,31 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, ops
-        >>> from mindspore import Parameter, ParameterTuple
         >>> from mindspore.ops import grad
+        >>>
+        >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y, z):
         ...         return x * y * z
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-        >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
         >>> net = Net()
         >>> output = grad(net, grad_position=(1, 2))(x, y, z)
         >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  6.00000000e+00],
-         [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-2.00000000e+00,  6.00000000e+00],
-         [-3.00000000e+00,  8.00000000e+00]]))
+        (Tensor(shape=[2], dtype=Float32, value=[ 0.00000000e+00,  6.00000000e+00]),
+         Tensor(shape=[2], dtype=Float32, value=[-2.00000000e+00,  6.00000000e+00]))
         >>>
+        >>> # Function object to be differentiated
         >>> def fn(x, y, z):
         ...     res = x * ops.exp(y) * ops.pow(z, 2)
         ...     return res, z
-        >>> x = Tensor(np.array([3, 3]).astype(np.float32))
-        >>> y = Tensor(np.array([0, 0]).astype(np.float32))
-        >>> z = Tensor(np.array([2, 2]).astype(np.float32))
+        >>> x = Tensor([3, 3], mindspore.float32)
+        >>> y = Tensor([0, 0], mindspore.float32)
+        >>> z = Tensor([2, 2], mindspore.float32)
         >>> gradient, aux = grad(net, (1, 2), None, True)(x, y)
         >>> print(gradient)
         (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
@@ -255,26 +261,35 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> print(aux)
         (Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]),)
         >>>
-        >>> class NetWithWeight(nn.Cell):
-        ...     def __init__(self):
-        ...         super(NetWithWeight, self).__init__()
-        ...         self.w = Parameter(Tensor(np.array([2, 2], np.float32)), name='w')
-        ...         self.z = Parameter(Tensor(np.array([3, 3], np.float32)), name='z')
-        ...     def construct(self, x, y):
-        ...         out = x * y * self.w * self.z
-        ...         return out, x
-        >>> net = NetWithWeight()
-        >>> params = ParameterTuple(net.trainable_params())
-        >>> x = Tensor(np.array([1, 2]).astype(np.float32))
-        >>> y = Tensor(np.array([3, 4]).astype(np.float32))
-        >>> gradient, aux = grad(net, (0, 1), params, True)(x, y)
-        >>> print(gradient)
-        ((Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  2.40000000e+01]),
-          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.20000000e+01])),
-         (Tensor(shape=[2], dtype=Float32, value= [ 9.00000000e+00,  2.40000000e+01]),
-          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.60000000e+01])))
-        >>> print(aux)
-        (Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]),)
+        >>> # For given network to be differentiated with both inputs and weights, there are 3 cases.
+        >>> net = nn.Dense(10, 1)
+        >>> loss_fn = nn.MSELoss()
+        >>> def forward(inputs, labels):
+        ...     logits = net(inputs)
+        ...     loss = loss_fn(logits, labels)
+        ...     return loss, logits
+        >>> inputs = Tensor(np.random.randn(16, 10).astype(np.float32))
+        >>> labels = Tensor(np.random.randn(16, 1).astype(np.float32))
+        >>> weights = net.trainable_params()
+        >>> # Case 1: gradient with respect to inputs.
+        >>> grad_fn = grad(forward, grad_position=0, weights=None, has_aux=True)
+        >>> inputs_gradient, (aux_logits,) = grad_fn(inputs, labels)
+        >>> print(aux_logits.shape)
+        (16, 1)
+        >>>
+        >>> # Case 2: gradient with respect to weights.
+        >>> grad_fn = grad(forward, grad_position=None, weights=weights, has_aux=True)
+        >>> params_gradient, (aux_logits,) = grad_fn(inputs, labels)
+        >>> print(aux_logits.shape)
+        (16, 1)
+        >>> print(len(weights), len(params_gradient))
+        2 2
+        >>>
+        >>> # Case 3: gradient with respect to inputs and weights.
+        >>> grad_fn = grad(forward, grad_position=0, weights=weights, has_aux=False)
+        >>> inputs_gradient, params_gradient = grad_fn(inputs, labels)
+        >>> print(len(weights), len(params_gradient))
+        2 2
     """
     if grad_position is None and weights is None:
         raise ValueError("`grad_position` and `weight` can not be None at the same time.")
@@ -316,20 +331,27 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
 
 
 def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
-    r"""
+    """
     A wrapper function to generate the function to calculate forward output and gradient for the input function.
+
+    As for gradient, three typical cases are included:
+        1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+        2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+        3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
         grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-            If None, none derivative of any input will be figured out, and in this case, `weights` is required.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0.
+            If None, none derivative of any input will be solved, and in this case, `weights` is required.
+            Default: 0.
         weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
-            calculate the gradient. `weights` can be got through `weights = ParameterTuple(net.trainable_params())`.
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()`.
             Default: None.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False. Specially, this is an experimental feature and is subjected to change.
+            Specially, this is an experimental feature and is subjected to change.
+            Default: False.
 
     Returns:
         Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
@@ -344,64 +366,76 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import Parameter, ParameterTuple
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops, nn
         >>> from mindspore.ops import value_and_grad
+        >>>
+        >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y, z):
         ...         return x * y * z
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-        >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3]), mindspore.float32)
+        >>> z = Tensor([0, 3]), mindspore.float32)
         >>> net = Net()
-        >>> output, gradient = value_and_grad(net, grad_position=(1, 2))(x, y, z)
+        >>> grad_fn = value_and_grad(net, grad_position=1)
+        >>> output, inputs_gradient = grad_fn(x, y, z)
         >>> print(output)
-        [[ -0.  18.]
-         [-15.  -8.]]
-        >>> print(gradient)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  6.00000000e+00],
-         [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-2.00000000e+00,  6.00000000e+00],
-         [-3.00000000e+00,  8.00000000e+00]]))
+        [ -0.  18.]
+        >>> print(inputs_gradient)
+        [0, 6.]
         >>>
+        >>> # Function object to be differentiated
         >>> def fn(x, y, z):
         ...     res = x * ops.exp(y) * ops.pow(z, 2)
         ...     return res, z
         >>> x = Tensor(np.array([3, 3]).astype(np.float32))
         >>> y = Tensor(np.array([0, 0]).astype(np.float32))
         >>> z = Tensor(np.array([2, 2]).astype(np.float32))
-        >>> output, gradient = grad(net, (1, 2), None, True)(x, y)
+        >>> output, inputs_gradient = grad(net, grad_position=(1, 2), weights=None, has_aux=True)(x, y)
         >>> print(output)
         (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
          Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]))
-        >>> print(gradient)
+        >>> print(inputs_gradient)
         (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
          Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
         >>>
-        >>> class NetWithWeight(nn.Cell):
-        ...     def __init__(self):
-        ...         super(NetWithWeight, self).__init__()
-        ...         self.w = Parameter(Tensor(np.array([2, 2], np.float32)), name='w')
-        ...         self.z = Parameter(Tensor(np.array([3, 3], np.float32)), name='z')
-        ...     def construct(self, x, y):
-        ...         out = x * y * self.w * self.z
-        ...         return out, x
-        >>> net = NetWithWeight()
-        >>> params = ParameterTuple(net.trainable_params())
-        >>> x = Tensor(np.array([1, 2]).astype(np.float32))
-        >>> y = Tensor(np.array([3, 4]).astype(np.float32))
-        >>> output, gradient = value_and_grad(net, (0, 1), params, True)(x, y)
-        >>> print(output)
-        (Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  4.80000000e+01]),
-         Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]))
-        >>> print(gradient)
-        ((Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  2.40000000e+01]),
-          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.20000000e+01])),
-         (Tensor(shape=[2], dtype=Float32, value= [ 9.00000000e+00,  2.40000000e+01]),
-          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.60000000e+01])))
+        >>> # For given network to be differentiated with both inputs and weights, there are 3 cases.
+        >>> net = nn.Dense(10, 1)
+        >>> loss_fn = nn.MSELoss()
+        >>> def forward(inputs, labels):
+        ...     logits = net(inputs)
+        ...     loss = loss_fn(logits, labels)
+        ...     return loss, logits
+        >>> inputs = Tensor(np.random.randn(16, 10).astype(np.float32))
+        >>> labels = Tensor(np.random.randn(16, 1).astype(np.float32))
+        >>> weights = net.trainable_params()
+        >>>
+        >>> # Case 1: gradient with respect to inputs.
+        >>> grad_fn = value_and_grad(forward, grad_position=0, weights=None, has_aux=True)
+        >>> (loss, logits), inputs_gradient = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(inputs.shape, inputs_gradient.shape)
+        (16, 10) (16, 10)
+        >>>
+        >>> # Case 2: gradient with respect to weights.
+        >>> grad_fn = value_and_grad(forward, grad_position=None, weights=weights, has_aux=True)
+        >>> (loss, logits), params_gradient = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(len(weights), len(params_gradient))
+        2 2
+        >>>
+        >>> # Case 3: gradient with respect to inputs and weights.
+        >>> grad_fn = value_and_grad(forward, grad_position=0, weights=weights, has_aux=False)
+        >>> (loss, logits), (inputs_gradient, params_gradient) = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(inputs.shape, inputs_gradient.shape)
+        (16, 10) (16, 10)
+        >>> print(len(weights), len(params_gradient))
+        2 2
     """
     if grad_position is None and weights is None:
         raise ValueError("`grad_position` and `weight` can not be None at the same time.")
