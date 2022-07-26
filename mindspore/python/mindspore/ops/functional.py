@@ -979,6 +979,7 @@ tensor_operator_registry.register('unsorted_segment_prod', unsorted_segment_prod
 tensor_operator_registry.register('tensor_scatter_update', tensor_scatter_update)
 tensor_operator_registry.register('tensor_scatter_mul', tensor_scatter_mul)
 tensor_operator_registry.register('tensor_scatter_div', tensor_scatter_div)
+tensor_operator_registry.register('tensor_scatter_max', P.TensorScatterMax)
 tensor_operator_registry.register('tensor_scatter_min', P.TensorScatterMin)
 tensor_operator_registry.register('tensor_scatter_sub', P.TensorScatterSub)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)

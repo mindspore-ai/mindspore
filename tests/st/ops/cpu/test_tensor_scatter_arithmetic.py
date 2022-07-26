@@ -28,6 +28,8 @@ func_map = {
     "add": ops.TensorScatterAdd,
     "sub": ops.TensorScatterSub,
     "div": ops.TensorScatterDiv,
+    "max": ops.TensorScatterMax,
+    "min": ops.TensorScatterMin,
     "mul": ops.TensorScatterMul,
 }
 
@@ -40,6 +42,8 @@ np_func_map = {
     "div": lambda a, b: a / b,
     "add": lambda a, b: a + b,
     "sub": lambda a, b: a - b,
+    "max": np.maximum,
+    "min": np.minimum,
 }
 
 
@@ -121,7 +125,7 @@ def compare_with_numpy(func, input_x, indices, updates):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.float64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
@@ -140,7 +144,7 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
@@ -165,7 +169,7 @@ def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
@@ -198,7 +202,7 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_one_value(func, data_type, index_type):
@@ -223,7 +227,7 @@ def test_tensor_scatter_arithmetic_one_value(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.int8])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_dim_check(func, data_type, index_type):
@@ -249,7 +253,7 @@ def test_tensor_scatter_arithmetic_dim_check(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int8, mstype.int16])
 def test_tensor_scatter_arithmetic_type_check(func, data_type, index_type):

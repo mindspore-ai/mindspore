@@ -232,6 +232,7 @@ const TensorScatterOpCpuKernelMode::TensorScatterSupportListType &TensorScatterO
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterAdd, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterSub, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMax, TensorScatterOpCpuKernelMode);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMin, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterDiv, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMul, TensorScatterOpCpuKernelMode);
 }  // namespace kernel
