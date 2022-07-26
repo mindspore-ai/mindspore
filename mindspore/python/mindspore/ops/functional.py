@@ -16,11 +16,13 @@
 # ============================================================================
 
 """The names of functional part are summarized here."""
+import numpy as np
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import ms_function
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn.grad.cell_grad import _JvpInner
@@ -586,6 +588,64 @@ shard_fn = Shard()
 
 def shard(fn, in_strategy, out_strategy, device="Ascend", level=0):
     return shard_fn(fn, in_strategy, out_strategy, device, level)
+
+
+@deprecated("2.0", "range", False)
+def arange(start=0, stop=None, step=1, rtype=None):
+    r"""
+    The ops.arange interface is deprecated, please use :class:`mindspore.ops.range`
+
+    Supported Platforms:
+        deprecated
+    """
+    if stop is None:
+        start, stop = 0, start
+
+    arg_map = {"start": start, "stop": stop, "step": step}
+    for arg in ("start", "stop", "step"):
+        arg_value = arg_map.get(arg)
+        if not isinstance(arg_value, int) and not isinstance(arg_value, float):
+            _raise_arange_type_error(arg, arg_value)
+    if start >= stop:
+        _raise_arange_value_error(start, stop)
+
+    if rtype is None:
+        if isinstance(start, float) or isinstance(stop, float) or isinstance(step, float):
+            rtype = mstype.float32
+        else:
+            rtype = mstype.int32
+    data = _arange(start, stop, step)
+    return _make_tensor(data, rtype)
+
+
+@constexpr
+def _make_tensor(data, rtype):
+    """Make Tensor"""
+    return Tensor(data, dtype=rtype)
+
+
+@constexpr
+def _arange(start, stop, step):
+    """Arange compute"""
+    return np.arange(start, stop, step)
+
+
+@constexpr
+def _raise_arange_type_error(arg, arg_value):
+    """
+    Raise TypeError in both graph/pynative mode.
+    """
+    raise TypeError("For mindspore.ops.arange, the argument '{}' must be int or float, but got {}."
+                    .format(arg, type(arg_value)))
+
+
+@constexpr
+def _raise_arange_value_error(start, stop):
+    """
+    Raise TypeError in both graph/pynative mode
+    """
+    raise ValueError("For mindspore.ops.arange, the argument 'start' must be < 'stop', but got 'start': {}, "
+                     "'stop': {}.".format(start, stop))
 
 
 def narrow(inputs, axis, start, length):
