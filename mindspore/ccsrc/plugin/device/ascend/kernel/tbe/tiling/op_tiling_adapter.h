@@ -51,7 +51,7 @@ class OpTilingCalculateAdapter {
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
-  void ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
+  void ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const;
   std::vector<std::tuple<std::size_t, ::ge::NodePtr>> ConvertDepends(
     const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
     ::ge::ComputeGraphPtr *ge_graph);
