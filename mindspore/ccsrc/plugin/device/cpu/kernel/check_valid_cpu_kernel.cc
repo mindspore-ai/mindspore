@@ -72,10 +72,10 @@ bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
       const size_t right_y = i * 4 + 3;
 
       bool valid_flag = false;
-      valid_flag |= std::less<T>()(anchor_box[left_x], ZERO);
-      valid_flag |= std::less<T>()(anchor_box[left_y], ZERO);
-      valid_flag |= std::less<double>()(img_width_x, static_cast<double>(anchor_box[right_x]));
-      valid_flag |= std::less<double>()(img_height_y, static_cast<double>(anchor_box[right_y]));
+      valid_flag = valid_flag || std::less<T>()(anchor_box[left_x], ZERO);
+      valid_flag = valid_flag || std::less<T>()(anchor_box[left_y], ZERO);
+      valid_flag = valid_flag || std::less<double>()(img_width_x, static_cast<double>(anchor_box[right_x]));
+      valid_flag = valid_flag || std::less<double>()(img_height_y, static_cast<double>(anchor_box[right_y]));
 
       output[i] = !valid_flag;
     }

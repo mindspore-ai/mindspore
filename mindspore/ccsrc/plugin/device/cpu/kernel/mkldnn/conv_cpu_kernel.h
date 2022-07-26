@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 

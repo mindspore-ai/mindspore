@@ -48,7 +48,6 @@ class BACKEND_EXPORT FusedSparseFtrlCpuKernelMod : public SparseOptimizerCpuKern
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
   void ResetResource() noexcept;
 
- protected:
   float lr_{0.0};
   float l1_{0.0};
   float l2_{0.0};
