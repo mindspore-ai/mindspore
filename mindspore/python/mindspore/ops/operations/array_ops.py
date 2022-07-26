@@ -7960,3 +7960,16 @@ class SegmentProd(Primitive):
         """Initialize SegmentProd"""
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['input_x', 'segment_ids'], outputs=['output'])
+
+
+class PopulationCount(Primitive):
+    r"""
+    Computes element-wise population count(a.k.a bitsum, bitcount).
+
+    Refer to :func:`mindspore.ops.population_count` for more detail.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PopulationCount"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
