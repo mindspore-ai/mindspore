@@ -36,10 +36,10 @@ abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vect
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr PartInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DiagInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_dtype = input_args[0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("input type", x_dtype, common_valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_dtype, common_valid_types, primitive->name());
 }
 }  // namespace
 
@@ -52,7 +52,10 @@ AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return abstract::MakeAbstract(DiagInferShape(primitive, input_args), PartInferType(primitive, input_args));
+
+  auto infer_type = DiagInferType(primitive, input_args);
+  auto infer_shape = DiagInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Diag, prim::kPrimDiag, DiagInfer, nullptr, true);
 }  // namespace ops
