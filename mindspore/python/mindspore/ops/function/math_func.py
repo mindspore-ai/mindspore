@@ -4634,6 +4634,94 @@ def log2(x):
     return output
 
 
+def arrange(x):
+    lists = []
+    for i in range(0, x):
+        lists.append(i)
+    return lists
+
+
+def rot90(x, k, dims):
+    """
+    Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
+    Rotation direction is from the first towards the second axis if k > 0,
+    and from the second towards the first for k < 0.
+
+    Args:
+        x (Tensor): Input tensor.
+        k (int): Number of times to rotate.
+        dims (a list or tuple): Axis to rotate.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `k` is not integer.
+        TypeError: If `dims` is not tuple of integers or list of ints.
+        ValueError: If the length of `dims` is not `2`.
+        ValueError: If any dims is out of range.
+        RuntimeError: If rotation dims are not different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[0, 1], [2, 3]])).astype(np.float32)
+        >>> k = 1
+        >>> dims = [0, 1]
+        >>> output = ops.rot90(x, k, dims)
+        >>> print(output)
+        [[1. 3.]
+        [0. 2.]]
+    """
+
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("the input x must be Tensor!")
+    if not isinstance(k, int):
+        raise TypeError("the input k must be int!")
+    if not isinstance(dims, (list, tuple)):
+        raise TypeError("the input dims must be list or tuple!")
+
+    total_dims = x.ndim
+    total_rot_dims = len(dims)
+
+    if total_rot_dims != 2:
+        raise ValueError("total rotation dims must be 2.")
+    if dims[0] == dims[1] or (dims[0] - dims[1]) == total_dims or (dims[1] - dims[0]) == total_dims:
+        raise RuntimeError("rotation dims must be different.")
+    if dims[0] >= total_dims or dims[0] < -total_dims:
+        raise ValueError("Rotation dim0 out of range, dim0 = {}".format(dims[0]))
+    if dims[1] >= total_dims or dims[1] < -total_dims:
+        raise ValueError("Rotation dim1 out of range, dim1 = {}".format(dims[1]))
+
+    k = (4 + (k % 4)) % 4
+
+    if k == 0:
+        out = x
+        return out
+    if k == 2:
+        op1 = P.ReverseV2(axis=[dims[0]])
+        output = op1(x)
+        op2 = P.ReverseV2(axis=[dims[1]])
+        out = op2(output)
+        return out
+
+    axes_list = arrange(total_dims)
+    (axes_list[dims[0]], axes_list[dims[1]]) = (axes_list[dims[1]],
+                                                axes_list[dims[0]])
+
+    if k == 1:
+        op = P.ReverseV2(axis=[dims[1]])
+        output = op(x)
+        out = output.transpose(axes_list)
+    else:
+        output = x.transpose(axes_list)
+        op = P.ReverseV2(axis=[dims[1]])
+        out = op(output)
+    return out
+
+
 def xdivy(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
@@ -5077,6 +5165,7 @@ __all__ = [
     'log1p',
     'approximate_equal',
     'frac',
-    'kron'
+    'kron',
+    'rot90'
 ]
 __all__.sort()
