@@ -20,7 +20,9 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor
-
+from mindspore.ops import functional as F
+from mindspore.ops.functional import vmap
+from mindspore.common.api import ms_function
 
 class NetDiag(nn.Cell):
     def __init__(self):
@@ -91,7 +93,7 @@ def diag_with_dynamic_shape(dtype):
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_1d_float16():
@@ -103,7 +105,7 @@ def test_diag_1d_float16():
     diag_1d(np.float16)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_1d_float32():
@@ -115,7 +117,7 @@ def test_diag_1d_float32():
     diag_1d(np.float32)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_2d_int32():
@@ -127,7 +129,7 @@ def test_diag_2d_int32():
     diag_2d(np.int32)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_2d_int64():
@@ -139,7 +141,7 @@ def test_diag_2d_int64():
     diag_2d(np.int64)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_with_dynamic_shape():
@@ -151,7 +153,7 @@ def test_diag_with_dynamic_shape():
     diag_with_dynamic_shape(np.float32)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_functional():
@@ -169,7 +171,7 @@ def test_diag_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_diag_tensor():
@@ -185,3 +187,33 @@ def test_diag_tensor():
                        [0, 2, 0],
                        [0, 0, 5]]).astype(np.float64)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_diag_vmap():
+    """
+    Feature: Diag op vmap.
+    Description: Test the vmap function of diag op.
+    Expectation: The value and shape of output are the expected values.
+    """
+    context.set_context(device_target="GPU")
+    def cal_diag(x):
+        return P.Diag()(x)
+
+    @ms_function
+    def manually_batched(xs):
+        output = []
+        for i in range(xs.shape[0]):
+            output.append(cal_diag(xs[i]))
+        return F.stack(output)
+
+    x = Tensor(np.array([[1, 2, 3],
+                         [4, 5, 6]]).astype(np.float32))
+    manually_output = manually_batched(x)
+
+    vmap_diag = vmap(cal_diag, in_axes=0, out_axes=0)
+    vmap_output = vmap_diag(x)
+
+    assert (manually_output.asnumpy() == vmap_output.asnumpy()).all()
