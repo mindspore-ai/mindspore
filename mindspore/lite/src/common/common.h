@@ -68,6 +68,8 @@ static const char *const kMSCacheSerializePath = "serialize_path";
 // weight path
 static const char *const kWeight = "weight";
 static const char *const kWeightPath = "weight_path";
+
+static const char *const kIsOptimized = "isOptimized";
 }  // namespace lite
 }  // namespace mindspore
 

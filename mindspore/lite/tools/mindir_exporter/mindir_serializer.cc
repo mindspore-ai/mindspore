@@ -23,6 +23,7 @@
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "src/common/file_utils.h"
+#include "src/common/common.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "mindspore/core/utils/file_utils.h"
 
@@ -379,6 +380,12 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
 }
 
 int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
+  mind_ir::GraphProto *graph_proto = model_proto->mutable_graph();
+  mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
+  if (attr_proto != nullptr) {
+    attr_proto->set_name(kIsOptimized);
+  }
+
   auto realpath = Common::CreatePrefixPath(output_file, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path of file " << output_file << " failed.";
