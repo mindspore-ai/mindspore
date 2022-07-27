@@ -220,6 +220,7 @@ Dropout层
     mindspore.nn.L1Loss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
+    mindspore.nn.NLLLoss
     mindspore.nn.RMSELoss
     mindspore.nn.SampledSoftmaxLoss
     mindspore.nn.SmoothL1Loss
