@@ -31,7 +31,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   abstract::AbstractTensorPtr indices =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   abstract::AbstractTensorPtr params =
@@ -101,7 +101,7 @@ TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
   constexpr int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
                                             op_name);

@@ -15,7 +15,6 @@
  */
 
 #include "ops/grad/pool_grad.h"
-#include <cctype>
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 
@@ -110,7 +109,7 @@ PadMode PoolGrad::get_pad_mode() const {
     return PadMode(GetValue<int64_t>(value_ptr));
   }
   auto attr_value_str = GetValue<std::string>(value_ptr);
-  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = pad_map.find(attr_value_str);
   if (iter == pad_map.end()) {
     MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use CALCULATED, PAD, VALID or SAME";
@@ -125,7 +124,7 @@ Format PoolGrad::get_format() const {
     return Format(GetValue<int64_t>(value_ptr));
   }
   auto attr_value_str = GetValue<std::string>(value_ptr);
-  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = dataformat_map.find(attr_value_str);
   if (iter == dataformat_map.end()) {
     MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << " use NCHW, NHWC NCDHW or NDHWC";

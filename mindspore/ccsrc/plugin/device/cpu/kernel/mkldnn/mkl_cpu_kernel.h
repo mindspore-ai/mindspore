@@ -137,7 +137,7 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
   bool first_parallel{true};
 
  public:
-  explicit mkl_threadpool(ThreadPool *tp) { tp_ = tp; }
+  explicit mkl_threadpool(ThreadPool *tp) : tp_(tp) {}
   void set_num_threads(int num) { thread_num_ = num; }
   int get_num_threads() const override { return std::min(SizeToInt(tp_->GetKernelThreadNum()), thread_num_); }
   bool get_in_parallel() const override { return !first_parallel; }

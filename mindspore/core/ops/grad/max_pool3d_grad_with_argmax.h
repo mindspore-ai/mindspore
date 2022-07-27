@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_MAX_POOL3D_GRAD_WITH_ARGMAX_H_
 #define MINDSPORE_CORE_OPS_MAX_POOL3D_GRAD_WITH_ARGMAX_H_
 
-#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>

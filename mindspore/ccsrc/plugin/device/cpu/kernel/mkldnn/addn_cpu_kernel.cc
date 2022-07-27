@@ -122,7 +122,7 @@ bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   return true;
 }
 
-void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   auto src0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (AnfAlgo::IsShapesDynamic({src0_shape, dst_shape})) {

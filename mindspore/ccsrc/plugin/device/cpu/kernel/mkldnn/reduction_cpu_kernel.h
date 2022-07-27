@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
 
-#include <memory>
 #include <vector>
 #include <map>
-#include <string>
 #include <utility>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
