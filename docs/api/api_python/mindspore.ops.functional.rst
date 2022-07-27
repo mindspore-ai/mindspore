@@ -101,6 +101,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
 
 距离函数
@@ -181,6 +182,9 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.sub
     mindspore.ops.svd
     mindspore.ops.tan
+    mindspore.ops.trunc
+    mindspore.ops.truncate_div
+    mindspore.ops.truncate_mod
     mindspore.ops.xlogy
 
 .. list-table::
@@ -391,6 +395,7 @@ Array操作
     mindspore.ops.meshgrid
     mindspore.ops.normal
     mindspore.ops.nonzero
+    mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements

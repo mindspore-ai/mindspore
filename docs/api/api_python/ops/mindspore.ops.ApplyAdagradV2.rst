@@ -1,5 +1,5 @@
-﻿mindspore.ops.ApplyAdagradV2
-=============================
+mindspore.ops.ApplyAdagradV2
+============================
 
 .. py:class:: mindspore.ops.ApplyAdagradV2(epsilon, update_slots=True)
 

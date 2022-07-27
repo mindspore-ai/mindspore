@@ -186,8 +186,11 @@ Sampling Operator
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
+    mindspore.ops.GridSampler2D
+    mindspore.ops.GridSampler3D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
+    mindspore.ops.UpsampleNearest3D
     mindspore.ops.UpsampleTrilinear3D
     
 Image Processing
@@ -291,6 +294,7 @@ Element-wise Operator
     mindspore.ops.SquareSumAll
     mindspore.ops.Sub
     mindspore.ops.Tan
+    mindspore.ops.Trunc
     mindspore.ops.TruncateDiv
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
