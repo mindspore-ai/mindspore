@@ -29,11 +29,10 @@ class BatchAssignCpuKernelMod : public BatchAssignCpuBaseMod {
   BatchAssignCpuKernelMod();
   ~BatchAssignCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
