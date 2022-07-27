@@ -2221,6 +2221,29 @@ def log1p(x):
     return F.log1p(x)
 
 
+def logit(x, eps=None):
+    r"""
+    Calculate the logit of a tensor element-wise. When eps is not None, element in 'x' is clamped to [eps, 1-eps].
+    When eps is None, input 'x' is not clamped.
+
+    `x` refer to self tensor.
+
+    .. math::
+        y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} = \begin{cases}
+        x_{i} &amp; \text{if eps is None} \\
+        \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
+        x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+        \end{cases}
+    """
+
+    if eps is None:
+        eps = -1.0
+    check_value_type('eps', eps, (float,), 'Tensor.logit')
+    return F.logit(x, eps)
+
+
 def log_matrix_determinant(x):
     """Computes the sign and the log of the absolute value of the determinant of one or more square matrices."""
     return F.log_matrix_determinant(x)

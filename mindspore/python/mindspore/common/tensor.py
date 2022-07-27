@@ -1341,6 +1341,49 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('log1p')(self)
 
+    def logit(self, eps=None):
+
+        r"""
+        Calculate the logit of a tensor element-wise. When eps is not None, element in 'x' is clamped to [eps, 1-eps].
+        When eps is None, input 'x' is not clamped.
+
+        `x` refer to self tensor.
+
+        .. math::
+            y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+            z_{i} = \begin{cases}
+            x_{i} &amp; \text{if eps is None} \\
+            \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
+            x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+            1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+            \end{cases}
+
+        Args:
+            eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.
+
+        Returns:
+            Tensor, with the same shape as the `x`.
+
+        Raises:
+            TypeError: If `eps` is not a float.
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of `x` is not float16, float32 or float64.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+            >>> output = x.logit(eps=1e-5)
+            >>> print(output)
+            [-2.1972246 -1.3862944 -0.8472978]
+        """
+        self._init_check()
+        if eps is None:
+            eps = -1.0
+        validator.check_value_type('eps', eps, (float,), 'Tensor.logit')
+        return tensor_operator_registry.get('logit')(self, eps)
+
     def log_matrix_determinant(self):
         r"""
         Computes the sign and the log of the absolute value of the determinant of one or more square matrices.

@@ -2322,6 +2322,40 @@ class Exp(Primitive):
         self.add_prim_attr("shift", 0.0)
 
 
+class Logit(Primitive):
+    r"""
+    Calculate the logit of a tensor element-wise. Element in `x` is clamped to [eps, 1-eps].
+
+    .. math::
+        y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} = \begin{cases}
+        x_{i} &amp; \text{if eps is None} \\
+        \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
+        x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+        \end{cases}
+
+    Refer to :func:`mindspore.ops.logit` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+        >>> op = ops.Logit(eps=1e-5)
+        >>> output = op(x)
+        >>> print(output)
+        [-2.1972246 -1.3862944 -0.8472978]
+    """
+
+    @prim_attr_register
+    def __init__(self, eps=-1.0):
+        """Initialize Exp"""
+        self.add_prim_attr("eps", eps)
+        validator.check_value_type("eps", eps, [float], self.name)
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class ReduceStd(Primitive):
     """
     Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.

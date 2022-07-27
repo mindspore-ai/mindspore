@@ -51,6 +51,21 @@ class ACosGrad(Primitive):
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
+class LogitGrad(Primitive):
+    """
+    Computes LogitGrad of input element-wise.
+
+    Returns:
+        Tensor, has the same type as input.
+    """
+    @prim_attr_register
+    def __init__(self, eps=-1.0):
+        """Initialize Exp"""
+        self.init_prim_io_names(inputs=['grad', 'input'], outputs=['dx'])
+        validator.check_value_type("eps", eps, [float], self.name)
+        self.add_prim_attr('eps', eps)
+
+
 class AcoshGrad(Primitive):
     """Performs grad of Acosh operation."""
 
