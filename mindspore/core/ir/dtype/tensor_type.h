@@ -152,6 +152,8 @@ class MS_CORE_API SparseTensorType : public Object {
   std::string ToString() const;
   std::string ToReprString() const;
   std::string DumpText() const;
+  const TypePtrList ElementsClone() const;
+  const bool ElementsEqual(const SparseTensorType &other) const;
   TypePtr DeepCopy() const;
 
  private:
@@ -207,8 +209,7 @@ class MS_CORE_API COOTensorType final : public SparseTensorType {
   /// \brief Constructor for COOTensorType.
   ///
   /// \param[in] ele The element of COOTensorType.
-  explicit COOTensorType(const TypePtrList &obj)
-      : SparseTensorType(kObjectTypeCOOTensorType, obj), elements_(obj.begin(), obj.end()) {}
+  explicit COOTensorType(const TypePtrList &obj) : SparseTensorType(kObjectTypeCOOTensorType, obj) {}
 
   /// \brief Destructor of COOTensorType.
   ~COOTensorType() override = default;
@@ -220,9 +221,6 @@ class MS_CORE_API COOTensorType final : public SparseTensorType {
   TypeId generic_type_id() const override { return kObjectTypeCOOTensorType; }
   TypePtr DeepCopy() const override;
   bool operator==(const Type &other) const override;
-
- private:
-  TypePtrList elements_;
 };
 using COOTensorTypePtr = std::shared_ptr<COOTensorType>;
 
@@ -235,8 +233,7 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
   /// \brief Constructor for CSRTensorType.
   ///
   /// \param[in] ele The element of CSRTensorType.
-  explicit CSRTensorType(const TypePtrList &obj)
-      : SparseTensorType(kObjectTypeCSRTensorType, obj), elements_(obj.begin(), obj.end()) {}
+  explicit CSRTensorType(const TypePtrList &obj) : SparseTensorType(kObjectTypeCSRTensorType, obj) {}
 
   /// \brief Destructor of CSRTensorType.
   ~CSRTensorType() override = default;
@@ -247,9 +244,6 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
   TypeId generic_type_id() const override { return kObjectTypeCSRTensorType; }
   TypePtr DeepCopy() const override;
   bool operator==(const Type &other) const override;
-
- private:
-  TypePtrList elements_;
 };
 using CSRTensorTypePtr = std::shared_ptr<CSRTensorType>;
 }  // namespace mindspore
