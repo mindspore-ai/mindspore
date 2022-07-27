@@ -247,10 +247,10 @@ class DimReduce(Cell):
             _save_weight(self.gk_last, self.gk_last_back)
             _save_weight(self.bk, self.bk_back)
 
-        clone = self._res_loss(old_grad, grad_proj, weight, weight_clone, rho)
+        clone = self._res_loss(old_grad, grad_proj, weight, weight_clone, rho, dn)
         return F.depend(loss, clone)
 
-    def _res_loss(self, old_grad, grad_proj, weight, weight_clone, rho):
+    def _res_loss(self, old_grad, grad_proj, weight, weight_clone, rho, dn):
         """update loss"""
         update_grad = self.hyper_map(F.partial(_update_grad_res_momentum, self.gamma, self.alpha),
                                      self.grad_res_momentum, old_grad, grad_proj)
