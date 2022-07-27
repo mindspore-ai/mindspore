@@ -144,7 +144,7 @@ class NoRepeatNGram(PrimitiveWithInfer):
         TypeError: If neither `state_seq` nor `log_probs` is a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> no_repeat_ngram = ops.NoRepeatNGram(ngram_size=3)
