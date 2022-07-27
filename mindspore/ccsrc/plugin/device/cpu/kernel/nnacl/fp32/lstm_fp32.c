@@ -216,12 +216,12 @@ void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight,
 
 void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *cell_gate, float *output_gate,
                   const float *state_weight, const float *state_bias, float *hidden_state, float *cell_state,
-                  float *buffer[7], const LstmParameter *lstm_param) {
-  float *packed_state = buffer[2];
-  float *state_gate = buffer[3];
-  float *cell_buffer = buffer[4];
-  float *hidden_buffer = buffer[5];
-  float *packed_output = buffer[6];
+                  float *buffer[C6NUM], const LstmParameter *lstm_param) {
+  float *packed_state = buffer[1];
+  float *state_gate = buffer[C2NUM];
+  float *cell_buffer = buffer[C3NUM];
+  float *hidden_buffer = buffer[C4NUM];
+  float *packed_output = buffer[C5NUM];
   bool is_vec = lstm_param->batch_ == 1;
   // state * weight
   if (is_vec) {
@@ -271,8 +271,8 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
 
 void LstmUnidirectional(float *output, const float *packed_input, const float *weight_i, const float *weight_h,
                         const float *input_bias, const float *state_bias, float *hidden_state, float *cell_state,
-                        float *buffer[7], const LstmParameter *lstm_param, bool is_backward) {
-  float *gate = buffer[1];
+                        float *buffer[C6NUM], const LstmParameter *lstm_param, bool is_backward) {
+  float *gate = buffer[0];
   for (int i = 0; i < 4; i++) {
     const float *weight_loop = weight_i + lstm_param->input_size_ * lstm_param->input_col_align_ * i;
     const float *bias_loop = input_bias + lstm_param->input_col_align_ * i;
@@ -299,10 +299,11 @@ void LstmUnidirectional(float *output, const float *packed_input, const float *w
 }
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *input_bias,
-          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[7],
+          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[C7NUM],
           const LstmParameter *lstm_param) {
   // forward
   float *packed_input = buffer[0];
+  buffer += 1;
   PackLstmInput(input, packed_input, lstm_param->seq_len_ * lstm_param->batch_, lstm_param->input_size_);
   LstmUnidirectional(output, packed_input, weight_i, weight_h, input_bias, state_bias, hidden_state, cell_state, buffer,
                      lstm_param, false);
