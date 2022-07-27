@@ -23,6 +23,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/strategy.h"
 #include "utils/log_adapter.h"
@@ -253,5 +254,7 @@ Shapes OneHotInfo::InferParamStrategy(const Shapes &default_strategy) {
   ret.push_back(tmp);
   return ret;
 }
+
+REGISTER(OneHotInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -37,7 +37,7 @@ namespace mindspore {
 namespace parallel {
 namespace {
 struct InStrategyValueRegister {
-  InStrategyValueRegister() {
+  InStrategyValueRegister() noexcept {
     AnfDumpHandler::SetInStrategyValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
       auto operator_info = node->user_data<parallel::OperatorInfo>();
       if (operator_info == nullptr) {
@@ -55,7 +55,7 @@ struct InStrategyValueRegister {
 } in_regist;
 
 struct InStrategyStageValueRegister {
-  InStrategyStageValueRegister() {
+  InStrategyStageValueRegister() noexcept {
     AnfDumpHandler::SetInStrategyStageValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
       auto operator_info = node->user_data<parallel::OperatorInfo>();
       if (operator_info == nullptr) {
@@ -73,7 +73,7 @@ struct InStrategyStageValueRegister {
 } in_stage_regist;
 
 struct OutStrategyValueRegister {
-  OutStrategyValueRegister() {
+  OutStrategyValueRegister() noexcept {
     AnfDumpHandler::SetOutStrategyValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
       auto operator_info = node->user_data<parallel::OperatorInfo>();
       if (operator_info == nullptr) {
@@ -286,7 +286,7 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
   if (g_dev_list_size == dev_matrix_size) {
     repeated_calc_num_ = 1;
   } else if (g_dev_list_size % dev_matrix_size == 0) {
-    repeated_calc_num_ = ((int64_t)(g_dev_list_size / dev_matrix_size));
+    repeated_calc_num_ = g_dev_list_size / dev_matrix_size;
   } else {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategy_->GetInputDim()) << ", it requires "
                   << dev_matrix_size << " devices, "
@@ -307,7 +307,7 @@ void OperatorInfo::SetRepeatedCalcDevMatrix() {
   if (repeated_num_in_dev_matrix_right_) {
     dev_matrix_shape_.push_back(repeated_calc_num_);
   } else {
-    (void)dev_matrix_shape_.insert(dev_matrix_shape_.begin(), repeated_calc_num_);
+    (void)dev_matrix_shape_.insert(dev_matrix_shape_.cbegin(), repeated_calc_num_);
   }
 }
 
@@ -645,7 +645,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   return SUCCESS;
 }
 
-Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *groups) {
+Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::vector<Group> *groups) {
   if (groups == nullptr) {
     MS_LOG(ERROR) << name_ << ": The group is null.";
     return FAILED;
@@ -701,7 +701,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
       return FAILED;
     }
     Group mirror_group;
-    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group)) {
+    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group) != SUCCESS) {
       MS_LOG(ERROR) << name_
                     << ": Create communication group for mirror in optimizer parallel failed,"
                        " the rank_list is: "
@@ -905,8 +905,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     return FAILED;
   }
 
-  used_devices_ =
-    ((int64_t)(std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>())));
+  used_devices_ = std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
 
   // must be after InferDevMatrixShape
   if (InferRepeatedCalcInfo() != SUCCESS) {
@@ -928,7 +927,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     MS_LOG(ERROR) << name_ << ": InferTensorInfo failed.";
     return FAILED;
   }
-  auto stage_dev_num = g_device_manager->stage_device_num();
+  auto stage_dev_num = LongToSize(g_device_manager->stage_device_num());
   if ((stage_dev_num & (stage_dev_num - 1)) == 0) {
     return SUCCESS;
   }
@@ -1002,35 +1001,35 @@ std::vector<std::shared_ptr<Edge>> OperatorInfo::GetAlivePrevEdges() {
   return ret;
 }
 
-void OperatorInfo::ReplacePreEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
+void OperatorInfo::ReplacePreEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplacePreEdge: the op is null.";
     return;
   }
   for (auto &edge : prev_edges_) {
     if (edge->prev_operator() == op) {
-      edge = replace_edge;
+      edge = new_edge;
       return;
     }
   }
   MS_LOG(EXCEPTION) << name_ << ": Replace edge failed: no edge has been replaced";
 }
 
-void OperatorInfo::ReplaceSuccEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
+void OperatorInfo::ReplaceSuccEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplaceSuccEdge: the op is null.";
     return;
   }
   for (auto &edge : succ_edges_) {
     if (edge->next_operator() == op) {
-      edge = replace_edge;
+      edge = new_edge;
       return;
     }
   }
   MS_LOG(EXCEPTION) << name_ << ": Replace edge failed: no edge has been replaced";
 }
 
-void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
+void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplacePreEdges: the op is null.";
     return;
@@ -1041,12 +1040,11 @@ void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, cons
       update_pre_edges.push_back(edge);
     }
   }
-  update_pre_edges.push_back(replace_edge);
+  update_pre_edges.push_back(new_edge);
   prev_edges_ = update_pre_edges;
 }
 
-void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
-                                    const std::shared_ptr<Edge> &replace_edge) {
+void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplaceSuccEdges: the op is null";
     return;
@@ -1057,7 +1055,7 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
       update_pre_edges.push_back(edge);
     }
   }
-  update_pre_edges.push_back(replace_edge);
+  update_pre_edges.push_back(new_edge);
   succ_edges_ = update_pre_edges;
 }
 
@@ -1217,8 +1215,8 @@ Status GenerateStrategiesForBroadcastLeft(int64_t stage_id, const Shapes &inputs
     size_t size_diff = inputs_shape[1].size() - inputs_shape[0].size();
 
     // erase the unnecessary part
-    (void)input0_strategy.erase(input0_strategy.begin(),
-                                input0_strategy.begin() + static_cast<different_type>(size_diff));
+    (void)input0_strategy.erase(input0_strategy.cbegin(),
+                                input0_strategy.cbegin() + static_cast<different_type>(size_diff));
 
     // handle the case likes ([1, c, d], [a, b, c, d])
     for (size_t i = 0; i < inputs_shape[0].size(); ++i) {
@@ -1268,8 +1266,8 @@ Status GenerateStrategiesForBroadcastRight(int64_t stage_id, const Shapes &input
     size_t size_diff = inputs_shape[0].size() - inputs_shape[1].size();
 
     // erase the unnecessary part
-    (void)input1_strategy.erase(input1_strategy.begin(),
-                                input1_strategy.begin() + static_cast<different_type>(size_diff));
+    (void)input1_strategy.erase(input1_strategy.cbegin(),
+                                input1_strategy.cbegin() + static_cast<different_type>(size_diff));
 
     // handle the case likes ([a, b, c, d], [1, c, d])
     for (size_t i = 0; i < inputs_shape[1].size(); ++i) {
@@ -1342,12 +1340,12 @@ Status GenerateStrategiesForBroadcastBoth(int64_t stage_id, const Shapes &inputs
 
 Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
                                                   const Shapes &splittable_inputs,
-                                                  std::vector<StrategyPtr> *const sp_vector) {
+                                                  std::vector<StrategyPtr> *sp_vector) {
   Shape combined_inputs_shape, combined_splittable_inputs, combined_partitions;
   for (size_t j = 0; j < inputs_shape.size(); ++j) {
-    (void)combined_inputs_shape.insert(combined_inputs_shape.end(), inputs_shape[j].begin(), inputs_shape[j].end());
-    (void)combined_splittable_inputs.insert(combined_splittable_inputs.end(), splittable_inputs[j].begin(),
-                                            splittable_inputs[j].end());
+    (void)combined_inputs_shape.insert(combined_inputs_shape.cend(), inputs_shape[j].cbegin(), inputs_shape[j].cend());
+    (void)combined_splittable_inputs.insert(combined_splittable_inputs.cend(), splittable_inputs[j].cbegin(),
+                                            splittable_inputs[j].cend());
   }
   std::function<void(uint64_t, size_t)> recursive = [&stage_id, &dev_num, &sp_vector, &combined_inputs_shape,
                                                      &combined_splittable_inputs, &combined_partitions, &recursive,
@@ -1399,8 +1397,7 @@ Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_n
 // NOTE: This implementation would partition all splittable dimensions in all inputs. Some operators requiring
 // specific dimensions in inputs have the identical partition should have individual implementation.
 Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
-                                              const Shapes &splittable_inputs,
-                                              std::vector<StrategyPtr> *const sp_vector) {
+                                              const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
     return FAILED;
@@ -1524,7 +1521,7 @@ Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inpu
 // or ([a, b, c, d], [b, c, d]) or ([a, b, c, d], [1, c, d])
 // or ([a, 1], [1, b]) or ([a, b, c, d], [1, b, c, d]) or ([a, b, c, 1], [1, b, c, d])
 Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
-                                       std::vector<StrategyPtr> *const sp_vector) {
+                                       std::vector<StrategyPtr> *sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
     return FAILED;
@@ -1591,7 +1588,7 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
     result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
-  BreakingTiesForPerferringDataParallel(strategy, result);
+  BreakingTiesForPreferringDataParallel(strategy, result);
   // refine communication cost calculation for practice
   RefineForPracticalCost(result, false);
   result->communication_forward_ = result->communication_without_parameter_;
@@ -1609,7 +1606,7 @@ CostPtrList OperatorInfo::GetCostByStrategyPtr(const StrategyPtr &strategy) {
     strategy_cost_.begin(), strategy_cost_.end(),
     [&](const std::shared_ptr<StrategyWithCost> &stra_cost) { return stra_cost->strategy_ptr == strategy; });
   if (target == strategy_cost_.end()) {
-    MS_LOG(ERROR) << "There is no StrategyWithCost with a strategy";
+    MS_LOG(EXCEPTION) << "There is no StrategyWithCost with a strategy";
   }
   return (*target)->cost_list;
 }
@@ -1961,7 +1958,7 @@ Status OperatorInfo::set_outputs_type(const std::vector<TypePtr> &outputs_type) 
   return SUCCESS;
 }
 
-void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr &stra, const CostPtr &cost) {
+void OperatorInfo::BreakingTiesForPreferringDataParallel(const StrategyPtr &stra, const CostPtr &cost) const {
   if (!stra->GetInputDim().empty() && !stra->GetInputDim()[0].empty()) {
     if (stra->GetInputDim()[0][0] == stage_device_size_) {
       if (cost->computation_cost_ > 1.0) {

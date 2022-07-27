@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/ops_info/kldiv_loss_info.h"
+
 #include <utility>
 
-#include "frontend/parallel/ops_info/kldiv_loss_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {
@@ -132,5 +134,7 @@ Status KLDivLossInfo::InferForwardCommunication() {
 }
 
 void KLDivLossInfo::ReComputeBatchSplitFlagList() { split_flag_list_.assign(inputs_shape_.size(), true); }
+
+REGISTER(KLDivLossInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 
 #include "frontend/parallel/ops_info/random_choice_with_mask_info.h"
 #include <algorithm>
+#include "frontend/parallel/dynamic_creator.h"
 
 namespace mindspore {
 namespace parallel {
@@ -118,5 +119,7 @@ Status RandomChoiceWithMaskInfo::InitForCostModel(const StrategyPtr &strategy, c
 }
 
 void RandomChoiceWithMaskInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = false; }
+
+REGISTER(RandomChoiceWithMaskInfo);
 }  // namespace parallel
 }  // namespace mindspore

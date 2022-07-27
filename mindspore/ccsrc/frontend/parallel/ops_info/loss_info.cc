@@ -22,6 +22,7 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
@@ -132,5 +133,7 @@ std::vector<StrategyPtr> SoftmaxCrossEntropyWithLogitsInfo::GenerateOpStrategies
 Status SoftmaxCrossEntropyWithLogitsInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
+
+REGISTER(SoftmaxCrossEntropyWithLogitsInfo);
 }  // namespace parallel
 }  // namespace mindspore

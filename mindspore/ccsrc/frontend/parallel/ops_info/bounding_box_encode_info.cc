@@ -16,6 +16,8 @@
 
 #include "frontend/parallel/ops_info/bounding_box_encode_info.h"
 
+#include "frontend/parallel/dynamic_creator.h"
+
 namespace mindspore {
 namespace parallel {
 Status BoundingBoxEncodeInfo::CheckStrategy(const StrategyPtr &strategy) {
@@ -117,5 +119,7 @@ void BoundingBoxEncodeInfo::ReComputeBatchSplitFlagList() {
   anchor_box_shape[0] == 1 ? split_flag_list_[0] = false : split_flag_list_[0] = true;
   gt_box_shape[0] == 1 ? split_flag_list_[1] = false : split_flag_list_[1] = true;
 }
+
+REGISTER(BoundingBoxEncodeInfo);
 }  // namespace parallel
 }  // namespace mindspore

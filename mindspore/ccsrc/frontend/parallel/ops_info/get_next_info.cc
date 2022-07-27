@@ -23,6 +23,7 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -225,5 +226,7 @@ std::vector<StrategyPtr> GetNextInfo::GenerateOpStrategies(int64_t stage_id) {
   sp_vector.push_back(sp);
   return sp_vector;
 }
+
+REGISTER(GetNextInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -35,9 +35,9 @@ class SplitInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<SplitCost>()) {}
   ~SplitInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
   Status GetAttrs() override;

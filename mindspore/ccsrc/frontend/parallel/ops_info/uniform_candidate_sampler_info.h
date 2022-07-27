@@ -43,10 +43,9 @@ class UniformCandidateSamplerInfo : public OperatorInfo {
         remove_accidental_hits_(false) {}
   ~UniformCandidateSamplerInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
-  Status InferAsLossDivisor() override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
@@ -55,10 +54,11 @@ class UniformCandidateSamplerInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferAsLossDivisor() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 
  private:
-  Status GetUniformSamplerAttrBool(const std::string &argsy, bool *value);
+  Status GetUniformSamplerAttrBool(const std::string &args, bool *value);
   Status GetUniformSamplerAttrInt64(const std::string &args, int64_t *value);
   int64_t num_sampled_;
   int64_t num_true_;

@@ -24,6 +24,7 @@
 #include "ir/value.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/device_matrix.h"
@@ -286,5 +287,7 @@ void DropoutDoMaskInfo::ReplaceNodeInputOrAttrs() {
     ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
   }
 }
+
+REGISTER(DropoutDoMaskInfo);
 }  // namespace parallel
 }  // namespace mindspore

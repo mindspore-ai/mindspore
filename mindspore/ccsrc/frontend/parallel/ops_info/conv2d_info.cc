@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -1421,5 +1422,9 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
 }
 
 void Conv2DBackpropInputInfo::ReplaceNodeInputOrAttrs() { UpdateOutShape(); }
+
+REGISTER(Conv2DInfo);
+REGISTER(Conv2DBackpropInputInfo);
+REGISTER(Conv2DTransposeInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -22,6 +22,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
@@ -179,7 +180,7 @@ Status ReshapeInfo::InferTensorMap() {
 
   Shape tensor_map_index_input;
   for (size_t j = 0; j < inputs_shape_[0].size(); ++j) {
-    tensor_map_index_input.push_back((int64_t)(inputs_shape_[0].size() - j - 1));
+    tensor_map_index_input.push_back(SizeToLong(inputs_shape_[0].size() - j - 1));
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
@@ -410,7 +411,7 @@ void ReshapeInfo::SetCostForReshape(const mindspore::parallel::StrategyPtr &stra
     result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
-  BreakingTiesForPerferringDataParallel(strategy, result);
+  BreakingTiesForPreferringDataParallel(strategy, result);
   // refine communication cost calculation for practice
   RefineForPracticalCost(result, false);
 
@@ -425,7 +426,7 @@ std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t stage_id) {
     MS_LOG(EXCEPTION) << name_ << ": Inputs shape size or is empty";
   }
   Shape input0_split;
-  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size(), 1);
+  (void)input0_split.insert(input0_split.cend(), inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
   // strategy used only in the input node is parameter,
   // in other case, use the input node's output_layout as input_layout.
@@ -637,5 +638,7 @@ TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) const {
   const auto &swc = strategy_cost_[LongToSize(swc_index)];
   return std::move(swc->outputs_ptr[0].tensor_layout());
 }
+
+REGISTER(ReshapeInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/ops_info/lin_space_info.h"
+
 #include <utility>
 
-#include "frontend/parallel/ops_info/lin_space_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
@@ -172,5 +174,7 @@ Status LinSpaceInfo::InferSliceId() {
   }
   return SUCCESS;
 }
+
+REGISTER(LinSpaceInfo);
 }  // namespace parallel
 }  // namespace mindspore

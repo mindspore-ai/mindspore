@@ -38,9 +38,10 @@ class SliceInfo : public OperatorInfo {
         slice_axis_(-1) {}
   ~SliceInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -49,7 +50,6 @@ class SliceInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  private:
   Status GetInput(const ValuePtr &input_value, std::vector<int64_t> *input);

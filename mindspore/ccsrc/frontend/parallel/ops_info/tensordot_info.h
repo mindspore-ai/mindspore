@@ -44,9 +44,9 @@ class TensorDotInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorDotCost>()) {}
   ~TensorDotInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &) override;
   Status PrepareStrategy(int32_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
                          size_t input1_shape_size, StrategyPtr *sp);
 

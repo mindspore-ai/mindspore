@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/ops_info/crop_and_resize_info.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
@@ -231,5 +232,7 @@ Status CropAndResizeInfo::InferMirrorOps() {
   (void)mirror_ops_.emplace_back(std::move(op_for_crop_size));
   return SUCCESS;
 }
+
+REGISTER(CropAndResizeInfo);
 }  // namespace parallel
 }  // namespace mindspore
