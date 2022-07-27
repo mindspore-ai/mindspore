@@ -114,7 +114,7 @@ ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_co
   return control_actors;
 }
 
-std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info) {
+std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info) const {
   std::vector<SwitchActorPtr> switch_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;
 
@@ -213,7 +213,7 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
   }
 }
 
-std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
+std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) const {
   std::vector<GatherActorPtr> gather_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -250,7 +250,8 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
   return gather_actors;
 }
 
-std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const GraphCompilerInfo &graph_compiler_info) {
+std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(
+  const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
   const auto &call_node_to_func_graphs = parser->call_node_to_func_graphs_;
@@ -315,7 +316,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
   return entrance_actors;
 }
 
-std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompilerInfo &graph_compiler_info) {
+std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompilerInfo &graph_compiler_info) const {
   std::vector<ExitActorPtr> exit_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -386,7 +387,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
   return exit_actors;
 }
 
-std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphCompilerInfo &graph_compiler_info) {
+std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphCompilerInfo &graph_compiler_info) const {
   std::vector<StackActorPtr> stack_actors;
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
@@ -436,7 +437,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
 }
 
 void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
-                                                         std::vector<StackActorPtr> *const stack_actors) {
+                                                         std::vector<StackActorPtr> *const stack_actors) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
 
@@ -529,7 +530,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
   }
 }
 
-void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) {
+void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
   MS_LOG(DEBUG) << "Control node scheduler link start.";
@@ -599,7 +600,7 @@ void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_
   }
 }
 
-void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_set) {
+void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_set) const {
   if (control_actor_set == nullptr) {
     return;
   }
@@ -1397,7 +1398,7 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
     MS_EXCEPTION_IF_NULL(base_node);
     auto dynamic_shape_depends = abstract::GetValueDependArgIndices(base_node);
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
-      auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
+      auto input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
       MS_EXCEPTION_IF_NULL(input_node);
       KernelWithIndex from_kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       const AnfNodePtr real_input_node = from_kernel_with_index.first;
@@ -1435,7 +1436,7 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
       size_t from_index = from_actor->FetchNodePosition(front_node_with_index);
       MS_LOG(DEBUG) << "Link data arrow from actor:" << from_actor->GetAID()
                     << " to custom actor:" << custom_actor->GetAID();
-      SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_index, *iter);
+      SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_index, LongToSize(*iter));
     }
   }
 }

@@ -91,7 +91,7 @@ class ControlActor : public MemoryAwareActor {
   void GetAllDeviceTensors(const OpPartialPtr &op_partial, std::vector<DeviceTensor *> *device_tensors);
   void GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter,
                            std::vector<DeviceTensor *> *device_tensors);
-  void IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data);
+  void IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) const;
   void IncreaseDynamicRefCount(const OpPartialPtr &op_partial);
   void IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op_real_parameter);
 

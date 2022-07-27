@@ -86,25 +86,25 @@ class DataPrepareActor : public DebugAwareActor {
 
   // Prepare the device data for persistent device tensor of weight node from host tensor.
   void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node, const TensorPtr &tensor,
-                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   // Prepare the device data for persistent device tensor of value node.
   void PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
-                               const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                               const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
-                                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
 
   // The data prepare in the control flow scene.
   // If the parameters in the root graph are only used by the control node, these parameters will not be initialized
   // by the kernel graph, and addresses need to be specially allocated for these parameters.
   void PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
                                               const std::vector<TensorPtr> &tensors,
-                                              OpContext<DeviceTensor> *const context);
+                                              OpContext<DeviceTensor> *const context) const;
   void PrepareHostTensorQueueForControlNode(const std::vector<TensorPtr> &tensors,
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
-                                      OpContext<DeviceTensor> *const context);
+                                      OpContext<DeviceTensor> *const context) const;
 
   // The device tensor stores may exist the two device tensors and need copy data in the heterogeneous scene.
   void CopyDataFromDeviceTensorStore(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,

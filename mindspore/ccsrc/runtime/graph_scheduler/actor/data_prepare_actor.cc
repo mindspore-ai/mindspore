@@ -15,7 +15,7 @@
  */
 
 #include <algorithm>
-
+#include <set>
 #include "runtime/graph_scheduler/actor/data_prepare_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
@@ -123,8 +123,8 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
     (void)values->emplace_back(csr_tensor->GetIndptr());
     (void)values->emplace_back(csr_tensor->GetIndices());
     (void)values->emplace_back(csr_tensor->GetValues());
-    std::transform(csr_tensor->shape().begin(), csr_tensor->shape().end(), std::back_inserter(*values),
-                   [](int64_t n) { return std::make_shared<Int64Imm>(n); });
+    (void)std::transform(csr_tensor->shape().begin(), csr_tensor->shape().end(), std::back_inserter(*values),
+                         [](int64_t n) { return std::make_shared<Int64Imm>(n); });
   } else if (value->isa<tensor::COOTensor>()) {
     auto coo_tensor = value->cast<tensor::COOTensorPtr>();
     MS_EXCEPTION_IF_NULL(coo_tensor);
@@ -132,8 +132,8 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
     MS_EXCEPTION_IF_NULL(coo_tensor->GetValues());
     (void)values->emplace_back(coo_tensor->GetIndices());
     (void)values->emplace_back(coo_tensor->GetValues());
-    std::transform(coo_tensor->shape().begin(), coo_tensor->shape().end(), std::back_inserter(*values),
-                   [](int64_t n) { return std::make_shared<Int64Imm>(n); });
+    (void)std::transform(coo_tensor->shape().begin(), coo_tensor->shape().end(), std::back_inserter(*values),
+                         [](int64_t n) { return std::make_shared<Int64Imm>(n); });
   } else {
     (void)values->emplace_back(value);
   }
@@ -572,7 +572,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
 void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value,
                                                      const AnfNodePtr &front_node, const DeviceContext *device_context,
-                                                     OpContext<DeviceTensor> *const context) {
+                                                     OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node_value);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -607,7 +607,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
 
 void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &node_with_index,
                                                       const DeviceContext *device_context,
-                                                      OpContext<DeviceTensor> *const context) {
+                                                      OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(node_with_index.first);
@@ -666,7 +666,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
 // Prepare the device data for persistent device tensor of value node.
 void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
                                                const DeviceContext *device_context,
-                                               OpContext<DeviceTensor> *const context) {
+                                               OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -743,7 +743,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
 // Prepare the device data for persistent device tensor of weight node from host tensor.
 void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node,
                                                 const TensorPtr &tensor, const DeviceContext *device_context,
-                                                OpContext<DeviceTensor> *const context) {
+                                                OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -814,7 +814,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
 
 void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
                                                               const std::vector<TensorPtr> &tensors,
-                                                              OpContext<DeviceTensor> *const context) {
+                                                              OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(control_node_parser);
   if (!control_node_parser->IsInited()) {
     return;
