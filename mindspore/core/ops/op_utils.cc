@@ -432,8 +432,9 @@ ValuePtr EvalShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrLis
 }
 }  // namespace
 
-ShapeVector GetShapeValue(const AbstractBasePtr &arg) {
+ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
   auto abs_value = arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(abs_value);
   if (arg->isa<abstract::AbstractTensor>()) {
     auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
     if (abs_value->isa<tensor::Tensor>()) {
@@ -462,7 +463,11 @@ ShapeVector GetShapeValue(const AbstractBasePtr &arg) {
     auto out_shape = GetValue<std::vector<int64_t>>(abs_value);
     return out_shape;
   }
-  MS_EXCEPTION(TypeError) << "Input arg must be abstract tensor or tuple.";
+
+  auto size_type = arg->BuildType();
+  MS_EXCEPTION_IF_NULL(size_type);
+  MS_EXCEPTION(TypeError) << "For " << primitive->name() << "Input arg must be abstract tensor or tuple, but got"
+                          << size_type->ToString() << ".";
 }
 
 ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {

@@ -102,6 +102,31 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
   return op_info;
 }
 
+inline std::string GetPrimitiveName(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return "";
+  }
+
+  return AnfUtils::GetCNodeName(node);
+}
+
+inline void GetRangeByShape(const AnfNodePtr &anf_node, const ShapeVector &shape, RangePair *range) {
+  constexpr int64_t kConv2DMaxShape = 4096;
+  auto name = GetPrimitiveName(anf_node);
+  for (auto val : shape) {
+    if (val < 0) {
+      // for "Conv2Dxxx" operators, the upper bound of range can not exceed 4096
+      if (name.find("Conv2D") != std::string::npos) {
+        range->emplace_back(std::make_pair(1L, kConv2DMaxShape));
+      } else {
+        range->emplace_back(std::make_pair(1L, -1L));
+      }
+    } else {
+      range->emplace_back(std::make_pair(val, val));
+    }
+  }
+}
+
 RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index,
                                                     const std::string &def_format, const TypeId &type) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -126,10 +151,7 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
     auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
     MS_EXCEPTION_IF_NULL(prev_node.first);
     auto shape = common::AnfAlgo::GetOutputInferShapeSigned(prev_node.first, prev_node.second);
-    for (auto val : shape) {
-      auto range = val < 0 ? std::make_pair(1L, -1L) : std::make_pair(val, val);
-      ret.emplace_back(range);
-    }
+    GetRangeByShape(anf_node, shape, &ret);
   } else {
     for (size_t i = 0; i < input_range_min.size(); i++) {
       ret.emplace_back(input_range_min[i], input_range_max[i]);
@@ -157,12 +179,10 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
   std::string reshape_type = AnfAlgo::GetOutputReshapeType(anf_node, index);
   trans::ShapeRangeTransfer shapeRangeTransfer;
   RangePair ret;
+
   if (output_range_min.empty() && output_range_max.empty()) {
     auto shape = common::AnfAlgo::GetOutputInferShapeSigned(anf_node, index);
-    for (auto val : shape) {
-      auto range = val < 0 ? std::make_pair(1L, -1L) : std::make_pair(val, val);
-      ret.emplace_back(range);
-    }
+    GetRangeByShape(anf_node, shape, &ret);
   } else {
     for (size_t i = 0; i < output_range_min.size(); i++) {
       ret.emplace_back(output_range_min[i], output_range_max[i]);

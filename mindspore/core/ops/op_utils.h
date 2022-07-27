@@ -71,7 +71,7 @@ bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs);
 // Ops like DynamicBroadcastTo or Reshape can directly get the shape value
 // from input which represents shape by invoking this function
 // Do not support input with type of AbstractTuple of AbstractTensor
-ShapeVector GetShapeValue(const AbstractBasePtr &input_arg);
+ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg);
 
 // Infer shape value of make-shape op that only transform shapes, e.g. Concat, Stack, StridedSlice
 // Do not support op with multiple outputs for now
