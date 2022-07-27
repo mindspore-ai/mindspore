@@ -17,6 +17,7 @@
 #include "ops/edit_distance.h"
 #include <map>
 #include <set>
+#include <vector>
 #include <string>
 #include <algorithm>
 #include "ops/op_utils.h"
