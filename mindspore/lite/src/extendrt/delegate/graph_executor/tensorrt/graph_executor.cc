@@ -34,8 +34,10 @@ bool TensorRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vecto
   return true;
 }
 
-static std::shared_ptr<device::GraphExecutor> TensorRTGraphExecutorCreator() {
-  return std::make_shared<TensorRTGraphExecutor>();
+static std::shared_ptr<device::GraphExecutor> TensorRTGraphExecutorCreator(
+  const std::shared_ptr<mindspore::DelegateConfig> &config) {
+  MS_EXCEPTION_IF_NULL(config);
+  return std::make_shared<TensorRTGraphExecutor>(config->GetContext());
 }
 
 REG_GRAPH_EXECUTOR(kGPU, tensorrt_provider, TensorRTGraphExecutorCreator);

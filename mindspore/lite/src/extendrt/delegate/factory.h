@@ -24,8 +24,10 @@
 #include "utils/hash_map.h"
 
 #include "extendrt/delegate/graph_executor/factory.h"
+#include "extendrt/delegate/graph_executor/type.h"
 
 namespace mindspore {
+typedef std::shared_ptr<Delegate> (*DelegateCreator)(const std::shared_ptr<mindspore::DelegateConfig> &config);
 class DelegateRegistry {
  public:
   DelegateRegistry() = default;
@@ -36,11 +38,10 @@ class DelegateRegistry {
     return &instance;
   }
 
-  void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
-                   std::function<std::shared_ptr<Delegate>()> creator) {
+  void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator) {
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
-      HashMap<std::string, std::function<std::shared_ptr<Delegate>()>> map;
+      HashMap<std::string, DelegateCreator> map;
       map[provider] = creator;
       creator_map_[device_type] = map;
       return;
@@ -48,9 +49,10 @@ class DelegateRegistry {
     it->second[provider] = creator;
   }
 
-  std::shared_ptr<Delegate> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider) {
+  std::shared_ptr<Delegate> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
+                                        const std::shared_ptr<mindspore::DelegateConfig> &config) {
     // first find graph executor delegate
-    auto graph_executor_delegate = GraphExecutorRegistry::GetInstance()->GetDelegate(device_type, provider);
+    auto graph_executor_delegate = GraphExecutorRegistry::GetInstance()->GetDelegate(device_type, provider, config);
     if (graph_executor_delegate != nullptr) {
       return graph_executor_delegate;
     }
@@ -64,18 +66,16 @@ class DelegateRegistry {
     if (creator_it == it->second.end()) {
       return nullptr;
     }
-    return creator_it->second();
+    return creator_it->second(config);
   }
 
  private:
-  mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, std::function<std::shared_ptr<Delegate>()>>>
-    creator_map_;
+  mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, DelegateCreator>> creator_map_;
 };
 
 class DelegateRegistrar {
  public:
-  DelegateRegistrar(const mindspore::DeviceType &device_type, const std::string &provider,
-                    std::function<std::shared_ptr<Delegate>()> creator) {
+  DelegateRegistrar(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator) {
     DelegateRegistry::GetInstance()->RegDelegate(device_type, provider, creator);
   }
   ~DelegateRegistrar() = default;

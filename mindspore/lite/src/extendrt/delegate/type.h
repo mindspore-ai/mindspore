@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_DELEGATE_TYPE_H_
+#define MINDSPORE_LITE_EXTENDRT_DELEGATE_TYPE_H_
 
 #include <memory>
 #include <vector>
 
-#include "include/api/delegate.h"
+#include "include/api/context.h"
 
 namespace mindspore {
-enum SessionType { kDefaultSession = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneSession };
+class DelegateConfig {
+ public:
+  DelegateConfig() = default;
+  explicit DelegateConfig(const std::shared_ptr<Context> &context) : context_(context) {}
+  virtual ~DelegateConfig() = default;
 
-struct SessionConfig {
-  SessionType type_;
-  std::shared_ptr<Context> context_;
-  std::vector<std::shared_ptr<Delegate>> delegates_;
+  // void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
+
+  const std::shared_ptr<Context> &GetContext() { return context_; }
+
+ protected:
+  const std::shared_ptr<Context> context_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_DELEGATE_TYPE_H_
