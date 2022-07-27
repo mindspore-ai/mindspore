@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
@@ -78,5 +79,7 @@ std::vector<StrategyPtr> L2NormalizeInfo::GenerateOpStrategies(int64_t stage_id)
   }
   return sp_vector;
 }
+
+REGISTER(L2NormalizeInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/resource.h"
@@ -176,5 +177,7 @@ ReplaceGraphPtr BroadcastToInfo::replace_graph(const CNodePtr &cnode) {
   }
   return replace_graph_;
 }
+
+REGISTER(BroadcastToInfo);
 }  // namespace parallel
 }  // namespace mindspore

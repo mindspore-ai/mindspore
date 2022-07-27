@@ -22,6 +22,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/log_adapter.h"
 
@@ -67,7 +68,7 @@ Status PReLUInfo::InferTensorMap() {
   TensorMap input_tensor_map;
   // such as 4: input_tensor_map [3,2,1,0]
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    input_tensor_map.push_back((int64_t)(inputs_shape_[0].size() - i - 1));
+    input_tensor_map.push_back(SizeToLong(inputs_shape_[0].size() - i - 1));
   }
 
   TensorMap param_tensor_map;
@@ -95,7 +96,7 @@ std::vector<StrategyPtr> PReLUInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split;
   input0_split.emplace_back(1);
   input0_split.emplace_back(0);
-  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size() - 2, 1);
+  (void)input0_split.insert(input0_split.cend(), inputs_shape_[0].size() - 2, 1);
   Shape input1_split(inputs_shape_[1].size(), 0);
   Shapes splittable_inputs = {input0_split, input1_split};
   std::vector<StrategyPtr> sp_vector;
@@ -106,5 +107,7 @@ std::vector<StrategyPtr> PReLUInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+
+REGISTER(PReLUInfo);
 }  // namespace parallel
 }  // namespace mindspore

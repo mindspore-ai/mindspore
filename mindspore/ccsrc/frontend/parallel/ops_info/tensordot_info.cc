@@ -17,17 +17,16 @@
 #include "frontend/parallel/ops_info/tensordot_info.h"
 
 #include <algorithm>
-#include <functional>
 #include <memory>
-#include <numeric>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "ir/value.h"
+#include "utils/convert_utils_base.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
@@ -44,9 +43,9 @@ static std::string AxesToString(const std::vector<int32_t> &shape) {
 }
 
 void TensorDotInfo::ShowAxes() {
-  if (axes_tuple_.size()) {
+  if (!axes_tuple_.empty()) {
     MS_LOG(INFO) << name_ << ": The axes tuple is " << AxesToString(axes_tuple_);
-  } else if (axes_tuple_tuple_.size()) {
+  } else if (!axes_tuple_tuple_.empty()) {
     MS_LOG(INFO) << name_ << ": The axes tuple tuple is " << AxesToString(axes_tuple_tuple_[0]) << " and "
                  << AxesToString(axes_tuple_tuple_[1]);
   }
@@ -216,14 +215,14 @@ void TensorDotInfo::InferTensorMapAxesInt(const TensorMap &tensor_map_index) {
   // for example: the dimension of input_b is 4, the tensor map is [3, 2, 1, 0]
   TensorMap input_b_tensor_map, output_tensor_map;
   for (size_t i = 0; i < inputs_shape_[1].size(); i++) {
-    input_b_tensor_map.push_back((int64_t)(inputs_shape_[1].size() - i - 1));
+    input_b_tensor_map.push_back(SizeToLong(inputs_shape_[1].size() - i - 1));
   }
 
   // infer output tensor map
   output_tensor_map = tensor_map_index;
   (void)output_tensor_map.erase(
-    output_tensor_map.begin() + static_cast<different_type>(inputs_shape_[0].size() - IntToSize(axes_int_)),
-    output_tensor_map.begin() + static_cast<different_type>(inputs_shape_[0].size()));
+    output_tensor_map.cbegin() + static_cast<different_type>(inputs_shape_[0].size() - IntToSize(axes_int_)),
+    output_tensor_map.cbegin() + static_cast<different_type>(inputs_shape_[0].size()));
 
   inputs_tensor_map_.push_back(input_b_tensor_map);
   outputs_tensor_map_.push_back(output_tensor_map);
@@ -236,7 +235,7 @@ void TensorDotInfo::InferTensorMapAxesTuple(size_t size, const TensorMap &input_
   // infer input_b tensor map
   TensorMap input_b_tensor_map, output_tensor_map, tmp_b_map_index;
   for (size_t i = 0; i < size - inputs_shape_[0].size(); ++i) {
-    tmp_b_map_index.push_back((int64_t)(size - inputs_shape_[0].size() - i - 1));  // [1, 0]
+    tmp_b_map_index.push_back(SizeToLong(size - inputs_shape_[0].size() - i - 1));  // [1, 0]
   }
   for (size_t i = 0; i < inputs_shape_[1].size(); ++i) {
     bool found = false;
@@ -251,7 +250,7 @@ void TensorDotInfo::InferTensorMapAxesTuple(size_t size, const TensorMap &input_
 
     if (!found) {
       input_b_tensor_map.push_back(tmp_b_map_index.front());
-      (void)tmp_b_map_index.erase(tmp_b_map_index.begin());
+      (void)tmp_b_map_index.erase(tmp_b_map_index.cbegin());
     } else {
       input_b_tensor_map.push_back(input_a_tensor_map[relevant_a_index]);
     }
@@ -284,7 +283,7 @@ Status TensorDotInfo::InferTensorMap() {
   TensorMap tensor_map_index, input_a_tensor_map;
   // such as 5: tensor_map_index [4, 3, 2, 1, 0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+    tensor_map_index.push_back(SizeToLong(LAST_INDEX(size) - i));
   }
 
   // infer input_a tensor map
@@ -349,5 +348,7 @@ std::vector<StrategyPtr> TensorDotInfo::GenerateOpStrategies(int64_t) {
 }
 
 Status TensorDotInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &) { return SUCCESS; }
+
+REGISTER(TensorDotInfo);
 }  // namespace parallel
 }  // namespace mindspore

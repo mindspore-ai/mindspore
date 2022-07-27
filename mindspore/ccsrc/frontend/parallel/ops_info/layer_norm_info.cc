@@ -15,9 +15,12 @@
  */
 
 #include "frontend/parallel/ops_info/layer_norm_info.h"
+
 #include <algorithm>
 #include <vector>
+
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
@@ -244,5 +247,7 @@ Status LayerNormInfo::InitShapes() {
   beta_shape_ = inputs_shape_[LAYER_NORM_BETA_INDEX];
   return SUCCESS;
 }
+
+REGISTER(LayerNormInfo);
 }  // namespace parallel
 }  // namespace mindspore

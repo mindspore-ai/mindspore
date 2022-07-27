@@ -24,6 +24,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "include/common/utils/parallel_context.h"
 #include "utils/log_adapter.h"
@@ -167,7 +168,7 @@ std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t stage_
     strategy = ParallelContext::GetInstance()->dataset_strategy();
   } else {
     bool full_batch = ParallelContext::GetInstance()->full_batch();
-    size_t total_dev_num;
+    int64_t total_dev_num;
     if (full_batch) {
       total_dev_num = 1;
     } else {
@@ -176,8 +177,8 @@ std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t stage_
     for (auto &shape : inputs_shape_) {
       Shape temp;
       if (!shape.empty()) {
-        temp.emplace_back(SizeToLong(total_dev_num));
-        (void)temp.insert(temp.end(), shape.size() - 1, 1);
+        temp.emplace_back(total_dev_num);
+        (void)temp.insert(temp.cend(), shape.size() - 1, 1);
       }
       strategy.push_back(temp);
     }
@@ -193,5 +194,7 @@ Status VirtualDatasetInfo::InferAsLossDivisor() {
   as_loss_divisor_ = 1;
   return SUCCESS;
 }
+
+REGISTER(VirtualDatasetInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/ops_info/roi_align_info.h"
+
 #include <utility>
 #include <functional>
 
-#include "frontend/parallel/ops_info/roi_align_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
 
@@ -238,5 +240,7 @@ std::vector<StrategyPtr> ROIAlignInfo::GenerateOpStrategies(int64_t stage_id) {
   }
   return sp_vector;
 }
+
+REGISTER(ROIAlignInfo);
 }  // namespace parallel
 }  // namespace mindspore

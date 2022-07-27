@@ -22,6 +22,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "include/common/utils/parallel_context.h"
 #include "utils/log_adapter.h"
@@ -74,7 +75,7 @@ std::vector<StrategyPtr> VirtualOutputInfo::GenerateOpStrategies(int64_t stage_i
       } else {
         (void)temp.emplace_back(1);
       }
-      (void)temp.insert(temp.end(), shape.size() - 1, 1);
+      (void)temp.insert(temp.cend(), shape.size() - 1, 1);
     }
     strategy.push_back(temp);
   }
@@ -83,5 +84,7 @@ std::vector<StrategyPtr> VirtualOutputInfo::GenerateOpStrategies(int64_t stage_i
   sp_vector.push_back(sp);
   return sp_vector;
 }
+
+REGISTER(VirtualOutputInfo);
 }  // namespace parallel
 }  // namespace mindspore

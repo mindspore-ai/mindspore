@@ -37,8 +37,10 @@ class ResizeBilinearInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ResizeBilinearCost>()) {}
   ~ResizeBilinearInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  void ReplaceNodeInputOrAttrs() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -46,8 +48,6 @@ class ResizeBilinearInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  void ReplaceNodeInputOrAttrs() override;
-  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   std::vector<int64_t> size_;
   std::vector<int64_t> slice_size_;
@@ -115,7 +115,7 @@ class ResizeNearestNeighborInfo : public ResizeBilinearInfo {
                             const PrimitiveAttrs &attrs)
       : ResizeBilinearInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~ResizeNearestNeighborInfo() override = default;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

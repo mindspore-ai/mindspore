@@ -17,17 +17,15 @@
 #include "frontend/parallel/ops_info/range_info.h"
 
 #include <algorithm>
-#include <functional>
 #include <memory>
-#include <numeric>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
@@ -97,5 +95,7 @@ std::vector<StrategyPtr> RangeInfo::GenerateOpStrategies(int64_t stage_id) {
 Status RangeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
+
+REGISTER(RangeInfo);
 }  // namespace parallel
 }  // namespace mindspore

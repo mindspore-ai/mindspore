@@ -86,7 +86,7 @@ class OperatorInfo {
   const std::vector<TypePtr> &outputs_type() const { return outputs_type_; }
   virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   // only init the necessary parts
-  virtual Status InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy);
+  virtual Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
 
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
@@ -107,7 +107,7 @@ class OperatorInfo {
   Status SetCostUnderStrategyBase(const StrategyPtr &strategy);
   CostPtrList GetCostByStrategyPtr(const StrategyPtr &strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
-  void SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &);
+  void SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &stra_cost);
   // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
   // WEIGHT, then these input should stay in memory until it is used in the backward phase, which is kept in memory
   // at the end of forward phase.
@@ -148,7 +148,7 @@ class OperatorInfo {
     selected_strategy_ = s_strategy;
     selected_cost_ = cost;
   }
-  void SetSelectedStrategy(const StrategyPtr &s_strategy, size_t);
+  void SetSelectedStrategy(const StrategyPtr &s_strategy, size_t curr_depth);
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
 
@@ -159,7 +159,7 @@ class OperatorInfo {
   bool IsReshape() const;
   bool IsTmpIdentity() const;
 
-  void set_swc_index(int64_t, int64_t);
+  void set_swc_index(int64_t swc, int64_t depth);
   int64_t swc_index() const { return swc_index_; }
   // Approximate the list of available strategies
   void ApproximateStrategies();
@@ -168,7 +168,7 @@ class OperatorInfo {
   bool is_strategy_cost_exact() const { return is_strategy_cost_exact_; }
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
-  void CheckSelectedStrategy(const StrategyPtr &);
+  void CheckSelectedStrategy(const StrategyPtr &s_strategy);
   Status InitSelectedStrategy(const StrategyPtr &s_strategy) {
     set_auto_parallel(false);
     return Init(s_strategy, nullptr);
@@ -206,7 +206,7 @@ class OperatorInfo {
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
-  Status CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *group);
+  Status CreateGroupForOptShard(TensorLayout *tensor_layout, std::vector<Group> *groups);
   virtual void ReplaceNodeInputOrAttrs() {}
   void set_auto_parallel(bool is_auto_parallel) { is_auto_parallel_ = is_auto_parallel; }
 
@@ -244,7 +244,7 @@ class OperatorInfo {
   virtual Status InferAsLossDivisor();
   Status InferSliceShape(const Strategys &inputs_strategy, const Strategys &outputs_strategy,
                          Shapes *inputs_slice_shape, Shapes *outputs_slice_shape);
-  void BreakingTiesForPerferringDataParallel(const StrategyPtr &, const CostPtr &);
+  void BreakingTiesForPreferringDataParallel(const StrategyPtr &stra, const CostPtr &cost) const;
   int64_t GetIntAttr(const std::string &attr_name);
   bool GetBoolAttr(const std::string &attr_name);
   float GetFloatAttr(const std::string &attr_name);
@@ -356,8 +356,7 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
 std::string StrategyToString(const Strategys &strategy);
 void PrintStrategy(const StrategyPtr &strategy);
 Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
-                                                  const Shapes &splittable_inputs,
-                                                  std::vector<StrategyPtr> *const sp_vector);
+                                                  const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
 Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
                                               const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);

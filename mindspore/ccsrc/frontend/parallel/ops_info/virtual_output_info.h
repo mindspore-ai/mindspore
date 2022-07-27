@@ -35,7 +35,7 @@ class VirtualOutputInfo : public VirtualDatasetInfo {
                     const PrimitiveAttrs &attrs)
       : VirtualDatasetInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~VirtualOutputInfo() override = default;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

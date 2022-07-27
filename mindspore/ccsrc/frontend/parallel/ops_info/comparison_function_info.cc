@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/parallel_stub/executor_manager_stub.h"
+#include "frontend/parallel/ops_info/comparison_function_info.h"
+
+#include "frontend/parallel/dynamic_creator.h"
+
 namespace mindspore {
 namespace parallel {
-std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, uint32_t device_id) {
-  std::string dev_key = device_name + "_" + std::to_string(device_id);
-  const auto &iter = executors_.find(dev_key);
-  if (iter != executors_.end()) {
-    return iter->second;
-  }
-  auto executor = std::make_shared<Executor>(device_name, device_id);
-  executors_[dev_key] = executor;
-  return executor;
-}
+REGISTER(EqualInfo);
+REGISTER(ApproximateEqualInfo);
+REGISTER(NotEqualInfo);
+REGISTER(MaximumInfo);
+REGISTER(MinimumInfo);
+REGISTER(GreaterInfo);
+REGISTER(GreaterEqualInfo);
+REGISTER(LessInfo);
+REGISTER(LessEqualInfo);
 }  // namespace parallel
 }  // namespace mindspore

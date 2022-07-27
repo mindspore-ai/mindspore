@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace parallel {
@@ -40,7 +41,7 @@ Status TmpIdentityInfo::InferTensorMap() {
   size_t size = inputs_shape_[0].size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - 1 - i));
+    tensor_map_index.push_back(SizeToLong(size - 1 - i));
   }
 
   inputs_tensor_map_.push_back(tensor_map_index);

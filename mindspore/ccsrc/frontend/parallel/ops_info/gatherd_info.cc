@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/resource.h"
@@ -215,5 +216,7 @@ std::vector<StrategyPtr> GatherDInfo::GenerateOpStrategies(int64_t stage_id) {
   }
   return sp_vector;
 }
+
+REGISTER(GatherDInfo);
 }  // namespace parallel
 }  // namespace mindspore
