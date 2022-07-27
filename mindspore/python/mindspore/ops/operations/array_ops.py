@@ -2013,7 +2013,7 @@ class Argmin(Primitive):
         TypeError: If `output_type` is neither int32 nor int64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
@@ -2030,6 +2030,7 @@ class Argmin(Primitive):
         validator.check_type_name("output_type", output_type, [mstype.int32, mstype.int64], self.name)
         self.axis = axis
         self.add_prim_attr('output_type', output_type)
+        self.add_prim_attr('axis', axis)
 
 
 class ArgminV2(Primitive):

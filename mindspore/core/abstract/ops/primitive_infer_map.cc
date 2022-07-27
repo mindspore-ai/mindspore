@@ -25,6 +25,7 @@
 #include "ops/reciprocal.h"
 #include "ops/real_div.h"
 #include "ops/add.h"
+#include "ops/arg_min.h"
 #include "ops/equal.h"
 #include "ops/greater_equal.h"
 #include "ops/greater.h"
@@ -365,6 +366,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
     {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
+    {prim::kPrimArgMin, R{ops::ArgMinInfer, nullptr, true}},
     {prim::kPrimSqrtGrad, R{InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, R{ops::SubInfer, nullptr, false}},
     {prim::kPrimNeg, R{ops::NegInfer, nullptr, false}},
