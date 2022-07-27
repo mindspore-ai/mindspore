@@ -172,20 +172,40 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   return NNACL_OK;
 }
 
-size_t FusedCastAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                         const int16_t *gradient16, float global_norm_reciprocal, size_t start, size_t end) {
+size_t FusedCastAdamFp32Fp16(float *var, const int16_t *gradient16, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end) {
   size_t c1 = start;
 
-  SIMD_RUN_AVX512(FusedCastAdamFp32, c1, var, m, v, lr, beta1, beta2, epsilon, decay, gradient16,
+  SIMD_RUN_AVX512(FusedCastAdamFp32Fp16, c1, var, gradient16, m, v, lr, beta1, beta2, epsilon, decay,
                   global_norm_reciprocal, end);
   return c1;
 }
 
-size_t FusedCastAdamFp16(int16_t *var16, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
-                         float decay, const int16_t *gradient16, float global_norm_reciprocal, size_t start,
-                         size_t end) {
+size_t FusedCastAdamFp32Fp32(float *var, const float *gradient32, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end) {
   size_t c1 = start;
-  SIMD_RUN_AVX512(FusedCastAdamFp16, c1, var16, m, v, lr, beta1, beta2, epsilon, decay, gradient16,
+
+  SIMD_RUN_AVX512(FusedCastAdamFp32Fp32, c1, var, gradient32, m, v, lr, beta1, beta2, epsilon, decay,
+                  global_norm_reciprocal, end);
+  return c1;
+}
+
+size_t FusedCastAdamFp16Fp16(int16_t *var16, const int16_t *gradient16, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end) {
+  size_t c1 = start;
+  SIMD_RUN_AVX512(FusedCastAdamFp16Fp16, c1, var16, gradient16, m, v, lr, beta1, beta2, epsilon, decay,
+                  global_norm_reciprocal, end);
+  return c1;
+}
+
+size_t FusedCastAdamFp16Fp32(int16_t *var16, const float *gradient32, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end) {
+  size_t c1 = start;
+  SIMD_RUN_AVX512(FusedCastAdamFp16Fp32, c1, var16, gradient32, m, v, lr, beta1, beta2, epsilon, decay,
                   global_norm_reciprocal, end);
   return c1;
 }
