@@ -38,14 +38,6 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
     return RET_ERROR;
   }
 
-  int input_nbDims = in_tensors_[0].Shape().size();
-  if (axis_ == -1) {
-    axis_ = input_nbDims - 1;
-  }
-  if (axis_ < 0 || axis_ > input_nbDims || axis_ == input_nbDims && type_ != schema::PrimitiveType_Stack) {
-    MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
@@ -53,8 +45,16 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
+  int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  if (axis_ == -1) {
+    axis_ = input_nbDims - 1;
+  }
+  if (axis_ < 0 || axis_ > input_nbDims || axis_ == input_nbDims && type_ != schema::PrimitiveType_Stack) {
+    MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;
+    return RET_ERROR;
+  }
 
-  if (in_tensors_.size() != in_tensors_.size()) {
+  if (in_tensors_.size() != ReadyInputsNumber(ctx)) {
     MS_LOG(ERROR) << "concate_op in tensor is invalid, trt tensor has " << in_tensors_.size()
                   << ", but origin ms tensor has " << in_tensors_.size();
     return RET_ERROR;
@@ -117,7 +117,9 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
 
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     if (input(ctx, i).trt_tensor_->getDimensions().nbDims != input_nbDims) {
-      MS_LOG(ERROR) << "dims of inputs is invalid for " << op_name_;
+      MS_LOG(ERROR) << "dims of inputs is invalid for " << in_tensors_[i].Name()
+                    << " input dim size : " << input(ctx, i).trt_tensor_->getDimensions().nbDims
+                    << " ms input dims size : " << input_nbDims;
       return RET_ERROR;
     }
     // keep origin format if all input format are the same

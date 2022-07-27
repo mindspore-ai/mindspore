@@ -21,6 +21,8 @@
 #include <set>
 #include <queue>
 #include <algorithm>
+#include <numeric>
+#include <functional>
 #include "src/runtime/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
@@ -158,7 +160,7 @@ bool TensorRTSubGraph::IsInt8Mode() {
   return false;
 }
 
-nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {
+nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor, size_t index) {
   for (int i = 0; i < ctx_->network()->getNbInputs(); i++) {
     if (in_tensor.Name().compare(ctx_->network()->getInput(i)->getName()) == 0) {
       MS_LOG(INFO) << "input tensor is already added in network: " << in_tensor.Name();
@@ -171,9 +173,42 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
     MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
     return nullptr;
   }
-  nvinfer1::Dims input_dims = ParseInputDimsProfile(in_tensor);
+  nvinfer1::Dims input_dims;
+  if (min_dims_.size() != 0 && min_dims_.size() == opt_dims_.size() && min_dims_.size() == max_dims_.size()) {
+    input_dims = SetInputDimsProfile(in_tensor, index);
+  } else {
+    input_dims = ParseInputDimsProfile(in_tensor);
+  }
   MS_LOG(INFO) << "add network input: " << in_tensor.Name();
   return ctx_->network()->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+}
+
+nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const mindspore::MSTensor &in_tensor, size_t index) {
+  nvinfer1::Dims input_dims;
+  input_dims.nbDims = min_dims_[index].nbDims;
+  for (int i = 0; i != input_dims.nbDims; ++i) {
+    input_dims.d[i] = (max_dims_[index].d[i] != min_dims_[index].d[i]) ? -1 : min_dims_[index].d[i];
+  }
+  if (profile_ == nullptr) {
+    MS_LOG(ERROR) << "profile is null.";
+    return input_dims;
+  }
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, min_dims_[index])) {
+    MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
+    return input_dims;
+  }
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, opt_dims_[index])) {
+    MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
+    return input_dims;
+  }
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, max_dims_[index])) {
+    MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
+    return input_dims;
+  }
+  DebugDims(min_dims_[index]);
+  DebugDims(opt_dims_[index]);
+  DebugDims(max_dims_[index]);
+  return input_dims;
 }
 
 nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor &in_tensor) {
@@ -260,10 +295,11 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
   // build engine online
   for (auto cur_op : all_ops_) {
     cur_op->SetRuntime(runtime_);
-    for (auto in_tensor : cur_op->inputs()) {
+    for (int i = 0; i != cur_op->inputs().size(); ++i) {
       // Data From CPU
+      auto in_tensor = cur_op->inputs()[i];
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
-        nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(in_tensor);
+        nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(in_tensor, i);
         if (trt_tensor == nullptr) {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
@@ -353,6 +389,7 @@ int TensorRTSubGraph::MarkOutputs() {
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
             out_trt_tensor = transpose_layer_out->getOutput(0);
           }
+
           out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
           out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
           out_trt_tensor->setName(out_tensor.Name().c_str());
@@ -397,7 +434,9 @@ int TensorRTSubGraph::Prepare() {
       MS_LOG(ERROR) << "malloc for inputs tensor device memory failed.";
       return RET_ERROR;
     }
+    runtime_->SetBatchSize(tensor.Shape()[0]);
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
+    MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor.Name() << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     trt_in_tensor_name_.push_back(tensor.Name());
     nvinfer1::Dims input_dims = ConvertCudaDims(tensor.Shape());
@@ -437,13 +476,27 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
-    tensor.MutableData();
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
+    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
+    auto out_dims = trt_context_->getBindingDimensions(index);
+    int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
+    DebugDims(out_dims);
+    std::map<enum DataType, size_t> TypeByte = {
+      {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
+      {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
+      {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
+      {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
+      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
+    };
+    if (tensor.Data() == nullptr) {
+      MS_LOG(INFO) << "Set output shape by tensorrt binding output";
+      tensor.SetShape(lite::ConvertMSShape(out_dims));
+      tensor.MutableData();
+    }
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * TypeByte[tensor.DataType()]);
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
       return RET_ERROR;
     }
-    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
     trt_out_tensor_name_.push_back(tensor.Name());
   }
@@ -482,6 +535,7 @@ int TensorRTSubGraph::ReSize() {
       return RET_ERROR;
     }
     int index = this->engine_->getBindingIndex(trt_in_tensor_name_[i].c_str());
+    MS_LOG(INFO) << "device index " << index << " for tensor : " << trt_in_tensor_name_[i] << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     // Set actual input size
     nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());

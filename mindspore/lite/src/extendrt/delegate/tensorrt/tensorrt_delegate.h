@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
+#include <map>
 #include "include/api/delegate.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_subgraph.h"
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
@@ -32,13 +33,7 @@ namespace mindspore::lite {
 class TensorRTDelegate : public Delegate {
  public:
   explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
-                            size_t device_cache_size, const std::string &serialize_path)
-      : context_(context),
-        cache_model_path_(cache_model_path),
-        vocab_size_(vocab_size),
-        device_cache_size_(device_cache_size),
-        serialize_path_(serialize_path) {}
-
+                            size_t device_cache_size, const std::map<std::string, std::string> &ms_cache);
   ~TensorRTDelegate() override;
 
   Status Init() override;
@@ -63,8 +58,11 @@ class TensorRTDelegate : public Delegate {
   size_t vocab_size_{0};
   size_t device_cache_size_{0};
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
-  const std::string serialize_path_;
+  std::string serialize_path_;
   cudaStream_t stream_{nullptr};
+  std::vector<nvinfer1::Dims> min_dims_;
+  std::vector<nvinfer1::Dims> opt_dims_;
+  std::vector<nvinfer1::Dims> max_dims_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

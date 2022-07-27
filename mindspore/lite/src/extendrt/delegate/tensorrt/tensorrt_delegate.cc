@@ -19,10 +19,61 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <map>
 #include "src/runtime/delegate/delegate_utils.h"
 #include "src/runtime/delegate/auto_registration_factory.h"
 
 namespace mindspore::lite {
+namespace {
+std::vector<std::string> Split(const std::string &str, const std::string &delim) {
+  auto start = 0U;
+  auto end = str.find(delim);
+  std::vector<std::string> substrs;
+  while (end != std::string::npos) {
+    substrs.push_back(str.substr(start, end - start));
+    start = end + delim.length();
+    end = str.find(delim, start);
+  }
+  substrs.push_back(str.substr(start, end));
+  return substrs;
+}
+std::vector<nvinfer1::Dims> StringToDims(const std::string &str) {
+  std::vector<nvinfer1::Dims> all_dims;
+  std::vector<std::string> all_str_dims = Split(str, ";");
+  for (const std::string &str_dims : all_str_dims) {
+    std::vector<std::string> str_dims_vec = Split(str_dims, ",");
+    nvinfer1::Dims dims;
+    dims.nbDims = str_dims_vec.size();
+    for (size_t i = 0; i != str_dims_vec.size(); ++i) {
+      dims.d[i] = std::stoi(str_dims_vec[i]);
+    }
+    all_dims.push_back(dims);
+  }
+  return all_dims;
+}
+}  // namespace
+TensorRTDelegate::TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
+                                   size_t device_cache_size, const std::map<std::string, std::string> &ms_cache)
+    : context_(context),
+      cache_model_path_(cache_model_path),
+      vocab_size_(vocab_size),
+      device_cache_size_(device_cache_size) {
+  if (ms_cache.find("serialize_path") != ms_cache.end()) {
+    serialize_path_ = ms_cache.at("serialize_path");
+  }
+  if (ms_cache.find("min_dims") != ms_cache.end()) {
+    min_dims_ = StringToDims(ms_cache.at("min_dims"));
+  }
+  if (ms_cache.find("opt_dims") != ms_cache.end()) {
+    opt_dims_ = StringToDims(ms_cache.at("opt_dims"));
+  }
+  if (ms_cache.find("max_dims") != ms_cache.end()) {
+    max_dims_ = StringToDims(ms_cache.at("max_dims"));
+  }
+  if (min_dims_.size() != opt_dims_.size() || min_dims_.size() != max_dims_.size()) {
+    MS_LOG(WARNING) << "number of min_dims, opt_dims, max_dims are not equal";
+  }
+}
 TensorRTDelegate::~TensorRTDelegate() {
   if (runtime_ != nullptr) {
     delete runtime_;
@@ -207,8 +258,9 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
                                                         KernelIter end, int index) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
-  auto *tensorrt_graph = new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_,
-                                                             runtime_, support_resize_, support_hw_resize_);
+  auto *tensorrt_graph =
+    new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_, runtime_, support_resize_,
+                                        support_hw_resize_, min_dims_, opt_dims_, max_dims_);
   if (tensorrt_graph == nullptr) {
     MS_LOG(ERROR) << "new tensorrt_graph failed.";
     return nullptr;

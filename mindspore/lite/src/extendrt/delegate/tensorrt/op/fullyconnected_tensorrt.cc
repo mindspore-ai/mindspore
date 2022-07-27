@@ -38,10 +38,6 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
   CHECK_NULL_RETURN(primitive);
   activation_ = primitive->activation_type();
   int axis = primitive->axis();
-  if (axis < 0 || axis >= out_tensors_[0].Shape().size()) {
-    MS_LOG(ERROR) << "axis: " << axis << " is invalid for " << op_name_;
-    return RET_ERROR;
-  }
   ITensorHelper fc_input;
   auto ret = PreprocessInputs(ctx, &fc_input);
   if (ret != RET_OK) {
@@ -54,7 +50,7 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
     bias_weight = ConvertWeight(in_tensors_[BIAS_INDEX]);
   }
   nvinfer1::IFullyConnectedLayer *fc_layer = ctx->network()->addFullyConnected(
-    *(fc_input.trt_tensor_), out_tensors_[0].Shape()[axis], kernel_weight, bias_weight);
+    *(fc_input.trt_tensor_), in_tensors_[1].Shape()[1 - axis], kernel_weight, bias_weight);
   if (fc_layer == nullptr) {
     MS_LOG(ERROR) << "addFullyConnected failed for " << op_name_;
     return RET_ERROR;
@@ -63,9 +59,12 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
   fc_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = fc_layer->getOutput(0);
 
-  if (out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
-    std::vector<int64_t> squeeze_dim(out_tensors_[0].Shape());
-    squeeze_dim[0] = out_tensor->getDimensions().d[0] == -1 ? -1 : squeeze_dim[0];
+  int origin_input_dims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  if (out_tensor->getDimensions().nbDims != origin_input_dims) {
+    std::vector<int64_t> squeeze_dim;
+    for (int i = 0; i != origin_input_dims; ++i) {
+      squeeze_dim.push_back(out_tensor->getDimensions().d[i]);
+    }
     out_tensor = Reshape(ctx, out_tensor, squeeze_dim);
   }
   // add activation
@@ -86,7 +85,7 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int FullyConnectedTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input) {
-  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), fc_input);
+  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, in_tensors_[1].Data().get() == nullptr), fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim failed for " << op_name_;
     return ret;

@@ -42,11 +42,15 @@ class TensorRTSubGraph : public kernel::Kernel {
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
                    std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_resize,
-                   bool support_hw_resize)
+                   bool support_hw_resize, const std::vector<nvinfer1::Dims> &min_dims,
+                   const std::vector<nvinfer1::Dims> &opt_dims, const std::vector<nvinfer1::Dims> &max_dims)
       : kernel::Kernel(inputs, outputs, nullptr, ctx),
         all_ops_(std::move(ops)),
         device_info_(device_info),
-        runtime_(runtime) {
+        runtime_(runtime),
+        min_dims_(min_dims),
+        opt_dims_(opt_dims),
+        max_dims_(max_dims) {
     trt_specific_weight_nodes_ = {
       schema::PrimitiveType_Conv2DFusion,   schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
       schema::PrimitiveType_Gather,         schema::PrimitiveType_Reshape,      schema::PrimitiveType_MatMulFusion,
@@ -89,7 +93,7 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   bool SupportFP16();
 
-  nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor);
+  nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor, size_t index);
 
   ITensorHelper FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
@@ -104,6 +108,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   int HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   nvinfer1::Dims ParseInputDimsProfile(const mindspore::MSTensor &in_tensor);
+  nvinfer1::Dims SetInputDimsProfile(const mindspore::MSTensor &in_tensor, size_t index);
   int ParseInputsProfile();
 
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
@@ -150,6 +155,10 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   std::string serialize_file_path_;
   cudaStream_t stream_{nullptr};
+
+  std::vector<nvinfer1::Dims> min_dims_;
+  std::vector<nvinfer1::Dims> opt_dims_;
+  std::vector<nvinfer1::Dims> max_dims_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_

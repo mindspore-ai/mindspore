@@ -27,6 +27,7 @@ struct ITensorHelper {
   nvinfer1::ITensor *trt_tensor_{nullptr};
   mindspore::Format format_{Format::NHWC};
   bool same_format_{true};
+  bool is_tensor{true};
 };
 class TensorRTContext {
  public:
