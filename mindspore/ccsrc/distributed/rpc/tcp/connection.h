@@ -112,6 +112,33 @@ struct Connection {
   // Send all the messages in the message queue.
   int Flush();
 
+  /**
+   * @description: Set callback to allocate memory for this connection when receiving message from the remote.
+   * @param {MemAllocateCallback} &allocate_cb: The allocating memory callback.
+   * @return {void}
+   */
+  void SetAllocateCallback(const MemAllocateCallback &allocate_cb) { allocate_cb_ = allocate_cb; }
+
+  /**
+   * @description: Set callback to free message for this connection.
+   * @param {MemFreeCallback} &free_cb: The callback which frees the real memory after message is sent to peer.
+   * @return {void}
+   */
+  void SetMessageFreeCallback(const MemFreeCallback &free_cb) { free_cb_ = free_cb; }
+
+  /**
+   * @description: Returns the free callback.
+   * @return {const MemFreeCallback &}
+   */
+  const MemFreeCallback &free_cb() const { return free_cb_; }
+
+  /**
+   * @description: Free the real data of the message using free callback.
+   * @param {MessageBase} *msg: The MessageBase object.
+   * @return {bool}: Whether successfully freeing the real data.
+   */
+  bool FreeMessageMemory(MessageBase *msg);
+
   // The socket used by this connection.
   int socket_fd;
 
@@ -202,6 +229,12 @@ struct Connection {
   // The error code when sending or receiving messages.
   int error_code;
 
+  // The method used to allocate memory when server receiving message from the remote.
+  MemAllocateCallback allocate_cb_;
+
+  // The method used to free the memory after client sending data to the remote.
+  MemFreeCallback free_cb_;
+
  private:
   // Add handler for socket connect event.
   int AddConnnectEventHandler();
@@ -217,6 +250,20 @@ struct Connection {
 
   // Change the header body from network byte order to host byte order.
   void ReorderHeader(MessageHeader *header) const;
+
+  /**
+   * @description: Get the real data pointer of the message.
+   * @param {MessageBase} *msg: The MessageBase object.
+   * @return {void *}: The pointer to the memory of the real data.
+   */
+  void *GetMessageBaseRealData(MessageBase *msg);
+
+  /**
+   * @description: Get size of the real data size.
+   * @param {MessageBase} *msg: The MessageBase object.
+   * @return {size_t}: The size of the real data.
+   */
+  size_t GetMessageBaseRealDataSize(MessageBase *msg);
 
   std::string advertise_addr_;
 };

@@ -38,7 +38,13 @@ class TCPClient {
   void Finalize();
 
   // Connect to the specified server.
-  bool Connect(const std::string &dst_url, size_t retry_count = 60);
+  // Function free_cb binds with client's each connection. It frees the real memory after message is sent to the peer.
+  bool Connect(
+    const std::string &dst_url, size_t retry_count = 60, const MemFreeCallback &free_cb = [](void *data) {
+      MS_ERROR_IF_NULL(data);
+      delete static_cast<char *>(data);
+      return true;
+    });
 
   // Check if the connection to dst_url has been established.
   bool IsConnected(const std::string &dst_url);

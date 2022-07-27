@@ -118,6 +118,8 @@ void OnAccept(int server, uint32_t events, void *arg) {
   conn->write_callback = std::bind(&TCPComm::WriteCallBack, tcpmgr, std::placeholders::_1);
   conn->read_callback = std::bind(&TCPComm::ReadCallBack, tcpmgr, std::placeholders::_1);
 
+  conn->SetAllocateCallback(tcpmgr->allocate_cb());
+
   int retval = conn->Initialize();
   if (retval != RPC_OK) {
     MS_LOG(ERROR) << "Failed to add accept fd event, server fd: " << server << ", events: " << events
@@ -176,13 +178,14 @@ bool TCPComm::Initialize() {
   return true;
 }
 
-bool TCPComm::StartServerSocket(const std::string &url) {
+bool TCPComm::StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb) {
   server_fd_ = SocketOperation::Listen(url);
   if (server_fd_ < 0) {
     MS_LOG(ERROR) << "Failed to call socket listen, url: " << url.c_str();
     return false;
   }
   url_ = url;
+  allocate_cb_ = allocate_cb;
   size_t index = url.find(URL_PROTOCOL_IP_SEPARATOR);
   if (index != std::string::npos) {
     url_ = url.substr(index + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1);
@@ -199,14 +202,25 @@ bool TCPComm::StartServerSocket(const std::string &url) {
   return true;
 }
 
-bool TCPComm::StartServerSocket() {
+bool TCPComm::StartServerSocket(const MemAllocateCallback &allocate_cb) {
   auto ip = SocketOperation::GetLocalIP();
   // The port 0 means that the port will be allocated randomly by the os system.
   auto url = ip + ":0";
-  return StartServerSocket(url);
+  return StartServerSocket(url, allocate_cb);
 }
 
 int TCPComm::GetServerFd() const { return server_fd_; }
+
+void TCPComm::SetMessageFreeCallback(const std::string &dst_url, const MemFreeCallback &free_cb) {
+  Connection *conn = conn_pool_->FindConnection(dst_url);
+  if (conn == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not find the connection to url: " << dst_url;
+  }
+  if (!free_cb) {
+    MS_LOG(EXCEPTION) << "The message callback is empty.";
+  }
+  return conn->SetMessageFreeCallback(free_cb);
+}
 
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
@@ -318,6 +332,7 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
       MS_LOG(WARNING) << "The message queue is full(max len:" << SENDMSG_QUEUELEN
                       << ") and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
+      conn->FreeMessageMemory(msg);
       DropMessage(msg);
       int error_no = -1;
       return error_no;
@@ -327,6 +342,7 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
       MS_LOG(WARNING) << "Invalid connection state " << conn->state
                       << " and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
+      conn->FreeMessageMemory(msg);
       DropMessage(msg);
       int error_no = -1;
       return error_no;

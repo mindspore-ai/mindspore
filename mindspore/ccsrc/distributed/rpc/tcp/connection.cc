@@ -359,17 +359,19 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       send_io_vec[index].iov_base = const_cast<char *>(send_from.data());
       send_io_vec[index].iov_len = send_from.size();
       ++index;
-      send_io_vec[index].iov_base = const_cast<char *>(msg->body.data());
-      send_io_vec[index].iov_len = msg->body.size();
+      send_io_vec[index].iov_base = GetMessageBaseRealData(msg);
+      // The real size of the data body.
+      size_t real_data_size = GetMessageBaseRealDataSize(msg);
+      send_io_vec[index].iov_len = real_data_size;
       ++index;
       send_kernel_msg.msg_iov = send_io_vec;
       send_kernel_msg.msg_iovlen = index;
       total_send_len =
-        UlongToUint(sizeof(send_msg_header)) + msg->name.size() + send_to.size() + send_from.size() + msg->body.size();
+        UlongToUint(sizeof(send_msg_header)) + msg->name.size() + send_to.size() + send_from.size() + real_data_size;
       send_message = msg;
 
       // update metrics
-      send_metrics->UpdateMax(msg->body.size());
+      send_metrics->UpdateMax(real_data_size);
       send_metrics->last_send_msg_name = msg->name;
       return;
     } else {
@@ -384,16 +386,17 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       msg->body = GenerateHttpMessage(msg);
     }
 
-    send_io_vec[index].iov_base = const_cast<char *>(msg->body.data());
-    send_io_vec[index].iov_len = msg->body.size();
+    send_io_vec[index].iov_base = GetMessageBaseRealData(msg);
+    size_t real_data_size = GetMessageBaseRealDataSize(msg);
+    send_io_vec[index].iov_len = real_data_size;
     ++index;
     send_kernel_msg.msg_iov = send_io_vec;
     send_kernel_msg.msg_iovlen = index;
-    total_send_len = UlongToUint(msg->body.size());
+    total_send_len = UlongToUint(real_data_size);
     send_message = msg;
 
     // update metrics
-    send_metrics->UpdateMax(msg->body.size());
+    send_metrics->UpdateMax(real_data_size);
     send_metrics->last_send_msg_name = msg->name;
   }
 }
@@ -417,7 +420,14 @@ void Connection::FillRecvMessage() {
   msg->name.resize(recvNameLen);
   recv_to.resize(recvToLen);
   recv_from.resize(recvFromLen);
-  msg->body.resize(recvBodyLen);
+
+  if (allocate_cb_) {
+    void *allocated_mem = allocate_cb_(recvBodyLen);
+    msg->data = allocated_mem;
+    msg->size = recvBodyLen;
+  } else {
+    msg->body.resize(recvBodyLen);
+  }
 
   recv_io_vec[i].iov_base = const_cast<char *>(msg->name.data());
   recv_io_vec[i].iov_len = msg->name.size();
@@ -428,16 +438,20 @@ void Connection::FillRecvMessage() {
   recv_io_vec[i].iov_base = const_cast<char *>(recv_from.data());
   recv_io_vec[i].iov_len = recv_from.size();
   ++i;
-  recv_io_vec[i].iov_base = const_cast<char *>(msg->body.data());
-  recv_io_vec[i].iov_len = msg->body.size();
+  recv_io_vec[i].iov_base = GetMessageBaseRealData(msg);
+  // The real size of the data body.
+  size_t real_data_size = GetMessageBaseRealDataSize(msg);
+  recv_io_vec[i].iov_len = real_data_size;
   ++i;
 
   recv_kernel_msg.msg_iov = recv_io_vec;
   recv_kernel_msg.msg_iovlen = IntToSize(i);
-  total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + msg->body.size();
+  total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + real_data_size;
 
   // There is no need to delete recv_message first because the recv_message has already been returned to the caller and
   // it's the caller's responsibility to release the received message after using it.
+  // The real data raw pointer is allocated by callback set by the caller. So the caller should be responsible for its
+  // releasing as well.
   recv_message = msg;
 }
 
@@ -456,8 +470,11 @@ int Connection::Flush() {
         // update metrics
         send_metrics->UpdateError(false);
 
-        output_buffer_size -= send_message->body.size();
-        total_send_bytes += send_message->body.size();
+        size_t real_data_size = GetMessageBaseRealDataSize(send_message);
+        output_buffer_size -= real_data_size;
+        total_send_bytes += real_data_size;
+
+        FreeMessageMemory(send_message);
         delete send_message;
         send_message = nullptr;
         break;
@@ -563,6 +580,61 @@ void Connection::ReorderHeader(MessageHeader *header) const {
   header->to_len = ntohl(header->to_len);
   header->from_len = ntohl(header->from_len);
   header->body_len = ntohl(header->body_len);
+}
+
+bool Connection::FreeMessageMemory(MessageBase *msg) {
+  if (msg == nullptr) {
+    MS_LOG(ERROR) << "The message is nullptr.";
+    return false;
+  }
+  if (msg->data == nullptr) {
+    MS_LOG(DEBUG) << "No need to free the raw pointer of message.";
+    return true;
+  }
+
+  // Use callback to release the real memory of the data.
+  if (!free_cb_) {
+    MS_LOG(ERROR) << "The free memory callback is not set. Can't free the data in message.";
+    return false;
+  }
+  bool free_result = free_cb_(msg->data);
+  if (!free_result) {
+    MS_LOG(ERROR) << "Failed to free message data memory.";
+    return false;
+  }
+  return true;
+}
+
+void *Connection::GetMessageBaseRealData(MessageBase *msg) {
+  MS_ERROR_IF_NULL_W_RET_VAL(msg, nullptr);
+  // The 'data' attribute is preferred.
+  if (msg->data != nullptr) {
+    return msg->data;
+  }
+
+  // Parse 'body' attribute if 'data' is empty.
+  if (!msg->body.empty()) {
+    return const_cast<char *>(msg->body.data());
+  }
+
+  MS_LOG(ERROR) << "The message object has neither 'data' nor 'body' attributes.";
+  return nullptr;
+}
+
+size_t Connection::GetMessageBaseRealDataSize(MessageBase *msg) {
+  MS_ERROR_IF_NULL_W_RET_VAL(msg, 0);
+  // The 'size' attribute is preferred.
+  if (msg->data != nullptr) {
+    return msg->size;
+  }
+
+  // Parse 'body' attribute if 'data' is empty.
+  if (!msg->body.empty()) {
+    return msg->body.size();
+  }
+
+  MS_LOG(ERROR) << "The message object has neither 'data' nor 'body' attributes.";
+  return 0;
 }
 }  // namespace rpc
 }  // namespace distributed

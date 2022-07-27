@@ -48,7 +48,7 @@ class TCPServer {
   uint32_t GetPort() const;
 
  private:
-  bool InitializeImpl(const std::string &url);
+  bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb = {});
 
   // The basic TCP communication component used by the server.
   std::unique_ptr<TCPComm> tcp_comm_;
