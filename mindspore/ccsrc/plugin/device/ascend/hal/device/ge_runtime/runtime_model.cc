@@ -139,12 +139,7 @@ void RuntimeModel::InitResource(const std::shared_ptr<DavinciModel> &davinci_mod
     MS_LOG(EXCEPTION) << "Call rt api rtModelCreate failed, ret: " << rt_ret;
   }
 
-  // Create rtStream for rt_model_handle_
-  rt_ret = rtStreamCreate(&rt_model_stream_, davinci_model->GetPriority());
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamCreate failed, ret: " << rt_ret;
-  }
-  MS_LOG(INFO) << "rtStreamCreate end";
+  rt_model_stream_ = davinci_model->model_stream();
 
   InitStream(davinci_model);
   InitEvent(davinci_model->GetEventNum());
@@ -255,11 +250,6 @@ void RuntimeModel::RtModelUnbindStream() noexcept {
 }
 
 void RuntimeModel::RtStreamDestory() noexcept {
-  if (rtStreamDestroy(rt_model_stream_) != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Destroy stream for rt_model failed!";
-    return;
-  }
-
   for (size_t i = 0; i < stream_list_.size(); i++) {
     if (rtStreamDestroy(stream_list_[i]) != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Destroy stream failed! Index: " << i;

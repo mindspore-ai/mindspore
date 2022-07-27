@@ -46,9 +46,13 @@ class MockOpsKernelInfoStore : public ge::OpsKernelInfoStore {
   bool CheckSupported(const ge::OpDescPtr &opDescPtr, std::string &un_supported_reason) const override { return true; }
   bool CheckSupported(const ge::NodePtr &node, std::string &un_supported_reason) const { return true; }
   bool CheckAccuracySupported(const ge::OpDescPtr &opDescPtr, std::string &un_supported_reason,
-      const bool realQuery = false) const override { return true; }
+                              const bool realQuery = false) const override {
+    return true;
+  }
   bool CheckAccuracySupported(const ge::NodePtr &node, std::string &un_supported_reason,
-      const bool realQuery = false) const { return true; }
+                              const bool realQuery = false) const {
+    return true;
+  }
   ge::Status LoadTask(ge::GETaskInfo &task) override { return ge::SUCCESS; }
 };
 
@@ -456,9 +460,9 @@ TEST_F(TestAscendGeRuntime, test_model_runner_success) {
   std::shared_ptr<TaskInfo> aicpu_task_info = std::make_shared<AicpuTaskInfo>(
     "op_name", 0, "so_name", "kernel_name", "node_def", "ext_info", std::vector<void *>{reinterpret_cast<void *>(1)},
     std::vector<void *>{reinterpret_cast<void *>(1)}, true);
-  auto davice_model =
-    std::make_shared<DavinciModel>(std::vector<std::shared_ptr<TaskInfo>>{tbe_task_info, aicpu_task_info},
-                                   std::vector<uint32_t>{}, std::vector<uint32_t>{}, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0);
+  auto davice_model = std::make_shared<DavinciModel>(
+    std::vector<std::shared_ptr<TaskInfo>>{tbe_task_info, aicpu_task_info}, std::vector<uint32_t>{},
+    std::vector<uint32_t>{}, nullptr, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0);
   ASSERT_NO_THROW(ModelRunner::Instance().LoadDavinciModel(0, 0, model_id, davice_model));
   auto iter = ModelRunner::Instance().runtime_models_.find(model_id);
   ASSERT_TRUE(iter != ModelRunner::Instance().runtime_models_.end());
