@@ -93,10 +93,10 @@ std::vector<AnfNodePtr> ReorderVirtualNode(const std::vector<AnfNodePtr> &nodes,
     if (parent == nullptr) {
       return false;
     }
-    auto iter = node_positions.find(parent);
+    const auto &iter = node_positions.find(parent);
     if (iter != node_positions.end()) {
       size_t position = iter->second;
-      auto iter_nodes = insert_positions.find(position);
+      const auto &iter_nodes = insert_positions.find(position);
       if (iter_nodes != insert_positions.end()) {
         iter_nodes->second.push_back(node);
       } else {
@@ -128,9 +128,9 @@ std::vector<AnfNodePtr> ReorderVirtualNode(const std::vector<AnfNodePtr> &nodes,
   }
 
   size_t insert_num = 0;
-  for (auto &item : insert_positions) {
+  for (const auto &item : insert_positions) {
     auto position = SizeToLong(item.first + insert_num);
-    (void)result.insert(result.begin() + position, item.second.begin(), item.second.end());
+    (void)result.insert(result.cbegin() + position, item.second.cbegin(), item.second.cend());
     insert_num += item.second.size();
   }
   return result;
@@ -160,7 +160,7 @@ std::vector<AnfNodePtr> GetNextNodes(const AnfNodePtr &node, std::map<AnfNodePtr
         MS_EXCEPTION_IF_NULL(partial_cnode);
         auto partial_inputs = partial_cnode->inputs();
         std::reverse(partial_inputs.begin(), partial_inputs.end());
-        (void)extend_inputs.insert(extend_inputs.end(), partial_inputs.begin(), partial_inputs.end());
+        (void)extend_inputs.insert(extend_inputs.cend(), partial_inputs.cbegin(), partial_inputs.cend());
         continue;
       }
     }
@@ -392,8 +392,8 @@ std::vector<AnfNodePtr> ParallelSort(const FuncGraphPtr &graph, const std::strin
       handle_target = other_target;
     }
     MS_EXCEPTION_IF_NULL(ready_node);
-    auto cast_map_iter = visit_nodes_info.seed_cast_next_node_.find(ready_node);
-    if (cast_map_iter != visit_nodes_info.seed_cast_next_node_.end()) {
+    const auto &cast_map_iter = visit_nodes_info.seed_cast_next_node_.find(ready_node);
+    if (cast_map_iter != visit_nodes_info.seed_cast_next_node_.cend()) {
       result.emplace_back(cast_map_iter->second);
     }
     result.emplace_back(ready_node);
@@ -559,7 +559,7 @@ void SplitDynamicNodeSegment(const std::vector<AnfNodePtr> &segment_nodes, std::
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
-    bool has_dynamic_shape = dynamic_nodes_set.find(node) != dynamic_nodes_set.end();
+    bool has_dynamic_shape = dynamic_nodes_set.find(node) != dynamic_nodes_set.cend();
     bool depend_common_node = false;
     bool depend_dynamic_node = false;
     bool is_last_node_dynamic = false;

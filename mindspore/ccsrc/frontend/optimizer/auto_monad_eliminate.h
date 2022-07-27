@@ -28,7 +28,7 @@ class AutoMonadEliminator {
   AutoMonadEliminator() = default;
   virtual ~AutoMonadEliminator() = default;
 
-  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
+  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) const {
     auto manager = optimizer->manager();
     MS_EXCEPTION_IF_NULL(manager);
     manager->AddFuncGraph(root);

@@ -60,7 +60,7 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
       return false;
     }
     auto new_arg = TransformTupleArgument(fg, arg, abs->cast<abstract::AbstractTuplePtr>());
-    new_args->insert(new_args->end(), new_arg.begin(), new_arg.end());
+    (void)new_args->insert(new_args->cend(), new_arg.cbegin(), new_arg.cend());
     change = true;
   }
   return change;
@@ -151,9 +151,9 @@ class CallTupleArgTransform : public AnfVisitor {
 class CallGraphTupleTransform : public OptimizerCaller {
  public:
   CallGraphTupleTransform() {
-    transformers_.emplace_back(std::make_shared<GraphTupleTransform>());
-    transformers_.emplace_back(std::make_shared<PartialTupleArgTransform>());
-    transformers_.emplace_back(std::make_shared<CallTupleArgTransform>());
+    (void)transformers_.emplace_back(std::make_shared<GraphTupleTransform>());
+    (void)transformers_.emplace_back(std::make_shared<PartialTupleArgTransform>());
+    (void)transformers_.emplace_back(std::make_shared<CallTupleArgTransform>());
   }
   ~CallGraphTupleTransform() override = default;
 

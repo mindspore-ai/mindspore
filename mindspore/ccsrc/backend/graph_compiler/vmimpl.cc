@@ -92,7 +92,7 @@ BaseRef Partial::operator()(const VectorRef &nodes) {
   return vm_->Call(fn_, arglist);
 }
 
-SetRef VM::ComputeFvs(const FuncGraphPtr &graph) {
+SetRef VM::ComputeFvs(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   SetRef rval;
   for (auto &fkv : graph->free_variables_total()) {
@@ -218,7 +218,7 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
         break;
       }
       if (utils::isa<ReturnWrapPtr>(except)) {
-        (void)frames.erase(frames.begin() + (static_cast<ssize_t>(frames.size()) - 1));
+        (void)frames.erase(frames.cbegin() + (static_cast<ssize_t>(frames.size()) - 1));
         if (frames.size() > 0) {
           auto top = frames[frames.size() - 1];
           MS_EXCEPTION_IF_NULL(top);
@@ -228,13 +228,13 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
             MS_LOG(EXCEPTION) << "The td is empty";
           }
           top->values()[td[td.size() - 1]] = utils::cast<ReturnWrapPtr>(except)->value;
-          (void)td.erase(td.begin() + (static_cast<ssize_t>(td.size()) - 1));
+          (void)td.erase(td.cbegin() + (static_cast<ssize_t>(td.size()) - 1));
         } else {
           return Export(utils::cast<ReturnWrapPtr>(except)->value);
         }
         break;
       }
-      (void)todo.erase(todo.begin() + (static_cast<ssize_t>(todo.size()) - 1));
+      (void)todo.erase(todo.cbegin() + (static_cast<ssize_t>(todo.size()) - 1));
     }
   }
   MS_LOG(EXCEPTION) << "VM Evaluate error";
@@ -326,7 +326,7 @@ ClosurePtr VM::MakeClosure(const FuncGraphPtr &graph, const VMFramePtr &frame) {
   MS_EXCEPTION_IF_NULL(frame);
   AnfNodePtrToBaseRefMap clos;
 
-  for (auto &v : utils::cast<SetRef>(vars_[graph])) {
+  for (const auto &v : utils::cast<SetRef>(vars_[graph])) {
     auto anf = utils::cast<AnfNodePtr>(v);
     clos[anf] = (*frame)[anf];
   }

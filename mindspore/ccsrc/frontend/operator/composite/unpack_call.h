@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_UNPACK_CALL_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_UNPACK_CALL_H_
 
-#include <vector>
 #include <string>
-#include <utility>
 #include <map>
 #include <set>
 #include <memory>

@@ -56,7 +56,7 @@ class BACKEND_EXPORT CompileGraph {
 
   virtual ~CompileGraph() = default;
 
-  InstSet Run(const FuncGraphPtr &func_graph);
+  InstSet Run(const FuncGraphPtr &graph);
   bool IsCut(const AnfNodePtr &node);
   void Push(const AnfNodePtr &node);
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
@@ -78,10 +78,10 @@ class BACKEND_EXPORT CompileGraph {
   }
 
  protected:
-  virtual void PushParameters(const FuncGraphPtr &func_graph);
-  bool Compile(const FuncGraphPtr &func_graph);
-  int64_t LinConvert(const FuncGraphPtr &func_graph, const GraphSegmentPtr &segment, const std::string &target = "");
-  int64_t InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
+  virtual void PushParameters(const FuncGraphPtr &graph);
+  bool Compile(const FuncGraphPtr &graph);
+  int64_t LinConvert(const FuncGraphPtr &graph, const GraphSegmentPtr &segment, const std::string &target = "");
+  int64_t InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node);
   virtual int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
   void AddPadStack(int64_t param_height);
   void AddTailCall(const AnfNodePtr &fn, size_t size);
@@ -122,9 +122,9 @@ class BACKEND_EXPORT CompileGraphs {
     mapping_.clear();
   }
 
-  void Compile(const FuncGraphPtr &func_graph);
+  void Compile(const FuncGraphPtr &graph);
   FinalVMPtr Link();
-  FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
+  FinalVMPtr CompileAndLink(const FuncGraphPtr &graph);
 
  protected:
   InstSet insts_;

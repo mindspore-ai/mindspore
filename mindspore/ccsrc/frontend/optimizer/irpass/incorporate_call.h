@@ -108,17 +108,17 @@ class IncorporateCall : public AnfVisitor {
 
     if (xs_first) {
       if (xs_size > 0) {
-        (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
+        (void)args.insert(args.cend(), Xs_.cbegin(), Xs_.cend());
       }
       if (ys_size > 0) {
-        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+        (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
       }
     } else {
       if (ys_size > 0) {
-        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+        (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
       }
       if (xs_size > 0) {
-        (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
+        (void)args.insert(args.cend(), Xs_.cbegin(), Xs_.cend());
       }
     }
     return MakeNewNode(node, args);
@@ -227,17 +227,17 @@ class IncorporateCallSwitch : public AnfVisitor {
     std::vector<AnfNodePtr> args{sw_node};
     if (xs_first) {
       if (xs_size > 0) {
-        (void)args.insert(args.end(), inputs_x.begin() + 1, inputs_x.end());
+        (void)args.insert(args.cend(), inputs_x.cbegin() + 1, inputs_x.cend());
       }
       if (ys_size > 0) {
-        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+        (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
       }
     } else {
       if (ys_size > 0) {
-        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+        (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
       }
       if (xs_size > 0) {
-        (void)args.insert(args.end(), inputs_x.begin() + 1, inputs_x.end());
+        (void)args.insert(args.cend(), inputs_x.cbegin() + 1, inputs_x.cend());
       }
     }
 

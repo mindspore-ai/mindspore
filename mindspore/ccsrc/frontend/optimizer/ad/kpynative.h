@@ -57,7 +57,7 @@ struct GradAttr {
 // op_args: the arguments list of each input parameters.
 // out: the op result.
 // return: the returned funcgraph should have the same prototype.
-FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
+FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &cnode, const ValuePtrList &op_args,
                                     const ValuePtr &out);
 
 // Start building back propagate funcgraph for this cell.
@@ -88,7 +88,7 @@ FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePt
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.
 // op_args: the arguments list of each input parameters.
 // out: the op result.
-bool GradPynativeOp(const KPynativeCellPtr &k_cell, const CNodePtr &c_node, const ValuePtrList &op_args,
+bool GradPynativeOp(const KPynativeCellPtr &k_cell, const CNodePtr &cnode, const ValuePtrList &op_args,
                     const ValuePtr &out);
 
 // Grad for cell which may have user defined back propagate function.

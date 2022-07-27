@@ -22,7 +22,6 @@
 
 #include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
-#include "utils/flags.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "utils/symbolic.h"
@@ -151,7 +150,7 @@ void InsertEnvironDestroyAll(const FuncGraphPtr &func_graph) {
 bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   SymbolicKeyConversionMap symbolic_key_map;
   static AbstractBasePtr scalar_abs = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
-  static AbstractBasePtr tensor_abs = std::make_shared<abstract::AbstractTensor>(scalar_abs);
+  static const AbstractBasePtr tensor_abs = std::make_shared<abstract::AbstractTensor>(scalar_abs);
   static const std::string attr_name = "value_type";
   const int kPrimitiveOffset = 0;
   const int kEnvironTypeOffset = 1;

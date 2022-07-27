@@ -96,7 +96,7 @@ AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &
   return func_graph->NewCNodeInOrder(inputs);
 }
 
-std::pair<std::string, std::string> HyperMap::GetHyperMapInputIndex(size_t num) {
+std::pair<std::string, std::string> HyperMap::GetHyperMapInputIndex(size_t num) const {
   std::string error_index;
   std::string next_index;
   const size_t first_index = 1;
@@ -167,7 +167,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.begin() + 1, call_node);
+      inputs.insert(inputs.cbegin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -250,7 +250,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
     pair = item;
     id = item.second->type_id();
     // The graph building reaches the leaf situation when there exists type that can not be divided any more.
-    if (!nonleaf_.count(id)) {
+    if (nonleaf_.count(id) == 0) {
       is_leaf = true;
       break;
     }
@@ -518,10 +518,10 @@ FuncGraphPtr Tail::GenerateTailFuncGraph(const AbstractSequencePtr &sequence_arg
   std::vector<AnfNodePtr> elements;
   PrimitivePtr op = nullptr;
   if (sequence_arg->isa<AbstractTuple>()) {
-    elements.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)elements.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     op = prim::kPrimTupleGetItem;
   } else {
-    elements.emplace_back(NewValueNode(prim::kPrimMakeList));
+    (void)elements.emplace_back(NewValueNode(prim::kPrimMakeList));
     op = prim::kPrimListGetItem;
   }
 
@@ -681,7 +681,8 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weigh
 
 // Do grad by the parameter of GradOperation.
 void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                                    const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad) {
+                                    const AnfNodePtr &weights, const AnfNodePtr &position,
+                                    bool enable_tuple_grad) const {
   MS_EXCEPTION_IF_NULL(k_child);
 
   AnfNodePtr bprop_arg = nullptr;
@@ -844,7 +845,7 @@ VmapOperation::VmapOperation(const std::string &name) : MetaFuncGraph(name) {
                              SignatureEnumDType::kDTypeEmptyDefaultValue}});
 }
 
-FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) {
+FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) const {
   FuncGraphPtr vmap_child = std::make_shared<FuncGraph>();
   vmap_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   vmap_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
@@ -986,7 +987,8 @@ TaylorOperation::TaylorOperation(const std::string &name) : MetaFuncGraph(name) 
   signatures_ = std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault}});
 }
 
-FuncGraphPtr TaylorOperation::GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params) {
+FuncGraphPtr TaylorOperation::GetTaylorGrad(const AnfNodePtr &k,
+                                            const std::vector<AnfNodePtr> &forward_graph_params) const {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
@@ -1378,7 +1380,7 @@ AnfNodePtr ListSliceSetItem::GetAssignNode(const FuncGraphPtr &func_graph, const
   }
   std::vector<AnfNodePtr> elems = {NewValueNode(prim::kPrimMakeList)};
   for (int64_t i = SizeToInt(value_list_->size()) - 1; i >= 0; --i) {
-    elems.emplace_back(
+    (void)elems.emplace_back(
       func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), assign_node, NewValueNode(i)}));
   }
   return func_graph->NewCNodeInOrder(elems);

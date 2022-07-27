@@ -19,9 +19,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_ZIP_OPERATION_H_
 
-#include <vector>
 #include <string>
-#include <utility>
 #include <map>
 #include <set>
 #include <memory>

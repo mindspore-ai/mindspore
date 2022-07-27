@@ -78,8 +78,8 @@ class HyperMap : public MetaFuncGraph {
                       const ArgsPairList &arg_map);
   AnfNodePtr FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                       const ArgsPairList &arg_map);
-  AnfNodePtr Make(const FuncGraphPtr &graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
-  std::pair<std::string, std::string> GetHyperMapInputIndex(size_t num);
+  AnfNodePtr Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
+  std::pair<std::string, std::string> GetHyperMapInputIndex(size_t num) const;
 
   MultitypeFuncGraphPtr fn_leaf_;
   bool reverse_;
@@ -114,7 +114,7 @@ class Tail : public MetaFuncGraph {
 
  private:
   FuncGraphPtr GenerateTailFuncGraph(const abstract::AbstractSequencePtr &sequence_arg) const;
-  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &sequence,
+  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &tuple_arg,
                                      const abstract::AbstractTuplePtr &position = nullptr) const;
 
   TailType tail_type_;
@@ -150,7 +150,7 @@ class GradOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
   FuncGraphPtr GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                       const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad_first);
+                       const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad);
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 
@@ -168,7 +168,7 @@ class GradOperation : public MetaFuncGraph {
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                       const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad_first);
+                       const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad) const;
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 
@@ -177,7 +177,7 @@ class TaylorOperation : public MetaFuncGraph {
   explicit TaylorOperation(const std::string &name);
   ~TaylorOperation() override = default;
   MS_DECLARE_PARENT(TaylorOperation, MetaFuncGraph);
-  FuncGraphPtr GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params);
+  FuncGraphPtr GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params) const;
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 };
@@ -281,7 +281,7 @@ class VmapOperation : public MetaFuncGraph {
   ~VmapOperation() override = default;
   MS_DECLARE_PARENT(VmapOperation, MetaFuncGraph)
 
-  FuncGraphPtr GetVmap(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params);
+  FuncGraphPtr GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) const;
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 };

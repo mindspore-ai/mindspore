@@ -109,7 +109,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
 
   // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs, It will traverse
   // all sub graphs to call CompileGraph.
-  const ActorInfo &CompileGraphs(const FuncGraphPtr &root_graph);
+  const ActorInfo &CompileGraphs(const FuncGraphPtr &func_graph);
 
   // Run Graph in the graph mode.
   void RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs);
@@ -219,7 +219,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   int real_execution_mode_{kGraphMode};
   void CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode = device::RunMode::kUnknown);
   void ProcessNotSupportCnode(const FuncGraphPtr &func_graph, const device::DeviceType &old_target,
-                              const device::DeviceType &new_target);
+                              const device::DeviceType &new_target) const;
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile
