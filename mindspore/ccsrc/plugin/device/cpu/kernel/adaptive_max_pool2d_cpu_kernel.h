@@ -28,11 +28,11 @@
 namespace mindspore {
 namespace kernel {
 static inline size_t start_index(size_t dim, size_t output_range, size_t input_range) {
-  return static_cast<size_t>(std::floor(static_cast<float>(dim * input_range) / output_range));
+  return static_cast<size_t>(std::floor(static_cast<float>(dim * input_range) / static_cast<float>(output_range)));
 }
 
 static inline size_t end_index(size_t dim, size_t output_range, size_t input_range) {
-  return static_cast<size_t>(std::ceil(static_cast<float>((dim + 1) * input_range) / output_range));
+  return static_cast<size_t>(std::ceil(static_cast<float>((dim + 1) * input_range) / static_cast<float>(output_range)));
 }
 
 class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
@@ -60,12 +60,11 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   using FuncList = std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>>;
@@ -77,8 +76,8 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
   // The number of N * C.
   size_t channel_size_{0};
   // The number of H * W.
-  int64_t input_hw_{0};
-  int64_t output_hw_{0};
+  size_t input_hw_{0};
+  size_t output_hw_{0};
   std::vector<int64_t> attr_output_size_;
   bool attr_return_indices_{false};
 };

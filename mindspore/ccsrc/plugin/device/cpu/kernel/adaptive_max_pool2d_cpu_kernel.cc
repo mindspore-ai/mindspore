@@ -90,7 +90,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::UpdateOutputSizeList(const std::vector<Kerne
     auto output_shape = outputs[0]->GetShapeVector();
     size_t output_number = 1;
     for (size_t i = 0; i < output_shape.size(); i++) {
-      output_number *= output_shape[i];
+      output_number *= static_cast<size_t>(output_shape[i]);
     }
     // N * C * H * W * type_size
     auto output_mem_size = output_number * input_type_size;
@@ -152,10 +152,10 @@ struct LocalWindow {
 };
 
 template <typename T>
-void ComputeLocalMax(int64_t *max_indice, T *max_val, const LocalWindow &lw, size_t input_width, T *input_ptr) {
+void ComputeLocalMax(size_t *max_indice, T *max_val, const LocalWindow &lw, size_t input_width, const T *input_ptr) {
   for (size_t h_index = lw.h_begin; h_index < lw.h_end; ++h_index) {
     for (size_t w_index = lw.w_begin; w_index < lw.w_end; ++w_index) {
-      int64_t indice = h_index * input_width + w_index;
+      size_t indice = h_index * input_width + w_index;
       T val = input_ptr[indice];
       if (val > (*max_val)) {
         (*max_indice) = indice;
@@ -167,8 +167,7 @@ void ComputeLocalMax(int64_t *max_indice, T *max_val, const LocalWindow &lw, siz
 }  // namespace
 
 template <typename T>
-bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspaces,
+bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -179,8 +178,8 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 
   auto task = [this, &input_addr, &output_addr, &indices_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      int64_t input_offset = i * input_hw_;
-      int64_t output_offset = i * output_hw_;
+      size_t input_offset = i * input_hw_;
+      size_t output_offset = i * output_hw_;
       T *input_ptr = input_addr + input_offset;
       T *output_ptr = output_addr + output_offset;
       int64_t *indices_ptr = (indices_addr == nullptr) ? indices_addr : indices_addr + output_offset;
@@ -194,7 +193,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
           size_t w_end = end_index(ow_index, output_width_, input_width_);
 
           // compute local max.
-          int64_t max_indice = h_begin * input_width_ + w_begin;
+          size_t max_indice = h_begin * input_width_ + w_begin;
           T max_val = input_ptr[max_indice];
 
           LocalWindow lw;
@@ -204,10 +203,10 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
           lw.w_end = w_end;
 
           ComputeLocalMax(&max_indice, &max_val, lw, input_width_, input_ptr);
-          int64_t output_index = oh_index * output_width_ + ow_index;
+          size_t output_index = oh_index * output_width_ + ow_index;
           output_ptr[output_index] = max_val;
           if (indices_addr != nullptr) {
-            indices_ptr[output_index] = max_indice;
+            indices_ptr[output_index] = SizeToLong(max_indice);
           }
         }
       }
@@ -219,7 +218,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 }
 
 const AdaptiveMaxPool2dCpuKernelMod::FuncList &AdaptiveMaxPool2dCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>> func_list = {
+  static std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &AdaptiveMaxPool2dCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
