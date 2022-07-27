@@ -71,7 +71,7 @@ __global__ void BroadcastGradGradOperator(const size_t l0, const size_t l1, cons
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    sopd_grad[pos] = Func()(x1[l_index], x2[r_index], dy1[pos], dy2[pos]);
+    sopd_grad[pos] = Func()(x1[l_index], x2[r_index], dy1[l_index], dy2[r_index]);
   }
 }
 
