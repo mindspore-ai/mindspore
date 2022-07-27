@@ -255,7 +255,7 @@ def standard_normal(shape, seed=0, seed2=0):
         Tensor. The shape is the same as the input `shape`. The dtype is float32.
 
     Raises:
-        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `seed` or `seed2` is not an int.
         TypeError: If `shape` is not a tuple.
         ValueError: If `shape` is not a constant value.
 
