@@ -196,6 +196,7 @@ constexpr auto kGatherDGrad = "GatherDGrad";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kSparseTensorToCSRSparseMatrix = "SparseTensorToCSRSparseMatrix";
 constexpr auto kSparseSplit = "SparseSplit";
+constexpr auto kReverseV2 = "ReverseV2";
 
 // NN
 constexpr auto kApplyAddSign = "ApplyAddSign";
