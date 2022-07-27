@@ -78,6 +78,7 @@ from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import RaggedRange
+from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.image_ops import ResizeBicubic
 from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
 from mindspore.ops.operations.array_ops import RangeV2
@@ -2255,6 +2256,13 @@ test_case_math_ops = [
         'block': Bucketize(boundaries=[1., 3., 5., 7., 9.]),
         'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float))],
         'skip': ['backward']}),
+    ('TridiagonalMatMul', {
+        'block': TridiagonalMatMul(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3]]).astype(np.float32)),
+                        Tensor(np.array([[1, 2, 3]]).astype(np.float32)),
+                        Tensor(np.array([[1, 2, 3]]).astype(np.float32)),
+                        Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
     ('Trace', {
         'block': Trace(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],

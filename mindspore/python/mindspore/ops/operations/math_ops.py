@@ -5722,6 +5722,75 @@ class Trunc(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
+class TridiagonalMatMul(Primitive):
+    """
+    Return the result of a multiplication of two matrices, where the left one is a Tridiagonal Matrix.
+
+    Inputs:
+        - **superdiag** (Tensor) - The input tensor.
+          Data types must be: float16, float32, double, complex64, complex128.
+          The shape is [..., 1, M].
+          Representing superdiagonals of Tridiagonal Matrices to the left of multiplication.
+          Last element is ignored.
+        - **maindiag** (Tensor) - The input tensor.
+          Data types must be: float16, float32, double, complex64, complex128.
+          The shape is [..., 1, M].
+          Representing maindiagonals of Tridiagonal Matrices to the left of multiplication.
+        - **subdiag** (Tensor) - The input tensor.
+          Data types must be: float16, float32, double, complex64, complex128.
+          The shape is [..., 1, M].
+          Representing subdiagonals of Tridiagonal Matrices to the left of multiplication.
+          First element is ignored.
+        - **rhs** (Tensor) - The input tensor.
+          Data types must be: float16, float32, double, complex64, complex128.
+          The shape is [..., M, N].
+          Representing MxN Matrices to the right of multiplication.
+
+    Outputs:
+        Tensor, with the same shape and data type as the `rhs`.
+
+    Raises:
+        TypeError: If dtypes of `superdiag`, `maindiag`, `subdiag` and `rhs`
+                   are not float16, float32, double, complex64, complex128.
+        ValueError: If the col of input `superdiag`, the col of input `maindiag`,
+                    the col of input `subdiag` and the row of input `rhs` are not equal.
+        ValueError: If the row of input `superdiag`, the row of input `maindiag` and
+                    the row of input `subdiag` are not 1.
+        ValueError: If the rank of input `superdiag`, the rank of input `maindiag`,
+                    the rank of input `subdiag` and rank row of input `rhs`
+                    are not equal to or greater than 2.
+        ValueError: If the shape of input `superdiag`, the shape of input `maindiag` and
+                    the shape of input `subdiag` are not same.
+        ValueError: If the shape of input `superdiag` ignoring the last two elements,
+                    the shape of input `maindiag` ignoring the last two elements,
+                    the shape of input `subdiag` ignoring the last two elements and
+                    the shape of input `rhs` ignoring the last two elements
+                    are not same.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> tridiagonalmatmul = ops.TridiagonalMatMul()
+        >>> superdiag = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
+        >>> maindiag = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
+        >>> subdiag = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
+        >>> rhs = Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))
+        >>> output = tridiagonalmatmul(superdiag,maindiag,subdiag,rhs)
+        >>> print(output)
+        [[ 2.  2.  2. ]
+         [ 6.  6.  6.]
+         [ 6.  6.  6.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TridiagonalMatMul"""
+        self.init_prim_io_names(
+            inputs=['superdiag', 'maindiag', 'subdiag', 'rhs'],
+            outputs=['y'])
+
+
 class Igamma(Primitive):
     r"""
     Calculates lower regularized incomplete Gamma function.
