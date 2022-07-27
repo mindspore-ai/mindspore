@@ -21,6 +21,7 @@ namespace mindspore {
 constexpr static int kMaxNumOfDevices = 3;
 constexpr static int kDefaultThreadNumTwo = 2;
 constexpr static int kDefaultThreadNumFour = 4;
+constexpr static int kDefaultInterOpParallelNum = 1;
 constexpr static int kCoreNumThreshold = 32;
 
 void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
@@ -76,7 +77,10 @@ Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceIn
   return kSuccess;
 }
 
-void ContextUtils::ResetDefaultThreadNum(Context *context) {
+void ContextUtils::ResetContextDefaultParam(Context *context) {
+  if (context->GetInterOpParallelNum() == 0) {
+    context->SetInterOpParallelNum(kDefaultInterOpParallelNum);
+  }
   if (context->GetThreadNum() != 0) {
     return;
   }
@@ -103,7 +107,7 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return nullptr;
   }
-  ResetDefaultThreadNum(context);
+  ResetContextDefaultParam(context);
   auto device_list = context->MutableDeviceInfo();
   if (device_list.size() == 0 || device_list.size() > kMaxNumOfDevices) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
