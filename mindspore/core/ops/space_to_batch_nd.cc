@@ -66,17 +66,18 @@ ShapeVector SpaceToBatchNDInferShapeImpl(const string &kernel_name_, const std::
 
     // check the paddings and block_sizes are valid
     auto tmp_shape = input_shape_[idx_i + off_set_] + paddings_[idx_i][0] + paddings_[idx_i][1];
-    if ((tmp_shape % block_size_[idx_i]) != 0) {
+    if (input_shape_[idx_i + off_set_] > 0 && (tmp_shape % block_size_[idx_i]) != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', padded shape should be divisible by block_size, , but got padded shape: " << tmp_shape
                         << ", block_size: " << block_size_[idx_i];
     }
-    if ((tmp_shape / block_size_[idx_i]) == 0) {
+    if (input_shape_[idx_i + off_set_] > 0 && (tmp_shape / block_size_[idx_i]) == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', padded shape cannot be less than block_size"
                         << ", but got padded shape: " << tmp_shape << ", block_size: " << block_size_[idx_i];
     }
-    output_shape_[idx_i + off_set_] = tmp_shape / block_size_[idx_i];
-    output_shape_[0] = output_shape_[0] * block_size_[idx_i];
+    output_shape_[idx_i + off_set_] =
+      input_shape_[idx_i + off_set_] > 0 ? tmp_shape / block_size_[idx_i] : input_shape_[idx_i + off_set_];
+    output_shape_[0] = output_shape_[0] > 0 ? output_shape_[0] * block_size_[idx_i] : output_shape_[0];
   }
 
   return output_shape_;
@@ -102,20 +103,7 @@ abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_shape = SpaceToBatchNDInferShapeImpl(prim_name, block_shapes, paddings, input_shape_ptr->shape());
 
-  if (!input_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  if (input_shape_ptr->max_shape().empty() || input_shape_ptr->min_shape().empty()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  ShapeVector max_out_shape =
-    SpaceToBatchNDInferShapeImpl(prim_name, block_shapes, paddings, input_shape_ptr->max_shape());
-  ShapeVector min_out_shape =
-    SpaceToBatchNDInferShapeImpl(prim_name, block_shapes, paddings, input_shape_ptr->min_shape());
-
-  return std::make_shared<abstract::Shape>(out_shape, min_out_shape, max_out_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr SpaceToBatchNDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
