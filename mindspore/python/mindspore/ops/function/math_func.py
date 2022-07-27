@@ -41,6 +41,7 @@ from ..operations.math_ops import (
     BesselK1,
     BesselK1e,
     MatrixSolve,
+    Orgqr,
     Renorm,
     Hypot,
     Lcm,
@@ -2991,6 +2992,56 @@ def minimum(x, y):
         Float32
     """
     return minimum_(x, y)
+
+
+def orgqr(x, tau):
+    r"""
+    Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch
+    as an example. The input x is a matrix of size :math:`(M, N)` after householder transformation. When the diagonal
+    of x is set to 1, every colunm of lower triangular in x is denoted as :math:`w_j` for :math:`j` for
+    :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
+
+    .. math::
+        H_{1} H_{2} \ldots H_{k} \quad \text { with } \quad H_{j}=\mathrm{I}_{M}-\tau_{j} w_{j} w_{j}^{\mathrm{H}}
+
+    where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
+    :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
+    The output matrix is the same size as the input matrix :math:`x`.
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
+                    with float32, float64, complex64 and complex128 data type.
+        tau (Tensor) : Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N` indicating the
+                       reflecting coefficient in Householder transformation, which have the same type as x.
+
+    Returns:
+        Tensor, has the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `x` or `tau` are not Tensors.
+        TypeError: If dtype of `x` and `tau` is not one of: float64, float32, complex64, complex128.
+        ValueError: If `x` and `tau` have different batch size.
+        ValueError: If x.shape[-2] < x.shape[-1].
+        ValueError: If x.shape[-1] < tau.shape[-1].
+        ValueError: If rank(x) - rank(tau) != 1.
+        ValueError: If rank(x) != 2 or 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
+        >>> tau = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
+        >>> net = ops.Orgqr()
+        >>> y = net(x, tau)
+        >>> print(y)
+        [[-0.54999995 -0.2128925   0.8137956 ]
+         [ 0.47119996 -0.8752807   0.08240613]
+         [ 0.69749993  0.42560163  0.57772595]]
+    """
+
+    orgqr_ = Orgqr()
+    return orgqr_(x, tau)
 
 
 def hypot(x1, x2):

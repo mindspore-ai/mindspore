@@ -224,6 +224,16 @@ class MatMulNet(nn.Cell):
         return self.biasAdd(self.matmul(x, y), b)
 
 
+class OrgqrFunc(nn.Cell):
+    def __init__(self):
+        super(OrgqrFunc, self).__init__()
+        self.orgqr_ = ops.function.math_func.orgqr
+
+    def construct(self, x, tau):
+        y = self.orgqr_(x, tau)
+        return y
+
+
 class NetWithLossSub(nn.Cell):
     """ NetWithLossSub definition """
 
@@ -840,6 +850,14 @@ raise_set = [
     ('Rot90_2_Error', {
         'block': (Rot90Func(), {'exception': ValueError}),
         'desc_inputs': [Tensor(np.array([0]), dtype=mstype.float16)],
+        'skip': ['backward']}),
+    ('Orgqr', {
+        'block': OrgqrFunc(),
+        'desc_inputs': [Tensor(np.array([[-114.6, 10.9, 1.1],
+                                         [-0.304, 38.07, 69.38],
+                                         [-0.45, -0.17, 62.0]]).astype(np.float32)),
+                        Tensor(np.array([1.55, 1.94, 0.0]).astype(np.float32))
+                        ],
         'skip': ['backward']}),
 ]
 
