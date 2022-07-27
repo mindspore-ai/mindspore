@@ -16,11 +16,9 @@
 
 #ifndef MINDSPORE_CORE_OPS_TENSOR_SCATTER_ARITHMETIC_H_
 #define MINDSPORE_CORE_OPS_TENSOR_SCATTER_ARITHMETIC_H_
-#include <memory>
 #include <vector>
 
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

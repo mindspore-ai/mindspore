@@ -62,10 +62,10 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto updates_shape = inputs.at(kIndex2)->GetShapeVector();
-  const Eigen::DenseIndex indices_rank = indices_shape.size();
-  const Eigen::DenseIndex last_indices_value = indices_shape.back();
-  const Eigen::DenseIndex update_rank = updates_shape.size();
-  constexpr Eigen::DenseIndex min_indices_rank = 2;
+  const auto indices_rank = indices_shape.size();
+  const auto last_indices_value = indices_shape.back();
+  const auto update_rank = updates_shape.size();
+  constexpr size_t min_indices_rank = 2;
   slice_size_ = last_indices_value;
   batch_size_ = 1;
   inner_size_ = 1;
@@ -75,15 +75,18 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
                              << indices_shape.size();
   }
 
-  for (Eigen::DenseIndex i = 0; i < update_rank; ++i) {
+  for (size_t i = 0; i < update_rank; ++i) {
     if (i <= indices_rank - min_indices_rank) {
-      batch_size_ *= indices_shape[i];
+      batch_size_ *= LongToSize(indices_shape[i]);
     } else {
-      inner_size_ *= updates_shape[i];
+      inner_size_ *= LongToSize(updates_shape[i]);
     }
   }
   batch_strides_.resize(slice_size_);
-  for (auto dim = slice_size_ - 1; dim >= 0; --dim) {
+  // Since the quit condition(i >= 0) is about negative integer,
+  // we convert iterated index from unsigned integer to signed integer.
+  for (auto i = SizeToLong(slice_size_) - 1; i >= 0; --i) {
+    auto dim = LongToSize(i);
     total_batch_size_ *= input_shape_[dim];
     if (dim == slice_size_ - 1) {
       batch_strides_[dim] = 1;
@@ -95,8 +98,8 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-inline void ComputeFunc(string kernel_name, MatrixXd<T> eigen_output, Eigen::DenseIndex out_index,
-                        MatrixXd<T> eigen_update, Eigen::DenseIndex upd_index) {
+inline void ComputeFunc(const string &kernel_name, MatrixXd<T> eigen_output, size_t out_index, MatrixXd<T> eigen_update,
+                        size_t upd_index) {
   switch (OpMap[kernel_name]) {
     case Op::ADD:
       eigen_output.row(out_index) += eigen_update.row(upd_index);
@@ -123,7 +126,7 @@ inline void ComputeFunc(string kernel_name, MatrixXd<T> eigen_output, Eigen::Den
 
 template <typename T, typename S>
 bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace,
+                                                const std::vector<kernel::AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto indices = GetDeviceAddress<S>(inputs, kIndex1);
@@ -148,10 +151,10 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
                                                                                               slice_size_);
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_output(output, total_batch_size_,
                                                                                              inner_size_);
-  for (Eigen::DenseIndex i = 0; i < batch_size_; ++i) {
-    Eigen::DenseIndex out_index = 0;
-    for (Eigen::DenseIndex j = 0; j < slice_size_; ++j) {
-      const Eigen::DenseIndex idx_index = eigen_indices(i, j);
+  for (size_t i = 0; i < batch_size_; ++i) {
+    size_t out_index = 0;
+    for (size_t j = 0; j < slice_size_; ++j) {
+      S idx_index = eigen_indices(i, j);
       out_index += batch_strides_[j] * idx_index;
       if (idx_index < 0 || idx_index >= static_cast<S>(input_shape_[j])) {
         invalid_index_pos = SizeToLong(i * slice_size_);
@@ -166,7 +169,7 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
   if (invalid_index_pos != -1) {
     std::stringstream indices_ss;
     std::stringstream input_shape_ss;
-    for (Eigen::DenseIndex i = 0; i < slice_size_; i++) {
+    for (size_t i = 0; i < slice_size_; i++) {
       if (i > 0) {
         indices_ss << ", ";
         input_shape_ss << ", ";
