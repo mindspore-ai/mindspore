@@ -64,7 +64,7 @@ using LayoutMap = std::map<string, LayoutPtr>;
 
 class MSANFModelParser {
  public:
-  MSANFModelParser() : producer_name_(""), model_version_(""), ir_version_("") {}
+  MSANFModelParser() = default;
   ~MSANFModelParser() = default;
 
   static void LoadTensorMapClear() { load_tensor_map_.clear(); }
@@ -92,7 +92,7 @@ class MSANFModelParser {
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
-  bool BuildParameterForFuncGraph(const ParameterPtr &node, const mind_ir::TensorProto &tensor_proto);
+  bool BuildParameterForFuncGraph(const ParameterPtr &node, const mind_ir::TensorProto &parameter_proto);
   bool SetValueForTopGraphParameter(const FuncGraphPtr &topGraph, const std::map<std::string, ValuePtr> &weights);
   bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
@@ -116,13 +116,13 @@ class MSANFModelParser {
   void SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInTupleTensorForm(const string &value_node_name, const mind_ir::AttributeProto &attr_proto);
-  bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_tensor);
+  bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool GetAttrValueForValueNodeWithType(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
-  bool little_endian() { return little_endian_; }
+  bool little_endian() const { return little_endian_; }
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr GetAnfNode(const std::string &node_name);
@@ -139,7 +139,7 @@ class MSANFModelParser {
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
   const unsigned char *mindir_dec_key_{nullptr};
-  size_t mindir_key_size_;
+  size_t mindir_key_size_{0};
   std::string mindir_dec_mode_;
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;

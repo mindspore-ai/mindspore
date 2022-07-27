@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <utility>
 
 namespace mindspore {
 class TraceInfo;
@@ -33,6 +32,7 @@ class TraceInfo {
  public:
   explicit TraceInfo(const DebugInfoPtr &info) : debug_info_(info) {}
   TraceInfo(const TraceInfo &other) = default;
+  TraceInfo &operator=(const TraceInfo &) = default;
   virtual ~TraceInfo() = default;
   virtual std::string name() const { return ""; }
   virtual std::string symbol() const { return ""; }
@@ -66,6 +66,7 @@ class TracePhi : public TraceInfo {
 class TraceIfStmtTrueBranch : public TraceInfo {
  public:
   TraceIfStmtTrueBranch(const TraceIfStmtTrueBranch &) = default;
+  TraceIfStmtTrueBranch &operator=(const TraceIfStmtTrueBranch &) = default;
   explicit TraceIfStmtTrueBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfStmtTrueBranch() override = default;
   MS_DECLARE_TRACE_NAME_SYMBOL("if_true", "✓");
@@ -75,6 +76,7 @@ class TraceIfStmtTrueBranch : public TraceInfo {
 class TraceIfStmtFalseBranch : public TraceInfo {
  public:
   TraceIfStmtFalseBranch(const TraceIfStmtFalseBranch &) = default;
+  TraceIfStmtFalseBranch &operator=(const TraceIfStmtFalseBranch &) = default;
   explicit TraceIfStmtFalseBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfStmtFalseBranch() override = default;
   MS_DECLARE_TRACE_NAME_SYMBOL("if_false", "✗");

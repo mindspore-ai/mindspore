@@ -171,7 +171,6 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \param[in] tensor [Tensor] The input tensor.
   explicit Tensor(const Tensor &tensor);
-
   /// \brief Create tensor with given data type from another tensor.
   ///
   /// \param[in] tensor [Tensor] The input tensor.

@@ -197,7 +197,7 @@ class TensorStringifier {
   TensorStringifier(const T *data, size_t data_size, size_t ndim) : data_(data), data_size_(data_size), ndim_(ndim) {}
   ~TensorStringifier() = default;
 
-  std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const {
+  std::string ToString(TypeId, const ShapeVector &shape, bool use_comma) const {
     constexpr auto valid =
       std::is_same<T, bool>::value || std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
       std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
@@ -214,7 +214,8 @@ class TensorStringifier {
 
     std::ostringstream ss;
     if (data_size_ == 1 && ndim_ == 0) {  // Scalar
-      OutputDataString(ss, 0, 0, 1, false, 0);
+      int max = 0;
+      OutputDataString(ss, 0, 0, 1, false, &max);
       return ss.str();
     }
 
@@ -987,7 +988,7 @@ static std::map<TypeId, std::vector<TensorChunk>> GroupingTensors(const TensorPt
     auto &chunk = chunks.back();
     chunk.size += tensor->DataSize();
     chunk.bytes += tensor_bytes;
-    chunk.tensors.emplace_back(tensor);
+    (void)chunk.tensors.emplace_back(tensor);
   }
   return group_info;
 }
@@ -1048,7 +1049,7 @@ TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
   TensorPtrList result_tensors;
   for (auto &entry : chunk_map) {
     auto &chunk_tensors = entry.second;
-    result_tensors.insert(result_tensors.end(), chunk_tensors.begin(), chunk_tensors.end());
+    (void)result_tensors.insert(result_tensors.end(), chunk_tensors.begin(), chunk_tensors.end());
   }
   return result_tensors;
 }
@@ -1120,7 +1121,6 @@ const size_t CSRTensor::GetSizeAt(size_t index) const {
     return sizeof(int64_t);
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for CSRTensor: " << ToString();
-  return kTypeUnknown;
 }
 
 TensorPtr CSRTensor::GetTensorAt(size_t index) const {
@@ -1139,7 +1139,6 @@ TensorPtr CSRTensor::GetTensorAt(size_t index) const {
     return std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), scalar->type());
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for CSRTensor: " << ToString();
-  return nullptr;
 }
 
 TensorPtr COOTensor::GetTensorAt(size_t index) const {

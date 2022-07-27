@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "cxx_api/model/model_impl.h"
+#include <string>
 #include "cxx_api/dlutils.h"
 
 namespace mindspore {
