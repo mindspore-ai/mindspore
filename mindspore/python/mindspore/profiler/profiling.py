@@ -148,6 +148,7 @@ class Profiler:
         self._filt_optype_names = ''
         self._output_path = ''
         self._rank_size = 0
+        self._ascend_profiler = None
         _environment_check()
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -572,11 +573,7 @@ class Profiler:
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
         op_parser_obj = self._ascend_graph_op_analyse(source_path)
-        framework_parser = op_parser_obj[0]
-        aicpu_data_parser = op_parser_obj[1]
-        optime_parser = op_parser_obj[2]
-        op_task_dict = op_parser_obj[3]
-
+        framework_parser, aicpu_data_parser, optime_parser, op_task_dict = op_parser_obj
         self._ascend_graph_minddata_analyse(source_path)
 
         # analyse op compute time info

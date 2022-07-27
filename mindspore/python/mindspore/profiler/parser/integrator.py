@@ -1195,7 +1195,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         self._timeline_meta = self._format_meta_data_list
 
         # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict)
 
     def check_op_name(self, op_name):
         """
