@@ -42,7 +42,7 @@ void ControlActor::Init() {
     if (IntToSize(data_arrow->from_output_index_) >= output_data_by_output_index_.size()) {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID();
     }
-    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data);
+    (void)output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(data);
     ++output_data_index;
   }
 }
@@ -71,7 +71,7 @@ void ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_rea
   }
 }
 
-void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) {
+void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) const {
   MS_EXCEPTION_IF_NULL(op_data);
   MS_EXCEPTION_IF_NULL(op_data->data_);
   op_data->data_->IncreaseDynamicRefCount(GetAID().Name());
@@ -191,7 +191,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      input_device_tensors_[input_data->index_] = input_data->data_;
+      input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
     }
   }
 
@@ -292,7 +292,7 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
                                " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    auto output_partial = input_partials_[output_partial_arrow->from_output_index_];
+    auto output_partial = input_partials_[IntToSize(output_partial_arrow->from_output_index_)];
     IncreaseDynamicRefCount(output_partial);
   }
 }
@@ -443,7 +443,7 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
                                " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    auto output_partial = input_partials_[partial_arrow->from_output_index_];
+    auto output_partial = input_partials_[IntToSize(partial_arrow->from_output_index_)];
     MS_EXCEPTION_IF_NULL(output_partial);
     ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
                           IntToSize(partial_arrow->to_input_index_), context);

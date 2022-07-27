@@ -27,9 +27,9 @@ void FusionActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
   }
   // Update the input data using the real input info.
-  auto &real_input_data = real_input_data_[input_data->index_];
+  auto &real_input_data = real_input_data_[IntToSize(input_data->index_)];
   MS_EXCEPTION_IF_NULL(real_input_data.first);
-  input_data->index_ = real_input_data.second;
+  input_data->index_ = SizeToInt(real_input_data.second);
 
   real_input_data.first->RunOpData(input_data, context);
 }

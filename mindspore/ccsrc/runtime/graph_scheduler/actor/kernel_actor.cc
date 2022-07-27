@@ -94,8 +94,8 @@ void KernelActor::Init() {
     if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors_.size()) {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
     }
-    data->data_ = output_device_tensors_[data_arrow->from_output_index_];
-    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data);
+    data->data_ = output_device_tensors_[IntToSize(data_arrow->from_output_index_)];
+    (void)output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(data);
 
     ++output_data_index;
   }
@@ -308,7 +308,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   if (IntToSize(input_data->index_) >= real_input_data_infos_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
-  auto &real_input_info = real_input_data_infos_[input_data->index_];
+  auto &real_input_info = real_input_data_infos_[IntToSize(input_data->index_)];
   MS_EXCEPTION_IF_NULL(real_input_info);
   if ((input_data->data_->GetDeviceType() == device_contexts_[0]->GetDeviceType()) &&
       (input_data->data_->format() == real_input_info->format_)) {
@@ -318,18 +318,19 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   if (IntToSize(input_data->index_) >= copy_input_device_tensors_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
-  if (copy_input_device_tensors_[input_data->index_] == nullptr) {
-    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
-      nullptr, real_input_info->size_, real_input_info->format_, real_input_info->type_id_, real_input_info->shape_);
+  if (copy_input_device_tensors_[IntToSize(input_data->index_)] == nullptr) {
+    copy_input_device_tensors_[IntToSize(input_data->index_)] =
+      device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
+        nullptr, real_input_info->size_, real_input_info->format_, real_input_info->type_id_, real_input_info->shape_);
   }
-  auto &new_device_tensor = copy_input_device_tensors_[input_data->index_];
+  auto &new_device_tensor = copy_input_device_tensors_[IntToSize(input_data->index_)];
   MS_EXCEPTION_IF_NULL(new_device_tensor);
   // Dynamic shape need update size.
   if (IsDynamic(real_input_info->shape_)) {
     new_device_tensor->SetSize(input_data->data_->GetSize());
   }
   // Update the input device tensor.
-  input_device_tensors_[input_data->index_] = new_device_tensor.get();
+  input_device_tensors_[IntToSize(input_data->index_)] = new_device_tensor.get();
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kKernelOutput,
                                                      input_data->index_);
@@ -364,9 +365,9 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
       }
 
-      if (input_device_tensors_[input_data->index_] != input_data->data_) {
-        input_device_tensors_[input_data->index_] = input_data->data_;
-        memory_free_list_[input_data->index_] = input_data->data_;
+      if (input_device_tensors_[IntToSize(input_data->index_)] != input_data->data_) {
+        input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
+        memory_free_list_[IntToSize(input_data->index_)] = input_data->data_;
       }
       CopyInputDeviceTensor(input_data, context);
     }

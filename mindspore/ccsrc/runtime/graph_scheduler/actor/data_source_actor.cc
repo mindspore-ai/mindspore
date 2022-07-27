@@ -67,7 +67,7 @@ void DataSourceActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, 
 
   auto position = FetchNodePosition(output_node);
   // Host data souruce actor uses the node position, device data source actor uses the output index.
-  auto output_position = (position != 0) ? position : data_arrow->from_output_index_;
+  auto output_position = (position != 0) ? position : IntToSize(data_arrow->from_output_index_);
   if (output_position >= output_device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
   }

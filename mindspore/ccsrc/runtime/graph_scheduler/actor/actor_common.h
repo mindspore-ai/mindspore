@@ -100,7 +100,7 @@ enum class KernelTransformType {
 
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
-#define CLEAR_FLAG(value, flag) ((value) = ((value) & (~flag)))
+#define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   {                                                            \
@@ -117,8 +117,8 @@ enum class KernelTransformType {
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, op_context, message) \
   {                                                                                  \
-    if (strategy == GraphExecutionStrategy::kStep) {                                 \
-      MS_LOG(EXCEPTION) << message;                                                  \
+    if ((strategy) == GraphExecutionStrategy::kStep) {                               \
+      MS_LOG(EXCEPTION) << (message);                                                \
     }                                                                                \
     (op_context).error_info_ = message;                                              \
     (op_context).SetFailed(kFailure);                                                \
@@ -129,14 +129,14 @@ enum class KernelTransformType {
   {                                                                                                                \
     std::string message = "";                                                                                      \
     if ((device_context).device_context_key().device_name_ == "CPU") {                                             \
-      message = "Memory isn't enough and alloc failed, kernel name: " + kernel_name +                              \
+      message = "Memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                            \
                 ", alloc size: " + std::to_string(alloc_size) + "B.";                                              \
     } else {                                                                                                       \
       message = "Device(id:" + std::to_string((device_context).device_context_key().device_id_) +                  \
-                ") memory isn't enough and alloc failed, kernel name: " + kernel_name +                            \
+                ") memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                          \
                 ", alloc size: " + std::to_string(alloc_size) + "B.";                                              \
     }                                                                                                              \
-    if (strategy == GraphExecutionStrategy::kStep) {                                                               \
+    if ((strategy) == GraphExecutionStrategy::kStep) {                                                             \
       MS_LOG(EXCEPTION) << message;                                                                                \
     }                                                                                                              \
     (op_context).error_info_ = message;                                                                            \
@@ -191,7 +191,6 @@ class ActorDispatcher {
   template <typename T, typename... Args0, typename... Args1>
   static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
-    MS_EXCEPTION_IF_NULL(actor_manager);
     auto base_actor = actor_manager->GetActor(aid);
     T *actor = static_cast<T *>(base_actor.get());
     MS_EXCEPTION_IF_NULL(actor);
