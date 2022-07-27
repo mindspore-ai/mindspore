@@ -27,10 +27,8 @@ size_t GetBaseTypeSize(TypeId type_id) {
   switch (type_id) {
     case kNumberTypeFloat16:
       return sizeof(float16);
-      break;
     case kNumberTypeFloat32:
       return sizeof(float);
-      break;
     default:
       MS_LOG(EXCEPTION) << "For Scale Grad input type is error: " << type_id;
   }
@@ -39,7 +37,7 @@ size_t GetBaseTypeSize(TypeId type_id) {
 size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
   size_t input_size = GetBaseTypeSize(type_id);
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= input_shape[i];
+    input_size *= SizeToLong(input_shape[i]);
   }
   return input_size;
 }
@@ -47,8 +45,9 @@ size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_
 
 template <typename T>
 void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs, float16 *scale_addr_half,
-                                                   float *scale_addr_float, size_t index) {
+                                                   const std::vector<AddressPtr> &outputs,
+                                                   const float16 *scale_addr_half, const float *scale_addr_float,
+                                                   size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
   T *output_addr = GetDeviceAddress<T>(outputs, index);
   T x1;
@@ -112,6 +111,9 @@ bool ScaleGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     input_size_list_.push_back(size);
   }
 
+  if (input_size < 1) {
+    MS_LOG(EXCEPTION) << "Operator " << kernel_name_ << " input size: " << input_size << " less than 1.";
+  }
   for (size_t index = 0; index < input_size - 1; index++) {
     output_size_list_.push_back(input_size_list_[index]);
   }
