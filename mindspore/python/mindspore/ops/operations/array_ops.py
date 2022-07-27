@@ -1185,7 +1185,7 @@ class Padding(Primitive):
         self.pad_dim_size = pad_dim_size
 
 
-class UniqueWithPad(PrimitiveWithInfer):
+class UniqueWithPad(PrimitiveWithCheck):
     """
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
@@ -1195,22 +1195,10 @@ class UniqueWithPad(PrimitiveWithInfer):
     the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
     to make it have the same shape as the Tensor `idx`.
 
-    Inputs:
-        - **x** (Tensor) - The tensor need to be unique. Must be 1-D vector with types: int32, int64.
-        - **pad_num** (int) - Pad num. The data type is an int.
-
-    Outputs:
-        tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
-
-        - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as `x`.
-        - idx (Tensor) - The index of each value of `x` in the unique output `y`, the shape and data type same as `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither int32 nor int64.
-        ValueError: If length of shape of `x` is not equal to 1.
+    Refer to :func:`mindspore.ops.unique_with_pad` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
@@ -1225,16 +1213,9 @@ class UniqueWithPad(PrimitiveWithInfer):
     def __init__(self):
         """init UniqueWithPad"""
 
-    def __infer__(self, x, pad_num):
-        validator.check_tensor_dtype_valid("x", x['dtype'], [mstype.int32, mstype.int64], self.name)
-        validator.check_subclass("pad_num", pad_num['dtype'], [mstype.int32, mstype.int64], self.name)
+    def __check__(self, x, pad_num):
         x_shape = list(x['shape'])
-        validator.check("rank of x", len(x_shape), "expected", 1, Rel.EQ, self.name)
-        out_shape = x_shape
-        out = {'shape': (out_shape, out_shape),
-               'dtype': (x['dtype'], x['dtype']),
-               'value': None}
-        return out
+        validator.check("rank of x", len(x_shape), '', 1, Rel.EQ, self.name)
 
 
 class Split(PrimitiveWithCheck):

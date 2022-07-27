@@ -586,6 +586,7 @@ def unique_with_pad(x, pad_num):
 
     Returns:
         tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
+
         - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as `x`.
         - idx (Tensor) - The index of each value of `x` in the unique output `y`, the shape and data type same as `x`.
 
@@ -3791,6 +3792,7 @@ def min(x, axis=0, keep_dims=False):
 
 __all__ = [
     'unique',
+    'unique_with_pad',
     'unique_consecutive',
     'eye',
     'matrix_band_part',

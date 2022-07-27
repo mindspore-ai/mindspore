@@ -370,6 +370,7 @@ Array Functions
     mindspore.ops.unsorted_segment_min
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unique_with_pad
 
 .. list-table::
    :widths: 50 50

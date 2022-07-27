@@ -226,6 +226,44 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   return std::make_shared<AbstractTuple>(elements);
 }
 
+AbstractBasePtr InferImplUniqueWithPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  MS_LOG(WARNING) << "InferImplUniqueWithPad.";
+  // inputs: a 1-d Tensor
+  const std::string op_name = primitive->name();
+  constexpr size_t kUniqueWithPadInputNum = 2;
+  CheckArgsSize(op_name, args_spec_list, kUniqueWithPadInputNum);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  auto shape = input->shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->shape().size() != 1) {
+    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+  }
+
+  // Currently we choose the same data type as input for the idx.
+  TypePtr ids_idx_type = kInt32;
+  MS_EXCEPTION_IF_NULL(input->element());
+  MS_EXCEPTION_IF_NULL(input->element()->GetTypeTrack());
+  if (input->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
+    ids_idx_type = kInt64;
+  }
+  ShapeVector idx_shape = shape->shape();
+  ShapeVector idx_min_shape = shape->min_shape();
+  if (idx_min_shape.empty()) {
+    idx_min_shape = shape->shape();
+  }
+  ShapeVector idx_max_shape = shape->max_shape();
+  if (idx_max_shape.empty()) {
+    idx_max_shape = shape->shape();
+  }
+  auto ids_idx = std::make_shared<AbstractTensor>(ids_idx_type, idx_shape);
+  ids_idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
+
+  AbstractBasePtr ids = input->Broaden();
+  return std::make_shared<AbstractTuple>(AbstractBasePtrList({ids, ids_idx}));
+}
+
 AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
