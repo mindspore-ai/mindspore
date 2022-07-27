@@ -351,6 +351,7 @@ def _tensor_index_by_bool(data, bool_value):
 
 
 def check_range(x, dim_size):
+    """Check whether x is within the range of dim_size"""
     tensor_x = const_utils.scalar_to_tensor(x)
     if tensor_x >= dim_size or tensor_x < -dim_size:
         return tensor_x
@@ -359,6 +360,7 @@ def check_range(x, dim_size):
 
 
 def get_stride_info_from_integer(tensor_int):
+    """Convert integer to slice"""
     begin_strides = [tensor_int]
     end_strides = [tensor_int + const_utils.scalar_to_tensor(1)]
     step_strides = [const_utils.scalar_to_tensor(1)]
