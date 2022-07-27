@@ -28,11 +28,18 @@ int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float
                   const float *gradient, size_t start, size_t end, bool use_nesterov);
 int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
                         const float *gradient, size_t start, size_t end);
-size_t FusedCastAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                         const int16_t *gradient16, float global_norm_reciprocal, size_t start, size_t end);
-size_t FusedCastAdamFp16(int16_t *var16, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
-                         float decay, const int16_t *gradient16, float global_norm_reciprocal, size_t start,
-                         size_t end);
+size_t FusedCastAdamFp32Fp16(float *var, const int16_t *gradient16, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end);
+size_t FusedCastAdamFp32Fp32(float *var, const float *gradient32, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end);
+size_t FusedCastAdamFp16Fp16(int16_t *var16, const int16_t *gradient16, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end);
+size_t FusedCastAdamFp16Fp32(int16_t *var16, const float *gradient32, float *m, float *v, float lr, float beta1,
+                             float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
+                             size_t end);
 #ifdef __cplusplus
 }
 #endif
