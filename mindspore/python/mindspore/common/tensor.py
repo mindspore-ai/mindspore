@@ -559,9 +559,9 @@ class Tensor(Tensor_):
             y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
         Args:
-            x1 (Tensor) - The numerator tensor.
-            x2 (Tensor) - The denominator tensor.
-            value (Tensor) - The multiplier for tensor x1/x2.
+            x1 (Tensor): The numerator tensor.
+            x2 (Tensor): The denominator tensor.
+            value (Tensor): The multiplier for tensor x1/x2.
 
         Returns:
             Tensor, has the same shape and dtype as x1/x2.
@@ -591,9 +591,9 @@ class Tensor(Tensor_):
             y[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
 
         Args:
-            x1 (Tensor) - The tensor to be multiplied.
-            x2 (Tensor) - The tensor to be multiplied.
-            value (Tensor) - The multiplier for tensor x1*x2.
+            x1 (Tensor): The tensor to be multiplied.
+            x2 (Tensor): The tensor to be multiplied.
+            value (Tensor): The multiplier for tensor x1*x2.
 
         Returns:
             Tensor, has the same shape and dtype as x1*x2.
