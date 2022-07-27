@@ -385,7 +385,8 @@ class MS_CORE_API StringImm : public Value {
   /// \brief Constructor of StringImm.
   ///
   /// \param[in] str Define the string.
-  explicit StringImm(const std::string &str) : Value(kString), str_(str), hash_(std::hash<std::string>{}(str_)) {}
+  explicit StringImm(const std::string &str) noexcept
+      : Value(kString), str_(str), hash_(std::hash<std::string>{}(str_)) {}
   /// \brief Destructor of ValueDictionary.
   ~StringImm() override = default;
   MS_DECLARE_PARENT(StringImm, Value)

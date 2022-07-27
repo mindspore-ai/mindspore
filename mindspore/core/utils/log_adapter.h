@@ -85,33 +85,34 @@ enum ExceptionType {
   RuntimeWarning,
 };
 
-static inline std::map<std::string, ExceptionType> exception_types_map = {{"IndexError", IndexError},
-                                                                          {"ValueError", ValueError},
-                                                                          {"TypeError", TypeError},
-                                                                          {"KeyError", KeyError},
-                                                                          {"AttributeError", AttributeError},
-                                                                          {"NameError", NameError},
-                                                                          {"AssertionError", AssertionError},
-                                                                          {"BaseException", BaseException},
-                                                                          {"KeyboardInterrupt", KeyboardInterrupt},
-                                                                          {"Exception", Exception},
-                                                                          {"StopIteration", StopIteration},
-                                                                          {"OverflowError", OverflowError},
-                                                                          {"ZeroDivisionError", ZeroDivisionError},
-                                                                          {"EnvironmentError", EnvironmentError},
-                                                                          {"IOError", IOError},
-                                                                          {"OSError", OSError},
-                                                                          {"MemoryError", MemoryError},
-                                                                          {"UnboundLocalError", UnboundLocalError},
-                                                                          {"RuntimeError", RuntimeError},
-                                                                          {"NotImplementedError", NotImplementedError},
-                                                                          {"IndentationError", IndentationError},
-                                                                          {"RuntimeWarning", RuntimeWarning}};
+static const inline std::map<std::string, ExceptionType> exception_types_map = {
+  {"IndexError", IndexError},
+  {"ValueError", ValueError},
+  {"TypeError", TypeError},
+  {"KeyError", KeyError},
+  {"AttributeError", AttributeError},
+  {"NameError", NameError},
+  {"AssertionError", AssertionError},
+  {"BaseException", BaseException},
+  {"KeyboardInterrupt", KeyboardInterrupt},
+  {"Exception", Exception},
+  {"StopIteration", StopIteration},
+  {"OverflowError", OverflowError},
+  {"ZeroDivisionError", ZeroDivisionError},
+  {"EnvironmentError", EnvironmentError},
+  {"IOError", IOError},
+  {"OSError", OSError},
+  {"MemoryError", MemoryError},
+  {"UnboundLocalError", UnboundLocalError},
+  {"RuntimeError", RuntimeError},
+  {"NotImplementedError", NotImplementedError},
+  {"IndentationError", IndentationError},
+  {"RuntimeWarning", RuntimeWarning}};
 
 static inline std::string SupportedExceptionsToString() {
   std::ostringstream oss;
   size_t index = 0;
-  for (auto iter = exception_types_map.begin(); iter != exception_types_map.end(); ++iter) {
+  for (auto iter = exception_types_map.cbegin(); iter != exception_types_map.cend(); ++iter) {
     oss << iter->first;
     if (index != exception_types_map.size() - 1) {
       oss << ", ";

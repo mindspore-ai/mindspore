@@ -131,6 +131,7 @@ constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
+constexpr auto kListGetItem = "list_getitem";
 constexpr auto kSliceGetItem = "SliceGetItem";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kUnravelIndex = "UnravelIndex";
@@ -303,6 +304,14 @@ constexpr auto kTaylor = "Taylor";
 
 // Others
 constexpr auto kMakeTuple = "MakeTuple";
+constexpr auto kMakeList = "MakeList";
+constexpr auto kSwitch = "Switch";
+constexpr auto kLoad = "Load";
+constexpr auto kUpdateState = "UpdateState";
+constexpr auto kReturn = "Return";
+constexpr auto kDepend = "Depend";
+constexpr auto kidentity = "identity";
+constexpr auto kListAppend = "list_append";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kAssign = "Assign";
 constexpr auto kAssignAdd = "AssignAdd";
@@ -1080,9 +1089,9 @@ GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHue));
 GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2));
 GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturation));
 // Statements
-GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>("Return"));
+GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturn));
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
-GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>("Switch"));
+GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>(kSwitch));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
 GVAR_DEF(PrimitivePtr, kPrimAssign, std::make_shared<Primitive>(kAssign));
 GVAR_DEF(PrimitivePtr, kPrimAssignAdd, std::make_shared<Primitive>(kAssignAdd));
@@ -1122,13 +1131,13 @@ GVAR_DEF(PrimitivePtr, kPrimErrorOnDynamicShapeInput, std::make_shared<Primitive
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimBartlettWindow, std::make_shared<Primitive>(kBartlettWindow));
-GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>("Depend", kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDepend, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimIOU, std::make_shared<Primitive>("IOU"));
 GVAR_DEF(PrimitivePtr, kPrimReformat, std::make_shared<Primitive>("Reformat"));
-GVAR_DEF(PrimitivePtr, kPrimLoad, std::make_shared<Primitive>("Load"));
-GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>("UpdateState"));
+GVAR_DEF(PrimitivePtr, kPrimLoad, std::make_shared<Primitive>(kLoad));
+GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>(kUpdateState));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>("identity", kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentity, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimHookBackward, std::make_shared<Primitive>("HookBackward"));
 GVAR_DEF(PrimitivePtr, kPrimCellBackwardHook, std::make_shared<Primitive>("CellBackwardHook"));
 GVAR_DEF(PrimitivePtr, kPrimPrintShapeType, std::make_shared<Primitive>("PrintShapeType"));
@@ -1158,7 +1167,7 @@ GVAR_DEF(PrimitivePtr, kPrimBlackmanWindow, std::make_shared<Primitive>("Blackma
 // Structures
 GVAR_DEF(PrimitivePtr, kPrimMakeList, std::make_shared<Primitive>("make_list"));
 GVAR_DEF(PrimitivePtr, kPrimMakeKeywordArg, std::make_shared<Primitive>("make_keyword_arg"));
-GVAR_DEF(PrimitivePtr, kPrimListGetItem, std::make_shared<Primitive>("list_getitem"));
+GVAR_DEF(PrimitivePtr, kPrimListGetItem, std::make_shared<Primitive>(kListGetItem));
 GVAR_DEF(PrimitivePtr, kPrimListSetItem, std::make_shared<Primitive>("list_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimDictGetItem, std::make_shared<Primitive>("dict_getitem"));
 GVAR_DEF(PrimitivePtr, kPrimDictSetItem, std::make_shared<Primitive>("dict_setitem"));

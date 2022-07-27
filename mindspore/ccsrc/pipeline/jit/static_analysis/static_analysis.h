@@ -233,12 +233,12 @@ struct EvaluatorArgs {
   bool operator==(const EvaluatorArgs &other) const {
     return (evaluator_ == other.evaluator_) && AbstractBasePtrListDeepEqual(args_, other.args_);
   }
-  bool operator!=(const EvaluatorArgs &other) { return !(*this == other); }
+  bool operator!=(const EvaluatorArgs &other) const { return !(*this == other); }
 
   EvaluatorPtr evaluator_;
   AbstractBasePtrList args_;
 };
-using EvalTraceRevIter = std::list<EvaluatorArgs>::reverse_iterator;
+using EvalTraceRevIter = std::list<EvaluatorArgs>::const_reverse_iterator;
 struct EvaluatorArgsHasher {
   std::size_t operator()(const EvaluatorArgs &eval_args) const {
     return hash_combine(PointerHash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
@@ -288,28 +288,28 @@ using PrimitiveEvalCachePtr = std::shared_ptr<PrimitiveEvalCache>;
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
-      : prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
-    forward_count_ = 0;
-    enable_recursive_eval_ = (common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1");
-  }
+      : prim_constructors_(prim_evaluator_map),
+        func_graph_manager_(func_graph_manager),
+        forward_count_(0),
+        enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1") {}
   virtual ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
-  void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result);
+  void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) const;
   EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
   // Evaluate a CNode without look up cache.
   EvalResultPtr ObtainEvalResultWithoutCache(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
-  EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
+  EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &func);
 
   AbstractBasePtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
                                            const FuncGraphPtr &func_graph);
-  AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
+  AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const;
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
-  EvalResultPtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
+  EvalResultPtr Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_spec_list);
   void Clear();
   void ClearEvaluatorCache();
   AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context,
@@ -317,16 +317,16 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context, func_graph);
   }
   // Overloaded function.
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VirtualAbstractClosure> &fn);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VirtualAbstractClosure> &func);
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TypedPrimitiveAbstractClosure> &);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &fn);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &fn);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func);
 
   FuncGraphManagerPtr func_graph_manager() { return func_graph_manager_; }
   const AnfNodeConfigMap &anfnode_config_map() const { return anfnode_config_map_; }
@@ -346,7 +346,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
  private:
-  void SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg);
+  void SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const;
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
@@ -408,7 +408,7 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
 }
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine);
-EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
+EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore
 
