@@ -217,7 +217,7 @@ int GetMaxFrequency(int core_id) {
 
 float CoreAffinity::GetServerFrequency() {
   float max_freq = -1.0f;
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   // The CPU cores in the server of the numa architecture are the same.
   // The main frequency of the first core is obtained.
   FILE *fp = popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
@@ -304,11 +304,6 @@ int CoreAffinity::InitHardwareCoreInfo() {
 
 std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) const {
   std::vector<int> bind_id;
-#ifdef SERVER_INFERENCE
-  if (bind_mode == Power_NoBind) {
-    return bind_id;
-  }
-#endif
 #ifdef _WIN32
   return bind_id;
 #elif defined(BIND_CORE)
