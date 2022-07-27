@@ -184,7 +184,7 @@ AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
   const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterNdInputNum, name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterNdInputNum, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), valid_indices_types, name);
   if (input_args.size() > static_cast<size_t>(kScatterNdInputNum)) {
     auto shape_type = input_args[kInputIndex2]->BuildType();
