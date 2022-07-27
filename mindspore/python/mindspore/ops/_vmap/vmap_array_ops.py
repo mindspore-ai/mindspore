@@ -686,6 +686,7 @@ def get_slice_grad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.TensorScatterSub)
 @vmap_rules_getters.register(P.TensorScatterMul)
 @vmap_rules_getters.register(P.TensorScatterDiv)
+@vmap_rules_getters.register(P.TensorScatterMax)
 def get_tensor_scatter_op_vmap_rule(prim, axis_size):
     """
     VmapRule for `TensorScatter*` operations, such as `TensorScatterMul`.
@@ -696,6 +697,7 @@ def get_tensor_scatter_op_vmap_rule(prim, axis_size):
         "TensorScatterSub": P.TensorScatterSub,
         "TensorScatterMul": P.TensorScatterMul,
         "TensorScatterDiv": P.TensorScatterDiv,
+        "TensorScatterMax": P.TensorScatterMax,
     }
     if isinstance(prim, str):
         prim_name = prim
