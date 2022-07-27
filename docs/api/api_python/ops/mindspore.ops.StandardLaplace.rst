@@ -21,6 +21,6 @@ mindspore.ops.StandardLaplace
 
     异常：    
         - **TypeError** - `seed` 或 `seed2` 不是int。
-        - **TypeError** - `shape` 不是tuple。
-        - **ValueError** - `shape` 不是常量值。
-
+        - **TypeError** - `shape` 既不是tuple，也不是Tensor。
+        - **ValueError** - `seed` 或 `seed2` 不是非负的int。
+        - **ValueError** - `shape` 为tuple时，包含非正的元素。
