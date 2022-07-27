@@ -411,8 +411,8 @@ TEST_F(TestComposite, test_ListSlice_arg_slice_step_positive) {
 }
 
 TEST_F(TestComposite, test_UnpackCall_3args) {
-  MetaFuncGraphPtr unPackCallPtr = std::make_shared<prim::UnpackCall>("UnPackCall");
-  FuncGraphPtr unPackCallGraphPtr = UTCompositeUtils::MakeFuncGraph(unPackCallPtr, 3);
+  MetaFuncGraphPtr unpackCallPtr = std::make_shared<prim::UnpackCall>("UnpackCall");
+  FuncGraphPtr unpackCallGraphPtr = UTCompositeUtils::MakeFuncGraph(unpackCallPtr, 3);
 
   auto fn_arg = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeTuple);
   AbstractTensorPtr tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
@@ -429,7 +429,7 @@ TEST_F(TestComposite, test_UnpackCall_3args) {
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_tuple, tensor_dict};
   AbstractTuplePtr ret =
-    dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).eval_result->abstract());
+    dyn_cast<AbstractTuple>(engine_->Run(unpackCallGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }
@@ -439,8 +439,8 @@ TEST_F(TestComposite, test_UnpackCall_3args) {
 }
 
 TEST_F(TestComposite, test_UnpackCall_5args) {
-  MetaFuncGraphPtr unPackCallPtr = std::make_shared<prim::UnpackCall>("UnPackCall");
-  FuncGraphPtr unPackCallGraphPtr = UTCompositeUtils::MakeFuncGraph(unPackCallPtr, 5);
+  MetaFuncGraphPtr unpackCallPtr = std::make_shared<prim::UnpackCall>("UnpackCall");
+  FuncGraphPtr unpackCallGraphPtr = UTCompositeUtils::MakeFuncGraph(unpackCallPtr, 5);
 
   auto fn_arg = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeTuple);
   AbstractTensorPtr tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
@@ -457,7 +457,7 @@ TEST_F(TestComposite, test_UnpackCall_5args) {
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_dict, tensor_tuple, tensor_dict, tensor_tuple};
   AbstractTuplePtr ret =
-    dyn_cast<AbstractTuple>(engine_->Run(unPackCallGraphPtr, args_spec_list).eval_result->abstract());
+    dyn_cast<AbstractTuple>(engine_->Run(unpackCallGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
   }

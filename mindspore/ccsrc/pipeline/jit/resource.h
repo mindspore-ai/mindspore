@@ -86,6 +86,9 @@ class Resource : public ResourceBase {
   const abstract::AbstractBasePtrList &args_abs() const { return args_abs_; }
   void set_args_abs(const abstract::AbstractBasePtrList &args_abs) { args_abs_ = args_abs; }
 
+  const std::vector<ValuePtr> &arguments() const { return arguments_; }
+  void set_arguments(const std::vector<ValuePtr> &arguments) { arguments_ = arguments; }
+
   void set_vm_loop(const bool &flag, const int64_t size) {
     vm_loop_flag_ = flag;
     loop_size_ = size;
@@ -122,6 +125,9 @@ class Resource : public ResourceBase {
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
   FuncGraphPtr optimize_graph_;
+  // The arguments may contain a Parameter, we need connect it to the Parameter default value of func graph.
+  // We keep all arguments inputs here for subsequent procedure.
+  std::vector<ValuePtr> arguments_;
   abstract::AbstractBasePtrList args_abs_;
   // The source obj to compile, usually a `Cell` or `ms_function` decorated function.
   py::object source_input_;

@@ -316,8 +316,8 @@ ResolveIRPassLib::ResolveIRPassLib() {
                                {prim::kPrimGetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
 }
 
-InferenceOptPrepareLib::InferenceOptPrepareLib() {
-  meta_fg_var_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_fg_var_prepare", IsCNode);
+MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
+  meta_unpack_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_unpack_prepare", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt

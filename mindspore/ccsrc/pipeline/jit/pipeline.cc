@@ -295,9 +295,11 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
       SetValueMutable(converted->ToAbstract());
       set_mutable = true;
     }
-    AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden, set_mutable);
-    args_abs.push_back(ptr);
-    (void)cur_convert_input_.emplace(args[i].ptr(), ptr);
+    AbstractBasePtr abs = ArgsToAbstract(converted, enable_tuple_broaden, set_mutable);
+    (void)args_abs.emplace_back(abs);
+    // The 'converted' maybe a Parameter, we need connect it to the Parameter of func graph,
+    // so we keep all inputs for subsequent procedure.
+    (void)cur_convert_input_.emplace(args[i].ptr(), std::make_pair(converted, abs));
   }
 
   // If cache matched no need CheckArgsValid
@@ -851,6 +853,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   // Get the parameters items and add the value to args_abs.
   abstract::AbstractBasePtrList args_abs;
+  std::vector<ValuePtr> arguments;
   std::size_t size = args.size();
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
@@ -858,15 +861,18 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     // So can't use cur_convert_input_ directly.
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter != cur_convert_input_.end()) {
-      args_abs.push_back(iter->second);
+      (void)arguments.emplace_back(iter->second.first);
+      (void)args_abs.emplace_back(iter->second.second);
       continue;
     }
     bool succ = parse::ConvertData(args[i], &converted);
     if (!succ) {
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
-    args_abs.push_back(ArgsToAbstract(converted, enable_tuple_broaden_));
+    (void)arguments.emplace_back(converted);
+    (void)args_abs.emplace_back(ArgsToAbstract(converted, enable_tuple_broaden_));
   }
+  resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = size;
   executor_info->resource = resource;
@@ -897,7 +903,7 @@ std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionI
   MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";
   std::vector<ActionItem> filtered_actions;
   for (const auto &item : actions) {
-    filtered_actions.emplace_back(item);
+    (void)filtered_actions.emplace_back(item);
     if (item.first == "validate") {
       break;
     }

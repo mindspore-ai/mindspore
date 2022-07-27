@@ -385,3 +385,30 @@ def test_parameter_same_name_between_tuple_or_list():
         output = net(x)
         output_expect = Tensor(20, ms.float32)
         assert output == output_expect
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_argument_and_fv():
+    """
+    Feature: Parameter argmument in top func graph.
+    Description: Use Parameter as input argmument.
+    Expectation: Parameter used as argument should equal to used as FV.
+    """
+    y = Parameter(Tensor([1]))
+    class Demo(Cell):
+        def construct(self, x):
+            ms.ops.Assign()(x, Tensor([0]))
+            ms.ops.Assign()(y, Tensor([0]))
+            return True
+
+    x = Parameter(Tensor([1]))
+    net = Demo()
+    net(x)
+    print(Tensor(x))
+    print(Tensor(y))
+    assert x == y

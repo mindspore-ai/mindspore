@@ -200,11 +200,11 @@ class ResolveIRPassLib {
   SubstitutionPtr resolver_;
 };
 
-class InferenceOptPrepareLib {
+class MetaUnpackPrepareLib {
  public:
-  InferenceOptPrepareLib();
-  ~InferenceOptPrepareLib() = default;
-  SubstitutionPtr meta_fg_var_prepare_;
+  MetaUnpackPrepareLib();
+  ~MetaUnpackPrepareLib() = default;
+  SubstitutionPtr meta_unpack_prepare_;
 };
 
 // predicate functions
