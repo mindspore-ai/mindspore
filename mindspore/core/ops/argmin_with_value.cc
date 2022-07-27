@@ -58,11 +58,13 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
   }
+
+  if (axis < -x_rank || axis >= x_rank) {
+    MS_EXCEPTION(ValueError) << "For ArgMinWithValue, axis must be in range [" << -x_rank << ", " << x_rank
+                             << "), but got " << axis << ".";
+  }
   if (axis < 0) {
     axis += x_rank;
-  }
-  if (axis < 0 || axis >= x_rank) {
-    MS_EXCEPTION(ValueError) << "For ArgMinWithValue, axis must be in range [-x_rank, x_rank), but got" << axis << ".";
   }
   (void)primitive->AddAttr("dimension", MakeValue(axis));
   // Calculate all the shapes.

@@ -1385,6 +1385,11 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
+  const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
+  MS_EXCEPTION_IF_NULL(cluster_ctx);
+  if (cluster_ctx->initialized() && cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
+    return true;
+  }
 #endif
   MS_LOG(INFO) << "Start InitDataSet Entry";
   mindspore::python_adapter::set_python_env_flag(true);
