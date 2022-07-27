@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_UTILS_MISC_H_
 #define MINDSPORE_CORE_UTILS_MISC_H_
 
-#include <list>
 #include <memory>
 #include <string>
 #include <sstream>

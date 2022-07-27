@@ -535,10 +535,10 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
         std::set<string> order_set;
         for (auto const &valid_type : check_list) {
           if (valid_type->isa<TensorType>()) {
-            order_set.emplace(valid_type->ToString());
+            (void)order_set.emplace(valid_type->ToString());
             break;
           } else {
-            order_set.emplace("Tensor[" + valid_type->ToString() + "]");
+            (void)order_set.emplace("Tensor[" + valid_type->ToString() + "]");
           }
         }
         for (auto const &error_item : order_set) {
@@ -592,7 +592,6 @@ TypePtr CheckAndConvertUtils::CheckSparseTensorTypeValid(const std::string &type
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
                             << "] cast to SparseTensorTypePtr failed! Get type : " << type->ToString() << ".";
   }
-  return nullptr;
 }
 
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
@@ -645,16 +644,16 @@ TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const
 
   if (is_mix) {
     for (const auto &item : template_types) {
-      order_set.emplace(item->ToString());
+      (void)order_set.emplace(item->ToString());
     }
   }
 
   for (const auto &item : template_types) {
     if (item->isa<TensorType>()) {
-      order_set.emplace(item->ToString());
+      (void)order_set.emplace(item->ToString());
       continue;
     }
-    order_set.emplace("Tensor[" + item->ToString() + "]");
+    (void)order_set.emplace("Tensor[" + item->ToString() + "]");
   }
 
   for (const auto &item : order_set) {
@@ -692,7 +691,7 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
 
 TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
                                                            const std::set<TypePtr> &valid_values,
-                                                           const std::string &prim_name, const bool allow_mix) {
+                                                           const std::string &prim_name, bool allow_mix) {
   (void)_CheckTypeSame(args, prim_name, allow_mix);
   return CheckTensorSubClass(args.begin()->first, args.begin()->second, valid_values, prim_name, true);
 }

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CORE_UTILS_SYSTEM_CRC32C_H_
 #define MINDSPORE_CORE_UTILS_SYSTEM_CRC32C_H_
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdint>
 #include "utils/system/base.h"
 #include "utils/system/env.h"
@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace system {
 // Align n to (1 << m) byte boundary
-#define MEM_ALIGN(n, m) ((n + ((1 << (m)) - 1)) & ~((1 << (m)) - 1))
+#define MEM_ALIGN(n, m) (((n) + ((1 << (m)) - 1)) & (~((1 << (m)) - 1)))
 
 // Masked for crc.
 static constexpr uint32 kMaskDelta = 0xa282ead8ul;

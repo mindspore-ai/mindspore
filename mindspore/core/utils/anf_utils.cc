@@ -26,8 +26,6 @@
 
 namespace mindspore {
 namespace {
-const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
-
 class AbstractMutexManager {
  public:
   static AbstractMutexManager &GetInstance() {
@@ -98,8 +96,7 @@ AnfNodePtr NewCustomActorNode(const CustomActorInfoPtr &actor_info, const FuncGr
 }
 }  // namespace
 
-AbstractScope::AbstractScope(std::recursive_mutex *mu) {
-  mu_ = mu;
+AbstractScope::AbstractScope(std::recursive_mutex *mu) : mu_(mu) {
   if (mu_ != nullptr) {
     mu_->lock();
   }
@@ -397,6 +394,7 @@ int64_t AnfUtils::GetIntValue(const AnfNodePtr &anf_node) {
 
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
   if (anf_node->isa<ValueNode>()) {
     return std::make_pair(anf_node, 0);
   } else if (anf_node->isa<Parameter>()) {

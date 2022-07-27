@@ -15,11 +15,11 @@
  */
 
 #include "utils/ms_context.h"
-#include <cstdlib>
 #include <thread>
 #include <atomic>
 #include <fstream>
 #include <algorithm>
+#include <utility>
 #include "ir/tensor.h"
 #include "utils/ms_utils.h"
 

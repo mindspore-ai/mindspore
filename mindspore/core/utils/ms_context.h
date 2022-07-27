@@ -20,14 +20,11 @@
 #include <memory>
 #include <map>
 #include <set>
-#include <vector>
 #include <string>
-#include <utility>
 #include <functional>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #ifdef ENABLE_TDTQUE
-#include "pybind11/pybind11.h"
 #include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
 using mindspore::dataset::TdtHandle;
 #endif
@@ -146,7 +143,7 @@ enum MsCtxParam : unsigned {
 
 class MS_CORE_API MsContext {
  public:
-  MsContext(const std::string &backend_policy, const std::string &target);
+  MsContext(const std::string &policy, const std::string &target);
   ~MsContext() = default;
   MsContext(const MsContext &) = delete;
   MsContext &operator=(const MsContext &) = delete;

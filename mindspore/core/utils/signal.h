@@ -42,7 +42,7 @@ template <class FuncType>
 class Signal {
  public:
   template <class... Args>
-  void operator()(Args &&... args) {
+  void operator()(Args &&... args) const {
     for (auto &slot : slots_) {
       if (slot->callback != nullptr) {
         slot->callback(std::forward<Args>(args)...);
@@ -66,4 +66,4 @@ class Signal {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_UTILS_EVENT_H_
+#endif  // MINDSPORE_CORE_UTILS_SIGNAL_H_

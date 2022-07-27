@@ -77,7 +77,7 @@ class CompactSet {
 
   T pop() {
     T e = std::move(data_.front());
-    data_.erase(data_.begin());
+    (void)data_.erase(data_.begin());
     return e;
   }
 

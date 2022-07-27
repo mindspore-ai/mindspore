@@ -20,8 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <utility>
-#include <stack>
 
 #include "utils/info.h"
 #include "ir/anf.h"

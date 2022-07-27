@@ -19,9 +19,9 @@
 #include <map>
 #include <functional>
 namespace mindspore {
-tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  auto type_id = ExtractTypeId(type_ptr);
+tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type, const std::vector<int64_t> &shape) {
+  MS_EXCEPTION_IF_NULL(type);
+  auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   size_t mem_size = IntToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
@@ -32,9 +32,9 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type_pt
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  auto type_id = ExtractTypeId(type_ptr);
+tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, const std::vector<int64_t> &shape) {
+  MS_EXCEPTION_IF_NULL(type);
+  auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   const size_t &mem_size = IntToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
@@ -65,30 +65,31 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type_ptr
   };
 
   const auto &tensor_type = tensor->data_type();
-  if (!type_dict.count(tensor_type)) {
+  auto iter = type_dict.find(tensor_type);
+  if (iter == type_dict.end()) {
     MS_LOG(EXCEPTION) << "unsupported data type: " << tensor_type;
   }
-  type_dict[tensor_type]();
+  iter->second();
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape,
+tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr &type, const std::vector<int64_t> &shape,
                                                      void *data) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  auto type_id = ExtractTypeId(type_ptr);
+  MS_EXCEPTION_IF_NULL(type);
+  auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape, data, type_id);
   return tensor;
 }
 
-TypeId TensorConstructUtils::ExtractTypeId(const TypePtr &type_ptr) {
-  MS_EXCEPTION_IF_NULL(type_ptr);
+TypeId TensorConstructUtils::ExtractTypeId(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
   TypeId type_id;
-  if (type_ptr->isa<TensorType>()) {
-    auto tensor_type = type_ptr->cast<TensorTypePtr>();
+  if (type->isa<TensorType>()) {
+    auto tensor_type = type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     type_id = tensor_type->element()->type_id();
   } else {
-    type_id = type_ptr->type_id();
+    type_id = type->type_id();
   }
   return type_id;
 }
