@@ -116,6 +116,14 @@ class _MathBinaryOp(_BinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type, self.name)
 
+    def _convert_back_shape(self, shape_value, cmp_shape):
+        if isinstance(cmp_shape, (Tensor, Tensor_)):
+            cmp_shape = cmp_shape.asnumpy()
+        if not isinstance(cmp_shape, tuple):
+            return shape_value
+        real_shape = [dim if cmp_dim > 0 else cmp_dim for dim, cmp_dim in zip(shape_value, cmp_shape)]
+        return tuple(real_shape)
+
 
 class _BitwiseBinaryOp(_MathBinaryOp):
     """
@@ -228,6 +236,11 @@ class Add(_MathBinaryOp):
             out = np.array(out, x.dtype)
             return Tensor(out)
         return None
+
+    def _infer_shape_value(self, x, y):
+        shape_value = self._infer_specified_add_value(x, y)
+        shape_value = self._convert_back_shape(shape_value, x)
+        return self._convert_back_shape(shape_value, y)
 
 
 class Addcdiv(Primitive):
@@ -1996,10 +2009,6 @@ class Mul(_MathBinaryOp):
             return out
         return None
 
-    def _convert_back_shape(self, shape_value, cmp_shape):
-        real_shape = [dim if cmp_dim > 0 else cmp_dim for dim, cmp_dim in zip(shape_value, cmp_shape)]
-        return tuple(real_shape)
-
     def _infer_min_value(self, x, y):
         """Calculate min value for output for Mul op"""
         return self._infer_specified_mul_value(x, y)
@@ -2019,7 +2028,8 @@ class Mul(_MathBinaryOp):
 
     def _infer_shape_value(self, x, y):
         shape_value = self._infer_specified_mul_value(x, y)
-        return self._convert_back_shape(shape_value, x)
+        shape_value = self._convert_back_shape(shape_value, x)
+        return self._convert_back_shape(shape_value, y)
 
 
 class SquaredDifference(Primitive):
@@ -2909,6 +2919,11 @@ class Div(_MathBinaryOp):
             out = np.array(x / y, x.dtype)
             return Tensor(out)
         return None
+
+    def _infer_shape_value(self, x, y):
+        shape_value = self._infer_specified_div_value(x, y)
+        shape_value = self._convert_back_shape(shape_value, x)
+        return self._convert_back_shape(shape_value, y)
 
 
 class DivNoNan(Primitive):

@@ -594,7 +594,7 @@ class PrimitiveWithInfer(Primitive):
                 fn_infer_max_value = getattr(self, '_infer_max_value')
                 out['max_value'] = fn_infer_max_value(*max_values)
         has_shape_value, shape_values = get_specified_value(args, 'shape_value')
-        if has_shape_value and hasattr(self, '_infer_shape_value'):
+        if has_shape_value and hasattr(self, '_infer_shape_value') and not None in shape_values:
             fn_infer_shape_value = getattr(self, '_infer_shape_value')
             out['shape_value'] = fn_infer_shape_value(*shape_values)
         if not has_dynamic_shape(out['shape']):

@@ -437,7 +437,8 @@ class Cast(PrimitiveWithInfer):
             out['min_value'] = min_value
             out['max_value'] = max_value
         if 'shape_value' in x:
-            out['shape_value'] = x['shape_value']
+            np_dst_type = mstype.dtype_to_nptype(dst_type)
+            out['shape_value'] = tuple(np.array(x['shape_value']).astype(np_dst_type))
         return out
 
 
@@ -3536,6 +3537,10 @@ class StridedSlice(PrimitiveWithInfer):
             slice_min = slice_input["min_value"]
             slice_max = slice_input["max_value"]
             has_special_value = True
+        elif "shape_value" in slice_input:
+            slice_min = slice_input["shape_value"]
+            slice_max = slice_min
+            has_special_value = True
         else:
             slice_min = slice_value
             slice_max = slice_value
@@ -3594,29 +3599,9 @@ class StridedSlice(PrimitiveWithInfer):
         if begin_len != strides_len or end_len != strides_len:
             raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
                              f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
-
-        bd_has_min_max_value = False
-        if begin_specical_value or end_specical_value:
-            bd_has_min_max_value = True
-
-        if bd_has_min_max_value and is_shape_known(x_shape):
-            ret_shape = [-1] * len(x_shape)
-            ret_min_shape = list(x_shape)
-            ret_max_shape = list(x_shape)
-            for i, _ in enumerate(ret_shape):
-                ret_min_shape[i] = end_v['min_value'][i] - begin_v['min_value'][i]
-                ret_max_shape[i] = end_v['max_value'][i] - begin_v['max_value'][i]
-            i = 0
-            for a, b in zip(ret_min_shape, ret_max_shape):
-                if a == b:
-                    ret_shape[i] = a
-                i += 1
-            return {'shape': tuple(ret_shape),
-                    'dtype': x['dtype'],
-                    'value': None,
-                    'max_shape': tuple(ret_max_shape),
-                    'min_shape': tuple(ret_min_shape)}
-
+        bd_has_shape_value = bool(begin_specical_value or end_specical_value)
+        if bd_has_shape_value and is_shape_known(x_shape):
+            return self._compute_shape_from_bd_shape_value(x, begin_v, end_v)
         if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x_shape):
             ret_shape, ret_min_shape, ret_max_shape = \
                 self._compute_dynamic_slicing_shape(x_shape, begin_len, max_shape)
@@ -3648,6 +3633,7 @@ class StridedSlice(PrimitiveWithInfer):
                     'value': value,
                     'max_value': max_value_slice,
                     'min_value': min_value_slice}
+
         if "shape_value" in x:
             validator.check_value_type("shape_value", x["shape_value"], [tuple], self.name)
             shape_value_slice = self._compute_dynamic_slicing_value(x["shape_value"], begin_v, end_v, strides_v)
@@ -3658,6 +3644,36 @@ class StridedSlice(PrimitiveWithInfer):
         return {'shape': ret_shape,
                 'dtype': x['dtype'],
                 'value': value}
+
+    def _compute_shape_from_bd_shape_value(self, x, begin_v, end_v):
+        """Compute slice shape from shape values of begin and end."""
+        x_shape, _, _ = self._check_and_get_shape(x)
+        ret_shape = [-1] * len(x_shape)
+        ret_min_shape = list(x_shape)
+        ret_max_shape = list(x_shape)
+        dynamic_shape_value = False
+        for i, _ in enumerate(ret_shape):
+            if end_v['min_value'][i] >= 0 and begin_v['min_value'][i] >= 0:
+                ret_min_shape[i] = int(end_v['min_value'][i] - begin_v['min_value'][i])
+                ret_max_shape[i] = int(end_v['max_value'][i] - begin_v['max_value'][i])
+            else:
+                dynamic_shape_value = True
+                ret_min_shape[i] = -1
+                ret_max_shape[i] = -1
+        i = 0
+        for a, b in zip(ret_min_shape, ret_max_shape):
+            if a == b:
+                ret_shape[i] = a
+            i += 1
+        if dynamic_shape_value:
+            return {'shape': tuple(ret_shape),
+                    'dtype': x['dtype'],
+                    'value': None}
+        return {'shape': tuple(ret_shape),
+                'dtype': x['dtype'],
+                'value': None,
+                'max_shape': tuple(ret_max_shape),
+                'min_shape': tuple(ret_min_shape)}
 
     def _compute_max_min_shape(self, rets, x_shape, ret_shape):
         """compute max/min shape"""
@@ -6528,6 +6544,9 @@ class TensorScatterUpdate(_TensorScatterOp):
         args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return input_x_dtype
+
+    def _infer_shape_value(self, input_x_value, indices_value, updates_value):
+        return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
 
 class TensorScatterMax(_TensorScatterOp):
