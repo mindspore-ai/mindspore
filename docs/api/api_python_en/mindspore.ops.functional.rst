@@ -488,7 +488,7 @@ Gradient Clipping
     mindspore.ops.clip_by_value
 
 Parameter Operation Functions
-----------------------------
+-----------------------------
 
 .. msplatformautosummary::
     :toctree: ops
@@ -509,13 +509,6 @@ Parameter Operation Functions
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
-
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
 
 Differential Functions
 ----------------
