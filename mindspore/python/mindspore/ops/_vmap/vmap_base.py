@@ -14,6 +14,7 @@
 # ============================================================================
 
 """vmap base functions"""
+from __future__ import absolute_import
 
 import mindspore.numpy as mnp
 from mindspore.ops import operations as P
