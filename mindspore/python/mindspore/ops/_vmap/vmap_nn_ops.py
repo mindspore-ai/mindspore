@@ -23,9 +23,8 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
-    _bdim_at_front, _bdim_at_back, _handle_broadcasting, \
-    get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, _bdim_at_any, \
+    _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
 from ..primitive import Primitive
 
 
@@ -982,6 +981,64 @@ def get_lrn_grad_vmap_rule(prim, axis_size):
         else:
             dx = prim(dy, x, y)
         return dx, x_ndim - 1
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.BatchNorm)
+def get_batchnorm_vmap_rule(prim, axis_size):
+    """VmapRule for `BatchNorm` operation."""
+    bn_min_dim = 3
+    bn_max_dim = 5
+    is_training = prim.is_training
+    prim_name = prim.name
+    data_format = prim.data_format
+
+    def vmap_rule(*inputs):
+        x_bdim = inputs[0]
+        scale_bdim = inputs[1]
+        offset_bdim = inputs[2]
+        mean_bdim = inputs[3]
+        var_bdim = inputs[4]
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, scale_bdim, offset_bdim, mean_bdim, var_bdim)
+        if is_all_none:
+            return result
+        if is_training:
+            raise ValueError("Operator {} does not support Vmap during training, since the input `scale, offset, mean, "
+                             "var of BatchNorm are parameters when is_training = true. If multiple batches of input "
+                             "data share the same parameters, please stack batches to the N dimension manually."
+                             .format(prim_name))
+        input_x, input_x_dim = x_bdim
+        scale, scale_dim = scale_bdim
+        offset, offset_dim = offset_bdim
+        mean, mean_dim = mean_bdim
+        var, var_dim = var_bdim
+        x_ndim = F.rank(input_x)
+        if x_ndim < bn_min_dim or x_ndim > bn_max_dim:
+            raise ValueError("The dim of `input_x` in `{}` must be larger than {} and less than {}, "
+                             "but got {}.".format(prim_name, bn_min_dim - 1, bn_max_dim + 1, x_ndim))
+        # Move input_x axis to the dim front of C
+        out_axis = 1 if data_format == "NCHW" else x_ndim - 2
+        input_x = _bdim_at_any(input_x, input_x_dim, out_axis, axis_size)
+        scale = _bdim_at_front(scale, scale_dim, axis_size)
+        offset = _bdim_at_front(offset, offset_dim, axis_size)
+        mean = _bdim_at_front(mean, mean_dim, axis_size)
+        var = _bdim_at_front(var, var_dim, axis_size)
+        x_shape = input_x.shape
+        other_shape = scale.shape
+        vmap_shape = (x_shape[0], -1,) + x_shape[3:] if data_format == "NCHW" else x_shape[:-2] + (-1,)
+        input_x = F.reshape(input_x, vmap_shape)
+        scale = scale.flatten()
+        offset = offset.flatten()
+        mean = mean.flatten()
+        var = var.flatten()
+        out, batch_mean, batch_var, rsv_1, rsv_2 = prim(input_x, scale, offset, mean, var)
+        out = F.reshape(out, x_shape)
+        batch_mean = F.reshape(batch_mean, other_shape)
+        batch_var = F.reshape(batch_var, other_shape)
+        rsv_1 = F.reshape(rsv_1, other_shape)
+        rsv_2 = F.reshape(rsv_2, other_shape)
+        return (out, out_axis), (batch_mean, 0), (batch_var, 0), (rsv_1, 0), (rsv_2, 0)
 
     return vmap_rule
 

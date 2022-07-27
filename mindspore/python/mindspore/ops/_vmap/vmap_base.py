@@ -207,6 +207,8 @@ def _bdim_at_any(x, src, dst, axis_size):
     """
     if src is None:
         return _broadcast_by_axis(x, dst, axis_size)
+    if dst is None:
+        _raise_value_error("The destination axis can not be None")
     return mnp.moveaxis(x, src, dst)
 
 

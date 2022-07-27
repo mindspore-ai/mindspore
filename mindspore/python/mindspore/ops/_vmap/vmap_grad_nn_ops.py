@@ -21,6 +21,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
+from ..composite import _VmapGeneralRule
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front,\
      _vmap_clone_prim, _bdim_at_any
 
@@ -329,6 +330,60 @@ def get_deformable_offsets_vmap_rule(prim, axis_size):
         dx = F.reshape(dx, x_origin_shape)
         d_offsets = F.reshape(d_offsets, offsets_origin_shape)
         return (dx, 0), (d_offsets, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.BatchNormGrad)
+def get_batchnorm_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `BatchNormGrad` operation."""
+    bn_min_dim = 3
+    bn_max_dim = 5
+    data_format = prim.data_format
+    prim_name = prim.name
+    if data_format == "NHWC":
+        batchnorm_grad_nhwc_vmap = _VmapGeneralRule(prim, axis_size)
+
+    def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim):
+        is_all_none, result = \
+            vmap_general_preprocess(prim, grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
+        if is_all_none:
+            return result
+        if data_format == "NHWC":
+            #BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
+            return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
+        grad, grad_dim = grad_bdim
+        input_x, input_x_dim = x_bdim
+        scale, scale_dim = scale_bdim
+        rsv_1, rsv_1_dim = rsv_1_bdim
+        rsv_2, rsv_2_dim = rsv_2_bdim
+        rsv_3, rsv_3_dim = rsv_3_bdim
+        x_ndim = F.rank(input_x)
+        if x_ndim not in (bn_min_dim, bn_max_dim):
+            raise ValueError("The dim of `input_x` in `{}` must be equal to {} or {}, "
+                             "but got {}.".format(prim_name, bn_min_dim, bn_max_dim, x_ndim))
+        # Move input_x and grad axis to the dim front of C
+        out_axis = 1
+        grad = _bdim_at_any(grad, grad_dim, out_axis, axis_size)
+        input_x = _bdim_at_any(input_x, input_x_dim, out_axis, axis_size)
+        scale = _bdim_at_front(scale, scale_dim, axis_size)
+        rsv_1 = _bdim_at_front(rsv_1, rsv_1_dim, axis_size)
+        rsv_2 = _bdim_at_front(rsv_2, rsv_2_dim, axis_size)
+        rsv_3 = _bdim_at_front(rsv_3, rsv_3_dim, axis_size)
+        x_shape = input_x.shape
+        other_shape = scale.shape
+        vmap_shape = (x_shape[0], -1,) + x_shape[3:]
+        grad = F.reshape(grad, vmap_shape)
+        input_x = F.reshape(input_x, vmap_shape)
+        scale = scale.flatten()
+        rsv_1 = rsv_1.flatten()
+        rsv_2 = rsv_2.flatten()
+        rsv_3 = rsv_3.flatten()
+        grad_x, grad_scale, grad_offset = prim(grad, input_x, scale, rsv_1, rsv_2, rsv_3)
+        grad_x = F.reshape(grad_x, x_shape)
+        grad_scale = F.reshape(grad_scale, other_shape)
+        grad_offset = F.reshape(grad_offset, other_shape)
+        return (grad_x, out_axis), (grad_scale, 0), (grad_offset, 0)
 
     return vmap_rule
 
