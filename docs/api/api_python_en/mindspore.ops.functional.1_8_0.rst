@@ -335,7 +335,6 @@ Array Functions
     mindspore.ops.repeat_elements
     mindspore.ops.sequence_mask
     mindspore.ops.reshape
-    mindspore.ops.reverse_sequence
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.shape
@@ -413,7 +412,7 @@ Gradient Clipping
     mindspore.ops.clip_by_value
 
 Parameter Operation Functions
-----------------------------
+-----------------------------
 
 .. msplatformautosummary::
     :toctree: ops
