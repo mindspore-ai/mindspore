@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/transformation_ops_declare.h"
 #include <vector>
+#include <string>
 
 namespace mindspore::transform {
 // Flatten
