@@ -1479,7 +1479,7 @@ void DfGraphConvertor::UpdateTupleOutCache() {
         continue;
       }
       string name = handle.op->GetName();
-      if (vars_.count(name) && (vars_[name] != nullptr)) {
+      if ((vars_.count(name) != 0) && (vars_[name] != nullptr)) {
         (*it.second)[i] = OutHandler(vars_[name], handle.out, handle.node);
         MS_LOG(INFO) << "update tuple_out_handle_cache_ " << name;
       }
@@ -1689,7 +1689,7 @@ DfGraphPtr DfGraphConvertor::GetSaveCheckpointGraph() { return save_ckp_graph_; 
 
 DfGraphPtr DfGraphConvertor::GetBroadcastGraph() { return broadcast_graph_; }
 
-bool DfGraphConvertor::IsSourceEdgeNode(const AnfNodePtr &node) {
+bool DfGraphConvertor::IsSourceEdgeNode(const AnfNodePtr &node) const {
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -1728,7 +1728,7 @@ bool DfGraphConvertor::IsSourceEdgeNode(const AnfNodePtr &node) {
   return false;
 }
 
-bool DfGraphConvertor::IsControlEdgeNode(const AnfNodePtr &node) {
+bool DfGraphConvertor::IsControlEdgeNode(const AnfNodePtr &node) const {
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -1908,7 +1908,7 @@ void DfGraphConvertor::SetOpControlInput(const AnfNodePtr &node) {
 
 const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
 
-AnfNodePtr DfGraphConvertor::ParseLoadInput(const CNodePtr &cnode) {
+AnfNodePtr DfGraphConvertor::ParseLoadInput(const CNodePtr &cnode) const {
   if (cnode->inputs().size() < 3) {
     MS_LOG(EXCEPTION) << "input size error, " << cnode->ToString();
   }
@@ -2313,7 +2313,7 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
   op_cache_[value_ptr.get()] = op;
 }
 
-void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
+void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) const {
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
@@ -2337,7 +2337,7 @@ void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
   }
 }
 
-void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) {
+void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const {
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
@@ -2392,7 +2392,7 @@ AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &
   return cnode;
 }
 
-void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) {
+void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) const {
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
@@ -2413,7 +2413,7 @@ void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) {
   }
 }
 
-std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
+std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {
   if (value == nullptr) {
     return {};
   }
@@ -2555,7 +2555,7 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *i
   return node->inputs()[1];
 }
 
-AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
+AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   if (cnode->inputs().size() != 3) {  // "Depend" primitive have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of depend is not equal to 3";
@@ -2563,7 +2563,7 @@ AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
   return cnode->inputs()[1];
 }
 
-AnfNodePtr DfGraphConvertor::TraceLoad(const CNodePtr &node) {
+AnfNodePtr DfGraphConvertor::TraceLoad(const CNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   if (cnode->inputs().size() < 3) {  // "Load" primitive have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of depend is less than 3";
@@ -2571,7 +2571,7 @@ AnfNodePtr DfGraphConvertor::TraceLoad(const CNodePtr &node) {
   return cnode->inputs()[1];
 }
 
-AnfNodePtr DfGraphConvertor::TraceMakeTuple(const CNodePtr &node, uint64_t index) {
+AnfNodePtr DfGraphConvertor::TraceMakeTuple(const CNodePtr &node, uint64_t index) const {
   if (index + 1 >= node->inputs().size()) {
     MS_LOG(EXCEPTION) << "length of make_tuple is less than index: " << index;
   }
@@ -2586,7 +2586,7 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node) {
   auto op = Convert(node);
   if (op != nullptr) {
     auto name = op->GetName();
-    if (vars_.count(name) && vars_[name] != nullptr) {
+    if ((vars_.count(name) != 0) && vars_[name] != nullptr) {
       op = vars_[name];
       MS_LOG(DEBUG) << "update tuple_out_handle_cache_ " << name;
     }

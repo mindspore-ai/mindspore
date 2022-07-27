@@ -130,20 +130,20 @@ class IrExportBuilder {
   bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
+  bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
+  bool SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
+  bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
   bool SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
 
-  mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id);
-  mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits);
-  mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits);
-  mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits);
-  std::string GetNodeName(const AnfNodePtr &node);
+  mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits) const;
+  std::string GetNodeName(const AnfNodePtr &node) const;
   std::string GetUniqueNodeName(const AnfNodePtr &node);
   std::string GetOpTypeName(const AnfNodePtr &node);
   size_t GetUniqueID() { return ++unique_id_; }
@@ -454,7 +454,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
   return true;
 }
 
-mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataType(TypeId type_id) {
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataType(TypeId type_id) const {
   auto iter = g_data_type_map.find(type_id);
   if (iter == g_data_type_map.end()) {
     MS_LOG(ERROR) << "Convert type error, unsupported type! " << type_id;
@@ -463,7 +463,7 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataType(TypeId type_id)
   return iter->second;
 }
 
-mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsIntType(int bits) {
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsIntType(int bits) const {
   auto iter = g_data_bits_int_map.find(bits);
   if (iter == g_data_bits_int_map.end()) {
     MS_LOG(ERROR) << "Convert bits int error, unsupported bits! " << bits;
@@ -472,7 +472,7 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsIntType(int bits
   return iter->second;
 }
 
-mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsUIntType(int bits) {
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsUIntType(int bits) const {
   auto iter = g_data_bits_uint_map.find(bits);
   if (iter == g_data_bits_uint_map.end()) {
     MS_LOG(ERROR) << "Convert bits uint error, unsupported bits! " << bits;
@@ -481,7 +481,7 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsUIntType(int bit
   return iter->second;
 }
 
-mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bits) {
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bits) const {
   auto iter = g_data_bits_float_map.find(bits);
   if (iter == g_data_bits_float_map.end()) {
     MS_LOG(ERROR) << "Convert bits float error, unsupported bits! " << bits;
@@ -865,7 +865,7 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   }
 }
 
-std::string IrExportBuilder::GetNodeName(const AnfNodePtr &node) {
+std::string IrExportBuilder::GetNodeName(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   std::string node_name = "";
   if (node->func_graph() != nullptr) {
@@ -990,7 +990,8 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
   return true;
 }
 
-bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value,
+                                                   mind_ir::AttributeProto *const attr_proto) const {
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
   }
@@ -1017,7 +1018,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
 }
 
 bool IrExportBuilder::SetScalarToAttributeProtoForInt_ir(const ValuePtr &value,
-                                                         mind_ir::AttributeProto *const attr_proto) {
+                                                         mind_ir::AttributeProto *const attr_proto) const {
   if (value->isa<Int8Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_INT8);
     attr_proto->set_i(value->cast<Int8ImmPtr>()->value());
@@ -1092,7 +1093,8 @@ bool IrExportBuilder::SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir
   return true;
 }
 
-bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value,
+                                                    mind_ir::AttributeProto *const attr_proto) const {
   if (attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "AttributeProto is null!";
   }
@@ -1118,7 +1120,7 @@ bool IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
 }
 
 bool IrExportBuilder::SetScalarToAttributeProtoForInt_irs(const ValuePtr &value,
-                                                          mind_ir::AttributeProto *const attr_proto) {
+                                                          mind_ir::AttributeProto *const attr_proto) const {
   if (value->isa<Int8Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_INT8);
     attr_proto->add_ints(value->cast<Int8ImmPtr>()->value());

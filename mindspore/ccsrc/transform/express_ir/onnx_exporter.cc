@@ -765,7 +765,7 @@ LoopParts MatchGraph(const CNodePtr &start_node) {
     if (!ignored_loop_params_mask.at(loop_i)) {
       auto output_i = loop_i;
       for (size_t i = 0; i < loop_i; ++i) {
-        output_i -= ignored_loop_params_mask.at(i);
+        output_i -= static_cast<int>(ignored_loop_params_mask.at(i));
       }
       result.after_param_to_output_indices.push_back(std::make_pair(after_i, output_i));
     }
@@ -1111,12 +1111,12 @@ class OnnxExporter {
 
   static onnx::TensorProto_DataType GetOnnxDataType(TypeId type_id);
   static onnx::TensorProto_DataType GetOutputType(const AnfNodePtr &node, int64_t output_index = -1);
-  void SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto *value_proto, int64_t output_index = -1);
+  void SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto *value_proto, int64_t output_index = -1) const;
 
   void MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
   void MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                         mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
+                         mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, std::string> *node_map_ptr,
                    onnx::GraphProto *graph_proto);
 
@@ -1217,11 +1217,11 @@ class OnnxExporter {
   std::string GetNodeInputName(const AnfNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                                onnx::GraphProto *const graph_proto);
 
-  void ConvertTupleToTensor(const ValuePtr &value, onnx::TensorProto *tensor_proto);
+  void ConvertTupleToTensor(const ValuePtr &value, onnx::TensorProto *tensor_proto) const;
   void SetTensorData(const ValuePtr &value, onnx::TensorProto *tensor_proto);
 
   void AddOutputWithCast(onnx::NodeProto *node_proto, const std::string &output_name,
-                         onnx::TensorProto_DataType target_type, onnx::GraphProto *graph_proto);
+                         onnx::TensorProto_DataType target_type, onnx::GraphProto *graph_proto) const;
 
   std::string GenerateUniqueName() { return std::to_string(++onnx_node_index_); }
   std::string RegisterNodeWithUniqueName(const AnfNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr) {
@@ -1360,7 +1360,7 @@ onnx::TensorProto_DataType OnnxExporter::GetOnnxDataType(TypeId type_id) {
 }
 
 void OnnxExporter::SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto *const value_proto,
-                                    int64_t output_index) {
+                                    int64_t output_index) const {
   auto dtype = GetOutputType(node, output_index);
   auto shape = node->Shape();
 
@@ -1420,7 +1420,7 @@ struct MergeRule {
 };
 
 void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+                                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
   auto &op_merged_infos = *op_merged_infos_ptr;
   const auto ignore = [&op_merged_infos](const AnfNodePtr &node) {
     op_merged_infos[node].mode = OP_MERGE_IGNORE;
@@ -2827,7 +2827,7 @@ void ExportLSTMWeights(const CNodePtr &node, const std::string &node_name, const
   auto num_layers = GetOpAttribute<int64_t>(node, "num_layers");
   auto has_bias = GetOpAttribute<bool>(node, "has_bias");
   auto bidirectional = GetOpAttribute<bool>(node, "bidirectional");
-  auto num_dir = 1 + bidirectional;
+  auto num_dir = 1 + static_cast<int>(bidirectional);
   auto num_gates = 4;
   auto gate_size = num_gates * hidden_size;
 
@@ -2909,7 +2909,7 @@ void OnnxExporter::ExportPrimLSTM(const FuncGraphPtr &func_graph, const CNodePtr
   auto x_input_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
   auto seq_len = x_input_shape[0];
   auto batch_size = x_input_shape[1];
-  auto num_dir = 1 + bidirectional;
+  auto num_dir = 1 + static_cast<int>(bidirectional);
 
   auto weights_name = GetNodeInputName(node->input(kFourNum), node_map_ptr, graph_proto);
   auto dtype = GetOutputType(node->input(kOneNum));
@@ -3299,7 +3299,7 @@ onnx::TensorProto_DataType OnnxExporter::GetOutputType(const AnfNodePtr &node, i
 }
 
 void OnnxExporter::AddOutputWithCast(onnx::NodeProto *node_proto, const std::string &output_name,
-                                     onnx::TensorProto_DataType target_type, onnx::GraphProto *graph_proto) {
+                                     onnx::TensorProto_DataType target_type, onnx::GraphProto *graph_proto) const {
   if (target_type == onnx::TensorProto_DataType_UNDEFINED) {
     node_proto->add_output(output_name);
   } else {
@@ -3623,7 +3623,7 @@ std::string OnnxExporter::GetNodeInputName(const AnfNodePtr &orig_node, std::map
   MS_LOG(EXCEPTION) << "Unexpected node type " << node->type_name();
 }
 
-void OnnxExporter::ConvertTupleToTensor(const ValuePtr &value, onnx::TensorProto *const tensor_proto) {
+void OnnxExporter::ConvertTupleToTensor(const ValuePtr &value, onnx::TensorProto *const tensor_proto) const {
   auto tuple_ptr = dyn_cast<ValueTuple>(value);
   MS_EXCEPTION_IF_NULL(tuple_ptr);
   if (tuple_ptr->size() == 0) {

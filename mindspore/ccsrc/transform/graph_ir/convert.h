@@ -151,9 +151,9 @@ class DfGraphConvertor {
   std::map<std::string, std::string> param_format_;
 
   AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
-  AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index);
-  AnfNodePtr TraceDepend(const CNodePtr &node);
-  AnfNodePtr TraceLoad(const CNodePtr &node);
+  AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index) const;
+  AnfNodePtr TraceDepend(const CNodePtr &node) const;
+  AnfNodePtr TraceLoad(const CNodePtr &node) const;
   OutHandler TraceRealOp(AnfNodePtr node);
   OutHandler GetHandler(const AnfNodePtr &node);
   OutHandler GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack, AnfNode *const draw_index);
@@ -170,15 +170,15 @@ class DfGraphConvertor {
   void ConvertTupleGetItem(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
-  void ConvertResizeBilinear(const FuncGraphPtr anf_graph);
-  void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph);
-  void ConvertTile(const FuncGraphPtr anf_graph);
+  void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
+  void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
+  void ConvertTile(const FuncGraphPtr anf_graph) const;
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const;
   void ConvertReshape(const CNodePtr node);
   void ConvertAllReduce(const CNodePtr node);
   void ConvertOCRRecPreHandle(const CNodePtr node);
   void ConvertConv2D(const CNodePtr node);
-  std::vector<int64_t> CastToInt(const ValuePtr &value);
+  std::vector<int64_t> CastToInt(const ValuePtr &value) const;
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void TraceOutput(AnfNodePtr node);
   void TraceOutputFromParameter(const AnfNodePtr &anf_out);
@@ -194,12 +194,12 @@ class DfGraphConvertor {
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
   OperatorPtr ToOperatorPtr(const AnfNodePtr &node);
-  bool IsSourceEdgeNode(const AnfNodePtr &node);
-  bool IsControlEdgeNode(const AnfNodePtr &node);
+  bool IsSourceEdgeNode(const AnfNodePtr &node) const;
+  bool IsControlEdgeNode(const AnfNodePtr &node) const;
   void AddEdgeForLoad(const AnfNodePtr &node);
   void AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &dest);
   void FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list, bool top);
-  AnfNodePtr ParseLoadInput(const CNodePtr &cnode);
+  AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void AutoMonadSetControlInput(const AnfNodePtr &node);
   void AutoMonadCollectInput(const AnfNodePtr &node);
   void AutoMonadSetInput(const AnfNodePtr &node);

@@ -63,38 +63,38 @@ class OpAdapterImpl {
     MS_EXCEPTION_IF_NULL(adpt_);
   }
   ~OpAdapterImpl() {}
-  bool IsCustomOp(const OperatorPtr &op);
+  bool IsCustomOp(const OperatorPtr &op) const;
   std::string GetCustomOpType(const PrimitivePtr &prim) const;
-  Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
-  Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
+  Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
+  Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
   OperatorPtr GenerateCustomOp(const AnfNodePtr anf);
   Status SetOpSubgraphFunc(const OperatorPtr &op, const std::shared_ptr<std::vector<DfGraph>> &subgraphs);
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches);
-  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input);
+  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) const;
   Status SetNormalOpInput(const OperatorPtr &op, int index, const OperatorPtr &input);
   int setInput(const OperatorPtr &op, int index, const OperatorPtr &input);
-  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle);
+  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) const;
   Status SetNormalOpInput(const OperatorPtr &op, int index, const OutHandler &handle);
   int setInput(const OperatorPtr &op, int index, const OutHandler &handle);
   int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec);
   OutHandler getOutput(const OperatorPtr &op, int index);
-  OutHandler getCustomOutput(const OperatorPtr &op, int index);
+  OutHandler getCustomOutput(const OperatorPtr &op, int index) const;
   OutHandler getNormalOutput(const OperatorPtr &op, int index);
   Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const std::string &format);
-  size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op);
+  size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const;
   std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
-                                                 const std::string &format);
+                                                 const std::string &format) const;
   Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                const std::string &format);
-  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node, const std::string &format);
+  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node, const std::string &format) const;
   void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr &node, const std::string format);
   void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node, const std::string format);
   void updateInputDesc(const OperatorPtr &op, const AnfNodePtr &node);
   void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                         const AnfNodePtr &node);
   int setAttr(const OperatorPtr &op, const std::string &attr_key, const ValuePtr &attr_value);
-  int SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim);
+  int SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
   int SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node);
@@ -148,7 +148,7 @@ class OpAdapter : public BaseOpAdapter {
   // Convert ME UserCustom AnfNode to GE CustomOp. And set it's attrs.
   OperatorPtr GenerateCustomOp(const AnfNodePtr anf) { return impl_->GenerateCustomOp(anf); }
 
-  OperatorPtr GenerateNormalOp(const AnfNodePtr &anf) {
+  OperatorPtr GenerateNormalOp(const AnfNodePtr &anf) const {
     OperatorPtr op = nullptr;
     // There are duplicate names in ANF graph, do not assign ANF node name to GE
     // GE will generate unique name automatically
@@ -183,7 +183,7 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  OperatorPtr GenerateDynamicOutputOp(const AnfNodePtr &anf) {
+  OperatorPtr GenerateDynamicOutputOp(const AnfNodePtr &anf) const {
     OperatorPtr op = nullptr;
     // There are duplicate names in ANF graph, do not assign ANF node name to GE
     // GE will generate unique name automatically
