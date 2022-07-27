@@ -97,7 +97,7 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     stride_compute(grid_stride_, grid_shape_);
     stride_compute(dinput_stride_, dinput_shape_);
     stride_compute(dgrid_stride_, dgrid_shape_);
-    size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2] * grid_shape_[kIndex3];
+    size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2];
     dinput_size_ = GetTensorSize(dinput_shape_);
     dgrid_size_ = GetTensorSize(dgrid_shape_);
     interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];

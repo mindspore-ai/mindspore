@@ -137,7 +137,9 @@ void GridSampler2D(const size_t size, const T *input_addr, const T *grid_addr, T
                    const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
                    const GridSamplerInterpolationMode interpolation_mode, const GridSamplerPaddingMode padding_mode,
                    const bool align_corners, cudaStream_t cuda_stream) {
-  GridSampler2DKernel<<<GET_BLOCKS(size), GET_THREADS_MAXSIZE(size), 0, cuda_stream>>>(
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
+  GridSampler2DKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
     size, input_addr, grid_addr, output_addr, input_shape[1], input_shape[2], input_shape[3], grid_shape[1],
     grid_shape[2], input_stride[0], input_stride[1], input_stride[2], input_stride[3], grid_stride[0], grid_stride[1],
     grid_stride[2], grid_stride[3], output_stride[0], output_stride[1], output_stride[2], output_stride[3],
@@ -303,7 +305,9 @@ void GridSampler3D(const size_t size, const T *input_addr, const T *grid_addr, T
                    const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
                    const GridSamplerInterpolationMode interpolation_mode, const GridSamplerPaddingMode padding_mode,
                    const bool align_corners, cudaStream_t cuda_stream) {
-  GridSampler3DKernel<<<GET_BLOCKS(size), GET_THREADS_MAXSIZE(size), 0, cuda_stream>>>(
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
+  GridSampler3DKernel<<< block_per_grid, thread_per_block, 0, cuda_stream>>>(
     size, input_addr, grid_addr, output_addr, input_shape[1], input_shape[2], input_shape[3], input_shape[4],
     grid_shape[1], grid_shape[2], grid_shape[3], input_stride[0], input_stride[1], input_stride[2], input_stride[3],
     input_stride[4], grid_stride[0], grid_stride[1], grid_stride[2], grid_stride[3], grid_stride[4], output_stride[0],
