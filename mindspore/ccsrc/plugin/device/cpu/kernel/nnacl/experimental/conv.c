@@ -51,6 +51,3 @@ KernelBase *CreateConv(OpParameter *param, TensorC *in, size_t insize, TensorC *
   }
   return NULL;
 }
-
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat32, CreateConv);
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat16, CreateConv);

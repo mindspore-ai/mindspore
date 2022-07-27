@@ -99,7 +99,8 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   const TensorC *input_tensor = inputs[0];
-  if (input_tensor->format_ != Format_NHWC && input_tensor->format_ != Format_KHWC) {
+  if (input_tensor->format_ != Format_NHWC && input_tensor->format_ != Format_KHWC &&
+      input_tensor->format_ != Format_NC4HW4 && input_tensor->format_ != Format_NC8HW8) {
     return NNACL_FORMAT_ERROR;
   }
   const TensorC *weight_tensor = inputs[1];
@@ -122,41 +123,37 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   param->kernel_h_ = param->kernel_h_ != -1 ? param->kernel_h_ : weight_tensor->shape_[1];
   param->kernel_w_ = param->kernel_w_ != -1 ? param->kernel_w_ : weight_tensor->shape_[2];
 
-  const int *in_shape = input_tensor->shape_;
   if (input_tensor->shape_size_ == 0) {
     return NNACL_INFER_INVALID;
   }
-  int input_h = in_shape[DIMENSION_1D];
-  int input_w = in_shape[DIMENSION_2D];
-  int input_c = in_shape[DIMENSION_3D];
+
+  int ret = CheckConvAttr(GetChannel(input_tensor), weight_tensor, param);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
   int output_w = 0, output_h = 0;
-
-  int ret = CheckConvAttr(input_c, weight_tensor, param);
+  ret = ConvInferShape(GetHeight(input_tensor), GetWidth(input_tensor), &output_h, &output_w, param);
   if (ret != NNACL_OK) {
     return ret;
   }
 
-  ret = ConvInferShape(input_h, input_w, &output_h, &output_w, param);
-  if (ret != NNACL_OK) {
-    return ret;
-  }
+  out_tensor->shape_size_ = input_tensor->shape_size_;
+  SetBatch(out_tensor, GetBatch(input_tensor));
+  SetChannel(out_tensor, GetBatch(weight_tensor));
+  output_h = output_h >= 0 ? output_h : 1;
+  SetHeight(out_tensor, output_h);
+  output_w = output_w >= 0 ? output_w : 1;
+  SetWidth(out_tensor, output_w);
 
-  int out_shape[MAX_SHAPE_SIZE];
-  size_t out_shape_size = 0;
-  ShapeSet(out_shape, &out_shape_size, input_tensor->shape_, input_tensor->shape_size_);
-  out_shape[DIMENSION_1D] = output_h >= 0 ? output_h : 1;
-  out_shape[DIMENSION_2D] = output_w >= 0 ? output_w : 1;
-  out_shape[DIMENSION_3D] = GetBatch(weight_tensor);
-  SetShapeArray(out_tensor, out_shape, out_shape_size);
-
-  param->input_batch_ = in_shape[DIMENSION_0D];
-  param->input_h_ = in_shape[DIMENSION_1D];
-  param->input_w_ = in_shape[DIMENSION_2D];
-  param->input_channel_ = in_shape[DIMENSION_3D];
-  param->output_batch_ = out_shape[DIMENSION_0D];
-  param->output_h_ = out_shape[DIMENSION_1D];
-  param->output_w_ = out_shape[DIMENSION_2D];
-  param->output_channel_ = out_shape[DIMENSION_3D];
+  param->input_batch_ = GetBatch(input_tensor);
+  param->input_h_ = GetHeight(input_tensor);
+  param->input_w_ = GetWidth(input_tensor);
+  param->input_channel_ = GetChannel(input_tensor);
+  param->output_batch_ = GetBatch(out_tensor);
+  param->output_h_ = GetHeight(out_tensor);
+  param->output_w_ = GetWidth(out_tensor);
+  param->output_channel_ = GetChannel(out_tensor);
   param->out_format_ = out_tensor->format_;
   return NNACL_OK;
 }

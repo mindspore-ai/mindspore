@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/unsorted_segment_arithmetic.h"
+#include <memory>
+#include <set>
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
@@ -41,7 +44,7 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
 
   if (num_segments != nullptr && num_segments->BuildValue() != kAnyValue) {
     num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
-    primitive->AddAttr(kNumSegments, MakeValue(num_segments_value));
+    (void)primitive->AddAttr(kNumSegments, MakeValue(num_segments_value));
   }
 
   if (x_shape_ptr->IsDynamic() || segment_ids_shape_ptr->IsDynamic() || num_segments_shape_ptr->IsDynamic()) {

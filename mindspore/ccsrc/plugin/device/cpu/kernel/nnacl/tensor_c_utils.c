@@ -240,6 +240,147 @@ int GetChannel(const TensorC *tensor) {
   }
 }
 
+void SetBatch(TensorC *tensor, int batch) {
+  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+    return;
+  }
+  switch (tensor->format_) {
+    case Format_NHWC:
+    case Format_NHWC4:
+    case Format_NCHW:
+    case Format_NC4HW4:
+    case Format_NC8HW8:
+    case Format_KCHW:
+    case Format_KHWC:
+    case Format_NC:
+    case Format_NC4:
+      tensor->shape_[kNHWC_N] = batch;
+      return;
+    case Format_HWCK:
+    case Format_CHWK:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kHWCN_N] = batch;
+      return;
+    case Format_HWKC:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kHWNC_N] = batch;
+      return;
+    case Format_CKHW:
+      tensor->shape_[1] = batch;
+      return;
+    default:
+      return;
+  }
+}
+
+void SetHeight(TensorC *tensor, int height) {
+  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+    return;
+  }
+  switch (tensor->format_) {
+    case Format_NCHW:
+    case Format_KCHW:
+    case Format_CKHW:
+    case Format_NC4HW4:
+    case Format_NC8HW8:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kNCHW_H] = height;
+      return;
+    case Format_NHWC:
+    case Format_NHWC4:
+    case Format_KHWC:
+    case Format_CHWK:
+      tensor->shape_[kNHWC_H] = height;
+      return;
+    case Format_HWCK:
+    case Format_HWKC:
+    case Format_HW:
+    case Format_HW4:
+      tensor->shape_[0] = height;
+      return;
+    default:
+      return;
+  }
+}
+
+void SetWidth(TensorC *tensor, int width) {
+  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+    return;
+  }
+  switch (tensor->format_) {
+    case Format_NCHW:
+    case Format_KCHW:
+    case Format_CKHW:
+    case Format_NC4HW4:
+    case Format_NC8HW8:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kNCHW_W] = width;
+      return;
+    case Format_KHWC:
+    case Format_NHWC:
+    case Format_NHWC4:
+    case Format_CHWK:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kNHWC_W] = width;
+      return;
+    case Format_HWCK:
+    case Format_HWKC:
+    case Format_HW:
+    case Format_HW4:
+      tensor->shape_[1] = width;
+      return;
+    default:
+      return;
+  }
+}
+
+void SetChannel(TensorC *tensor, int channel) {
+  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+    return;
+  }
+  switch (tensor->format_) {
+    case Format_NCHW:
+    case Format_KCHW:
+    case Format_NC:
+    case Format_NC4:
+    case Format_NC4HW4:
+    case Format_NC8HW8:
+      tensor->shape_[kNCHW_C] = channel;
+      return;
+    case Format_HWCK:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kHWCN_C] = channel;
+      return;
+    case Format_HWKC:
+    case Format_NHWC:
+    case Format_NHWC4:
+    case Format_KHWC:
+      if (tensor->shape_size_ != DIMENSION_4D) {
+        return;
+      }
+      tensor->shape_[kNHWC_C] = channel;
+      return;
+    case Format_CKHW:
+    case Format_CHWK:
+      tensor->shape_[0] = channel;
+      return;
+    default:
+      return;
+  }
+}
+
 int GetElementNum(const TensorC *tensor) {
   if (tensor == NULL) {
     return -1;
