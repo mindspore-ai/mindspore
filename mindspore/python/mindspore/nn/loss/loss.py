@@ -1826,6 +1826,17 @@ class TripletMarginLoss(LossBase):
         return self.triplet_margin_loss(x, positive, negative, margin)
 
 
+@constexpr
+def _check_nll_loss_shape(logits_shape, label_shape, prim_name=None):
+    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
+    logits_shape_new = (logits_shape[0], *logits_shape[2:])
+    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
+    if logits_shape_new != label_shape:
+        raise ValueError(f"{msg_prefix} shape of 'logits' should be (N, C, d_0, d_1, ...), "
+                         f"and the shape of 'labels' should be (N, d_0, d_1, ...), "
+                         f"but get 'logits' shape: {logits_shape} and 'labels' shape: {label_shape}")
+
+
 class NLLLoss(LossBase):
     r"""
     Gets the negative log likelihood loss between logits and labels.
@@ -1901,6 +1912,7 @@ class NLLLoss(LossBase):
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
+        _check_nll_loss_shape(logits.shape, labels.shape, self.cls_name)
         return F.nll_loss(logits, labels, self.weight, self.ignore_index, self.reduction)
 
 
