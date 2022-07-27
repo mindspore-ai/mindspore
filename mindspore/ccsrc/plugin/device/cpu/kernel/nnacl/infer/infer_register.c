@@ -150,6 +150,7 @@
 #include "nnacl/infer/unsqueeze_infer.h"
 #include "nnacl/infer/unstack_infer.h"
 #include "nnacl/infer/where_infer.h"
+#include "nnacl/infer/isfinite_infer.h"
 
 InferShape g_infer_func[PrimType_MAX] = {0};
 InferShape g_inner_op_infer_func[PrimType_InnerOpMax - PrimType_InnerOpMin] = {0};
@@ -245,7 +246,7 @@ void RegAllInferFunc2() {
   g_infer_func[PrimType_HashtableLookup] = HashtableLoopupInferShape;
   g_infer_func[PrimType_InstanceNorm] = InstanceNormInferShape;
   g_infer_func[PrimType_InvertPermutation] = InvertPermutationInferShape;
-  g_infer_func[PrimType_IsFinite] = CommonInferShape;
+  g_infer_func[PrimType_IsFinite] = IsFiniteInferShape;
   g_infer_func[PrimType_L2NormalizeFusion] = CommonInferShape;
   g_infer_func[PrimType_LayerNormFusion] = LayerNormInferShape;
   g_infer_func[PrimType_LayerNormGrad] = LayerNormGradInferShape;

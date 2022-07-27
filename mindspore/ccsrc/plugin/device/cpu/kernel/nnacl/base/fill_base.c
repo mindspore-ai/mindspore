@@ -46,3 +46,14 @@ int FillInt32(int *output, int size, int data) {
   }
   return NNACL_OK;
 }
+
+int FillBool(bool *output, int size, bool data) {
+  if (output == NULL) {
+    return NNACL_NULL_PTR;
+  }
+
+  for (int index = 0; index < size; ++index) {
+    output[index] = data;
+  }
+  return NNACL_OK;
+}

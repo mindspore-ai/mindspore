@@ -73,14 +73,17 @@ int BatchToSpaceCPUKernel::Run() {
   float *output_data = reinterpret_cast<float *>(output->data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
+  size_t data_size = sizeof(float);
+#ifdef ENABLE_FP16
+  data_size = input->data_type() == kNumberTypeFloat16 ? sizeof(float16_t) : data_size;
+#endif
   if (in_tensors_.size() == 1) {
     BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
     if (param->no_crop_) {
-      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                                sizeof(float));
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, data_size);
     } else {
       BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                          sizeof(float));
+                          data_size);
     }
   }
   if (in_tensors_.size() == 3) {
@@ -90,14 +93,16 @@ int BatchToSpaceCPUKernel::Run() {
       return ret;
     }
     if (no_crop_) {
-      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, sizeof(float));
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, data_size);
     } else {
-      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, crops_, sizeof(float));
+      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, crops_, data_size);
     }
   }
   return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, LiteKernelCreator<BatchToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BatchToSpace, LiteKernelCreator<BatchToSpaceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, LiteKernelCreator<BatchToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BatchToSpaceND, LiteKernelCreator<BatchToSpaceCPUKernel>)
 }  // namespace mindspore::kernel

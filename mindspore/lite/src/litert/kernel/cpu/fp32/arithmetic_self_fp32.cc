@@ -70,6 +70,13 @@ ArithmeticSelfIntFunc ArithmeticSelfCPUKernel::GetArithmeticSelfIntFun(int primi
   return nullptr;
 }
 
+ArithmeticSelfFloatBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFloatBoolFun(int primitive_type) const {
+  if (primitive_type == mindspore::schema::PrimitiveType_IsFinite) {
+    return ElementIsFinite;
+  }
+  return nullptr;
+}
+
 int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
   CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
@@ -98,6 +105,17 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     return RET_OK;
   }
   int ret = RET_ERROR;
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32 && out_tensors_[0]->data_type() == kNumberTypeBool) {
+    if (func_float_bool_ == nullptr) {
+      MS_LOG(ERROR) << "Run function is null! ";
+      return RET_ERROR;
+    }
+    float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+    bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
+    ret = func_float_bool_(input_ptr + offset, output_ptr + offset, count);
+    return ret;
+  }
+
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
     if (func_ == nullptr) {
       MS_LOG(ERROR) << "Run function is null! ";
@@ -166,4 +184,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reciprocal, LiteKernelCreator
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Erf, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Neg, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Abs, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_IsFinite, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 }  // namespace mindspore::kernel

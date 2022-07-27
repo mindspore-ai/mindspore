@@ -63,6 +63,8 @@ int FillCPUKernel::DoFill(int task_id) {
     ret = FillFp32(out_ptr_ + offset, size, src_data_);
   } else if (input_tensor->data_type() == kNumberTypeInt32 || input_tensor->data_type() == kNumberTypeInt) {
     ret = FillInt32(int32_out_ptr_ + offset, size, int32_src_data_);
+  } else if (input_tensor->data_type() == kNumberTypeBool) {
+    ret = FillBool(bool_out_ptr_ + offset, size, bool_src_data_);
   } else {
     return RET_ERROR;
   }
@@ -102,6 +104,11 @@ int FillCPUKernel::Run() {
     int32_src_data_ = fill_data[0];
     int32_out_ptr_ = reinterpret_cast<int *>(output->MutableData());
     CHECK_NULL_RETURN(int32_out_ptr_);
+  } else if (fill_input->data_type() == kNumberTypeBool) {
+    auto fill_data = reinterpret_cast<bool *>(fill_input->data());
+    bool_src_data_ = fill_data[0];
+    bool_out_ptr_ = reinterpret_cast<bool *>(output->MutableData());
+    CHECK_NULL_RETURN(bool_out_ptr_);
   } else {
     MS_LOG(ERROR) << "unsupported fill data type " << fill_input->data_type();
     return RET_ERROR;
@@ -114,6 +121,7 @@ int FillCPUKernel::Run() {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Fill, LiteKernelCreator<FillCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Fill, LiteKernelCreator<FillCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Fill, LiteKernelCreator<FillCPUKernel>)
 }  // namespace mindspore::kernel

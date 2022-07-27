@@ -44,6 +44,8 @@ class FillCPUKernel : public LiteKernel {
   float *out_ptr_ = nullptr;
   int int32_src_data_ = 0;
   int *int32_out_ptr_ = nullptr;
+  bool bool_src_data_ = false;
+  bool *bool_out_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

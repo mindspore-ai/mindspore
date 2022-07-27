@@ -33,15 +33,13 @@ PrimitiveCPtr TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_start(attr_value.i());
   } else {
     auto input_0_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(FIRST_INPUT));
-    if (tf_node_map.find(input_0_name) == tf_node_map.end()) {
-      MS_LOG(ERROR) << "not find start node.";
-      return nullptr;
-    }
-    auto start_node = tf_node_map.at(input_0_name);
-    MS_CHECK_TRUE_RET(start_node != nullptr, nullptr);
-    if (TensorFlowUtils::FindAttrValue(*start_node, "value", &attr_value)) {
-      MS_LOG(INFO) << "Found raggedrange start node value attr, means it has default value";
-      prim->set_start(attr_value.i());
+    if (tf_node_map.find(input_0_name) != tf_node_map.end()) {
+      auto start_node = tf_node_map.at(input_0_name);
+      MS_CHECK_TRUE_RET(start_node != nullptr, nullptr);
+      if (TensorFlowUtils::FindAttrValue(*start_node, "value", &attr_value)) {
+        MS_LOG(INFO) << "Found raggedrange start node value attr, means it has default value";
+        prim->set_start(attr_value.i());
+      }
     }
   }
 
@@ -49,15 +47,13 @@ PrimitiveCPtr TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_limit(attr_value.i());
   } else {
     auto input_1_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(SECOND_INPUT));
-    if (tf_node_map.find(input_1_name) == tf_node_map.end()) {
-      MS_LOG(ERROR) << "not find limit node.";
-      return nullptr;
-    }
-    auto limit_node = tf_node_map.at(input_1_name);
-    MS_CHECK_TRUE_RET(limit_node != nullptr, nullptr);
-    if (TensorFlowUtils::FindAttrValue(*limit_node, "value", &attr_value)) {
-      MS_LOG(INFO) << "Found raggedrange limit node value attr, means it has default value";
-      prim->set_limit(attr_value.i());
+    if (tf_node_map.find(input_1_name) != tf_node_map.end()) {
+      auto limit_node = tf_node_map.at(input_1_name);
+      MS_CHECK_TRUE_RET(limit_node != nullptr, nullptr);
+      if (TensorFlowUtils::FindAttrValue(*limit_node, "value", &attr_value)) {
+        MS_LOG(INFO) << "Found raggedrange limit node value attr, means it has default value";
+        prim->set_limit(attr_value.i());
+      }
     }
   }
 

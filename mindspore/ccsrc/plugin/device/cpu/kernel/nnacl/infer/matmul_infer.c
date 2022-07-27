@@ -81,11 +81,6 @@ int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs
     MS_CHECK_TRUE_RET(CheckMatMulBias(bias_shape, bias_shape_size) == NNACL_OK, NNACL_ERR);
   }
 
-  if (a_shape_size == COMM_SHAPE_SIZE && a_shape[THIRD_INPUT] == 1 && a_shape[FOURTH_INPUT] == 1) {
-    a_shape_size = 2;
-    SetShapeArray(input0, a_shape, a_shape_size);
-  }
-
   bool del_start = false;
   bool del_end = false;
   if (a_shape_size == 1) {

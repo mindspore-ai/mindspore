@@ -40,6 +40,7 @@ int ZerosLikeCPUKernel::Run() {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ZerosLike, LiteKernelCreator<ZerosLikeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ZerosLike, LiteKernelCreator<ZerosLikeCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ZerosLike, LiteKernelCreator<ZerosLikeCPUKernel>)
