@@ -1559,6 +1559,29 @@ def get_expand_dims_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Diag)
+def get_diag_vmap_rule(prim, axis_size):
+    """VmapRule for `Diag` operations."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = P.Diag()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = batch_prim(x)
+        return (out, 0)
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
