@@ -33,7 +33,7 @@ bool InitRandomNormal(std::vector<int64_t> out_shape, int64_t seed, int64_t seed
     thread_num = 1;
   }
   auto temp = py::cast<std::shared_ptr<mindspore::tensor::Tensor>>(output_tensor);
-  float *start_ptr = reinterpret_cast<float *>(temp->data_c());
+  float *start_ptr = static_cast<float *>(temp->data_c());
   if (start_ptr == nullptr) {
     std::cout << "start_ptr is nullptr" << std::endl;
     return false;

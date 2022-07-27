@@ -22,7 +22,6 @@
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
-#include "utils/flags.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
@@ -263,13 +262,13 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   // append hyper parameter to specialized_parameter_list
   MS_EXCEPTION_IF_NULL(specialized_graph);
   auto params = specialized_graph->parameters();
-  specialized_parameter_list.insert(specialized_parameter_list.end(), params.end() - SizeToInt(fv_param_count_),
-                                    params.end());
+  (void)specialized_parameter_list.insert(specialized_parameter_list.end(), params.end() - SizeToInt(fv_param_count_),
+                                          params.end());
   std::vector<AnfNodePtr> specialized_parameter_list_update(specialized_parameter_list.begin() + pos_arg_indexes.size(),
                                                             specialized_parameter_list.end());
   for (size_t i = 0; i < pos_arg_indexes.size(); i++) {
-    specialized_parameter_list_update.insert(specialized_parameter_list_update.begin() + pos_arg_indexes[i],
-                                             specialized_parameter_list[i]);
+    (void)specialized_parameter_list_update.insert(specialized_parameter_list_update.begin() + pos_arg_indexes[i],
+                                                   specialized_parameter_list[i]);
   }
 
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(specialized_graph, false);

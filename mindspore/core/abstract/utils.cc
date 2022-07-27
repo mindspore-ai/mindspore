@@ -141,7 +141,7 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   bool no_min_max_shape = false;
   bool has_dynamic_rank = IsShapesDynamicRank({shape1->shape(), shape2->shape()});
   if (has_dynamic_rank) {
-    dims.emplace_back(kDynamicRankShape);
+    (void)dims.emplace_back(kDynamicRankShape);
     return std::make_shared<Shape>(dims);
   }
   // lengths of two shapes are not same, join failed

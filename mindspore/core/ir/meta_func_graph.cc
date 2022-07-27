@@ -27,7 +27,7 @@ abstract::AbstractBasePtr MetaFuncGraph::ToAbstract() {
   return std::make_shared<abstract::MetaFuncGraphAbstractClosure>(shared_from_base<MetaFuncGraph>());
 }
 
-FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) {
+FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) const {
   std::vector<AnfNodePtr> parameters;
   ParameterPtr undetermined_param = nullptr;
   auto stub = std::make_shared<FuncGraph>();

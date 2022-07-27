@@ -952,9 +952,9 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     if (!padding_axis_value.empty()) {
       // the condition that the number of -1 in shape is > 1, but just paddingshape
       for (size_t index = 0; index < padding_axis_value.size(); ++index) {
-        shape[padding_axis_value[index]] = x_shape[index];
-        min_shape[padding_axis_value[index]] = x_min_shape[index];
-        max_shape[padding_axis_value[index]] = x_max_shape[index];
+        shape[IntToSize(padding_axis_value[index])] = x_shape[index];
+        min_shape[IntToSize(padding_axis_value[index])] = x_min_shape[index];
+        max_shape[IntToSize(padding_axis_value[index])] = x_max_shape[index];
       }
     } else {
       auto it_second = find(it_first + 1, shape.end(), -1);
@@ -1492,9 +1492,9 @@ AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, cons
   ShapeVector universe_min_shp;
   ShapeVector universe_max_shp;
 
-  universe_shp.emplace_back(Shape::SHP_ANY);
-  universe_min_shp.emplace_back(universe_min_batch);
-  universe_max_shp.emplace_back(universe_max_batch);
+  (void)universe_shp.emplace_back(Shape::SHP_ANY);
+  (void)universe_min_shp.emplace_back(universe_min_batch);
+  (void)universe_max_shp.emplace_back(universe_max_batch);
 
   auto universe_abstract =
     std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(universe_shp, universe_min_shp, universe_max_shp));
@@ -1504,13 +1504,13 @@ AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, cons
   ShapeVector r_min_shp = {images_min_batch, image_h, image_w};
 
   if (format == "NHWC") {
-    r_shp.emplace(r_shp.end(), images_channels);
-    r_max_shp.emplace(r_max_shp.end(), images_channels);
-    r_min_shp.emplace(r_min_shp.end(), images_channels);
+    (void)r_shp.emplace(r_shp.end(), images_channels);
+    (void)r_max_shp.emplace(r_max_shp.end(), images_channels);
+    (void)r_min_shp.emplace(r_min_shp.end(), images_channels);
   } else {
-    r_shp.emplace(r_shp.begin() + 1, images_channels);
-    r_max_shp.emplace(r_max_shp.begin() + 1, images_channels);
-    r_min_shp.emplace(r_min_shp.begin() + 1, images_channels);
+    (void)r_shp.emplace(r_shp.begin() + 1, images_channels);
+    (void)r_max_shp.emplace(r_max_shp.begin() + 1, images_channels);
+    (void)r_min_shp.emplace(r_min_shp.begin() + 1, images_channels);
   }
 
   auto r_batched_abstract =

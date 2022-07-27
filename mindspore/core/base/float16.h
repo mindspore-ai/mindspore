@@ -137,7 +137,7 @@ class Float16 {
     constexpr unsigned int exponent_bits = 13;
     constexpr unsigned int sign_bit_shift = 16;
     constexpr unsigned int sign_mask = 0x80000000u;
-    constexpr uint32_t rouding_bias_part1 = ((unsigned int)(15 - 127) << 23) + 0xfff;
+    constexpr uint32_t rouding_bias_part1 = (static_cast<unsigned int>(15 - 127) << 23) + 0xfff;
 
     Union32 f;
     f.f = f32;

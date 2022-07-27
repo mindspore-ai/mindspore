@@ -124,11 +124,11 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Append
   virtual ParameterPtr add_parameter();
   ParameterPtr add_parameter(NodeDebugInfoPtr &&debug_info);
-  void add_parameter(const ParameterPtr &p);
+  void add_parameter(const ParameterPtr &param);
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   // Prepend
   virtual ParameterPtr InsertFrontParameter();
-  void InsertFrontParameter(const ParameterPtr &p);
+  void InsertFrontParameter(const ParameterPtr &param);
   void PrependParameter(const ParameterPtr &p) { parameters_.insert(parameters_.begin(), p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
   void set_parameters(std::vector<AnfNodePtr> &&params) { parameters_ = std::move(params); }
@@ -138,12 +138,12 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Create a cnode with given inputs, bound to this graph.
   virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
   virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
-  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
+  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs);
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.
   CNodePtr NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs);
   CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
-  CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
+  CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs);
 
   // Create a cnode with given inputs, bound to this graph and push back to front of order list.
   CNodePtr NewCNodeInFront(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
@@ -269,8 +269,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   const CNodeIndexCounterMap &func_graph_cnodes_index() const;
   void CopyFuncGraphCNodesIndex(const FuncGraphPtr &source);
   void ClearFuncGraphCNodesIndex();
-  void AddFuncGraphCNodeIndex(const CNodeIndexPairPtr &node, int count = 1);
-  void DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &node);
+  void AddFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair, int count = 1);
+  void DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair);
 
   // Return the parent of this graph.
   FuncGraphPtr parent();
@@ -319,7 +319,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   SeenNum seen_;
 
   std::list<CNodePtr> GetOrderedCnodes();
-  void EraseUnusedNodeInOrder(const AnfNodePtr &n);
+  void EraseUnusedNodeInOrder(const AnfNodePtr &node);
   void EraseUnusedNodeInOrder();
   void DumpCNodeList();
   const OrderedSet<CNodePtr> &order_list() const { return order_; }
@@ -346,7 +346,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_switch_layer_input(const std::shared_ptr<bool> &switch_layer_input) {
     switch_layer_input_ = switch_layer_input;
   }
-  void SetMultiTarget();
+  void SetMultiTarget() const;
   bool exist_multi_target() const { return exist_multi_target_; }
   void set_exist_multi_target(bool exist_multi_target) { exist_multi_target_ = exist_multi_target; }
   int64_t stage() const { return stage_; }

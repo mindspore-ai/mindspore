@@ -33,6 +33,7 @@ class ParamInfo {
   ParamInfo() {}
 
   ParamInfo(const ParamInfo &other) = default;
+  ParamInfo &operator=(const ParamInfo &other) = default;
 
   virtual ~ParamInfo() = default;
 
