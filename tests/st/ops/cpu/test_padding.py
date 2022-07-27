@@ -48,7 +48,7 @@ class PaddingDynamicShapeNet(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2, 1), (2, 4, 1), (3, 4, 5, 1)])
-@pytest.mark.parametrize('dtype', [np.int32, np.float16, np.float32])
+@pytest.mark.parametrize('dtype', [np.bool_, np.uint32, np.float16, np.float32, np.complex64, np.complex128])
 @pytest.mark.parametrize('pad_dim_size', [2, 4, 10])
 def test_padding(mode, shape, dtype, pad_dim_size):
     """

@@ -398,7 +398,7 @@ def test_invert_dynamic_shape(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
-@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-5)])
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_softsign(shape, dtype, tol):
     """
     Feature: ALL To ALL
