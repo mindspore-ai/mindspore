@@ -2570,7 +2570,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         ValueError: If `dtype` is neither 'int32' nor 'int64'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
@@ -2587,19 +2587,10 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
         valid_values = ['int32']
-        self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
+        self.dtype = validator.check_string(dtype, valid_values, "d_type", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
-        self.add_prim_attr('dtype', 3)
+        self.add_prim_attr('d_type', 3)
 
-    def infer_shape(self, x_shape, range_shape):
-        return (self.nbins,)
-
-    def infer_dtype(self, x_dtype, range_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32, mstype.int32)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        validator.check_tensor_dtype_valid("range", range_dtype, valid_dtypes, self.name)
-        y_dtype = mstype.int32
-        return y_dtype
 
 
 class Log(Primitive):
