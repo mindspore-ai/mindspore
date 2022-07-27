@@ -1145,7 +1145,7 @@ ValuePtr SetSensValue(const ValuePtr &value, TensorIdWithTensorObject *tensor_id
     sens_tensor->set_base_shape(tensor_value->base_shape_ptr());
     MS_LOG(DEBUG) << "Make new tensor for sens id " << sens_tensor->id() << ", abstract "
                   << sens_tensor->ToAbstract()->ToString();
-    (*tensor_id_with_tensor_object)[sens_tensor->id()].emplace_back(sens_tensor);
+    (void)(*tensor_id_with_tensor_object)[sens_tensor->id()].emplace_back(sens_tensor);
     return sens_tensor;
   } else {
     return value;
@@ -2864,7 +2864,7 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
   return cell_id;
 }
 
-void GradExecutor::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) {
+void GradExecutor::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) const {
 #ifdef ENABLE_DUMP_IR
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -3155,7 +3155,7 @@ void GradExecutor::UpdateTopCellId(const py::args &args) {
   if (need_change) {
     // Change args shape
     for (size_t i = 0; i < id_with_shape.size(); ++i) {
-      const auto it = std::next(id_with_shape.begin(), i);
+      const auto it = std::next(id_with_shape.begin(), static_cast<int64_t>(i));
       if (!it->second.empty() && top_cell()->cell_self_info()->args_id[i] == it->first) {
         top_cell()->cell_self_info()->args_shape[i] = std::make_shared<abstract::Shape>(it->second);
       }
@@ -3227,7 +3227,7 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell
     MS_EXCEPTION_IF_NULL(delete_first_top_cell);
     delete_first_top_cell->Clear();
     (void)already_run_top_cell_.erase(delete_first_top_cell->already_run_cell_id());
-    top_cell_list_.erase(top_cell_list_.begin());
+    (void)top_cell_list_.erase(top_cell_list_.begin());
     MS_LOG(WARNING) << "Too many top cell has been built, please check if the cell " << cell.cast<CellPtr>()->ToString()
                     << " is repeatedly defined in each epoch";
   }
@@ -3250,7 +3250,7 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell
   } else {
     top_cell->SetCellSelfInfoForTopCell(cell, args);
   }
-  top_cell_list_.emplace_back(top_cell);
+  (void)top_cell_list_.emplace_back(top_cell);
   PushHighOrderGraphStack(top_cell);
   set_top_cell(top_cell);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
@@ -3511,7 +3511,7 @@ std::string GradExecutor::GetAlreadyRunCellId(const std::string &cell_id) {
   return already_run_cell_id;
 }
 
-std::string GradExecutor::GetGradCellId(bool has_sens, const py::object &cell, const py::args &args) {
+std::string GradExecutor::GetGradCellId(bool has_sens, const py::object &cell, const py::args &args) const {
   size_t forward_args_size = args.size();
   py::args tmp = args;
   if (has_sens) {
@@ -3582,7 +3582,7 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   if (w_args.empty() && !df_builder->parameters().empty()) {
     MS_LOG(DEBUG) << "Add weights params to w_args";
-    w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
+    (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
   }
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
@@ -4122,7 +4122,7 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forw
     const auto &arg = PyObjToValue(forward_args[i]);
     input_args.emplace_back(arg);
   }
-  input_args.insert(input_args.end(), weights_args.cbegin(), weights_args.cend());
+  (void)input_args.insert(input_args.end(), weights_args.cbegin(), weights_args.cend());
   // Get output values
   py::object new_out;
   if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !py::isinstance<py::tuple>(out)) {
@@ -4300,11 +4300,11 @@ void PynativeExecutor::SetHookChanged(const py::object &cell) {
   grad_executor()->SetHookChanged(cell);
 }
 
-void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
+void PynativeExecutor::set_graph_phase(const std::string &graph_phase) const {
   grad_executor()->set_graph_phase(graph_phase);
 }
 
-void PynativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) {
+void PynativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
   MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell id " << GetId(cell);
   forward_executor()->SetDynamicInput(cell, args);
   // After set input, check previous top cell can be make to dynamic shape
@@ -4337,7 +4337,7 @@ py::object PynativeExecutor::CheckGraph(const py::object &cell, const py::args &
   return grad_executor()->CheckGraph(cell, args);
 }
 
-void PynativeExecutor::set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position) {
+void PynativeExecutor::set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position) const {
   grad->set_grad_position(std::string(py::str(grad_position)));
 }
 
@@ -4350,23 +4350,23 @@ void PynativeExecutor::set_weights_id(const prim::GradOperationPtr &grad, const 
 }
 
 py::object PynativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                             const py::args &args) {
+                                             const py::args &args) const {
   return grad_executor()->CheckAlreadyRun(grad, cell, args);
 }
 
-py::object PynativeExecutor::Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) {
+py::object PynativeExecutor::Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const {
   py::object ret;
   PynativeExecutorTry(grad_executor()->RunGraph, &ret, cell, sens_param, args);
   return ret;
 }
 
-void PynativeExecutor::ClearCell(const py::object &cell) {
+void PynativeExecutor::ClearCell(const py::object &cell) const {
   const auto &cell_id = GetId(cell);
   MS_LOG(DEBUG) << "Clear cell res, cell id " << cell_id;
   grad_executor()->ClearCellRes(cell_id);
 }
 
-void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
+void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) const {
   MS_LOG(DEBUG) << "Clear grad";
   return grad_executor()->ClearGrad(cell, args);
 }
@@ -4399,7 +4399,7 @@ void PynativeExecutor::ClearRes() {
   g_pyobj_id_cache.clear();
 }
 
-void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
+void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) const {
   if (py::isinstance<Cell>(cell)) {
     forward_executor()->IncreaseCellDepth();
   }
@@ -4438,7 +4438,7 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   forward_executor()->ResetDynamicAbsMap();
 }
 
-py::object PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) {
+py::object PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) const {
   return grad_executor()->GradMsFunction(out, args);
 }
 

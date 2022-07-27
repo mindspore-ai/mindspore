@@ -322,7 +322,7 @@ class GradExecutor {
   // Manage resource when run grad process.
   bool IsBpropGraph(const std::string &cell_id);
   bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) const;
-  void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
+  void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) const;
   void NewGraphInner(const py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(const py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
   void SetForwardLastNodeInfo(const py::object &out) const;
@@ -330,7 +330,7 @@ class GradExecutor {
   void UpdateSensValueForDynamicShapeOutput(const py::object &out) const;
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
   std::string GetAlreadyRunCellId(const std::string &cell_id);
-  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
+  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args) const;
   void GradNetInner(const py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                     const py::object &weights, const py::object &grad_position, const py::args &args);
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
@@ -468,7 +468,6 @@ class ForwardExecutor {
   void SaveOutputDynamicShape(const OpExecInfoPtr &op_exec_info, const AbstractBasePtr &real_abs,
                               const py::object &obj);
 
- private:
   uint32_t cell_depth_{0};
   GradExecutorWeakPtr grad_executor_;
   PrimAbsCache prim_abs_list_;
@@ -499,27 +498,27 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   bool grad_flag() const;
   void set_grad_flag(bool flag);
-  void SetDynamicInput(const py::object &cell, const py::args &args);
+  void SetDynamicInput(const py::object &cell, const py::args &args) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
-  void set_graph_phase(const std::string &graph_phase);
+  void set_graph_phase(const std::string &graph_phase) const;
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
   void SetHookChanged(const py::object &cell);
-  void NewGraph(const py::object &cell, const py::args &args);
+  void NewGraph(const py::object &cell, const py::args &args) const;
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::object &grad_position, const py::args &args);
-  py::object GradMsFunction(const py::object &out, const py::args &args);
+  py::object GradMsFunction(const py::object &out, const py::args &args) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
-  void set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position);
+  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args) const;
+  void set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position) const;
   void set_weights_id(const prim::GradOperationPtr &grad, const py::object &weights_id);
-  py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args);
+  py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const;
 
   // Used by graph clean
   // Cell destruct will call
-  void ClearCell(const py::object &cell);
-  void ClearGrad(const py::object &cell, const py::args &args);
+  void ClearCell(const py::object &cell) const;
+  void ClearGrad(const py::object &cell, const py::args &args) const;
   // Abnormal existed
   void ClearRes();
   // Sync stream
