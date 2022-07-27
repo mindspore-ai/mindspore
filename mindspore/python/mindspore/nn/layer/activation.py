@@ -26,12 +26,14 @@ from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 
-__all__ = ['Softmax',
+__all__ = ['Softmin',
+           'Softmax',
            'LogSoftmax',
            'ReLU',
            'ReLU6',
            'RReLU',
            'SeLU',
+           'SiLU',
            'Tanh',
            'Tanhshrink',
            'Hardtanh',

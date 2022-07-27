@@ -24,7 +24,6 @@ from mindspore.ops import functional as F
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -44,7 +43,6 @@ def test_resize_linear_1d_align_corners(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -65,7 +63,6 @@ def test_resize_linear_1d_half_pixel(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -85,7 +82,6 @@ def test_resize_linear_1d_size_not_change(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -104,7 +100,6 @@ def test_resize_linear_1d_half_pixel_functional_interface(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

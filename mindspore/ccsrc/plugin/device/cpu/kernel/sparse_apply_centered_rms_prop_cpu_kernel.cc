@@ -244,5 +244,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyCenteredRMSP
   return func_list;
 }
 
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseApplyCenteredRMSProp, SparseApplyCenteredRMSPropCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

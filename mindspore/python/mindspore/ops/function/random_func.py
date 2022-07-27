@@ -240,5 +240,6 @@ __all__ = [
     'standard_laplace',
     'standard_normal',
     'uniform',
+    'random_gamma'
 ]
 __all__.sort()

@@ -2135,6 +2135,42 @@ class Tensor(Tensor_):
             return tensor_operator_registry.get('cumsum')()(x, axis).astype(dtype, copy=False)
         return tensor_operator_registry.get('cumsum')()(x, axis)
 
+    def inplace_update(self, v, indices):
+        """
+        Update some rows of a tensor with values of v according to the specified indices.
+
+        Args:
+            v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
+              the same as the size of indices.
+            indices (Union[int, tuple]): Indices into the left-most dimension determining which rows to be updated.
+
+        Returns:
+            Tensor, with updated values.
+
+        Raises:
+            TypeError: if indices is not int or tuple.
+            TypeError: if indices is tuple but any of its element is not int.
+            ValueError: the Tensor shape is different from that of v.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+            >>> v = Tensor(np.array([[0.1, 0.2], [0.3, 0.4]]), mindspore.float32)
+            >>> indices = (0, 1)
+            >>> output = x.inplace_update(v, indices)
+            >>> print(output)
+            [[0.1 0.2]
+             [0.3 0.4]
+             [5.  6. ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inplace_update')(indices)(self, v)
+
     def copy(self):
         """
         Return a copy of the tensor.
@@ -2370,6 +2406,49 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_sub')()(self, indices, updates)
+
+    def scatter_min(self, indices, updates):
+        """
+        By comparing the value at the position indicated by `indices` in self tensor with the value in the `updates`,
+        the value at the index will eventually be equal to the smallest one to create a new tensor.
+
+        The last axis of the index is the depth of each index vector. For each index vector,
+        there must be a corresponding value in `updates`. The shape of `updates` should be
+        equal to the shape of `input_x[indices]`. For more details, see case below.
+
+        Note:
+            If some values of the `indices` are out of range, instead of raising an index error,
+            the corresponding `updates` will not be updated to `input_x`.
+
+        Args:
+            indices (Tensor): The index of input tensor whose data type is int32 or int64.
+                The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input,
+                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+        Returns:
+            Tensor, has the same shape and type as `input_x`.
+
+        Raises:
+            TypeError: If dtype of `indices` is neither int32 nor int64.
+            ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
+            >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
+            >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
+            >>> output = x.scatter_min(indices, updates)
+            >>> print(output)
+            [[ -0.1  0.3  3.6]
+            [ 0.4  0.5 -3.2]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tensor_scatter_min')()(self, indices, updates)
 
     def scatter_max(self, indices, updates):
         """
@@ -3981,7 +4060,6 @@ class Tensor(Tensor_):
 
         Returns:
             tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
-
             - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as self tensor.
             - idx (Tensor) - The index of each value of self tensor in the unique output `y`,
               the shape and data type same as self tensor.
@@ -4112,6 +4190,51 @@ class Tensor(Tensor_):
              [2, 2]]))
         """
         return tensor_operator_registry.get('split')(axis, output_num)(self)
+
+
+    def xlogy(self, y):
+        r"""
+        Computes the self tensor multiplied by the logarithm of input tensor element-wise.
+        Returns zero when self tensor is zero. The data type of the self tensor should be
+        `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_ or
+        `bool_ <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
+        To make it clear, the following content will use `x` to represent the self tensor.
+
+        .. math::
+
+            out_i = x_{i}\ln{y_{i}}
+
+        Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        The inputs must be two tensors or one tensor and one scalar.
+        When the inputs are two tensors,
+        dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+        When the inputs are one tensor and one scalar,
+        the scalar could only be a constant.
+
+        Args:
+            y (Union[Tensor, number.Number, bool]): The `y` input is a number.Number or
+              a bool or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `y` is not a number.Number or a bool or a Tensor.
+            TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64] .
+            ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+            >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+            >>> print(x.xlogy(y))
+            [-3.465736   0.        2.7725887]
+        """
+        return tensor_operator_registry.get("xlogy")()(self, y)
+
 
     def erf(self):
         r"""

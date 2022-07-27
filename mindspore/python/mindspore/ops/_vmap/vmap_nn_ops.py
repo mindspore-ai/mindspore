@@ -635,6 +635,7 @@ def get_kl_div_loss_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.SmoothL1Loss)
 def get_smooth_l1_loss_vmap_rule(prim, axis_size):
     """VmapRule for `SmoothL1Loss` operation."""
     if isinstance(prim, str):

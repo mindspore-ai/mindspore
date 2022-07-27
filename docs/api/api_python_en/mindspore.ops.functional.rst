@@ -65,6 +65,7 @@ Loss Functions
     :template: classtemplate.rst
 
     mindspore.ops.cross_entropy
+    mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
 Activation Functions
@@ -79,6 +80,7 @@ Activation Functions
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
+    mindspore.ops.hardswish
     mindspore.ops.log_softmax
     mindspore.ops.mish
     mindspore.ops.selu
@@ -134,6 +136,9 @@ Element-by-Element Functions
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
+    mindspore.ops.inplace_add
+    mindspore.ops.inplace_sub
+    mindspore.ops.inplace_update
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lerp
@@ -312,6 +317,7 @@ Randomly Generating Functions
 
     mindspore.ops.gamma
     mindspore.ops.laplace
+    mindspore.ops.random_gamma
     mindspore.ops.multinomial
     mindspore.ops.normal
     mindspore.ops.poisson
@@ -339,10 +345,16 @@ Array Functions
     mindspore.ops.index_add
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
+    mindspore.ops.gumbel_softmax
+    mindspore.ops.intopk
+    mindspore.ops.masked_fill
+    mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
     mindspore.ops.meshgrid
     mindspore.ops.narrow
     mindspore.ops.nonzero
+    mindspore.ops.one_hot
+    mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements
@@ -394,6 +406,8 @@ Array Functions
      - Refer to :class:`mindspore.ops.Squeeze`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
+   * - mindspore.ops.tensor_scatter_update
+     - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice
      - `tensor_slice` will be deprecated in the future. Please use `mindspore.ops.slice` instead.
 

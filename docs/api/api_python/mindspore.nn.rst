@@ -124,7 +124,9 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.ReLU6
     mindspore.nn.RReLU
     mindspore.nn.SeLU
+    mindspore.nn.SiLU
     mindspore.nn.Sigmoid
+    mindspore.nn.Softmin
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
@@ -200,6 +202,8 @@ Dropout层
     mindspore.nn.ConstantPad1d
     mindspore.nn.ConstantPad2d
     mindspore.nn.ConstantPad3d
+    mindspore.nn.ReflectionPad1d
+    mindspore.nn.ReflectionPad2d
     mindspore.nn.ZeroPad2d
 
 损失函数

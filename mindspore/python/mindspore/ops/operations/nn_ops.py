@@ -849,29 +849,10 @@ class HSwish(Primitive):
     r"""
     Hard swish activation function.
 
-    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard swish is defined as:
-
-    .. math::
-
-        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.hardswish` for more detail.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> hswish = ops.HSwish()
@@ -2719,47 +2700,7 @@ class ApplyMomentum(Primitive):
 
 class SmoothL1Loss(Primitive):
     r"""
-    Computes smooth L1 loss, a robust L1 loss.
-
-    SmoothL1Loss is a Loss similar to MSELoss but less sensitive to outliers as described in the
-    `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ by Ross Girshick.
-
-    Given two input :math:`x,\  y` of length :math:`N`, the unreduced SmoothL1Loss can be described
-    as follows:
-
-    .. math::
-        L_{i} =
-        \begin{cases}
-        \frac{0.5 (x_i - y_i)^{2}}{\text{beta}}, & \text{if } |x_i - y_i| < \text{beta} \\
-        |x_i - y_i| - 0.5 \text{beta}, & \text{otherwise. }
-        \end{cases}
-
-    Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
-    Its default value is 1.0. :math:`N` is the batch size. This function returns an
-    unreduced loss Tensor.
-
-    .. warning::
-        This operator does not perform the "reduce" operation on the loss value.
-        Call other reduce operators to perform "reduce" operation on the loss if required.
-
-    Args:
-        beta (float): A parameter used to control the point where the function will change from
-            quadratic to linear. Default: 1.0.
-
-    Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
-          same shape and dtype as the `logits`.
-
-    Outputs:
-        Tensor, loss float tensor, same shape and dtype as the `logits`.
-
-    Raises:
-        TypeError: If `beta` is not a float.
-        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
-        ValueError: If `beta` is less than or equal to 0.
-        ValueError: If shape of `logits` is not the same as `labels`.
+    Refer to :func:`mindspore.ops.smooth_l1_loss` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8949,7 +8890,7 @@ class SparseApplyCenteredRMSProp(Primitive):
         ValueError: If shape of `grad` is not same as shape of `var` except first dimension.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np

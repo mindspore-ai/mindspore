@@ -230,5 +230,6 @@ std::vector<KernelAttr> GammaCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomGamma, GammaCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,7 +18,7 @@ from mindspore import ops
 from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 
-__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ZeroPad2d']
+__all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d', 'ReflectionPad2d', 'ZeroPad2d']
 
 
 @constexpr

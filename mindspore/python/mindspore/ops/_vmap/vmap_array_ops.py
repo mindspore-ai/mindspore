@@ -577,6 +577,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ScatterNdAdd)
 @vmap_rules_getters.register(P.ScatterNdSub)
 @vmap_rules_getters.register(P.ScatterNdMin)
+@vmap_rules_getters.register(P.ScatterNdMax)
 @vmap_rules_getters.register(P.array_ops.ScatterNdMul)
 @vmap_rules_getters.register(P.ScatterNdDiv)
 @vmap_rules_getters.register(P.ScatterNdUpdate)
@@ -874,6 +875,7 @@ def get_unique_with_pad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.array_ops.MatrixDiagV3)
 def get_matrix_diag_v3_vmap_rule(prim, axis_size):
     """VmapRule for `MatrixDiagV3` operation."""
     if isinstance(prim, str):
@@ -942,6 +944,7 @@ def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
     return (orig_axis, indices_dim + 1)
 
 
+@vmap_rules_getters.register(P.OneHot)
 def get_one_hot_vmap_rule(prim, axis_size):
     """VmapRule for `OneHot` operation."""
     if isinstance(prim, str):
@@ -982,6 +985,7 @@ def get_one_hot_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.MaskedSelect)
 def get_masked_select_vmap_rule(prim, axis_size):
     """VmapRule for `MaskedSelect`."""
 
@@ -1042,6 +1046,7 @@ def get_matrix_band_part_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.array_ops.MatrixDiagPartV3)
 def get_matrix_diag_part_v3_vmap_rule(prim, axis_size):
     """VmapRule for `MatrixBandPart` operation."""
     if isinstance(prim, str):
@@ -1200,6 +1205,7 @@ def get_batch_to_space_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.GatherNd)
 def get_gather_nd_vmap_rule(prim, axis_size):
     """VmapRule for GatherND operations."""
     if isinstance(prim, str):
@@ -1274,6 +1280,7 @@ def get_meshgrid_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.MaskedFill)
 def get_masked_fill_vmap_rule(prim, axis_size):
     """VmapRule for `MaskedFill` operation."""
     if hasattr(prim, 'batch_rank'):

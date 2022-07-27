@@ -355,6 +355,7 @@ def test_fused_sparse_ftrl_dynamic():
     assert np.allclose(net.var.data.asnumpy(), expect_var)
 
 
+@pytest.mark.skip(reason='Not support on CPU')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

@@ -23,6 +23,7 @@ from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
 import mindspore.ops as ops
 from mindspore.ops.operations.array_ops import ScatterNdMul
+from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -35,6 +36,7 @@ func_map = {
     "sub": ops.ScatterNdSub,
     "mul": ScatterNdMul,
     "div": ops.ScatterNdDiv,
+    "max": ScatterNdMax,
     "min": ops.ScatterNdMin,
 }
 
@@ -44,6 +46,7 @@ np_func_map = {
     "sub": lambda a, b: a - b,
     "mul": lambda a, b: a * b,
     "div": lambda a, b: div(Tensor(np.array(a)), Tensor(np.array(b))).asnumpy(),
+    "max": np.maximum,
     "min": np.minimum,
 }
 
@@ -121,7 +124,7 @@ def compare_scatter_nd_func(func, inputx, indices, updates):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'min'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
                           mstype.uint64, mstype.int64, mstype.float16, mstype.float32, mstype.float64])
@@ -158,7 +161,7 @@ def test_scatter_nd_func_small_update():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'min'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
                           mstype.uint64, mstype.int64, mstype.float16, mstype.float32, mstype.float64])
@@ -187,7 +190,7 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'min'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
                           mstype.uint64, mstype.int64, mstype.float16, mstype.float32, mstype.float64])
@@ -228,7 +231,7 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("func_name", ['update', 'add', 'sub', 'div', 'mul', 'min'])
+@pytest.mark.parametrize("func_name", ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 def test_scatter_nd_dy_shape(func_name):
     """
     Feature: Test ScatterNdSub && ScatterNdAdd DyNamicShape.
@@ -258,7 +261,7 @@ def test_scatter_nd_dy_shape(func_name):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_indices_vmap(func):
     """
     Feature: test ScatterNd* vmap.
@@ -285,7 +288,7 @@ def test_scatter_func_indices_vmap(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'mul'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_update_vmap(func):
     """
     Feature: test ScatterNd* vmap.
