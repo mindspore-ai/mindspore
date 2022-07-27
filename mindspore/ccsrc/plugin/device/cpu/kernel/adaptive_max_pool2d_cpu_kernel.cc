@@ -218,7 +218,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 }
 
 const AdaptiveMaxPool2dCpuKernelMod::FuncList &AdaptiveMaxPool2dCpuKernelMod::GetFuncList() const {
-  static std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>> func_list = {
+  static const std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &AdaptiveMaxPool2dCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

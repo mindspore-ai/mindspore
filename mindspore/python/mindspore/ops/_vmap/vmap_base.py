@@ -27,8 +27,8 @@ from ..primitive import Primitive
 from ..operations.random_ops import UniformCandidateSampler
 from ...common import Tensor
 
+
 vmap_rules_getters = Registry()
-vmap_rules = Registry()
 
 
 def get_vmap_rule(prim, axis_size):
@@ -36,12 +36,12 @@ def get_vmap_rule(prim, axis_size):
     out = vmap_rules_getters.get(prim, None)
     if out:
         return out(prim, axis_size)
-    return vmap_rules.get(prim, None)
+    return None
 
 
 @constexpr
-def _get_broadcast_shape_without_axis(x_shape, y_shape):
-    """Get the broadcast shape for _handle_broadcasting."""
+def _get_broadcast_shape_with_front_axis(x_shape, y_shape):
+    """ Explicitly matched with the broadcast shape, that is, 1 is added to the broadcast position. """
     x_len = len(x_shape)
     y_len = len(y_shape)
 
@@ -69,8 +69,18 @@ def _get_broadcast_shape_without_axis(x_shape, y_shape):
 
 
 def _handle_broadcasting(x, x_shape, y_shape):
-    """Handle the broadcasting shape."""
-    broadcast_shape = _get_broadcast_shape_without_axis(x_shape, y_shape)
+    """
+    Handle the broadcasting shape with axis in the front.
+
+    Args:
+        x (Tensor): The input tensor, whose batch axis is in the front.
+        x_shape (Tuple): The shape of x.
+        y_shape (Tuple): The shape of y using to broadcasting, whose batch axis is also in the front.
+
+    Returns:
+        Tensor, array after reshaped to the broadcasting shape.
+    """
+    broadcast_shape = _get_broadcast_shape_with_front_axis(x_shape, y_shape)
     return F.reshape(x, broadcast_shape)
 
 

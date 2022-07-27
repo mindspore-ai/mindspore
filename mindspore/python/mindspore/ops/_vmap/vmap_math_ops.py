@@ -329,9 +329,9 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
 
         x, dim = operand_bdim
         x = mnp.moveaxis(x, dim, 0)
-        axis_size = F.shape(x)[0]
+        x_shape = F.shape(x)
         batch_shape = (axis_size,) + shape
-
+        x = _handle_broadcasting(x, x_shape, batch_shape)
         out = P.BroadcastTo(batch_shape)(x)
         return (out, 0)
 
