@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ARITHMETIC_SIMPLIFY_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ARITHMETIC_SIMPLIFY_H_
 
-#include <algorithm>
 #include <memory>
-#include <vector>
 
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/prim_eliminate.h"
@@ -56,7 +54,7 @@ class ArithmeticSimplify : public OptimizerCaller {
 // Arithmetic Simplifications should be done after step_parallel.
 // eg: Mul(0, weight) where weight is a parameter will be simplified to a constant tensor
 // with shape(weight), but after step_parallel, shape of weight may be changed, so the
-// shape of the constant tensor should also be changed. So this pass is seperated from
+// shape of the constant tensor should also be changed. So this pass is separated from
 // ArithmeticSimplify and deferred until step_parallel.
 class ArithmeticSimplify2 : public OptimizerCaller {
  public:

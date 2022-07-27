@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <functional>
 #include <utility>
+#include <memory>
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "mindspore/core/ops/core_ops.h"
@@ -478,7 +479,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     inputs.reserve(node->size());
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     // Inputs of node should be [make_list, item1, item2, ...], so offset by 1 to get items;
-    (void)inputs.insert(inputs.end(), node->inputs().begin() + 1, node->inputs().end());
+    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
     return node->func_graph()->NewCNode(std::move(inputs));
   }
 
@@ -535,7 +536,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
     inputs.reserve(node->size());
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items.
-    (void)inputs.insert(inputs.end(), node->inputs().begin() + 1, node->inputs().end());
+    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
     auto new_node = node->func_graph()->NewCNode(std::move(inputs));
     new_node->set_abstract(node->abstract());
     return new_node;
@@ -613,13 +614,13 @@ class CleanAfterOptARewriter : public BaseRewriter {
     if (value->isa<ValueSequence>()) {
       std::vector<ValuePtr> elements;
       auto value_seq = value->cast<ValueSequencePtr>();
-      std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
-                     [&](const ValuePtr &value) -> ValuePtr {
-                       bool is_convert = false;
-                       auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
-                       *need_convert |= is_convert;
-                       return convert_value;
-                     });
+      (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
+                           [&](const ValuePtr &value) -> ValuePtr {
+                             bool is_convert = false;
+                             auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
+                             *need_convert |= is_convert;
+                             return convert_value;
+                           });
       *need_convert |= value->isa<ValueList>();
       if (*need_convert) {
         return std::make_shared<ValueTuple>(elements);

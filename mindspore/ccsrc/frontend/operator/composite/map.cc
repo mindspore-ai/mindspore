@@ -43,7 +43,7 @@ AnfNodePtr Map::FullMakeLeaf(const FuncGraphPtr &func_graph, const AnfNodePtr &f
   } else {
     inputs.emplace_back(NewValueNode(fn_leaf_));
   }
-  inputs.insert(inputs.end(), args.begin(), args.end());
+  inputs.insert(inputs.cend(), args.cbegin(), args.cend());
   return func_graph->NewCNodeInOrder(inputs);
 }
 
@@ -65,7 +65,7 @@ FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
   return ptrGraph;
 }
 
-std::pair<std::string, std::string> Map::GetMapInputIndex(size_t num) {
+std::pair<std::string, std::string> Map::GetMapInputIndex(size_t num) const {
   std::string error_index;
   std::string next_index;
   const size_t first_index = 1;
@@ -137,7 +137,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      (void)inputs.insert(inputs.begin() + 1, call_node);
+      (void)inputs.insert(inputs.cbegin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -198,7 +198,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      (void)inputs.insert(inputs.begin() + 1, call_node);
+      (void)inputs.insert(inputs.cbegin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -218,7 +218,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
     pair = arg_pair;
     MS_LOG(DEBUG) << "Map " << pair.second->ToString();
     id = arg_pair.second->type_id();
-    if (nonleaf_.count(id)) {
+    if (nonleaf_.count(id) != 0) {
       found = true;
       break;
     }

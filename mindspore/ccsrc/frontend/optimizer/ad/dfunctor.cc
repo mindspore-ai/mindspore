@@ -198,11 +198,11 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     // Replace hook node with make tuple node.
     abstract::AbstractBasePtrList multi_output_abs;
     std::vector<AnfNodePtr> multi_output_nodes{NewValueNode(prim::kPrimMakeTuple)};
-    std::for_each(output_cnode->inputs().begin() + 1, output_cnode->inputs().end(),
+    std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
                   [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
                     MS_EXCEPTION_IF_NULL(inp);
-                    multi_output_nodes.emplace_back(inp);
-                    multi_output_abs.emplace_back(inp->abstract());
+                    (void)multi_output_nodes.emplace_back(inp);
+                    (void)multi_output_abs.emplace_back(inp->abstract());
                   });
     auto primal_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(primal_graph);
@@ -749,7 +749,7 @@ void DFunctor::UpdateAdjoint(const AdjointPtr &adjoint_definition) {
   }
 }
 
-AdjointPtr DFunctor::FindAdjoint(const AnfNodePtr &primal) {
+AdjointPtr DFunctor::FindAdjoint(const AnfNodePtr &primal) const {
   auto adjoint = anfnode_to_adjoin_definition_.find(primal);
   if (adjoint != anfnode_to_adjoin_definition_.end()) {
     MS_LOG(DEBUG) << "FindAdjoint found adjoint definition for free variable " << primal->ToString() << ".";
@@ -759,7 +759,7 @@ AdjointPtr DFunctor::FindAdjoint(const AnfNodePtr &primal) {
   return nullptr;
 }
 
-void DFunctor::CallDoutHoleOnTape() {
+void DFunctor::CallDoutHoleOnTape() const {
   if (!is_top_) {
     return;
   }
@@ -906,7 +906,7 @@ static mindspore::HashMap<CNodePtr, std::vector<CNodePtr>> FindPrimalJPair(const
       // To find real calling.
       auto fg = cnode->func_graph();
       MS_EXCEPTION_IF_NULL(fg);
-      auto iter = primal_map.find(fg);
+      const auto &iter = primal_map.find(fg);
       if (iter != primal_map.end()) {
         iter->second.push_back(cnode);
         continue;

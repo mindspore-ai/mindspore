@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_LIST_APPEND_OPERATION_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_LIST_APPEND_OPERATION_H_
 
-#include <vector>
 #include <string>
 #include <memory>
 
@@ -31,7 +30,7 @@ class ListAppend : public MetaFuncGraph {
   explicit ListAppend(const std::string &name) : MetaFuncGraph(name) {}
   ~ListAppend() override = default;
   MS_DECLARE_PARENT(ListAppend, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) override;
   friend std::ostream &operator<<(std::ostream &os, const ListAppend &list_append) {
     os << list_append.name_;
     return os;

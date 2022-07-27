@@ -30,7 +30,7 @@ const PrimitiveSet dump_skipped_prim_set = {prim::kPrimReturn,       prim::kPrim
 // Expand dump flag to all of cnodes if parent graph has dump flag.
 class ExpandDumpFlag {
  public:
-  bool operator()(const FuncGraphPtr &, const OptimizerPtr &optimizer) {
+  bool operator()(const FuncGraphPtr &, const OptimizerPtr &optimizer) const {
     MS_EXCEPTION_IF_NULL(optimizer);
     auto manager = optimizer->manager();
     MS_EXCEPTION_IF_NULL(manager);
@@ -56,7 +56,7 @@ class ExpandDumpFlag {
         if (seen.find(node_graph) != seen.end()) {
           continue;
         }
-        traverse_graphs.insert(node_graph);
+        (void)traverse_graphs.insert(node_graph);
         // If the node need be ignored or the dump flag is set by false, do not set true.
         if (!node->isa<CNode>() || IsOneOfPrimitiveCNode(node, dump_skipped_prim_set) ||
             (AnfUtils::HasDumpFlag(node) && !AnfUtils::GetDumpFlag(node))) {
@@ -69,7 +69,7 @@ class ExpandDumpFlag {
           graph->erase_flag(FUNC_GRAPH_FLAG_DUMP);
         }
       }
-      seen.insert(traverse_graphs.begin(), traverse_graphs.end());
+      seen.insert(traverse_graphs.cbegin(), traverse_graphs.cend());
     }
     return false;
   }

@@ -377,7 +377,7 @@ class IncorporateEnvironGet : public AnfVisitor {
     }
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(new_fg));
-    (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+    (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
 
     return node->func_graph()->NewCNode(args);
   }
@@ -397,7 +397,7 @@ class IncorporateEnvironGetSwitch : public AnfVisitor {
   ~IncorporateEnvironGetSwitch() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
+    static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }
@@ -483,7 +483,7 @@ class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
       return nullptr;
     }
     std::vector<AnfNodePtr> args_outer;
-    args_outer.insert(args_outer.end(), inputs_outer.begin() + 1, inputs_outer.end());
+    (void)args_outer.insert(args_outer.cend(), inputs_outer.cbegin() + 1, inputs_outer.cend());
     auto &input_switch_layer = inputs_outer[0]->cast<CNodePtr>()->inputs();
 
     is_match_ = false;
@@ -492,7 +492,7 @@ class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
       return nullptr;
     }
     std::vector<AnfNodePtr> args;
-    (void)args.insert(args.end(), input_switch_layer.begin() + 1, input_switch_layer.end());
+    (void)args.insert(args.cend(), input_switch_layer.cbegin() + 1, input_switch_layer.cend());
 
     // {prim::kPrimSwitchLayers, X, {prim::kPrimMakeTuple, G1, G2...}}
     auto sw = input_switch_layer[0]->cast<CNodePtr>();
@@ -520,9 +520,9 @@ class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
     }
     auto layers_node = fg->NewCNode(prim::kPrimMakeTuple, layers);
     auto new_sw = fg->NewCNode({NewValueNode(prim::kPrimSwitchLayer), sw->input(1), layers_node});
-    args.insert(args.begin(), new_sw);
+    (void)args.insert(args.cbegin(), new_sw);
     auto inner_call = fg->NewCNode(args);
-    args_outer.insert(args_outer.begin(), inner_call);
+    (void)args_outer.insert(args_outer.cbegin(), inner_call);
     return fg->NewCNode(args_outer);
   }
 

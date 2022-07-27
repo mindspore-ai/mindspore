@@ -92,13 +92,13 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   void MapValueObject();
   void MapParamObject();
   // Find adjoint with its primary k.
-  AdjointPtr FindAdjoint(const AnfNodePtr &primal);
+  AdjointPtr FindAdjoint(const AnfNodePtr &primal) const;
   // Broadcast stop flags.
   void BroadCastStopFlag();
   bool AllReferencesStopped(const CNodePtr &node);
   // Update k hole with adjoint_definition, only applied in recursive case.
   void UpdateAdjoint(const AdjointPtr &adjoint_definition);
-  void CallDoutHoleOnTape();
+  void CallDoutHoleOnTape() const;
   // Replace the primal graph with k graph
   void EliminatePrimalGraph();
   // Pynative specialize
@@ -139,7 +139,7 @@ class KPrim {
   KPrim() = default;
   ~KPrim() = default;
 
-  FuncGraphPtr KPrimitive(const CNodePtr &primal_user, const ValueNodePtr &value_node,
+  FuncGraphPtr KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
                           const pipeline::ResourceBasePtr &resources);
   MetaFuncGraphPtr KMetaFuncGraph(const PrimitivePtr &prim);
   // bprop_fg and primal_fg in bprop_fg's transforms are FuncGraph just after convert.
@@ -157,28 +157,28 @@ class KPrim {
 #endif
 
  private:
-  FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr);
-  FuncGraphPtr GetFprop(const PrimitivePtr &prim);
+  FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr) const;
+  FuncGraphPtr GetFprop(const PrimitivePtr &prim) const;
   FuncGraphPtr GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
                             const pipeline::ResourceBasePtr &resources);
-  FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
-  FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
+  FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) const;
+  FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) const;
   // Given a bprop rule, do the K mapping.
   // current_primal_fg is only valid for user defined bprop for Cell, not for Primitive.
   // Refer the comment in KUserDefinedCellBprop.
   template <typename T>
-  FuncGraphPtr BpropToK(const T &primal, const FuncGraphPtr &bprop_g, const FuncGraphPtr &current_primal_fg,
+  FuncGraphPtr BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg,
                         const CNodePtr &cnode, const mindspore::HashMap<std::string, ValuePtr> &primal_attrs,
                         const std::vector<NodeDebugInfoPtr> &primal_debug_infos);
-  AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
+  AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) const;
   void TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                  const PrimitivePtr &primitive, const FuncGraphPtr &outer,
-                                 std::vector<AnfNodePtr> *const transf_args);
+                                 std::vector<AnfNodePtr> *const transf_args) const;
   template <typename T>
   void TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                  const T &current_primal_fg, const FuncGraphPtr &outer,
-                                 std::vector<AnfNodePtr> *const transf_args);
-  void CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check);
+                                 std::vector<AnfNodePtr> *const transf_args) const;
+  void CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check) const;
 
   Registry bprop_registry_;
   mindspore::HashMap<PrimitivePtr, MetaFuncGraphPtr> bprop_registry_meta_;
@@ -245,10 +245,10 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   if constexpr (std::is_same<T, PrimitivePtr>::value) {
     PrimitivePtr primitive = primal;
     TransformArgsForPrimitive(mng, cloned_bprop_fg, primal, outer, &transf_args);
-    (void)transf_args.insert(transf_args.begin(), NewValueNode(primal));
+    (void)transf_args.insert(transf_args.cbegin(), NewValueNode(primal));
   } else {
     TransformArgsForFuncGraph(mng, cloned_bprop_fg, current_primal_fg, outer, &transf_args);
-    (void)transf_args.insert(transf_args.begin(), NewValueNode(current_primal_fg));
+    (void)transf_args.insert(transf_args.cbegin(), NewValueNode(current_primal_fg));
   }
   CNodePtr out_value = nullptr;
   if (cnode != nullptr) {  // Set equiv debug info. for Primitive CNode out.

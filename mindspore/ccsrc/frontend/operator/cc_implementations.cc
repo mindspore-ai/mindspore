@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_utils.h"

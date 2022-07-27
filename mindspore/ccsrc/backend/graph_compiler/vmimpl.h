@@ -94,7 +94,7 @@ class VMFrame {
 // Representation of a closure.
 class Closure : public Base {
  public:
-  Closure(const FuncGraphPtr &func_graph, const AnfNodePtrToBaseRefMap &values);
+  Closure(const FuncGraphPtr &graph, const AnfNodePtrToBaseRefMap &values);
   BaseRef operator()(const VectorRef &args);
 
   const VMPtr &vm() const { return vm_; }
@@ -136,9 +136,9 @@ class Partial : public Base {
 // Virtual Machine interface.
 class VM : public std::enable_shared_from_this<VM>, public VMImpl {
  public:
-  SetRef ComputeFvs(const FuncGraphPtr &func_graph);
+  SetRef ComputeFvs(const FuncGraphPtr &graph) const;
 
-  void AcquireGraph(const FuncGraphPtr &func_graph);
+  void AcquireGraph(const FuncGraphPtr &graph);
 
   VectorRef ExportSequence(const VectorRef &seq);
 
@@ -147,7 +147,7 @@ class VM : public std::enable_shared_from_this<VM>, public VMImpl {
   ClosurePtr ExportClosure(const ClosurePtr &clos);
 
   // Return an object that executes `fg` when called on arguments.
-  ClosurePtr ExportGraph(const FuncGraphPtr &fg);
+  ClosurePtr ExportGraph(const FuncGraphPtr &g);
 
   BaseRef ExportObj(const BaseRef &obj) const;
 
@@ -156,11 +156,11 @@ class VM : public std::enable_shared_from_this<VM>, public VMImpl {
   // Run a graph.
   // This will evaluate the passed-in graph and return the
   // resulting value.
-  BaseRef Evaluate(const FuncGraphPtr &func_graph, const VectorRef &args,
+  BaseRef Evaluate(const FuncGraphPtr &graph, const VectorRef &args,
                    const AnfNodePtrToBaseRefMap &closure = AnfNodePtrToBaseRefMap());
 
   // Return a visitor for the graph.
-  SuccFunc SuccVm(const FuncGraphPtr &func_graph);
+  SuccFunc SuccVm(const FuncGraphPtr &graph);
 
   // Call the `fn` object.
   // `fn` can be anything that would be valid as the first element of an apply.
@@ -168,13 +168,13 @@ class VM : public std::enable_shared_from_this<VM>, public VMImpl {
 
   BaseRef _Call(const BaseRef &graph, const VectorRef &args);
 
-  ClosurePtr MakeClosure(const FuncGraphPtr &func_graph, const VMFramePtr &frame);
+  ClosurePtr MakeClosure(const FuncGraphPtr &graph, const VMFramePtr &frame);
 
   BaseRef DispatchCall(const AnfNodePtr &node, const VMFramePtr &frame, const BaseRef &fn, const VectorRef &args);
 
   BaseRef HandleNode(const AnfNodePtr &node, const VMFramePtr &frame);
 
-  VectorRef RunGraph(const FuncGraphPtr &fg, const VectorRef &args) override;
+  VectorRef RunGraph(const FuncGraphPtr &g, const VectorRef &args) override;
 
  private:
   FuncGraphManagerPtr manager_;

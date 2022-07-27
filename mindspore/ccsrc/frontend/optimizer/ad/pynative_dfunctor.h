@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_PYNATIVE_D_FUNCTOR_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_PYNATIVE_D_FUNCTOR_H_
 
-#include <memory>
 #include <vector>
 
 #include "ir/anf.h"
@@ -27,7 +26,7 @@ namespace mindspore {
 namespace ad {
 class PynativeDFunctor {
  public:
-  static ValueNodePtr GenNewTensor(const CNodePtr &forward_node);
+  static ValueNodePtr GenNewTensor(const CNodePtr &cnode_morph);
   static tensor::TensorPtr GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem);
   static void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node, FuncGraphPtr *bprop_graph,
                                              FuncGraphPtr *fprop_graph);

@@ -159,7 +159,7 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
   std::map<SignatureEnumDType, std::vector<size_t>> type_indices;
   for (size_t i = 0; i < dtypes.size(); ++i) {
-    auto it = type_indices.find(dtypes[i]);
+    const auto &it = type_indices.find(dtypes[i]);
     if (it == type_indices.end()) {
       (void)type_indices.insert(std::make_pair(dtypes[i], std::vector<size_t>{i}));
     } else {
@@ -167,7 +167,7 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
     }
   }
   std::map<SignatureEnumDType, TypeId> dst_type;
-  for (auto it = type_indices.begin(); it != type_indices.end(); (void)++it) {
+  for (auto it = type_indices.cbegin(); it != type_indices.cend(); (void)++it) {
     auto type = it->first;
     auto indices = it->second;
     // If the number of arguments belonging to the same SignatureEnumDType is less than 2, skip it.
@@ -218,7 +218,7 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
       continue;
     }
     auto rw_it = write_indices.find(i);
-    auto is_write = (rw_it != write_indices.end());
+    const auto &is_write = (rw_it != write_indices.cend());
 
     TypeId arg_type_id = kTypeUnknown;
     auto arg_value = input_types[i];

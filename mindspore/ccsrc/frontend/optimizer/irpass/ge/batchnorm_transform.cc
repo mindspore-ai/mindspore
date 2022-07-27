@@ -169,7 +169,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   mgr->SetEdge(node, kIndex5, none2);
   // create tuple_get_item node
   vector<AnfNodePtr> tuple_getitems;
-  (void)CreateMultiOutputOfAnfNode(fg, node, kBNOutputNum, &tuple_getitems);
+  CreateMultiOutputOfAnfNode(fg, node, kBNOutputNum, &tuple_getitems);
   MS_EXCEPTION_IF_CHECK_FAIL(tuple_getitems.size() == kBNOutputNum, "BatchNorm output size check fail!");
   // process load for moving_mean
   auto mean_load_prim = NewValueNode(prim::kPrimLoad);
@@ -247,7 +247,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
                                     mean_assignsub_node,
                                     var_assignsub_node,
                                     make_tuple_node};
-  (void)SetScopeForNewNodes(new_nodes, anf_node);
+  SetScopeForNewNodes(new_nodes, anf_node);
   return anf_node;
 }
 
@@ -270,7 +270,7 @@ void BatchNormTransform(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manag
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(fg);
   AnfNodeSet all_node = manager->all_nodes();
-  for (auto &node : all_node) {
+  for (const auto &node : all_node) {
     MS_EXCEPTION_IF_NULL(node);
     AnfNodePtr new_node = nullptr;
     if (NeedBNTransform(node)) {

@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <utility>
+#include <queue>
 
 #include "utils/hash_map.h"
 #include "ir/func_graph.h"
@@ -565,7 +566,7 @@ AnfNodePtr TransformMergeBranches(const std::vector<AnfNodePtr> &block_nodes,
 }
 }  // namespace internal
 
-bool ConvertSwitchReplacement::CheckSwitchBranch(const AnfNodePtr &node) {
+bool ConvertSwitchReplacement::CheckSwitchBranch(const AnfNodePtr &node) const {
   if (!IsValueNode<FuncGraph>(node)) {
     return false;
   }
@@ -596,7 +597,7 @@ bool ConvertSwitchReplacement::CheckSwitchWrapNode(const AnfNodePtr &node) {
   return false;
 }
 
-void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &node) {
+void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   constexpr size_t input_index = 0;

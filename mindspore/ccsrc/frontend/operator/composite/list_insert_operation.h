@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_LIST_INSERT_OPERATION_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPERATOR_COMPOSITE_LIST_INSERT_OPERATION_H_
 
-#include <vector>
 #include <string>
 #include <memory>
 
@@ -31,7 +30,7 @@ class ListInsert : public MetaFuncGraph {
   explicit ListInsert(const std::string &name) : MetaFuncGraph(name) {}
   ~ListInsert() override = default;
   MS_DECLARE_PARENT(ListInsert, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) override;
   friend std::ostream &operator<<(std::ostream &os, const ListInsert &list_insert) {
     os << list_insert.name_;
     return os;

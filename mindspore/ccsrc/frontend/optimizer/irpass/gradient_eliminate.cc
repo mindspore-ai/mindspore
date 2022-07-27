@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "pipeline/pynative/pynative_execute.h"
 
@@ -71,9 +73,9 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   for (auto &j_node : prim_nodes_) {
     const auto &j_node_inp1 = j_node->input(1);
     if (IsValueNode<FuncGraph>(j_node_inp1)) {
-      auto func_graph = GetValueNode<FuncGraphPtr>(j_node_inp1);
-      func_graphs.push_back(func_graph);
-      MS_LOG(DEBUG) << "FuncGraph: " << func_graph->ToString() << " will expandJ now";
+      auto cur_func_graph = GetValueNode<FuncGraphPtr>(j_node_inp1);
+      func_graphs.push_back(cur_func_graph);
+      MS_LOG(DEBUG) << "FuncGraph: " << cur_func_graph->ToString() << " will expandJ now";
       j_node_to_index_map[j_node] = index++;
     } else if (IsValueNode<Primitive>(j_node_inp1)) {
       auto expanded_j = internal::ExpandJPrimitive(j_node_inp1->cast<ValueNodePtr>(), optimizer->resource());
@@ -85,7 +87,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   auto grad_func_graphs = internal::ExpandMultiJ(func_graphs, optimizer);
   for (const auto &j_node_index_iter : j_node_to_index_map) {
     const auto &j_node = j_node_index_iter.first;
-    manager->Replace(j_node, grad_func_graphs[j_node_index_iter.second]);
+    (void)manager->Replace(j_node, grad_func_graphs[j_node_index_iter.second]);
     set_k_graph_flag(j_node->func_graph());
     change = true;
   }

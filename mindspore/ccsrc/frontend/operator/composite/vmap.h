@@ -43,7 +43,7 @@ class VmapMatchOutAxis : public MetaFuncGraph {
  private:
   CNodePtr GenerateFuncGraphInnerBroadcastAxis(const AnfNodePtr &inputs, const AnfNodePtr &out_axis,
                                                const AnfNodePtr &axis_size,
-                                               const AbstractBasePtr &abstract_elements_begin) const;
+                                               const AbstractBasePtr &inputs_abstract_elements_begin) const;
   CNodePtr GenerateFuncGraphInnerSingleElement(const AnfNodePtr &inputs, const AnfNodePtr &out_axis,
                                                const AnfNodePtr &axis_size,
                                                const AbstractBasePtr &inputs_abstract_elements_end) const;
