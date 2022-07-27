@@ -55,7 +55,6 @@ class FastGeLUCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   std::string kernel_type_{kUnknown};
   const size_t max_dims_{7};
 };

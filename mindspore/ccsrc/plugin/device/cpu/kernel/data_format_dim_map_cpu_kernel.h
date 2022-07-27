@@ -56,7 +56,6 @@ class DataFormatDimMapCpuKernelMod : public NativeCpuKernelMod, public MatchKern
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   std::string kernel_type_{kUnknown};
   std::string src_format_{kUnknown};
   std::string dst_format_{kUnknown};

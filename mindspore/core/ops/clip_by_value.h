@@ -33,7 +33,7 @@ class MIND_API ClipByValue : public BaseOperator {
   explicit ClipByValue(const std::string k_name) : BaseOperator(k_name) {
     InitIOName({"x", "clip_value_min", "clip_value_max"}, {"output"});
   }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr ClipByValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args);
