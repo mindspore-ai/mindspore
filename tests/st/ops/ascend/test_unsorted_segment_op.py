@@ -86,7 +86,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op(func):
     """
     Feature: test_unsorted_segment_op* operators.
@@ -103,6 +103,8 @@ def test_unsorted_segment_op(func):
         graph_output = P.UnsortedSegmentMin()(x, segment_ids, num_segments)
     if func == 'max':
         graph_output = P.UnsortedSegmentMax()(x, segment_ids, num_segments)
+    if func == 'sum':
+        graph_output = P.UnsortedSegmentSum()(x, segment_ids, num_segments)
 
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
@@ -116,6 +118,8 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
             self.func = P.UnsortedSegmentMin()
         if func == 'max':
             self.func = P.UnsortedSegmentMax()
+        if func == 'sum':
+            self.func = P.UnsortedSegmentSum()
         self.num_segments = num_segments
 
     def construct(self, x, segment_ids):
@@ -126,7 +130,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op_dynamic_shape(func):
     """
     Feature: test_unsorted_segment_op_dynamic_shape.

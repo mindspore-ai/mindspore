@@ -1,0 +1,32 @@
+mindspore.ops.unsorted_segment_prod
+===================================
+
+.. py:function:: mindspore.ops.unsorted_segment_prod(x, segment_ids, num_segments)
+
+    计算输出Tensor :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]` ，其中 :math:`j,...` 是代表元素索引的Tuple。 `segment_ids` 确定输入Tensor元素的分段。 `segment_ids` 不需要排序，也不需要覆盖 `num_segments` 范围内的所有值。
+
+    UnsortedSegmentSum的计算过程如下图所示：
+
+    .. image:: UnsortedSegmentSum.png
+
+    .. note::
+        - 如果 `segment_ids` 中不存在segment_id `i` ，则对输出 `output[i]` 填充0。
+        - 在Ascend平台上，如果segment_id的值小于0或大于输入Tensor的shape的长度，将触发执行错误。
+
+    如果 `segment_ids` 元素为负数，将忽略该值。 `num_segments` 必须等于不同segment_id的数量。
+
+    **参数：**
+
+    - **input_x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。
+    - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
+    - **num_segments** (int) - 分段数量 :math:`z` 。
+
+    **返回：**
+
+    Tensor，shape： :math:`(z, x_{N+1}, ..., x_R)` 。
+
+    **异常：**
+
+    - **TypeError** - `num_segments` 不是int类型。
+    - **ValueError** - `segment_ids` 的维度小于1。
+

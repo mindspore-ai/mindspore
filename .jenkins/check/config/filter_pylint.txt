@@ -60,6 +60,10 @@
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "wildcard-import"
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "unused-wildcard-import"
+"mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "redefined-builtin"
+"mindspore/mindspore/python/mindspore/common/tensor.py"                                                                  "redefined-builtin"
+"mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "redefined-builtin"
+"mindspore/mindspore/python/mindspore/ops/operations/array_ops.py"                                                       "redefined-builtin"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
