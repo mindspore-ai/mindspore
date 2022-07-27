@@ -623,7 +623,6 @@ bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, mindspore::Ha
   MS_EXCEPTION_IF_NULL(input_to_attr_ptr);
   if (op_run_info->op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
-    mindspore::HashSet<size_t> attr_indexes;
     const PrimitivePtr &op_prim = op_run_info->py_primitive;
     MS_EXCEPTION_IF_NULL(op_prim);
     opt::GetCustomOpAttrIndex(op_prim, input_to_attr_ptr);

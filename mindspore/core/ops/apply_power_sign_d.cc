@@ -50,18 +50,20 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
   auto sign_decay_shape_rank = SizeToLong(sign_decay_shape.size());
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShapeTrack())[kShape];
   auto grad_shape = input_args[kInputIndex6]->BuildShape();
-  size_t batch_rank = 0;
+  int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
 
   if (batch_rank != 0) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, batch_rank,
+                                             prim_name);
     (void)CheckAndConvertUtils::CheckInteger("logbase_shape size", logbase_shape_rank, kEqual, batch_rank, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape size", sign_decay_shape_rank, kEqual, batch_rank,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("beta_shape size", beta_shape.size(), kEqual, batch_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("beta_shape size", SizeToLong(beta_shape.size()), kEqual, batch_rank,
+                                             prim_name);
   } else {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kLessEqual, 1, prim_name);
     if (lr_shape.size() == 1) {
