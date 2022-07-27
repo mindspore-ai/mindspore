@@ -30,7 +30,7 @@ void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   if (axis_ < 0) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     axis_ += (SizeToInt(input_shape.size()) + 1);

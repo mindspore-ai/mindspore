@@ -15,9 +15,8 @@
  */
 
 #include "transform/graph_ir/graph_builder.h"
-
+#include <vector>
 #include <sstream>
-
 #include "ops/math_ops.h"
 
 namespace mindspore {

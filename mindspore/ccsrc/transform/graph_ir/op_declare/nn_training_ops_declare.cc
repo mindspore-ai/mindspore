@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/nn_training_ops_declare.h"
+#include <string>
 
 namespace mindspore::transform {
 // ApplyMomentum
