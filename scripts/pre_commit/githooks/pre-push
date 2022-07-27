@@ -1,0 +1,731 @@
+#!/bin/bash
+# Copyright 2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# init parameter
+status=0
+REPOSITORY_NAME=mindspore
+PIPELINE_TYPE="gate"
+CURR_DIR=$(dirname "${BASH_SOURCE-$0}")
+CURR_DIR=$(
+    cd -P "${CURR_DIR}" || exit
+    pwd -P
+)
+REPO_HOME=$(
+    cd -P "${CURR_DIR}/../../../" || exit
+    pwd -P
+)
+WORKSPACE=$(
+    cd -P "${CURR_DIR}/../../../../" || exit
+    pwd -P
+)
+
+# get os name
+uname_s=$(uname -s)
+os_name=${uname_s:0:5}
+if [ "$os_name" == "Darwi" ]; then # Darwin
+    echo "Mac OS X"
+elif [ "$os_name" == "Linux" ]; then # Linux
+    echo "GNU/Linux"
+elif [ "$os_name" == "MINGW" ]; then # MINGW, windows, git-bash
+    echo "Windows, git-bash"
+else
+    echo "unknown os"
+fi
+
+STAGE_FILES=$(git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD)
+if [[ "$STAGE_FILES" == "" && $PIPELINE_TYPE == "gate" ]]; then
+    echo "No file need to push."
+    exit "${status}"
+fi
+
+# mkdir check_path
+check_path=${WORKSPACE}/.${REPOSITORY_NAME}_code_check
+rm -rf "${check_path}"
+mkdir -p "${check_path}"
+
+# mkdir CODE_PATH
+CODE_PATH="${check_path}/code"
+mkdir -p "${CODE_PATH}"
+
+# get gate pr filelist
+if [ "${PIPELINE_TYPE}" = "gate" ]; then
+    cd "${REPO_HOME}" || return
+    git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD >"${CODE_PATH}/pr_filelist.txt"
+    cat "${CODE_PATH}/pr_filelist.txt"
+    echo "Filelist number: $(cat <"${CODE_PATH}"/pr_filelist.txt | wc -l)"
+
+    mkdir "${CODE_PATH}/${REPOSITORY_NAME}"
+    while read -r line; do
+        file_dirname=$(dirname "${line}")
+        mkdir -p "${CODE_PATH}/${REPOSITORY_NAME}/${file_dirname}"
+        cp -a "${REPO_HOME}/${line}" "${CODE_PATH}/${REPOSITORY_NAME}/${file_dirname}" >/dev/null 2>&1
+    done <"${CODE_PATH}/pr_filelist.txt"
+
+    # Reserved directory(.jenkins) for code check
+    if [ -d "${REPO_HOME}/.jenkins" ]; then
+        cp -a "${REPO_HOME}/.jenkins" "${CODE_PATH}"/${REPOSITORY_NAME}/.jenkins >/dev/null 2>&1
+    fi
+fi
+
+# Common exclude folder for code check
+if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,graphengine,akg,mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils,mindspore/lite/micro/example,tests/models,mindspore/lite/examples/quick_start_micro"
+elif [ "${REPOSITORY_NAME}" = "akg" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,tests"
+else
+    COMMON_EXCLUDE_FOLDER="third_party"
+fi
+
+# Get CODE
+function GET_CODE() {
+    workspace=${1}
+    if [ "${PIPELINE_TYPE}" = "gate" ]; then
+        if [ "$os_name" == "Darwi" ]; then
+            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
+        else
+            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}"/ >/dev/null 2>&1
+        fi
+    else
+        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
+    fi
+}
+
+# Exclude folder
+function MS_EXCLUDE_FOLDER() {
+    local src_path=${1}
+    local exclude_folder="${2}"
+
+    if [ -n "${src_path}" ] && [ -n "$(echo "${src_path}" | awk -F'/' '{print $3}')" ]; then
+        for folder in ${exclude_folder//,/ }; do
+            rm -rf "${src_path:?}/${folder:?}"
+        done
+    else
+        return
+    fi
+}
+
+# judge succeed or failed
+function DP_ASSERT_EQUAL() {
+    local actual_value=${1}
+    local expect_value=${2}
+    local assert_msg=${3}
+    if [ "${actual_value}" != "${expect_value}" ]; then
+        echo "${assert_msg} failed, ${assert_msg} error number is ${actual_value}."
+        status=$((status + actual_value))
+    else
+        echo "${assert_msg} succeed."
+    fi
+}
+
+# Assert A is not equal to B
+# True: not equal
+# False: equal
+function DP_ASSERT_NOT_EQUAL() {
+    local actual_value=${1}
+    local expect_value=${2}
+    local assert_msg=${3}
+    if [ "${actual_value}" = "${expect_value}" ]; then
+        echo "${assert_msg} is failed, ${assert_msg}  error number is ${actual_value}."
+        status=$((status + 1))
+    else
+        echo "${assert_msg} succeed."
+    fi
+}
+
+# Print N character
+function PRINT_N_CHAR() {
+    local char=${1}
+    local number=${2}
+    local str
+    str=$(printf "%-${number}s" "")
+    echo "${str// /${char}}"
+}
+
+# 进行clang-format检查
+function clang_format_check() {
+    if [ -f "${REPO_HOME}/scripts/check_clang_format.sh" ]; then
+        echo "clang-format scan start"
+        which clang-format || (echo "[INFO] Please install 'clang-format' tool first" && return 1)
+        if [ $? -eq "1" ]; then
+            return
+        fi
+
+        # create clang-format workspace
+        local workspace=${CODE_PATH}/clang_format
+        rm -rf "${workspace}"
+        mkdir -p "${workspace}"
+
+        # get code
+        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
+
+        # Reset exclude file
+        local LOCAL_EXCLUDE_FOLDER=${COMMON_EXCLUDE_FOLDER}
+        if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+            local DVPP_PATH="mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils"
+            LOCAL_EXCLUDE_FOLDER=$(echo ${LOCAL_EXCLUDE_FOLDER} | sed "s#${DVPP_PATH},##g" | sed "s#,${DVPP_PATH}##g")
+        fi
+
+        # Exclude folder
+        MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+        # Check clang-format
+        echo "clang-format scanning"
+        cd "${workspace}/${REPOSITORY_NAME}" || return
+        if [ "${PIPELINE_TYPE}" = "gate" ]; then
+            bash -x scripts/check_clang_format.sh -l
+        else
+            bash -x scripts/check_clang_format.sh -a
+        fi
+        DP_ASSERT_EQUAL "$?" "0" "Clang-format scanning"
+    else
+        echo "${REPO_HOME}/scripts/check_clang_format.sh is not exist."
+    fi
+}
+
+# 进行cmakelint检查
+function cmakelint_check() {
+    echo "cmakelint scan start"
+    which cmakelint || (echo "[INFO] Please install 'cmakelint' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create cmakelint workspace
+    local workspace=${CODE_PATH}/cmakelint
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Exclude folder
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Set rules
+    local CMAKELINT_FILTER="+convention/filename,+linelength,+package/consistency,+readability/logic,-readability/mixedcase,-readability/wonkycase,-syntax,+whitespace/eol,+whitespace/extra,+whitespace/indent,+whitespace/mismatch,+whitespace/newline,+whitespace/tabs"
+
+    # create cmakelint_check path
+    local cmakelint_path=${check_path}/cmakelint
+    mkdir "${cmakelint_path}"
+    : >"${cmakelint_path}"/cmakelint.log
+
+    # Run cmakelint
+    echo "cmakelint scanning"
+    cd "${workspace}" || return
+    find ${REPOSITORY_NAME} -name '*.cmake' -o -name 'CMakeLists.txt' -o -name 'cmakelists.txt' | xargs -r cmakelint --filter=${CMAKELINT_FILTER} --spaces=2 --linelength=120 --quiet >"${cmakelint_path}"/cmakelint.log
+
+    if [ "$os_name" == "MINGW" ]; then
+        # change \ to / in "${cmakelint_path}"/cmakelint.log
+        sed -i 's#\\#\/#g' "${cmakelint_path}"/cmakelint.log
+    fi
+
+    error_number=$(cat <"${cmakelint_path}"/cmakelint.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number" != 0 ]; then
+        # Print content
+        echo "Problem items: "
+        cat <"${cmakelint_path}"/cmakelint.log | grep "^${REPOSITORY_NAME}/"
+    fi
+    # Return result
+    DP_ASSERT_EQUAL "${error_number}" "0" "Cmakelint scanning"
+}
+
+# 进行codespell检查
+function codespell_check() {
+    echo "codespell scan start"
+    which codespell || (echo "[INFO] Please install 'codespell' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create codespell workspace
+    local workspace=${CODE_PATH}/codespell
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Reset exclude file
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,mindspore/python/mindspore/profiler/common/validator/validate.py,mindspore/python/mindspore/ops/_op_impl/_custom_op/fake_quant_perlayer.py"
+    fi
+
+    # Exclude folder
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Check rule file
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow" ]; then
+        local RULE_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow
+    else
+        echo "${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow not exist"
+        return
+    fi
+
+    # mkdir codespell_path
+    local codespell_path=${check_path}/codespell
+    mkdir "${codespell_path}"
+    : >"${codespell_path}"/codespell.log
+
+    # Run codespell
+    echo "codespell scanning"
+    cd "${workspace}" || return
+    codespell -q 7 -S '.git,third_party' -I "${RULE_FILE}" ${REPOSITORY_NAME} | grep -E -v ": [0-9a-zA-Z]{1,4} ==> |: [a-zA-Z][a-z]{1,}[TXYZ] ==> |: [a-z][A-Z][a-z]{1,} ==> " >"${codespell_path}"/codespell.log
+
+    if [ "$os_name" == "MINGW" ]; then
+        # change \ to / in "${codespell_path}"/codespell.log
+        sed -i 's#\\#\/#g' "${codespell_path}"/codespell.log
+    fi
+
+    # filter codespell
+    cat <"${RULE_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${codespell_path}"/codespell_filter.txt
+    while read -r line; do
+        if [ "$os_name" == "Darwi" ]; then
+            sed -i "" "/: ${line} ==> /d" "${codespell_path}"/codespell.log
+        else
+            sed -i "/: ${line} ==> /d" "${codespell_path}"/codespell.log
+        fi
+    done <"${codespell_path}"/codespell_filter.txt
+
+    error_number=$(cat <"${codespell_path}"/codespell.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number" != 0 ]; then
+        # Print content
+        echo "Problem items: "
+        cat <"${codespell_path}"/codespell.log | grep "^${REPOSITORY_NAME}/"
+    fi
+    # Return result
+    DP_ASSERT_EQUAL "${error_number}" "0" "Codespell scanning"
+}
+
+# 进行cpplint检查
+function cpplint_check() {
+    echo "cpplint scan start"
+    which cpplint || (echo "[INFO] Please install 'cpplint' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create cpplint workspace
+    local workspace=${CODE_PATH}/cpplint
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Reset exclude file
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests"
+    elif [ "${REPOSITORY_NAME}" = "models" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},official/audio/lpcnet/third_party/src"
+    fi
+
+    # Exclude folder
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Run cpplint
+    echo "cpplint scanning"
+    local cpplint_path=${check_path}/cpplint
+    mkdir "${cpplint_path}"
+    : >"${cpplint_path}"/cpplint.log
+    cd "${workspace}" || return
+    cpplint --root=src --extensions=cxx,cu,hh,cpp,hxx,cuh,h++,cc,c,hpp,c++,h,tpp,txx,cl --filter=-build/header_guard,-build/c++11 --quiet --repository="${workspace}"/${REPOSITORY_NAME} --linelength=120 --recursive ${REPOSITORY_NAME} >"${cpplint_path}"/cpplint.log 2>&1
+
+    if [ "$os_name" == "MINGW" ]; then
+        # change \ to / in "${cpplint_path}"/cpplint.log
+        sed -i 's#\\#\/#g' "${cpplint_path}"/cpplint.log
+    fi
+
+    # Filter
+    rm -f "${cpplint_path}"/cpplint_org.log
+    cp -a "${cpplint_path}"/cpplint.log "${cpplint_path}"/cpplint_org.log >/dev/null 2>&1
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_cpplint.txt" ]; then
+        local FILTER_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_cpplint.txt
+    fi
+    cat <"${FILTER_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${cpplint_path}"/cpplint_filter.txt
+    while read -r line; do
+        local key1
+        key1=$(echo "${line}" | awk -F'"' '{print $2}')
+        local key2
+        key2=$(echo "${line}" | awk -F'"' '{print $4}')
+        cat <"${cpplint_path}"/cpplint.log | grep -n "^${key1}" | grep "${key2}" | awk -F':' '{print $1}' >"${cpplint_path}"/cpplint_line.txt
+        for line_number in $(tac "${cpplint_path}"/cpplint_line.txt); do
+            if [ "$os_name" == "Darwi" ]; then
+                sed -i "" "${line_number}d" "${cpplint_path}"/cpplint.log
+            else
+                sed -i "${line_number}d" "${cpplint_path}"/cpplint.log
+            fi
+        done
+    done <"${cpplint_path}"/cpplint_filter.txt
+
+    # Check result
+    if [ -s "${cpplint_path}"/cpplint_org.log ] && [ ! -s "${cpplint_path}"/cpplint.log ]; then
+        echo "[ERROR] Filter cpplint failed."
+    fi
+
+    error_number=$(cat <"${cpplint_path}"/cpplint.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number" != 0 ]; then
+        # Print content
+        echo "Problem items: "
+        cat <"${cpplint_path}"/cpplint.log | grep "^${REPOSITORY_NAME}/"
+    fi
+    # Return result
+    DP_ASSERT_EQUAL "${error_number}" "0" "Cpplint scanning"
+}
+
+# 进行lizard检查
+function lizard_check() {
+    echo "lizard scan start"
+    which lizard || (echo "[INFO] Please install 'lizard' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create lizard workspace
+    local workspace=${CODE_PATH}/lizard
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Exclude folder
+    local LOCAL_EXCLUDE_FOLDER=${COMMON_EXCLUDE_FOLDER}
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Set additional option
+    local ADDITIONAL_LIZARD_OPTION=""
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/whitelizard.txt" ]; then
+        ADDITIONAL_LIZARD_OPTION="-W ${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/whitelizard.txt"
+    fi
+
+    # mkdir lizard_path
+    local lizard_path=${check_path}/lizard
+    mkdir "${lizard_path}"
+    : >"${lizard_path}"/lizard.log
+
+    # Run lizard
+    echo "lizard scanning"
+    cd "${workspace}" || return
+    local THRESHOLD_LIZARD_CCN=19
+    local THRESHOLD_LIZARD_LENGTH=100
+    lizard -l cpp -l python -l java -C ${THRESHOLD_LIZARD_CCN} -L ${THRESHOLD_LIZARD_LENGTH} -x "*/tests/*" -x "*/test/*" -x "*/third_party/*" "${ADDITIONAL_LIZARD_OPTION}" -w ${REPOSITORY_NAME} >"${lizard_path}"/lizard.log
+
+    if [ "$os_name" == "MINGW" ]; then
+        # change \ to / in "${lizard_path}"/lizard.log
+        sed -i 's#\\#\/#g' "${lizard_path}"/lizard.log
+    fi
+
+    # Get result of cyclomatic complexity
+    (
+        while read -r line; do
+            filename=$(echo "${line}" | awk -F': ' '{print $1}')
+            method_name=$(echo "${line}" | awk -F': ' '{print $3}' | awk '{print $1}')
+            method_ccn=$(echo "${line}" | awk -F'NLOC, ' '{print $2}' | awk -F' CCN' '{print $1}')
+            if [[ ${method_ccn} -gt ${THRESHOLD_LIZARD_CCN} ]]; then
+                printf "%-115s %-75s %-7s\n" "${filename}" "${method_name}" "${method_ccn}"
+            fi
+        done <"${lizard_path}"/lizard.log
+    ) >"${lizard_path}"/lizard_ccn.log
+
+    # Get result of large function
+    (
+        while read -r line; do
+            filename=$(echo "${line}" | awk -F': ' '{print $1}')
+            method_name=$(echo "${line}" | awk -F': ' '{print $3}' | awk '{print $1}')
+            method_nloc=$(echo "${line}" | awk -F'has ' '{print $2}' | awk -F' NLOC' '{print $1}')
+            if [[ ${method_nloc} -gt ${THRESHOLD_LIZARD_LENGTH} ]]; then
+                printf "%-115s %-75s %-7s\n" "${filename}" "${method_name}" "${method_nloc}"
+            fi
+        done <"${lizard_path}"/lizard.log
+    ) >"${lizard_path}"/lizard_nloc.log
+
+    error_number_ccn=$(cat <"${lizard_path}"/lizard_ccn.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number_ccn" != 0 ]; then
+        # Print content of cyclomatic complexity
+        echo "[Lizard] Cyclomatic complexity error number: ${error_number_ccn}, threshold(CCN) > ${THRESHOLD_LIZARD_CCN} problem items: "
+        if [ -s "${lizard_path}/lizard_ccn.log" ]; then
+            PRINT_N_CHAR "-" "195"
+            printf "%-115s %-75s %-7s\n" "FilePath" "Function" "CCN"
+            printf "%-115s %-75s %-7s\n" "--------" "--------" "---"
+            cat "${lizard_path}"/lizard_ccn.log
+            PRINT_N_CHAR "-" "195"
+        fi
+    fi
+
+    error_number_nloc=$(cat <"${lizard_path}"/lizard_nloc.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number_nloc" != 0 ]; then
+        # Print content of large function
+        echo "[Lizard] Function length error number: ${error_number_nloc}, threshold(NLOC) > ${THRESHOLD_LIZARD_LENGTH} problem items: "
+        if [ -s "${lizard_path}/lizard_nloc.log" ]; then
+            PRINT_N_CHAR "-" "196"
+            printf "%-115s %-75s %-7s\n" "FilePath" "Function" "NLOC"
+            printf "%-115s %-75s %-7s\n" "--------" "--------" "----"
+            cat "${lizard_path}"/lizard_nloc.log
+            PRINT_N_CHAR "-" "196"
+        fi
+    fi
+    # Return result
+    DP_ASSERT_EQUAL "$((error_number_ccn + error_number_nloc))" "0" "Lizard scanning"
+}
+
+# 进行markdownlint检查
+function markdownlint_check() {
+    echo "markdownlint scan start"
+    which mdl || (echo "[INFO] Please install 'markdownlint' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create markdownlint workspace
+    local workspace=${CODE_PATH}/markdownlint
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Exclude folder
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Get rules
+    local RULES_FILE_NAME="markdownlint_mindspore.rb"
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/rules/markdownlint/${RULES_FILE_NAME}" ]; then
+        local RULE_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/rules/markdownlint/${RULES_FILE_NAME}
+    fi
+
+    # Run markdownlint
+    echo "markdownlint scanning"
+    cd "${workspace}" || return
+    mdl -s "${RULE_FILE}" ${REPOSITORY_NAME}
+    DP_ASSERT_EQUAL "$?" "0" "Markdownlint scanning"
+}
+
+# 进行pylint检查
+function pylint_check() {
+    echo "pylint scan start"
+    which pylint || (echo "[INFO] Please install 'pylint' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create pylint workspace
+    local workspace=${CODE_PATH}/pylint
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Reset exclude file
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    if [ "${PIPELINE_TYPE}" = "daily" ] || [ "${PIPELINE_TYPE}" = "version" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests"
+    fi
+    LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},mindspore/profiler/common/proto_files"
+
+    # Exclude folder
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Check rule file
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/rules/pylint/pylintrc" ]; then
+        local RULE_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/rules/pylint/pylintrc
+    fi
+
+    # create pylint path
+    local pylint_path=${check_path}/pylint
+    mkdir -p "${pylint_path}"
+
+    # Get scan filename
+    if [ "${PIPELINE_TYPE}" = "gate" ]; then
+        # Get pylint pr filelist(*.py)
+        cat <"${CODE_PATH}"/pr_filelist.txt | grep '\.py$' >"${pylint_path}"/scan_filename.txt
+    else
+        # Get scan file number
+        cd "${workspace}" || return
+        (find ${REPOSITORY_NAME} -iname "*.py") >"${pylint_path}"/scan_filename.txt
+        if [ "$os_name" == "Darwi" ]; then
+            sed -i "" "s#^${REPOSITORY_NAME}/##g" "${pylint_path}"/scan_filename.txt
+        else
+            sed -i "s#^${REPOSITORY_NAME}/##g" "${pylint_path}"/scan_filename.txt
+        fi
+    fi
+
+    # run pylint
+    echo "pylint scanning"
+    cd "${workspace}" || return
+    : >"${pylint_path}"/pylint.log
+    while read -r line; do
+        if [ -f "${workspace}/${REPOSITORY_NAME}/${line}" ]; then
+            pylint --rcfile="${RULE_FILE}" -j 4 --output-format=parseable "${REPOSITORY_NAME}/${line}" --max-line-length=120 >>"${pylint_path}"/pylint.log
+        fi
+    done <"${pylint_path}"/scan_filename.txt
+
+    if [ "$os_name" == "MINGW" ]; then
+        # change \ to / in "${pylint_path}"/lizard.log
+        sed -i 's#\\#\/#g' "${pylint_path}"/pylint.log
+    fi
+
+    # filter pylint
+    rm -f "${pylint_path}"/pylint_org.log
+    cp -a "${pylint_path}"/pylint.log "${pylint_path}"/pylint_org.log >/dev/null 2>&1
+    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_pylint.txt" ]; then
+        local FILTER_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_pylint.txt
+    fi
+    cat <"${FILTER_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${pylint_path}"/pylint_filter.txt
+    while read -r line; do
+        local key1
+        key1=$(echo "${line}" | awk -F'"' '{print $2}')
+        local key2
+        key2=$(echo "${line}" | awk -F'"' '{print $4}')
+        cat <"${pylint_path}"/pylint.log | grep -n "^${key1}" | grep "${key2}" | awk -F':' '{print $1}' >"${pylint_path}"/pylint_line.txt
+        for line_number in $(tac "${pylint_path}"/pylint_line.txt); do
+            if [ "$os_name" == "Darwi" ]; then
+                sed -i "" "${line_number}d" "${pylint_path}"/pylint.log
+            else
+                sed -i "${line_number}d" "${pylint_path}"/pylint.log
+            fi
+        done
+    done <"${pylint_path}"/pylint_filter.txt
+
+    # Check result
+    if [ -s "${pylint_path}"/pylint_org.log ] && [ ! -s "${pylint_path}"/pylint.log ]; then
+        echo "[ERROR] Filter pylint failed."
+        return
+    fi
+
+    error_number=$(cat <"${pylint_path}"/pylint.log | grep -c "^${REPOSITORY_NAME}/")
+    if [ "$error_number" != 0 ]; then
+        # Print content
+        echo "Problem items: "
+        cat <"${pylint_path}"/pylint.log | grep "^${REPOSITORY_NAME}/"
+    fi
+    # Return result
+    DP_ASSERT_EQUAL "${error_number}" "0" "Pylint scanning"
+}
+
+# 进行shellcheck检查
+function shellcheck_check() {
+    echo "shellcheck scan start"
+    which shellcheck || (echo "[INFO] Please install 'shellcheck' tool first" && return 1)
+    if [ $? -eq "1" ]; then
+        return
+    fi
+
+    # create shellcheck workspace
+    local workspace=${CODE_PATH}/shellcheck
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    GET_CODE "${workspace}"
+
+    # Exclude folder
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # check shellcheck path
+    local shellcheck_path=${check_path}/shellcheck
+    mkdir -p "${shellcheck_path}"
+    : >"${shellcheck_path}"/shellcheck_result.log
+
+    # Filter
+    # Reference: https://github.com/pytorch/pytorch/blob/master/.jenkins/pytorch/.shellcheckrc
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # SC1090: Can't follow non-constant source. Use a directive to specify location.
+    # SC1091: Not following: (error message here)
+    # SC2155: Declare and assign separately to avoid masking return values.
+    # SC2164: Use cd ... || exit in case cd fails.
+    # SC1003: Want to escape a single quote? echo 'This is how it'\''s done'.
+    local SHELLCHECK_EXCLUDE_TYPES="SC2086,SC1090,SC1091,SC2155,SC2164,SC1003"
+
+    # Run shellcheck (warning)
+    echo "shellcheck scanning"
+    local error_number
+    error_number=$(find "${workspace}"/${REPOSITORY_NAME} -name '*.sh' -type f -print0 | xargs -0 -r shellcheck --severity=warning --exclude=${SHELLCHECK_EXCLUDE_TYPES} --format=gcc | wc -l)
+    if [ "${error_number}" -ne "0" ]; then
+        find "${workspace}"/${REPOSITORY_NAME} -name '*.sh' -type f -print0 | xargs -0 -r shellcheck --severity=warning --exclude=${SHELLCHECK_EXCLUDE_TYPES} --format=tty >"${shellcheck_path}"/shellcheck_result.log
+        # Print content
+        echo "Problem items: "
+        cat "${shellcheck_path}/shellcheck_result.log"
+    fi
+    DP_ASSERT_EQUAL "${error_number}" "0" "Shellcheck scanning"
+}
+
+# 进行tab检查
+function tab_check() {
+    echo "tab scan start"
+
+    # create tab workspace
+    local workspace=${CODE_PATH}/tab
+    rm -rf "${workspace}"
+    mkdir -p "${workspace}"
+
+    # get code
+    if [ "${PIPELINE_TYPE}" = "gate" ]; then
+        if [ "$os_name" == "Darwi" ]; then
+            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
+        else
+            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}"/ >/dev/null 2>&1
+        fi
+        # Reserved directory(.git) for command(git grep)
+        cp -a "${REPO_HOME}/.git" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
+    else
+        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
+    fi
+
+    # Reset exclude file
+    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,tests/ut/cpp/dataset/c_api_text_test.cc,mindspore/lite/examples/quick_start_ios/mindspore-lite.xcodeproj,mindspore/lite/examples/quick_start_ios/mindspore-lite/Base.Iproj,mindspore/lite/examples/quick_start_ios/mindspore-lite/Assets.xcassets,mindspore/lite/examples/quick_start_ios/mindspore-lite/Info.plist"
+    fi
+
+    # Exclude folder
+    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
+
+    # Check tab
+    echo "tab scanning"
+    cd "${workspace}/${REPOSITORY_NAME}" || return
+    error_number=$(git grep -I -n $'\t' -- . ':(exclude)*.git*' ':(exclude)third_party' ':(exclude)**Makefile' ':(exclude)*.bin' ':(exclude)*.xml' ':(exclude)*.rst' ':(exclude)*.docx' ':(exclude)*.xlsx' ':(exclude)*.pdf' ':(exclude)*.mindir' ':(exclude)*.css' ':(exclude)*.js' ':(exclude)*.html' ':(exclude)*.patch' | wc -l)
+    if [ "${error_number}" -ne "0" ]; then
+        # Print content
+        echo "Problem items(The following files have tabs, please convert tab to space): "
+        git grep -I -n $'\t' -- . ':(exclude)*.git*' ':(exclude)third_party' ':(exclude)**Makefile' ':(exclude)*.bin' ':(exclude)*.xml' ':(exclude)*.rst' ':(exclude)*.docx' ':(exclude)*.xlsx' ':(exclude)*.pdf' ':(exclude)*.mindir' ':(exclude)*.css' ':(exclude)*.js' ':(exclude)*.html' ':(exclude)*.patch'
+    fi
+    DP_ASSERT_EQUAL "$error_number" "0" "Tab scanning"
+}
+
+# 按照门禁顺序进行检查
+clang_format_check
+cmakelint_check
+codespell_check
+cpplint_check
+lizard_check
+markdownlint_check
+pylint_check
+if [ "$os_name" == "Linux" ] || [ "$os_name" == "Darwi" ]; then
+    shellcheck_check
+fi
+tab_check
+
+if [ "$status" == 0 ]; then
+    echo "No error found during pre-push scanning stage, your code is ready for push!"
+else
+    echo "Total error number is $status, please correct your code before push!"
+fi
+exit $status
