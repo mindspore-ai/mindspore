@@ -38,7 +38,7 @@ abstract::ShapePtr GeLUInferShape(const PrimitivePtr &, const std::vector<Abstra
 
 TypePtr GeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   MS_EXCEPTION_IF_NULL(input_args[0]);
   (void)types.emplace("x", input_args[0]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());

@@ -18,6 +18,10 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_GELU_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
+#include <map>
+#include <utility>
+#include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -25,49 +29,48 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class GeluGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr auto kUnknown = "Unknown";
+
+class GeLUGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GeluGpuKernelMod() : input_size_(0), is_null_input_(false) {}
-  ~GeluGpuKernelMod() override = default;
+  GeLUGpuKernelMod() = default;
+  explicit GeLUGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  ~GeLUGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-    Gelu(input_size_ / sizeof(T), input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    InitResource();
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(T);
-    input_size_ *= SizeOf(input_shape);
-    InitSizeLists();
-    return true;
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, outputs);
   }
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_;
-  bool is_null_input_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+ private:
+  using GeLULaunchFunc = std::function<bool(GeLUGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, GeLULaunchFunc>> func_list_;
+  GeLULaunchFunc kernel_func_;
+  std::string kernel_type_{kUnknown};
+  void *cuda_stream_{nullptr};
+  std::vector<size_t> input_shape_;
+  size_t unit_size_{1};
+  bool is_null_input_{false};
+  size_t input_elements_{};
+  const size_t max_dims_{7};
 };
 }  // namespace kernel
 }  // namespace mindspore
