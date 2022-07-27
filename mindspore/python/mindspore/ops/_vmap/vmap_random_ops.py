@@ -15,6 +15,8 @@
 # ============================================================================
 
 """random_ops vmap impl."""
+from __future__ import absolute_import
+
 from ..operations.random_ops import UniformCandidateSampler
 from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim
 

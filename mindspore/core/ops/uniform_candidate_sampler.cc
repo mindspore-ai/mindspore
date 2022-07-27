@@ -64,9 +64,9 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   auto num_sampled = GetValue<int64_t>(primitive->GetAttr("num_sampled"));
   std::vector<int64_t> batch_lists;
   for (int64_t i = 0; i < batch_rank; i++) {
-    batch_lists.emplace_back(input_shape[i]);
+    (void)batch_lists.emplace_back(input_shape[i]);
   }
-  batch_lists.emplace_back(num_sampled);
+  (void)batch_lists.emplace_back(num_sampled);
 
   abstract::ShapePtr sampled_shape_ptr = std::make_shared<abstract::Shape>(batch_lists);
   auto output_shapes = std::make_shared<abstract::TupleShape>(
@@ -85,6 +85,7 @@ TuplePtr UCSInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(UniformCandidateSampler, BaseOperator);
 void UniformCandidateSampler::Init(int64_t num_true, int64_t num_sampled, bool unique, int64_t range_max, int64_t seed,
                                    bool remove_accidental_hits) {
   set_num_true(num_true);
@@ -141,7 +142,6 @@ abstract::AbstractBasePtr UniformCandidateSamplerInfer(const abstract::AnalysisE
   return abstract::MakeAbstract(UCSInferShape(prim, input_args), UCSInferType(prim, input_args));
 }
 
-MIND_API_OPERATOR_IMPL(UniformCandidateSampler, BaseOperator);
 // register primivtive
 REGISTER_PRIMITIVE_EVAL_IMPL(UniformCandidateSampler, prim::kPrimUniformCandidateSampler, UniformCandidateSamplerInfer,
                              nullptr, true);
