@@ -121,7 +121,7 @@ bool LinkCustomOp::LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, 
     return changed;
   }
 
-  auto dynamic_shape_depends = abstract::GetDependsFormMap(cnode);
+  auto dynamic_shape_depends = abstract::GetValueDependArgIndices(cnode);
   if (dynamic_shape_depends.empty()) {
     return changed;
   }

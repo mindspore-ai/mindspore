@@ -1395,7 +1395,7 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
     // Kernel in depends form map should link data arrow for infer shape.
     auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
     MS_EXCEPTION_IF_NULL(base_node);
-    auto dynamic_shape_depends = abstract::GetDependsFormMap(base_node);
+    auto dynamic_shape_depends = abstract::GetValueDependArgIndices(base_node);
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
       auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
       MS_EXCEPTION_IF_NULL(input_node);

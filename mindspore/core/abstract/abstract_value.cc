@@ -760,6 +760,19 @@ bool AbstractSequence::operator==(const AbstractSequence &other) const {
   return true;
 }
 
+void AbstractTuple::set_shape(const BaseShapePtr &shape) {
+  auto tuple_shape = dyn_cast<TupleShape>(shape);
+  MS_EXCEPTION_IF_NULL(tuple_shape);
+  if (tuple_shape->shape().size() != elements_.size()) {
+    MS_LOG(EXCEPTION) << "Size mismatch: " << tuple_shape->shape().size() << " vs " << elements_.size();
+  }
+
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    elements_[i]->set_shape(tuple_shape->shape()[i]);
+  }
+}
+
 bool AbstractTuple::operator==(const AbstractTuple &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractTuple::operator==(const AbstractBase &other) const {

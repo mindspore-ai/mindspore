@@ -1037,7 +1037,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto py_args = PreparePyInputs(prim_py, args);
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'.
   prim_py->RunCheck(py_args);
-  auto abs = eval_impl_.infer_shape_impl_(engine, prim_py, args);
+  auto abs = eval_impl_.InferShapeAndType(engine, prim_py, args);
+  MS_EXCEPTION_IF_NULL(abs);
   prim_py->EndRecordAddAttr();
   auto &added_attrs = prim_py->evaluate_added_attrs();
   eval_result = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>(added_attrs));
@@ -1120,7 +1121,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool need_infer_value = !eval_impl_.in_white_list_;
+  bool need_infer_value = !eval_impl_.IsInWhileList();
   if (need_infer_value == false) {
     need_infer_value = ((context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode)) &&
                        std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
@@ -1133,8 +1134,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   AbstractBasePtr abs_base = nullptr;
   ValuePtr value = nullptr;
   prim_->BeginRecordAddAttr();
-  if (need_infer_value && eval_impl_.infer_value_impl_ != nullptr) {
-    value = eval_impl_.infer_value_impl_(prim_, args);
+  if (need_infer_value && eval_impl_.IsImplInferValue()) {
+    value = eval_impl_.InferValue(prim_, args);
     if (value != nullptr) {
       abs_base = value->ToAbstract();
       prim_->EndRecordAddAttr();
@@ -1142,7 +1143,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
       return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
-  abs_base = eval_impl_.infer_shape_impl_(engine, prim_, args);
+  abs_base = eval_impl_.InferShapeAndType(engine, prim_, args);
+  MS_EXCEPTION_IF_NULL(abs_base);
   prim_->EndRecordAddAttr();
   const auto &added_attrs = prim_->evaluate_added_attrs();
   return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
@@ -2428,7 +2430,7 @@ bool IsInWhiteList(const PrimitivePtr &primitive) {
 
   auto iter = GetPrimitiveToEvalImplMap().find(primitive);
   if (iter != GetPrimitiveToEvalImplMap().end()) {
-    return iter->second.in_white_list_;
+    return iter->second.IsInWhileList();
   }
 
   auto uni_iter = GetUniformPrimitiveToImplMap().find(primitive);

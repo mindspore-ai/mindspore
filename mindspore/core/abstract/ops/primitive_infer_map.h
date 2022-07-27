@@ -28,20 +28,45 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
+#include "abstract/ops/op_infer.h"
 
 namespace mindspore {
 namespace abstract {
-using InferShapeImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
-                                           const AbstractBasePtrList &);
+using InferAbstractImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
+                                              const AbstractBasePtrList &);
 using InferValueImpl = ValuePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &);
 
-struct StandardPrimitiveImplReg {
-  InferShapeImpl infer_shape_impl_;  // infer shape and type for ops
-  InferValueImpl infer_value_impl_;  // infer value for ops
+class MS_CORE_API StandardPrimitiveImplReg {
+ public:
+  StandardPrimitiveImplReg() = default;
+  StandardPrimitiveImplReg(const InferAbstractImpl &infer_abstract, const InferValueImpl &infer_value,
+                           bool in_white_list);
+  StandardPrimitiveImplReg(const OpInferBasePtr &op_infer, bool is_impl_infer_value)
+      : op_infer_(op_infer), is_impl_infer_value_(is_impl_infer_value) {}
+  ~StandardPrimitiveImplReg() = default;
+
+  const OpInferBasePtr Get() const { return op_infer_; }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const;
+  BaseShapePtr InferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
+  ValuePtr InferValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
+
+  bool IsImplInferShapeAndType() const { return is_impl_infer_shape_and_type_ && op_infer_ != nullptr; }
+  bool IsImplInferValue() const { return is_impl_infer_value_ && op_infer_ != nullptr; }
+  bool IsInWhileList() const { return in_white_list_; }
+
+ private:
+  OpInferBasePtr op_infer_{nullptr};  // Infer shape, type and value.
+  bool is_impl_infer_shape_and_type_{true};
+  bool is_impl_infer_value_{false};
   // in_white_list_ is true means this primitive can be executed by vm backend
   // else will be optimized by frontend
-  bool in_white_list_;
+  bool in_white_list_{true};
 };
+
+void IsImplInferShapeAndType(const OpInferBasePtr &op_infer);
+void IsImplInferValue(const OpInferBasePtr &op_infer);
 
 using PrimitiveEvalImplMap =
   mindspore::HashMap<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
@@ -54,30 +79,47 @@ MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
 MS_CORE_API StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
-MS_CORE_API std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num);
+MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t input_num);
 
-MS_CORE_API std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode);
+MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode);
 
 MS_CORE_API void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);
 
 class RegisterStandardPrimitiveEvalHelper {
  public:
-  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferShapeImpl &infer_impl,
+  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferAbstractImpl &infer_shape_and_type_impl,
                                       const InferValueImpl &infer_value_impl, const bool is_white_list = true) {
-    const StandardPrimitiveImplReg impl_reg{infer_impl, infer_value_impl, is_white_list};
+    const StandardPrimitiveImplReg impl_reg{infer_shape_and_type_impl, infer_value_impl, is_white_list};
+    RegisterStandardPrimitiveImpl(primitive, impl_reg);
+  }
+
+  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const OpInferBasePtr &op_infer,
+                                      bool is_impl_infer_value = false) {
+    const StandardPrimitiveImplReg impl_reg{op_infer, is_impl_infer_value};
     RegisterStandardPrimitiveImpl(primitive, impl_reg);
   }
   ~RegisterStandardPrimitiveEvalHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl, is_white_list)         \
-  static auto helper_##name =                                                                              \
-    abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, is_white_list); \
-  std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                               \
-    name out;                                                                                              \
-    return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                         \
-  }                                                                                                        \
+#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, infer_shape_and_type_impl, infer_value_impl, is_white_list)      \
+  static auto helper_eval_##name = abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_shape_and_type_impl, \
+                                                                                 infer_value_impl, is_white_list);     \
+  std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                                           \
+    name out;                                                                                                          \
+    return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                                     \
+  }                                                                                                                    \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
+
+#define REGISTER_PRIMITIVE_OP_INFER_IMPL(name, primitive, OP_INFER_ClASS, is_impl_infer_value)                         \
+  const auto helper_op_infer_##name =                                                                                  \
+    abstract::RegisterStandardPrimitiveEvalHelper(primitive, std::make_shared<OP_INFER_ClASS>(), is_impl_infer_value); \
+  std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                                           \
+    name out;                                                                                                          \
+    return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                                     \
+  }                                                                                                                    \
+  ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name)
+
+MS_CORE_API void RegisterHostDependsImpl(const std::string &name, const std::set<int64_t> &host_depends);
 
 MS_CORE_API void RegisterHostDependsImpl(const std::string &prim_name, const std::set<int64_t> &host_depends);
 

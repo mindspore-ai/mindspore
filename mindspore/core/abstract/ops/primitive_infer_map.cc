@@ -184,7 +184,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kCropAndResizeGradImage, ShapeSet{3}}};
   return host_depends;
 }
-std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
+
+std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t input_num) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -201,10 +202,16 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                        [&](int64_t idx) { return idx < SizeToLong(input_num); });
     return res;
   }
+
+  auto op_infer = GetPrimitiveInferImpl(std::make_shared<Primitive>(prim_name)).Get();
+  if (op_infer != nullptr) {
+    return op_infer->GetValueDependArgIndices();
+  }
+
   return {};
 }
 
-std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
@@ -212,7 +219,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->ToString();
-  return GetDependsFormMap(prim_name, cnode->inputs().size() - 1);
+  return GetValueDependArgIndices(prim_name, cnode->inputs().size() - 1);
 }
 
 void RegisterHostDependsImpl(const std::string &prim_name, const std::set<int64_t> &host_depends) {
@@ -433,6 +440,103 @@ StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
 void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg) {
   auto &prim_eval_map = GetPrimitiveToEvalImplMap();
   prim_eval_map[primitive] = impl_reg;
+}
+
+class OpInferCommon : public OpInferBase {
+ public:
+  OpInferCommon() = delete;
+  OpInferCommon(const InferAbstractImpl &infer_impl, const InferValueImpl &infer_value_impl)
+      : infer_impl_(infer_impl), infer_value_impl_(infer_value_impl) {}
+  ~OpInferCommon() = default;
+
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override;
+
+ private:
+  InferAbstractImpl infer_impl_{nullptr};
+  InferValueImpl infer_value_impl_{nullptr};
+};
+
+BaseShapePtr OpInferCommon::InferShape(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
+  if (!infer_impl_) {
+    return nullptr;
+  }
+
+  auto inferred_res = infer_impl_(nullptr, primitive, input_args);
+  if (inferred_res == nullptr) {
+    return nullptr;
+  }
+
+  return inferred_res->BuildShape();
+}
+
+TypePtr OpInferCommon::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  if (!infer_impl_) {
+    return nullptr;
+  }
+
+  auto inferred_res = infer_impl_(nullptr, primitive, input_args);
+  if (inferred_res == nullptr) {
+    return nullptr;
+  }
+
+  return inferred_res->BuildType();
+}
+
+ValuePtr OpInferCommon::InferValue(const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) const {
+  if (!infer_value_impl_) {
+    return nullptr;
+  }
+  return infer_value_impl_(primitive, input_args);
+}
+
+AbstractBasePtr OpInferCommon::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
+                                                 const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args) const {
+  if (!infer_impl_) {
+    return nullptr;
+  }
+
+  return infer_impl_(engine, primitive, input_args);
+}
+
+StandardPrimitiveImplReg::StandardPrimitiveImplReg(const InferAbstractImpl &infer_abstract,
+                                                   const InferValueImpl &infer_value, bool in_white_list) {
+  op_infer_ = std::make_shared<OpInferCommon>(infer_abstract, infer_value);
+  is_impl_infer_shape_and_type_ = infer_abstract != nullptr;
+  is_impl_infer_value_ = infer_value != nullptr;
+  in_white_list_ = in_white_list;
+}
+
+AbstractBasePtr StandardPrimitiveImplReg::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<AbstractBasePtr> &input_args) const {
+  if (op_infer_ == nullptr) {
+    return nullptr;
+  }
+
+  return op_infer_->InferShapeAndType(engine, primitive, input_args);
+}
+
+BaseShapePtr StandardPrimitiveImplReg::InferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
+  if (op_infer_ == nullptr) {
+    return nullptr;
+  }
+
+  return op_infer_->InferShape(prim, args);
+}
+
+ValuePtr StandardPrimitiveImplReg::InferValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
+  if (op_infer_ == nullptr) {
+    return nullptr;
+  }
+
+  return op_infer_->InferValue(prim, args);
 }
 }  // namespace abstract
 }  // namespace mindspore

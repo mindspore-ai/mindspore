@@ -58,14 +58,14 @@ AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const Abstr
   auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
   auto iter = frontend_infer_func.find(prim);
   if (iter != frontend_infer_func.end()) {
-    MS_EXCEPTION_IF_NULL(iter->second.infer_shape_impl_);
-    return iter->second.infer_shape_impl_(nullptr, prim, abs_list);
+    MS_EXCEPTION_IF_CHECK_FAIL(iter->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
+    return iter->second.InferShapeAndType(nullptr, prim, abs_list);
   }
   auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
   auto iter2 = backend_infer_func.find(prim);
   if (iter2 != backend_infer_func.end()) {
-    MS_EXCEPTION_IF_NULL(iter2->second.infer_shape_impl_);
-    return iter2->second.infer_shape_impl_(nullptr, prim, abs_list);
+    MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
+    return iter2->second.InferShapeAndType(nullptr, prim, abs_list);
   } else {
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
@@ -74,13 +74,13 @@ AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const Abstr
 tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
   auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
   auto iter = frontend_infer_func.find(prim);
-  if (iter != frontend_infer_func.end() && iter->second.infer_value_impl_ != nullptr) {
-    return std::static_pointer_cast<tensor::Tensor>(iter->second.infer_value_impl_(prim, abs_list));
+  if (iter != frontend_infer_func.end() && iter->second.IsImplInferValue()) {
+    return std::static_pointer_cast<tensor::Tensor>(iter->second.InferValue(prim, abs_list));
   }
   auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
   auto iter2 = backend_infer_func.find(prim);
-  if (iter2 != backend_infer_func.end() && iter2->second.infer_value_impl_ != nullptr) {
-    return std::static_pointer_cast<tensor::Tensor>(iter2->second.infer_value_impl_(prim, abs_list));
+  if (iter2 != backend_infer_func.end() && iter2->second.IsImplInferValue()) {
+    return std::static_pointer_cast<tensor::Tensor>(iter2->second.InferValue(prim, abs_list));
   }
   return nullptr;
 }

@@ -417,7 +417,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
 
   // Find prim infer function in the prim function map return a standard evaluator
   auto eval_impl = GetPrimitiveInferImpl(prim);
-  if (eval_impl.infer_shape_impl_ != nullptr && prim->name() != prim::kPrimMakeTuple->name() &&
+  if (eval_impl.IsImplInferShapeAndType() && prim->name() != prim::kPrimMakeTuple->name() &&
       prim->name() != prim::kPrimMakeList->name()) {  // Refactoring infer routine soon.
     return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
   }

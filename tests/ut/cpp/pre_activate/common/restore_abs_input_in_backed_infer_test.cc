@@ -86,13 +86,13 @@ TEST_F(TestAttrAndDynamicBackendInfer, test_attr_and_dynamic_input_infer) {
   // construct Abstract list
   auto abs_a = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
   auto abs_c = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
-  auto attr_infer_result = CppInferShape(prim_attr_test, {abs_a, abs_c});
+  auto attr_infer_result = CppInferShapeAndType(prim_attr_test, {abs_a, abs_c});
   auto abs_dynamic_a = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
   auto abs_dynamic_b = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
   auto abs_dynamic_c = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
   auto abs_dynamic_d = std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{2, 2, 2, 2});
   auto dynamic_infer_result =
-    CppInferShape(prim_dynamic_input_test, {abs_dynamic_a, abs_dynamic_b, abs_dynamic_c, abs_dynamic_d});
+    CppInferShapeAndType(prim_dynamic_input_test, {abs_dynamic_a, abs_dynamic_b, abs_dynamic_c, abs_dynamic_d});
 }
 }  // namespace opt
 }  // namespace mindspore
