@@ -2380,6 +2380,11 @@ def filter_(fun, iter_):
 ##################
 
 
+def csr_softmax(logits, dtype):
+    """Implementation of `sum` for CSRTensor."""
+    return F.sparse_matrix_softmax(logits, dtype)
+
+
 def csr_add(a, b, alpha, beta):
     """Implementation of "csr_add" for CSRTensor."""
     return F.csr_add(a, b, alpha, beta)
