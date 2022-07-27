@@ -891,7 +891,7 @@ void AnfAlgo::SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, s
   if (node->func_graph() != nullptr) {
     auto manager = node->func_graph()->manager();
     if (manager != nullptr) {
-      manager->SetEdge(node, index + IntToSize(1), input_node);
+      manager->SetEdge(node, SizeToInt(index + 1), input_node);
       return;
     }
   }
@@ -1377,7 +1377,7 @@ void AnfAlgo::GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *
     MS_LOG(INFO) << "Node:" << node->fullname_with_scope() << " has already been visited";
     return;
   }
-  visited->insert(node);
+  (void)visited->insert(node);
   auto input_size = node->inputs().size() - 1;
   for (size_t i = 0; i < input_size; ++i) {
     auto input = AnfAlgo::GetInputNode(node, i);

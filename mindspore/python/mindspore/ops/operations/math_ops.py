@@ -6215,7 +6215,7 @@ class Renorm(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
-        >>> y = Renorm(x, p=1, dim=0, maxnorm=5.)
+        >>> y = Renorm(p=1, dim=0, maxnorm=5.)(x)
         >>> print(y)
         [[1.       1.        1.        ]
         [1.6666666 1.6666666 1.6666666 ]

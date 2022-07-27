@@ -25,8 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include "ir/dtype/type_id.h"
-
 namespace mindspore::opt {
 enum kPassType {
   kMindIRPass = 0,
@@ -40,7 +38,7 @@ class Factory {
 
  public:
   Factory(const Factory &) = delete;
-  void operator=(const Factory &) = delete;
+  Factory operator=(const Factory &) = delete;
 
   static Factory &Instance() {
     static Factory instance{};
