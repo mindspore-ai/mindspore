@@ -40,11 +40,8 @@ abstract::ShapePtr HSigmoidGradInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto prim_name = primitive->name();
-  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, input_x_shape, prim_name, TypeError);
-  return std::make_shared<abstract::Shape>(grads_shape);
+  return std::make_shared<abstract::Shape>(input_x_shape);
 }
 
 TypePtr HSigmoidGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -67,5 +64,6 @@ AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(infer_shape);
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
+REGISTER_PRIMITIVE_EVAL_IMPL(HSigmoidGrad, prim::kPrimHSigmoidGrad, HSigmoidGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
