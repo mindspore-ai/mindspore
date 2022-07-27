@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <map>
 #include <string>
-#include <vector>
 #include "ops/fake_quant_with_min_max_vars.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

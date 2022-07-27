@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 
