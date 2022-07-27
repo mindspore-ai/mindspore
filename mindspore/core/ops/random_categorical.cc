@@ -34,7 +34,7 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
     return logits_shape_ptr->cast<abstract::ShapePtr>();
   }
   if (logits_shape.size() != kDim2) {
-    MS_EXCEPTION(TypeError) << "logits shape size only support 2D";
+    MS_EXCEPTION(ValueError) << "logits shape size only support 2D";
   }
   std::vector<int64_t> output_shape;
   for (size_t i = 0; i < logits_shape.size() - 1; ++i) {
