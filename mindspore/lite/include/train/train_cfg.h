@@ -46,7 +46,10 @@ class MixPrecisionCfg {
 /// \brief TrainCfg defined for holding train configuration.
 class TrainCfg {
  public:
-  TrainCfg() { this->loss_name_.emplace_back("_loss_fn"); }
+  TrainCfg() {
+    this->loss_name_.emplace_back("_loss_fn");
+    this->loss_name_.emplace_back("SigmoidCrossEntropy");
+  }
   TrainCfg(const TrainCfg &rhs) {
     this->loss_name_ = rhs.loss_name_;
     this->mix_precision_cfg_ = rhs.mix_precision_cfg_;

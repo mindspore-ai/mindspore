@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <utility>
 #include <limits>
+#include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -26,11 +27,7 @@ static constexpr size_t OUTPUT_NUM = 1;
 template <typename T>
 T GetDivZeroVal(const T &v) {
   auto zero = static_cast<T>(0.0);
-  if (std::numeric_limits<T>::has_infinity) {
-    return v > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-  } else {
-    return v > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-  }
+  return v > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
 }
 
 template <>
@@ -39,8 +36,23 @@ complex128 GetDivZeroVal(const complex128 &v) {
 }
 
 template <>
-complex64 GetDivZeroVal(const complex64 &v) {
+complex64 GetDivZeroVal(const complex64 &) {
   return std::numeric_limits<complex64>::quiet_NaN();
+}
+
+template <class T>
+bool isZero(T val) {
+  return val == T(0.0f);
+}
+
+template <>
+bool isZero(float val) {
+  return std::fpclassify(val) == FP_ZERO;
+}
+
+template <>
+bool isZero(double val) {
+  return std::fpclassify(val) == FP_ZERO;
 }
 
 template <typename T>
@@ -49,9 +61,9 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto x_addr = static_cast<T *>(inputs[0]->addr);
+  auto y_addr = static_cast<T *>(inputs[1]->addr);
+  auto output_addr = static_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T);
   BroadcastIterator base_iter(x_shape_, y_shape_, out_shape_);
   auto task = [&x_addr, &y_addr, &output_addr, &base_iter](size_t start, size_t end) {
@@ -61,10 +73,9 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
       auto dividend = x_addr[iter.GetInputPosA()];
       auto divisor = y_addr[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
-      if (divisor == zero) {
-        if (dividend == zero) {
-          output_addr[i] = zero;
+      if (isZero(divisor)) {
+        if (isZero(dividend)) {
+          output_addr[i] = static_cast<T>(0.0);
           continue;
         }
         output_addr[i] = GetDivZeroVal(dividend);
@@ -126,7 +137,7 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   y_shape_ = inputs[1]->GetShapeVector();
   out_shape_ = outputs[0]->GetShapeVector();
   if (out_shape_.empty()) {
-    out_shape_.emplace_back(1);
+    (void)out_shape_.emplace_back(1);
   }
   auto x_shape_len = x_shape_.size();
   for (size_t i = 0; i < out_shape_.size() - x_shape_len; ++i) {
@@ -136,7 +147,7 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   for (size_t i = 0; i < out_shape_.size() - y_shape_len; ++i) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
   }
-  return KRET_OK;
+  return 0;
 }
 
 std::vector<KernelAttr> XdivyCpuKernelMod::GetOpSupport() { return support_ops_; }

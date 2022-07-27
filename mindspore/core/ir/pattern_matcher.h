@@ -617,7 +617,7 @@ class PConstant : public PBase<PConstant<T> > {
     MS_EXCEPTION_IF_NULL(source_data);
     if (x_tensor_ptr->DataSize() == 1) {
       auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
-      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+      char *data = static_cast<char *>(new_tensor_ptr->data_c());
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
         ret = memcpy_s(data + IntToSize(i) * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
         if (ret != 0) {
@@ -626,7 +626,7 @@ class PConstant : public PBase<PConstant<T> > {
         }
       }
     } else {
-      char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
+      char *data = static_cast<char *>(new_tensor_ptr->data_c());
       ret = memcpy_s(data, new_tensor_ptr->Size(), source_data, new_tensor_ptr->Size());
       if (ret != 0) {
         MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << new_tensor_ptr->Size()

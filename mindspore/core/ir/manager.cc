@@ -781,8 +781,8 @@ void FuncGraphManager::CommitChanges(std::vector<change::ChangePtr> &&changes) {
 
 void FuncGraphManager::EraseOneGraph(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
-  size_t erase_cnt = func_graphs_.erase(fg->shared_from_base<FuncGraph>());
-  if (!erase_cnt) {
+  bool erase_ret = func_graphs_.erase(fg->shared_from_base<FuncGraph>());
+  if (!erase_ret) {
     return;
   }
   fg->DecAttachedMngCnt();
