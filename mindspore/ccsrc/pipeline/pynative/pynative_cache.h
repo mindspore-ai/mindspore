@@ -23,6 +23,8 @@
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "ir/anf.h"
+#include "ir/signature.h"
+#include "pybind11/pytypes.h"
 
 namespace mindspore::pynative {
 struct AbsCacheKey {
