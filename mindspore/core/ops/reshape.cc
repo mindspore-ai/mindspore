@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/reshape.h"
 
 #include <string>
-#include <algorithm>
 #include <memory>
-#include <set>
-#include <vector>
-#include <numeric>
-#include <functional>
-#include "ops/reshape.h"
+
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"

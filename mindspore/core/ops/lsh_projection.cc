@@ -25,7 +25,7 @@ MIND_API_OPERATOR_IMPL(LshProjection, BaseOperator);
 void LshProjection::Init(const LshProjectionType &type) { set_type(type); }
 
 void LshProjection::set_type(const LshProjectionType &type) {
-  int64_t swi = (int64_t)type;
+  int64_t swi = static_cast<int64_t>(type);
   (void)AddAttr(kType, api::MakeValue(swi));
 }
 

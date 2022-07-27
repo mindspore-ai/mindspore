@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#include <map>
 #include <string>
-#include <set>
-#include <vector>
 #include <memory>
 
 #include "ops/assert.h"

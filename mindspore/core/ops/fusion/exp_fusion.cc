@@ -16,9 +16,6 @@
 
 #include "ops/fusion/exp_fusion.h"
 #include <string>
-#include <algorithm>
-#include <memory>
-#include <vector>
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 

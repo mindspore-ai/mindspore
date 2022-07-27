@@ -29,7 +29,9 @@ void SGD::Init(const float dampening, const float weight_decay, const bool neste
 }
 
 void SGD::set_dampening(const float dampening) {
-  if (get_nesterov()) CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
+  if (get_nesterov()) {
+    CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
+  }
   (void)AddAttr(kDampening, api::MakeValue(dampening));
 }
 

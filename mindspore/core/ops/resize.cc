@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <map>
 #include <string>
-#include <vector>
 #include <memory>
 #include "ops/resize.h"
 #include "ops/op_utils.h"
@@ -48,7 +46,7 @@ void Resize::set_format(const Format format) {
 }
 
 void Resize::set_method(const ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
@@ -76,7 +74,7 @@ void Resize::set_extrapolation_value(const float extrapolation_value) {
 }
 
 void Resize::set_nearest_mode(const NearestMode nearest_mode) {
-  int64_t swi = (int64_t)nearest_mode;
+  int64_t swi = static_cast<int64_t>(nearest_mode);
   (void)this->AddAttr(kNearestMode, api::MakeValue(swi));
 }
 
