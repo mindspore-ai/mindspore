@@ -16,11 +16,11 @@
 """grad experimental impl."""
 from .._grad.grad_base import get_bprop_fn
 from . import grad_array_ops
+from . import grad_image_ops
 from . import grad_inner_ops
 from . import grad_nn_ops
 from . import grad_math_ops
 from . import grad_linalg_ops
-from . import grad_image_ops
 from . import grad_sparse
 from . import grad_sparse_ops
 

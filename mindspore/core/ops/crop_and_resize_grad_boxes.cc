@@ -103,12 +103,13 @@ TypePtr CropAndResizeGradBoxesInferType(const PrimitivePtr &prim, const std::vec
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNums, prim_name);
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kGrads]->BuildType(), {kFloat32}, prim_name);
+  const std::set<TypePtr> valid_others = {kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kGrads]->BuildType(), valid_others, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[kImages]->BuildType(), valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kBoxes]->BuildType(), {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kBoxes]->BuildType(), valid_others, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kBoxIndex]->BuildType(), {kInt32},
                                                    prim_name);
-  return kFloat32;
+  return input_args[kGrads]->BuildType();
 }
 }  // namespace
 

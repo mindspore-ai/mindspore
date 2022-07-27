@@ -47,6 +47,7 @@ constexpr auto kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 constexpr auto kResizeBilinearV2 = "ResizeBilinearV2";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kCropAndResize = "CropAndResize";
+constexpr auto kCropAndResizeGradImage = "CropAndResizeGradImage";
 
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
@@ -575,6 +576,7 @@ GVAR_DEF(PrimitivePtr, kPrimResizeArea, std::make_shared<Primitive>("ResizeArea"
 GVAR_DEF(PrimitivePtr, kPrimResizeBilinearV2, std::make_shared<Primitive>(kResizeBilinearV2));
 GVAR_DEF(PrimitivePtr, kPrimResizeBilinearGrad, std::make_shared<Primitive>(kResizeBilinearGrad));
 GVAR_DEF(PrimitivePtr, kPrimCropAndResize, std::make_shared<Primitive>(kCropAndResize));
+GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradImage, std::make_shared<Primitive>(kCropAndResizeGradImage));
 
 // NN
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));

@@ -16,7 +16,9 @@
 """image_ops"""
 from ... import context
 from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 from ..primitive import prim_attr_register, Primitive
+from ...common import dtype as mstype
 
 
 class AdjustSaturation(Primitive):
@@ -520,7 +522,7 @@ class CropAndResizeGradBoxes(Primitive):
 
     Inputs:
         - **grads** (Tensor) - A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth].
-          The format must be NHWC. Types allowed: float32.
+          The format must be NHWC. Types allowed: float32, float64.
         - **images** (Tensor) - A 4-D tensor of shape [batch, image_height, image_width, depth].
           The format must be NHWC. Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
           Both image_height and image_width need to be positive.
@@ -531,18 +533,18 @@ class CropAndResizeGradBoxes(Primitive):
           mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
           crop is an up-down flipped version of the original image. The width dimension is treated similarly.
           Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
-          extrapolate the input image values. Types allowed: float32.
+          extrapolate the input image values. Types allowed: float32, float64.
         - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
           The value of box_index[i] specifies the image that the i-th box refers to. Types allowed: int32.
 
     Outputs:
-        A 2-D tensor of shape [num_boxes, 4] with type: float32.
+        A 2-D tensor of shape [num_boxes, 4] with type: float32 or float64.
 
     Raises:
         TypeError: If `method` is not a str.
-        TypeError: If `grads` is not tensor or its dtype is not float32.
+        TypeError: If `grads` is not tensor or its dtype is not float32 or float64.
         TypeError: If `images` is not tensor or its dtype is incorrect.
-        TypeError: If `boxes` is not tensor or its dtype is not float32.
+        TypeError: If `boxes` is not tensor or its dtype is not float32 or float64.
         TypeError: If `box_index` is not tensor or its dtype is not int32.
         ValueError: If `method` is not 'bilinear'.
         ValueError: If the size of `grads` tensor shape is not equal to 4.
@@ -554,7 +556,7 @@ class CropAndResizeGradBoxes(Primitive):
         ValueError: If the length of `box_index` is not equal to num_boxes.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> crop_and_resize_grad_boxes = ops.CropAndResizeGradBoxes(method = "bilinear")
@@ -841,3 +843,98 @@ class ResizeArea(Primitive):
         self.init_prim_io_names(inputs=['images', 'size'], outputs=['y'])
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
         self.align_corners = align_corners
+
+
+class CropAndResizeGradImage(Primitive):
+    """
+    Computes the gradient of the CropAndResize op with respect to the input images tensor.
+
+    Note:
+        Input grads must be a 4-D tensor.
+
+    Args:
+        method (str): A string specifying the interpolation method. "bilinear", "nearest" and "bilinear_v2" are
+            supported for now. Default: "bilinear".
+        T (mindspore.dtype): T is a required attribute. The value range of T is {mindspore.float16, mindspore.float32,
+            mindspore.float64}.
+
+    Inputs:
+        - **grads** (Tensor) - A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth].
+          The format must be NHWC. Types allowed: float32, float64.
+        - **boxes** (Tensor) - A 2-D tensor of shape [num_boxes, 4].
+          The i-th row of the tensor specifies the coordinates of a box in the box_index[i] image
+          and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
+          the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
+          mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
+          crop is an up-down flipped version of the original image. The width dimension is treated similarly.
+          Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
+          extrapolate the input image values. Types allowed: float32, float64.
+        - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
+          The value of box_index[i] specifies the image that the i-th box refers to. Types allowed: int32.
+        - **image_size** (Tensor) - A 1-D tensor with value [batch, image_height, image_width, depth]
+          containing the original image size. Both image_height and image_width need to be positive.
+          Types allowed: int32.
+
+    Outputs:
+        A 4-D tensor of shape [batch, image_height, image_width, depth]. Output type depends on input attribute T.
+        Types allowed: mindspore.float16, mindspore.float32, mindspore.float64.
+
+    Raises:
+        TypeError: If `method` is not a str.
+        TypeError: If `grads` is not tensor or its dtype is not float32 or float64.
+        TypeError: If `boxes` is not tensor or its dtype is not float32 or float64.
+        TypeError: If `box_index` is not tensor or its dtype is not int32.
+        TypeError: If `image_size` is not tensor or its dtype is not int32.
+        TypeError: If the value of `T` is not a number dtype in mindspore.
+        ValueError: If `method` is not "bilinear".
+        ValueError: If `T` is not in {mindspore.float16, mindspore.float32, mindspore.float64}.
+        ValueError: If the size of `grads` tensor shape is not equal to 4.
+        ValueError: If the size of `boxes` tensor shape is not equal to 2.
+        ValueError: If the length of the second dimension of `boxes` is not equal to 4.
+        ValueError: If the size of `image_size` or `box_index` tensor shape is not equal to 1.
+        ValueError: If the length of `box_index` is not equal to num_boxes.
+        ValueError: If the length of `image_size` is not equal to 4.
+        ValueError: If the value of image_height or image_width of `image_size` is not positive.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> crop_and_resize_grad_image = ops.CropAndResizeGradImage(T = mindspore.float32, method = "bilinear")
+        >>> grads = Tensor(np.array([[[[1.0], [2.0]], [[3.0], [4.0]]]]), mindspore.float32)
+        >>> boxes = Tensor(np.array([[0.1, 0.2, 0.3, 0.4]]), mindspore.float32)
+        >>> box_index = Tensor(np.array([0]), mindspore.int32)
+        >>> image_size = Tensor(np.array([1, 4, 4, 1]), mindspore.int32)
+        >>> output = crop_and_resize_grad_image(grads, boxes, box_index, image_size)
+        >>> print(output.asnumpy())
+        [[[[0.39999992]
+           [2.0399997 ]
+           [0.36000004]
+           [0.        ]]
+          [[1.1999999 ]
+           [5.16      ]
+           [0.8400003 ]
+           [0.        ]]
+          [[0.        ]
+           [0.        ]
+           [0.        ]
+           [0.        ]]
+          [[0.        ]
+           [0.        ]
+           [0.        ]
+           [0.        ]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, T, method="bilinear"):
+        """Initialize CropAndResizeGradImage"""
+        self.init_prim_io_names(inputs=['grads', 'boxes', 'box_index', 'image_size'], outputs=['y'])
+        validator.check_value_type("method", method, [str], self.name)
+        validator.check_string(method, ["bilinear", "nearest", "bilinear_v2"], "method", self.name)
+        self.method = method
+        valid_values = (mstype.float16, mstype.float32, mstype.float64)
+        if T in mstype.number_type:
+            validator.check("T", T, "expected", valid_values, Rel.IN, self.name)
+        else:
+            validator.check_type_name("T", T, valid_values, self.name)
+        self.add_prim_attr("max_Byte", int(2e9))  # Maximum bytes of image gradient
