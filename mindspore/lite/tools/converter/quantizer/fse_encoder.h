@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "ir/anf.h"
+#include "ir/tensor.h"
 #include "tools/converter/quantizer/fse_bit_stream.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 
@@ -62,6 +63,73 @@ class FSEEncoder {
 
   int SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size, uint8_t *out8,
                           size_t *out_size);
+
+  template <typename T>
+  int SqueezeQuant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants) {
+    CHECK_NULL_RETURN(weight);
+    CHECK_NULL_RETURN(quants);
+    auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(tensor_info);
+
+    auto data_c = static_cast<T *>(tensor_info->data_c());
+    auto data_size = tensor_info->DataSize();
+
+    auto min_max = GetMinMaxValue(static_cast<T *>(tensor_info->data_c()), data_size);
+    int qmin = min_max.first;
+    int qmax = min_max.second;
+    int uncompressed_frequency_count = qmax - qmin + 1;
+
+    std::vector<int> uncompressed_frequency(uncompressed_frequency_count);
+    for (int i = 0; i < uncompressed_frequency_count; i++) {
+      uncompressed_frequency[i] = 0;
+    }
+    for (size_t i = 0; i < data_size; i++) {
+      auto data = static_cast<T>(data_c[i]);
+      int q = data - qmin;
+      uncompressed_frequency[q] += 1;
+    }
+
+    double shannon_entropy = 0.0;
+    for (int i = 0; i < uncompressed_frequency_count; ++i) {
+      if (uncompressed_frequency[i] != 0) {
+        auto p = 1.0 * uncompressed_frequency[i] / data_size;
+        shannon_entropy -= p * log(p);
+      }
+    }
+    MS_LOG(INFO) << weight->fullname_with_scope() << " shannon_entropy is " << shannon_entropy;
+
+    std::vector<uint16_t> uncompressed_freqs_to_compressed_sym(uncompressed_frequency_count);
+    int sym = 0;
+    for (int i = 0; i < uncompressed_frequency_count; i++) {
+      if (uncompressed_frequency[i] != 0) {
+        if (sym >= MAX_SYMS) {
+          return RET_ERROR;  // too many symbols!
+        }
+        uncompressed_freqs_to_compressed_sym[i] = sym;
+        quants->frequency[sym] = uncompressed_frequency[i];
+        // real = varCorr * (q - zp) * scale + meanCorr
+        quants->centroids[sym] =
+          q_param.front().varCorr * static_cast<float>(i + qmin - q_param.front().zeroPoint) * (q_param.front().scale) +
+          q_param.front().meanCorr;
+        sym++;
+      }
+    }
+    MS_LOG(INFO) << "uncompressed frequency count:" << uncompressed_frequency_count << " sym:" << sym;
+    quants->size = sym;
+    quants->symbol_table_count = data_size;
+    quants->symbol_table = static_cast<uint16_t *>(malloc(quants->symbol_table_count * sizeof(uint16_t)));
+    if (quants->symbol_table == nullptr) {
+      MS_LOG(ERROR) << "malloc memory failed.";
+      return RET_ERROR;
+    }
+    for (int i = 0; i < quants->symbol_table_count; i++) {
+      auto data = static_cast<T>(data_c[i]);
+      int q = data - qmin;
+      sym = uncompressed_freqs_to_compressed_sym[q];
+      quants->symbol_table[i] = sym;
+    }
+    return RET_OK;
+  }
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_
