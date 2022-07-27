@@ -54,6 +54,7 @@ transpose_ = P.Transpose()
 scatter_add_ = P.ScatterAdd()
 scatter_max_ = P.ScatterMax()
 scatter_min_ = P.ScatterMin()
+scatter_mul_ = P.ScatterMul()
 scatter_div_ = P.ScatterDiv()
 scatter_nd_ = P.ScatterNd()
 gather_ = P.Gather()
@@ -1312,6 +1313,103 @@ def transpose(input_x, input_perm):
           [ 9. 12.]]]
     """
     return transpose_(input_x, input_perm)
+
+
+def scatter_mul(input_x, indices, updates):
+    r"""
+    Updates the value of the input tensor through the multiply operation.
+
+    Using given values to update tensor value through the mul operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    for each `i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+
+    Returns:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> output = ops.scatter_mul(input_x, indices, updates)
+        >>> print(output)
+        [[2. 2. 2.]
+         [4. 4. 4.]]
+        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> # for indices = [[0, 1], [1, 1]]
+        >>> # step 1: [0, 1]
+        >>> # input_x[0] = [1.0, 1.0, 1.0] * [1.0, 1.0, 1.0] = [1.0, 1.0, 1.0]
+        >>> # input_x[1] = [2.0, 2.0, 2.0] * [3.0, 3.0, 3.0] = [6.0, 6.0, 6.0]
+        >>> # step 2: [1, 1]
+        >>> # input_x[1] = [6.0, 6.0, 6.0] * [7.0, 7.0, 7.0] = [42.0, 42.0, 42.0]
+        >>> # input_x[1] = [42.0, 42.0, 42.0] * [9.0, 9.0, 9.0] = [378.0, 378.0, 378.0]
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.scatter_mul(input_x, indices, updates)
+        >>> print(output)
+        [[  1.   1.   1.]
+         [378. 378. 378.]]
+        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> # for indices = [[1, 0], [1, 1]]
+        >>> # step 1: [1, 0]
+        >>> # input_x[0] = [1.0, 1.0, 1.0] * [3.0, 3.0, 3.0] = [3.0, 3.0, 3.0]
+        >>> # input_x[1] = [2.0, 2.0, 2.0] * [1.0, 1.0, 1.0] = [2.0, 2.0, 2.0]
+        >>> # step 2: [1, 1]
+        >>> # input_x[1] = [2.0, 2.0, 2.0] * [7.0, 7.0, 7.0] = [14.0, 14.0, 14.0]
+        >>> # input_x[1] = [14.0, 14.0, 14.0] * [9.0, 9.0, 9.0] = [126.0, 126.0, 126.0]
+        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.scatter_mul(input_x, indices, updates)
+        >>> print(output)
+        [[  3.   3.   3.]
+         [126. 126. 126.]]
+        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> # for indices = [[0, 1], [0, 1]]
+        >>> # step 1: [0, 1]
+        >>> # input_x[0] = [1.0, 1.0, 1.0] * [1.0, 1.0, 1.0] = [1.0, 1.0, 1.0]
+        >>> # input_x[1] = [2.0, 2.0, 2.0] * [3.0, 3.0, 3.0] = [6.0, 6.0, 6.0]
+        >>> # step 2: [0, 1]
+        >>> # input_x[0] = [1.0, 1.0, 1.0] * [7.0, 7.0, 7.0] = [7.0, 7.0, 7.0]
+        >>> # input_x[1] = [6.0, 6.0, 6.0] * [9.0, 9.0, 9.0] = [54.0, 54.0, 54.0]
+        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.scatter_mul(input_x, indices, updates)
+        >>> print(output)
+        [[ 7.  7.  7.]
+         [54. 54. 54.]]
+    """
+    return scatter_mul_(input_x, indices, updates)
 
 
 def scatter_max(input_x, indices, updates):
@@ -3914,6 +4012,7 @@ __all__ = [
     'masked_fill',
     'masked_select',
     'scatter_add',
+    'scatter_mul',
     'scatter_max',
     'scatter_min',
     'scatter_div',
