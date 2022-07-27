@@ -1608,8 +1608,8 @@ void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::strin
   device_context->GetDeprecatedInterface()->ExportDFGraph(file_name, func_graph->ToString(), encrypt, key);
 }
 
-FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
-                        const py::object decrypt) {
+FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const size_t key_len,
+                        const std::string &dec_mode, const py::object decrypt) {
   FuncGraphPtr func_graph = nullptr;
   if (dec_mode == "Customized") {
     py::bytes key_bytes(dec_key);
@@ -1619,7 +1619,7 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_
     MindIRLoader mindir_loader;
     func_graph = mindir_loader.LoadMindIR(model_string.c_str(), model_string.size());
   } else {
-    MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
+    MindIRLoader mindir_loader(false, reinterpret_cast<const unsigned char *>(dec_key), key_len, dec_mode, false);
     func_graph = mindir_loader.LoadMindIR(file_name);
   }
 #ifdef ENABLE_DUMP_IR

@@ -182,8 +182,8 @@ void ClearResAtexit();
 void ReleaseGeTsd();
 void MemoryRecycle();
 
-FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
-                        const py::object decrypt = py::none());
+FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const size_t key_len,
+                        const std::string &dec_mode, const py::object decrypt = py::none());
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
