@@ -3269,20 +3269,7 @@ class Ceil(PrimitiveWithInfer):
     r"""
     Rounds a tensor up to the closest integer element-wise.
 
-    .. math::
-
-        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of x is not float16 or float32.
+    Refer to :func:`mindspore.ops.ceil` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
