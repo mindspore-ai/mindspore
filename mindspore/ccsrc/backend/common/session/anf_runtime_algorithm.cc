@@ -787,7 +787,24 @@ uint32_t AnfRuntimeAlgorithm::GetGraphId(const AnfNode *node) {
 bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {
-    return false;
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    ValuePtr value = value_node->value();
+    std::vector<tensor::TensorPtr> tensors;
+    TensorValueToTensor(value, &tensors);
+    auto ret = false;
+    if (!tensors.empty()) {
+      auto all_tensor_have_address = true;
+      for (const auto &tensor : tensors) {
+        MS_EXCEPTION_IF_NULL(tensor);
+        if (tensor->device_address() == nullptr) {
+          all_tensor_have_address = false;
+          break;
+        }
+      }
+      ret = all_tensor_have_address;
+    }
+    return ret;
   }
   if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
     return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
