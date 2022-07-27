@@ -29,8 +29,8 @@ namespace rpc {
 // Print error message every 1000 times and sleep for 5ms in case the log file is too large.
 static size_t kPrintCount = 0;
 static std::mutex kPrintCountMutex;
-size_t kPrintCountInterval = 1000;
-size_t kPrintTimeInterval = 50000;
+const size_t kPrintCountInterval = 1000;
+const int kPrintTimeInterval = 50000;
 
 // Handle socket events like read/write.
 void SocketEventHandler(int fd, uint32_t events, void *context) {
@@ -51,7 +51,7 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
     return;
   }
   // Handle write event.
-  if (events & EPOLLOUT) {
+  if ((events & EPOLLOUT) > 0) {
     (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLIN | EPOLLHUP | EPOLLERR);
     if (conn->write_callback != nullptr) {
       conn->write_callback(conn);
@@ -74,7 +74,7 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
                      << ", errcode: " << conn->error_code << ", errno: " << errno
                      << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
                      << ", remote: " << conn->is_remote;
-        usleep(kPrintTimeInterval);
+        (void)usleep(kPrintTimeInterval);
       }
     }
     conn->state = ConnectionState::kDisconnecting;
@@ -101,7 +101,7 @@ void NewConnectEventHandler(int fd, uint32_t events, void *context) {
   }
 
   retval = conn->recv_event_loop->DeleteEpollEvent(fd);
-  if (retval) {
+  if (retval > 0) {
     MS_LOG(ERROR) << "Failed to remove epoll remove connect handler for fd: " << fd;
     return;
   }
@@ -194,16 +194,16 @@ bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, ui
   socklen_t len = sizeof(*soError);
 
   int retval = recv_event_loop->DeleteEpollEvent(fd);
-  if (retval) {
+  if (retval > 0) {
     MS_LOG(ERROR) << "Failed to delete event for fd: " << fd << ", event: " << events;
     return false;
   }
 
   retval = getsockopt(fd, SOL_SOCKET, SO_ERROR, soError, &len);
-  if (retval) {
+  if (retval > 0) {
     *soError = errno;
   }
-  if (*soError || error) {
+  if (*soError > 0 || error > 0) {
     return false;
   }
   retval = recv_event_loop->SetEventHandler(socket_fd, EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR, SocketEventHandler,
@@ -341,7 +341,7 @@ std::string Connection::GenerateHttpMessage(MessageBase *msg) {
 
 void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg) {
   if (msg->type == MessageBase::Type::KMSG) {
-    int index = 0;
+    size_t index = 0;
     if (!isHttpKmsg) {
       send_to = msg->to;
       send_from = msg->from;

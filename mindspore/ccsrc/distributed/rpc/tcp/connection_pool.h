@@ -62,7 +62,7 @@ class ConnectionPool {
 
   // Delete connection.
   void DeleteConnection(const std::string &dst_url);
-  void DeleteAllConnections(std::map<std::string, Connection *> *alllinks);
+  void DeleteAllConnections(std::map<std::string, Connection *> *alllinks) const;
 
   // Close connection.
   void CloseConnection(Connection *conn);
