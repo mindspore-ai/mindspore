@@ -24,6 +24,16 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kElu = "Elu";
+constexpr auto kReLU = "ReLU";
+constexpr auto kReLU6 = "ReLU6";
+constexpr auto kExp = "Exp";
+constexpr auto kSigmoid = "Sigmoid";
+constexpr auto kSoftplus = "Softplus";
+constexpr auto kLog = "Log";
+constexpr auto kTanh = "Tanh";
+constexpr auto kMish = "Mish";
+constexpr auto kSqrt = "Sqrt";
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 1;
 
@@ -143,25 +153,25 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
     {kReLU6,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {prim::kPrimExp->name(),
+    {kExp,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {prim::kPrimLog->name(),
+    {kLog,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSigmoid,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {prim::kPrimTanh->name(),
+    {kTanh,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSoftplus,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {prim::kPrimMish->name(),
+    {kMish,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {prim::kPrimSqrt->name(),
+    {kSqrt,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}}};
 
@@ -173,6 +183,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSoftplus); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
-                                 []() { return std::make_shared<EltWiseCpuKernelMod>(prim::kPrimMish->name()); });
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kMish); });
 }  // namespace kernel
 }  // namespace mindspore

@@ -83,8 +83,8 @@ TypePtr AdaptiveMaxPool2DGradInferType(const PrimitivePtr &primitive, const std:
   (void)args.emplace("x", input_args[1]->BuildType());
 
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, floating_data_types, primitive->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("argmax_dtype", argmax_dtype, argmax_valid_types,
-                                             kNameAdaptiveMaxPool2DGrad);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax_dtype", argmax_dtype, argmax_valid_types,
+                                                   kNameAdaptiveMaxPool2DGrad);
   return y_grad_dtype;
 }
 }  // namespace
