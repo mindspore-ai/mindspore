@@ -47,9 +47,8 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-    x_shape_.clear();
-    y_shape_.clear();
-    out_shape_.clear();
+    index_listx_.clear();
+    index_listy_.clear();
   }
 
  private:
@@ -62,9 +61,10 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<KernelAttr> support_ops_;
   static std::map<mindspore::TypeId, XdivyFunc> func_map_;
   XdivyFunc kernel_func_;
-  ShapeVector x_shape_;
-  ShapeVector y_shape_;
-  ShapeVector out_shape_;
+  // Broadcast related.
+  std::vector<int64_t> index_listx_{};
+  std::vector<int64_t> index_listy_{};
+  bool is_need_broadcast_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

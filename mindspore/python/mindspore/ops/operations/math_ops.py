@@ -3346,8 +3346,8 @@ class Xdivy(Primitive):
 
     # Let x/y using same sig_dtype to enable implicit conversion for compatibility
     __mindspore_signature__ = (
-        sig.make_sig('x', dtype=sig.sig_dtype.T),
-        sig.make_sig('y', dtype=sig.sig_dtype.T)
+        sig.make_sig('x', rw=sig.sig_rw.RW_READ, dtype=sig.sig_dtype.T),
+        sig.make_sig('y', rw=sig.sig_rw.RW_READ, dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
