@@ -198,7 +198,13 @@ def get_transpose_vmap_rule(prim, axis_size):
         if dim < 0:
             dim = dim + x_rank
         batch_perm = (dim,)
+
+        perm_len = len(perm)
+
         for i in perm:
+            if i < 0:
+                i += perm_len
+
             if i < dim:
                 batch_perm = batch_perm + (i,)
             else:
