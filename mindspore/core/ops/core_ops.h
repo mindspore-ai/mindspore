@@ -306,6 +306,7 @@ constexpr auto kAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
 
 // Random
 constexpr auto kStandardNormal = "StandardNormal";
+constexpr auto kRandomGammaGrad = "RandomGammaGrad";
 
 // RowTensor
 constexpr auto kMakeRowTensor = "MakeRowTensor";
@@ -1526,6 +1527,7 @@ GVAR_DEF(PrimitivePtr, kPrimTruncatedNormal, std::make_shared<Primitive>("Trunca
 GVAR_DEF(PrimitivePtr, kPrimRandomPoisson, std::make_shared<Primitive>("RandomPoisson"));
 GVAR_DEF(PrimitivePtr, kPrimRandomGamma, std::make_shared<Primitive>("RandomGamma"));
 GVAR_DEF(PrimitivePtr, kPrimRandomShuffle, std::make_shared<Primitive>("RandomShuffle"));
+GVAR_DEF(PrimitivePtr, kPrimRandomGammaGrad, std::make_shared<Primitive>("RandomGammaGrad"));
 GVAR_DEF(PrimitivePtr, kPrimRandomCategorical, std::make_shared<Primitive>("RandomCategorical"));
 GVAR_DEF(PrimitivePtr, kPrimRandperm, std::make_shared<Primitive>("Randperm"));
 GVAR_DEF(PrimitivePtr, kPrimUniformCandidateSampler, std::make_shared<Primitive>("UniformCandidateSampler"));

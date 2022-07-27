@@ -89,7 +89,7 @@ class TruncatedNormal(Primitive):
         dtype (mindspore.dtype): Must be one of the following types: mindspore.float16, mindspore.float32 and
             mindspore.float64. Default: mindspore.float32.
 
-    Inputs:
+    Inputs
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
           mindspore.int32 and mindspore.int64.
 
@@ -306,6 +306,44 @@ class LogNormalReverse(Primitive):
         """Initialize LogNormalReverse"""
         Validator.check_value_type("mean", mean, [float], self.name)
         Validator.check_value_type("std", std, [float], self.name)
+
+
+class RandomGammaGrad(Primitive):
+    r"""
+    Computes the derivative of a random sample of Gamma with respect to alpha.:
+
+    Inputs:
+        - **alpha** (Tensor) - α is the shape parameter of RandomGamma distribution.
+        It must be greater than 0. Must be one of the following types: float32, float64.
+        - **sample** (Tensor) - The sample of random gamma tensor. Must be one of the
+        following types: float32, float64.
+
+    Outputs:
+        The dtype is the same type as alpha.
+        The output shape is derived from the input through broadcasting.
+
+    Raises:
+        TypeError: If data type of `alpha` and `sample` is not float32 or float64.
+        TypeError: If data type of `alpha` and `sample` is not same.
+        ValueError: If the shape last dim of `sample` and `alpha` is not equal.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> alpha = Tensor(np.array([1., 0.6, 3., 26.]), mstype.float32)
+        >>> sample = Tensor(np.array([6., 7, 11., 0.5]), mstype.float32)
+        >>> randomgammagrad = ops.RandomGammaGrad()
+        >>> output = randomgammagrad(alpha, sample)
+        >>> print(output)
+        [2.5142431 3.4334087 1.8847835 0.07780622]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize RandomGammaGrad"""
+        self.init_prim_io_names(inputs=['alpha', 'sample'], outputs=['output'])
+        self.add_prim_attr("side_effect_hidden", True)
 
 
 class Gamma(PrimitiveWithInfer):
