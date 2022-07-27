@@ -30,26 +30,28 @@ class LstmCPUKernel : public LiteKernel {
     lstm_param_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
-  ~LstmCPUKernel() override { FreeTmpBuffer(); }
+  ~LstmCPUKernel() override = default;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
 
   void InputWeightMatMul(int task_id) const;
+  int DoSequenceLoop(int task_id);
 
  private:
-  void FreeTmpBuffer();
   void FreeRunBuffer();
   int InitParam();
-  int MallocRunBuffer();
+  int MallocRunBuffer(bool is_double);
   int InitInputWeightBias();
   int InitStateWeightBias();
-
-  int LstmUnidirectional(float *output, const float *weight_i, const float *weight_h, const float *input_bias,
-                         const float *state_bias, float *hidden_state, float *cell_state, float *intermediate_states,
-                         bool is_backward);
-  int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
+  int LstmPreProcessWithInput(const float *weight_i, const float *input_bias, float *dst);
+  int ExecuteUnidirectionalOrSingleThread();
+  int ExecuteBidirectionalWithMultiThread();
+  void LstmForwardLoop(float *buffer[]);
+  void LstmBackwardLoop(float *buffer[]);
+  void LstmUnidirectional(float *output, const float *weight_h, const float *state_bias, float *hidden_state,
+                          float *cell_state, float *intermediate_states, float *buffer[], bool is_backward);
   void RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate, float *forget_gate,
                     float *cell_gate, float *intermediate_states, int step);
   const float *weight_loop_;
@@ -62,6 +64,7 @@ class LstmCPUKernel : public LiteKernel {
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
+  float *intermediate_states_ = nullptr;
   // indices of weights when split
   const size_t mindir_input_tensors = 4;
   const int onnx_weight_i_index = 1;
@@ -76,16 +79,13 @@ class LstmCPUKernel : public LiteKernel {
   int hidden_state_input_index_ = onnx_hidden_state_index;
   int cell_state_input_index_ = onnx_cell_state_index;
 
-  float *buffer_[8] = {nullptr};
+  float *packed_input_{nullptr};
+  float *buffer_forward_[C7NUM] = {nullptr};
+  float *buffer_backward_[C7NUM] = {nullptr};
+  std::vector<void *> buffer_running_malloc_;
   const int gate_num = 4;
-  const int packed_input_index = 0;
-  const int input_gate_index = 1;
-  const int packed_state_index = 2;
-  const int state_gate_index = 3;
-  const int cell_state_index = 4;
-  const int hidden_state_index = 5;
-  const int avx_state_output_index = 6;
-  const int tmp_hidden_output_index = 7;
+  const int input_gate_index = 0;
+  const int tmp_hidden_output_index = 6;
   static const int out_intermediate_states_index = 3;
   const int weights_order_IFOG[2 * 4] = {0, 2, 3, 1, 4, 6, 7, 5};  // IFGO order to IOFG order
 
@@ -95,7 +95,6 @@ class LstmCPUKernel : public LiteKernel {
   int state_col_tile_ = 0;
   int weight_batch_ = 0;
   bool state_is_vec_ = false;
-  bool output_need_packed_ = false;
   // control weight layout
   bool gpu_orig_state_ = true;
   bool gpu_orig_cfg_ = true;
