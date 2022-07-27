@@ -185,9 +185,6 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
   }
   ofs.close();
   ChangeFileMode(file_path);
-  if (op_side_ == "cpu") {
-    op_timestamps_map_.clear();
-  }
 }
 
 void DataSaver::ChangeFileMode(const std::string &file_path) const {
@@ -195,6 +192,12 @@ void DataSaver::ChangeFileMode(const std::string &file_path) const {
     MS_LOG(WARNING) << "Modify file: " << file_path << " to rw fail.";
     return;
   }
+}
+
+void DataSaver::Clear() {
+  op_timestamps_map_.clear();
+  op_type_infos_.clear();
+  op_detail_infos_.clear();
 }
 }  // namespace profiler
 }  // namespace mindspore
