@@ -66,6 +66,8 @@ constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
 constexpr auto kNeg = "Neg";
 constexpr auto kSub = "Sub";
+constexpr auto kMedian = "Median";
+constexpr auto kMedianGrad = "MedianGrad";
 constexpr auto kMul = "Mul";
 constexpr auto kMulNoNan = "MulNoNan";
 constexpr auto kACos = "ACos";
@@ -970,6 +972,8 @@ GVAR_DEF(PrimitivePtr, kPrimMaximumGrad, std::make_shared<Primitive>("MaximumGra
 GVAR_DEF(PrimitivePtr, kPrimMinimumGrad, std::make_shared<Primitive>("MinimumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMinimumGradGrad, std::make_shared<Primitive>("MinimumGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMaximumGradGrad, std::make_shared<Primitive>("MaximumGradGrad"));
+GVAR_DEF(PrimitivePtr, kPrimMedian, std::make_shared<Primitive>(kMedian));
+GVAR_DEF(PrimitivePtr, kPrimMedianGrad, std::make_shared<Primitive>(kMedianGrad));
 GVAR_DEF(PrimitivePtr, kPrimReduce, std::make_shared<Primitive>("Reduce"));
 GVAR_DEF(PrimitivePtr, kPrimReduceMean, std::make_shared<Primitive>("ReduceMean"));
 GVAR_DEF(PrimitivePtr, kPrimReduceSum, std::make_shared<Primitive>("ReduceSum"));

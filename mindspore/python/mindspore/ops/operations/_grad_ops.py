@@ -3224,6 +3224,48 @@ class DeformableOffsetsGrad(Primitive):
         self.add_prim_attr('modulated', self.modulated)
 
 
+class MedianGrad(Primitive):
+    """
+    Computes gradient for Median operation.
+
+    .. warning::
+        When attr `global_median` is True, the value of Median's second output Tensor `indices` value is meaningless.
+
+    Args:
+        global_median (bool): Whether the output tensor is the global median of all input tensor elements
+            or not in Median operation.
+        axis (int): The dimension need to reduce in Median operation.
+        keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not in Median operation.
+
+    Inputs:
+        - **y_grad** (Tensor) - The gradients of loss to output of Median function.
+        - **x** (Tensor) - The first input is a tensor whose data type is number.
+          The dtype is one of the following: int16, int32, int64, float32, double.
+        - **y** (Tensor) - The first output of Median function, which datatype is same as `x`.
+        - **indices** (Tensor) - The second output of Median function, which datatype is int64.
+
+    Outputs:
+        x_grad - Tensor, has the same shape as the `x`, dtype is double only when dtype of `x` is double.
+        Otherwise, dtype of `x_grad` is float32.
+
+    Raises:
+        TypeError: If dtype of `y_grad` is not the same as `x`.
+        ValueError: If shape of `y_grad` is not the same as `y`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, global_median=False, axis=0, keep_dims=False):
+        validator.check_value_type("global_median", global_median, [bool], self.name)
+        self.global_median = global_median
+        if global_median is False:
+            validator.check_value_type("axis", axis, [int], self.name)
+            validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'y', 'indices'], outputs=['x_grad'])
+
+
 class GridSampler2DGrad(Primitive):
     """
     Computes gradients for GridSampler2D operation.
