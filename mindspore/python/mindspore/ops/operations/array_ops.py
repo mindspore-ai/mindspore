@@ -4631,7 +4631,7 @@ class Triu(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class ScatterMul(_ScatterOp):
+class ScatterMul(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the multiply operation.
 

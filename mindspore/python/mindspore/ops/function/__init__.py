@@ -79,6 +79,7 @@ from .array_func import (
     tensor_scatter_min,
     tensor_scatter_elements,
     scatter_add,
+    scatter_mul,
     scatter_max,
     scatter_min,
     scatter_div,
