@@ -60,9 +60,9 @@ class TrainCfg {
   ~TrainCfg() = default;
 
   OptimizationLevel optimization_level_ = kO0;
-  std::vector<std::string> loss_name_ = {"loss_fct",
-                                         "_loss_fn"}; /**< Set part of the name that identify a loss kernel */
-  MixPrecisionCfg mix_precision_cfg_;                 /**< Mix precision configuration */
+  std::vector<std::string> loss_name_ = {
+    "loss_fct", "_loss_fn", "SigmoidCrossEntropy"}; /**< Set part of the name that identify a loss kernel */
+  MixPrecisionCfg mix_precision_cfg_;               /**< Mix precision configuration */
   bool accumulate_gradients_ = false;
 };
 }  // namespace mindspore
