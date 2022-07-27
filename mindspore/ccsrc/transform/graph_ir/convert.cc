@@ -1956,7 +1956,6 @@ AnfNodePtr DfGraphConvertor::TransformConstOp(const CNodePtr &node, AnfNodePtr p
     auto op_itor = op_cache_.find(pred.get());
     if (op_itor == op_cache_.end()) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << pred->ToString() << ".";
-      return nullptr;
     }
     if (op_itor->second != nullptr &&
         (op_itor->second->GetOpType() == "Constant" || op_itor->second->GetOpType() == "Const") &&

@@ -951,7 +951,6 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     }
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
-    return false;
   }
   return true;
 }
@@ -1089,7 +1088,6 @@ bool IrExportBuilder::SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir
     return SetTensorToAttributeProto(value, attr_proto);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
-    return false;
   }
   return true;
 }
