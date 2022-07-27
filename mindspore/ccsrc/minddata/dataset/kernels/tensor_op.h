@@ -110,6 +110,7 @@ constexpr char kRandomVerticalFlipOp[] = "RandomVerticalFlipOp";
 constexpr char kRandomVerticalFlipWithBBoxOp[] = "RandomVerticalFlipWithBBoxOp";
 constexpr char kRescaleOp[] = "RescaleOp";
 constexpr char kResizeBilinearOp[] = "ResizeBilinearOp";
+constexpr char kResizedCropOp[] = "ResizedCropOp";
 constexpr char kResizeOp[] = "ResizeOp";
 constexpr char kResizePreserveAROp[] = "ResizePreserveAROp";
 constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";

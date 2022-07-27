@@ -1662,6 +1662,50 @@ class MS_API Rescale final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Crop the given image and zoom to the specified size.
+class MS_API ResizedCrop final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] top Horizontal ordinate of the upper left corner of the crop image.
+  /// \param[in] left Vertical ordinate of the upper left corner of the crop image.
+  /// \param[in] height Height of cropped image.
+  /// \param[in] width Width of cropped image.
+  /// \param[in] size A vector representing the output size of the image.
+  ///     If the size is a single value, a squared resized of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
+  /// \param[in] interpolation Image interpolation mode. Default: InterpolationMode::kLinear.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
+  /// \note If the input image is more than one, then make sure that the image size is the same.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto resized_crop_op = vision::ResizedCrop(128, 128, 256, 256, {128, 128});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, resized_crop_op},  // operations
+  ///                            {"image"});                    // input columns
+  /// \endcode
+  ResizedCrop(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
+              InterpolationMode interpolation = InterpolationMode::kLinear);
+
+  /// \brief Destructor.
+  ~ResizedCrop() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Resize the input image to the given size and adjust bounding boxes accordingly.
 class MS_API ResizeWithBBox final : public TensorTransform {
  public:

@@ -74,6 +74,7 @@
 #include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/resized_crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
@@ -746,6 +747,19 @@ PYBIND_REGISTER(ResizeWithBBoxOperation, 1, ([](const py::module *m) {
                       return resize_with_bbox;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  ResizedCropOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::ResizedCropOperation, TensorOperation, std::shared_ptr<vision::ResizedCropOperation>>(
+      *m, "ResizedCropOperation")
+      .def(py::init([](int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
+                       InterpolationMode interpolation) {
+        auto resized_crop =
+          std::make_shared<vision::ResizedCropOperation>(top, left, height, width, size, interpolation);
+        THROW_IF_ERROR(resized_crop->ValidateParams());
+        return resized_crop;
+      }));
+  }));
 
 PYBIND_REGISTER(RgbToBgrOperation, 1, ([](const py::module *m) {
                   (void)

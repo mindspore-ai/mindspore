@@ -71,9 +71,9 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, check_random_color_adjust, \
     check_random_crop, check_random_erasing, check_random_perspective, check_random_posterize, \
     check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
-    check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, check_rotate, \
-    check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, \
-    check_to_tensor, FLOAT_MAX_INTEGER
+    check_range, check_rescale, check_resize, check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, \
+    check_rotate, check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, \
+    check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -3355,6 +3355,69 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         if self.py_interpolation is None:
             raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.resize(img, self.py_size, self.py_interpolation)
+
+
+class ResizedCrop(ImageTensorOperation):
+    """
+    Crop the input image at a specific location, and resize the cropped image using a selected interpolation mode.
+
+    Args:
+        top (int): Horizontal ordinate of the upper left corner of the crop image.
+        left (int): Vertical ordinate of the upper left corner of the crop image.
+        height (int): Height of cropped image.
+        width (int): Width of cropped image.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        interpolation (Inter, optional): Image interpolation mode. Default: Inter.LINEAR.
+            It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
+
+            - Inter.LINEAR, means interpolation method is bilinear interpolation.
+
+            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+
+            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+            - Inter.AREA, means interpolation method is pixel area interpolation.
+
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
+              should be in 3 channels format.
+
+    Raises:
+        TypeError: If `top` is not of type int.
+        TypeError: If `left` is not of type int.
+        TypeError: If `height` is not of type int.
+        TypeError: If `width` is not of type int.
+        TypeError: If `size` is not of type int or Sequence[int].
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.vision import Inter
+        >>> transforms_list = [vision.Decode(), vision.ResizedCrop(0, 0, 128, 128, (100, 75), Inter.BILINEAR)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+    @check_resized_crop
+    def __init__(self, top, left, height, width, size, interpolation=Inter.BILINEAR):
+        super().__init__()
+        if isinstance(size, int):
+            size = (size, size)
+
+        self.top = top
+        self.left = left
+        self.height = height
+        self.width = width
+        self.size = size
+        self.interpolation = interpolation
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.ResizedCropOperation(self.top, self.left, self.height,
+                                        self.width, self.size, Inter.to_c_type(self.interpolation))
 
 
 class ResizeWithBBox(ImageTensorOperation):

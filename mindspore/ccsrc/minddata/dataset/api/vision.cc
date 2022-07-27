@@ -76,6 +76,7 @@
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_preserve_ar_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/resized_crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_gray_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_bgr_ir.h"
@@ -1125,6 +1126,30 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
 }
+
+#ifndef ENABLE_ANDROID
+// ResizedCrop Transform Operation.
+struct ResizedCrop::Data {
+  Data(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
+       InterpolationMode interpolation)
+      : top_(top), left_(left), height_(height), width_(width), size_(size), interpolation_(interpolation) {}
+  int32_t top_;
+  int32_t left_;
+  int32_t height_;
+  int32_t width_;
+  std::vector<int32_t> size_;
+  InterpolationMode interpolation_;
+};
+
+ResizedCrop::ResizedCrop(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
+                         InterpolationMode interpolation)
+    : data_(std::make_shared<Data>(top, left, height, width, size, interpolation)) {}
+
+std::shared_ptr<TensorOperation> ResizedCrop::Parse() {
+  return std::make_shared<ResizedCropOperation>(data_->top_, data_->left_, data_->height_, data_->width_, data_->size_,
+                                                data_->interpolation_);
+}
+#endif  // not ENABLE_ANDROID
 
 // ResizePreserveAR Transform Operation.
 struct ResizePreserveAR::Data {
