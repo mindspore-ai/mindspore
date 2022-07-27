@@ -88,8 +88,8 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   bool is_null_input_;
   std::default_random_engine generator_;
 
-  int64_t init_seed_{0};
-  int64_t cur_seed_{0};
+  size_t init_seed_{0};
+  size_t cur_seed_{0};
   std::unordered_set<int64_t> set_input_;
 };
 }  // namespace kernel
