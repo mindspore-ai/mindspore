@@ -16,9 +16,7 @@
 
 #include "pybind_api/ir/primitive_py.h"
 
-#include <mutex>
 #include <map>
-#include <utility>
 #include "ir/signature.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
@@ -127,6 +125,19 @@ PrimitivePy::PrimitivePy(const PrimitivePy &prim_py)
       bprop_cut_prims_(prim_py.bprop_cut_prims_),
       backward_hook_fn_(prim_py.backward_hook_fn_) {}
 
+PrimitivePy &PrimitivePy::operator=(const PrimitivePy &other) {
+  if (this == &other) {
+    return *this;
+  }
+  python_obj_ = other.python_obj_;
+  bprop_cls_name_ = other.bprop_cls_name_;
+  adapter_ = other.adapter_;
+  signatures_ = other.signatures_;
+  bprop_cut_prims_ = other.bprop_cut_prims_;
+  backward_hook_fn_ = other.backward_hook_fn_;
+  return *this;
+}
+
 PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter)
     : Primitive(adapter->name_, false), python_obj_(python_obj), adapter_(adapter) {
   MS_LOG(DEBUG) << "New primitive:" << adapter->name_;
@@ -147,15 +158,14 @@ void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   set_has_signature(!signatures.empty());
 }
 
-py::function PrimitivePy::GetVmapRuleFunction(const bool is_side_effect, int axis_size) {
+py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
     py::function fn = python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
     return fn;
-  } else {
-    auto fn = GetVmapRuleFunctionByObj(python_obj_, axis_size);
-    return fn;
   }
+  auto fn = GetVmapRuleFunctionByObj(python_obj_, axis_size);
+  return fn;
 }
 
 py::function PrimitivePy::GetBpropFunction() {
@@ -634,9 +644,9 @@ int PrimitivePyAdapter::AddBackwardHookFn(const py::function &backward_hook_fn) 
 }
 
 void PrimitivePyAdapter::RemoveBackwardHookFn(int key) {
-  auto iter = backward_hook_fn_.find(key);
+  const auto iter = backward_hook_fn_.find(key);
   if (iter != backward_hook_fn_.end()) {
-    backward_hook_fn_.erase(iter);
+    (void)backward_hook_fn_.erase(iter);
   }
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {

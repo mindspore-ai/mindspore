@@ -481,7 +481,7 @@ void FuncGraphSpecializer::Run() {
 }
 
 void FuncGraphSpecializer::FirstPass() {
-  while (todo_.size()) {
+  while (!todo_.empty()) {
     AnfNodePtr node = todo_.back();
     todo_.pop_back();
     if (node->func_graph() == nullptr) {
@@ -669,7 +669,7 @@ bool CheckAbstractSequence(const AbstractSequencePtr &abs) {
 // First elimination.
 // Eliminate the unused items of Tuple/List.
 // Just adjust the nodes, not change the abstracts and dead nodes.
-void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
+void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) const {
   if (cnode == nullptr || cnode->abstract() == nullptr) {
     MS_LOG(EXCEPTION) << "The parameter \'node\' and its abstract should not be null.";
   }
@@ -1123,11 +1123,11 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   while (IsPrimitiveCNode(func, prim::kPrimPartial)) {
     std::vector<AnfNodePtr> inputs = func->cast<CNodePtr>()->inputs();
     // First element is partial, second is func so arg is start from 2
-    (void)args.insert(args.begin(), inputs.begin() + SizeToInt(arg_start_index), inputs.end());
+    (void)args.insert(args.cbegin(), inputs.cbegin() + SizeToInt(arg_start_index), inputs.cend());
     func = inputs[1];
   }
   new_inputs = args;
-  (void)new_inputs.insert(new_inputs.begin(), func);
+  (void)new_inputs.insert(new_inputs.cbegin(), func);
 
   // Deal with the CNode|Parameter function call including Partial closure ahead.
   if (!func->isa<ValueNode>() && func->abstract()->isa<AbstractFunction>() &&

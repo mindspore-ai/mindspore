@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "ir/manager.h"
 #include "ir/dtype.h"
@@ -159,11 +160,11 @@ void CheckValueTuple(const AnfNodePtr &node) {
   }
 }
 
-void Validate(const FuncGraphPtr &fg) {
-  FuncGraphManagerPtr mgr = Manage(fg, false);
+void Validate(const FuncGraphPtr &func_graph) {
+  FuncGraphManagerPtr mgr = Manage(func_graph, false);
   MS_EXCEPTION_IF_NULL(mgr);
-  AnfNodeSet &all_nodes = mgr->all_nodes();
-  for (auto &node : all_nodes) {
+  const AnfNodeSet &all_nodes = mgr->all_nodes();
+  for (auto node : all_nodes) {
     TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
     while (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
       node = node->cast<CNodePtr>()->input(1);

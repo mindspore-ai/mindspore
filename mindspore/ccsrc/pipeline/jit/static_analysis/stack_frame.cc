@@ -39,7 +39,7 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
 }
 
 AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
-                                                const AbstractFunctionPtr &graph_func) {
+                                                const AbstractFunctionPtr &graph_func) const {
   MS_EXCEPTION_IF_NULL(graph_func);
   MS_EXCEPTION_IF_NULL(fg_evaluator);
   AnalysisContextPtr parent_context = nullptr;

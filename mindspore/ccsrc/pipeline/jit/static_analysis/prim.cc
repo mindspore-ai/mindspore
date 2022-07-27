@@ -86,10 +86,9 @@ struct InterpretAbstractBoolCheckerRegister {
 
 using mindspore::parse::PyObjectWrapper;
 
-mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
-  prim::kPrimMakeTuple->name(),  prim::kPrimMakeList->name(),   prim::kPrimSwitch->name(),
-  prim::kPrimEnvironSet->name(), prim::kPrimEnvironGet->name(), prim::kPrimLoad->name(),
-  prim::kPrimUpdateState->name()};
+mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{prim::kMakeTuple,  prim::kMakeList,   prim::kSwitch,
+                                                                 prim::kEnvironSet, prim::kEnvironGet, prim::kLoad,
+                                                                 prim::kUpdateState};
 
 // The Python primitives who visit tuple/list elements, but not consume all elements.
 // Including:
@@ -97,10 +96,9 @@ mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
 // - Consume partial elements, not all. For instance, TupleGetItem.
 // Map{"primitive name", {vector<int>:"index to transparent pass, -1 means all elements"}}
 mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequence{
-  {prim::kPrimReturn->name(), std::vector({0})},       {prim::kPrimDepend->name(), std::vector({0})},
-  {prim::kPrimIdentity->name(), std::vector({0})},     {prim::kPrimMakeTuple->name(), std::vector({-1})},
-  {prim::kPrimMakeList->name(), std::vector({-1})},    {prim::kPrimListAppend->name(), std::vector({0})},
-  {prim::kPrimTupleGetItem->name(), std::vector({0})}, {prim::kPrimListGetItem->name(), std::vector({0})}};
+  {prim::kReturn, std::vector({0})},       {prim::kDepend, std::vector({0})},     {prim::kidentity, std::vector({0})},
+  {prim::kMakeTuple, std::vector({-1})},   {prim::kMakeList, std::vector({-1})},  {prim::kListAppend, std::vector({0})},
+  {prim::kTupleGetItem, std::vector({0})}, {prim::kListGetItem, std::vector({0})}};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
@@ -364,7 +362,7 @@ py::object AbstractTupleValueToPython(const AbstractTuplePtr &tuple_abs) {
   for (size_t i = 0; i < len; ++i) {
     value_tuple[i] = ConvertAbstractToPython(elements[i], true)[ATTR_VALUE];
   }
-  return std::move(value_tuple);
+  return value_tuple;
 }
 
 py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
@@ -454,7 +452,7 @@ py::object AbstractListValueToPython(const AbstractListPtr &list_abs) {
   for (size_t i = 0; i < len; ++i) {
     value_list[i] = ConvertAbstractToPython(elements[i], true)[ATTR_VALUE];
   }
-  return std::move(value_list);
+  return value_list;
 }
 
 py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
@@ -785,13 +783,12 @@ void SetShapeValue(const AbstractBasePtr &tensor, const py::object &output) {
   if (output.is_none()) {
     return;
   }
-  py::object obj_min =
-    output.contains(py::str(ATTR_MIN_VALUE)) ? (py::object)output[ATTR_MIN_VALUE] : (py::object)py::none();
-  py::object obj_max =
-    output.contains(py::str(ATTR_MAX_VALUE)) ? (py::object)output[ATTR_MAX_VALUE] : (py::object)py::none();
-  py::object obj_shape_value =
-    output.contains(py::str(ATTR_SHAPE_VALUE)) ? (py::object)output[ATTR_SHAPE_VALUE] : (py::object)py::none();
-  if (!obj_min.is_none() && !obj_max.is_none()) {
+  if (output.contains(py::str(ATTR_MIN_VALUE)) && output.contains(py::str(ATTR_MAX_VALUE))) {
+    const py::object &obj_min = output[ATTR_MIN_VALUE];
+    const py::object &obj_max = output[ATTR_MAX_VALUE];
+    if (obj_min.is_none() || obj_max.is_none()) {
+      return;
+    }
     bool converted = true;
     ValuePtr min_value = nullptr;
     ValuePtr max_value = nullptr;
@@ -806,16 +803,21 @@ void SetShapeValue(const AbstractBasePtr &tensor, const py::object &output) {
     auto abs_tensor = dyn_cast<abstract::AbstractTensor>(tensor);
     abs_tensor->set_value_range(min_value, max_value);
   }
-  if (!obj_shape_value.is_none()) {
-    bool converted = true;
-    ValuePtr shape_value = nullptr;
-    converted = parse::ConvertData(obj_shape_value, &shape_value);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert shape value data failed";
-    }
-    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(tensor);
-    abs_tensor->set_shape_value(shape_value);
+  if (!output.contains(py::str(ATTR_SHAPE_VALUE))) {
+    return;
   }
+  const py::object &obj_shape_value = output[ATTR_SHAPE_VALUE];
+  if (obj_shape_value.is_none()) {
+    return;
+  }
+  bool converted = true;
+  ValuePtr shape_value = nullptr;
+  converted = parse::ConvertData(obj_shape_value, &shape_value);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "Convert shape value data failed";
+  }
+  auto abs_tensor = dyn_cast<abstract::AbstractTensor>(tensor);
+  abs_tensor->set_shape_value(shape_value);
 }
 
 static bool IsMonadType(const py::object &type_obj) {
@@ -856,6 +858,17 @@ py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) 
   return out_item;
 }
 
+ShapeVector GetShapeVectorByAttr(const std::string &attr, const py::object &obj) {
+  if (!obj.contains(py::str(attr))) {
+    return {};
+  }
+  const py::object &shape = obj[py::str(attr)];
+  if (shape.is_none()) {
+    return {};
+  }
+  return shape.cast<ShapeVector>();
+}
+
 AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
                                               const py::object &output) {
   auto ret_vec = shape_obj.cast<ShapeVector>();
@@ -864,16 +877,8 @@ AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const
   ShapeVector max_shape_vec;
 
   if (!output.is_none()) {
-    py::object min_shape =
-      output.contains(py::str(ATTR_MIN_SHAPE)) ? (py::object)output[ATTR_MIN_SHAPE] : (py::object)py::none();
-    py::object max_shape =
-      output.contains(py::str(ATTR_MAX_SHAPE)) ? (py::object)output[ATTR_MAX_SHAPE] : (py::object)py::none();
-    if (!min_shape.is_none()) {
-      min_shape_vec = min_shape.cast<ShapeVector>();
-    }
-    if (!max_shape.is_none()) {
-      max_shape_vec = max_shape.cast<ShapeVector>();
-    }
+    min_shape_vec = GetShapeVectorByAttr(ATTR_MIN_SHAPE, output);
+    max_shape_vec = GetShapeVectorByAttr(ATTR_MAX_SHAPE, output);
   }
 
   auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
@@ -925,7 +930,7 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
     // Return monad abstract if it is monad type.
     return ToMonadAbstract(type_obj);
   } else {
-    MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
+    MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << py::str(type_obj);
   }
 }
 
@@ -956,7 +961,7 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 }
 }  // namespace
 
-EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
+EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &, const AbstractBasePtr &abs_base,
                                                      const AbstractBasePtrList &args) {
   auto prim_py = dyn_cast<PrimitivePy>(prim_);
   if (prim_py == nullptr) {
@@ -1180,7 +1185,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
   const auto &added_attrs = prim_py_->evaluate_added_attrs();
-  MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
+  MS_LOG(DEBUG) << "Output type is " << py::str(output);
   auto res_abs = PyInferRes2Abstract(prim_py_, output);
   MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
   EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
@@ -1372,8 +1377,8 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
-                                                      const ValuePtr &data_value, const ConfigPtr &data_conf,
+EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &, const ValuePtr &item_value,
+                                                      const ValuePtr &data_value, const ConfigPtr &,
                                                       const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(item_value);
   MS_EXCEPTION_IF_NULL(data_value);
@@ -1503,7 +1508,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 }
 }  // namespace
 
-EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
@@ -1526,7 +1531,7 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   return res;
 }
 
-EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
                                           const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
@@ -1870,7 +1875,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
   PyInterpretEvaluator() : TransitionPrimEvaluator("PyInterpretEvaluator") {}
   ~PyInterpretEvaluator() override = default;
   MS_DECLARE_PARENT(PyInterpretEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
     if (args_spec_list.empty()) {
       MS_LOG(ERROR) << "'args_spec_list' should not be empty";
@@ -2120,8 +2125,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   RaiseEvaluator() : TransitionPrimEvaluator("RaiseEvaluator") {}
   ~RaiseEvaluator() override = default;
   MS_DECLARE_PARENT(RaiseEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
     auto node = out_conf->node();
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
@@ -2179,12 +2184,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       exception_string += ")";
     }
     MS_EXCEPTION(type) << exception_string;
-    return nullptr;
   }
 
  private:
   // string need add quotation marks
-  bool CheckNeedSymbol(const AnfNodePtr &input, const AbstractBasePtr &abs) {
+  bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
     bool need_symbol = false;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast<abstract::AbstractScalarPtr>();
@@ -2274,7 +2278,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return exception_str;
   }
 
-  std::string GetExceptionType(const AbstractBasePtr &abs) {
+  std::string GetExceptionType(const AbstractBasePtr &abs) const {
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast<abstract::AbstractScalarPtr>();
@@ -2287,22 +2291,14 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
   }
 
-  std::string GetScalarStringValue(const AbstractBasePtr &abs, const AnfNodePtr &node) {
+  std::string GetScalarStringValue(const AbstractBasePtr &abs, const AnfNodePtr &node) const {
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast<abstract::AbstractScalarPtr>();
       auto scalar_value = scalar->BuildValue();
       auto scalar_type = scalar->BuildType();
-      if (scalar_value->isa<Int64Imm>()) {
-        str = std::to_string(GetValue<int64_t>(scalar_value));
-      } else if (scalar_value->isa<Int32Imm>()) {
-        str = std::to_string(GetValue<int32_t>(scalar_value));
-      } else if (scalar_type->isa<Float>()) {
+      if (scalar_type->isa<Float>()) {
         str = std::to_string(GetValue<float>(scalar_value));
-      } else if (scalar_value->isa<BoolImm>()) {
-        str = std::to_string(GetValue<bool>(scalar_value));
-      } else if (scalar_value->isa<StringImm>()) {
-        str = GetValue<std::string>(scalar_value);
       } else {
         str = scalar_value->ToString();
       }
