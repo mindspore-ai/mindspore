@@ -39,7 +39,7 @@ class DropoutGradBwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs, float keep_prob);
+                             const std::vector<AddressPtr> &outputs, float keep_prob) const;
   float keep_prob_{1.0};
   size_t num_count_{1};
   TypeId dtype_{kTypeUnknown};

@@ -86,9 +86,9 @@ TuplePtr AdaptiveMaxPool3DInferType(const PrimitivePtr &primitive, const std::ve
   const std::set<TypePtr> x_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> output_size_valid_types = {kInt32};
-  CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, x_valid_types, kNameAdaptiveMaxPool3D);
-  CheckAndConvertUtils::CheckTensorTypeValid("output_size_dtype", output_size_dtype, output_size_valid_types,
-                                             kNameAdaptiveMaxPool3D);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, x_valid_types, kNameAdaptiveMaxPool3D);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size_dtype", output_size_dtype, output_size_valid_types,
+                                                   kNameAdaptiveMaxPool3D);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, output_size_dtype});
 }
 }  // namespace

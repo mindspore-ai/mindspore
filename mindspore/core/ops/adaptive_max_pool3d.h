@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <set>
 #include <memory>
-#include <numeric>
 #include <vector>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"

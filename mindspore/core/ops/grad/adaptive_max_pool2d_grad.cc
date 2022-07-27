@@ -53,8 +53,8 @@ abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive
   CheckAndConvertUtils::CheckInRange("x_dim", x_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
   CheckAndConvertUtils::CheckInRange("argmax_dim", argmax_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
 
-  CheckAndConvertUtils::CheckInteger("y_grad_dims", y_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
-  CheckAndConvertUtils::CheckInteger("argmax_dims", argmax_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
+  (void)CheckAndConvertUtils::CheckInteger("y_grad_dims", y_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
+  (void)CheckAndConvertUtils::CheckInteger("argmax_dims", argmax_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
   if (y_grad_shape != argmax_shape) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the shape of 'y_grad' should be consistent with the shape of 'argmax'.";

@@ -19,7 +19,6 @@
 
 #include <map>
 #include <vector>
-#include <memory>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {

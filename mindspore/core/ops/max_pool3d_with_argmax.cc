@@ -94,7 +94,7 @@ Format MaxPool3DWithArgmax::get_format() const {
     {"NCDHW", Format::NCDHW},
   };
   auto attr_value_str = GetValue<std::string>(value_ptr);
-  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = valid_dataformat.find(attr_value_str);
   if (iter == valid_dataformat.end()) {
     MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << ", use NCDHW";
@@ -113,7 +113,7 @@ TypeId MaxPool3DWithArgmax::get_argmax_type() const {
     {"int64", TypeId::kNumberTypeInt64},
   };
   auto attr_value_str = GetValue<std::string>(value_ptr);
-  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = valid_argmax_type.find(attr_value_str);
   if (iter == valid_argmax_type.end()) {
     MS_LOG(EXCEPTION) << "Invalid argmax type " << attr_value_str << ", use int64 or int32";

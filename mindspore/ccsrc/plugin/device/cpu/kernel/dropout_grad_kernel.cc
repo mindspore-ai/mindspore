@@ -79,7 +79,7 @@ bool DropoutGradBwdCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 template <typename T>
 void DropoutGradBwdCpuKernelMod::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
                                                        const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs, float keep_prob) {
+                                                       const std::vector<AddressPtr> &outputs, float keep_prob) const {
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *mask = reinterpret_cast<T *>(inputs[1]->addr);

@@ -63,7 +63,7 @@ abstract::TupleShapePtr BatchNormGradGradInferShape(const PrimitivePtr &primitiv
                                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kBatchNormGradGradInputsNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kBatchNormGradGradInputsNum, prim_name);
   BaseShapePtr x_shape = input_args[kInputIndex0]->BuildShape();
   BaseShapePtr dy_shape = input_args[kInputIndex1]->BuildShape();
   BaseShapePtr scale_shape = input_args[kInputIndex2]->BuildShape();
