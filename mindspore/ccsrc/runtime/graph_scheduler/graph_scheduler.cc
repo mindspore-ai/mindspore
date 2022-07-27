@@ -878,8 +878,13 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         }
         MS_EXCEPTION_IF_NULL(front_node_with_index.first);
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
-        // is saved in the host queue data source actor.
-        if (front_node_position_temp_map.count(front_node_with_index) > 0) {
+        // is saved in the host queue data source actor. Particularly, the same front parameter corresponds to multiple
+        // backend parameters in heterogeneous scenarios, and these heterogeneous parameters need to be placed in the
+        // data source actor.
+        if (front_node_position_temp_map.count(front_node_with_index) > 0 &&
+            (!IsNeedInsertCopyActor(
+              device_context,
+              host_queue_ds_actor->device_contexts_[front_node_position_temp_map[front_node_with_index]]))) {
           (void)host_queue_ds_actor->data_node_position_map_.emplace(
             KernelWithIndex(input_node, 0), front_node_position_temp_map[front_node_with_index]);
           continue;
@@ -889,7 +894,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         (void)host_queue_ds_actor->data_node_position_map_.emplace(KernelWithIndex(input_node, 0), data_node_position);
         // In control flow, need to rely on the front node to find the location of the corresponding real parameter.
         (void)host_queue_ds_actor->data_node_position_map_.emplace(front_node_with_index, data_node_position);
-        MS_LOG(DEBUG) << "Insert data source parameter:" << front_node_with_index.first->DebugString()
+        MS_LOG(DEBUG) << "Insert data source parameter:" << input_node->DebugString()
+                      << " for front node:" << front_node_with_index.first->DebugString()
                       << " index:" << front_node_with_index.second << " position:" << data_node_position;
         (void)front_node_position_temp_map.emplace(front_node_with_index, data_node_position);
         data_node_position++;
