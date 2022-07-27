@@ -83,7 +83,7 @@ int LSTMTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
-  auto ms_input_shape = in_tensors_[0].Shape();
+  auto ms_input_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
   params_.sequence_size_ = ms_input_shape[0];
   params_.batch_size_ = ms_input_shape[1];
   params_.input_data_size_ = ms_input_shape[INPUT_SIZE_INDEX];

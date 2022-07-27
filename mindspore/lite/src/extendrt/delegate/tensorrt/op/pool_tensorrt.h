@@ -35,7 +35,7 @@ class PoolTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ParseParams();
+  int ParseParams(TensorRTContext *ctx);
 
   void AddParams(nvinfer1::IPoolingLayer *pooling_layer);
 

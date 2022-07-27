@@ -69,7 +69,7 @@ ITensorHelper TensorRTContext::MsName2Tensor(const std::string &ms_name) {
   if (ms_name2trt_tensor_.find(ms_name) != ms_name2trt_tensor_.end()) {
     return ms_name2trt_tensor_[ms_name];
   }
-  MS_LOG(ERROR) << "Get Tensorrt tensor by ms_tensor: " << ms_name << " fail!";
+  MS_LOG(WARNING) << "Get Tensorrt tensor by ms_tensor: " << ms_name << " fail!";
   return {};
 }
 }  // namespace mindspore::lite

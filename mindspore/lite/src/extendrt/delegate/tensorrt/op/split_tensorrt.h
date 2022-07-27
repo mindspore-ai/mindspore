@@ -36,7 +36,7 @@ class SplitTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ParseParams();
+  int ParseParams(const ITensorHelper &helper);
   int64_t axis_;
   int64_t output_num_;
   std::vector<int64_t> size_splits_;
