@@ -245,12 +245,40 @@ std::string MetaFuncGraphAbstractClosure::ToString() const {
   return "MetaFuncGraphAbstractClosure: " + meta_func_graph_->name();
 }
 
+namespace {
+class VisitedHistory {
+ public:
+  explicit VisitedHistory(const AbstractFunction *address) : visited_(!history_.emplace(address).second) { deep_++; }
+  ~VisitedHistory() {
+    deep_--;
+    // cppcheck-suppress *
+    if (deep_ == 0) {  // The result of cppcheck is "Condition (deep_==0) is always true". But it's wrong.
+      history_.clear();
+    }
+  }
+  bool IsVisited() const { return visited_; }
+
+ private:
+  static inline thread_local std::set<const AbstractFunction *> history_;
+  static inline thread_local size_t deep_ = 0;
+  bool visited_{false};
+};
+}  // namespace
+
 bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<PartialAbstractClosure>()) {
     return false;
   }
   auto other_partial = static_cast<const PartialAbstractClosure *>(&other);
-  if (!(*fn_ == *other_partial->fn_)) {
+  if (this == other_partial) {
+    return true;
+  }
+  // Avoid to recursively compare.
+  VisitedHistory history(this);
+  if (history.IsVisited()) {
+    return true;
+  }
+  if ((fn_ != other_partial->fn_) && !(*fn_ == *other_partial->fn_)) {
     MS_LOG(DEBUG) << "Fn: " << fn_->ToString() << " other: " << other_partial->fn_->ToString();
     return false;
   }
@@ -260,7 +288,8 @@ bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
   }
   for (std::size_t i = 0; i < args_spec_list_.size(); i++) {
     if (args_spec_list_[i]->isa<AbstractFunction>()) {
-      if (!(*args_spec_list_[i] == *other_partial->args_spec_list_[i])) {
+      if ((args_spec_list_[i] != other_partial->args_spec_list_[i]) &&
+          !(*args_spec_list_[i] == *other_partial->args_spec_list_[i])) {
         MS_LOG(DEBUG) << "Fn: [" << i << "] " << args_spec_list_[i]->ToString()
                       << " other: " << other_partial->args_spec_list_[i]->ToString();
         return false;
