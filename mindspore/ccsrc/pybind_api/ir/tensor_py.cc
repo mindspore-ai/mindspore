@@ -142,7 +142,7 @@ static std::string GetPyTypeFormat(TypeId data_type) {
 
 static bool IsCContiguous(const py::array &input) {
   auto flags = static_cast<unsigned int>(input.flags());
-  return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
+  return (flags & static_cast<unsigned int>(pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_)) != 0;
 }
 
 // TensorDataNumpy implements TensorData using numpy array.
@@ -220,11 +220,11 @@ TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) 
   std::unique_ptr<char[]> tmp_buf;
   if (!IsCContiguous(input)) {
     Py_buffer pybuf;
-    if (PyObject_GetBuffer(input.ptr(), &pybuf, PyBUF_ANY_CONTIGUOUS)) {
+    if (PyObject_GetBuffer(input.ptr(), &pybuf, PyBUF_ANY_CONTIGUOUS) != 0) {
       MS_LOG(EXCEPTION) << "Failed to get buffer from the input!";
     }
     tmp_buf = std::make_unique<char[]>(pybuf.len);
-    if (PyBuffer_ToContiguous(tmp_buf.get(), &pybuf, pybuf.len, 'C')) {
+    if (PyBuffer_ToContiguous(tmp_buf.get(), &pybuf, pybuf.len, 'C') != 0) {
       MS_LOG(EXCEPTION) << "Can't copy numpy.ndarray to a contiguous buffer.";
     }
     PyBuffer_Release(&pybuf);

@@ -52,7 +52,7 @@ using is_value = std::is_base_of<Value, remove_reference_t<T>>;
 template <typename T>
 using is_base_ref = std::is_base_of<BaseRef, remove_reference_t<T>>;
 
-MS_CORE_API iterator ConstIteratorCast(std::vector<BaseRef> *v, const_iterator iter);
+MS_CORE_API iterator ConstIteratorCast(std::vector<BaseRef> *v, const const_iterator iter);
 
 inline std::shared_ptr<VectorRef> MakeNode(const std::vector<BaseRef> &elements) {
   return std::make_shared<VectorRef>(elements);
@@ -76,13 +76,13 @@ inline BasePtr MakeNode(const T &v) {
   return MakeValue(v);
 }
 
-inline std::shared_ptr<VectorRef> MakeNode(const VectorRef &a) { return std::make_shared<VectorRef>(std::move(a)); }
+inline std::shared_ptr<VectorRef> MakeNode(const VectorRef &a) { return std::make_shared<VectorRef>(a); }
 inline std::shared_ptr<VectorRef> MakeNode(const AnfNodePtrList &a) {
   std::vector<BaseRef> ret;
   (void)std::transform(a.begin(), a.end(), std::back_inserter(ret), [](const AnfNodePtr &v) { return v; });
   return std::make_shared<VectorRef>(ret);
 }
-inline std::shared_ptr<SetRef> MakeNode(const SetRef &a) { return std::make_shared<SetRef>(std::move(a)); }
+inline std::shared_ptr<SetRef> MakeNode(const SetRef &a) { return std::make_shared<SetRef>(a); }
 inline std::shared_ptr<RunFunctionRef> MakeNode(const RunFuncPtr &a) { return std::make_shared<RunFunctionRef>(a); }
 
 /// \brief BaseRef is a base class which store a Base pointer to some real data.
@@ -251,7 +251,7 @@ const T &cast(const BaseRef &handle) {
     return static_cast<const T &>(*handle.m_ptr);
   }
 
-  return std::move(static_cast<const T &>(handle));
+  return static_cast<const T &>(handle);
 }
 
 // valueref -> nodeptr type
@@ -281,6 +281,7 @@ class MS_CORE_API VectorRef : public BaseRef {
   VectorRef(const const_iterator &begin, const const_iterator &end) : elements_(begin, end) {}
 
   // left reference
+  VectorRef(const VectorRef &other);
   virtual VectorRef &operator=(const VectorRef &other);
 
   ~VectorRef() override = default;
@@ -374,6 +375,7 @@ class MS_CORE_API SetRef : public BaseRef {
   SetRef(const const_set_iterator &begin, const const_set_iterator &end) : elements_(begin, end) {}
 
   // left reference
+  SetRef(const SetRef &other);
   virtual SetRef &operator=(const SetRef &other);
 
   bool operator==(const BaseRef &other) const override;

@@ -79,7 +79,7 @@ class RegisterStandardPrimitiveEvalHelper {
   }                                                                                                        \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
 
-MS_CORE_API void RegisterHostDependsImpl(const std::string &name, const std::set<int64_t> &host_depends);
+MS_CORE_API void RegisterHostDependsImpl(const std::string &prim_name, const std::set<int64_t> &host_depends);
 
 class RegisterHostDependsHelper {
  public:

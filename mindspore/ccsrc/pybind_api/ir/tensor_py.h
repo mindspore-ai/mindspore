@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 
 #include "ir/tensor.h"
@@ -39,10 +38,12 @@ struct npy_scalar_caster {
   PYBIND11_TYPE_CASTER(T, _("PleaseOverride"));
   using Array = array_t<T>;
 
-  bool load(handle src, bool convert) {
+  bool load(handle src, bool convert) const {
     // Taken from Eigen casters. Permits either scalar dtype or scalar array.
     handle type = dtype::of<T>().attr("type");
-    if (!convert && !isinstance<Array>(src) && !isinstance(src, type)) return false;
+    if (!convert && !isinstance<Array>(src) && !isinstance(src, type)) {
+      return false;
+    }
 
     Array tmp = Array::ensure(src);
     if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {
@@ -97,7 +98,7 @@ class TensorPy {
   //
   // param input [py::array] Data value of the tensor.
   // param data_type [TypeId] Data type of the tensor.
-  static TensorPtr MakeTensor(const py::array &input, const TypePtr &data_type = nullptr);
+  static TensorPtr MakeTensor(const py::array &input, const TypePtr &type_ptr = nullptr);
 
   // brief Create Tensor from a numpy array without copy.
   //

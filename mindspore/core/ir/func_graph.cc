@@ -20,7 +20,6 @@
 #include <algorithm>
 #include "utils/trace_base.h"
 #include "ir/manager.h"
-#include "utils/flags.h"
 #include "utils/ordered_set.h"
 #include "utils/convert_utils_base.h"
 #include "abstract/abstract_function.h"
@@ -574,7 +573,7 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
   if (has_kwarg_) {
     min_param_num += 1;
   }
-  min_param_num += kw_only_args_count_;
+  min_param_num += IntToSize(kw_only_args_count_);
   min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
@@ -583,7 +582,7 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
                       << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
                       << ", kw_only_args_count_: " << kw_only_args_count_;
   }
-  return parameters_[parameters_.size() - min_param_num + kw_only_args_count_];
+  return parameters_[parameters_.size() - min_param_num + IntToSize(kw_only_args_count_)];
 }
 
 std::string FuncGraph::GetVariableArgName() {
@@ -638,7 +637,7 @@ AnfNodePtrList FuncGraph::GetKwOnlyArgsParameters() {
     min_param_num += 1;
     varargs_kwargs_num += 1;
   }
-  min_param_num += kw_only_args_count_;
+  min_param_num += IntToSize(kw_only_args_count_);
   min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
@@ -765,7 +764,7 @@ CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const std::ve
   return NewCNodeInOrder(std::move(input_node_list));
 }
 
-void FuncGraph::SetMultiTarget() {
+void FuncGraph::SetMultiTarget() const {
   auto graph_manager = manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();

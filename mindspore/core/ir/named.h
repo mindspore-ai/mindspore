@@ -30,7 +30,7 @@ class MS_CORE_API Named : public Value {
   /// \brief The constructor for Named.
   ///
   /// \param[in] name The name of object.
-  explicit Named(const std::string &name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
+  explicit Named(const std::string &name) : name_(name), hash_id_(std::hash<std::string>{}(name)) {}
   /// \brief The constructor for Named, create a Named for another Named.
   ///
   /// \param[in]  other The input tensor.

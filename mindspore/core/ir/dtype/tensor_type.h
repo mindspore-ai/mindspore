@@ -144,7 +144,7 @@ class MS_CORE_API SparseTensorType : public Object {
   std::string ElementsDtypeStr(const StringType str_type) const;
   TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
 
-  const TypePtr operator[](size_t dim) const;
+  const TypePtr operator[](std::size_t dim) const;
   bool operator==(const Type &other) const;
   TypePtrList elements() const { return elements_; }
 

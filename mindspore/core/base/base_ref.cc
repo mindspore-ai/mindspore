@@ -88,6 +88,8 @@ uint32_t BaseRef::type() const {
 }
 
 // left reference
+SetRef::SetRef(const SetRef &other) : elements_(other.elements_) {}
+
 SetRef &SetRef::operator=(const SetRef &other) {
   if (elements_ == other.elements_ || this == &other) {
     return *this;
@@ -113,6 +115,8 @@ std::string SetRef::ToString() const {
 }
 
 // left reference
+VectorRef::VectorRef(const VectorRef &other) : elements_(other.elements_) {}
+
 VectorRef &VectorRef::operator=(const VectorRef &other) {
   if (elements_ == other.elements_ || this == &other) {
     return *this;

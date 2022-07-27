@@ -17,7 +17,8 @@
  */
 
 #include "ir/graph_utils.h"
-
+#include <utility>
+#include <deque>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
@@ -173,9 +174,9 @@ static void FetchCNodeSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> 
   auto sort_rhs_first =
     attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
   if (sort_rhs_first) {
-    vecs->insert(vecs->end(), inputs.cbegin(), inputs.cend());
+    (void)vecs->insert(vecs->end(), inputs.cbegin(), inputs.cend());
   } else {
-    vecs->insert(vecs->end(), inputs.crbegin(), inputs.crend());
+    (void)vecs->insert(vecs->end(), inputs.crbegin(), inputs.crend());
   }
 }
 

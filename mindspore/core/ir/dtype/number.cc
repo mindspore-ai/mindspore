@@ -15,7 +15,6 @@
  */
 
 #include "ir/dtype/number.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 bool Number::operator==(const Type &other) const {

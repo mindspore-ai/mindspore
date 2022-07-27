@@ -19,14 +19,8 @@
 #ifndef MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 #define MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 
-#include <utility>
-#include <memory>
 #include <vector>
-#include <map>
-#include <set>
-#include <string>
 #include <functional>
-#include <deque>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
