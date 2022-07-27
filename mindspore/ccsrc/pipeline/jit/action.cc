@@ -490,6 +490,75 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
   return true;
 }
 
+namespace {
+bool IsSideEffectCNode(const AnfNodePtr &node) {
+  const auto &primitive = GetCNodePrimitiveWithoutDoSignature(node);
+  if (primitive != nullptr) {
+    auto effect_info = GetPrimEffectInfo(primitive);
+    if (effect_info.memory || effect_info.io) {
+      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
+bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
+  const auto node = func_graph->output();
+  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return false;
+  }
+  auto cnode = dyn_cast<CNode>(node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
+  auto sort_rhs_first =
+    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
+  if (!sort_rhs_first) {
+    // Return false if it's definitely not isolated Depend CNode.
+    return false;
+  }
+
+  // To check isolated nodes in {Depend -> StopGradient -> MakeTuple(...)}.
+  constexpr size_t stop_gradient_pos = 2;
+  auto stop_gradient_node = cnode->input(stop_gradient_pos);
+  auto stop_gradient_cnode = dyn_cast<CNode>(stop_gradient_node);
+  MS_EXCEPTION_IF_NULL(stop_gradient_cnode);
+  constexpr size_t isolated_node_pos = 1;
+  auto isolated_node = stop_gradient_cnode->input(isolated_node_pos);
+  if (IsPrimitiveCNode(isolated_node, prim::kPrimMakeTuple)) {
+    auto isolated_cnode = dyn_cast<CNode>(isolated_node);
+    MS_EXCEPTION_IF_NULL(isolated_cnode);
+    for (size_t i = 1; i < isolated_cnode->size(); ++i) {
+      if (IsSideEffectCNode(isolated_cnode->input(i))) {
+        MS_LOG(DEBUG) << "Multiple isolated side-effect node[" << i << "]: " << isolated_cnode->input(i)->DebugString();
+        return true;
+      }
+    }
+  } else {
+    if (IsSideEffectCNode(isolated_node)) {
+      MS_LOG(DEBUG) << "Single isolated side-effect node: " << isolated_node->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
+void CheckIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
+  if (!HasIsolatedSideEffectNode(func_graph)) {
+    return;
+  }
+
+  auto new_return = func_graph->get_return();
+  new_return->set_has_isolated_side_effect_node(true);
+  func_graph->set_has_isolated_side_effect_node(true);
+  auto output_cnode = dyn_cast<CNode>(func_graph->output());
+  if (output_cnode != nullptr) {
+    output_cnode->set_has_isolated_side_effect_node(true);
+  }
+  MS_LOG(INFO) << "Set isolated side-effect node flag for " << func_graph->ToString();
+}
+}  // namespace
+
 bool SymbolResolveAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -500,12 +569,15 @@ bool SymbolResolveAction(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "SymbolResolve error, graph is null";
   }
   bool ret = parse::ResolveFuncGraph(func_graph, resource);
-  // Remove unused nodes in cnode order list.
-  if (func_graph) {
+  // Remove unused nodes in cnode order list,
+  // and check isolated side-effect nodes.
+  if (func_graph != nullptr) {
     func_graph->EraseUnusedNodeInOrder();
+    CheckIsolatedSideEffectNode(func_graph);
     for (auto fg : func_graph->func_graphs_used_total()) {
-      if (fg) {
+      if (fg != nullptr) {
         fg->EraseUnusedNodeInOrder();
+        CheckIsolatedSideEffectNode(fg);
       }
     }
   }
@@ -589,6 +661,9 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   auto loaded_graph_ptr = GetLoadedGraph(resource);
 
   // Abstract analyze
+  auto engine = resource->engine();
+  MS_EXCEPTION_IF_NULL(engine);
+  engine->set_check_isolated_side_effect(true);
   AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
 
   // The top graph may be replaced by infer, update the top graph when the infer is done
@@ -597,6 +672,7 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   // Specialize
   FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
   resource->set_func_graph(new_fg);
+  engine->set_check_isolated_side_effect(false);
 
   // Remove unused nodes in cnode order list, this is prepared for auto-monad.
   if (new_fg) {

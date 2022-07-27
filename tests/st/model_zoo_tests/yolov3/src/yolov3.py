@@ -671,7 +671,8 @@ class TrainingWrapper(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 class YoloBoxScores(nn.Cell):

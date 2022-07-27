@@ -34,9 +34,8 @@ def _adam_opt(opt, beta1, beta2, eps, lr, weight_decay, param, m, v, gradient):
     """
     Update parameters by AdamWeightDecay op.
     """
-    success = True
-    next_param = opt(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient)
-    return F.depend(success, next_param)
+    opt(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient)
+    return True
 
 
 def _check_param_value(beta1, beta2, eps, prim_name):

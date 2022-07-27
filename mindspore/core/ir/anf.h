@@ -657,12 +657,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
 
   /// \brief Add a node debug info.
   ///
-  /// \param node A node debug info of an anf node.
+  /// \param debug_info A node debug info of an anf node.
   void AddFusedDebugInfo(const NodeDebugInfoPtr &debug_info);
 
   /// \brief Add a list of node debug infos.
   ///
-  /// \param node A node debug info of an anf node.
+  /// \param debug_infos A node debug info of an anf node.
   void AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos);
 
   /// \brief Check whether this node is in ms_function or not in PyNative Mode.
@@ -672,8 +672,20 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
 
   /// \brief Set is_parallel_ for CNode.
   ///
-  /// \param[in] is_parallel_ Boolean.
+  /// \param[in] parallel Boolean.
   void set_parallel(bool parallel) { flags_[kIsParallel] = parallel; }
+
+  /// \brief Check whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
+  ///
+  /// \return True if contains, otherwise false.
+  bool has_isolated_side_effect_node() const { return has_isolated_side_effect_node_; }
+
+  /// \brief Set whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
+  ///
+  /// \param[in] has_isolated_side_effect_node Boolean.
+  void set_has_isolated_side_effect_node(bool has_isolated_side_effect_node) {
+    has_isolated_side_effect_node_ = has_isolated_side_effect_node;
+  }
 
  private:
   static constexpr size_t kStopGradient = 0;
@@ -693,6 +705,9 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
   NodeDebugInfoSet primal_debug_infos_;
   NodeDebugInfoSet fused_debug_infos_;
+
+  // If the inputs or their inputs contain Depend CNode with isolated side-effect node.
+  bool has_isolated_side_effect_node_{false};
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.

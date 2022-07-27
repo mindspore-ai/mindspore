@@ -24,7 +24,7 @@ class NetValueNodeWithDepend(nn.Cell):
         return output
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_node_with_depend():

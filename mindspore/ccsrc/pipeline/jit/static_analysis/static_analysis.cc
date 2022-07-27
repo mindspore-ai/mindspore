@@ -323,12 +323,19 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
   }
 
+  bool contains_isolated_side_effect = false;
   ConfigPtrList args_conf_list;
   // Ignore the first node which is function name
   auto &inputs = cnode->inputs();
   for (std::size_t i = 1; i < inputs.size(); i++) {
     const AnfNodePtr &node = inputs[i];
     args_conf_list.push_back(MakeConfig(node, conf->context(), conf->func_graph()));
+    if (check_isolated_side_effect()) {
+      auto input_cnode = dyn_cast<CNode>(node);
+      if (input_cnode != nullptr) {
+        contains_isolated_side_effect |= input_cnode->has_isolated_side_effect_node();
+      }
+    }
   }
 
   std::vector<EvaluatorPtr> evaluators;
@@ -348,6 +355,21 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   func->Visit(build_evaluator);
 
   auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
+  // Check if func graph contains isolated side-effect, and sync.
+  if (check_isolated_side_effect()) {
+    FuncGraphAbstractClosurePtr func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(func);
+    if (func_graph_abs != nullptr) {
+      contains_isolated_side_effect |= func_graph_abs->func_graph()->has_isolated_side_effect_node();
+    }
+    MetaFuncGraphAbstractClosurePtr meta_func_graph_abs = dyn_cast<MetaFuncGraphAbstractClosure>(func);
+    if (meta_func_graph_abs != nullptr) {
+      contains_isolated_side_effect |= meta_func_graph_abs->meta_func_graph()->has_isolated_side_effect_node();
+    }
+    if (contains_isolated_side_effect) {
+      cnode->set_has_isolated_side_effect_node(true);
+      conf->func_graph()->set_has_isolated_side_effect_node(true);
+    }
+  }
   return eval_result;
 }
 

@@ -783,9 +783,21 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       MS_LOG(EXCEPTION) << "Fail to get input's abstract value, with input config: " << input_conf->ToString()
                         << ", in old node: " << c_old->DebugString();
     }
-    // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
-    // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
-    AnfNodePtr replace_node = BuildPossibleValueNode(node_input, abs, attrs, node);
+    bool ignore_build_value = false;
+    AnfNodePtr replace_node = nullptr;
+    if (specializer_->engine()->check_isolated_side_effect()) {
+      auto cnode_input = dyn_cast<CNode>(node_input);
+      ignore_build_value = (cnode_input != nullptr && cnode_input->has_isolated_side_effect_node());
+      if (ignore_build_value) {
+        MS_LOG(INFO) << "Don't build value node for CNode which contains isolated side-effect inputs, node: "
+                     << cnode_input->DebugString() << ", flag: " << cnode_input->has_isolated_side_effect_node();
+      }
+    }
+    if (!ignore_build_value) {
+      // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
+      // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
+      replace_node = BuildPossibleValueNode(node_input, abs, attrs, node);
+    }
     if (replace_node == nullptr) {
       replace_node = BuildReplacedNode(input_conf);
       replace_node->set_abstract(abs);

@@ -20,7 +20,6 @@ from mindspore import nn
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
@@ -98,8 +97,10 @@ class TrainStepWrap(nn.Cell):
         sens_w = P.Fill()(P.DType()(loss_w), P.Shape()(loss_w), self.sens)
         sens_d = P.Fill()(P.DType()(loss_d), P.Shape()(loss_d), self.sens)
         grads_w = self.grad_w(self.loss_net_w, weights_w)(x, sens_w)
+        self.optimizer_w(grads_w)
         grads_d = self.grad_d(self.loss_net_d, weights_d)(x, sens_d)
-        return F.depend(loss_w, self.optimizer_w(grads_w)), F.depend(loss_d, self.optimizer_d(grads_d))
+        self.optimizer_d(grads_d)
+        return loss_w, loss_d
 
 
 def test_two_subgraphs():

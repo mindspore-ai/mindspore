@@ -18,7 +18,6 @@ import os
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import mindspore.common.dtype as mstype
-from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Dropout
@@ -321,7 +320,8 @@ class TrainStepWrap(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 class PredictWithSigmoid(nn.Cell):

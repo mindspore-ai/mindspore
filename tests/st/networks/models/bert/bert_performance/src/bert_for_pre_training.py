@@ -488,8 +488,8 @@ update_accu_grads = C.MultitypeFuncGraph("update_accu_grads")
 
 @update_accu_grads.register("Tensor", "Tensor")
 def _update_accu_grads(accu_grad, grad):
-    succ = True
-    return F.depend(succ, F.assign(accu_grad, cast(grad, mstype.float32)))
+    F.assign(accu_grad, cast(grad, mstype.float32))
+    return True
 
 
 accumulate_accu_grads = C.MultitypeFuncGraph("accumulate_accu_grads")
@@ -497,8 +497,8 @@ accumulate_accu_grads = C.MultitypeFuncGraph("accumulate_accu_grads")
 
 @accumulate_accu_grads.register("Tensor", "Tensor")
 def _accumulate_accu_grads(accu_grad, grad):
-    succ = True
-    return F.depend(succ, F.assign_add(accu_grad, cast(grad, mstype.float32)))
+    F.assign_add(accu_grad, cast(grad, mstype.float32))
+    return True
 
 
 zeroslike = P.ZerosLike()
@@ -507,8 +507,8 @@ reset_accu_grads = C.MultitypeFuncGraph("reset_accu_grads")
 
 @reset_accu_grads.register("Tensor")
 def _reset_accu_grads(accu_grad):
-    succ = True
-    return F.depend(succ, F.assign(accu_grad, zeroslike(accu_grad)))
+    F.assign(accu_grad, zeroslike(accu_grad))
+    return True
 
 
 class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):

@@ -248,9 +248,7 @@ bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
     return false;
   }
   auto cnode = dyn_cast<CNode>(node);
-  if (cnode == nullptr) {
-    return false;
-  }
+  MS_EXCEPTION_IF_NULL(cnode);
   auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
   auto sort_rhs_first =
     attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
