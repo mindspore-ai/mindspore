@@ -487,7 +487,7 @@ class FeedForward(Cell):
 
             if expert_num > 1:
                 self.mapping.shard(strategy_matmul=((dp, ep, 1, 1), (ep, 1, mp)),
-                                   strategy_bias=((dp, ep, 1, mp), (dp, ep, 1, mp)),
+                                   strategy_bias=((dp, ep, 1, mp), (1, ep, 1, mp)),
                                    strategy_activation=((dp, ep, 1, mp),))
             else:
                 self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
@@ -502,7 +502,7 @@ class FeedForward(Cell):
                                       param_init_type=param_init_type)
             if expert_num > 1:
                 self.projection.shard(strategy_matmul=((dp, ep, 1, mp), (ep, mp, 1)),
-                                      strategy_bias=((dp, ep, 1, 1), (dp, ep, 1, 1)))
+                                      strategy_bias=((dp, ep, 1, 1), (1, ep, 1, 1)))
             else:
                 self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)),
                                       strategy_bias=((dp, 1), (1,)))
