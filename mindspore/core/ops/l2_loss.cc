@@ -37,7 +37,7 @@ TypePtr L2LossInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto x_type = input_args[0]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
   return x_type;
 }

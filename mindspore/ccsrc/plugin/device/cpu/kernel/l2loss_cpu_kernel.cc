@@ -17,7 +17,9 @@
 #include "plugin/device/cpu/kernel/l2loss_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/l2_loss.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,31 +28,40 @@ constexpr size_t kL2LossInputsNum = 1;
 constexpr size_t kL2LossOutputsNum = 1;
 }  // namespace
 
-void L2LossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
-  tensor_size_ = SizeOf(input_shape_);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, L2LossFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "L2Loss does not support this kernel data type: " << kernel_attr;
+bool L2LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Loss>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast L2Loss ops failed!";
+    return false;
   }
-  kernel_func_ = func_list_[index].second;
+  kernel_name_ = kernel_ptr->name();
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+int L2LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
+  }
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
+  tensor_size_ = SizeOf(input_shape_);
+  return 0;
 }
 
 template <typename T>
 bool L2LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2LossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2LossOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto result_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   *result_addr = static_cast<T>(0);
   if (tensor_size_ == 0) {
     MS_LOG(WARNING) << kernel_name_ << " input shape contain 0, input_shape: " << input_shape_;
@@ -63,11 +74,25 @@ bool L2LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
-std::vector<std::pair<KernelAttr, L2LossCpuKernelMod::L2LossFunc>> L2LossCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &L2LossCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &L2LossCpuKernelMod::LaunchKernel<float>}};
+const std::vector<std::pair<KernelAttr, L2LossCpuKernelMod::KernelRunFunc>> &L2LossCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, L2LossCpuKernelMod::KernelRunFunc>> func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &L2LossCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &L2LossCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &L2LossCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list_;
+}
+
+std::vector<KernelAttr> L2LossCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  auto func_list = GetFuncList();
+  (void)std::transform(func_list.begin(), func_list.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, KernelRunFunc> &item) { return item.first; });
+  return support_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, L2Loss, L2LossCpuKernelMod);
 }  // namespace kernel

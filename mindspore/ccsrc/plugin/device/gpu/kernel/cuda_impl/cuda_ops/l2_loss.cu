@@ -42,3 +42,5 @@ template CUDA_LIB_EXPORT void L2Loss<float>(const size_t input_size, const float
                                             cudaStream_t stream);
 template CUDA_LIB_EXPORT void L2Loss<half>(const size_t input_size, const half *input , half *output,
                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void L2Loss<double>(const size_t input_size, const double *input , double *output,
+                                           cudaStream_t stream);
