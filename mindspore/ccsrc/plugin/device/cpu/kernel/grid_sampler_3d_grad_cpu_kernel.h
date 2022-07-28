@@ -78,19 +78,19 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   template <typename T>
   T grid_sampler_compute_source_index_set_grad(T coord, int64_t size, const std::string &padding_mode,
-                                               bool align_corners, T *grad_x);
+                                               bool align_corners, T *grad_x) const;
 
   template <typename T>
-  T reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x);
+  T reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x) const;
 
   template <typename T>
-  T clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x);
+  T clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x) const;
 
   template <typename T>
   void safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW, int64_t D, int64_t H,
                    int64_t W, T delta);
 
-  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
+  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

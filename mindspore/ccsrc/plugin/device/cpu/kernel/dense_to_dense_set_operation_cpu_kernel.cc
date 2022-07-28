@@ -52,8 +52,9 @@ const std::vector<size_t> GetStrides(const ShapeVector &shape) {
   std::vector<size_t> result(shape.size());
   size_t product = 1;
   for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
-    result[i] = product;
-    product *= LongToSize(shape[i]);
+    auto idx = LongToSize(i);
+    result[idx] = product;
+    product *= LongToSize(shape[idx]);
   }
   return result;
 }
