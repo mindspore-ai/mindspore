@@ -25,6 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,6 +34,7 @@ constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
+constexpr auto kAttrPrimitiveTarget = "primitive_target";
 void MaxPool::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
   (void)this->AddAttr(kPadMode, api::MakeValue(swi));
@@ -111,12 +113,49 @@ int64_t CeilDiv(int64_t a, int64_t b) {
   return result;
 }
 
+void CheckOutshapeValid(const PrimitivePtr &primitive, const std::vector<int64_t> &out_shape,
+                        const std::vector<int64_t> &in_shape, const std::vector<int64_t> &kernel_size,
+                        const std::vector<int64_t> &strides) {
+  for (auto out : out_shape) {
+    if (out <= 0 && out != -1) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the each element of the output shape must be larger than 0, but got output "
+                                  "shape: {out_shape}. The input shape: "
+                               << in_shape << ", kernel size: " << kernel_size << ", strides: " << strides
+                               << ". Please check the official api documents for more information about the output.";
+    }
+  }
+}
+
+void CheckDataFormat(const PrimitivePtr &primitive, int64_t data_format) {
+  if (data_format == NHWC) {
+    string primitive_target;
+
+    if (primitive->HasAttr(kAttrPrimitiveTarget)) {
+      primitive_target = GetValue<std::string>(primitive->GetAttr(kAttrPrimitiveTarget));
+    } else {
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      primitive_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    }
+    if (primitive_target != kGPUDevice) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the 'NHWC' format is only supported in GPU target.";
+    }
+  } else if (data_format != NCHW) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input format should be NCHW or NHWC, but got "
+                             << data_format << ".";
+  }
+}
+
 abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   std::vector<int64_t> kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   std::vector<int64_t> strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  (void)CheckAndConvertUtils::CheckPositiveVector("kernel_size", kernel_size, op_name);
+  (void)CheckAndConvertUtils::CheckPositiveVector("strides", strides, op_name);
   int64_t pad_mode = 0;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
 
@@ -128,18 +167,15 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   if (shape_map.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input should exist, but missed.";
   }
+  CheckDataFormat(primitive, data_format);
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of input", in_shape.size(), kEqual, kSizeFour, op_name);
-
   if (data_format == NHWC) {
     ConvertShapeNHWCToNCHW(&in_shape);
     ConvertShapeNHWCToNCHW(&min_shape);
     ConvertShapeNHWCToNCHW(&max_shape);
-  } else if (data_format != NCHW) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input format should be NCHW or NHWC, but got "
-                             << data_format << ".";
   }
 
   int64_t out_h = 0, out_w = 0, out_h_min = 0, out_w_min = 0, out_h_max = 0, out_w_max = 0;
@@ -170,8 +206,9 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
                              << pad_mode << ".";
   }
   abstract::ShapePtr shape;
+  std::vector<int64_t> out_shape;
   if (data_format == NHWC) {
-    std::vector<int64_t> out_shape = {in_shape[kIndex0], out_h, out_w, in_shape[kIndex1]};
+    out_shape = {in_shape[kIndex0], out_h, out_w, in_shape[kIndex1]};
     if (!min_shape.empty() && !max_shape.empty()) {
       std::vector<int64_t> out_shape_min = {min_shape[kIndex0], out_h_min, out_w_min, min_shape[kIndex1]};
       std::vector<int64_t> out_shape_max = {max_shape[kIndex0], out_h_max, out_w_max, max_shape[kIndex1]};
@@ -180,7 +217,7 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
       shape = std::make_shared<abstract::Shape>(out_shape);
     }
   } else {
-    std::vector<int64_t> out_shape = {in_shape[kIndex0], in_shape[kIndex1], out_h, out_w};
+    out_shape = {in_shape[kIndex0], in_shape[kIndex1], out_h, out_w};
     if (!min_shape.empty() && !max_shape.empty()) {
       std::vector<int64_t> out_shape_min = {min_shape[kIndex0], min_shape[kIndex1], out_h_min, out_w_min};
       std::vector<int64_t> out_shape_max = {max_shape[kIndex0], max_shape[kIndex1], out_h_max, out_w_max};
@@ -189,15 +226,22 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
       shape = std::make_shared<abstract::Shape>(out_shape);
     }
   }
+
+  CheckOutshapeValid(primitive, out_shape, in_shape, kernel_size, strides);
   return shape;
 }
 
 TypePtr MaxPoolInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.size() == 0) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the input args used for infer shape and type is necessary, but missing it.";
+  }
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                             << "', the input args used for infer shape and type is necessary, but missing it.";
   }
-  return input_args[0]->BuildType();
+  auto type = CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, 0);
+  return type;
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(MaxPool, BaseOperator);

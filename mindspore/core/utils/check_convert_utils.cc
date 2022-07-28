@@ -470,7 +470,7 @@ TypePtr CheckAndConvertUtils::GetTensorInputType(const std::string &prim_name,
   auto base_type = input_arg->BuildType();
   MS_EXCEPTION_IF_NULL(base_type);
   if (!base_type->isa<TensorType>()) {
-    MS_EXCEPTION(ValueError) << "The " << index << "'s input type of " << prim_name << " is not Tensor.";
+    MS_EXCEPTION(TypeError) << "The " << index << "'s input type of " << prim_name << " is not Tensor.";
   }
   auto tensor_type = base_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
