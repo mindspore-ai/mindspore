@@ -44,14 +44,14 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+ protected:
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
 
  private:
   template <typename S>
-  inline S GetBlankPaddedTarget(const S *target, int i) const {
+  inline S GetBlankPaddedTarget(const S *target, int64_t i) const {
     if (i % 2 == 0) {
       return static_cast<S>(blank_);
     } else {

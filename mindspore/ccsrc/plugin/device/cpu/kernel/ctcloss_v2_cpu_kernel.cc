@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/ctcloss_v2_cpu_kernel.h"
-#include <utility>
 #include <string>
 #include <limits>
 #include <algorithm>
@@ -102,7 +101,7 @@ std::vector<S> CTCLossV2CpuKernelMod::IndexProcessing(const S *input_lengths, co
                                  << "] = " << target_lengths[i]
                                  << " is negative or larger than target.shape[1] = " << target_length << ".";
       }
-      target_offsets[i] = target_length * SizeToLong(i);
+      target_offsets[i] = static_cast<S>(target_length * SizeToLong(i));
     }
   } else {
     S current = 0;
@@ -213,10 +212,10 @@ T CTCLossV2CpuKernelMod::DoReduce(T *neg_log_likelihood, const S *target_lengths
     for (int b = 0; b < batch_; ++b) {
       neg_log_likelihood[b] = neg_log_likelihood[b] / target_lengths[b];
     }
-    T sum = std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, 0.0);
+    T sum = std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, static_cast<T>(0.0));
     return sum / batch_;
   } else {  // Sum
-    return std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, 0.0);
+    return std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, static_cast<T>(0.0));
   }
 }
 

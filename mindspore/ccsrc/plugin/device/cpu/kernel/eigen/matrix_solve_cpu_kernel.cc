@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/eigen/matrix_solve_cpu_kernel.h"
 #include <Eigen/Dense>
-#include <utility>
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/matrix_solve.h"
@@ -56,7 +55,8 @@ int MatrixSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   const auto matrix_shape = inputs.at(kIndex0)->GetShapeVector();
   const auto rhs_shape = inputs.at(kIndex1)->GetShapeVector();
-  batch_num_ = std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, 1, std::multiplies{});
+  batch_num_ =
+    std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, static_cast<int64_t>(1), std::multiplies{});
   m_ = matrix_shape.back();
   k_ = rhs_shape.back();
 
@@ -65,7 +65,7 @@ int MatrixSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
 template <typename T>
 bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
+                                           const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto matrix_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto rhs_ptr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
@@ -85,9 +85,9 @@ bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
 
       PartialPivLU<Matrix<T>> lu(m_);
       if (adjoint_) {
-        lu.compute(matrix.adjoint());
+        (void)lu.compute(matrix.adjoint());
       } else {
-        lu.compute(matrix);
+        (void)lu.compute(matrix);
       }
 
       if (lu.matrixLU().diagonal().cwiseAbs().minCoeff() <= 0) {
@@ -99,7 +99,7 @@ bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   };
 
-  ParallelLaunchAutoSearch(task, batch_num_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, LongToSize(batch_num_), this, &parallel_search_info_);
 
   if (!invertible) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'matrix' is not invertible.";

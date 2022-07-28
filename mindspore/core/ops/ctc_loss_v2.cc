@@ -66,9 +66,11 @@ TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto name = primitive->name();
   auto type = CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->BuildType(),
                                                    {kFloat32, kFloat64}, name);
-  CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64}, name);
-  CheckAndConvertUtils::CheckTypeValid("input_lengths", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64}, name);
-  CheckAndConvertUtils::CheckTypeValid("target_lengths", input_args[kInputIndex3]->BuildType(), {kInt32, kInt64}, name);
+  (void)CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64}, name);
+  (void)CheckAndConvertUtils::CheckTypeValid("input_lengths", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64},
+                                             name);
+  (void)CheckAndConvertUtils::CheckTypeValid("target_lengths", input_args[kInputIndex3]->BuildType(), {kInt32, kInt64},
+                                             name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace
@@ -77,7 +79,7 @@ MIND_API_OPERATOR_IMPL(CTCLossV2, BaseOperator);
 AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kInputNum = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto type = CTCLossV2InferType(primitive, input_args);
   auto shape = CTCLossV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
