@@ -19,7 +19,9 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "pybind11/pybind11.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -47,7 +49,9 @@ class DeprecatedInterface {
   // ascend
   virtual uint32_t InitCollective() { return 0; }  // return device id
   virtual void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
-
+  virtual bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) { return true; }
+  virtual bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false) { return true; }
+  virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
   // gpu
 };
 }  // namespace device

@@ -179,7 +179,7 @@ uint32_t GetHcclRankSize();
 void InitPipeline();
 void FinalizeBackend();
 void ClearResAtexit();
-void ReleaseGeTsd();
+void CloseTsd(bool force = false);
 void MemoryRecycle();
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,

@@ -25,7 +25,6 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
-#include "runtime/device/context_extends.h"
 #include "include/common/utils/mpi/mpi_config.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/rt.h"
@@ -1275,9 +1274,6 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
 bool AscendKernelRuntime::HcclInit() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context::IsTsdOpened(context_ptr)) {
-    MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
-  }
   MS_LOG(INFO) << "Do hcom init.";
   auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string rank_id_str = GetRankIdStr();

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSORPRINT_UTILS_H_
-#define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSORPRINT_UTILS_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
 
 #include <map>
 #include <string>
 #include "ir/dtype/type.h"
-#ifndef NO_DLIB
 #include "acl/acl_tdt.h"
 #include "tdt/tsd_client.h"
 #include "tdt/data_common.h"
@@ -41,5 +40,4 @@ class COMMON_EXPORT TensorPrint {
   const acltdtChannelHandle *acl_handle_;
 };
 }  // namespace mindspore
-#endif
-#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSORPRINT_UTILS_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_

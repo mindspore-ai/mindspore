@@ -427,7 +427,12 @@ void GeDeviceContext::Initialize() {
   initialized_ = InitGe(MsContext::GetInstance());
 }
 
-void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
+void GeDeviceContext::Destroy() {
+  (void)FinalizeGe(MsContext::GetInstance());
+  if (deprecated_interface_ != nullptr) {
+    deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
+  }
+}
 
 void GeDeviceResManager::Initialize() {
   if (mem_manager_ == nullptr) {
@@ -748,7 +753,7 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
 DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   // need lock when multi-threads
   if (deprecated_interface_ == nullptr) {
-    deprecated_interface_ = std::make_unique<GeDeprecatedInterface>(this);
+    deprecated_interface_ = std::make_unique<AscendDeprecatedInterface>(this);
   }
   return deprecated_interface_.get();
 }
