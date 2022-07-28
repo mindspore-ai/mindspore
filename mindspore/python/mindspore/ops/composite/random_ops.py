@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Operations for random number generators."""
+import mindspore
 from mindspore.ops.primitive import constexpr
 from .. import operations as P
 from .. import functional as F
@@ -310,7 +311,7 @@ def poisson(shape, mean, seed=None):
         TypeError: If `seed` is not an int.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend````CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -321,19 +322,17 @@ def poisson(shape, mean, seed=None):
         >>> output = ops.poisson(shape, mean, seed=5)
         >>> result = output.shape
         >>> print(result)
-        (4, 2)
+        (4, 2, 1)
         >>> # case 2: It can not be broadcast. It is recommended to use the same shape.
         >>> shape = (2, 2)
         >>> mean = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
         >>> output = ops.poisson(shape, mean, seed=5)
         >>> result = output.shape
         >>> print(result)
-        (2, 2)
+        (2, 2, 2, 2)
     """
-    seed1, seed2 = _get_seed(seed, "poisson")
-    random_poisson = P.Poisson(seed1, seed2)
-    value = random_poisson(shape, mean)
-    return value
+    shape_in = mindspore.Tensor(shape)
+    return F.poisson(shape_in, mean, seed)
 
 
 @_function_forbid_reuse
