@@ -37,6 +37,30 @@ from ..operations.array_ops import TensorScatterElements
 from ..composite import _VmapGeneralRule
 
 
+@vmap_rules_getters.register(P.NoRepeatNGram)
+def get_no_repeat_ngram_vmap_rule(prim, axis_size):
+    """VmapRule for `NoRepeatNGram` operation."""
+
+    def vmap_rule(state_seq_bdim, log_probs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, state_seq_bdim, log_probs_bdim)
+        if is_all_none:
+            return result
+
+        state_seq, state_seq_dim = state_seq_bdim
+        log_probs, log_probs_dim = log_probs_bdim
+        state_seq = _bdim_at_front(state_seq, state_seq_dim, axis_size)
+        log_probs = _bdim_at_front(log_probs, log_probs_dim, axis_size)
+        s_ori_shape = F.shape(state_seq)
+        l_ori_shape = F.shape(log_probs)
+        state_seq = F.reshape(state_seq, (-1,) + s_ori_shape[-2:])
+        log_probs = F.reshape(log_probs, (-1,) + l_ori_shape[-2:])
+        out = prim(state_seq, log_probs)
+        out = F.reshape(out, l_ori_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register("Cast")
 def get_cast_vmap_rule(prim, axis_size):
     """VmapRule for `Cast` operation."""
