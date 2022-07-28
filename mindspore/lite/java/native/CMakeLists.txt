@@ -96,7 +96,7 @@ endif()
 set(LITE_SO_NAME mindspore-lite)
 
 set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
-            LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
+        LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -113,7 +113,7 @@ if(SUPPORT_TRAIN)
         ${TOP_DIR}/mindspore/lite/src/common/log.cc
     )
     set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
-                LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
+            LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
     if(PLATFORM_ARM64 OR PLATFORM_ARM32)
         find_library(log-lib log)

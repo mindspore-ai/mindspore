@@ -103,6 +103,7 @@ public class MSContext {
     public void free() {
         if (isInitialized()) {
             this.free(this.msContextPtr);
+            this.msContextPtr = EMPTY_CONTEXT_PTR_VALUE;
         } else {
             LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
         }
