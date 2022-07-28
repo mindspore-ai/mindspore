@@ -865,7 +865,7 @@ std::vector<Operator> DfGraphConvertor::GetWhileBodyOutputs() {
     }
 
     if (j->isa<Parameter>()) {
-      size_t idx = find(inputs_.begin(), inputs_.end(), j) - inputs_.begin();
+      int64_t idx = find(inputs_.begin(), inputs_.end(), j) - inputs_.begin();
       auto idx_cond = body_cond_map_[idx];
       if (while_used_input_index_.find(idx_cond) == while_used_input_index_.end() ||
           while_const_input_index_.find(idx_cond) != while_const_input_index_.end()) {
@@ -1140,7 +1140,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
 
   for (size_t i = 0; i < body_params.size(); i++) {
     auto p = body_params[i];
-    size_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
+    int64_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
     body_cond_map_[i] = idx;
     MS_LOG(DEBUG) << "body_cond_map_'s key: " << i << " value: " << idx;
   }
@@ -1157,7 +1157,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
 
   for (size_t i = 0; i < after_params.size(); i++) {
     auto p = after_params[i];
-    size_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
+    int64_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
     after_cond_map_[i] = idx;
     MS_LOG(DEBUG) << "after_cond_map_'s key: " << i << " value: " << idx;
   }
