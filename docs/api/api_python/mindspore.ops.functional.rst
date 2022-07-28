@@ -479,7 +479,7 @@ Array操作
     mindspore.ops.sparse_add
 
 梯度剪裁
-^^^^^^^
+^^^^^^^^
 
 .. mscnplatformautosummary::
     :toctree: ops
