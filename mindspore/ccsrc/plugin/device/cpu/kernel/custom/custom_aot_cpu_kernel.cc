@@ -63,7 +63,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < num_input_; i++) {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-    shape_list_.emplace_back(in_shape);
+    (void)shape_list_.emplace_back(in_shape);
     ndims_.push_back(SizeToInt(in_shape.size()));
     type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
@@ -77,7 +77,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < num_output_; i++) {
     auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-    shape_list_.emplace_back(out_shape);
+    (void)shape_list_.emplace_back(out_shape);
     ndims_.push_back(SizeToInt(out_shape.size()));
     type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
   }

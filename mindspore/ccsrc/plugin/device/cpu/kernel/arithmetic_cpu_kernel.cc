@@ -101,8 +101,8 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
     }
 
     output_size_ = SizeOf(output_shape_);
-    op_para_.in_elements_num0_ = SizeOf(input_shape1_);
-    op_para_.in_elements_num1_ = SizeOf(input_shape2_);
+    op_para_.in_elements_num0_ = SizeToInt(SizeOf(input_shape1_));
+    op_para_.in_elements_num1_ = SizeToInt(SizeOf(input_shape2_));
 
     size_t l = input_shape1_.size();
     if (l < output_shape_.size()) {

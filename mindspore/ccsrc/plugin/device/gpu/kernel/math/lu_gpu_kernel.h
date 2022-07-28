@@ -161,7 +161,7 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (IsDynamic(shape_signed)) {
       return true;
     }
-    auto in_shape = Convert2SizeTClipNeg(shape_signed);
+    auto in_shape = Convert2SizeT(shape_signed);
     // 2. check input shape not null
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {

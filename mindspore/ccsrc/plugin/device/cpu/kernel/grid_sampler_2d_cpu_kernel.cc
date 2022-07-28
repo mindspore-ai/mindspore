@@ -40,7 +40,7 @@ void GridSampler2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, ShapeVector shape) {
     for (int32_t i = 3; i > -1; i--) {
       stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= LongToSize(shape[i]);
+      stride_tmp *= LongToSize(shape[IntToSize(i)]);
     }
     stride_tmp = 1;
   };

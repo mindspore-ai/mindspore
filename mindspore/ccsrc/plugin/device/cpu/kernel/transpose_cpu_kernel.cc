@@ -68,8 +68,8 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   transpose_param_.strides_[num_axes - 1] = 1;
   transpose_param_.out_strides_[num_axes - 1] = 1;
   for (size_t i = num_axes - 1; i >= 1; i--) {
-    transpose_param_.strides_[i - 1] = input_shape_[i] * transpose_param_.strides_[i];
-    transpose_param_.out_strides_[i - 1] = output_shape_[i] * transpose_param_.out_strides_[i];
+    transpose_param_.strides_[i - 1] = LongToInt(input_shape_[i]) * transpose_param_.strides_[i];
+    transpose_param_.out_strides_[i - 1] = LongToInt(output_shape_[i]) * transpose_param_.out_strides_[i];
   }
   launch_map_[kNumberTypeBool] = &TransposeFwdCpuKernelMod::LaunchKernel<bool>;
   launch_map_[kNumberTypeInt8] = &TransposeFwdCpuKernelMod::LaunchKernel<int8_t>;
@@ -110,7 +110,7 @@ void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
   int output_shape[SizeToInt(output_shape_.size())];
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_shape[i] = output_shape_[i];
+    output_shape[i] = LongToInt(output_shape_[i]);
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (axes_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {

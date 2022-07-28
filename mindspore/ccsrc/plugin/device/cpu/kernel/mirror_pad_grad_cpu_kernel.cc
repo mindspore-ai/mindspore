@@ -70,7 +70,7 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   shape_size_ = input_shape_.size();
-  (void)input_shape_.insert(input_shape_.begin(), SizeToLong(kPadMaxSupportDim - shape_size_), 1);
+  (void)input_shape_.insert(input_shape_.begin(), kPadMaxSupportDim - shape_size_, 1);
   shape_size_ = kPadMaxSupportDim;
 
   for (size_t i = 0; i < shape_size_; ++i) {
@@ -87,9 +87,8 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (output_shape_.size() == 2) {
     (void)output_shape_.insert(output_shape_.begin(), 2, 1);  // channel padding
   }
-  for (auto x : output_shape_) {
-    output_size_ *= SizeToLong(x);
-  }
+
+  output_size_ = SizeOf(output_shape_);
 
   for (size_t i = 0; i < 2; i++) {
     workspace_size_ *= LongToSize(output_shape_[i]);

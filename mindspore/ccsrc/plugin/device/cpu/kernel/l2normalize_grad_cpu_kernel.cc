@@ -63,7 +63,8 @@ void L2NormalizeGradCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   int output_dim_length = output_shape.size();
   dim_elem_num_list_.resize(output_dim_length, 1);
   for (int i = output_dim_length - 2; i >= 0; i--) {  // from -2 to 0 dim
-    dim_elem_num_list_[i] = LongToSize(output_shape[i + 1]) * dim_elem_num_list_[i + 1];
+    auto idx = IntToSize(i);
+    dim_elem_num_list_[idx] = LongToSize(output_shape[idx + 1]) * dim_elem_num_list_[idx + 1];
   }
 
   int axis = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
@@ -139,11 +140,12 @@ template <typename T>
 std::vector<T> L2NormalizeGradCpuFunc<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
   auto x_shape = input_shape_list_[0];
   std::vector<T> x_vector;
-  x_vector.reserve(x_shape[axis_]);
-  for (size_t i = 0; i < LongToSize(x_shape[axis_]); i++) {
+  auto idx = IntToSize(axis_);
+  x_vector.reserve(x_shape[idx]);
+  for (size_t i = 0; i < LongToSize(x_shape[idx]); i++) {
     size_t oneDimIndex = 0;
     std::vector<size_t> tmp_high_dim_index = high_dim_index;
-    tmp_high_dim_index[axis_] = i;
+    tmp_high_dim_index[idx] = i;
     HighDimIndexToOneDimIndex(&oneDimIndex, tmp_high_dim_index);
     (void)x_vector.emplace_back(x[oneDimIndex]);
   }

@@ -40,8 +40,8 @@ void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input must be float32, but got " << dtype_;
   }
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  param_->num_axes_ = input_shape_.size();
-  param_->in_shape_length_ = input_shape_.size();
+  param_->num_axes_ = SizeToInt(input_shape_.size());
+  param_->in_shape_length_ = SizeToInt(input_shape_.size());
   std::vector<int64_t> begin_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
                        [](const int64_t &value) { return static_cast<int>(value); });

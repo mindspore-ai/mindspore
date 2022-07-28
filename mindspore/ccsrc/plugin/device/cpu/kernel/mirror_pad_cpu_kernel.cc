@@ -54,7 +54,7 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   shape_size_ = input_shape_.size();
-  (void)input_shape_.insert(input_shape_.begin(), SizeToLong(kPadMaxSupportDim - shape_size_), 1);
+  (void)input_shape_.insert(input_shape_.begin(), kPadMaxSupportDim - shape_size_, 1);
   shape_size_ = kPadMaxSupportDim;
 
   tensor_size_ = SizeOf(input_shape_);

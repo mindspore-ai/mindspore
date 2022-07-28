@@ -218,7 +218,7 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
     type_ids.emplace_back(type_id);
-    shapes.emplace_back(shape);
+    (void)shapes.emplace_back(shape);
   }
 
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());

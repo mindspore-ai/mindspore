@@ -33,7 +33,7 @@ class PServerKernel {
   PServerKernel(const PServerKernel &) = delete;
   PServerKernel &operator=(const PServerKernel &) = delete;
   virtual void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &) {}
-  virtual void InitKernel(const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &) {}
+  virtual void InitKernel(const CNodePtr &, const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &) {}
   virtual void ReInit(const std::vector<ShapeVector> &) {}
   virtual bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
