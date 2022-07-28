@@ -41,6 +41,7 @@ void Celu(const float *src, int length, float *dst, float alpha);
 float TanhOpt(float src);
 int HShrink(const float *src, int length, float *dst, float lambd);
 int SoftShrink(const float *src, int length, float *dst, float lambd);
+int SoftsignFp32Opt(const float *src, int length, float *dst);
 #ifdef __cplusplus
 }
 #endif

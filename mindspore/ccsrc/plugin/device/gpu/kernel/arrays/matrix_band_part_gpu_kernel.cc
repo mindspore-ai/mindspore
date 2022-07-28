@@ -153,17 +153,20 @@ bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
   upper_ = static_cast<int64_t>(upper);
   lower_ = (lower_ < 0 || lower_ > SizeToLong(m_)) ? SizeToLong(m_) : lower_;
   upper_ = (upper_ < 0 || upper_ > SizeToLong(n_)) ? SizeToLong(n_) : upper_;
-  if (lower_ >= SizeToLong(m_) && upper_ >= SizeToLong(n_)) {
+
+  if (lower == 0 && upper == 0) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(output_ptr, 0, output_element_num_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "For 'MatrixBandPart', it's cudaMemsetAsync failed.");
+  } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(output_ptr, x_ptr, output_element_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "For 'MatrixBandPart', it's cudaMemcpyAsync failed.");
-    return true;
   }
-  if (lower_ == 0 && upper_ == 0) {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(output_ptr, 0, output_element_num_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
-      "For 'MatrixBandPart', it's cudaMemsetAsync failed.");
+
+  if (lower_ >= SizeToLong(m_) && upper_ >= SizeToLong(n_)) {
+    return true;
   }
   MatrixBandPart(output_outer_size_, x_ptr, m_, n_, lower_, upper_, output_ptr, device_id_,
                  reinterpret_cast<cudaStream_t>(cuda_stream_));
