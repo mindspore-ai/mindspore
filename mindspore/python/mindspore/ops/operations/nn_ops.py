@@ -8466,7 +8466,7 @@ class CTCLossV2Grad(Primitive):
         self.add_prim_attr("zero_infinity", zero_infinity)
 
 
-class Conv3DTranspose(PrimitiveWithInfer):
+class Conv3DTranspose(Primitive):
     r"""
     Computes a 3D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
@@ -8583,6 +8583,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.add_prim_attr('out_channel', self.out_channel)
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.add_prim_attr('kernel_size', self.kernel_size)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False,
                                              ret_five=True)
         self.add_prim_attr('strides', self.stride)
@@ -8608,6 +8609,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         if self.pad_mode == 'pad':
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad item', self.name)
+        self.add_prim_attr('pad_list', self.pad_list)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
         self.group = validator.check_equal_int(group, 1, 'group', self.name)
@@ -8622,6 +8624,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the 'output_padding' must be zero or (0, 0, 0) "
                              f"when 'pad_mode' is not \"pad\", but got 'output_padding' is "
                              f"{output_padding} and 'pad_mode' is {pad_mode}.")
+        self.add_prim_attr('output_padding', self.output_padding)
         validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
         validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, Rel.INC_BOTH,
@@ -8634,71 +8637,6 @@ class Conv3DTranspose(PrimitiveWithInfer):
                                   'output_padding_h belonging [0, max(stride_h,dilation_h))', self.name)
         validator.check_int_range(self.output_padding[4], 0, max(self.dilation[4], self.stride[4]), Rel.INC_LEFT,
                                   'output_padding_w belonging [0, max(stride_w,dilation_w))', self.name)
-
-    def __infer__(self, x, w, b=None):
-        args = {'x': x['dtype'], 'w': w['dtype']}
-        if b is not None:
-            raise ValueError(f"For '{self.name}', the 'bias' currently only support None, but got {b}.")
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-
-        # infer shape
-        x_shape = x['shape']
-        w_shape = w['shape']
-        validator.check_equal_int(len(w_shape), 5, "weight rank", self.name)
-        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
-        validator.check("filter's batch", w_shape[0], "input x's channel",
-                        x_shape[1], Rel.EQ, self.name)
-
-        kernel_d, kernel_h, kernel_w = self.kernel_size
-        _, _, stride_d, stride_h, stride_w = self.stride
-        _, _, dilation_d, dilation_h, dilation_w = self.dilation
-
-        if self.pad_mode == "valid":
-            d_out = _deconv_output_length(x_shape[2], kernel_d, stride_d, dilation_d)
-            h_out = _deconv_output_length(x_shape[3], kernel_h, stride_h, dilation_h)
-            w_out = _deconv_output_length(x_shape[4], kernel_w, stride_w, dilation_w)
-            self.pad_list = (0, 0, 0, 0, 0, 0)
-            self.output_padding = (0, 0, 0, 0, 0)
-
-        elif self.pad_mode == "same":
-            d_out = x_shape[2] * stride_d
-            h_out = x_shape[3] * stride_h
-            w_out = x_shape[4] * stride_w
-
-            pad_needed_d = max(0, (x_shape[2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - d_out)
-            pad_head = math.floor(pad_needed_d / 2)
-            pad_tail = pad_needed_d - pad_head
-
-            pad_needed_h = max(0, (x_shape[3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - h_out)
-            pad_top = math.floor(pad_needed_h / 2)
-            pad_bottom = pad_needed_h - pad_top
-
-            pad_needed_w = max(0, (x_shape[4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - w_out)
-            pad_left = math.floor(pad_needed_w / 2)
-            pad_right = pad_needed_w - pad_left
-            self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
-            self.output_padding = (0, 0, 0, 0, 0)
-
-        elif self.pad_mode == 'pad':
-            pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.pad_list
-            d_out = (x_shape[2] - 1) * self.stride[2] - (pad_head + pad_tail) + self.dilation[2] * \
-                    (self.kernel_size[0] - 1) + self.output_padding[2] + 1
-            h_out = (x_shape[3] - 1) * self.stride[3] - (pad_top + pad_bottom) + self.dilation[3] * \
-                    (self.kernel_size[1] - 1) + self.output_padding[3] + 1
-            w_out = (x_shape[4] - 1) * self.stride[4] - (pad_left + pad_right) + self.dilation[4] * \
-                    (self.kernel_size[2] - 1) + self.output_padding[4] + 1
-
-        self.add_prim_attr('pad_list', self.pad_list)
-        self.add_prim_attr('output_padding', self.output_padding)
-        output_shape = (x_shape[0], w_shape[1] * self.group, d_out, h_out, w_out)
-        self.add_prim_attr('input_size', output_shape)
-        out = {
-            'value': None,
-            'shape': output_shape,
-            'dtype': x['dtype'],
-        }
-        return out
 
 
 class Dilation2D(Primitive):

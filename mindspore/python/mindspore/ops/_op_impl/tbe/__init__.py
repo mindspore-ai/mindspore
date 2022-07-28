@@ -561,6 +561,7 @@ from .conv3d import _conv3d_tbe
 from .conv3d_backprop_input import _conv3d_backprop_input_tbe
 from .conv3d_backprop_filter import _conv3d_backprop_filter_tbe
 from .conv3d_transpose import _conv3d_transpose_tbe
+from .conv3d_transpose_ds import _conv3d_transpose_ds_tbe
 from .lamb_apply_optimizer_assign import _lamb_apply_optimizer_assign_tbe
 from .lamb_apply_weight_assign import _lamb_apply_weight_assign_tbe
 from .nll_loss import _nll_loss_tbe
