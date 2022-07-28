@@ -56,7 +56,7 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   }
   output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   values_size_ = LongToSize(values_shape[0]);
-  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE));
+  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IntToSize(DENSE)));
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' must be "
                       << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";

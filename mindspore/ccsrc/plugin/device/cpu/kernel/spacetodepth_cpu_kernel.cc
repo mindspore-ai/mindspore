@@ -77,9 +77,9 @@ bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
 
   auto task = [&, input_addr, output_addr](size_t start, size_t end) {
-    std::vector<size_t> input_pos_array(input_dimension, 0);
+    std::vector<int64_t> input_pos_array(input_dimension, 0);
     for (size_t i = start; i < end; ++i) {
-      size_t tmp_pos = i;
+      int64_t tmp_pos = i;
       for (size_t j = 0; j < input_dimension - 1; ++j) {
         input_pos_array[j] = tmp_pos / input_strides[j];
         tmp_pos %= input_strides[j];

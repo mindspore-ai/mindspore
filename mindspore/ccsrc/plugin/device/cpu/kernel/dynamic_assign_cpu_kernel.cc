@@ -107,7 +107,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     auto node_ptr = out_node->cast<ParameterPtr>();
     auto value = node_ptr->default_param();
     auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
-    tensor->set_shape(input_x_shape);
+    (void)tensor->set_shape(input_x_shape);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output must be a Parameter.";
   }

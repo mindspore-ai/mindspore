@@ -42,7 +42,7 @@ void GridSampler3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto stride_compute = [&](std::vector<size_t> &stride, std::vector<int64_t> shape) {
     for (int i = kFour; i > -static_cast<int>(kOne); i--) {
       (void)stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= static_cast<size_t>(shape[static_cast<size_t>(i)]);
+      stride_tmp *= LongToSize(shape[IntToSize(i)]);
     }
     stride_tmp = kOne;
   };
@@ -223,7 +223,8 @@ T GridSampler3DCpuKernelMod::reflect_coordinates(T coord, int64_t twice_low, int
   }
 }
 
-bool GridSampler3DCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) {
+bool GridSampler3DCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H,
+                                                 int64_t W) const {
   return d >= 0 && d < D && h >= 0 && h < H && w >= 0 && w < W;
 }
 
