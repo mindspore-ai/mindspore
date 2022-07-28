@@ -1822,6 +1822,7 @@ class MaxPoolWithArgmax(_Pool):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+
         data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
@@ -1842,7 +1843,7 @@ class MaxPoolWithArgmax(_Pool):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
