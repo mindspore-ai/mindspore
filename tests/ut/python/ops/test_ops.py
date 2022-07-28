@@ -89,6 +89,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
+from mindspore.ops.operations.image_ops import RGBToHSV
 from mindspore.ops.operations.nn_ops import CTCLossV2
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
@@ -4034,6 +4035,10 @@ test_case_other_ops = [
         'block': P.HSVToRGB(),
         'desc_inputs': [Tensor(np.array([[[[0.5, 0.5, 0.5]]]], np.float32))],
         'skip': ['backward']}),
+    ('RGBToHSV', {
+        'block': RGBToHSV(),
+        'desc_inputs': [Tensor(np.array([[[[0.5, 0.5, 0.5]]]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[[[0., 0., 0.5]]]], np.float32))]}),
     ('FillV2', {
         'block': inner.FillV2(),
         'desc_inputs': [Tensor([2, 3], mstype.int32),

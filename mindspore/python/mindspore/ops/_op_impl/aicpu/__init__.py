@@ -22,6 +22,7 @@ from .fractional_avg_pool import _fractional_avg_pool_aicpu
 from .fractional_avg_pool_grad import _fractional_avg_pool_grad_aicpu
 from .unravel_index import _unravel_index_aicpu
 from .hsv_to_rgb import _hsv_to_rgb_aicpu
+from .rgb_to_hsv import _rgb_to_hsv_aicpu
 from .unique import _unique_aicpu
 from .lu_solve import _lu_solve_aicpu
 from .matrix_solve import _matrix_solve_aicpu
