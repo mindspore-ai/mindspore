@@ -51,18 +51,21 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
                              << "', the input 'x' and 'v' must be greater than 0 dimension,"
                              << " but got: " << x_in_shape.size();
   }
+  (void)CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
+                                                 primitive->name());
 
   for (size_t i = 1; i < x_in_shape.size(); ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
-                                              std::to_string(i) + "th dim of v", v_in_shape.at(i), primitive->name());
+    (void)CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
+                                                    std::to_string(i) + "th dim of v", v_in_shape.at(i),
+                                                    primitive->name());
   }
 
   auto indices = CheckAndConvertUtils::CheckIntOrTupleInt("indices", primitive->GetAttr(kIndices), primitive->name());
 
   // check indices
   if (v_in_shape.at(0) > 0) {
-    CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, v_in_shape.at(0),
-                                             primitive->name());
+    (void)CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual,
+                                                   LongToSize(v_in_shape.at(0)), primitive->name());
   }
   if (v_in_shape.at(0) > 0) {
     for (size_t i = 0; i < indices.size(); ++i) {
@@ -91,8 +94,8 @@ TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   return CheckAndConvertUtils::CheckTensorTypeSame(args, common_valid_types, prim_name);
 }
 }  // namespace
-void InplaceAdd::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
-void InplaceSub::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
+void InplaceAdd::set_indices(const std::vector<int64_t> indices) { (void)AddAttr(kIndices, api::MakeValue(indices)); }
+void InplaceSub::set_indices(const std::vector<int64_t> indices) { (void)AddAttr(kIndices, api::MakeValue(indices)); }
 void InplaceUpdate::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
 
 std::vector<int64_t> InplaceAdd::get_indices() const {

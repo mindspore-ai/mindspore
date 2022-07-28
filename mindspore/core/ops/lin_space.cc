@@ -29,9 +29,9 @@ namespace ops {
 namespace {
 TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(prim_name, input_args, kInputIndex2);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(prim_name, input_args, kInputIndex2);
 
   auto num_value = input_args[kInputIndex2]->BuildValue();
   MS_EXCEPTION_IF_NULL(num_value);
@@ -69,7 +69,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   const auto num_value = input_args[kInputIndex2]->BuildValue();
   const int64_t num = num_value->cast<Int64ImmPtr>()->value();
 
-  CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterThan, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterThan, 0, prim_name);
 
   size_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
@@ -84,7 +84,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
     ShapeVector out_shape = {num};
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    (void)CheckAndConvertUtils::Check("shape of 'start'", start_shape, kEqual, stop_shape, prim_name);
+    CheckAndConvertUtils::Check("shape of 'start'", start_shape, kEqual, stop_shape, prim_name);
     ShapeVector out_shape(start_shape.begin(), start_shape.end());
     out_shape.push_back(num);
     return std::make_shared<abstract::Shape>(out_shape);
@@ -96,7 +96,7 @@ AbstractBasePtr LinSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = LinSpaceInferType(primitive, input_args);
   auto infer_shape = LinSpaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_INPLACE_SUB_H_
 #define MINDSPORE_CORE_OPS_INPLACE_SUB_H_
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -35,7 +34,7 @@ class MIND_API InplaceSub : public BaseOperator {
   /// \brief Constructor.
   InplaceSub() : BaseOperator(kNameInplaceSub) { InitIOName({"x", "v"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.InplaceSub for the inputs.
-  void Init(std::vector<int64_t> indices) { set_indices(indices); }
+  void Init(const std::vector<int64_t> indices) { set_indices(indices); }
   /// \brief Set indices.
   void set_indices(std::vector<int64_t> indices);
   /// \brief Get indices.

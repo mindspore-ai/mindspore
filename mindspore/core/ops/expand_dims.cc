@@ -61,11 +61,11 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
     axis += rank + 1;
   }
 
-  x_shape.insert(x_shape.begin() + axis, 1);
+  (void)x_shape.insert(x_shape.begin() + axis, 1);
 
   if (!max_shape.empty() && !min_shape.empty()) {
-    max_shape.insert(max_shape.begin() + axis, 1);
-    min_shape.insert(min_shape.begin() + axis, 1);
+    (void)max_shape.insert(max_shape.begin() + axis, 1);
+    (void)min_shape.insert(min_shape.begin() + axis, 1);
     return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
   } else {
     return std::make_shared<abstract::Shape>(x_shape);
@@ -74,7 +74,7 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
 
   constexpr auto kExpandDimsInputsNum = 2;
   ValuePtr num_value = nullptr;
