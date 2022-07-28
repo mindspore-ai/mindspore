@@ -2838,3 +2838,132 @@ class GridSampler2DGrad(Primitive):
         self.add_prim_attr('interpolation_mode', interpolation_mode)
         self.add_prim_attr('padding_mode', padding_mode)
         self.add_prim_attr('align_corners', align_corners)
+
+
+class ResizeBicubicGrad(Primitive):
+    """
+    Computes gradients for ResizeBicubicGrad operation.
+
+    Args:
+        align_corners (bool):If true, the centers of the 4 corner pixels of the input
+    and output tensors are aligned, preserving the values at the corner pixels.Default: False.
+        half_pixel_centers (bool): An optional bool. Default: False.
+
+    Inputs:
+        - **grads** (Tensor) - A Tensor of type float. 4-D with shape
+          [batch, height, width,channels]. The format must be NHWC.
+        - **original_image** (Tensor) - A Tensor. Must be one of the following types: float,double.
+          4-D with shape [batch, orig_height, orig_width, channels], The image tensor that was resized.
+          The format must be NHWC.
+
+    Outputs:
+        A 4-D Tensor , with the same shape and data type as `original_image`.
+
+    Rasise:
+        TypeError: If `grads` is not allowed.
+        TypeError: If `original_image` is not allowed.
+        ValueError: If `images` dim is not 4.
+        ValueError: If `size` dim is not 4.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self, align_corners=False, half_pixel_centers=False):
+        """Initialize CropAndResize"""
+        validator.check_value_type('align_corners', align_corners, bool, self.name)
+        validator.check_value_type('half_pixel_centers', half_pixel_centers, bool, self.name)
+        self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
+
+    def __infer__(self, grads, original_image):
+        # get shape
+        grads_shape = list(grads['shape'])
+        original_image_shape = list(original_image['shape'])
+        # get value
+        if grads['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'grads' cannot be None,\
+                            but got {grads['value']}.")
+        if original_image['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'original_image' cannot be None,\
+                                but got {original_image['value']}.")
+        # get dtype
+        grads_dtype = grads['dtype']
+        original_image_dtype = original_image['dtype']
+        # check dytpe
+        validator.check_tensor_dtype_valid("grads", grads_dtype,
+                                           [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid("original_image", original_image_dtype,
+                                           [mstype.float32, mstype.float64], self.name)
+        # check input shape rank
+        validator.check("grads rank", len(grads_shape), "expected", 4, Rel.EQ, self.name)
+        validator.check("original_image rank", len(original_image_shape), "expected", 4, Rel.EQ, self.name)
+        validator.check("batch_size equal", grads_shape[0], "expected", original_image_shape[0], Rel.EQ, self.name)
+        validator.check("channel equal", grads_shape[3], "expected", original_image_shape[3], Rel.EQ, self.name)
+        # check original_image_shape and grads_shape
+        validator.check("original_image[0] and grads[0]", original_image_shape[0],
+                        "expected", grads_shape[0], Rel.EQ, self.name)
+        validator.check("original_image[3] and grads[3]", original_image_shape[3],
+                        "expected", grads_shape[3], Rel.EQ, self.name)
+
+        batch_size = grads_shape[0]
+        height = original_image_shape[1]
+        width = original_image_shape[2]
+        channel = grads_shape[3]
+        out_shape = (batch_size, height, width, channel)
+        return {'shape': out_shape,
+                'dtype': original_image_dtype,
+                'value': None}
+
+
+class UpsampleNearest3DGrad(Primitive):
+    """
+    Computes gradients for UpsampleNearest3DGrad operation.
+
+    Args:
+        input_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the forward pass
+            input Tensor size.
+        output_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the output volumetric size.
+            Default: None.
+        scales (Union[tuple[float], list[float]]): A list or tuple of float specifying the upsampling factors.
+            Default: None.
+
+    Inputs:
+        - **dy** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. With float16 or
+            float32 data type.
+
+    Outputs:
+        - **dx** (Tensor) - A 5-D tensor whose dtype and shape are the same as `input_x` and 'dy'.
+
+    Raises:
+        TypeError: If data type of `dy` is not float16, float32.
+        TypeError: If `input_size` is not provided.
+        ValueError: If size of `dy` is not a 5D tensor.
+        ValueError: If `output_size` is a list or tuple and if `output_size` length is not 3.
+        ValueError: If `scales` is a list or tuple and if `scales` length is not 3.
+        ValueError: If both `output_size` and `scales` are None.
+        ValueError: If both `output_size` and `scales` are non-empty lists.
+
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, input_size, output_size=None, scales=None):
+        self.init_prim_io_names(inputs=['dy'], outputs=['dx'])
+        if output_size is None:
+            output_size = []
+        if scales is None:
+            scales = []
+        validator.check_value_type('output_size', output_size, [list, tuple], self.name)
+        for item in output_size:
+            validator.check_value_type('output_size_item', item, int, self.name)
+        validator.check_value_type('scales', scales, [list, tuple], self.name)
+        for item in scales:
+            validator.check_value_type('scales_item', item, float, self.name)
+        validator.check_value_type('input_size', input_size, [list, tuple], self.name)
+        for item in input_size:
+            validator.check_value_type('input_size_item', item, int, self.name)
+        self.add_prim_attr('output_size', output_size)
+        self.add_prim_attr('scales', scales)
+        self.add_prim_attr('input_size', input_size)

@@ -79,7 +79,6 @@ abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
   }
   name_ = "output_shape";
   CheckDims(name_, op_name, output_shape);
-
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
