@@ -27,16 +27,13 @@ bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (!fl::worker::FLWorker::GetInstance().SendToServer(target_server_rank_, fbb_->GetBufferPointer(), fbb_->GetSize(),
                                                         ps::core::TcpUserCommand::kGetKeys, &get_keys_rsp_msg)) {
     MS_LOG(EXCEPTION) << "Sending request for GetKeys to server " << target_server_rank_ << " failed.";
-    return false;
   }
   if (get_keys_rsp_msg == nullptr) {
     MS_LOG(EXCEPTION) << "Received message pointer is nullptr.";
-    return false;
   }
   flatbuffers::Verifier verifier(get_keys_rsp_msg->data(), get_keys_rsp_msg->size());
   if (!verifier.VerifyBuffer<schema::ReturnExchangeKeys>()) {
     MS_LOG(EXCEPTION) << "The schema of ResponseGetKeys is invalid.";
-    return false;
   }
 
   const schema::ReturnExchangeKeys *get_keys_rsp =
@@ -50,7 +47,6 @@ bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   bool save_keys_succeed = SavePublicKeyList(get_keys_rsp->remote_publickeys());
   if (!save_keys_succeed) {
     MS_LOG(EXCEPTION) << "Save received remote keys failed.";
-    return false;
   }
 
   MS_LOG(INFO) << "Get keys successfully.";
@@ -68,11 +64,9 @@ void GetKeysKernelMod::Init(const CNodePtr &kernel_node) {
   rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();
   if (rank_id_ == UINT32_MAX) {
     MS_LOG(EXCEPTION) << "Federated worker is not initialized yet.";
-    return;
   }
   if (server_num_ <= 0) {
     MS_LOG(EXCEPTION) << "Server number must be larger than 0, but got: " << server_num_;
-    return;
   }
   target_server_rank_ = rank_id_ % server_num_;
 
@@ -90,7 +84,7 @@ void GetKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
 
 void GetKeysKernelMod::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
-  int iter = fl::worker::FLWorker::GetInstance().fl_iteration_num();
+  int iter = SizeToInt(fl::worker::FLWorker::GetInstance().fl_iteration_num());
   auto fbs_fl_id = fbb->CreateString(fl_id_);
   schema::GetExchangeKeysBuilder get_keys_builder(*(fbb.get()));
   get_keys_builder.add_fl_id(fbs_fl_id);
@@ -106,10 +100,9 @@ bool GetKeysKernelMod::SavePublicKeyList(
     MS_LOG(EXCEPTION) << "Input remote_pubic_key is nullptr.";
   }
 
-  int client_num = remote_public_key->size();
+  int client_num = SizeToInt(remote_public_key->size());
   if (client_num <= 0) {
     MS_LOG(EXCEPTION) << "Received client keys length is <= 0, please check it!";
-    return false;
   }
 
   // save client keys list

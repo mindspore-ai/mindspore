@@ -24,9 +24,9 @@
 #endif
 #include "utils/log_adapter.h"
 
-#define KEY_LEN 32
-#define SALT_LEN 32
-#define ITERATION 10000
+constexpr int KEY_LEN = 32;
+constexpr int SALT_LEN = 32;
+constexpr int ITERATION = 10000;
 
 namespace mindspore {
 namespace armour {

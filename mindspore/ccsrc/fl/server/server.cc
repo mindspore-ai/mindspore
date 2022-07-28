@@ -313,7 +313,7 @@ void Server::InitCipher() {
   } else {
     MS_LOG(EXCEPTION) << "Get prime failed.";
   }
-  if (prim != NULL) {
+  if (prim != nullptr) {
     BN_clear_free(prim);
   }
   if (!cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,

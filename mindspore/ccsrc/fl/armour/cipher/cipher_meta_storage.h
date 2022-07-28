@@ -31,19 +31,23 @@
 #include "fl/server/distributed_metadata_store.h"
 #include "fl/server/common.h"
 
-#define IND_IV_INDEX 0
-#define PW_IV_INDEX 1
-#define PW_SALT_INDEX 2
+constexpr int IND_IV_INDEX = 0;
+constexpr int PW_IV_INDEX = 1;
+constexpr int PW_SALT_INDEX = 2;
 
 namespace mindspore {
 namespace armour {
 
 template <typename T1>
 bool CreateArray(std::vector<T1> *newData, const flatbuffers::Vector<T1> &fbs_arr) {
-  if (newData == nullptr) return false;
+  if (newData == nullptr) {
+    return false;
+  }
   size_t size = newData->size();
   size_t size_fbs_arr = fbs_arr.size();
-  if (size != size_fbs_arr) return false;
+  if (size != size_fbs_arr) {
+    return false;
+  }
   for (size_t i = 0; i < size; ++i) {
     newData->at(i) = fbs_arr.Get(i);
   }

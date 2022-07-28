@@ -55,7 +55,7 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
     (void)BN_bin2bn(publicparam_->prime, PRIME_MAX_LEN, prime);
     if (iter->second.size() >= cipher_init_->secrets_minnums_) {  // combine private key seed.
       MS_LOG(INFO) << "start assign secrets shares to public shares ";
-      for (int i = 0; i < static_cast<int>(cipher_init_->secrets_minnums_); ++i) {
+      for (int i = 0; i < SizeToInt(cipher_init_->secrets_minnums_); ++i) {
         shares_tmp->at(i)->index = (iter->second)[i].index;
         shares_tmp->at(i)->len = (iter->second)[i].share.size();
         if (memcpy_s(shares_tmp->at(i)->data, IntToSize(SHARE_MAX_SIZE), (iter->second)[i].share.data(),
@@ -69,7 +69,9 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
       size_t length;
       uint8_t secret[SECRET_MAX_LEN] = {0};
       SecretSharing combine(prime);
-      if (combine.Combine(cipher_init_->secrets_minnums_, *shares_tmp, secret, &length) < 0) retcode = false;
+      if (combine.Combine(cipher_init_->secrets_minnums_, *shares_tmp, secret, &length) < 0) {
+        retcode = false;
+      }
       length = SECRET_MAX_LEN;
       MS_LOG(INFO) << "combine secrets shares Success.";
 
@@ -176,7 +178,7 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
     MS_LOG(INFO) << "share size: " << iter->second.size();
   }
   std::vector<Share *> shares_tmp;
-  if (!MallocShares(&shares_tmp, (SizeToInt)(cipher_init_->secrets_minnums_))) {
+  if (!MallocShares(&shares_tmp, cipher_init_->secrets_minnums_)) {
     MS_LOG(ERROR) << "Reconstruct malloc shares_tmp invalid.";
     DeleteShares(&shares_tmp);
     return false;
@@ -233,7 +235,9 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
   MS_LOG(INFO) << "CipherReconStruct::ReconstructSecrets START";
   clock_t start_time = clock();
   bool inputs_check = CheckInputs(reconstruct_secret_req, fbb, cur_iterator, next_req_time);
-  if (!inputs_check) return false;
+  if (!inputs_check) {
+    return false;
+  }
 
   int iterator = reconstruct_secret_req->iteration();
   std::string fl_id = reconstruct_secret_req->fl_id()->str();
@@ -380,7 +384,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
   for (auto p_key = clients_share_list.begin(); p_key != clients_share_list.end(); ++p_key) {
     if (*p_key != fl_id) {
       PrivateKey *privKey = KeyAgreement::FromPrivateBytes(secret, length);
-      if (privKey == NULL) {
+      if (privKey == nullptr) {
         MS_LOG(ERROR) << "create privKey failed\n";
         return false;
       }
@@ -404,7 +408,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
       std::vector<uint8_t> pw_iv = iter->second[PW_IV_INDEX];
       std::vector<uint8_t> pw_salt = iter->second[PW_SALT_INDEX];
       PublicKey *pubKey = KeyAgreement::FromPublicBytes(public_key.data(), public_key.size());
-      if (pubKey == NULL) {
+      if (pubKey == nullptr) {
         MS_LOG(ERROR) << "create pubKey failed\n";
         return false;
       }
@@ -421,7 +425,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
 
       std::vector<float> noise_tmp;
       if (Masking::GetMasking(&noise_tmp, SizeToInt(cipher_init_->featuremap_), (const uint8_t *)secret1,
-                              SECRET_MAX_LEN, pw_iv.data(), pw_iv.size()) < 0) {
+                              SizeToInt(SECRET_MAX_LEN), pw_iv.data(), SizeToInt(pw_iv.size())) < 0) {
         MS_LOG(ERROR) << "Get Masking failed\n";
         return false;
       }
@@ -454,7 +458,9 @@ bool CipherReconStruct::GetSymbol(const std::string &str1, const std::string &st
 // recombined shares by their source fl_id (ownners)
 bool CipherReconStruct::ConvertSharesToShares(const std::map<std::string, std::vector<clientshare_str>> &src,
                                               std::map<std::string, std::vector<clientshare_str>> *des) {
-  if (des == nullptr) return false;
+  if (des == nullptr) {
+    return false;
+  }
   for (auto iter = src.begin(); iter != src.end(); ++iter) {
     std::string des_id = iter->first;
     auto &cur_clientshare_str = iter->second;
@@ -477,7 +483,9 @@ bool CipherReconStruct::ConvertSharesToShares(const std::map<std::string, std::v
 }
 
 bool CipherReconStruct::MallocShares(std::vector<Share *> *shares_tmp, size_t shares_size) {
-  if (shares_tmp == nullptr) return false;
+  if (shares_tmp == nullptr) {
+    return false;
+  }
   for (size_t i = 0; i < shares_size; ++i) {
     Share *share_i = new (std::nothrow) Share();
     if (share_i == nullptr) {
@@ -498,7 +506,9 @@ bool CipherReconStruct::MallocShares(std::vector<Share *> *shares_tmp, size_t sh
 }
 
 void CipherReconStruct::DeleteShares(std::vector<Share *> *shares_tmp) {
-  if (shares_tmp == nullptr) return;
+  if (shares_tmp == nullptr) {
+    return;
+  }
   if (shares_tmp->size() != 0) {
     for (size_t i = 0; i < shares_tmp->size(); ++i) {
       if (shares_tmp->at(i) != nullptr && shares_tmp->at(i)->data != nullptr) {

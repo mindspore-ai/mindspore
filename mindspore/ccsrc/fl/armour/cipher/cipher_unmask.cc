@@ -48,7 +48,7 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
     for (size_t i = 0; i < size_data; ++i) {
       in_data[i] = in_data[i] + noise[i + IntToSize(sum_size)] / data_size;
     }
-    sum_size += IntToSize(size_data);
+    sum_size += SizeToInt(size_data);
     for (size_t i = 0; i < data.size(); ++i) {
       MS_LOG(INFO) << " index : " << i << " in_data unmask: " << in_data[i] * data_size;
     }
