@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-#include "nnacl/experimental/fp16_funcs.h"
-
-void InitFp16Funcs(CoreFuncs *funcs_) {
-#ifdef ENABLE_ARM64
-  funcs_->pack = C8NUM;
-  funcs_->byte = sizeof(float16_t);
-#endif
+#ifdef ENABLE_ARM32
+#include "nnacl/experimental/ms_core.h"
+void InitOptMatmulTileArm32(int *row_tile, int *col_tile) {
+  *row_tile = C12NUM;
+  *col_tile = C4NUM;
 }
+
+void InitArm32Core(CoreFuncs *funcs_) {
+  funcs_->pack = C4NUM;
+  funcs_->byte = sizeof(float);
+  funcs_->OptMatmulTile = InitOptMatmulTileArm32;
+}
+#endif

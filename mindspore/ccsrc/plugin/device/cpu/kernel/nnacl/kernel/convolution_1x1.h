@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_FP32_FUNCS_H_
-#define MINDSPORE_NNACL_EXPERIMENT_FP32_FUNCS_H_
+#ifndef MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
+#define MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
 
+#include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
+#include "nnacl/kernel/matmul_optimize.h"
+#include "nnacl/kernel/matmul_experimental.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void InitFp32Funcs(CoreFuncs *funcs_);
+typedef struct Conv1x1Stru {
+  KernelBase base;
+  uint8_t *bias_;
+  uint8_t *weight_;
+  MatmulOptStru opt_;
+  MatmulExpStru exp_;
+} Conv1x1Stru;
 
-void GetPostParameters(ActType act, float *min, float *max);
+KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                          FormatC format);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_EXPERIMENT_FP32_FUNCS_H_
+#endif  // MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_

@@ -14,34 +14,37 @@
  * limitations under the License.
  */
 
-#include "nnacl/experimental/conv1x1.h"
+#include "nnacl/kernel/convolution_1x1.h"
 #include <stdint.h>
 #include "nnacl/conv_parameter.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
-#include "nnacl/experimental/base_matmul.h"
 
-typedef struct Conv1x1Stru {
-  KernelBase base;
-  uint8_t *bias_;
-  uint8_t *weight_;
-} Conv1x1Stru;
-
-int conv1x1_resize(struct KernelBase *self) { return 0; }
-
-int conv1x1_prepare(struct KernelBase *self) {
+int conv1x1_exp_resize(struct KernelBase *self) {
   Conv1x1Stru *conv = (Conv1x1Stru *)self;
   ConvParameter *param = (ConvParameter *)conv->base.param;
+  conv->exp_.row = param->input_h_ * param->input_w_;
+  conv->exp_.deep = param->input_channel_;
+  conv->exp_.col = param->output_channel_;
+  conv->exp_.thread_num = param->op_parameter_.thread_num_;
+  if (conv->bias_ != NULL || param->act_type_ != ActType_No) {
+    conv->exp_.base->funcs->PostParam(param->act_type_, &conv->exp_.min, &conv->exp_.max);
+  }
+  return 0;
+}
 
-  conv->base.funcs = GetCoreFuncs(conv->base.in[0].data_type_ == kNumberTypeFloat16);
+int conv1x1_exp_prepare(struct KernelBase *self) {
+  Conv1x1Stru *conv = (Conv1x1Stru *)self;
+  ConvParameter *param = (ConvParameter *)conv->base.param;
+  conv->exp_.base = &conv->base;
 
   int row_tile, deep_tile, col_tile;
-  conv->base.funcs->InitMatmulTileCount(&row_tile, &deep_tile, &col_tile);
+  conv->base.funcs->ExpMatmulTile(&row_tile, &deep_tile, &col_tile);
 
   conv->weight_ = (uint8_t *)(conv->base.env->alloc(
     conv->base.env->allocator,
     UP_ROUND(param->output_channel_, col_tile) * UP_ROUND(param->input_channel_, deep_tile) * row_tile));
-  conv->base.funcs->PackRight(conv->base.in[1].data_, conv->weight_, 1, param->input_channel_, param->output_channel_);
+  conv->base.funcs->PackNcX(conv->base.in[1].data_, conv->weight_, 1, param->input_channel_, param->output_channel_);
 
   if (conv->base.insize < kInputSize2) {
     conv->bias_ = NULL;
@@ -57,27 +60,21 @@ int conv1x1_prepare(struct KernelBase *self) {
   return 0;
 }
 
-int conv1x1_release(struct KernelBase *self) {
+int conv1x1_exp_release(struct KernelBase *self) {
   Conv1x1Stru *conv = (Conv1x1Stru *)self;
   conv->base.env->free(conv->base.env->allocator, conv->bias_);
   conv->base.env->free(conv->base.env->allocator, conv->weight_);
   return 0;
 }
 
-int conv1x1_compute(struct KernelBase *self) {
+int conv1x1_exp_compute(struct KernelBase *self) {
   Conv1x1Stru *conv = (Conv1x1Stru *)self;
-  ConvParameter *param = (ConvParameter *)conv->base.param;
-
-  BaseMatmul(conv->base.in[0].data_, conv->weight_, conv->bias_, conv->base.out[0].data_,
-             param->input_h_ * param->input_w_, param->input_channel_, param->output_channel_, param->act_type_,
-             param->op_parameter_.thread_num_, &conv->base);
+  ExperimentalMatmul(conv->base.in[0].data_, conv->weight_, conv->bias_, conv->base.out[0].data_, &conv->exp_);
   return 0;
 }
 
-KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
-  if (in[0].format_ != Format_NC4HW4) {
-    return NULL;
-  }
+KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                          FormatC format) {
   Conv1x1Stru *conv1x1 = (Conv1x1Stru *)malloc(sizeof(Conv1x1Stru));
   conv1x1->base.param = param;
   conv1x1->base.in = in;
@@ -85,10 +82,14 @@ KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, Tensor
   conv1x1->base.out = out;
   conv1x1->base.outsize = outsize;
   conv1x1->base.env = GetExecEnv();
-  conv1x1->base.prepare = conv1x1_prepare;
-  conv1x1->base.resize = conv1x1_resize;
-  conv1x1->base.release = conv1x1_release;
-  conv1x1->base.compute = conv1x1_compute;
+  conv1x1->base.funcs = GetCoreFuncs(data_type == kNumberTypeFloat16);
+
+  if (format == Format_NC4HW4) {
+    conv1x1->base.prepare = conv1x1_exp_prepare;
+    conv1x1->base.resize = conv1x1_exp_resize;
+    conv1x1->base.release = conv1x1_exp_release;
+    conv1x1->base.compute = conv1x1_exp_compute;
+  }
 
   return (KernelBase *)conv1x1;
 }

@@ -15,9 +15,10 @@
  */
 #ifndef MINDSPORE_NNACL_KERNEL_H_
 #define MINDSPORE_NNACL_KERNEL_H_
+
 #include "nnacl/op_base.h"
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/experimental/core_funcs.h"
+#include "nnacl/experimental/ms_core.h"
 
 typedef struct ExecEnv {
   void *allocator;
@@ -55,7 +56,8 @@ typedef struct KernelBase {
   }
 #endif
 
-typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
+typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize,
+                                     int data_type, FormatC format);
 void RegKernelCreator(int opType, int format, int dataType, KernelCreator func);
 CoreFuncs *GetCoreFuncs(bool use_fp16);
 

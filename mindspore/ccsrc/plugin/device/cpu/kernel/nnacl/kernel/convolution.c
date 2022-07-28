@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_EXP_H_
-#define MINDSPORE_NNACL_KERNEL_EXP_H_
 
-#include "nnacl/op_base.h"
+#include "nnacl/kernel/convolution.h"
+#include "nnacl/kernel/convolution_1x1.h"
 #include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
+#include "nnacl/op_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
-
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format);
-
-#ifdef __cplusplus
+KernelBase *CreateConvolution(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize,
+                              int data_type, FormatC format) {
+  return CreateConv1x1(param, in, insize, out, outsize, data_type, format);
 }
-#endif
-#endif  // MINDSPORE_NNACL_KERNEL_EXP_H_
+
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat32, CreateConvolution);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC8HW8, kNumberTypeFloat16, CreateConvolution);

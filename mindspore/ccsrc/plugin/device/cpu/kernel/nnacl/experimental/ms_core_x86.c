@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "nnacl/experimental/fp32_funcs.h"
-#include <float.h>
+#include "nnacl/experimental/ms_core.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/fp32/exp_fp32.h"
 
 void GetPostParameters(ActType act, float *min, float *max) {
 #define RELU6_VALUE 6.0f
@@ -35,13 +35,13 @@ void GetPostParameters(ActType act, float *min, float *max) {
   return;
 }
 
-void InitBaseMMFp32TileCount(int *row_tile, int *deep_tile, int *col_tile) {
+void InitExpMMFp32TileCount(int *row_tile, int *deep_tile, int *col_tile) {
   *row_tile = C16NUM;
   *col_tile = C4NUM;
   *deep_tile = 1;
 }
 
-void PackMatmulA(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride) {
+void PackExpMatmulIn(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride) {
   /* src_stride : total row */
   float *dst = (float *)dst_ptr;
   float *src = (float *)src_ptr;
@@ -54,8 +54,8 @@ void PackMatmulA(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t s
   }
 }
 
-static void DoBaseMatmul(float *c_ptr, const float *a_ptr, const float *b_ptr, const float *bias, size_t row,
-                         size_t deep, size_t col, size_t dst_stride, float min, float max) {
+static void ExpMatmul(float *c_ptr, const float *a_ptr, const float *b_ptr, const float *bias, size_t row, size_t deep,
+                      size_t col, size_t dst_stride, float min, float max) {
   /* dst_stride : total_row * pack */
   for (size_t r = 0; r < row; r++) {
     for (size_t c = 0; c < col; c++) {
@@ -79,32 +79,39 @@ static void DoBaseMatmul(float *c_ptr, const float *a_ptr, const float *b_ptr, c
   }
 }
 
-void BaseMatMul(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
-                size_t dst_stride, float min, float max) {
+void ExpMatMulBlock(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                    size_t dst_stride, float min, float max) {
   float *c = (float *)c_ptr;
   float *a = (float *)a_ptr;
   float *b = (float *)b_ptr;
   float *bias = (float *)bias_ptr;
-  return DoBaseMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
+  return ExpMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
 }
 
-void BaseMatMulRes(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
-                   size_t dst_stride, float min, float max) {
+void ExpMatmulRemain(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                     size_t dst_stride, float min, float max) {
   float *c = (float *)c_ptr;
   float *a = (float *)a_ptr;
   float *b = (float *)b_ptr;
   float *bias = (float *)bias_ptr;
-  return DoBaseMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
+  return ExpMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
 }
 
-void InitFp32Funcs(CoreFuncs *funcs_) {
+void InitOptMatmulTile(int *row_tile, int *col_tile) {
+  *row_tile = C12NUM;
+  *col_tile = C8NUM;
+}
+
+void InitCore(CoreFuncs *funcs_) {
   funcs_->pack = C4NUM;
   funcs_->byte = sizeof(float);
-  funcs_->InitMatmulTileCount = InitBaseMMFp32TileCount;
-  funcs_->PackNcX = NULL;
-  funcs_->UnPackNcX = NULL;
-  funcs_->PackLeft = PackMatmulA;
-  funcs_->PackRight = NULL;
-  funcs_->Matmul = BaseMatMul;
-  funcs_->MatMulRes = BaseMatMulRes;
+  funcs_->ExpMatmulTile = InitExpMMFp32TileCount;
+  funcs_->PackNcX = PackNCHWToNC4HW4Fp32;
+  funcs_->UnPackNcX = PackNC4HW4ToNCHWFp32;
+  funcs_->ExpMatmulPackIn = PackExpMatmulIn;
+  funcs_->ExpMatmulBlock = ExpMatMulBlock;
+  funcs_->ExpMatMulRemain = ExpMatmulRemain;
+  funcs_->ExpFusion = ExpFusionFp32;
+  funcs_->OptMatmulTile = InitOptMatmulTile;
+  funcs_->PostParam = GetPostParameters;
 }

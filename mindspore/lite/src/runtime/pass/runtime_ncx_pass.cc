@@ -26,7 +26,7 @@
 
 namespace mindspore::lite::pass {
 #ifdef ENABLE_RUNTIME_NCX_PASS
-std::set<schema::PrimitiveType> ncxhwx_kernels = {};
+std::set<schema::PrimitiveType> ncxhwx_kernels = {schema::PrimitiveType_Conv2DFusion};
 
 bool RuntimeNCXPassVaild(kernel::SubGraphKernel *subgraph) {
   if (subgraph->subgraph_type() == kernel::kNotSubGraph) {

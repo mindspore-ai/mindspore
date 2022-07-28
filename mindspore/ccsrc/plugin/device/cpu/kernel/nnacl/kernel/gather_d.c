@@ -103,7 +103,8 @@ int gather_d_compute(struct KernelBase *self) {
   return status;
 }
 
-KernelBase *CreateGatherD(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
+KernelBase *CreateGatherD(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                          FormatC format) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
   gather_d->base.param = param;
   gather_d->base.in = in;

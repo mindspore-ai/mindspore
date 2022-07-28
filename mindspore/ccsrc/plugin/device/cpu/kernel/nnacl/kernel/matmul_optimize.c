@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_CONV1X1_H_
-#define MINDSPORE_NNACL_EXPERIMENT_CONV1X1_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
+#include "nnacl/kernel/matmul_optimize.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
-
-#ifdef __cplusplus
+void MatmulOpt_prepare(MatmulOptStru *matmul) {
+  matmul->base->funcs->OptMatmulTile(&matmul->row_tile, &matmul->col_tile);
+  return;
 }
-#endif
-#endif  // MINDSPORE_NNACL_EXPERIMENT_CONV1X1_H_

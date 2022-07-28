@@ -26,7 +26,8 @@
 extern "C" {
 #endif
 
-KernelBase *CreateGroupNorm(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
+KernelBase *CreateGroupNorm(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                            FormatC format);
 
 #ifdef __cplusplus
 }

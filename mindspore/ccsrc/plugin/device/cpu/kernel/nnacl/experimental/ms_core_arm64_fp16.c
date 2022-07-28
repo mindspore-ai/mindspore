@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_EXP_H_
-#define MINDSPORE_NNACL_KERNEL_EXP_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
+#ifdef ENABLE_FP16
+#include "nnacl/experimental/ms_core.h"
+#include "nnacl/fp16/exp_fp16.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
-
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format);
-
-#ifdef __cplusplus
+void InitFp16Core(CoreFuncs *funcs_) {
+  funcs_->pack = C8NUM;
+  funcs_->byte = sizeof(float16_t);
+  funcs_->ExpFusion = ExpFusionFp16;
 }
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_EXP_H_

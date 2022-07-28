@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_
-#define MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_
 
-#include "nnacl/kernel.h"
+#ifdef ENABLE_ARM64
+#include "nnacl/experimental/ms_core.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void BaseMatmul(uint8_t *a_ptr, uint8_t *b_ptr, uint8_t *bias, uint8_t *c_ptr, int row, int deep, int col,
-                ActType act_type, int thread_num, KernelBase *base);
-
-#ifdef __cplusplus
+void InitFp32Core(CoreFuncs *funcs_) {
+  funcs_->pack = C4NUM;
+  funcs_->byte = sizeof(float);
 }
 #endif
-#endif  // MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_
