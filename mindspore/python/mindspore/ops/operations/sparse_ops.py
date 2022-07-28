@@ -907,6 +907,74 @@ class SparseMatrixTranspose(Primitive):
                                          'y_col_indices', 'y_values'])
 
 
+class SparseSparseMinimum(Primitive):
+    r"""
+    Returns the element-wise min of two SparseTensors.
+
+    Inputs:
+        - **x1_indices** (Tensor) - A 2-D Tensor. It represents the position of the non-zero element
+          in the first sparse tensor.
+        - **x1_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `x1_indices`, the shape of which should be :math:`(N,)`.
+        - **x1_shape** (Tensor) - A 1-D Tensor. It represents the shape of the input sparse tensor,
+          the shape of which should be :math:`(N,)`.
+        - **x2_indices** (Tensor) - A 2-D Tensor. It represents the position of the non-zero element
+          in the second sparse tensor.
+        - **x2_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `x2_indices`, the shape of which should be :math:`(N,)`.
+        - **x2_shape** (Tensor) - A 1-D Tensor. It represents the shape of the input sparse tensor,
+          the shape of which should be :math:`(N,)`.
+
+    Outputs:
+        - **y_indices** (Tensor) - A 2-D Tensor. It represents the position of the element-wise min of
+          two input tensors.
+        - **y_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `y_indices`.
+
+    Raises:
+        TypeError: The dtype of `x1_indices`, `x1_shape`, `x2_indices` or `x2_shape` is wrong.
+        TypeError: The dtype of `x1_values` or `x2_values` is wrong.
+        TypeError: If `x1_indices`, `x1_values`, `x1_shape`, `x2_indices`, `x2_values`, `x2_shape`
+                    is not a tensor.
+        TypeError: If `x1_indices` is not a 2-D tensor.
+        TypeError: If `x2_indices` is not a 2-D tensor.
+        ValueError: If any of `x1_values` and `x1_shape` is not a 1-D tensor.
+        ValueError: If shape[0] of `x1_indices` is not corresponding to shape[0] of `x1_values`.
+        ValueError: If shape[1] of `x1_indices` is not corresponding to shape[0] of `x1_shape`.
+        ValueError: If any of `x2_values` and `x2_shape` is not a 1-D tensor.
+        ValueError: If shape[0] of `x2_indices` is not corresponding to shape[0] of `x2_values`.
+        ValueError: If shape[1] of `x2_indices` is not corresponding to shape[0] of `x2_shape`.
+        ValueError: If shape[0] of `x1_shape` is not corresponding to shape[0] of `x2_shape`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
+        >>> x1_indices = Tensor(np.array([[0, 0, 0], [0, 1, 0], [0, 1, 1]]).astype(np.int64))
+        >>> x1_values = Tensor([1, 2, 3], dtype=mstype.float32)
+        >>> x1_shape = Tensor(np.array([2, 2, 2]).astype(np.int64))
+        >>> x2_indices = Tensor(np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]]).astype(np.int64))
+        >>> x2_values = Tensor([2, 4, 5], dtype=mstype.float32)
+        >>> x2_shape = Tensor(np.array([2, 2, 2]).astype(np.int64))
+        >>> sparse_sparse_minimum = ops.SparseSparseMinimum()
+        >>> out = sparse_sparse_minimum(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape)
+        >>> print(out[0])
+        [[0 0 0]
+         [0 1 0]
+         [0 1 1]
+         [1 0 0]]
+        >>> print(out[1])
+        [1. 2. 0. 0.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSparseMinimum."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2_indices', 'x2_values', 'x2_shape'],
+                                outputs=['y_indices', 'y_values'])
+
+
 class SparseTensorToCSRSparseMatrix(Primitive):
     """
     Converts a sparse tensor to its CSR sparse matrix(maybe batched) form.

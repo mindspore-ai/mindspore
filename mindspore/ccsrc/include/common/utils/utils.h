@@ -297,6 +297,7 @@ constexpr auto kLessEqualOpName = "LessEqual";
 constexpr auto kSquareOpName = "Square";
 constexpr auto kSelectOpName = "Select";
 constexpr auto kCSRSparseMatrixToSparseTensorOpName = "CSRSparseMatrixToSparseTensor";
+constexpr auto kSparseSparseMinimumOpName = "SparseSparseMinimum";
 constexpr auto kReduceSumOpName = "ReduceSum";
 constexpr auto kReduceMinOpName = "ReduceMin";
 constexpr auto kReduceMaxOpName = "ReduceMax";
@@ -896,7 +897,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kResizeAreaOpName,
                                               kSegmentMeanOpName,
                                               kSegmentProdOpName,
-                                              kNonZeroOpName};
+                                              kNonZeroOpName,
+                                              kSparseSparseMinimumOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
