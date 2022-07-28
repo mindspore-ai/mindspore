@@ -24,6 +24,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "utils/log_adapter.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -114,7 +115,7 @@ Status ReduceMethod::InferTensorMap() {
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - 1 - i));
+    tensor_map_index.push_back(SizeToLong(size - 1 - i));
   }
   dim_list = reduce_dim();
   for (size_t i = 0; i < size; ++i) {
@@ -877,5 +878,18 @@ Status SquareSumAllInfo::InferAsLossDivisor() {
                << ", " << output_tensor_map_str << ", " << as_loss_divisor_;
   return SUCCESS;
 }
+
+REGISTER(ReduceMaxInfo);
+REGISTER(ArgMaxWithValueInfo);
+REGISTER(ArgMinWithValueInfo);
+REGISTER(ReduceMeanInfo);
+REGISTER(ReduceSumInfo);
+REGISTER(ReduceAnyInfo);
+REGISTER(ReduceMinInfo);
+REGISTER(ReduceProdInfo);
+REGISTER(ReduceAllInfo);
+REGISTER(ArgmaxInfo);
+REGISTER(ArgminInfo);
+REGISTER(SquareSumAllInfo);
 }  // namespace parallel
 }  // namespace mindspore

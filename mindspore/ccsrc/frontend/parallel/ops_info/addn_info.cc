@@ -17,6 +17,7 @@
 #include <utility>
 #include <algorithm>
 
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/ops_info/addn_info.h"
 
 namespace mindspore {
@@ -95,5 +96,7 @@ void AddNInfo::ReComputeBatchSplitFlagList() {
     split_flag_list_[i] = flag;
   }
 }
+
+REGISTER(AddNInfo);
 }  // namespace parallel
 }  // namespace mindspore

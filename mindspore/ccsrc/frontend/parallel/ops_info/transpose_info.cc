@@ -21,6 +21,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -125,5 +126,7 @@ std::vector<StrategyPtr> TransposeInfo::GenerateOpStrategies(int64_t stage_id) {
 
   return sp_vector;
 }
+
+REGISTER(TransposeInfo);
 }  // namespace parallel
 }  // namespace mindspore

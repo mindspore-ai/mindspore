@@ -28,6 +28,7 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
@@ -519,5 +520,8 @@ Shapes MatMulBase::InferParamStrategy(const Shapes &default_strategy) {
   ret.push_back(right_matrix_strategy);
   return ret;
 }
+
+REGISTER(MatMulInfo);
+REGISTER(BatchMatMulInfo);
 }  // namespace parallel
 }  // namespace mindspore

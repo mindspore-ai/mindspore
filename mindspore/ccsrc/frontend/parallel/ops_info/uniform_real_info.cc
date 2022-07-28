@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/resource.h"
@@ -158,5 +159,7 @@ void UniformRealInfo::ResetInputsShape() {
   inputs_shape_.push_back(GetValue<Shape>(shape_value));
   is_parameter_.push_back(false);
 }
+
+REGISTER(UniformRealInfo);
 }  // namespace parallel
 }  // namespace mindspore

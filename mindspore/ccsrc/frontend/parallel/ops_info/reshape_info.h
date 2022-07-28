@@ -61,22 +61,22 @@ class ReshapeInfo : public OperatorInfo {
   Status GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs, int64_t out_index,
                                int64_t in_index, bool is_prev_param, bool is_next_reshape);
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::string pre_operator_name() const { return pre_operator_name_; }
   std::string next_operator_name() const { return next_operator_name_; }
   int64_t pre_operator_index() const { return pre_operator_index_; }
   int64_t next_operator_index() const { return next_operator_index_; }
 
-  int64_t GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &);
-  int64_t GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &);
-  int64_t GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &);
-  int64_t GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &);
-  bool CheckStrategyConsistencyByOutputLayout(int64_t, const TensorLayout &) const;
-  bool CheckStrategyConsistencyByInputLayout(int64_t, const TensorLayout &) const;
+  int64_t GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &output_layout);
+  int64_t GetSWCIndexByOutputLayoutWithMiniComm(const TensorLayout &output_layout);
+  int64_t GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &input_layout);
+  int64_t GetSWCIndexByInputLayoutWithMiniComm(const TensorLayout &input_layout);
+  bool CheckStrategyConsistencyByOutputLayout(int64_t swc_index, const TensorLayout &output_layout) const;
+  bool CheckStrategyConsistencyByInputLayout(int64_t swc_index, const TensorLayout &input_layout) const;
 
-  TensorLayout GetInputLayoutBySWCIndex(int64_t) const;
-  TensorLayout GetOutputLayoutBySWCIndex(int64_t) const;
+  TensorLayout GetInputLayoutBySWCIndex(int64_t swc_index) const;
+  TensorLayout GetOutputLayoutBySWCIndex(int64_t swc_index) const;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

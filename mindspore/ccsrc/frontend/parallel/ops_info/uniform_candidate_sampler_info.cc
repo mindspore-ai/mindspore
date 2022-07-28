@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -182,7 +183,8 @@ std::shared_ptr<Strategies> UniformCandidateSamplerInfo::GenerateBatchStrategies
 }
 
 ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode) {
-  auto input_strategy = strategy_->GetInputDim().at(0);
+  const auto &input_dim = strategy_->GetInputDim();
+  auto input_strategy = input_dim.at(0);
   // Only when the axis-1 is sharded, we need to modify the attribute
   if (input_strategy.size() == 2 && input_strategy[1] > 1) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
@@ -194,7 +196,8 @@ ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode
 
 Status UniformCandidateSamplerInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
-  auto input_strategy = strategy_->GetInputDim().at(0);
+  const auto &input_dim = strategy_->GetInputDim();
+  auto input_strategy = input_dim.at(0);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
@@ -217,5 +220,7 @@ Status UniformCandidateSamplerInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
+
+REGISTER(UniformCandidateSamplerInfo);
 }  // namespace parallel
 }  // namespace mindspore

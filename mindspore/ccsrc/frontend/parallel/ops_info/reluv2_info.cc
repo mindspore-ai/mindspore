@@ -24,6 +24,7 @@
 #include <numeric>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "include/common/utils/parallel_context.h"
@@ -84,7 +85,7 @@ Status ReLUV2Info::InferTensorMap() {
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - i - 1));
+    tensor_map_index.push_back(SizeToLong(size - i - 1));
   }
 
   inputs_tensor_map_.push_back(tensor_map_index);
@@ -120,5 +121,7 @@ Status ReLUV2Info::InferAsLossDivisor() {
                << as_loss_divisor_;
   return SUCCESS;
 }
+
+REGISTER(ReLUV2Info);
 }  // namespace parallel
 }  // namespace mindspore

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/ops_info/gamma_info.h"
+
 #include <map>
 #include <utility>
 
-#include "frontend/parallel/ops_info/gamma_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 
@@ -214,5 +216,7 @@ int64_t GammaInfo::ComputeOpAndPrevEdgeParameterInvolved() {
 
   return is_output_parameter_involve_;
 }
+
+REGISTER(GammaInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -19,6 +19,7 @@
 #include <functional>
 
 #include "frontend/parallel/ops_info/inplace_add_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 
 namespace mindspore {
 namespace parallel {
@@ -94,5 +95,8 @@ void InplaceAddInfo::ReComputeBatchSplitFlagList() {
   split_flag_list_[0] = false;
   split_flag_list_[1] = false;
 }
+
+REGISTER(InplaceAddInfo);
+REGISTER(InplaceSubInfo);
 }  // namespace parallel
 }  // namespace mindspore

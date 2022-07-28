@@ -803,8 +803,8 @@ void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
   }
 }
 
-void ComputShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_t> &begin, std::vector<int64_t> *end,
-                          std::vector<int64_t> *stride) {
+void ComputeShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_t> &begin, std::vector<int64_t> *end,
+                           std::vector<int64_t> *stride) {
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   auto shrink_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrShrinkAxisMask);
@@ -823,7 +823,7 @@ void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *be
   ComputeEndMask(kernel_node, end, *stride, input_shape);
   ComputeEllipsisMask(kernel_node, begin, end, stride, input_shape);
   ComputNewAxisMask(kernel_node, begin, end, stride, input_shape);
-  ComputShrinkAxisMask(kernel_node, *begin, end, stride);
+  ComputeShrinkAxisMask(kernel_node, *begin, end, stride);
 }
 
 std::string GetProcessorStr(const AnfNodePtr &anf_node) {
