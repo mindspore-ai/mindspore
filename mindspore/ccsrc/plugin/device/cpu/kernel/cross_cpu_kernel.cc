@@ -118,7 +118,7 @@ bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
                       &output_data_stride, &input1_data_stride, &input2_data_stride](size_t start, size_t end) {
     const size_t input1_data_dim = input1_shape_.size();
     std::vector<int64_t> position_in_dims(input1_data_dim);
-    int64_t index_in_curr_dim = start;
+    int64_t index_in_curr_dim = SizeToLong(start);
     int64_t input1_data_start = 0;
     int64_t input2_data_start = 0;
     int64_t output_data_start = 0;

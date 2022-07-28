@@ -47,8 +47,8 @@ void NLLLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
 
-  nllloss_param_.batch_ = logits_shape[0];
-  nllloss_param_.class_num_ = logits_shape[1];
+  nllloss_param_.batch_ = LongToInt(logits_shape[0]);
+  nllloss_param_.class_num_ = LongToInt(logits_shape[1]);
   nllloss_param_.reduction_type_ = pair->second;
 }
 

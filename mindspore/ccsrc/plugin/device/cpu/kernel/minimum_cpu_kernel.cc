@@ -172,13 +172,14 @@ void MinimumCpuKernelMod::BroadcastArithKernel(const int64_t l0, const int64_t l
                                                const int64_t d2, const int64_t d3, const int64_t d4, const int64_t d5,
                                                const int64_t d6, const T *input_x, const T *input_y, T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
-    int64_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    int64_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    int64_t k = pos / (d3 * d4 * d5 * d6) % d2;
-    int64_t l = pos / (d4 * d5 * d6) % d3;
-    int64_t m = pos / (d5 * d6) % d4;
-    int64_t n = pos / d6 % d5;
-    int64_t o = pos % d6;
+    auto pos_signed = SizeToLong(pos);
+    int64_t i = pos_signed / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+    int64_t j = pos_signed / (d2 * d3 * d4 * d5 * d6) % d1;
+    int64_t k = pos_signed / (d3 * d4 * d5 * d6) % d2;
+    int64_t l = pos_signed / (d4 * d5 * d6) % d3;
+    int64_t m = pos_signed / (d5 * d6) % d4;
+    int64_t n = pos_signed / d6 % d5;
+    int64_t o = pos_signed % d6;
 
     size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
     l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;

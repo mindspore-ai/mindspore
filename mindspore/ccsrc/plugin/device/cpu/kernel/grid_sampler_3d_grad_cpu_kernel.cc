@@ -246,7 +246,7 @@ void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 template <typename T>
 T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, int64_t size,
                                                                             const std::string &padding_mode,
-                                                                            bool align_corners, T *grad_x) {
+                                                                            bool align_corners, T *grad_x) const {
   T grad_clip, grad_refl;
   if (align_corners) {
     *grad_x = static_cast<T>(size - kOne) / kTwo;
@@ -260,9 +260,9 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
     *grad_x = (*grad_x) * grad_clip;
   } else if (padding_mode == "reflection") {
     if (align_corners) {
-      coord = reflect_coordinates_set_grad(coord, kZero, kTwo * (size - kOne), &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, 0, (size - 1) << 1, &grad_refl);
     } else {
-      coord = reflect_coordinates_set_grad(coord, -kOne, kTwo * size - kOne, &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, -1, (size << 1) - 1, &grad_refl);
     }
     coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_refl * grad_clip;
@@ -271,7 +271,7 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
 }
 
 template <typename T>
-T GridSampler3DGradCpuKernelMod::clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x) {
+T GridSampler3DGradCpuKernelMod::clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x) const {
   if (x <= static_cast<T>(kZero)) {
     *grad_x = static_cast<T>(kZero);
     return static_cast<T>(kZero);
@@ -288,7 +288,8 @@ T GridSampler3DGradCpuKernelMod::clip_coordinates_set_grad(T x, int64_t clip_lim
 }
 
 template <typename T>
-T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x) {
+T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high,
+                                                              T *grad_x) const {
   if (twice_low == twice_high) {
     *grad_x = static_cast<T>(kZero);
     return static_cast<T>(kZero);
@@ -322,7 +323,8 @@ void GridSampler3DGradCpuKernelMod::safe_add_3d(T *data, int64_t d, int64_t h, i
   }
 }
 
-bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) {
+bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H,
+                                                     int64_t W) const {
   int64_t iD = D;
   int64_t iH = H;
   int64_t iW = W;

@@ -66,7 +66,7 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   T reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high);
 
-  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
+  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

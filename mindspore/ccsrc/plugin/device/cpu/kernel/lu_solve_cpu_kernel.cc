@@ -137,9 +137,9 @@ bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
   auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_Shape = AnfAlgo::GetOutputDeviceShape(node_wpt_, 0);
-  auto input0_element_num = get_element_num(input_0_Shape);
-  auto input1_element_num = get_element_num(input_1_Shape);
-  auto output_element_num = get_element_num(output_Shape);
+  auto input0_element_num = SizeOf(input_0_Shape);
+  auto input1_element_num = SizeOf(input_1_Shape);
+  auto output_element_num = SizeOf(output_Shape);
   std::vector<T1> input_0(input_x0, input_x0 + input0_element_num);
   std::vector<T1> input_1(input_x1, input_x1 + input1_element_num);
   size_t b_dims = input_0_Shape.size();
@@ -150,7 +150,7 @@ bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   size_t lu_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1] * input_1_Shape[lu_dims - 2]);
   size_t pivots_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1]);
   MS_EXCEPTION_IF_ZERO("b_stride", b_stride);
-  size_t batch_num = static_cast<size_t>(output_element_num / b_stride);
+  size_t batch_num = output_element_num / b_stride;
   if (b_dims == lu_dims) {
     for (size_t i = 0; i < batch_num; i++) {
       T1 *b_working_ptr = input_0.data() + i * b_stride;

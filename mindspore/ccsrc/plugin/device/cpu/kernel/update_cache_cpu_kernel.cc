@@ -75,7 +75,7 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   batch_size_ = SizeOf(indices_shape);
   MS_LOG(INFO) << "UpdateCache batch_size:" << batch_size_;
-  update_size_ = SizeOf(update_shape);
+  update_size_ = SizeToLong(SizeOf(update_shape));
   update_length_ = LongToSize(update_shape[1]);
   char *input_x = reinterpret_cast<char *>(inputs[0]->addr);
   T *indices = reinterpret_cast<T *>(inputs[1]->addr);

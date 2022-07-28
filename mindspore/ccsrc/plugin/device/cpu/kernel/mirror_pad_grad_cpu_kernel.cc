@@ -57,7 +57,6 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   num_paddings_ = padding_shape[0];
 
   ShapeVector output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
   for (auto x : output_shape) {
     output_size_ *= SizeToLong(x);
     output_shape_.push_back(SizeToLong(x));

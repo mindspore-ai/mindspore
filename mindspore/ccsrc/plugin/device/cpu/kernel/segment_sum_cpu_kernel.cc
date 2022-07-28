@@ -158,6 +158,9 @@ bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
   }
+  if (input_x_shape_[0] == 0) {
+    MS_LOG(ERROR) << "For SegmentSumCPUKernelMod, input_x_shape_[0] can not be 0";
+  }
   const size_t num_compare_per = input_x_num_ / LongToSize(input_x_shape_[0]);
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {

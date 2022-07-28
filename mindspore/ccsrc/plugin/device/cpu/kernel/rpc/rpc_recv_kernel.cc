@@ -32,7 +32,7 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
     }
 
     int64_t size = 1;
-    GetShapeSize(int64_shape, TypeIdToType(inputs[i]->GetDtype()), &size);
+    (void)GetShapeSize(int64_shape, TypeIdToType(inputs[i]->GetDtype()), &size);
     input_size_list_[i] = LongToSize(size);
   }
   // Reassign the memory size of recv kernel's outputs.
@@ -43,7 +43,7 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
     }
 
     int64_t size = 1;
-    GetShapeSize(int64_shape, TypeIdToType(outputs[i]->GetDtype()), &size);
+    (void)GetShapeSize(int64_shape, TypeIdToType(outputs[i]->GetDtype()), &size);
     output_size_list_[i] = LongToSize(size);
   }
   return 0;

@@ -25,7 +25,7 @@ void PServerKernel::Shard(ShapeVector *shape, int axis) {
     MS_LOG(EXCEPTION) << "Shape size is invalid.";
   }
   (*shape)[IntToSize(axis)] =
-    LongToSize(Util::LocalShard((*shape)[IntToSize(axis)], SizeToLong(rank_id_), SizeToLong(pserver_num_)));
+    Util::LocalShard((*shape)[IntToSize(axis)], SizeToLong(rank_id_), SizeToLong(pserver_num_));
 }
 }  // namespace ps
 }  // namespace kernel

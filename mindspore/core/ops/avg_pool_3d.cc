@@ -75,10 +75,10 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
                       << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
   }
   if (ceil_mode) {
-    out_d = std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d + stride_d - 1) / stride_d + 1);
-    out_h =
-      std::floor((in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h + stride_h - 1) / stride_h + 1);
-    out_w = std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w + stride_w - 1) / stride_w + 1);
+    out_d = DoubleToLong(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d + stride_d - 1) / stride_d + 1));
+    out_h = DoubleToLong(
+      std::floor((in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h + stride_h - 1) / stride_h + 1));
+    out_w = DoubleToLong(std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w + stride_w - 1) / stride_w + 1));
     if ((out_d - 1) * stride_d >= in_d + pad_list[0]) {
       out_d--;
     }
@@ -89,9 +89,10 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
       out_w--;
     }
   } else {
-    out_d = std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1);
-    out_h = std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1);
-    out_w = std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1);
+    out_d = DoubleToLong(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1));
+    out_h = DoubleToLong(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1));
+    out_w =
+      DoubleToLong(std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
   }
   std::vector<int64_t> output_shape = {in_shape[0], in_shape[1], out_d, out_h, out_w};
   return output_shape;
