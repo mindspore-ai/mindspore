@@ -665,8 +665,8 @@ std::vector<size_t> TraceLoopToControlMap(const FuncGraphPtr &control_subgraph) 
   auto switch_node = FindLoopSwitchNode(control_subgraph);
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   const auto &control_params = control_subgraph->parameters();
-  auto auxiliary_inputs_num = 2;
-  for (size_t i = auxiliary_inputs_num; i < loop_partial_node->inputs().size(); ++i) {
+  int64_t auxiliary_inputs_num = 2;
+  for (size_t i = static_cast<unsigned int>(auxiliary_inputs_num); i < loop_partial_node->inputs().size(); ++i) {
     auto loop_param = GetNodeInput<Parameter>(loop_partial_node, i);
     auto control_param_pos =
       std::find(control_params.begin(), control_params.end(), loop_param) - control_params.begin();
@@ -683,8 +683,8 @@ std::vector<size_t> TraceAfterToLoopMap(const FuncGraphPtr &control_subgraph) {
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   auto after_partial_node = GetNodeInput<CNode>(switch_node, kThreeNum);
   const auto &loop_params = loop_partial_node->inputs();
-  auto auxiliary_inputs_num = 2;
-  for (size_t i = auxiliary_inputs_num; i < after_partial_node->inputs().size(); ++i) {
+  int64_t auxiliary_inputs_num = 2;
+  for (size_t i = static_cast<unsigned int>(auxiliary_inputs_num); i < after_partial_node->inputs().size(); ++i) {
     auto after_param = GetNodeInput<Parameter>(after_partial_node, i);
     auto after_param_pos = std::find(loop_params.begin(), loop_params.end(), after_param) - loop_params.begin();
     result.push_back(after_param_pos - auxiliary_inputs_num);
@@ -1675,7 +1675,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   const auto &x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
   auto end_ignore_mask = GetOpAttribute<int64_t>(node, "end_mask");
   for (size_t i = 0; i < end_value.size(); ++i) {
-    if ((end_ignore_mask & (1 << i)) != 0) {
+    if (((unsigned int)end_ignore_mask & (1 << i)) != 0) {
       end_value[i] = x_shape[i];
     }
   }
