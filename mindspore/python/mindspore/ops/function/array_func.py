@@ -1268,11 +1268,15 @@ def transpose(input_x, input_perm):
     If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
     then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
 
+    Note:
+        On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input_x)`.
+        Negative value of `input_perm` is not supported on Ascend.
+
     Args:
         input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         input_perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
             the indexes of each dimension of `input_x`. The length of `input_perm` and the shape of `input_x` must be
-            the same. Only constant value is allowed. Must be in the range [0, rank(input_x)).
+            the same. Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Returns:
         Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
