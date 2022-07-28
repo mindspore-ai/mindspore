@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,11 @@ std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
     auto &opcoder = opcoders.at(i);
     std::string code = blocks.at(i);
     std::string name = opcoder->name();
+    auto pos = name.find_first_of('/');
+    while (pos != std::string::npos) {
+      name.replace(pos, 1, ".");
+      pos = name.find_first_of('/');
+    }
     code += "    {\n";
     code += "      FILE *output_file = fopen(\"./" + name + ".ir\", \"w\");\n";
     code += "      fprintf(output_file, \"Node:" + name + "\\n\");\n";

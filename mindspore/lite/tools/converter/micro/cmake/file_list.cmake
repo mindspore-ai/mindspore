@@ -100,6 +100,12 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/exp_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/deconv2d_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/prelu_fp32_coder.cc
+        #### nnacl fp32_grad coder
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/activation_grad_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/adam_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/assign_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/biasadd_grad_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/softmax_cross_entropy_with_logits_coder.cc
         #### nnacl int8 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/activation_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/affine_int8_coder.cc

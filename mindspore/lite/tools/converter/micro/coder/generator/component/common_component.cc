@@ -229,7 +229,7 @@ void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   // input tensors
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
-    ofs << "static const unsigned char *" << ctx->input_name() + std::to_string(i) << " = 0;\n";
+    ofs << "const unsigned char *" << ctx->input_name() + std::to_string(i) << " = 0;\n";
   }
   size_t size = inputs.size();
   ofs << "int "

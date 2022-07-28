@@ -20,6 +20,7 @@
 #include "schema/model_generated.h"
 #include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH;
@@ -41,43 +42,13 @@ constexpr static int kGradientIdx = 9;
 
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
-static int DoAdam(float *m, float *v, const float *gradient, float *weight, float beta1, float beta2, float beta1_power,
-                  float beta2_power, float eps, float learning_rate, bool nesterov, int start, int end) {
-  if ((1.f - beta1_power) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0 or below";
-    return RET_ERROR;
-  }
-  if ((1.f - beta2_power) < 0.0f) {
-    MS_LOG(ERROR) << "sqrt cannot be negative";
-    return RET_ERROR;
-  }
-
-  auto update_lr = learning_rate * std::sqrt(1.f - beta2_power) / (1.f - beta1_power);
-  const float one_minus_beta1 = 1.f - beta1;
-  const float one_minus_beta2 = 1.f - beta2;
-  if (nesterov) {  // Nadam
-    for (int i = start; i < end; ++i) {
-      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
-      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
-      weight[i] -= update_lr * (m[i] * beta1 + one_minus_beta1 * gradient[i]) / (std::sqrt(v[i]) + eps);
-    }
-  } else {
-    for (int i = start; i < end; ++i) {
-      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
-      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
-      weight[i] -= update_lr * m[i] / (std::sqrt(v[i]) + eps);
-    }
-  }
-  return RET_OK;
-}
-
 int AdamCPUKernel::DoExecute(int task_id) {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_10D);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(kMomentVector1stIdx)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(kMomentVector2stIdx)->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData())[0];
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData());
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData());
   auto learning_rate = lr_;
   auto beta1 = reinterpret_cast<float *>(in_tensors_.at(kBeta1Idx)->MutableData())[0];
   auto beta2 = reinterpret_cast<float *>(in_tensors_.at(kBeta2Idx)->MutableData())[0];
@@ -146,8 +117,8 @@ int AdamCPUKernel::OptimizerStep() {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(kMomentVector1stIdx)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(kMomentVector2stIdx)->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData())[0];
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData());
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData());
   auto learning_rate = lr_;
   auto beta1 = reinterpret_cast<float *>(in_tensors_.at(kBeta1Idx)->MutableData())[0];
   auto beta2 = reinterpret_cast<float *>(in_tensors_.at(kBeta2Idx)->MutableData())[0];

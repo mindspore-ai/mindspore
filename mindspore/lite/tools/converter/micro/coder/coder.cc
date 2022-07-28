@@ -120,18 +120,18 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
   return RET_OK;
 }
 
-int Coder::Init(const std::string code_mode, const std::string target, bool support_parallel, bool debug_mode) const {
+int Coder::Init(const std::string &code_mode, const std::string &target, bool support_parallel, bool debug_mode) const {
   static const std::map<std::string, Target> kTargetMap = {
     {"x86", kX86}, {"Cortex-M", kCortex_M}, {"ARM32", kARM32}, {"ARM64", kARM64}, {"All", kAllTargets}};
   static const std::map<std::string, CodeMode> kCodeModeMap = {{"Inference", Inference}, {"Train", Train}};
   Configurator *config = Configurator::GetInstance();
 
   auto target_item = kTargetMap.find(target);
-  MS_CHECK_TRUE_RET_BOOL(target_item != kTargetMap.end(), "unsupported target: " + target);
+  MS_CHECK_TRUE_MSG(target_item != kTargetMap.end(), RET_ERROR, "unsupported target: " + target);
   config->set_target(target_item->second);
 
   auto code_item = kCodeModeMap.find(code_mode);
-  MS_CHECK_TRUE_RET_BOOL(code_item != kCodeModeMap.end(), "unsupported code mode: " + code_mode);
+  MS_CHECK_TRUE_MSG(code_item != kCodeModeMap.end(), RET_ERROR, "unsupported code mode: " + code_mode);
   config->set_code_mode(code_item->second);
 
   if (support_parallel && config->target() == kCortex_M) {

@@ -204,10 +204,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // do const value packing to init
   if (!params_->a_const_) {
     code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
-    if (!params_->b_const_) {
-      init_code.CodeMallocExpression(b_pack_ptr_, b_pack_ptr_size_);
-      init_code.CodeFunction("memset", b_pack_ptr_, 0, b_pack_ptr_size_);
-    } else {
+    if (params_->b_const_) {
       init_code.CodeBufferOffsetExpression(b_pack_ptr_, context->weight_name(), context->weight_offset_name(),
                                            context->weight_size_name(), b_pack_ptr_size_);
       w_buf_size += b_pack_ptr_size_;
@@ -223,10 +220,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     init_code.CodeFunction("InitMatrixB", b_src_str, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
   if (!params_->b_const_) {
-    if (!params_->a_const_) {
-      init_code.CodeMallocExpression(a_pack_str, a_pack_ptr_size_);
-      init_code.CodeFunction("memset", a_pack_ptr_, 0, a_pack_ptr_size_);
-    } else {
+    if (params_->a_const_) {
       init_code.CodeBufferOffsetExpression(a_pack_ptr_, context->weight_name(), context->weight_offset_name(),
                                            context->weight_size_name(), a_pack_ptr_size_);
       w_buf_size += a_pack_ptr_size_;

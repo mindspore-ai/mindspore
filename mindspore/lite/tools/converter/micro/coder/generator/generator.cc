@@ -254,7 +254,10 @@ int Generator::CodeWeightFile() {
   cofs << g_hwLicense;
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
   cofs << "int  " << gThreadNum << " = 1; \n";
-
+  std::vector<Tensor *> inputs = ctx_->graph_inputs();
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    cofs << "extern const unsigned char *" << ctx_->input_name() + std::to_string(i) << ";\n";
+  }
   if (config_->target() != kCortex_M) {
     cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";

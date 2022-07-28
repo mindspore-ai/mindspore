@@ -35,8 +35,6 @@ class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   }
   ~SoftmaxCrossEntropyWithLogitsCPUKernel() override = default;
 
-  void ForwardPostExecute(const float *labels, const float *logits, float *output1, float *output2) const;
-
   int Prepare() override;
   int ReSize() override;
   int Run() override;
@@ -46,7 +44,6 @@ class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   SoftmaxCrossEntropyParameter *param_;
   SoftmaxParameter sm_params_;
 };
-
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GRAD_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_

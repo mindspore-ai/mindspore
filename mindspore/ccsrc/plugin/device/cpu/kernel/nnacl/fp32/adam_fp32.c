@@ -209,3 +209,31 @@ size_t FusedCastAdamFp16Fp32(int16_t *var16, const float *gradient32, float *m, 
                   global_norm_reciprocal, end);
   return c1;
 }
+
+int DoAdam(float *m, float *v, const float *gradient, float *weight, float beta1, float beta2, float *beta1_power,
+           float *beta2_power, float eps, float learning_rate, bool nesterov, int start, int end) {
+  if ((1.f - beta1_power[0]) <= 0.0f) {
+    return NNACL_PARAM_INVALID;
+  }
+  if ((1.f - beta2_power[0]) < 0.0f) {
+    return NNACL_ERRCODE_SQRT_NEGATIVE;
+  }
+
+  float update_lr = learning_rate * sqrtf(1.f - beta2_power[0]) / (1.f - beta1_power[0]);
+  const float one_minus_beta1 = 1.f - beta1;
+  const float one_minus_beta2 = 1.f - beta2;
+  if (nesterov) {  // Nadam
+    for (int i = start; i < end; ++i) {
+      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
+      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
+      weight[i] -= update_lr * (m[i] * beta1 + one_minus_beta1 * gradient[i]) / (sqrtf(v[i]) + eps);
+    }
+  } else {
+    for (int i = start; i < end; ++i) {
+      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
+      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
+      weight[i] -= update_lr * m[i] / (sqrtf(v[i]) + eps);
+    }
+  }
+  return NNACL_OK;
+}

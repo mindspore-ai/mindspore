@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 #include "coder/opcoders/nnacl/fp32/activation_fp32_coder.h"
-#include <string>
 #include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/op_base.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"

@@ -42,7 +42,8 @@
 namespace mindspore::lite::micro {
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
-void CoderSession::EndCode() {
+int CoderSession::EndCode() {
+  int ret = RET_OK;
   context_->set_tensor_map(allocator_->tensors_map());
   context_->set_saved_weights(allocator_->saved_weights());
   size_t de_quant_max_workspace_size = nnacl::Dequant::GetInstance()->de_quant_max_workspace();
@@ -59,8 +60,10 @@ void CoderSession::EndCode() {
     context_->set_code_blocks(blocks);
   }
   if (config->code_mode() == Train) {
-    Train::TransformGraphForTrain(context_.get(), op_coders_, schema_version_);
+    ret = Train::TransformGraphForTrain(context_.get(), op_coders_, schema_version_);
+    MS_CHECK_RET_CODE(ret, "transform graph for train failed.");
   }
+  return ret;
 }
 
 int CoderSession::Run() {
@@ -85,7 +88,8 @@ int CoderSession::Run() {
     MS_CHECK_RET_CODE(ret, "do coder " << op_coder->name() << " failed");
   }
 
-  this->EndCode();
+  ret = this->EndCode();
+  MS_CHECK_RET_CODE(ret, "End code failed.");
   MS_LOG(INFO) << "run opcoders success";
   return RET_OK;
 }
@@ -220,6 +224,8 @@ int CoderSession::CreateOpCoders() {
   CodeMode code_mode = config->code_mode();
   bool support_parallel = config->support_parallel();
   uint32_t nodes_size = model->graph_.all_nodes_.size();
+  std::vector<lite::Tensor *> all_tensors = coder_graph_->all_tensors();
+  MS_CHECK_TRUE_MSG(!all_tensors.empty(), RET_ERROR, "coder_graph has no any tensors");
   OpCoderBuilder builder;
   for (uint32_t i = 0; i < nodes_size; ++i) {
     const auto *node = model->graph_.all_nodes_.at(i);
@@ -227,19 +233,9 @@ int CoderSession::CreateOpCoders() {
       MS_LOG(ERROR) << "node is nullptr";
       return RET_ERROR;
     }
-    std::vector<lite::Tensor *> all_tensors = coder_graph_->all_tensors();
-    if (all_tensors.empty()) {
-      MS_LOG(ERROR) << "coder_graph has no any tensors";
-      return RET_ERROR;
-    }
     // set op_coder's inputs && outputs info
-    std::vector<uint32_t> input_indices;
-    std::vector<uint32_t> node_input_indices = node->input_indices_;
-    input_indices.insert(input_indices.end(), node_input_indices.begin(), node_input_indices.end());
-    std::vector<uint32_t> output_indices;
-    std::vector<uint32_t> node_output_indices = node->output_indices_;
-    output_indices.insert(output_indices.end(), node_output_indices.begin(), node_output_indices.end());
-
+    std::vector<uint32_t> input_indices(node->input_indices_);
+    std::vector<uint32_t> output_indices(node->output_indices_);
     std::vector<lite::Tensor *> inputs;
     std::vector<lite::Tensor *> outputs;
     for (auto in_index : input_indices) {
@@ -259,11 +255,11 @@ int CoderSession::CreateOpCoders() {
       outputs.push_back(all_tensors.at(out_index));
     }
     if (inputs.empty()) {
-      MS_LOG(ERROR) << "node: " << node->name_ << "has  no inputs tensor";
+      MS_LOG(ERROR) << "node: " << node->name_ << "has no inputs tensor";
       return RET_ERROR;
     }
     if (outputs.empty()) {
-      MS_LOG(ERROR) << "node: " << node->name_ << "has  no outputs tensor";
+      MS_LOG(ERROR) << "node: " << node->name_ << "has no outputs tensor";
       return RET_ERROR;
     }
 

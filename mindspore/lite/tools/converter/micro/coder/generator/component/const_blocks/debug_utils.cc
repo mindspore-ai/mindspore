@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ const char debug_utils_h[] = R"RAW(
 #include <sys/time.h>
 #include <time.h>
 #include <stdint.h>
+#include "nnacl/op_base.h"
 
 #define MICRO_INFO(content, args...) \
   { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
@@ -62,24 +63,9 @@ enum DataType {
   DataType_MAX = DataType_DT_UNDEFINED
 };
 
-enum Format {
-  Format_NCHW = 0,
-  Format_NHWC = 1,
-  Format_HWKC = 2,
-  Format_HWCK = 3,
-  Format_KCHW = 4,
-  Format_CKHW = 5,
-  Format_KHWC = 6,
-  Format_CHWK = 7,
-  Format_NC4HW4 = 100,
-  Format_NUM_OF_FORMAT = 101,
-  Format_MIN = Format_NCHW,
-  Format_MAX = Format_NUM_OF_FORMAT
-};
-
 typedef struct {
   enum DataType type;
-  enum Format format;
+  enum FormatC format;
   int ndim;
   int *dim;
   void *data;
@@ -140,7 +126,7 @@ static const char *const TypeNames[] = {"DT_FLOAT", "DT_FLOAT16", "DT_INT8",   "
                                         "",         "",           "DT_UINT32", "DT_INT64", "DT_UINT16",    "",
                                         "",         "",           "",          "",         "DT_UNDEFINED", ""};
 
-const char *EnumNameFormat(enum Format e) {
+const char *EnumNameFormat(enum FormatC e) {
   switch (e) {
     case Format_NCHW:
       return "NCHW";
@@ -160,8 +146,6 @@ const char *EnumNameFormat(enum Format e) {
       return "CHWK";
     case Format_NC4HW4:
       return "NC4HW4";
-    case Format_NUM_OF_FORMAT:
-      return "NUM_OF_FORMAT";
     default:
       return "";
   }

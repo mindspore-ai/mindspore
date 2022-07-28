@@ -50,7 +50,7 @@ class CoderSession {
   int CreateOpCoders();
   int InitCodeGraph();
   int CompileGraph();
-  void EndCode();
+  int EndCode();
 
   std::unique_ptr<CoderGraph> coder_graph_{nullptr};
   std::unique_ptr<CoderContext> context_{nullptr};

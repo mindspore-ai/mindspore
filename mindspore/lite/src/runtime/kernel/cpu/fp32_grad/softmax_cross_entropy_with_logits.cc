@@ -18,6 +18,7 @@
 #include "src/runtime/kernel_registry.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/fp32/softmax_fp32.h"
+#include "nnacl/fp32_grad/softmax_cross_entropy_with_logits.h"
 #include "src/runtime/kernel/cpu/fp32_grad/softmax_cross_entropy_with_logits.h"
 #include "include/errorcode.h"
 
@@ -28,34 +29,6 @@ using mindspore::schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() { return ReSize(); }
-
-void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,
-                                                                float *output2) const {
-  float eps = 1e-6;
-  if (grads != nullptr) {
-    for (size_t i = 0; i < static_cast<size_t>(param_->batch_size_); ++i) {
-      float loss = 0.f;
-      for (size_t j = 0; j < param_->number_of_classes_; ++j) {
-        float logit =
-          -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
-        grads[i * param_->number_of_classes_ + j] =
-          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j]);
-        loss += labels[i * param_->number_of_classes_ + j] * logit;
-      }
-      output2[i] = loss;
-    }
-  } else {
-    for (size_t i = 0; i < static_cast<size_t>(param_->batch_size_); ++i) {
-      float loss = 0.f;
-      for (size_t j = 0; j < param_->number_of_classes_; ++j) {
-        float logit =
-          -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
-        loss += labels[i * param_->number_of_classes_ + j] * logit;
-      }
-      output2[i] = loss;
-    }
-  }
-}
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data());
@@ -75,7 +48,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   std::fill(losses_, losses_ + data_size, 0);
   std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
   Softmax(ins, losses_, sum_data_, &sm_params_);
-  ForwardPostExecute(labels, losses_, grads, out);
+  ForwardPostExecute(labels, losses_, grads, out, param_->number_of_classes_, param_->batch_size_);
   return RET_OK;
 }
 

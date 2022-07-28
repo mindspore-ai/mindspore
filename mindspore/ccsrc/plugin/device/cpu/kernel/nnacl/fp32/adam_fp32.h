@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ size_t FusedCastAdamFp16Fp16(int16_t *var16, const int16_t *gradient16, float *m
 size_t FusedCastAdamFp16Fp32(int16_t *var16, const float *gradient32, float *m, float *v, float lr, float beta1,
                              float beta2, float epsilon, float decay, float global_norm_reciprocal, size_t start,
                              size_t end);
+
+int DoAdam(float *m, float *v, const float *gradient, float *weight, float beta1, float beta2, float *beta1_power,
+           float *beta2_power, float eps, float learning_rate, bool nesterov, int start, int end);
 #ifdef __cplusplus
 }
 #endif
