@@ -744,10 +744,10 @@ TEST_F(MindDataTestPipeline, TestToTensorOpDefault) {
 }
 
 /// Feature: ToTensor op
-/// Description: Test ToTensor op with float64 type
+/// Description: Test ToTensor op with float64 type passed as string
 /// Expectation: Tensor type is changed to float64 and all rows iterated correctly
-TEST_F(MindDataTestPipeline, TestToTensorOpFloat64) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpFloat64.";
+TEST_F(MindDataTestPipeline, TestToTensorOpFloat64String) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpFloat64String.";
 
   std::string MindDataPath = "data/dataset";
   std::string folder_path = MindDataPath + "/testImageNetData/train/";
@@ -773,8 +773,37 @@ TEST_F(MindDataTestPipeline, TestToTensorOpFloat64) {
 }
 
 /// Feature: ToTensor op
-/// Description: Test ToTensor op with default float64 type
+/// Description: Test ToTensor op with float64 type passed as DataType
 /// Expectation: Tensor type is changed to float64 and all rows iterated correctly
+TEST_F(MindDataTestPipeline, TestToTensorOpFloat64DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpFloat64DataType.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto to_tensor_op = vision::ToTensor(DataType::DE_FLOAT64);
+  ds = ds->Map({to_tensor_op}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image type: " << image.DataType();
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+  iter->Stop();
+}
+
+/// Feature: ToTensor op
+/// Description: Test ToTensor op with float64 type and invalid uint32 type input data
+/// Expectation: Error is caught as given invalid input data type
 TEST_F(MindDataTestPipeline, TestToTensorOpInvalidInput) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpInvalidInput.";
 

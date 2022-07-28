@@ -28,6 +28,7 @@
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 #include "include/dataset/vision_lite.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -1600,7 +1601,8 @@ class MS_API SwapRedBlue final : public TensorTransform {
 class MS_API ToTensor final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] output_type The type of the output tensor (default="float32").
+  /// \param[in] output_type The type of the output tensor of type mindspore::DataType or String
+  /// (default=mindspore::dataset::DataType::DE_FLOAT32).
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -1610,7 +1612,9 @@ class MS_API ToTensor final : public TensorTransform {
   ///     dataset = dataset->Map({ToTensor},  // operations
   ///                            {"image"});  // input columns
   /// \endcode
-  explicit ToTensor(std::string output_type = "float32");
+  ToTensor();
+  explicit ToTensor(std::string output_type);
+  explicit ToTensor(DataType::Type output_type);
 
   /// \brief Destructor.
   ~ToTensor() = default;

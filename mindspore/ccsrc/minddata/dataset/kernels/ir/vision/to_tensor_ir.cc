@@ -28,6 +28,8 @@ ToTensorOperation::ToTensorOperation(const std::string &output_type) {
   output_type_ = temp_output_type;
 }
 
+ToTensorOperation::ToTensorOperation(const DataType &output_type) { output_type_ = output_type; }
+
 ToTensorOperation::~ToTensorOperation() = default;
 
 std::string ToTensorOperation::Name() const { return kToTensorOperation; }

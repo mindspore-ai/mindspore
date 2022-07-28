@@ -1136,11 +1136,14 @@ std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<
 
 // ToTensor Transform Operation.
 struct ToTensor::Data {
-  explicit Data(std::string &output_type) : output_type_(output_type) {}
-  std::string output_type_;
+  explicit Data(std::string &output_type) : output_type_(DataType(output_type)) {}
+  explicit Data(DataType::Type output_type) : output_type_(output_type) {}
+  DataType output_type_{};
 };
 
+ToTensor::ToTensor() : data_(std::make_shared<Data>(DataType::Type::DE_FLOAT32)) {}
 ToTensor::ToTensor(std::string output_type) : data_(std::make_shared<Data>(output_type)) {}
+ToTensor::ToTensor(DataType::Type output_type) : data_(std::make_shared<Data>(output_type)) {}
 
 std::shared_ptr<TensorOperation> ToTensor::Parse() { return std::make_shared<ToTensorOperation>(data_->output_type_); }
 

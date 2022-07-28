@@ -1421,7 +1421,57 @@ TEST_F(MindDataTestPipeline, TestNormalizePadDefault) {
 
   // Create objects for the tensor ops
   auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
-                                                             std::vector<float>{70.0, 68.0, 71.0}, "float32");
+                                                             std::vector<float>{70.0, 68.0, 71.0});
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[2], 4);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op basic usage with default HWC parameter and float16 type
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestNormalizePadDefaultFloat16AndHWCDefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadDefaultFloat16AndHWCDefault.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float16");
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds

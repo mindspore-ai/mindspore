@@ -27,8 +27,7 @@ namespace mindspore {
 namespace dataset {
 class ToTensorOp : public TensorOp {
  public:
-  explicit ToTensorOp(const DataType &output_type) : output_type_(output_type) {}
-
+  explicit ToTensorOp(const DataType::Type &output_type) : output_type_(output_type) {}
   explicit ToTensorOp(const std::string &output_type) { output_type_ = DataType(output_type); }
 
   ~ToTensorOp() override = default;
