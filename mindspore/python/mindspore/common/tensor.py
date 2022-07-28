@@ -4622,6 +4622,62 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get("erfc")()(self)
 
 
+    def top_k(self, k, sorted=True):
+        r"""
+        Finds values and indices of the `k` largest entries along the last dimension.
+
+        .. warning::
+            - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
+
+        `input_x` refer to self tensor.
+
+        If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
+        and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
+        and its index is indices [`k`].
+
+        For a multi-dimensional matrix,
+        calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
+
+        .. math::
+
+            values.shape = indices.shape = input\_x.shape[:-1] + [k].
+
+        If the two compared elements are the same, the one with the smaller index value is returned first.
+
+        Args:
+            k (int): The number of top elements to be computed along the last dimension, constant input is needed.
+            sorted (bool, optional): If true, the obtained elements will be sorted by the values in descending order.
+                Default: True.
+
+        Returns:
+            Tuple of 2 tensors, the values and the indices.
+
+            - values (Tensor): The `k` largest elements in each slice of the last dimension.
+            - indices (Tensor): The indices of values within the last dimension of input.
+
+        Raises:
+            TypeError: If `k` is not an int.
+            TypeError: If `sorted` is not a bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``  ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor([1, 2, 3, 4, 5], ms.float16)
+            >>> k = 3
+            >>> values, indices = input_x.top_k(k, sorted=True)
+            >>> print((values, indices))
+            (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
+              dtype=Int32, value= [4, 3, 2]))
+        """
+        self._init_check()
+        validator.check_is_int(k, 'k')
+        validator.check_bool(sorted, 'sorted')
+        return tensor_operator_registry.get("top_k")(sorted)(self, k)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.

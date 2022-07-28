@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 @pytest.mark.level0
@@ -80,3 +81,71 @@ def test_topk():
     k = 40960
     ms_output = P.TopK(False)(Tensor(x_np), k)
     assert np.allclose(ms_output[0].asnumpy(), x_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_top_k_functional():
+    """
+    Feature: test_top_k_functional
+    Description: test top_k functional API
+    Expectation: the output is as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x_np = np.random.rand(3, 4).astype(np.float32)
+    k = 4
+    ms_output = F.top_k(Tensor(x_np), k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(3, 4).astype(np.float32)
+    k = 4
+    ms_output = F.top_k(Tensor(x_np), k, False)
+    assert np.allclose(ms_output[0].asnumpy(), x_np)
+
+    x_np = np.random.rand(2, 3, 4).astype(np.float32)
+    k = 2
+    ms_output = F.top_k(Tensor(x_np), k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(512, 1024).astype(np.float32)
+    k = 512
+    ms_output = F.top_k(Tensor(x_np), k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_top_k_tensor():
+    """
+    Feature: test_top_k_tensor
+    Description: test top_k tensor API
+    Expectation: the output is as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x_np = np.random.rand(3, 4).astype(np.float32)
+    k = 4
+    ms_output = Tensor(x_np).top_k(k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(3, 4).astype(np.float32)
+    k = 4
+    ms_output = Tensor(x_np).top_k(k, False)
+    assert np.allclose(ms_output[0].asnumpy(), x_np)
+
+    x_np = np.random.rand(2, 3, 4).astype(np.float32)
+    k = 2
+    ms_output = Tensor(x_np).top_k(k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(512, 1024).astype(np.float32)
+    k = 512
+    ms_output = Tensor(x_np).top_k(k, True)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)

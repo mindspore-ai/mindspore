@@ -2673,68 +2673,6 @@ class BiasAdd(Primitive):
         self.add_prim_attr('data_format', self.format)
 
 
-class TopK(Primitive):
-    """
-    Finds values and indices of the `k` largest entries along the last dimension.
-
-    .. warning::
-        - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
-
-    If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
-    and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
-    and its index is indices [`k`].
-
-    For a multi-dimensional matrix,
-    calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
-
-    .. math::
-
-        values.shape = indices.shape = input.shape[:-1] + [k].
-
-    If the two compared elements are the same, the one with the smaller index value is returned first.
-
-    Args:
-        sorted (bool): If true, the obtained elements will
-            be sorted by the values in descending order. Default: True.
-
-    Inputs:
-        - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32.
-        - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
-
-    Outputs:
-        Tuple of 2 tensors, the values and the indices.
-
-        - **values** (Tensor) - The `k` largest elements in each slice of the last dimension.
-        - **indices** (Tensor) - The indices of values within the last dimension of input.
-
-    Raises:
-        TypeError: If `sorted` is not a bool.
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If `k` is not an int.
-        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> topk = ops.TopK(sorted=True)
-        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
-        >>> k = 3
-        >>> values, indices = topk(input_x, k)
-        >>> print((values, indices))
-        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
-          dtype=Int32, value= [4, 3, 2]))
-    """
-
-    @prim_attr_register
-    def __init__(self, sorted=True):
-        """Initialize TopK."""
-        self.sorted = validator.check_value_type("sorted", sorted, [bool], self.name)
-        self.add_prim_attr("sorted", self.sorted)
-        self.init_prim_io_names(inputs=['input', 'k'],
-                                outputs=['values', 'indices'])
-
-
 class NLLLoss(PrimitiveWithInfer):
     r"""
     Gets the negative log likelihood loss between logits and labels.

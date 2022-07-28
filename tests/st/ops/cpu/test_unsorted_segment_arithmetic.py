@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
@@ -30,7 +31,6 @@ UnsortedSegmentArith_func_map = {
     "sum": ops.UnsortedSegmentSum,
     "prod": ops.UnsortedSegmentProd,
 }
-
 
 arith_np_func_map = {
     "prod": lambda a, b: a * b,
@@ -90,7 +90,6 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     trans_inp = np_inp.reshape(trans_inp_shape)
     trans_ids = np_ids.reshape(ids_size)
 
-
     for i in range(ids_size):
         out_index = trans_ids[i]
         if out_index < 0:
@@ -105,7 +104,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
@@ -188,6 +187,8 @@ def test_tensor_check(func):
         output_ms = x.unsorted_segment_min(segment_ids, num_segments)
     if func == 'max':
         output_ms = x.unsorted_segment_max(segment_ids, num_segments)
+    if func == 'sum':
+        output_ms = x.unsorted_segment_sum(segment_ids, num_segments)
 
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
@@ -196,7 +197,7 @@ def test_tensor_check(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_functional_check(func):
     """
     Feature: test_functional_check.
@@ -212,6 +213,8 @@ def test_functional_check(func):
         output_ms = F.unsorted_segment_min(x, segment_ids, num_segments)
     if func == 'max':
         output_ms = F.unsorted_segment_max(x, segment_ids, num_segments)
+    if func == 'sum':
+        output_ms = F.unsorted_segment_sum(x, segment_ids, num_segments)
 
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
