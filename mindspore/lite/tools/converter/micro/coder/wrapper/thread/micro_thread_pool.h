@@ -25,22 +25,20 @@ typedef struct Task {
   int (*func)(void *, int, float, float);
   void *content;
   volatile atomic_int finished;
-  atomic_int status;  // return status, RET_OK
+  volatile atomic_int status;  // return status, RET_OK
+  volatile atomic_int started;
+  int task_num;
+  volatile atomic_bool valid;
 } Task;
-
-typedef struct TaskHandle {
-  struct TaskHandle *next;
-  int task_id;
-  Task *task;
-} TaskHandle;
 
 typedef struct ThreadPool {
   int max_thread_num;
   pthread_t *thread_id;
   pthread_cond_t queue_ready;
   pthread_mutex_t queue_lock;
-  TaskHandle *tasks;
-  int shutdown;
+  volatile Task task;
+  volatile int shutdown;
+  volatile int max_spin_count;
 } ThreadPool;
 
 int CreateThreadPool(int thread_num);
@@ -52,5 +50,9 @@ int GetCurrentThreadNum();
 int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int task_num);
 
 void ClearThreadPool();
+
+void SetSpinCountMinValue();
+
+void SetSpinCountMaxValue();
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_THREAD_POOL_H_

@@ -32,12 +32,15 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
     conv_coder_ =
       CPUConvolutionFP32CoderSelect(input_tensors_, output_tensors_, node_, node_index(), target_, schema_version_);
     MS_CHECK_PTR(conv_coder_);
-    ConvParameter *op_parameter = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+    ConvParameter *op_parameter = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
     if (op_parameter == nullptr) {
       MS_LOG(ERROR) << "malloc ConvParameter failed.";
       return RET_ERROR;
     }
-    memcpy_s(op_parameter, sizeof(ConvParameter), parameter_, sizeof(ConvParameter));
+    if (memcpy_s(op_parameter, sizeof(ConvParameter), parameter_, sizeof(ConvParameter)) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
     conv_coder_->set_type(GetPrimitiveType(node_->primitive_, schema_version_));
     conv_coder_->set_thread_num(thread_num_);
     conv_coder_->set_parameter(reinterpret_cast<OpParameter *>(op_parameter));
