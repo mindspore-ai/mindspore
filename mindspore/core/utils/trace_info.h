@@ -59,7 +59,8 @@ class TracePhi : public TraceInfo {
  public:
   explicit TracePhi(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TracePhi() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("phi", "Φ");
+  // phi: Φ
+  MS_DECLARE_TRACE_NAME_SYMBOL("phi", "\u0444");
   TraceInfoPtr clone() override { return std::make_shared<TracePhi>(*this); }
 };
 
@@ -69,7 +70,8 @@ class TraceIfStmtTrueBranch : public TraceInfo {
   TraceIfStmtTrueBranch &operator=(const TraceIfStmtTrueBranch &) = default;
   explicit TraceIfStmtTrueBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfStmtTrueBranch() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("if_true", "✓");
+  // if_true: ✓
+  MS_DECLARE_TRACE_NAME_SYMBOL("if_true", "\u2713");
   TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtTrueBranch>(*this); }
 };
 
@@ -79,7 +81,8 @@ class TraceIfStmtFalseBranch : public TraceInfo {
   TraceIfStmtFalseBranch &operator=(const TraceIfStmtFalseBranch &) = default;
   explicit TraceIfStmtFalseBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfStmtFalseBranch() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("if_false", "✗");
+  // if_false: ✗
+  MS_DECLARE_TRACE_NAME_SYMBOL("if_false", "\u2717");
   TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtFalseBranch>(*this); }
 };
 
@@ -87,7 +90,8 @@ class TraceIfStmtAfterBranch : public TraceInfo {
  public:
   explicit TraceIfStmtAfterBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfStmtAfterBranch() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("if_after", "↓");
+  // if_after: ↓
+  MS_DECLARE_TRACE_NAME_SYMBOL("if_after", "\u2193");
   TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtAfterBranch>(*this); }
 };
 
@@ -95,7 +99,8 @@ class TraceIfExpTrueBranch : public TraceInfo {
  public:
   explicit TraceIfExpTrueBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfExpTrueBranch() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("ifexp_true", "↰");
+  // ifexp_true: ↰
+  MS_DECLARE_TRACE_NAME_SYMBOL("ifexp_true", "\u21B0");
   TraceInfoPtr clone() override { return std::make_shared<TraceIfExpTrueBranch>(*this); }
 };
 
@@ -103,7 +108,8 @@ class TraceIfExpFalseBranch : public TraceInfo {
  public:
   explicit TraceIfExpFalseBranch(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceIfExpFalseBranch() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("ifexp_false", "↱");
+  // ifexp_false: ↱
+  MS_DECLARE_TRACE_NAME_SYMBOL("ifexp_false", "\u21B1");
   TraceInfoPtr clone() override { return std::make_shared<TraceIfExpFalseBranch>(*this); }
 };
 
@@ -128,7 +134,8 @@ class TraceWhileHeader : public TraceInfo {
  public:
   explicit TraceWhileHeader(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceWhileHeader() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("while_header", "⤾");
+  // while_header: ↵
+  MS_DECLARE_TRACE_NAME_SYMBOL("while_header", "\u21B5");
   TraceInfoPtr clone() override { return std::make_shared<TraceWhileHeader>(*this); }
 };
 
@@ -136,7 +143,8 @@ class TraceWhileBody : public TraceInfo {
  public:
   explicit TraceWhileBody(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceWhileBody() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("while_body", "⥁");
+  // while_body: ↻
+  MS_DECLARE_TRACE_NAME_SYMBOL("while_body", "\u21BB");
   TraceInfoPtr clone() override { return std::make_shared<TraceWhileBody>(*this); }
 };
 
@@ -144,7 +152,8 @@ class TraceWhileAfter : public TraceInfo {
  public:
   explicit TraceWhileAfter(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceWhileAfter() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("while_after", "↓");
+  // while_after: ↓
+  MS_DECLARE_TRACE_NAME_SYMBOL("while_after", "\u2193");
   TraceInfoPtr clone() override { return std::make_shared<TraceWhileAfter>(*this); }
 };
 
@@ -152,7 +161,8 @@ class TraceForHeader : public TraceInfo {
  public:
   explicit TraceForHeader(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceForHeader() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("for_header", "⤾");
+  // for_header: ↵
+  MS_DECLARE_TRACE_NAME_SYMBOL("for_header", "\u21B5");
   TraceInfoPtr clone() override { return std::make_shared<TraceForHeader>(*this); }
 };
 
@@ -160,7 +170,8 @@ class TraceForBody : public TraceInfo {
  public:
   explicit TraceForBody(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceForBody() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("for_body", "⥁");
+  // for_body: ↻
+  MS_DECLARE_TRACE_NAME_SYMBOL("for_body", "\u21BB");
   TraceInfoPtr clone() override { return std::make_shared<TraceForBody>(*this); }
 };
 
@@ -176,7 +187,8 @@ class TraceForAfter : public TraceInfo {
  public:
   explicit TraceForAfter(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceForAfter() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("for_after", "↓");
+  // for_after: ↓
+  MS_DECLARE_TRACE_NAME_SYMBOL("for_after", "\u2193");
   TraceInfoPtr clone() override { return std::make_shared<TraceForAfter>(*this); }
 };
 
@@ -184,7 +196,8 @@ class TraceLoopEnd : public TraceInfo {
  public:
   explicit TraceLoopEnd(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceLoopEnd() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("loop_end", "↓↓");
+  // loop_end: ⇊
+  MS_DECLARE_TRACE_NAME_SYMBOL("loop_end", "\u21CA");
   TraceInfoPtr clone() override { return std::make_shared<TraceLoopEnd>(*this); }
 };
 
@@ -201,7 +214,8 @@ class TraceGradFpropApp : public TraceInfo {
   TraceGradFpropApp() : TraceInfo(nullptr) {}
   explicit TraceGradFpropApp(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGradFpropApp() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("grad_fprop_app", "▲");
+  // grad_fprop_app: ▲
+  MS_DECLARE_TRACE_NAME_SYMBOL("grad_fprop_app", "\u25B2");
   TraceInfoPtr clone() override { return std::make_shared<TraceGradFpropApp>(*this); }
 };
 
@@ -210,7 +224,8 @@ class TraceGradBpropApp : public TraceInfo {
   TraceGradBpropApp() : TraceInfo(nullptr) {}
   explicit TraceGradBpropApp(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGradBpropApp() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("grad_bprop_app", "▼");
+  // grad_bprop_app: ▼
+  MS_DECLARE_TRACE_NAME_SYMBOL("grad_bprop_app", "\u25BC");
   TraceInfoPtr clone() override { return std::make_shared<TraceGradBpropApp>(*this); }
 };
 
@@ -219,7 +234,8 @@ class TraceGradFprop : public TraceInfo {
   TraceGradFprop() : TraceInfo(nullptr) {}
   explicit TraceGradFprop(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGradFprop() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("grad_fprop", "▶");
+  // grad_fprop: ▶
+  MS_DECLARE_TRACE_NAME_SYMBOL("grad_fprop", "\u25B8");
   TraceInfoPtr clone() override { return std::make_shared<TraceGradFprop>(*this); }
 };
 
@@ -228,7 +244,8 @@ class TraceGradBprop : public TraceInfo {
   TraceGradBprop() : TraceInfo(nullptr) {}
   explicit TraceGradBprop(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGradBprop() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("grad_bprop", "◀");
+  // grad_bprop: ◀
+  MS_DECLARE_TRACE_NAME_SYMBOL("grad_bprop", "\u25C2");
   TraceInfoPtr clone() override { return std::make_shared<TraceGradBprop>(*this); }
 };
 
@@ -237,7 +254,8 @@ class TraceGradSens : public TraceInfo {
   TraceGradSens() : TraceInfo(nullptr) {}
   explicit TraceGradSens(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGradSens() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("grad_sens", "∇");
+  // grad_sens: ∇
+  MS_DECLARE_TRACE_NAME_SYMBOL("grad_sens", "\u25BD");
   TraceInfoPtr clone() override { return std::make_shared<TraceGradSens>(*this); }
 };
 
