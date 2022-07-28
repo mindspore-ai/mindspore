@@ -31,7 +31,7 @@ void StandardLaplace(float *output, std::uniform_real_distribution<float> distri
   for (size_t i = start; i < end; i++) {
     float uniform_random_num = distribution(random_generator);
     float uniform_random_num_sign = std::copysignf(1.0, uniform_random_num);
-    output[i] = -uniform_random_num_sign * std::log(1.0 - std::abs(uniform_random_num));
+    output[i] = static_cast<float>(-uniform_random_num_sign * std::log(1.0 - std::abs(uniform_random_num)));
   }
 }
 
@@ -46,7 +46,9 @@ void LaunchStandardLaplace(StandardLaplaceCpuKernelMod *content, unsigned int se
   size_t lens = outputs[0]->size / sizeof(float);
   auto thread_pool = GetActorMgrInnerThreadPool();
   size_t max_thread_num = thread_pool->GetKernelThreadNum();
-  size_t thread_num = lens < kRandomBlockSize * max_thread_num ? std::ceil(lens / kRandomBlockSize) : max_thread_num;
+  size_t thread_num = lens < static_cast<size_t>(kRandomBlockSize) * max_thread_num
+                        ? static_cast<size_t>(std::ceil(lens / kRandomBlockSize))
+                        : max_thread_num;
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
 
   // Uniform variates sampled from the open-interval (-1,1) rather than [-1, 1].
@@ -73,7 +75,7 @@ bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
 }
 
 bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   unsigned int RNG_seed = 0;
   std::random_device rd;
