@@ -16,6 +16,128 @@
 
 #include "nnacl/kernel/matmul_experimental.h"
 
+#ifdef ENABLE_FP16
+void InitExpMMFp16TileCount(int *row_tile, int *deep_tile, int *col_tile) {
+  *row_tile = C16NUM;
+  *col_tile = C12NUM;
+  *deep_tile = 1;
+}
+
+void PackExpMatmulInFp16(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride) {
+  float16_t *dst = (float16_t *)dst_ptr;
+  float16_t *src = (float16_t *)src_ptr;
+
+  for (int d = 0; d < deep; d++) {
+    int deep_mod8 = d % C8NUM;
+    int deep_div8 = d / C8NUM;
+    for (int r = 0; r < row; r++) {
+      dst[d * row + r] = src[deep_div8 * src_stride * C8NUM + r * C8NUM + deep_mod8];
+    }
+  }
+}
+
+void ExpMatmulFp16(void *c_ptr, const void *a_ptr, const void *b_ptr, const void *bias_ptr, size_t row, size_t deep,
+                   size_t col, size_t dst_stride, float min, float max) {
+  float16_t *fp16_c = (float16_t *)c_ptr;
+  float16_t *fp16_a = (float16_t *)a_ptr;
+  float16_t *fp16_b = (float16_t *)b_ptr;
+  float16_t *fp16_bias = (float16_t *)bias_ptr;
+
+  /* dst_stride : total_row * pack */
+  for (size_t r = 0; r < row; r++) {
+    for (size_t c = 0; c < col; c++) {
+      float dst = 0;
+      size_t c_div8 = c / C8NUM;
+      size_t c_mod8 = c % C8NUM;
+      for (size_t d = 0; d < deep; d++) {
+        size_t a_index = d * row + r;
+        size_t b_index = c_div8 * deep * C8NUM + d * C8NUM + c_mod8;
+        dst += fp16_a[a_index] * fp16_b[b_index];
+      }
+
+      if (fp16_bias != NULL) {
+        dst += fp16_bias[c];
+      }
+      dst = MSMIN(dst, max);
+      dst = MSMAX(dst, min);
+      size_t dst_index = c_div8 * dst_stride + r * C8NUM + c_mod8;
+      fp16_c[dst_index] = dst;
+    }
+  }
+}
+
+void ExpMatmulRemainFp16(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                         size_t dst_stride, float min, float max) {
+  return ExpMatmulFp16(c_ptr, a_ptr, b_ptr, bias_ptr, row, deep, col, dst_stride, min, max);
+}
+void ExpMatMulBlockFp16(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                        size_t dst_stride, float min, float max) {
+  return ExpMatmulFp16(c_ptr, a_ptr, b_ptr, bias_ptr, row, deep, col, dst_stride, min, max);
+}
+#endif
+
+void InitExpMMFp32TileCount(int *row_tile, int *deep_tile, int *col_tile) {
+  *row_tile = C16NUM;
+  *col_tile = C4NUM;
+  *deep_tile = 1;
+}
+
+void PackExpMatmulIn(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride) {
+  float *dst = (float *)dst_ptr;
+  float *src = (float *)src_ptr;
+
+  for (int d = 0; d < deep; d++) {
+    int deep_mod4 = d % C4NUM;
+    int deep_div4 = d / C4NUM;
+    for (int r = 0; r < row; r++) {
+      dst[d * row + r] = src[deep_div4 * src_stride * C4NUM + r * C4NUM + deep_mod4];
+    }
+  }
+}
+
+void ExpMatmul(float *c_ptr, const float *a_ptr, const float *b_ptr, const float *bias, size_t row, size_t deep,
+               size_t col, size_t dst_stride, float min, float max) {
+  /* dst_stride : total_row * pack */
+  for (size_t r = 0; r < row; r++) {
+    for (size_t c = 0; c < col; c++) {
+      float dst = 0;
+      size_t c_div4 = c / C4NUM;
+      size_t c_mod4 = c % C4NUM;
+      for (size_t d = 0; d < deep; d++) {
+        size_t a_index = d * row + r;
+        size_t b_index = c_div4 * deep * C4NUM + d * C4NUM + c_mod4;
+        dst += a_ptr[a_index] * b_ptr[b_index];
+      }
+
+      if (bias != NULL) {
+        dst += bias[c];
+      }
+      dst = MSMIN(dst, max);
+      dst = MSMAX(dst, min);
+      size_t dst_index = c_div4 * dst_stride + r * C4NUM + c_mod4;
+      c_ptr[dst_index] = dst;
+    }
+  }
+}
+
+void ExpMatMulBlock(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                    size_t dst_stride, float min, float max) {
+  float *c = (float *)c_ptr;
+  float *a = (float *)a_ptr;
+  float *b = (float *)b_ptr;
+  float *bias = (float *)bias_ptr;
+  return ExpMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
+}
+
+void ExpMatmulRemain(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                     size_t dst_stride, float min, float max) {
+  float *c = (float *)c_ptr;
+  float *a = (float *)a_ptr;
+  float *b = (float *)b_ptr;
+  float *bias = (float *)bias_ptr;
+  return ExpMatmul(c, a, b, bias, row, deep, col, dst_stride, min, max);
+}
+
 int ExpMatmulRun(void *param, int task_id, float lhs_scale, float rhs_scale) {
   MatmulExpStru *matmul = (MatmulExpStru *)param;
   if (matmul == NULL) {

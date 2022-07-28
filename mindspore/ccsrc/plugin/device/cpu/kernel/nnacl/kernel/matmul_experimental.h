@@ -41,6 +41,22 @@ typedef struct MatmulExpStru {
   size_t row_tile;
 } MatmulExpStru;
 
+#ifdef ENABLE_FP16
+void InitExpMMFp16TileCount(int *row_tile, int *deep_tile, int *col_tile);
+void PackExpMatmulInFp16(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride);
+void ExpMatmulRemainFp16(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                         size_t dst_stride, float min, float max);
+void ExpMatMulBlockFp16(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                        size_t dst_stride, float min, float max);
+#endif
+
+void InitExpMMFp32TileCount(int *row_tile, int *deep_tile, int *col_tile);
+void PackExpMatmulIn(void *dst_ptr, void *src_ptr, size_t row, size_t deep, size_t src_stride);
+void ExpMatmulRemain(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                     size_t dst_stride, float min, float max);
+void ExpMatMulBlock(void *c_ptr, void *a_ptr, void *b_ptr, void *bias_ptr, size_t row, size_t deep, size_t col,
+                    size_t dst_stride, float min, float max);
+
 void ExperimentalMatmul(uint8_t *a_ptr, uint8_t *b_ptr, uint8_t *bias, uint8_t *c_ptr, MatmulExpStru *matmul);
 
 #ifdef __cplusplus

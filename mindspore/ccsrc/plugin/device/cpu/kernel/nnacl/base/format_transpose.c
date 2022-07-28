@@ -41,11 +41,11 @@ int TransposeFp32Data(void *src_data, void *dst_data, const FormatC src_format, 
 int TransposeFp16Data(void *src_data, void *dst_data, const FormatC src_format, const FormatC dst_format, int batch,
                       int channel, int plane) {
   if (src_format == Format_NCHW && dst_format == Format_NC8HW8) {
-    PackNCHWFp16ToNC8HW8Fp16((float16_t *)src_data, (float16_t *)dst_data, batch, plane, channel);
+    PackNCHWFp16ToNC8HW8Fp16(src_data, dst_data, batch, plane, channel);
   } else if (src_format == Format_NHWC && dst_format == Format_NC8HW8) {
     return NNACL_ERR;
   } else if (src_format == Format_NC8HW8 && dst_format == Format_NCHW) {
-    return NNACL_ERR;
+    PackNC8HW8ToNCHWFp16(src_data, dst_data, batch, plane, channel);
   } else if (src_format == Format_NC8HW8 && dst_format == Format_NHWC) {
     PackNC8HW8ToNHWCFp16((float16_t *)src_data, (float16_t *)dst_data, batch, plane, channel);
   } else {

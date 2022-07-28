@@ -21,7 +21,11 @@
 
 KernelBase *CreateConvolution(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize,
                               int data_type, FormatC format) {
-  return CreateConv1x1(param, in, insize, out, outsize, data_type, format);
+  TensorC weight = in[1];
+  if (GetWidth(&weight) == 1 && GetHeight(&weight) == 1) {
+    return CreateConv1x1(param, in, insize, out, outsize, data_type, format);
+  }
+  return NULL;
 }
 
 REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat32, CreateConvolution);
