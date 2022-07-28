@@ -274,6 +274,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"erfc", std::string("erfc")},                                      // P.Erfc()
        {"argmin_with_value", std::string("argmin_with_value")},            // P.ArgMinWithValue
        {"top_k", std::string("top_k")},                                    // P.TopK()
+       {"isfinite", std::string("isfinite")},                              // P.isfinite()
      }},
     {kObjectTypeRowTensorType,
      {

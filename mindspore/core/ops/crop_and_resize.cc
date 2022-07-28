@@ -35,27 +35,34 @@ constexpr size_t kCropAndResizeInputSize = 4;
 constexpr size_t kShapeRank2 = 2;
 constexpr size_t kShapeRank4 = 4;
 int64_t ParseNumBoxes(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name) {
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(), "boxes's shape wrong.");
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(),
+                             prim_name + ": boxes has no abstract::Shape.");
   auto boxes_shape_element = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
   auto boxes_shape = boxes_shape_element->shape();
   MS_EXCEPTION_IF_CHECK_FAIL(
     SizeToLong(boxes_shape.size()) == kShapeRank2 || (boxes_shape.size() == 1 && boxes_shape[0] == kUnknownDims),
-    "boxes's shape wrong.");
+    prim_name + ": the shape rank of boxes should be 2, bug got " + std::to_string(boxes_shape.size()) + ".");
 
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
-                             "box_index's shape wrong.");
+                             prim_name + ": box_index has no abstract::Shape.");
   auto box_index_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto box_index_shape = box_index_shape_element->shape();
-  CheckAndConvertUtils::Check("box_index rank", box_index_shape.size(), kEqual, 1, prim_name);
+  if (box_index_shape.size() != 1) {
+    std::string log =
+      prim_name + ": the shape rank of box_index must be 1, but got " + std::to_string(box_index_shape.size()) + ".";
+    MS_EXCEPTION(ArgumentError) << log;
+  }
   int64_t num_boxes = -1;
   if (boxes_shape[0] >= 0 || box_index_shape[0] >= 0) {
     if (boxes_shape[0] >= 0 && box_index_shape[0] >= 0) {
       MS_EXCEPTION_IF_CHECK_FAIL(boxes_shape[0] == box_index_shape[0],
-                                 "boxes' first dim should be equal to that of box_index.");
+                                 prim_name + ": the first dim of boxes should be equal to that of box_index, but got " +
+                                   std::to_string(boxes_shape[0]) + " vs " + std::to_string(box_index_shape[0]) + ".");
     }
     if (boxes_shape.size() == kShapeRank2) {
-      MS_EXCEPTION_IF_CHECK_FAIL(boxes_shape[1] == kLimitValue4 || boxes_shape[1] == -1,
-                                 "boxes' second dim should be 4 or dynamic shape.");
+      MS_EXCEPTION_IF_CHECK_FAIL(
+        boxes_shape[1] == kLimitValue4 || boxes_shape[1] == -1,
+        prim_name + ": the second dim of boxes must be 4, but got " + std::to_string(boxes_shape[1]) + ".");
     }
     num_boxes = std::max(boxes_shape[0], box_index_shape[0]);
   }
@@ -67,16 +74,18 @@ abstract::ShapePtr CropAndResizeInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kCropAndResizeInputSize,
-                             "CropAndResize's input size should be 4 but got " + std::to_string(input_args.size()));
+                             "CropAndResize's input size must be 4 but got " + std::to_string(input_args.size()));
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(), "x's shape wrong.");
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(),
+                             prim_name + ": x has no abstract:Shape.");
   auto x_shape_element = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
   auto x_shape = x_shape_element->shape();
-  MS_EXCEPTION_IF_CHECK_FAIL(x_shape.size() == kShapeRank4 || (x_shape.size() == 1 && x_shape[0] == kUnknownDims),
-                             "x's shape wrong.");
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    x_shape.size() == kShapeRank4 || (x_shape.size() == 1 && x_shape[0] == kUnknownDims),
+    prim_name + ": the shape rank of x should be 4, bug got " + std::to_string(x_shape.size()) + ".");
   int64_t out_channel = -1;
   if (x_shape.size() == kShapeRank4 && x_shape.back() > 0) {
     out_channel = x_shape.back();
@@ -84,7 +93,7 @@ abstract::ShapePtr CropAndResizeInferShape(const PrimitivePtr &primitive,
 
   auto num_boxes = ParseNumBoxes(input_args, prim_name);
   auto crop_size_type = input_args[kInputIndex3]->BuildType();
-  MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr, "crop_size's type is invalid.");
+  MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr, prim_name + ": the TypePtr of crop_size is a nullptr.");
   auto value_ptr = input_args[kInputIndex3]->BuildValue();
   std::vector<int64_t> crop_size;
   if (crop_size_type->isa<TensorType>()) {
@@ -92,7 +101,7 @@ abstract::ShapePtr CropAndResizeInferShape(const PrimitivePtr &primitive,
   } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
     crop_size = CheckAndConvertUtils::CheckIntOrTupleInt("crop_size", value_ptr, prim_name);
   } else {
-    MS_LOG(EXCEPTION) << "crop_size type is invalid, which should be Tensor or Tuple, but now is "
+    MS_LOG(EXCEPTION) << "crop_size type is invalid, which must be a Tensor or Tuple, but now is "
                       << crop_size_type->ToString();
   }
   CheckAndConvertUtils::Check("crop_size length", crop_size.size(), kEqual, kLimitValue2, prim_name);
@@ -106,7 +115,7 @@ TypePtr CropAndResizeInferType(const PrimitivePtr &primitive, const std::vector<
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kCropAndResizeInputSize,
-                             "CropAndResize's input size should be 4 but got " + std::to_string(input_args.size()));
+                             "CropAndResize's input size must be 4 but got " + std::to_string(input_args.size()));
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

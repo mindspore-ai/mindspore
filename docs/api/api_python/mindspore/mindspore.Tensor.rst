@@ -70,6 +70,7 @@ mindspore.Tensor
     mindspore.Tensor.inv
     mindspore.Tensor.invert
     mindspore.Tensor.isclose
+    mindspore.Tensor.isfinite
     mindspore.Tensor.item
     mindspore.Tensor.itemset
     mindspore.Tensor.itemsize
