@@ -16,7 +16,6 @@
 
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include <string>
-#include <utility>
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"

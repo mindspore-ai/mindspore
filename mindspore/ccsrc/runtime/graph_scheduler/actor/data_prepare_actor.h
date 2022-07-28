@@ -88,10 +88,10 @@ class DataPrepareActor : public DebugAwareActor {
 
   // Prepare the device data for persistent device tensor of weight node from host tensor.
   void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node, const TensorPtr &tensor,
-                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   // Prepare the device data for persistent device tensor of value node.
   void PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
-                               const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                               const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
@@ -106,7 +106,7 @@ class DataPrepareActor : public DebugAwareActor {
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
-                                      OpContext<DeviceTensor> *const context);
+                                      OpContext<DeviceTensor> *const context) const;
 
   // The device tensor stores may exist the two device tensors and need copy data in the heterogeneous scene.
   void CopyDataFromDeviceTensorStore(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,

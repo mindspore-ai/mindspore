@@ -121,7 +121,7 @@ void AbstractActor::InitOutputData() {
 
     // Identify whether the output data flag is kOutputDataFlagToStack.
     bool is_to_stack = (to_op_name.find(kStackActorNameSuffix) != std::string::npos);
-    int output_data_flag = (is_to_stack == true) ? kOutputDataFlagToStack : kOutputDataFlagInit;
+    size_t output_data_flag = (is_to_stack == true) ? kOutputDataFlagToStack : kOutputDataFlagInit;
 
     // Add the batch output data.
     if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagBatch)) {
@@ -172,7 +172,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     // The index of output data will be modified the real actor input index in the fusion actor, so need recovery the
     // fusion actor index before sending output data to the fusion actor.
     if (TEST_FLAG(output_data.second, kOutputDataFlagToFusion)) {
-      output_data.first->index_ = data_arrow_to_fusion_actor_indexs_.at(output_data_arrow.get());
+      output_data.first->index_ = SizeToInt(data_arrow_to_fusion_actor_indexs_.at(output_data_arrow.get()));
     }
 
     if (TEST_FLAG(output_data.second, kOutputDataFlagLastBatch)) {
@@ -231,7 +231,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 
-AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) {
+AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) const {
   if (parent_fusion_actor_ == nullptr) {
     return nullptr;
   }

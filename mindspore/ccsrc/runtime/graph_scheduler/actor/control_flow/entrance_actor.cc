@@ -56,7 +56,8 @@ void EntranceActor::RunOpRealParameterWithBranchID(const OpRealParameterWithBran
 
 void EntranceActor::ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the message of clearing data.";
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the message of clearing data from:" << input_control->Name() << ".";
 
   is_loop_body_execution_ = false;
 
@@ -107,7 +108,7 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      input_device_tensors_[input_data->index_] = input_data->data_;
+      input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
     }
   } else {
     // 2.Data comes from the gather actor, it is in the form of data with branch id.
