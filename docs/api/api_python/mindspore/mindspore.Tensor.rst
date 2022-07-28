@@ -746,6 +746,18 @@ mindspore.Tensor
         - **ValueError** - 当前Tensor和 `x2` 无法广播。
         - **ValueError** - `atol` 和 `rtol` 中的任何一个小于零。
 
+    .. py:method:: isfinite()
+
+        判断输入数据每个位置上的值是否是有限数。
+
+        **返回：**
+
+        Tensor，输出的shape与输入相同，数据类型为bool。
+
+        **异常：**
+
+        - **TypeError** - 如果当前Tensor不是Tensor。
+
     .. py:method:: item(index=None)
 
         获取Tensor中指定索引的元素。

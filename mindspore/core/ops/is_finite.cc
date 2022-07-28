@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,45 @@
 #include "ops/is_finite.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+abstract::ShapePtr IsFiniteInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  return std::make_shared<abstract::Shape>(x_shape);
+}
+
+TypePtr IsFiniteInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  CheckAndConvertUtils::CheckTensorTypeValid(
+    "x", input_args[0]->BuildType(),
+    {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
+    primitive->name());
+  return std::make_shared<TensorType>(kBool);
+}
+}  // namespace
+
+AbstractBasePtr IsFiniteInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const std::vector<AbstractBasePtr> &input_args) {
+  auto infertype = IsFiniteInferType(primitive, input_args);
+  auto infershape = IsFiniteInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
+}
 MIND_API_OPERATOR_IMPL(IsFinite, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameIsFinite, IsFinite);
+REGISTER_PRIMITIVE_EVAL_IMPL(IsFinite, prim::kPrimIsFinite, IsFiniteInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
