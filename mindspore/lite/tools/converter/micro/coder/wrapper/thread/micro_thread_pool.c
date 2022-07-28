@@ -20,52 +20,82 @@
 #include "wrapper/thread/micro_core_affinity.h"
 
 ThreadPool *g_pool;
-int global_verbose;
+const int kSpinCountMaxValue = 300000;
 
 void *work_routine(void *args) {
+  int spin_count = 0;
   while (1) {
-    pthread_mutex_lock(&g_pool->queue_lock);
-    while (!g_pool->tasks && !g_pool->shutdown) {
-      pthread_cond_wait(&g_pool->queue_ready, &g_pool->queue_lock);
+    if (g_pool->task.valid) {
+      volatile Task *p_task = &g_pool->task;
+      int expected_index = p_task->started;
+      int finish = 0;
+      while (expected_index < p_task->task_num) {
+        if (atomic_compare_exchange_strong(&p_task->started, &expected_index, expected_index + 1)) {
+          p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
+          expected_index = p_task->started;
+          finish++;
+        }
+      }
+      p_task->valid = 0;
+      p_task->finished += finish;
+      spin_count = 0;
+    } else if (spin_count++ > g_pool->max_spin_count) {
+      pthread_mutex_lock(&g_pool->queue_lock);
+      if (!g_pool->shutdown) {
+        pthread_cond_wait(&g_pool->queue_ready, &g_pool->queue_lock);
+      }
+      pthread_mutex_unlock(&g_pool->queue_lock);
+    } else {
+      sched_yield();
     }
     if (g_pool->shutdown) {
-      pthread_mutex_unlock(&g_pool->queue_lock);
       pthread_exit(NULL);
     }
-    TaskHandle *task_handle = g_pool->tasks;
-    g_pool->tasks = task_handle->next;
-    pthread_mutex_unlock(&g_pool->queue_lock);
-    Task *task = task_handle->task;
-    if (task == NULL) {
-      continue;
-    }
-    task->status |= task->func(task->content, task_handle->task_id, 0, 1);
-    ++task->finished;
-    free(task_handle);
+  }
+}
+
+void SetSpinCountMinValue(void) {
+  if (g_pool != NULL) {
+    g_pool->max_spin_count = 1;
+  }
+}
+
+void SetSpinCountMaxValue(void) {
+  if (g_pool != NULL) {
+    g_pool->max_spin_count = kSpinCountMaxValue;
   }
 }
 
 int CreateThreadPool(int thread_num) {
+  if (thread_num <= 0) {
+    return RET_TP_SYSTEM_ERROR;
+  }
   g_pool = (ThreadPool *)malloc(sizeof(ThreadPool));
   if (g_pool == NULL) {
     return RET_TP_SYSTEM_ERROR;
   }
-  g_pool->max_thread_num = thread_num;
-  g_pool->tasks = NULL;
-  g_pool->shutdown = 0;
-  g_pool->thread_id = (pthread_t *)malloc(sizeof(pthread_t) * thread_num);
-  if (g_pool->thread_id == NULL) {
-    return RET_TP_SYSTEM_ERROR;
+  if (thread_num > 1) {
+    g_pool->thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (thread_num - 1));
+    if (g_pool->thread_id == NULL) {
+      return RET_TP_SYSTEM_ERROR;
+    }
   }
+  g_pool->max_thread_num = thread_num;
+  g_pool->shutdown = 0;
+  g_pool->task.status = g_pool->task.finished = g_pool->task.task_num = 0;
+  g_pool->task.valid = 0;
+  SetSpinCountMinValue();
   if (pthread_mutex_init(&(g_pool->queue_lock), NULL) != 0) {
     return RET_TP_SYSTEM_ERROR;
   }
   if (pthread_cond_init(&(g_pool->queue_ready), NULL) != 0) {
     return RET_TP_SYSTEM_ERROR;
   }
-  for (int i = 0; i < thread_num; i++) {
-    if (pthread_create(&g_pool->thread_id[i], NULL, work_routine, g_pool)) {
-      return RET_TP_SYSTEM_ERROR;
+  if (thread_num > 1) {
+    for (int i = 0; i < (thread_num - 1); i++) {
+      if (pthread_create(&g_pool->thread_id[i], NULL, work_routine, NULL)) {
+        return RET_TP_SYSTEM_ERROR;
+      }
     }
   }
   return 0;
@@ -99,31 +129,35 @@ int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int ta
     int ret = func(content, 0, 0, 1);
     return ret;
   }
-  Task task = {func, content, 0, 0};
-  // multi Task shared same base task
-  for (int i = 0; i < task_num; i++) {
-    TaskHandle *task_handle = (TaskHandle *)malloc(sizeof(TaskHandle));
-    task_handle->task_id = i;
-    task_handle->task = &task;
-    task_handle->next = NULL;
-    // add task
-    pthread_mutex_lock(&g_pool->queue_lock);
-    TaskHandle *task_tail = g_pool->tasks;
-    if (!task_tail) {
-      g_pool->tasks = task_handle;
-    } else {
-      while (task_tail->next) {
-        task_tail = task_tail->next;
-      }
-      task_tail->next = task_handle;
+  volatile Task *p_task = &g_pool->task;
+  atomic_store(&p_task->valid, 0);
+  p_task->func = func;
+  p_task->content = content;
+  p_task->task_num = task_num;
+  p_task->finished = 1;
+  p_task->started = 1;
+  atomic_store(&p_task->valid, 1);
+
+  pthread_mutex_lock(&g_pool->queue_lock);
+  pthread_cond_broadcast(&g_pool->queue_ready);
+  pthread_mutex_unlock(&g_pool->queue_lock);
+
+  p_task->status |= func(content, 0, 0, 0);
+
+  int expected_index = p_task->started;
+  while (expected_index < task_num) {
+    if (atomic_compare_exchange_strong(&p_task->started, &expected_index, expected_index + 1)) {
+      p_task->status |= func(content, expected_index, 0, 0);
+      (void)++p_task->finished;
+      expected_index = p_task->started;
     }
-    pthread_cond_signal(&g_pool->queue_ready);
-    pthread_mutex_unlock(&g_pool->queue_lock);
   }
-  while (task.finished != task_num) {
+  p_task->valid = 0;
+
+  while (p_task->finished != task_num) {
     sched_yield();
   }
-  if (task.status != 0) {
+  if (p_task->status != 0) {
     return -1;
   }
   return 0;
@@ -137,15 +171,11 @@ void ClearThreadPool() {
   pthread_mutex_lock(&g_pool->queue_lock);
   pthread_cond_broadcast(&g_pool->queue_ready);
   pthread_mutex_unlock(&g_pool->queue_lock);
-
-  for (int i = 0; i < g_pool->max_thread_num; i++) {
-    pthread_join(g_pool->thread_id[i], NULL);
-  }
-  free(g_pool->thread_id);
-  while (g_pool->tasks) {
-    TaskHandle *task = g_pool->tasks;
-    g_pool->tasks = g_pool->tasks->next;
-    free(task);
+  if (g_pool->max_thread_num > 1) {
+    for (int i = 0; i < (g_pool->max_thread_num - 1); i++) {
+      pthread_join(g_pool->thread_id[i], NULL);
+    }
+    free(g_pool->thread_id);
   }
   pthread_mutex_destroy(&g_pool->queue_lock);
   pthread_cond_destroy(&g_pool->queue_ready);
