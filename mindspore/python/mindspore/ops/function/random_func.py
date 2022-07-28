@@ -107,9 +107,10 @@ def standard_laplace(shape, seed=0, seed2=0):
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
-        TypeError: If neither seed nor seed2 is an int.
-        TypeError: If shape is not a tuple.
-        ValueError: If shape is not a constant value.
+        TypeError: If seed or seed2 is not an int.
+        TypeError: If shape is neither a tuple nor a Tensor.
+        ValueError: If seed or seed2 is not a non-negative int.
+        ValueError: If shape is a tuple containing non-positive items.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
