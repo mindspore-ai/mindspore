@@ -970,6 +970,7 @@ mindspore.Tensor
         - **TypeError** - `x` 的数据类型非float16或float32。
 
     .. py:method:: logit(eps=None)
+
         逐元素计算张量的logit值，当 eps 不是 None 时， `x` 中的元素被截断到范围[eps, 1-eps]内。
         当 eps 为 None 时，输入 `x` 不进行数值截断。
 

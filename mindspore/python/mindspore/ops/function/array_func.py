@@ -1224,7 +1224,7 @@ def squeeze(input_x, axis=()):
 
     Note:
         - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
-    and there is no Tensor data copy process.
+          and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
     Args:

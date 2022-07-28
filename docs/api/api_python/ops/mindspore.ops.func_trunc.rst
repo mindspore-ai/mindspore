@@ -5,14 +5,11 @@ mindspore.ops.trunc
 
     返回一个新的张量，该张量具有输入元素的截断整数值。
 
-    **参数：**
+    参数：
+        - **input_x** (Tensor) - 任意维度的Tensor。
 
-    - **input_x** (Tensor) - 任意维度的Tensor。
+    返回：
+        Tensor，shape和数据类型与 `input_x` 相同。
 
-    **返回：**
-
-    Tensor，shape和数据类型与 `input_x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 不是Tensor。
+    异常：
+        - **TypeError** - `input_x` 不是Tensor。
