@@ -91,6 +91,37 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(MultiMarginLoss, BaseOperator);
+
+void MultiMarginLoss::Init(int64_t p, float margin, const Reduction &reduction) {
+  set_p(p);
+  set_margin(margin);
+  set_reduction(reduction);
+}
+
+void MultiMarginLoss::set_p(int64_t p) { (void)AddAttr(kP, api::MakeValue(p)); }
+
+void MultiMarginLoss::set_margin(float margin) { (void)AddAttr(kMargin, api::MakeValue(margin)); }
+
+void MultiMarginLoss::set_reduction(const Reduction &reduction) {
+  int64_t swi = reduction;
+  (void)this->AddAttr(kReduction, api::MakeValue(swi));
+}
+
+int64_t MultiMarginLoss::get_p() const {
+  auto value_ptr = GetAttr(kP);
+  return GetValue<int64_t>(value_ptr);
+}
+
+float MultiMarginLoss::get_margin() const {
+  auto value_ptr = GetAttr(kMargin);
+  return GetValue<float>(value_ptr);
+}
+
+string MultiMarginLoss::get_reduction() const {
+  auto value_ptr = GetAttr(kReduction);
+  return GetValue<string>(value_ptr);
+}
+
 AbstractBasePtr MultiMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -20,12 +20,12 @@ It shows how well the model works on a dataset and the optimization target which
 """
 
 from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss,\
-    SoftmaxCrossEntropyWithLogits, BCELoss, CosineEmbeddingLoss, \
+    SoftmaxCrossEntropyWithLogits, BCELoss, MultiMarginLoss, CosineEmbeddingLoss, \
     SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss,\
     RMSELoss, MAELoss, HuberLoss, CrossEntropyLoss, NLLLoss
 
 
 __all__ = ['LossBase', 'L1Loss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss', 'FocalLoss',
-           'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss',
+           'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss', 'MultiMarginLoss',
            'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss',
            'RMSELoss', 'MAELoss', 'HuberLoss', 'CrossEntropyLoss', 'NLLLoss']
