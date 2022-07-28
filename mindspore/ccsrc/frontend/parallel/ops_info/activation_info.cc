@@ -26,6 +26,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -740,5 +741,40 @@ Status L2LossInfo::InferForwardCommunication() {
 
   return SUCCESS;
 }
+
+REGISTER(ActivationInfo);
+REGISTER(GeLUInfo);
+REGISTER(FastGeLUInfo);
+REGISTER(TanhInfo);
+REGISTER(SoftmaxInfo);
+REGISTER(LogSoftmaxInfo);
+REGISTER(CumSumInfo);
+REGISTER(CumProdInfo);
+REGISTER(CustomInfo);
+REGISTER(EluInfo);
+REGISTER(ReLUInfo);
+REGISTER(RepeatElementsInfo);
+REGISTER(ReLU6Info);
+REGISTER(SoftsignInfo);
+REGISTER(SoftplusInfo);
+REGISTER(CastInfo);
+REGISTER(SqrtInfo);
+REGISTER(NegInfo);
+REGISTER(ExpandDimsInfo);
+REGISTER(SqueezeInfo);
+REGISTER(SquareInfo);
+REGISTER(SigmoidInfo);
+REGISTER(DropoutInfo);
+REGISTER(HShrinkInfo);
+REGISTER(HSigmoidInfo);
+REGISTER(IsFiniteInfo);
+REGISTER(MishInfo);
+REGISTER(RintInfo);
+REGISTER(SeLUInfo);
+REGISTER(SoftShrinkInfo);
+REGISTER(L2LossInfo);
+REGISTER(ErfinvInfo);
+REGISTER(InvertInfo);           // has not bprop
+REGISTER(PopulationCountInfo);  // has not bprop
 }  // namespace parallel
 }  // namespace mindspore

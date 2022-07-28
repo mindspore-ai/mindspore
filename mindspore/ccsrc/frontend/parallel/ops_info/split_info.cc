@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "include/common/utils/parallel_context.h"
@@ -184,5 +185,8 @@ Status SplitInfo::InferAsLossDivisor() {
                << as_loss_divisor_;
   return SUCCESS;
 }
+
+REGISTER(SplitInfo);
+REGISTER(SplitVInfo);
 }  // namespace parallel
 }  // namespace mindspore

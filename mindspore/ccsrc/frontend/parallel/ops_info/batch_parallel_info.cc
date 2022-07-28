@@ -22,6 +22,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
@@ -201,5 +202,9 @@ Status CheckValidInfo::InferDevMatrixShape() {
 }
 
 void CheckValidInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = true; }
+
+REGISTER(BatchParallelInfo);
+REGISTER(SparseSoftmaxCrossEntropyWithLogitsInfo);
+REGISTER(CheckValidInfo);  // has not bprop
 }  // namespace parallel
 }  // namespace mindspore

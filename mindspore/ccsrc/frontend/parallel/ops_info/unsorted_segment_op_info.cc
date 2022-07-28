@@ -22,6 +22,7 @@
 
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/strategy.h"
 #include "ir/tensor.h"
@@ -142,14 +143,14 @@ Status UnsortedSegmentOpInfo::InferTensorMap() {
     tensor_map_out.push_back(SizeToInt(input0_size - i - 1));
   }
 
-  (void)tensor_map_out.erase(tensor_map_out.begin(),
-                             tensor_map_out.begin() + static_cast<different_type>(inputs_shape_.at(1).size() - 1));
+  (void)tensor_map_out.erase(tensor_map_out.cbegin(),
+                             tensor_map_out.cbegin() + static_cast<different_type>(inputs_shape_.at(1).size() - 1));
   // A special case: the input vector (a,) id (a,) or input vector (a,b,c), id(a,b,c)
   // The output vector will be a 1-dim vector,
   // These two kinds of situations as row slice.
   tensor_map_out[0] = -1;
-  (void)tensor_map_in_index.erase(tensor_map_in_index.begin() + static_cast<different_type>(inputs_shape_.at(1).size()),
-                                  tensor_map_in_index.end());
+  (void)tensor_map_in_index.erase(
+    tensor_map_in_index.cbegin() + static_cast<different_type>(inputs_shape_.at(1).size()), tensor_map_in_index.cend());
   if (tensor_map_out.size() != outputs_shape_.at(0).size()) {
     MS_LOG(ERROR) << "Out tensor map size is not equal to output size! Out tensor map size is " << tensor_map_out.size()
                   << " output size is " << outputs_shape_.at(0).size();
@@ -309,5 +310,10 @@ Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
+
+REGISTER(UnsortedSegmentSumInfo);
+REGISTER(UnsortedSegmentProdInfo);
+REGISTER(UnsortedSegmentMinInfo);
+REGISTER(UnsortedSegmentMaxInfo);
 }  // namespace parallel
 }  // namespace mindspore

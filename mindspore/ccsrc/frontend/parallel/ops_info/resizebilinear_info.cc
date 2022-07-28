@@ -23,6 +23,7 @@
 #include <cmath>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/resource.h"
@@ -470,5 +471,8 @@ std::vector<StrategyPtr> ResizeNearestNeighborInfo::GenerateOpStrategies(int64_t
 
   return sp_vector;
 }
+
+REGISTER(ResizeBilinearInfo);
+REGISTER(ResizeNearestNeighborInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -36,8 +36,8 @@ class UniformRealInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<UniformRealCost>()) {}
   ~UniformRealInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void UpdateShape(const CNodePtr &cnode);
   void ReplaceNodeInputOrAttrs() override;
 

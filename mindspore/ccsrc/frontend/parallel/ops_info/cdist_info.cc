@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "frontend/parallel/ops_info/cdist_info.h"
+
 #include <unordered_map>
 
-#include "frontend/parallel/ops_info/cdist_info.h"
+#include "frontend/parallel/dynamic_creator.h"
 
 namespace mindspore {
 namespace parallel {
@@ -113,5 +115,7 @@ void CdistInfo::ReComputeBatchSplitFlagList() {
     split_flag_list_[1] = true;
   }
 }
+
+REGISTER(CdistInfo);
 }  // namespace parallel
 }  // namespace mindspore

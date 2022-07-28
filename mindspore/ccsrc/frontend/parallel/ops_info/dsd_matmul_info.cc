@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/step_parallel.h"
@@ -187,5 +188,7 @@ std::vector<StrategyPtr> DSDMatmulInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status DSDMatmulInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+
+REGISTER(DSDMatmulInfo);
 }  // namespace parallel
 }  // namespace mindspore

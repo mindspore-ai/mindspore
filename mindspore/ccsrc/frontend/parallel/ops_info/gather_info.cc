@@ -23,6 +23,7 @@
 #include <algorithm>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
 #ifdef WITH_BACKEND
@@ -1033,5 +1034,9 @@ std::shared_ptr<Strategys> GatherInfo::GenerateBatchStrategies() {
   Strategys strategy_v = {param_strategy, index_strategy};
   return std::make_shared<Strategys>(strategy_v);
 }
+
+REGISTER(GatherInfo);
+REGISTER(SparseGatherV2Info);
+REGISTER(EmbeddingLookupInfo);
 }  // namespace parallel
 }  // namespace mindspore

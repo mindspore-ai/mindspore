@@ -37,7 +37,7 @@ class VirtualDatasetInfo : public OperatorInfo {
   Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
   Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 

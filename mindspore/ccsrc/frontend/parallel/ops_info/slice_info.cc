@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -175,7 +176,8 @@ std::vector<StrategyPtr> SliceInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 ReplaceGraphPtr SliceInfo::replace_graph(const CNodePtr &cnode) {
-  auto input_strategy = strategy_->GetInputDim().at(0);
+  const auto &input_dim = strategy_->GetInputDim();
+  auto input_strategy = input_dim.at(0);
   if (std::any_of(input_strategy.begin(), input_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
       MS_LOG(EXCEPTION) << name_ << ": InferReplaceOp failed.";
@@ -190,7 +192,8 @@ Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
-  Dimensions input_stra = strategy_->GetInputDim().at(0);
+  const auto input_dim = strategy_->GetInputDim();
+  Dimensions input_stra = input_dim.at(0);
 
   std::vector<int64_t> sliced_size_shape_int;
   Shape input_slice_shape = inputs_tensor_info_[0].slice_shape();
@@ -212,5 +215,7 @@ Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
+
+REGISTER(SliceInfo);
 }  // namespace parallel
 }  // namespace mindspore

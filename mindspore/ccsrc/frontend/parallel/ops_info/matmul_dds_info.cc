@@ -22,6 +22,7 @@
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "utils/log_adapter.h"
@@ -309,5 +310,7 @@ std::vector<StrategyPtr> MatmulDDSInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status MatmulDDSInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+
+REGISTER(MatmulDDSInfo);
 }  // namespace parallel
 }  // namespace mindspore
