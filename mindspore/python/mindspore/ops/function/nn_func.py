@@ -1465,10 +1465,10 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> loss = ops.SmoothL1Loss()
+        >>> from mindspore.ops import functional as F
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> output = loss(logits, labels)
+        >>> output = F.smooth_l1_loss(logits, labels)
         >>> print(output)
         [0.  0.  0.5]
     """

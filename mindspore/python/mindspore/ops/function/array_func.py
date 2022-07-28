@@ -2529,9 +2529,10 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
 
     .. warning::
-        The order in which updates are applied is nondeterministic, meaning that if there
-        are multiple index vectors in `indices` that correspond to the same position, the
-        value of that position in the output will be nondeterministic.
+        - The order in which updates are applied is nondeterministic, meaning that if there are multiple index vectors
+          in `indices` that correspond to the same position, the value of that position in the output will be
+          nondeterministic.
+        - On Ascend, the reduction only support set to "none" for now.
 
     .. note::
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -2562,12 +2563,13 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops import functional as F
         >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[1, 1, 1], [1, 1, 1]]), mindspore.float32)
         >>> axis = 0
         >>> reduction = "add"
-        >>> output = tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> output = F.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
         [[ 2.0  3.0  3.0]
          [ 5.0  5.0  7.0]
@@ -2577,7 +2579,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
         >>> axis = 1
         >>> reduction = "none"
-        >>> output = tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> output = F.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
         [[ 1  2  8  4  8]]
     """
