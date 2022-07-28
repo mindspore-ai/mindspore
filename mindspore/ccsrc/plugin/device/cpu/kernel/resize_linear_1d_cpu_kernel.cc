@@ -186,4 +186,7 @@ int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   SetWorkSpaceSize(inputs);
   return KRET_OK;
 }
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ResizeLinear1D,
+                                 []() { return std::make_shared<ResizeLinear1DCpuKernelMod>(kResizeLinear1D); });
 }  // namespace mindspore::kernel

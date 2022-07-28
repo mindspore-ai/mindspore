@@ -161,5 +161,7 @@ std::map<mindspore::TypeId, XdivyCpuKernelMod::XdivyFunc> XdivyCpuKernelMod::fun
   {kNumberTypeFloat64, &XdivyCpuKernelMod::LaunchKernel<double>},
   {kNumberTypeComplex64, &XdivyCpuKernelMod::LaunchKernel<complex64>},
   {kNumberTypeComplex128, &XdivyCpuKernelMod::LaunchKernel<complex128>}};
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Xdivy, XdivyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -85,6 +85,7 @@ from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.other_ops import BlackmanWindow
+from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import Expand
@@ -1174,6 +1175,17 @@ class MatrixSetDiagV3Net(nn.Cell):
 
     def construct(self, x, diagonal, k):
         return self.matrix_set_diag_v3(x, diagonal, self.k)
+
+
+class SparseApplyCenteredRMSPropNet(nn.Cell):
+    def __init__(self, use_locking=False):
+        super(SparseApplyCenteredRMSPropNet, self).__init__()
+        self.sparse_apply_centered_rms_prop = SparseApplyCenteredRMSProp(use_locking)
+
+    def construct(self, var, mg, ms, mom, lr, rho, momentum, epsilon, grad, indices):
+        out = self.sparse_apply_centered_rms_prop(var, mg, ms, mom, lr, rho,
+                                                  momentum, epsilon, grad, indices)
+        return out
 
 
 class SparseApplyRMSPropNet(nn.Cell):
@@ -2819,6 +2831,19 @@ test_case_nn_ops = [
                         Tensor(0.3, mstype.float32),
                         Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))],
         'desc_bprop': [],
+        'skip': ['backward']}),
+    ('SparseApplyCenteredRMSProp', {
+        'block': SparseApplyCenteredRMSPropNet(),
+        'desc_inputs': [Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
+                        Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32)),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(1e-10, mstype.float32),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(0.01, mstype.float32),
+                        Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32))],
         'skip': ['backward']}),
     ('SparseApplyRMSProp', {
         'block': SparseApplyRMSPropNet(0.2, 0.01, 1e-6),

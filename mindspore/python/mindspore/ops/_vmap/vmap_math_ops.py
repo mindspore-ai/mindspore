@@ -41,6 +41,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.Sub)
 @vmap_rules_getters.register(P.Mul)
 @vmap_rules_getters.register(P.Div)
+@vmap_rules_getters.register(P.Xdivy)
 @vmap_rules_getters.register(P.RealDiv)
 @vmap_rules_getters.register(P.FloorDiv)
 @vmap_rules_getters.register(P.Maximum)
@@ -60,6 +61,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseOr)
 @vmap_rules_getters.register(P.BitwiseXor)
 @vmap_rules_getters.register(P.IsClose)
+@vmap_rules_getters.register(P.Xlogy)
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
 
@@ -341,6 +343,7 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.InplaceAdd)
 @vmap_rules_getters.register(P.InplaceSub)
+@vmap_rules_getters.register(P.InplaceUpdate)
 def get_inplace_ops_vmap_rule(prim, axis_size):
     """VmapRule for `InplaceAdd`, `InplaceSub`, `InplaceUpdate` operation."""
 
@@ -537,6 +540,7 @@ def get_lp_norm_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Renorm)
 def get_renorm_rule(prim, axis_size):
     """VmapRule for Renorm"""
     pnorm = prim.p

@@ -180,6 +180,11 @@ def test_ascend_graph_mode():
     one_hot_tensor_graph(np.int32, mstype.float32, np.float32)
 
 
+@pytest.mark.skip(reason='Pls contact me @id: 30026544')
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_ascend_pynative_mode():
     """
     Feature: test one_hot static shape on Ascend in pynative mode

@@ -23,6 +23,7 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim
 
 
 @vmap_rules_getters.register(IMG.ResizeBilinearV2)
+@vmap_rules_getters.register(IMG.ResizeLinear1D)
 def get_resize_dynamic_input_rule(prim, axis_size):
     """VmapRule for `Resize` operation."""
     prim_name = prim.name

@@ -242,5 +242,6 @@ std::vector<KernelAttr> MaskedSelectGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MaskedSelect, MaskedSelectGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

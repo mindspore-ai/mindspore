@@ -453,6 +453,11 @@ def test_dynamic_square_sum_all():
     assert compare(out, out_expect)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('dtype', [np.float32])
+@pytest.mark.env_onecard
 def test_dynamic_hswish(dtype):
     """
     Feature: Test HSwish and its backward. The input shape is dynamic.

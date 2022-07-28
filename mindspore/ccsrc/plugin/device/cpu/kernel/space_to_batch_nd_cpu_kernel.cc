@@ -191,5 +191,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SpaceToBatchNDCpuKernel
   };
   return func_list;
 }
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SpaceToBatchND, SpaceToBatchNDCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

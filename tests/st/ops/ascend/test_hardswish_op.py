@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
+from mindspore.ops import functional as F
 
 
 class Grad(nn.Cell):
@@ -119,3 +120,78 @@ def test_hardswish_forward_and_backward():
 def np_all_close_with_loss(out, expect):
     """np_all_close_with_loss"""
     return np.allclose(out, expect, 0.005, 0.005, equal_nan=True)
+
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_hswish_vmap(dtype, shape=(100, 2)):
+    """
+    Feature: HSwish vmap
+    Description: test the rightness of HSwish vmap feature.
+    Expectation: Success.
+    """
+
+    def hswish_func(x):
+        """hswish_func"""
+        return P.HSwish()(x)
+
+    prop = 100 if np.random.random() > 0.5 else -100
+    x_np = (np.random.randn(*shape) * prop).astype(dtype)
+    x = Tensor(x_np)
+    x = F.sub(x, 0)
+    output_vmap = F.vmap(hswish_func, in_axes=(0,))(x)
+
+    @ms_function
+    def manually_batched(xs):
+        """manually_batched"""
+        output = []
+        for i in range(xs.shape[0]):
+            output.append(hswish_func(xs[i]))
+        return F.stack(output)
+
+    output_manually = manually_batched(x)
+    assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_hswish_grad_vmap(dtype, shape=(100, 2)):
+    """
+    Feature: HSwishGrad vmap
+    Description: test the rightness of HSwishGrad vmap feature.
+    Expectation: Success.
+    """
+    net = Net()
+    grad = Grad(net)
+
+    def hswish_grad_func(dy, x):
+        """hswish_grad_func"""
+        output = grad(dy, x)
+        return output[0]
+
+    prop = 1 if np.random.random() > 0.5 else -1
+    dy_np = (np.random.randn(*shape) * prop).astype(dtype)
+    x_np = (np.random.randn(*shape) * prop).astype(dtype)
+    dy = Tensor(dy_np)
+    x = Tensor(x_np)
+    dy = F.sub(dy, 0)
+    x = F.sub(x, 0)
+    output_vmap = F.vmap(hswish_grad_func, in_axes=(0, 0))(dy, x)
+
+    @ms_function
+    def manually_batched(dys, xs):
+        """manually_batched"""
+        output = []
+        for i in range(dys.shape[0]):
+            output.append(hswish_grad_func(dys[i], xs[i]))
+        return F.stack(output)
+
+    output_manually = manually_batched(dy, x)
+    assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
