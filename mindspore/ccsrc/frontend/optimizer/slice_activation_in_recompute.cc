@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
   if (group.GetDevNum() == 0) {
     MS_LOG(EXCEPTION) << "The dev num of group should not be 0.";
   }
-  if (out_shape_element[0] % group.GetDevNum() != 0) {
+  if (out_shape_element[0] % SizeToLong(group.GetDevNum()) != 0) {
     MS_LOG(WARNING) << "The output_shape first dim:" << out_shape_element[0]
                     << " cannot be divisible by the repeated size: " << group.GetDevNum()
                     << "The slice would not activate to this node: " << node->DebugString();

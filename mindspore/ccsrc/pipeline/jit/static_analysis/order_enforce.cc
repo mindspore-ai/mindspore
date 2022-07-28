@@ -17,6 +17,7 @@
 #include "pipeline/jit/static_analysis/order_enforce.h"
 #include <algorithm>
 #include <map>
+#include <set>
 #include <queue>
 #include <vector>
 #include <utility>
