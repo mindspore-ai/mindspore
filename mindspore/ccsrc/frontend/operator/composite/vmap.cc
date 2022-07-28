@@ -307,7 +307,7 @@ FuncGraphPtr VmapGeneralPreprocess::GenerateFuncGraph(const AbstractBasePtrList 
     MS_LOG(EXCEPTION) << "The length of input to VmapGeneralPreprocess must be greater than 1";
   }
   bool wrapped_tuple = false;
-  int64_t inputs_size = args_size - 1;
+  int64_t inputs_size = SizeToLong(args_size - 1);
   uint32_t offset = 1;
   auto get_tuple_elements = [args_size, &wrapped_tuple, &inputs_size,
                              &offset](const AbstractBasePtrList &args_spec_list) -> const AbstractBasePtrList & {

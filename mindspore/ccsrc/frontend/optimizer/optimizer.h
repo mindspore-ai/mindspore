@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
         is_watch_renormalize_(false),
         is_enable_(true),
         is_untyped_generated_(false),
-        traverse_nodes_first_(traverse_nodes_first) {}
+        traverse_nodes_first_(traverse_nodes_first),
+        is_first_order_j_(true) {}
   virtual ~Optimizer() = default;
 
   void Init(const OptPassGroupMap &passes, bool run_only_once) {
@@ -267,7 +268,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   bool is_untyped_generated_;
   bool traverse_nodes_first_;
   // A flag to indicate if it's the first order J or innermost J in GraphMode.
-  bool is_first_order_j_{true};
+  bool is_first_order_j_;
 };
 }  // namespace opt
 }  // namespace mindspore
