@@ -2732,7 +2732,6 @@ def approximate_equal(x, y, tolerance=1e-5):
 
     Examples:
         >>> from mindspore.ops.function.math_func import approximate_equal
-        >>> ...
         >>> tol = 2.
         >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
         >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
