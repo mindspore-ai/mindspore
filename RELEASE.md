@@ -60,28 +60,6 @@
 
 ### API Change
 
-#### Backwards Incompatible Change
-
-##### Python API
-
-- DVPP simulation algorithm is no longer supported. Remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
-- Add `on_train_epoch_end` method in LossMonitor, which implements printing metric information in the epoch level when it is used in `mindspore.Model.fit`.
-- TimeMonitor printing content changes, and the printed content is added to "train" or "eval" to distinguish between training and inference phases.
-- `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
-
-## MindSpore Lite
-
-### Major Features and Improvements
-
-#### API
-
-- [STABLE] Add C++ and Python APIs for model conversion.
-- [STABLE] Add Python APIs for model inference.
-
-#### Post-Training Quantization
-
-- [STABLE] Support perlayer quantization, and built-in CLE to optimize perlayer quantization accuracy.
-
 #### operator
 
 - [STABLE] Add GPU support for ops.adaptive_avg_pool2d.
@@ -179,6 +157,28 @@
 - [STABLE] Add CPU support for ops.unsorted_segment_max.
 - [STABLE] Add CPU support for ops.unsorted_segment_min.
 - [STABLE] Add GPU support for ops.unsorted_segment_prod.
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+- DVPP simulation algorithm is no longer supported. Remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
+- Add `on_train_epoch_end` method in LossMonitor, which implements printing metric information in the epoch level when it is used in `mindspore.Model.fit`.
+- TimeMonitor printing content changes, and the printed content is added to "train" or "eval" to distinguish between training and inference phases.
+- `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
+
+## MindSpore Lite
+
+### Major Features and Improvements
+
+#### API
+
+- [STABLE] Add C++ and Python APIs for model conversion.
+- [STABLE] Add Python APIs for model inference.
+
+#### Post-Training Quantization
+
+- [STABLE] Support perlayer quantization, and built-in CLE to optimize perlayer quantization accuracy.
 
 ### Contributors
 
