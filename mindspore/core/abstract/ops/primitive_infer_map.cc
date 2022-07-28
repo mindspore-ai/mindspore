@@ -295,6 +295,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimPoolingGrad, R{InferImplPoolingGrad, nullptr, true}},
     {prim::kPrimBatchNorm, R{InferImplBatchNorm, nullptr, true}},
     {prim::kPrimBpropCut, R{InferImplBpropCut, nullptr, true}},
+    {prim::kPrimBiasDropoutAdd, R{InferImplBiasDropoutAdd, nullptr, true}},
     {prim::kPrimSparseApplyProximalAdagrad, R{InferImplSparseApplyProximalAdagrad, nullptr, true}},
     {prim::kPrimSGD, R{InferImplSGD, nullptr, true}},
     {prim::kPrimHSigmoid, R{InferImplHSigmoid, nullptr, true}},

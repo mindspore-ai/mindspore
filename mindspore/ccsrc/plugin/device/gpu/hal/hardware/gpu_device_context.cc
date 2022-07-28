@@ -328,6 +328,7 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2Fusion>());
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradFusion>());
+    pm->AddPass(std::make_shared<opt::BiasDropoutAddFusion>());
   }
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
