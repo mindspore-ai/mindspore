@@ -113,7 +113,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), kernel_mod->stream());
+    (void)rtProfilerTraceEx(1, rt_model_id_, static_cast<uint16_t>(point->tag()), kernel_mod->stream());
 
     MS_LOG(INFO) << "Report step point, rt_model_id_: " << rt_model_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
@@ -124,8 +124,8 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
 void ProfilingReporter::DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
                                           const KernelType kernel_type) {
   ReportTask(node, stream_id, task_id, kernel_type);
-  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
-  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
+  ReportNode(node, stream_id, task_id, static_cast<uint32_t>(MSPROF_GE_TENSOR_TYPE_INPUT));
+  ReportNode(node, stream_id, task_id, static_cast<uint32_t>(MSPROF_GE_TENSOR_TYPE_OUTPUT));
   MS_LOG(INFO) << "Profiling report one dynamic node <" << node->fullname_with_scope() << "> data finish.";
 }
 
@@ -142,17 +142,17 @@ const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {
 
 uint32_t ProfilingReporter::GetStreamId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return stream_ids_[(uint32_t)index];
+  return stream_ids_[static_cast<uint32_t>(index)];
 }
 
 uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return task_ids_[(uint32_t)index];
+  return task_ids_[static_cast<uint32_t>(index)];
 }
 
 void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const string &tag_name) {
   ReporterData report_data{};
-  report_data.deviceId = device_id;
+  report_data.deviceId = static_cast<uint32_t>(device_id);
   report_data.data = data;
   report_data.dataLen = data_size;
   auto ret = memcpy_s(report_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, tag_name.c_str(), tag_name.length());
@@ -171,10 +171,10 @@ void ProfilingReporter::ConstructNodeNameIndexMap() {
     return;
   }
 
-  size_t task_index = 0;
+  int task_index = 0;
   for (const auto &node : cnode_list_) {
     MS_EXCEPTION_IF_NULL(node);
-    (void)node_name_index_map_.insert(pair<string, size_t>(node->fullname_with_scope(), task_index));
+    (void)node_name_index_map_.insert(pair<string, int>(node->fullname_with_scope(), task_index));
     ++task_index;
   }
 }
@@ -247,8 +247,8 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
   ReportData(device_id_, reinterpret_cast<unsigned char *>(&tensor_info), sizeof(tensor_info), tag_name);
 }
 
-void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id,
-                                                  uint32_t task_id) {
+void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, const uint32_t stream_id,
+                                                  const uint32_t task_id) {
   MS_EXCEPTION_IF_NULL(tensor_info);
   tensor_info->modelId = rt_model_id_;
   tensor_info->streamId = stream_id;

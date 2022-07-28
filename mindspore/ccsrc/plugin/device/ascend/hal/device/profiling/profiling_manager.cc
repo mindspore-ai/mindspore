@@ -46,7 +46,7 @@ ProfilingManager &ProfilingManager::GetInstance() {
 }
 
 ProfilingManager::ProfilingManager()
-    : device_id_(0), prof_cb_({0}), cur_state_(kProfilingInvalid), profiling_path_("") {}
+    : device_id_(0), prof_cb_({nullptr}), cur_state_(kProfilingInvalid), profiling_path_("") {}
 
 uint64_t ProfilingManager::GetJobId() const { return 0; }
 

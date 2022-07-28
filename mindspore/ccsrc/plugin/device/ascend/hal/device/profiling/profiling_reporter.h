@@ -21,7 +21,6 @@
 #include <vector>
 #include <memory>
 
-#include "securec/include/securec.h"
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -87,7 +86,7 @@ class ProfilingReporter {
   void ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
   void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
   void ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type);
-  void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id, uint32_t task_id);
+  void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, const uint32_t stream_id, const uint32_t task_id);
   void BuildTensorData(MsprofGeTensorData *tensor_data, const CNodePtr &node, size_t index, uint32_t tensor_type);
 
   template <typename T>
