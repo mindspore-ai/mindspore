@@ -525,7 +525,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Sync stream
   void Sync();
   void SetLazyBuild(bool enable);
-  void ExecuteLazyTask();
+  void ExecuteLazyTask() const;
   bool IsFirstCell() const;
 
  private:

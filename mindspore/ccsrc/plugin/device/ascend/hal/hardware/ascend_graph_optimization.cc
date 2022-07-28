@@ -46,7 +46,7 @@ void RemoveUnusedValueNode(const KernelGraphPtr &graph) {
   mindspore::HashSet<ValueNodePtr> unused_value_nodes;
   for (auto &value_node : graph->graph_value_nodes()) {
     if (node_users.find(value_node) == node_users.end()) {
-      unused_value_nodes.insert(value_node);
+      (void)unused_value_nodes.insert(value_node);
     }
   }
   for (auto &value_node : unused_value_nodes) {

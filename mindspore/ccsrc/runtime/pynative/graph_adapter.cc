@@ -149,7 +149,9 @@ device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &
     tensor->data_sync();
     auto new_device_address = CreateValueNodeAddress(value_node, device_context);
     MS_EXCEPTION_IF_NULL(new_device_address);
-    CopyTensorData(tensor, new_device_address, value_node, device_context);
+    if (!CopyTensorData(tensor, new_device_address, value_node, device_context)) {
+      MS_LOG(EXCEPTION) << "Copy Tensor data failed";
+    }
     return new_device_address;
   }
   return device_address;
@@ -189,7 +191,6 @@ void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr
 // if the value node is output of forward_graph in PyNative mode.
 void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  HashMap<std::string, size_t> tensor_counts;
   HashMap<ValueNodePtr, size_t> value_node_ref_counts = GetGraphValueNodeRefCounts(graph);
 
   std::vector<size_t> value_node_ref_count_list;
@@ -198,8 +199,8 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
     MS_EXCEPTION_IF_NULL(value_node);
     auto tensor = GetTensorFromValueNode(value_node);
     if (tensor == nullptr || !tensor->is_forward_output()) {
-      value_node_ref_count_list.emplace_back(SIZE_MAX);
-      value_node_forward_output_flags.emplace_back(false);
+      (void)value_node_ref_count_list.emplace_back(SIZE_MAX);
+      (void)value_node_forward_output_flags.emplace_back(false);
       continue;
     }
 
@@ -208,12 +209,12 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
       // The value_node is in bp graph but not used.
       // e.g. %1-MakeTuple(T1, T2) -> TupleGetItem(%1, 0). T2 is not used.
       MS_LOG(DEBUG) << "ValueNode " << value_node->ToString() << " is not used in graph";
-      value_node_ref_count_list.emplace_back(SIZE_MAX);
+      (void)value_node_ref_count_list.emplace_back(SIZE_MAX);
       value_node_forward_output_flags.emplace_back(false);
       continue;
     }
 
-    value_node_ref_count_list.emplace_back(iter->second);
+    (void)value_node_ref_count_list.emplace_back(iter->second);
     value_node_forward_output_flags.emplace_back(true);
     MS_LOG(DEBUG) << "ValueNode " << value_node->DebugString() << " ref_count " << iter->second;
   }

@@ -4474,7 +4474,7 @@ void PynativeExecutor::SetLazyBuild(bool enable) { forward_executor()->set_lazy_
 
 bool PynativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
-void PynativeExecutor::ExecuteLazyTask() {
+void PynativeExecutor::ExecuteLazyTask() const {
   mindspore::ScopedLongRunning long_running;
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
