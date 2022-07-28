@@ -15,32 +15,124 @@
  */
 
 #include "plugin/device/gpu/kernel/other/assign_gpu_kernel.h"
+#include <complex>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  Assign,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  AssignGpuKernelMod, double)
-MS_REG_GPU_KERNEL_ONE(
-  Assign,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AssignGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  Assign,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  AssignGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(
-  Assign, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  AssignGpuKernelMod, int)
-MS_REG_GPU_KERNEL_ONE(
-  Assign, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  AssignGpuKernelMod, int64_t)
-MS_REG_GPU_KERNEL_ONE(
-  Assign, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  AssignGpuKernelMod, unsigned int)
-MS_REG_GPU_KERNEL_ONE(
-  Assign, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  AssignGpuKernelMod, bool)
+namespace {
+constexpr size_t kAssignInputsNum = 2;
+constexpr size_t kAssignOutputsNum = 1;
+template <typename T>
+std::unique_ptr<cukernel::GpuKernelHelperBase> CreateAssignKernelPtr(const std::string &kernel_name,
+                                                                     const uint32_t &device_id) {
+  return std::make_unique<cukernel::AssignHelperGpuKernel<T>>(kernel_name, device_id);
+}
+
+using AssignPtrCreatorFunc =
+  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
+
+const std::vector<std::pair<KernelAttr, AssignPtrCreatorFunc>> kernel_attr = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   CreateAssignKernelPtr<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   CreateAssignKernelPtr<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   CreateAssignKernelPtr<half>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateAssignKernelPtr<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   CreateAssignKernelPtr<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   CreateAssignKernelPtr<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   CreateAssignKernelPtr<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   CreateAssignKernelPtr<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   CreateAssignKernelPtr<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   CreateAssignKernelPtr<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateAssignKernelPtr<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   CreateAssignKernelPtr<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateAssignKernelPtr<std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateAssignKernelPtr<std::complex<double>>},
+};
+}  // namespace
+
+bool AssignGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  std::vector<void *> input_ptrs = ConvertPtrs(inputs);
+  std::vector<void *> work_ptrs = ConvertPtrs(workspace);
+  std::vector<void *> output_ptrs = ConvertPtrs(outputs);
+  if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
+    return false;
+  }
+  return true;
+}
+
+bool AssignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assign>(base_operator);
+  kernel_name_ = kernel_ptr->name();
+  auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_ptr;
+    return false;
+  }
+
+  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
+
+  int ret = Resize(kernel_ptr, inputs, outputs);
+  if (ret == KRET_RESIZE_FAILED) {
+    return false;
+  }
+
+  return true;
+}
+
+int AssignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {  // check input size
+  if (inputs.size() != kAssignInputsNum || outputs.size() != kAssignOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kAssignInputsNum << " and "
+                  << kAssignOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
+    return KRET_RESIZE_FAILED;
+  }
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+
+  (void)input_shapes.emplace_back(input_shape);
+
+  if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
+    return KRET_RESIZE_FAILED;
+  }
+
+  input_size_list_ = helper_ptr_->GetInputSizeList();
+  output_size_list_ = helper_ptr_->GetOutputSizeList();
+
+  return KRET_OK;
+}
+
+std::vector<KernelAttr> AssignGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(kernel_attr.begin(), kernel_attr.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, AssignPtrCreatorFunc> &item) { return item.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Assign, AssignGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

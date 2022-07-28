@@ -19,74 +19,37 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <memory>
+#include <algorithm>
+
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "mindspore/core/ops/assign.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/assign_helper.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class AssignGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AssignGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AssignGpuKernelMod() : input_size_(0), is_null_input_(false) {}
+  AssignGpuKernelMod() = default;
   ~AssignGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *var = GetDeviceAddress<T>(inputs, 0);
-    T *value = GetDeviceAddress<T>(inputs, 1);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemcpyAsync(var, value, input_size_, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemcpyAsync(output, value, input_size_, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync failed.");
-    return true;
-  }
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(T) * SizeOf(shape);
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-  }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
-    }
-  }
-
-  size_t input_size_;
-  bool is_null_input_;
+  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
