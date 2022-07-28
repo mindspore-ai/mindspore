@@ -29,7 +29,9 @@ namespace opt {
 class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  public:
   explicit MultiHeadAttentionFusion(const std::string &name = "MultiHeadAttentionFusion", bool multigraph = true)
-      : MultiplePatternProcessPass(name, multigraph) {}
+      : MultiplePatternProcessPass(name, multigraph) {
+    std::cout << "calling constructor" << std::endl;
+  }
 
   ~MultiHeadAttentionFusion() override = default;
 
@@ -46,20 +48,20 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
 
  private:
   // define patterns
-  VectorRef DefineMPWithMaskPattern() const;
-
-  VectorRef DefineMPWithoutMaskPattern() const;
-
-  CNodePtr CreateMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                        const std::string &base_name) const;
+  VectorRef DefineMPWithMaskPattern(bool cross = false, bool mask = true) const;
+  VectorRef DefineMPWithMaskPatternPA(bool cross = false) const;
 
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                              const std::string &base_name) const;
+                                              const std::string &base_name, bool cross = false, bool mask = true) const;
 
  protected:
-  const std::string kMPAWithoutMaskPatternName = "MPAWithoutMaskPattern";
   const std::string kMPAWithMaskPatternName = "MPAWithMaskPattern";
+  const std::string kMPAXWithMaskPatternName = "MPAXWithMaskPattern";
+  const std::string kMPAWithMaskPatternNamePA = "MPAWithMaskPatternPA";
+  const std::string kMPAXWithMaskPatternNamePA = "MPAXWithMaskPatternPA";
+  const std::string kMPAPatternName = "MPAPattern";
+  const std::string kMPAXPatternName = "MPAXPattern";
 
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
