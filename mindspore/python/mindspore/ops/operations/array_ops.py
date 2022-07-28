@@ -6815,9 +6815,9 @@ class TensorScatterElements(Primitive):
          [ 0.0  5.0  0.0]
          [ 7.0  0.0  0.0]]
         >>> op = ops.TensorScatterElements(1, "add")
-        >>> data = Tensor(np.array([[1, 2, 3, 4, 5]), mindspore.int32)
+        >>> data = Tensor(np.array([[1, 2, 3, 4, 5]), mindspore.float32)
         >>> indices = Tensor(np.array([[2, 4]), mindspore.int32)
-        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
         >>> output = op(data, indices, updates)
         >>> print(output)
         [[ 1  2  11  4  13]]
