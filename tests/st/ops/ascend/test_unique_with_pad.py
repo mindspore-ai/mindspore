@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
@@ -42,3 +43,49 @@ def test_unique_with_pad():
     expect_val = ([1, 5, 4, 3, 2, 8, 8, 8, 8, 8], [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
     assert(out[0].asnumpy() == expect_val[0]).all()
     assert(out[1].asnumpy() == expect_val[1]).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unique_with_pad_dynamic_shape():
+    """
+    Feature: uniquewithpad dynamic shape test in ascend.
+    Description: test the rightness of uniquewithpad dynamic shape feature.
+    Expectation: expect correct forward result.
+    """
+    x = Tensor(np.array([1, 2, 5, 2]).astype(np.int32))
+    net = Net(0)
+    input_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
+    net.set_inputs(input_dyn)
+    output = net(x)
+    expect_y_result = [1, 2, 5, 0]
+    expect_idx_result = [0, 1, 2, 1]
+
+    assert (output[0].asnumpy() == expect_y_result).all()
+    assert (output[1].asnumpy() == expect_idx_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unique_with_pad_vmap():
+    """
+    Feature: uniquewithpad vmap test in ascend.
+    Description: test the rightness of uniquewithpad vmap feature.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    def cal_unique_with_pad(x):
+        return P.UniqueWithPad()(x, -1)
+
+    x = Tensor(np.array([[[1, 2, 5, 2], [1, 2, 5, 2]], [[1, 2, 5, 2], [1, 2, 5, 2]]]).astype(np.int32))
+
+    vmap_unique_with_pad = vmap(vmap(cal_unique_with_pad, in_axes=0), in_axes=0)
+    outputs = vmap_unique_with_pad(x)
+    expect0 = np.array([[[1, 2, 5, -1], [1, 2, 5, -1]], [[1, 2, 5, -1], [1, 2, 5, -1]]]).astype(np.int32)
+    expect1 = np.array([[[0, 1, 2, 1], [0, 1, 2, 1]], [[0, 1, 2, 1], [0, 1, 2, 1]]]).astype(np.int32)
+    assert np.allclose(outputs[0].asnumpy(), expect0)
+    assert np.allclose(outputs[1].asnumpy(), expect1)

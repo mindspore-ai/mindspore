@@ -41,6 +41,12 @@ void CalUniqueWithPad(const T *input, int num_elements, S *input_index, S *sorte
   }
 }
 
+template CUDA_LIB_EXPORT void CalUniqueWithPad<float, int>(const float *input, int num_elements, int *input_index,
+                                                         int *sorted_index, float *output, int *index,
+                                                         cudaStream_t cuda_stream, float *pad_num);
+template CUDA_LIB_EXPORT void CalUniqueWithPad<half, int>(const half *input, int num_elements, int *input_index,
+                                                           int *sorted_index, half *output, int *index,
+                                                           cudaStream_t cuda_stream, half *pad_num);
 template CUDA_LIB_EXPORT void CalUniqueWithPad<int, int>(const int *input, int num_elements, int *input_index,
                                                          int *sorted_index, int *output, int *index,
                                                          cudaStream_t cuda_stream, int *pad_num);

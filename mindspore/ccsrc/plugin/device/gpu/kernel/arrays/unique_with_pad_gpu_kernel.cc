@@ -45,7 +45,19 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt64),
-   CreateUniqueWithPadKernelPtr<int64_t, int64_t>}};
+   CreateUniqueWithPadKernelPtr<int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateUniqueWithPadKernelPtr<float, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateUniqueWithPadKernelPtr<half, int32_t>}};
 }  // namespace
 
 bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -76,6 +88,7 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   input_shapes.emplace_back(inputs[1]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
+  is_need_retrieve_output_shape_ = false;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (const auto &input : inputs) {
