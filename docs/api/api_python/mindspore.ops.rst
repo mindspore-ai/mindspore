@@ -77,7 +77,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
-    mindspore.ops.ResizeLinear1D
 
 损失函数
 ^^^^^^^^^^
