@@ -60,28 +60,6 @@
 
 ### API变更
 
-#### 非兼容性变更
-
-##### Python API
-
-- 不再支持DVPP模拟算法，删除 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` 和 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` 接口。
-- LossMonitor中增加`on_train_epoch_end` 方法，实现在 `mindspore.Model.fit` 中使用时，打印epoch级别的metric信息。
-- TimeMonitor打印内容变更，打印内容加入"train"或"eval"用于区分训练和推理阶段。
-- load_checkpoint 接口的`filter_prefix`：不再支持空字符串("")，匹配规则由强匹配修改为模糊匹配。
-
-## MindSpore Lite
-
-### 主要特性和增强
-
-#### API
-
-- [STABLE] 新增模型转换的C++和Python API.
-- [STABLE] 新增模型推理的Python API.
-
-#### 后量化
-
-- [STABLE] 后量化支持PerLayer量化，同时内置CLE算法优化精度。
-
 #### 算子
 
 - [STABLE] ops.adaptive_avg_pool2d 新增GPU支持。
@@ -179,6 +157,28 @@
 - [STABLE] ops.unsorted_segment_max 新增CPU支持。
 - [STABLE] ops.unsorted_segment_min 新增CPU支持。
 - [STABLE] ops.unsorted_segment_prod 新增GPU支持。
+
+#### 非兼容性变更
+
+##### Python API
+
+- 不再支持DVPP模拟算法，删除 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` 和 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` 接口。
+- LossMonitor中增加`on_train_epoch_end` 方法，实现在 `mindspore.Model.fit` 中使用时，打印epoch级别的metric信息。
+- TimeMonitor打印内容变更，打印内容加入"train"或"eval"用于区分训练和推理阶段。
+- load_checkpoint 接口的`filter_prefix`：不再支持空字符串("")，匹配规则由强匹配修改为模糊匹配。
+
+## MindSpore Lite
+
+### 主要特性和增强
+
+#### API
+
+- [STABLE] 新增模型转换的C++和Python API.
+- [STABLE] 新增模型推理的Python API.
+
+#### 后量化
+
+- [STABLE] 后量化支持PerLayer量化，同时内置CLE算法优化精度。
 
 ### 贡献者
 
