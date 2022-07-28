@@ -57,7 +57,8 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
     }
   } else {
     for (auto &item : axis) {
-      CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeLeft, {-rank, rank}, op_name);
+      CheckAndConvertUtils::CheckInRange<int64_t>("element or value of axis", item, kIncludeLeft, {-rank, rank},
+                                                  op_name);
       auto idx = item >= 0 ? item : rank + item;
       // If shape dims contain unknown dim, ignore it.
       if (in_shape[LongToSize(idx)] != UNKNOWN_DIM) {
