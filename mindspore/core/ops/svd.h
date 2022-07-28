@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_SVD_H_
 #define MINDSPORE_CORE_OPS_SVD_H_
 #include <string>
-#include <vector>
 #include <memory>
 
 #include "ops/base_operator.h"

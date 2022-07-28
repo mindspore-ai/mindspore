@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <set>
+#include <vector>
 
 #include "mindapi/ir/type.h"
 #include "utils/check_convert_utils.h"
@@ -39,7 +40,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
   auto n = a_shape[ndim - kIndexOne];
   auto p = std::min(m, n);
 
-  auto s_shape = ShapeVector(a_shape.begin(), a_shape.end() - kIndexOne);
+  auto s_shape = ShapeVector(a_shape.begin(), a_shape.end() - SizeToLong(kIndexOne));
   s_shape[s_shape.size() - kIndexOne] = p;
   auto u_shape = ShapeVector(a_shape.begin(), a_shape.end());
   auto v_shape = ShapeVector(a_shape.begin(), a_shape.end());
