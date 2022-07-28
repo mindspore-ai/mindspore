@@ -227,7 +227,7 @@ uint32_t FieldMask(unsigned int field_size) {
   return mask >> (BYTE_SIZE * sizeof(mask) - field_size);
 }
 
-uint32_t ExponentBias(unsigned int exponent_size) { return (1 << (exponent_size - 1)) - 1; }
+uint32_t ExponentBias(unsigned int exponent_size) { return (1U << (exponent_size - 1U)) - 1U; }
 
 uint32_t Fp32ToFp16(float value) {
   const unsigned int FP32_M = 23;
@@ -645,11 +645,11 @@ LoopConditionInfo TraceLoopConditionInfo(const CNodePtr &start_node, const CNode
   const auto &subgraph_args = control_subgraph->parameters();
   auto counter_input_pos = std::find(subgraph_args.begin(), subgraph_args.end(), counter) - subgraph_args.begin();
 
-  auto begin_tensor = GetNodeInputValue<tensor::Tensor>(start_node, 1 + counter_input_pos);
+  auto begin_tensor = GetNodeInputValue<tensor::Tensor>(start_node, 1UL + static_cast<size_t>(counter_input_pos));
   MS_EXCEPTION_IF_CHECK_FAIL(begin_tensor->shape_c().empty(), "Expected a scalar tensor");
   auto begin = *reinterpret_cast<const int32_t *>(begin_tensor->data_c());
 
-  auto increment_node = GetNodeInput<CNode>(loop_repeat_node, 1 + counter_input_pos);
+  auto increment_node = GetNodeInput<CNode>(loop_repeat_node, 1UL + static_cast<size_t>(counter_input_pos));
   MS_EXCEPTION_IF_CHECK_FAIL(increment_node->IsApply(prim::kPrimAdd), "Expected Add node");
   auto step_tensor = GetNodeInputValue<tensor::Tensor>(increment_node, kTwoNum);
   MS_EXCEPTION_IF_CHECK_FAIL(step_tensor->shape_c().empty(), "Expected a scalar tensor");
@@ -665,7 +665,7 @@ std::vector<size_t> TraceLoopToControlMap(const FuncGraphPtr &control_subgraph) 
   auto switch_node = FindLoopSwitchNode(control_subgraph);
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   const auto &control_params = control_subgraph->parameters();
-  auto auxiliary_inputs_num = 2;
+  size_t auxiliary_inputs_num = 2;
   for (size_t i = auxiliary_inputs_num; i < loop_partial_node->inputs().size(); ++i) {
     auto loop_param = GetNodeInput<Parameter>(loop_partial_node, i);
     auto control_param_pos =
@@ -683,7 +683,7 @@ std::vector<size_t> TraceAfterToLoopMap(const FuncGraphPtr &control_subgraph) {
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   auto after_partial_node = GetNodeInput<CNode>(switch_node, kThreeNum);
   const auto &loop_params = loop_partial_node->inputs();
-  auto auxiliary_inputs_num = 2;
+  size_t auxiliary_inputs_num = 2;
   for (size_t i = auxiliary_inputs_num; i < after_partial_node->inputs().size(); ++i) {
     auto after_param = GetNodeInput<Parameter>(after_partial_node, i);
     auto after_param_pos = std::find(loop_params.begin(), loop_params.end(), after_param) - loop_params.begin();
@@ -1191,14 +1191,14 @@ class OnnxExporter {
                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &node,
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-  void ExportPrimLSTM(const FuncGraphPtr &func_graph, const CNodePtr &node,
-                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimLSTM(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                      onnx::GraphProto *graph_proto);
   void ExportPrimReverseV2(const FuncGraphPtr &func_graph, const CNodePtr &node,
                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-  void ExportPrimTensorCopySlices(const FuncGraphPtr &func_graph, const CNodePtr &node,
+  void ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-  void ExportPrimStack(const FuncGraphPtr &func_graph, const CNodePtr &node,
-                       std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimStack(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                       onnx::GraphProto *graph_proto);
   void ExportMergeConv(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1209,13 +1209,13 @@ class OnnxExporter {
                                     std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeLayerNorm(const FuncGraphPtr &func_graph, const CNodePtr &node,
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-  void ExportMergeConv2DTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
+  void ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
 
   void ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &return_arg,
                     std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   std::string GetNodeInputName(const AnfNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
-                               onnx::GraphProto *const graph_proto);
+                               onnx::GraphProto *const);
 
   void ConvertTupleToTensor(const ValuePtr &value, onnx::TensorProto *tensor_proto);
   void SetTensorData(const ValuePtr &value, onnx::TensorProto *tensor_proto);
@@ -1367,7 +1367,7 @@ void OnnxExporter::SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto
   abstract::ShapePtr output_shape;
   if (shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = dyn_cast<abstract::TupleShape>(shape);
-    auto base_shape = tuple_shape->shape().at(output_index);
+    auto base_shape = tuple_shape->shape().at(static_cast<size_t>(output_index));
     output_shape = dyn_cast<abstract::Shape>(base_shape);
     if (output_shape == nullptr) {
       MS_LOG(EXCEPTION) << "Expected " << node->ToString() << " to output a tuple of tensors. Instead got "
@@ -2491,7 +2491,7 @@ void OnnxExporter::ExportPrimSplit(const FuncGraphPtr &, const CNodePtr &node,
   if (axis < 0 || static_cast<size_t>(axis) >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "`axis` is out of range";
   }
-  if (input_shape[axis] % output_num != 0) {
+  if (input_shape[static_cast<size_t>(axis)] % output_num != 0) {
     MS_LOG(EXCEPTION) << "Input dim is not divisible by `output_num`";
   }
 
@@ -2511,7 +2511,7 @@ void OnnxExporter::ExportPrimSplit(const FuncGraphPtr &, const CNodePtr &node,
   split_attr_proto->set_name("split");
   split_attr_proto->set_type(onnx::AttributeProto_AttributeType_INTS);
   for (int64_t i = 0; i < output_num; ++i) {
-    split_attr_proto->add_ints(input_shape[axis] / output_num);
+    split_attr_proto->add_ints(input_shape[static_cast<size_t>(axis)] / output_num);
   }
 }
 
@@ -2892,7 +2892,7 @@ void ExportLSTMWeights(const CNodePtr &node, const std::string &node_name, const
   }
 }
 
-void OnnxExporter::ExportPrimLSTM(const FuncGraphPtr &func_graph, const CNodePtr &node,
+void OnnxExporter::ExportPrimLSTM(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, std::string> *node_map_ptr,
                                   onnx::GraphProto *const graph_proto) {
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
@@ -2981,13 +2981,13 @@ void OnnxExporter::ExportPrimReverseV2(const FuncGraphPtr &, const CNodePtr &nod
   std::vector<int64_t> starts_vec(n_axes, -1);
   std::vector<int64_t> ends_vec(n_axes);
   (void)std::transform(axes_vec.begin(), axes_vec.end(), ends_vec.begin(),
-                       [&shape](int64_t ax) { return -shape.at(ax) - 1; });
+                       [&shape](size_t ax) { return -shape.at(ax) - 1; });
   std::vector<int64_t> steps_vec(n_axes, -1);
 
   AddSliceOp(input, output, starts_vec, ends_vec, axes_vec, steps_vec, graph_proto);
 }
 
-void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &func_graph, const CNodePtr &node,
+void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodePtr &node,
                                               std::map<AnfNodePtr, std::string> *node_map_ptr,
                                               onnx::GraphProto *graph_proto) {
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
@@ -3039,8 +3039,8 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &func_graph, co
                        [](auto x) { return x - 1; });
   size_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
-  size_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
-  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<size_t>());
+  size_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1UL, std::multiplies<size_t>());
+  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1UL, std::multiplies<size_t>());
   MS_EXCEPTION_IF_CHECK_FAIL(value_size == flat_end_index - flat_begin_index, "Cannot copy 'value' to target slice");
 
   auto flat_x_name = node_name + "_flat_x";
@@ -3059,7 +3059,7 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &func_graph, co
   AddReshapeOp(flat_result_name, node_name, x_shape, graph_proto);
 }
 
-void OnnxExporter::ExportPrimStack(const FuncGraphPtr &func_graph, const CNodePtr &node,
+void OnnxExporter::ExportPrimStack(const FuncGraphPtr &, const CNodePtr &node,
                                    std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
 
@@ -3287,7 +3287,7 @@ onnx::TensorProto_DataType OnnxExporter::GetOutputType(const AnfNodePtr &node, i
       MS_LOG(EXCEPTION) << "Expected output of node " << unpacked->ToString()
                         << " to be a tuple. Instead got: " << unpacked->Type()->ToString();
     }
-    auto element_type = tuple_type->elements()[output_index];
+    auto element_type = tuple_type->elements()[static_cast<size_t>(output_index)];
     MS_EXCEPTION_IF_NULL(element_type);
     auto tensor_type = dyn_cast<TensorType>(element_type);
     if (tensor_type == nullptr) {
@@ -3333,27 +3333,27 @@ std::string OnnxExporter::ExportPrimitive(const FuncGraphPtr &, std::map<AnfNode
                                                             onnx::TensorProto_DataType_UNDEFINED);
   // Cast inputs if needed
   for (const auto &rule : op_convert_info.input_casts()) {
-    auto original_type = GetOutputType(inputs[rule.input_index]);
+    auto original_type = GetOutputType(inputs[static_cast<size_t>(rule.input_index)]);
     if (original_type != rule.input_type) {
       continue;
     }
 
     auto cast_input_name = node_name + "cast_input_" + std::to_string(rule.input_index);
-    AddCastOp(input_list[rule.input_index], cast_input_name, rule.target_type, graph_proto);
-    input_list[rule.input_index] = cast_input_name;
+    AddCastOp(input_list[static_cast<size_t>(rule.input_index)], cast_input_name, rule.target_type, graph_proto);
+    input_list[static_cast<size_t>(rule.input_index)] = cast_input_name;
 
     auto output_cast = std::find_if(
       op_convert_info.output_casts().begin(), op_convert_info.output_casts().end(), [&rule](const OutputConversion &x) {
         return x.mode == OutputConversion::Mode::INPUT && x.input_with_matching_type == rule.input_index;
       });
     if (output_cast != op_convert_info.output_casts().end()) {
-      output_cast_types[output_cast->output_index] = original_type;
+      output_cast_types[static_cast<size_t>(output_cast->output_index)] = original_type;
     }
   }
 
   for (const auto &output_cast : op_convert_info.output_casts()) {
     if (output_cast.mode == OutputConversion::Mode::FIXED) {
-      output_cast_types[output_cast.output_index] = output_cast.target_type;
+      output_cast_types[static_cast<size_t>(output_cast.output_index)] = output_cast.target_type;
     }
   }
 
@@ -3367,7 +3367,7 @@ std::string OnnxExporter::ExportPrimitive(const FuncGraphPtr &, std::map<AnfNode
   } else {
     for (int i = 0; i < op_convert_info.num_outputs(); ++i) {
       auto output_name = MakeOutputName(node_name, i);
-      AddOutputWithCast(node_proto, output_name, output_cast_types[i], graph_proto);
+      AddOutputWithCast(node_proto, output_name, output_cast_types[static_cast<size_t>(i)], graph_proto);
     }
   }
 
@@ -3501,7 +3501,7 @@ void OnnxExporter::ExportMergeLayerNorm(const FuncGraphPtr &, const CNodePtr &no
                                  epsilon, input_shape, onnx_type, graph_proto);
 }
 
-void OnnxExporter::ExportMergeConv2DTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
+void OnnxExporter::ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodePtr &node,
                                               std::map<AnfNodePtr, std::string> *node_map_ptr,
                                               onnx::GraphProto *const graph_proto) {
   auto conv_node = dyn_cast<CNode>(node->input(kOneNum));
@@ -3575,7 +3575,7 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_a
 }
 
 std::string OnnxExporter::GetNodeInputName(const AnfNodePtr &orig_node, std::map<AnfNodePtr, std::string> *node_map_ptr,
-                                           onnx::GraphProto *const graph_proto) {
+                                           onnx::GraphProto *const) {
   auto node = GetRealInput(orig_node);
 
   // if node is renamed and not ignored, use alternative name
