@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/actor/rpc/send_actor.h"
 
 #include <utility>
+#include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 
 namespace mindspore {
 namespace runtime {
@@ -47,19 +48,27 @@ bool SendActor::ConnectServer() {
   for (const auto &peer_actor_id : peer_actor_ids_) {
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
     auto peer_actor_address = actor_route_table_proxy_->LookupRoute(peer_actor_id);
+
     // If route is successfully looked up, peer_actor_address is not empty.
     server_url_ = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
-    if (!client_->Connect(server_url_)) {
+    auto free_callback = std::bind(&SendActor::FreeMessage, this, std::placeholders::_1);
+    size_t retry_count = 60;
+    if (!client_->Connect(server_url_, retry_count, free_callback)) {
       MS_LOG(EXCEPTION) << "Failed to connect to server of actor " << peer_actor_id << ", server_url: " << server_url_;
     }
+
     MS_LOG(INFO) << "Successfully connect to server " << server_url_ << ", inter-process edge name: " << peer_actor_id;
     peer_actor_urls_[peer_actor_id] = server_url_;
   }
   return true;
 }
 
-bool SendActor::LaunchKernel() {
-  if (!KernelActor::LaunchKernel()) {
+bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+  MS_ERROR_IF_NULL_W_RET_VAL(context, false);
+  // Set context for later usage in FreeMessage.
+  context_ = context;
+
+  if (!KernelActor::LaunchKernel(context)) {
     MS_LOG(ERROR) << "Launching kernel for send actor failed.";
     return false;
   }
@@ -138,12 +147,53 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr
     total_size =
       std::accumulate(data_list.begin(), data_list.end(), total_size,
                       [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
-    message->body.reserve(total_size);
-    for (const auto &data : data_list) {
-      (void)message->body.append(static_cast<char *>(data->addr), data->size);
+    auto send_workspace = launch_info_.workspaces_;
+    if (send_workspace.empty()) {
+      MS_LOG(EXCEPTION) << "RpcSendKernel workspace should not be empty.";
+    }
+    if (send_workspace[0]->size != total_size) {
+      MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << send_workspace[0]->size
+                        << " and " << total_size;
+    }
+
+    if (common::GetEnv("use_void").empty()) {
+      message->body.reserve(total_size);
+      for (const auto &data : data_list) {
+        (void)message->body.append(static_cast<char *>(data->addr), data->size);
+      }
+    } else {
+      size_t offset = 0;
+      for (const auto &data : data_list) {
+        if (EOK !=
+            memcpy_s(static_cast<char *>(send_workspace[0]->addr) + offset, data->size, data->addr, data->size)) {
+          MS_LOG(EXCEPTION) << "memcpy_s for send data failed.";
+        }
+        offset += data->size;
+      }
+      message->data = send_workspace[0]->addr;
+      message->size = total_size;
     }
   }
   return message;
+}
+
+bool SendActor::FreeMessage(void *data) {
+  auto memory_free_list = FindDeviceTensorNeedsFree(data);
+  ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list,
+                            device_contexts_[0], context_, GetAID());
+  return true;
+}
+
+std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(void *data) {
+  std::vector<DeviceTensor *> free_list;
+  // The sent data uses the memory of workspace. So query the DeviceTensor from workspace_device_tensors_.
+  for (const auto &device_tensor : workspace_device_tensors_) {
+    MS_ERROR_IF_NULL_W_RET_VAL(device_tensor, {});
+    if (data == device_tensor->GetMutablePtr()) {
+      free_list.push_back(device_tensor);
+    }
+  }
+  return free_list;
 }
 }  // namespace runtime
 }  // namespace mindspore

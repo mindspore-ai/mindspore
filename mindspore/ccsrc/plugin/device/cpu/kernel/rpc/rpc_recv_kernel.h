@@ -53,13 +53,23 @@ class RpcRecvKernelMod : public RpcKernelMod {
       }
     } else {
       size_t offset = 0;
+      // If the string body is not empty, it means we need to copy data from 'body' instead of raw pointer 'data'.
+      bool use_string_msg = !remote_input_->Body().empty();
+      auto data_ptr = use_string_msg ? (remote_input_->Body().data()) : (static_cast<char *>(remote_input_->data));
+      size_t data_size = use_string_msg ? (remote_input_->Body().size()) : (remote_input_->size);
       for (size_t i = 0; i < inputs.size(); i++) {
         MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
+        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + offset, inputs[i]->size);
         if (ret != 0) {
           MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
         }
+
         offset += inputs[i]->size;
+        // Maybe the size of data from remote is smaller than inputs size, need to break in advance to avoid illegal
+        // memory access. For example, the 'umonad' inputs of RpcRecvKernel is not sent from remote.
+        if (offset == data_size) {
+          break;
+        }
       }
     }
 

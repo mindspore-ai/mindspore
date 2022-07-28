@@ -19,9 +19,9 @@
 
 namespace mindspore {
 namespace runtime {
-bool MuxSendActor::LaunchKernel() {
+bool MuxSendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   MS_ERROR_IF_NULL(client_);
-  if (!KernelActor::LaunchKernel()) {
+  if (!KernelActor::LaunchKernel(context)) {
     MS_LOG(ERROR) << "Launching kernel for send actor failed.";
     return false;
   }

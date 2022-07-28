@@ -101,6 +101,9 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
     rpc_actor->set_actor_route_table_proxy(proxy);
   }
 
+  // Update the reference counts of rpc kernel inputs and workspaces.
+  UpdateRpcActorRefCounts(rpc_actor_set);
+
   return rpc_actor_set;
 }
 
@@ -201,6 +204,23 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
   for (auto &send_actor : rpc_actors->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);
     send_actor->ResetOpcontext();
+  }
+}
+
+void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) {
+  MS_EXCEPTION_IF_NULL(rpc_actor_set);
+  for (const auto send_actor : rpc_actor_set->send_actors_) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(send_actor->kernel_);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
+    if (workspace_num == 0) {
+      MS_LOG(EXCEPTION) << "Rpc send kernel must have workspace assigned.";
+    }
+    for (size_t i = 0; i < workspace_num; ++i) {
+      auto device_tensor = AnfAlgo::GetMutableWorkspaceAddr(send_actor->kernel_, i);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      UpdateRefCount(device_tensor.get());
+    }
   }
 }
 

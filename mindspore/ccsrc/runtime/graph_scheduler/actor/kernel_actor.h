@@ -94,7 +94,7 @@ class KernelActor : public DebugAwareActor {
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
-  virtual bool LaunchKernel();
+  virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
 
   // The info of kernel.
   CNodePtr kernel_;
@@ -103,9 +103,30 @@ class KernelActor : public DebugAwareActor {
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
 
+  // The device tensors for launch.
+  std::vector<DeviceTensor *> input_device_tensors_;
+  std::vector<DeviceTensor *> output_device_tensors_;
+  std::vector<DeviceTensor *> workspace_device_tensors_;
+  // The received input device type and format may be different from the formal parameter in the control flow scenarios,
+  // so it needs to be copied from the input data to real data that kernel launch needs.
+  std::vector<DeviceTensorPtr> copy_input_device_tensors_;
+  // Real data info that kernel launch needs, used to check the consistency of received input data.
+  std::vector<std::shared_ptr<InputDataInfo>> real_input_data_infos_;
+
+  // The device tensors for memory alloc and free.
+  // output + workspace
+  std::vector<DeviceTensor *> memory_alloc_list_;
+  // input + output + workspace
+  std::vector<DeviceTensor *> memory_free_list_;
+  // The device tensor of external reference is not the real data of this kernel, but need add to the memory_free_list_.
+  std::vector<DeviceTensor *> external_reference_tensors_;
+
  private:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+#ifdef ENABLE_RPC_ACTOR
+  friend class RpcNodeScheduler;
+#endif
 
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
@@ -130,24 +151,6 @@ class KernelActor : public DebugAwareActor {
   // In pipeline mode, kernel actor executes asynchronously.
   // In step mode, kernel actor executes synchronously.
   GraphExecutionStrategy strategy_{GraphExecutionStrategy::kPipeline};
-
-  // The device tensors for launch.
-  std::vector<DeviceTensor *> input_device_tensors_;
-  std::vector<DeviceTensor *> output_device_tensors_;
-  std::vector<DeviceTensor *> workspace_device_tensors_;
-  // The received input device type and format may be different from the formal parameter in the control flow scenarios,
-  // so it needs to be copied from the input data to real data that kernel launch needs.
-  std::vector<DeviceTensorPtr> copy_input_device_tensors_;
-  // Real data info that kernel launch needs, used to check the consistency of received input data.
-  std::vector<std::shared_ptr<InputDataInfo>> real_input_data_infos_;
-
-  // The device tensors for memory alloc and free.
-  // output + workspace
-  std::vector<DeviceTensor *> memory_alloc_list_;
-  // input + output + workspace
-  std::vector<DeviceTensor *> memory_free_list_;
-  // The device tensor of external reference is not the real data of this kernel, but need add to the memory_free_list_.
-  std::vector<DeviceTensor *> external_reference_tensors_;
 
   // Record the modifiable ref indexes. Used to refresh the ref data which are modified in the running.
   std::set<size_t> modifiable_ref_input_indexes_;
