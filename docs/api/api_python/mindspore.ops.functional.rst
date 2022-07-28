@@ -82,6 +82,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.celu
+    mindspore.ops.dropout
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink

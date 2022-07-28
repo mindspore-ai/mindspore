@@ -22,3 +22,8 @@
         - **TypeError** - `Seed0` 或 `Seed1` 不是int。
         - **TypeError** - `x` 的数据类型既不是float16也不是float32。
         - **TypeError** - `x` 不是Tensor。
+
+    更多细节请参考 :func:`mindspore.ops.dropout` 。
+
+    支持平台:
+        ``Ascend`` ``GPU`` ``CPU``
