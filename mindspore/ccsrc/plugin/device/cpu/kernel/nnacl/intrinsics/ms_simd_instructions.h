@@ -96,7 +96,7 @@
 #define SIMD_RSQRT_F32 MS_SIMD_INSTRUCTION_F32(MS_RSQRT)
 
 // log (float) op
-#define SIMD_LOG_F32 MS_SIMD_INSTRUCTION_F32(MS_LOG)
+#define SIMD_LOG_F32 MS_SIMD_INSTRUCTION(MS, _LOG_F32)
 
 // cos (float) op
 #define SIMD_COS_F32 MS_SIMD_INSTRUCTION_F32(MS_COS)
@@ -107,7 +107,7 @@
 // erf (float) op
 #define SIMD_ERF_F32 MS_SIMD_INSTRUCTION(MS, _ERF_F32)
 
-// log (float) op
+// abs (float) op
 #define SIMD_ABS_F32 MS_SIMD_INSTRUCTION_F32(MS_ABS)
 #define SIMD_ABS_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_ABS)
 
@@ -173,6 +173,8 @@
 // exp (float) op
 #define SIMD_EXP_ST_F32 MS_SIMD_INSTRUCTION(simd_exp, )
 #define SIMD_EXP_F32 MS_SIMD_INSTRUCTION(simd_exp, _f32)
+// exp (float) high precision but a little slow op.
+#define SIMD_HEXP_F32 MS_SIMD_INSTRUCTION(simd_hexp, _f32)
 
 // cmp (float/int) op
 #define SIMD_CMPLT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPLT)

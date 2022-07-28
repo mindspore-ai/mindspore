@@ -237,6 +237,7 @@ from .nn_func import (
     avg_pool2d,
     max_pool3d,
     celu,
+    binary_cross_entropy_with_logits,
     dropout2d,
     dropout3d,
     deformable_conv2d,
