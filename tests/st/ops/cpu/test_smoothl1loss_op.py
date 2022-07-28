@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops import operations as P
@@ -152,7 +153,7 @@ def smoothl1loss_grad_2(beta, reduction):
 
     net = SmoothL1LossForwardNet(beta, reduction)
     grad = Grad(net)
-    return grad(Tensor(prediction), Tensor(target), 9.)
+    return grad(Tensor(prediction), Tensor(target), Tensor(9, ms.float32))
 
 
 @pytest.mark.level0

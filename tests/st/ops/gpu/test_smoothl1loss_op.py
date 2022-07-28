@@ -150,10 +150,11 @@ def test_smoothl1loss_grad_no_reduce():
 def smoothl1loss_grad_2(beta, reduction):
     prediction = np.array([1, 2, 3, 4, 5, 6], dtype=np.float32)
     target = np.array([100, 2, 7, 32, 34, 1], dtype=np.float32)
+    sens = np.array([9], dtype=np.float32)
 
     net = SmoothL1LossForwardNet(beta, reduction)
     grad = Grad(net)
-    return grad(Tensor(prediction), Tensor(target), 9.)
+    return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
 @pytest.mark.level0

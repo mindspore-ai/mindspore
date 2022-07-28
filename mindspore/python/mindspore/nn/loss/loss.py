@@ -468,7 +468,17 @@ class SmoothL1Loss(LossBase):
 
     Where :math:`{\beta}` represents the threshold `beta`.
 
+    If `reduction` is not `none`, then:
+
+    .. math::
+        L =
+        \begin{cases}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
     .. note::
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean'.
         SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
         L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
         squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
@@ -477,16 +487,21 @@ class SmoothL1Loss(LossBase):
     Args:
         beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
             Default: 1.0.
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+                         Default: "none".
 
     Inputs:
-        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be float16 or float32.
+        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16,
+          float32 and float64.
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor. Same shape and data type as `logits`.
+        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Otherwise the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
         TypeError: If `logits` or `labels` are not Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 not float32.
         TypeError: If dtype of `logits` is not the same as `labels`.

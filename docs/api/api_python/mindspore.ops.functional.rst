@@ -377,6 +377,7 @@ Array操作
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
+    mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.top_k
     mindspore.ops.transpose

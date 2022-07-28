@@ -625,7 +625,7 @@ def _interpolate_output_shape(shape, scales, sizes, mode):
     return Tensor(ret)
 
 
-def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="bilinear"):
+def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="linear"):
     r"""
     Using the interpolate method specified by `mode` resize the input tensor `x`.
 
@@ -633,11 +633,13 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         - This is an experimental prototype that is subject to change.
         - The `roi` is reserved interface for 'crop_and_resize' coordinate transformation mode,
           which is not support now.
+        - The Ascend platforms is currently not supported when `mode` is "linear".
         - The 'half_pixel' coordinate_transformation_mode is currently not supported on CPU device
           when mode is "bilinear".
 
     Args:
-        x (Tensor): a tensor which to resize. `x` is a 4-D tensor when `mode` is "bilinear".
+        x (Tensor): a tensor which to resize. `x` is a 3-D tensor when `mode` is "linear". `x` is a 4-D tensor when
+            `mode` is "bilinear".
         roi (tuple[float], optional): a tuple of float. Only takes effect when attr coordinate_transformation_mode is
             'crop_and_resize'.
         scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension.
@@ -645,8 +647,8 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
             `scales` and `sizes` can be specified.
         sizes (tuple[int], optional): a tuple of int, describes the shape of the output tensor. The numbers in `sizes`
             must all be positive. Only one of `scales` and `sizes` can be specified.  If `sizes` is specified, then set
-            `scales` to 'None' in this operator's input list. It is 2 int elements :math:`(new\_height, new\_width)`
-            when `mode` is "bilinear".
+            `scales` to 'None' in this operator's input list. It is 1 int elements :math:`(new\_width,)` when `mode`
+            is "linear". It is 2 int elements :math:`(new\_height, new\_width)` when `mode` is "bilinear".
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
             For example, we want to resize the original tensor along axis x. Let's denote `new_i` as the i-th coordinate
@@ -662,7 +664,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
 
                 old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
 
-        mode (string): The method used to interpolate: 'bilinear'. Default is 'bilinear'.
+        mode (string): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
 
     Returns:
         Resized tensor, with the same data type as input `x`.
@@ -683,6 +685,13 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         ValueError: If `mode` is not in the support list.
 
     Examples:
+        >>> # case 1: linear mode
+        >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> output = ops.interpolate(x, None, None, (6,), "align_corners")
+        >>> print(output)
+        [[[1. 1.4 1.8 2.2 2.6 3.]
+          [4. 4.4 4.8 5.2 5.6 6.]]]
+        >>> # case 2: bilinear mode
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> output = ops.interpolate(x, None, None, (5, 5), "asymmetric", "bilinear")
         >>> print(output)
@@ -1304,7 +1313,7 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
     return loss
 
 
-def smooth_l1_loss(logits, labels, beta=1.0):
+def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
 
@@ -1321,20 +1330,35 @@ def smooth_l1_loss(logits, labels, beta=1.0):
         |x_i - y_i| - 0.5 \text{beta}, & \text{otherwise. }
         \end{cases}
 
+    If `reduction` is not `none`, then:
+
+    .. math::
+        L =
+        \begin{cases}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
     Its default value is 1.0. :math:`N` is the batch size.
+
+    Note:
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean' for now.
 
     Args:
         logits (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         labels (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `logits`.
         beta (float): A parameter used to control the point where the function will change from
             quadratic to linear. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
 
     Returns:
-        Tensor. Same shape and data type as `logits`.
+        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Otherwise the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
@@ -1351,7 +1375,7 @@ def smooth_l1_loss(logits, labels, beta=1.0):
         [0.  0.  0.5]
     """
 
-    return P.SmoothL1Loss(beta)(logits, labels)
+    return P.SmoothL1Loss(beta, reduction)(logits, labels)
 
 
 def intopk(x1, x2, k):
