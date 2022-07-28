@@ -314,25 +314,23 @@ constexpr auto kCount = "count";
 constexpr auto kDim = "dim";
 constexpr auto kLinearSumAssignment = "linear_sum_assignment";
 
-enum Index : size_t {
-  kInputIndex0 = 0,
-  kInputIndex1,
-  kInputIndex2,
-  kInputIndex3,
-  kInputIndex4,
-  kInputIndex5,
-  kInputIndex6,
-  kInputIndex7,
-  kInputIndex8,
-  kInputIndex9,
-  kInputIndex10,
-  kInputIndex11,
-  kInputIndex12,
-  kInputIndex13,
-  kInputIndex14,
-  kInputIndex15,
-  kInputIndex16,
-};
+constexpr size_t kInputIndex0 = 0;
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
+constexpr size_t kInputIndex3 = 3;
+constexpr size_t kInputIndex4 = 4;
+constexpr size_t kInputIndex5 = 5;
+constexpr size_t kInputIndex6 = 6;
+constexpr size_t kInputIndex7 = 7;
+constexpr size_t kInputIndex8 = 8;
+constexpr size_t kInputIndex9 = 9;
+constexpr size_t kInputIndex10 = 10;
+constexpr size_t kInputIndex11 = 11;
+constexpr size_t kInputIndex12 = 12;
+constexpr size_t kInputIndex13 = 13;
+constexpr size_t kInputIndex14 = 14;
+constexpr size_t kInputIndex15 = 15;
+constexpr size_t kInputIndex16 = 16;
 enum Dims : size_t { kDim0 = 0, kDim1, kDim2, kDim3, kDim4, kDim5, kDim6, kDim7, kDim8 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_NAME_H

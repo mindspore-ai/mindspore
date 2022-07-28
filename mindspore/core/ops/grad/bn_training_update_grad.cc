@@ -16,14 +16,13 @@
 
 #include "ops/grad/bn_training_update_grad.h"
 
-#include <algorithm>
 #include <set>
 
 #include "ops/op_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "utils/tensor_construct_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace ops {

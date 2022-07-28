@@ -148,6 +148,7 @@ def is_shape_unknown(shape):
 
 @constexpr
 def is_shape_known(shape):
+    """judge shape is known."""
     for i in shape:
         if i < 0:
             return False

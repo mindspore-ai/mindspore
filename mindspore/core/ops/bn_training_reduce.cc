@@ -32,7 +32,9 @@ namespace {
 int64_t BNTrainingReduceGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
+  if (!result ||
+      (data_format != static_cast<int64_t>(Format::NHWC) && data_format != static_cast<int64_t>(Format::NCHW) &&
+       data_format != static_cast<int64_t>(Format::NCDHW))) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC or NCDHW, but got "
                       << data_format << ".";
   }
@@ -51,7 +53,7 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = BNTrainingReduceGetAndCheckFormat(primitive, data_format_ptr);
   size_t c_axis = kInputIndex1;
-  if (data_format == Format::NHWC) {
+  if (data_format == static_cast<int64_t>(Format::NHWC)) {
     c_axis = kInputIndex3;
   }
   ShapeVector batch = {shape[c_axis]};
