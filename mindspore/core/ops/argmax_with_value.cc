@@ -40,7 +40,6 @@ bool ArgMaxWithValue::keep_dims() const {
 namespace {
 abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   auto x_shape_ptr = input_args[0]->BuildShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];
@@ -67,7 +66,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   auto cal_shape = [axis, keep_dims](ShapeVector &shape, const ShapeVector &x_shape) -> void {
     (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());
     if (keep_dims) {
-      shape[axis] = 1;
+      shape[LongToSize(axis)] = 1;
     } else {
       (void)shape.erase(shape.begin() + axis);
     }

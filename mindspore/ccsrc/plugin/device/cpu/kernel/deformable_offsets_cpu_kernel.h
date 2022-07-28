@@ -44,7 +44,6 @@ class DeformableOffsetsCpuKernelMod : public NativeCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
@@ -63,20 +62,20 @@ class DeformableOffsetsCpuKernelMod : public NativeCpuKernelMod,
   std::vector<int64_t> pads_;
   std::vector<int64_t> kernel_size_;
   std::vector<int64_t> dilations_;
-  int64_t deformable_groups_;
-  bool modulated_;
+  int64_t deformable_groups_{1};
+  bool modulated_{true};
 
-  int64_t n_axis_;
-  int64_t c_axis_;
-  int64_t h_axis_;
-  int64_t w_axis_;
-  int64_t n_;
-  int64_t c_;
-  int64_t input_h_;
-  int64_t input_w_;
-  int64_t output_h_;
-  int64_t output_w_;
-  int64_t position_grid_size_;
+  size_t n_axis_{kIndex0};
+  size_t c_axis_{kIndex1};
+  size_t h_axis_{kIndex2};
+  size_t w_axis_{kIndex3};
+  int64_t n_{0};
+  int64_t c_{0};
+  int64_t input_h_{0};
+  int64_t input_w_{0};
+  int64_t output_h_{0};
+  int64_t output_w_{0};
+  int64_t position_grid_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
