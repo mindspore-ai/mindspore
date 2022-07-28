@@ -63,7 +63,7 @@ class SecretSharing {
   // subtraction in finite field
   bool field_sub(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
   // convert secret sharing from Share type to BIGNUM type
-  bool GetShare(BIGNUM *x, BIGNUM *share, Share *s_share);
+  bool GetShare(BIGNUM *x, BIGNUM *share, const Share *s_share);
   void FreeBNVector(std::vector<BIGNUM *> bns);
 };
 #endif

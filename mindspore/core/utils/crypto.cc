@@ -132,7 +132,7 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
         EVP_CIPHER_CTX_free(ctx);
         return 1;
       }
-      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
+      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, nullptr) != 1) {
         MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
         EVP_CIPHER_CTX_free(ctx);
         return 1;

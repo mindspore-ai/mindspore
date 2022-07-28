@@ -26,7 +26,6 @@ bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   MS_LOG(INFO) << "Launching client ExchangeKeysKernelMod";
   if (!BuildExchangeKeysReq(fbb_)) {
     MS_LOG(EXCEPTION) << "Building request for ExchangeKeys failed.";
-    return false;
   }
 
   std::shared_ptr<std::vector<unsigned char>> exchange_keys_rsp_msg = nullptr;
@@ -34,16 +33,13 @@ bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
                                                         ps::core::TcpUserCommand::kExchangeKeys,
                                                         &exchange_keys_rsp_msg)) {
     MS_LOG(EXCEPTION) << "Sending request for ExchangeKeys to server " << target_server_rank_ << " failed.";
-    return false;
   }
   if (exchange_keys_rsp_msg == nullptr) {
     MS_LOG(EXCEPTION) << "Received message pointer is nullptr.";
-    return false;
   }
   flatbuffers::Verifier verifier(exchange_keys_rsp_msg->data(), exchange_keys_rsp_msg->size());
   if (!verifier.VerifyBuffer<schema::ResponseExchangeKeys>()) {
     MS_LOG(EXCEPTION) << "The schema of ResponseExchangeKeys is invalid.";
-    return false;
   }
 
   const schema::ResponseExchangeKeys *exchange_keys_rsp =
@@ -68,12 +64,10 @@ void ExchangeKeysKernelMod::Init(const CNodePtr &kernel_node) {
   rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();
   if (rank_id_ == UINT32_MAX) {
     MS_LOG(EXCEPTION) << "Federated worker is not initialized yet.";
-    return;
   }
 
   if (server_num_ <= 0) {
     MS_LOG(EXCEPTION) << "Server number must be larger than 0, but got: " << server_num_;
-    return;
   }
   target_server_rank_ = rank_id_ % server_num_;
 
@@ -114,11 +108,10 @@ bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBui
   std::vector<uint8_t> pubkey_bytes = GetPubicKeyBytes();
   if (pubkey_bytes.size() == 0) {
     MS_LOG(EXCEPTION) << "Get public key failed.";
-    return false;
   }
 
   // build data which will be send to server
-  int iter = fl::worker::FLWorker::GetInstance().fl_iteration_num();
+  int iter = SizeToInt(fl::worker::FLWorker::GetInstance().fl_iteration_num());
   auto fbs_fl_id = fbb->CreateString(fl_id_);
   auto fbs_public_key = fbb->CreateVector(pubkey_bytes.data(), pubkey_bytes.size());
   auto fbs_pw_iv = fbb->CreateVector(pw_iv_.data(), iv_vec_len);
@@ -142,7 +135,7 @@ std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
 
   // get public bytes length
   size_t pubLen;
-  uint8_t *secret_pubkey_ptr = NULL;
+  uint8_t *secret_pubkey_ptr = nullptr;
   auto ret = sPriKeyPtr->GetPublicBytes(&pubLen, secret_pubkey_ptr);
   if (ret != 0 || pubLen == 0) {
     MS_LOG(ERROR) << "GetPublicBytes error, failed to get public_key bytes length.";

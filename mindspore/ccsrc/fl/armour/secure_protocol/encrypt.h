@@ -22,9 +22,9 @@
 #endif
 #include "utils/log_adapter.h"
 
-#define AES_IV_SIZE 16
-#define KEY_LENGTH_32 32
-#define KEY_LENGTH_16 16
+constexpr int AES_IV_SIZE = 16;
+constexpr int KEY_LENGTH_32 = 32;
+constexpr int KEY_LENGTH_16 = 16;
 
 namespace mindspore {
 namespace armour {
