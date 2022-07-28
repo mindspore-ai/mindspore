@@ -78,6 +78,15 @@ const std::map<std::string, std::shared_ptr<RuntimeInfo>> &ModelRunner::GetRunti
   return model_iter->second->GetRuntimeInfoMap();
 }
 
+const std::map<uint32_t, uint32_t> &ModelRunner::GetEndGraphInfoMap(uint32_t model_id) const {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
+    MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
+  }
+  MS_EXCEPTION_IF_NULL(model_iter->second);
+  return model_iter->second->GetEndGraphInfoMap();
+}
+
 void *ModelRunner::GetModelHandle(uint32_t model_id) const {
   decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
   if (model_iter == runtime_models_.cend()) {

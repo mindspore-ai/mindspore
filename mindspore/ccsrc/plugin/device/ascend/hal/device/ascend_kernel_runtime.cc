@@ -627,10 +627,12 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   }
   MS_LOG(INFO) << "Start Launch Dump Data";
   auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  auto end_graph_info_map = ModelRunner::Instance().GetEndGraphInfoMap(graph_id);
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     auto &data_dumper = dumper_iter->second;
     MS_EXCEPTION_IF_NULL(data_dumper);
     data_dumper->set_runtime_info(runtime_info_map);
+    data_dumper->set_end_graph(end_graph_info_map);
     data_dumper->LoadDumpInfo();
   } else {
     MS_LOG(EXCEPTION) << "GraphId:" << graph_id << " not found";

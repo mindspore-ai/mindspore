@@ -69,6 +69,7 @@ class KernelAdjust {
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
   static bool NeedLoopSink();
+  bool IsTaskSink() const;
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
@@ -89,7 +90,7 @@ class KernelAdjust {
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                 StreamSwitchKind kind);
-
+  CNodePtr CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
                                  size_t output_idx) const;
   CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
@@ -135,6 +136,9 @@ class KernelAdjust {
                                   const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                   std::vector<CNodePtr> *exec_order, uint32_t *fpbp_stream_id,
                                   uint32_t *fpbp_switch_stream_id);
+  void InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void InsertEndGraph(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
+                      uint32_t stream_id);
   void InsertFpBpStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                            std::vector<CNodePtr> *exec_order, uint32_t fpbp_start_event_id, uint32_t fpbp_stream_id);
   void InsertNextLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,

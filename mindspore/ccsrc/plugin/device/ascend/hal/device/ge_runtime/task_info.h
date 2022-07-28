@@ -38,6 +38,7 @@ enum TaskInfoType {
   MEMCPY_ASYNC,
   STREAM_SWITCH,
   STREAM_ACTIVE,
+  END_GRAPH,
   // Insert new task type here
   REVSERVED = 23
 };
@@ -329,6 +330,13 @@ class MemcpyAsyncTaskInfo : public TaskInfo {
   void *src_;
   uint64_t count_;
   uint32_t kind_;
+};
+
+class EndGraphTaskInfo : public TaskInfo {
+ public:
+  EndGraphTaskInfo(const std::string &op_name, uint32_t stream_id, bool dump_flag)
+      : TaskInfo(op_name, stream_id, TaskInfoType::END_GRAPH, dump_flag) {}
+  ~EndGraphTaskInfo() override {}
 };
 
 class StreamSwitchTaskInfo : public TaskInfo {
