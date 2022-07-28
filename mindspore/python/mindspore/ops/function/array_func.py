@@ -2489,6 +2489,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           in `indices` that correspond to the same position, the value of that position in the output will be
           nondeterministic.
         - On Ascend, the reduction only support set to "none" for now.
+        - On Ascend, the data type of `input_x` must be float16 or float32.
 
     .. note::
         If some values of the `indices` are out of bound, instead of raising an index error,
@@ -2530,9 +2531,9 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         [[ 2.0  3.0  3.0]
          [ 5.0  5.0  7.0]
          [ 7.0  9.0  10.0]]
-        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32), name="x")
+        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
         >>> axis = 1
         >>> reduction = "none"
         >>> output = F.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
