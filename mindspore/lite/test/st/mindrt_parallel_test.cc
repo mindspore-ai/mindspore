@@ -105,12 +105,7 @@ TEST_F(MindrtParallelTest, offline1) {
   ASSERT_EQ(status, kSuccess);
 
   size_t size = 0;
-  char *graph_buf = nullptr;
-#ifdef SERVER_INFERENCE
-  graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model_split.mindir", &size);
-#else
-  graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model_split.ms", &size);
-#endif
+  char *graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model_split.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
   auto model = std::shared_ptr<lite::Model>(lite::Model::Import(graph_buf, size));
@@ -149,12 +144,7 @@ TEST_F(MindrtParallelTest, runtime1) {
   ASSERT_EQ(status, kSuccess);
 
   size_t size = 0;
-  char *graph_buf = nullptr;
-#ifdef SERVER_INFERENCE
-  graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.mindir", &size);
-#else
-  graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.ms", &size);
-#endif
+  char *graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.ms", &size);
   ASSERT_NE(graph_buf, nullptr);
 
   auto model = std::shared_ptr<lite::Model>(lite::Model::Import(graph_buf, size));
