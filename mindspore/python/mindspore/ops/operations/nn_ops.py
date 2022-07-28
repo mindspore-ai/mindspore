@@ -5914,7 +5914,7 @@ class SparseApplyAdagrad(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class SparseApplyAdagradV2(PrimitiveWithInfer):
+class SparseApplyAdagradV2(Primitive):
     r"""
     Updates relevant entries according to the adagrad scheme, one more epsilon attribute than SparseApplyAdagrad.
 
@@ -5961,7 +5961,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -6000,21 +6000,6 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         self.use_locking = validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.update_slots = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, accum_shape, grad_shape, indices_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('len of var shape', len(var_shape), 'len of grad shape', len(grad_shape), Rel.EQ, self.name)
-        if len(var_shape) > 1:
-            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return var_shape, accum_shape
-
-    def infer_dtype(self, var_type, accum_type, grad_type, indices_type):
-        args = {'var': var_type, 'accum': accum_type, 'grad': grad_type}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('indices', indices_type, [mstype.int32], self.name)
-        return var_type, accum_type
 
 
 class ApplyProximalAdagrad(Primitive):

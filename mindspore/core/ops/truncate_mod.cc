@@ -57,7 +57,7 @@ TypePtr TruncateModInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << z_type->ToString()
                             << ".";
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt8, kInt32, kUInt8};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt32, kUInt8};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", z_type, valid_types, prim_name);
   return z_type;
 }
