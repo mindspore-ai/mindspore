@@ -57,17 +57,21 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // Infer shape
+  MS_EXCEPTION_IF_NULL(input_args[kGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGrads]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, kGradsShapeLen,
                                            prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kImages]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kImages]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("images rank", SizeToLong(input_shape1.size()), kEqual, kImageShapeLen,
                                            prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kBoxes]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape2.size()), kEqual, kBoxesShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape2[1]), kEqual, kCoordinateLen,
                                            prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
   auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape3.size()), kEqual, kBoxIndShapeLen,
                                            prim_name);

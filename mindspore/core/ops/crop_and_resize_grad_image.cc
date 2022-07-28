@@ -60,21 +60,21 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
                                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
+  MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
                                            prim_name);
-
+  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape1[1]), kEqual,
                                            ImagekCoordinateLen, prim_name);
-
+  MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual,
                                            ImagekBoxIndShapeLen, prim_name);
-
+  MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
   auto input_shape3 =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
