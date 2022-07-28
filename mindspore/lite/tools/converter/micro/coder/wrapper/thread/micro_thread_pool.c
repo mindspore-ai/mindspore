@@ -119,7 +119,7 @@ int GetCurrentThreadNum() {
 int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int task_num) {
   if (g_pool == NULL) {
     LOG_ERROR("thread pool is NULL")
-    return -1;
+    return RET_TP_ERROR;
   }
   if (task_num == 0) {
     return 0;
@@ -158,7 +158,7 @@ int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int ta
     sched_yield();
   }
   if (p_task->status != 0) {
-    return -1;
+    return RET_TP_ERROR;
   }
   return 0;
 }
