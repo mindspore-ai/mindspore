@@ -140,7 +140,9 @@ bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::ve
     const int register_time = 500;
     std::this_thread::sleep_for(std::chrono::milliseconds(register_time));
     count++;
-    if (count >= count_thld) break;
+    if (count >= count_thld) {
+      break;
+    }
   }
   if (clients_noises_pb.has_one_client_noises() == false) {
     MS_LOG(WARNING) << "GetClientNoisesFromServer Count: " << count;

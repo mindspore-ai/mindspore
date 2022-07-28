@@ -28,7 +28,7 @@
 #include "fl/armour/cipher/cipher_init.h"
 #include "fl/armour/cipher/cipher_meta_storage.h"
 
-#define IV_NUM 3
+constexpr int IV_NUM = 3;
 
 namespace mindspore {
 namespace armour {
