@@ -190,10 +190,10 @@ Status LayerNormInfo::GenerateGammaAndBetaStrategies(const std::vector<StrategyP
     Strategys tmp_strategy;
     Dimensions input_strategy = sp->GetInputDim()[0];
     Dimensions gamma_strategy = input_strategy;
-    (void)gamma_strategy.erase(gamma_strategy.begin(),
-                               gamma_strategy.begin() + static_cast<different_type>(gamma_diff));
+    (void)gamma_strategy.erase(gamma_strategy.cbegin(),
+                               gamma_strategy.cbegin() + static_cast<different_type>(gamma_diff));
     Dimensions beta_strategy = input_strategy;
-    (void)beta_strategy.erase(beta_strategy.begin(), beta_strategy.begin() + static_cast<different_type>(beta_diff));
+    (void)beta_strategy.erase(beta_strategy.cbegin(), beta_strategy.cbegin() + static_cast<different_type>(beta_diff));
 
     // reset the strategy
     tmp_strategy.push_back(input_strategy);

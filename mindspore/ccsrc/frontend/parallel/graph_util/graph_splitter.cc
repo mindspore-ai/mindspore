@@ -102,14 +102,14 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr
 CNodePtr CreateMakeTupleNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &tuple_inputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
   AnfNodePtrList new_make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  new_make_tuple_inputs.insert(new_make_tuple_inputs.end(), tuple_inputs.begin(), tuple_inputs.end());
+  (void)new_make_tuple_inputs.insert(new_make_tuple_inputs.cend(), tuple_inputs.cbegin(), tuple_inputs.cend());
   auto make_tuple_node = func_graph->NewCNode(new_make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple_node);
 
   // MakeTuple's abstract must consist of all inputs' abstract in case unexpected graph compiling error.
   AbstractBasePtrList abstract_list;
-  (void)std::for_each(tuple_inputs.begin(), tuple_inputs.end(),
-                      [&](const auto &input) { abstract_list.emplace_back(input->abstract()); });
+  (void)std::for_each(tuple_inputs.cbegin(), tuple_inputs.cend(),
+                      [&](const auto &input) { (void)abstract_list.emplace_back(input->abstract()); });
   make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple_node;
 }
@@ -133,7 +133,7 @@ AnfNodePtr CreateReplacedOutputNode(const FuncGraphPtr &func_graph, const AnfNod
       auto fake_value_node = NewValueNode(fake_tensor);
       MS_EXCEPTION_IF_NULL(fake_value_node);
       fake_value_node->set_abstract(fake_tensor->ToAbstract());
-      tuple_inputs.emplace_back(fake_value_node);
+      (void)tuple_inputs.emplace_back(fake_value_node);
     }
     return CreateMakeTupleNode(func_graph, tuple_inputs);
   } else {
@@ -338,7 +338,7 @@ FusedInterProcessOpPairMap ParameterServerMode::DoRpcNodeFusion(InterProcessOpEd
   // The rest of the edges are not fused like edges for EmbeddingLookup, but the FusedInterProcessOpPairMap object
   // should be created.
   FusedInterProcessOpPairMap rest_edges = FilterNotServerOptimizerEdges(*comm_edges_ptr);
-  optimizer_fused_edges.insert(rest_edges.begin(), rest_edges.end());
+  optimizer_fused_edges.insert(rest_edges.cbegin(), rest_edges.cend());
   return optimizer_fused_edges;
 }
 
@@ -375,8 +375,8 @@ void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInf
           OperatorLabel worker_label = {i, distributed::kEnvRoleOfWorker};
           InterProcessOpEdge edge = {ps_optimizer, node_labels_->at(ps_optimizer), dst_node, worker_label};
           auto duplicated_send_node = CreateSendNode(func_graph_, edge);
-          node_labels_->insert(std::make_pair(duplicated_send_node, edge.src_label));
-          new_make_tuple_inputs.emplace_back(duplicated_send_node);
+          (void)node_labels_->insert(std::make_pair(duplicated_send_node, edge.src_label));
+          (void)new_make_tuple_inputs.emplace_back(duplicated_send_node);
         }
         auto new_make_tuple_node = func_graph_->NewCNode(new_make_tuple_inputs);
         new_make_tuple_node->set_abstract(new_make_tuple_inputs.back()->abstract());
@@ -417,12 +417,12 @@ void ParameterServerMode::PostBuildDistributedGraph(const FusedInterProcessOpPai
     CNodePtr fused_send_node = std::get<0>(op_pairs[0]);
     // Node's inputs except primtive value node.
     std::vector<AnfNodePtr> fused_send_node_inputs = fused_send_node->inputs();
-    (void)fused_send_node_inputs.erase(fused_send_node_inputs.begin());
+    (void)fused_send_node_inputs.erase(fused_send_node_inputs.cbegin());
 
     // Only handle the edge whose src_node is optimizer.
-    if (std::find_if(ps_optimizer_node_list.begin(), ps_optimizer_node_list.end(), [&](const auto &ps_optimizer) {
+    if (std::find_if(ps_optimizer_node_list.cbegin(), ps_optimizer_node_list.cend(), [&](const auto &ps_optimizer) {
           return ps_optimizer.get() == fused_send_node_inputs[0].get();
-        }) == ps_optimizer_node_list.end()) {
+        }) == ps_optimizer_node_list.cend()) {
       continue;
     }
 
@@ -436,12 +436,12 @@ void ParameterServerMode::PostBuildDistributedGraph(const FusedInterProcessOpPai
         InterProcessOpEdge edge = {src_node, node_labels_->at(src_node), dst_node, worker_label};
         auto duplicated_send_node = CreateSendNode(func_graph_, edge);
         MS_EXCEPTION_IF_NULL(duplicated_send_node);
-        node_labels_->insert(std::make_pair(duplicated_send_node, edge.src_label));
-        new_send_nodes.emplace_back(duplicated_send_node);
+        (void)node_labels_->insert(std::make_pair(duplicated_send_node, edge.src_label));
+        (void)new_send_nodes.emplace_back(duplicated_send_node);
       }
       CNodePtr new_fused_send_node = FuseRpcSendNodes(new_send_nodes);
       MS_EXCEPTION_IF_NULL(new_fused_send_node);
-      new_make_tuple_inputs.emplace_back(new_fused_send_node);
+      (void)new_make_tuple_inputs.emplace_back(new_fused_send_node);
     }
     auto new_make_tuple_node = func_graph_->NewCNode(new_make_tuple_inputs);
     new_make_tuple_node->set_abstract(fused_send_node->abstract());
@@ -471,9 +471,9 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
   for (const auto &ps_optimizer : ps_optimizer_node_list) {
     MS_EXCEPTION_IF_NULL(ps_optimizer);
     // Load attributes for this optimizer.
-    size_t gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
-                              ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
-                              : UINT64_MAX;
+    auto gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
+                            ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
+                            : UINT64_MAX;
     size_t indices_index = common::AnfAlgo::HasNodeAttr(kAttrIndicesInputIndex, ps_optimizer)
                              ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrIndicesInputIndex)
                              : UINT64_MAX;
@@ -506,8 +506,8 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
         const auto &accum_node = grad_accum_nodes.first;
         const auto &real_div_node = grad_accum_nodes.second;
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, real_div_node);
-        node_labels_->insert(std::make_pair(accum_node, node_labels_->at(ps_optimizer)));
-        node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
+        (void)node_labels_->insert(std::make_pair(accum_node, node_labels_->at(ps_optimizer)));
+        (void)node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), accum_node);
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), real_div_node);
         common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), accum_node);
@@ -518,18 +518,17 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
           kConcatOpName, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
 
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, new_indices_input);
-        node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
+        (void)node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), new_indices_input);
         common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), new_indices_input);
       } else {
-        std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes =
-          CreateNodesForMakeTuple(input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
+        std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes = CreateNodesForMakeTuple(input, worker_num);
 
         auto &make_tuple_node = make_tuple_get_item_nodes.first;
         auto &tuple_get_item_node = make_tuple_get_item_nodes.second;
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, tuple_get_item_node);
         node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
-        node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
+        (void)node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), make_tuple_node);
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), tuple_get_item_node);
         common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), make_tuple_node);
@@ -552,7 +551,7 @@ std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList() {
     }
     const auto &cnode = node->cast<CNodePtr>();
     if (common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, cnode)) {
-      ps_optim_list.emplace_back(cnode);
+      (void)ps_optim_list.emplace_back(cnode);
       common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), cnode);
     }
   }
@@ -601,7 +600,7 @@ CNodePtr ParameterServerMode::CreateGradMeanNode(const AnfNodePtr &gradient, siz
   return grad_mean_node;
 }
 
-std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForMakeTuple(const AnfNodePtr &input, size_t input_index,
+std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForMakeTuple(const AnfNodePtr &input,
                                                                            size_t total_inputs_number) {
   MS_EXCEPTION_IF_NULL(input);
   CNodePtr make_tuple_node = CreateNodeWithInterProcessEdgeOnPServer(
@@ -635,13 +634,13 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
 
     // Set operator label for new node's inputs.
     OperatorLabel input_label = {SizeToUint(i), distributed::kEnvRoleOfWorker};
-    node_labels_->insert(std::make_pair(new_node_inputs[i], input_label));
+    (void)node_labels_->insert(std::make_pair(new_node_inputs[i], input_label));
   }
   new_node_inputs[index_of_real_input] = real_input;
 
   // Step 2: Create the new node.
   auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
-  new_node_inputs.insert(new_node_inputs.begin(), new_node_prim);
+  (void)new_node_inputs.insert(new_node_inputs.cbegin(), new_node_prim);
 
   auto new_node = func_graph_->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -657,7 +656,7 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
 
     auto new_abs = origin_abs->Clone()->cast<abstract::AbstractTensorPtr>();
     ShapeVector new_shape = new_abs->shape()->shape();
-    new_shape[0] = new_shape[0] * total_inputs_number;
+    new_shape[0] = new_shape[0] * static_cast<int64_t>(total_inputs_number);
     new_abs->shape()->set_shape(new_shape);
     new_node->set_abstract(new_abs);
 
@@ -669,7 +668,7 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
     auto first_input = new_node_inputs.begin();
     std::advance(first_input, 1);
     (void)std::for_each(first_input, new_node_inputs.end(),
-                        [&](const auto &input) { abstract_list.emplace_back(input->abstract()); });
+                        [&](const auto &input) { (void)abstract_list.emplace_back(input->abstract()); });
     new_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   } else {
     new_node->set_abstract(real_input->abstract());
@@ -683,13 +682,14 @@ FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
   for (const auto &comm_edge_info : comm_edges_of_server_optimizer) {
     const InterProcessOpEdge &edge = comm_edge_info.first;
     const InterProcessOpPair &node_pair = comm_edge_info.second;
-    comm_edges_with_same_peer[{edge.src_label, edge.dst_label, 0}].emplace_back(node_pair);
+    (void)comm_edges_with_same_peer[{edge.src_label, edge.dst_label, 0}].emplace_back(node_pair);
   }
 
   InterProcessOpPairMap comm_edges_segments;
-  for (const auto &comm_edge_info : comm_edges_with_same_peer) {
-    InterProcessEdgeWithIndex edge_with_index = comm_edge_info.first;
-    const std::vector<InterProcessOpPair> &op_pair_list = comm_edge_info.second;
+  for (auto comm_edge_info = comm_edges_with_same_peer.cbegin(); comm_edge_info != comm_edges_with_same_peer.cend();
+       ++comm_edge_info) {
+    InterProcessEdgeWithIndex edge_with_index = comm_edge_info->first;
+    const std::vector<InterProcessOpPair> &op_pair_list = comm_edge_info->second;
     std::map<size_t, size_t> real_index_to_segment =
       GetRealIndexToSeg(ps_optimizer_fusion_segments_, op_pair_list.size());
     if (real_index_to_segment.empty()) {
@@ -701,33 +701,34 @@ FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
       }
       for (size_t i = 0; i < op_pair_list.size(); i++) {
         edge_with_index.index = real_index_to_segment[i];
-        comm_edges_segments[edge_with_index].emplace_back(op_pair_list[i]);
+        (void)comm_edges_segments[edge_with_index].emplace_back(op_pair_list[i]);
       }
     }
   }
 
   FusedInterProcessOpPairMap results;
-  for (auto &rpc_nodes_fuse_info : comm_edges_segments) {
+  for (auto rpc_nodes_fuse_info = comm_edges_segments.begin(); rpc_nodes_fuse_info != comm_edges_segments.end();
+       ++rpc_nodes_fuse_info) {
     // Reorder the rpc node pairs list. Place monad inputs to the end of the list so that rpc send/recv nodes can be
     // built.
-    std::vector<InterProcessOpPair> &inter_process_pairs = rpc_nodes_fuse_info.second;
+    std::vector<InterProcessOpPair> &inter_process_pairs = (*rpc_nodes_fuse_info).second;
     std::vector<InterProcessOpPair> monad_pairs;
     std::vector<InterProcessOpPair> no_monad_pairs;
-    std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(), [&](const auto &op_pair) {
+    (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(), [&](const auto &op_pair) {
       if (HasAbstractMonad(std::get<1>(op_pair))) {
-        monad_pairs.emplace_back(op_pair);
+        (void)monad_pairs.emplace_back(op_pair);
       } else {
-        no_monad_pairs.emplace_back(op_pair);
+        (void)no_monad_pairs.emplace_back(op_pair);
       }
     });
-    no_monad_pairs.insert(no_monad_pairs.end(), monad_pairs.begin(), monad_pairs.end());
+    (void)no_monad_pairs.insert(no_monad_pairs.cend(), monad_pairs.cbegin(), monad_pairs.cend());
     inter_process_pairs = no_monad_pairs;
 
     std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
     (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(),
                         [&rpc_send_nodes, &rpc_recv_nodes](const auto &node_pair) {
-                          rpc_send_nodes.emplace_back(std::get<0>(node_pair));
-                          rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
+                          (void)rpc_send_nodes.emplace_back(std::get<0>(node_pair));
+                          (void)rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
                         });
     CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
     CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
@@ -736,26 +737,26 @@ FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
     for (size_t i = 0; i < inter_process_pairs.size(); i++) {
       FusedInterProcessOpPair fused_inter_process_pair = std::make_tuple(
         fused_send_node, fused_recv_node, i, std::get<2>(inter_process_pairs[i]), std::get<3>(inter_process_pairs[i]));
-      fused_pairs.emplace_back(fused_inter_process_pair);
+      (void)fused_pairs.emplace_back(fused_inter_process_pair);
     }
-    results[rpc_nodes_fuse_info.first] = fused_pairs;
+    results[rpc_nodes_fuse_info->first] = fused_pairs;
   }
   return results;
 }
 
 InterProcessOpEdgesInfo ParameterServerMode::FilterCommEdgesOfServerOptimizer(
-  const InterProcessOpEdgesInfo &comm_edges) {
+  const InterProcessOpEdgesInfo &comm_edges) const {
   InterProcessOpEdgesInfo comm_edges_of_server_optimizer;
   for (const auto &edge_info : comm_edges) {
     if (edge_info.first.edge_label.label_name == kPSOptimizerEdgeLabel) {
-      comm_edges_of_server_optimizer.insert(edge_info);
+      (void)comm_edges_of_server_optimizer.insert(edge_info);
     }
   }
   return comm_edges_of_server_optimizer;
 }
 
 FusedInterProcessOpPairMap ParameterServerMode::FilterNotServerOptimizerEdges(
-  const InterProcessOpEdgesInfo &comm_edges) {
+  const InterProcessOpEdgesInfo &comm_edges) const {
   FusedInterProcessOpPairMap results;
   for (const auto &edge_info : comm_edges) {
     if (edge_info.first.edge_label.label_name != kPSOptimizerEdgeLabel) {
@@ -788,10 +789,10 @@ CNodePtr ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_
       if (HasAbstractMonad(input_i)) {
         continue;
       }
-      send_inputs.emplace_back(input_i);
+      (void)send_inputs.emplace_back(input_i);
     }
-    abstract_list.emplace_back(send_node->abstract());
-    fused_inter_process_edge_name.append(
+    (void)abstract_list.emplace_back(send_node->abstract());
+    (void)fused_inter_process_edge_name.append(
       common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(send_node, kAttrInterProcessEdgeNames).front());
   }
 
@@ -821,10 +822,10 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
       if (HasAbstractMonad(input_i)) {
         continue;
       }
-      recv_inputs.emplace_back(input_i);
+      (void)recv_inputs.emplace_back(input_i);
     }
-    abstract_list.emplace_back(recv_node->abstract());
-    fused_inter_process_edge_name.append(
+    (void)abstract_list.emplace_back(recv_node->abstract());
+    (void)fused_inter_process_edge_name.append(
       common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(recv_node, kAttrInterProcessEdgeNames).front());
   }
   // Add umonad for recv node to update reference.
@@ -884,7 +885,7 @@ void EmbeddingCacheMode::PreBuildDistributedGraph() {
       CNodePtr cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       OperatorLabel label = GetNodeLabel(cnode);
-      node_labels_->emplace(node, label);
+      (void)node_labels_->emplace(node, label);
     }
   });
 }
@@ -1067,7 +1068,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOperators() {
 
     // Generating send/recv nodes for each nodes' inputs will be enough.
     auto node_inputs_comm_edges = GenerateInterProcessOpsForNodeInputs(node);
-    comm_edges.insert(node_inputs_comm_edges.begin(), node_inputs_comm_edges.end());
+    comm_edges.insert(node_inputs_comm_edges.cbegin(), node_inputs_comm_edges.cend());
   }
   MS_LOG(INFO) << "The communication edge number is " << comm_edges.size();
   return comm_edges;
@@ -1190,7 +1191,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
   return comm_edges;
 }
 
-InterProcessEdgeLabel GraphSplitter::GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) {
+InterProcessEdgeLabel GraphSplitter::GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) const {
   MS_EXCEPTION_IF_NULL(src_node);
   MS_EXCEPTION_IF_NULL(dst_node);
   std::string src_node_edge_label = "";
@@ -1298,7 +1299,7 @@ InOutDegreeList GraphSplitter::GenerateInOutDegreeList(const std::vector<SplitGr
     if (concerned_in_degree_nodes.empty()) {
       continue;
     }
-    in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
+    (void)in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
   }
   MS_LOG(INFO) << "End finding inter-process in-degrees.";
   return in_out_degree_list;
@@ -1311,8 +1312,8 @@ void GraphSplitter::AddDependencyBetweenSegments(const InOutDegreeList &in_out_d
   for (size_t i = 0; i < in_out_degree_list.size(); i++) {
     auto &concerned_in_degree_nodes = in_out_degree_list[i].first;
     auto &concerned_out_degree_nodes = in_out_degree_list[i].second;
-    send_node_tuple_inputs.insert(send_node_tuple_inputs.end(), concerned_in_degree_nodes.begin(),
-                                  concerned_in_degree_nodes.end());
+    (void)send_node_tuple_inputs.insert(send_node_tuple_inputs.cend(), concerned_in_degree_nodes.cbegin(),
+                                        concerned_in_degree_nodes.cend());
     if (concerned_out_degree_nodes.empty()) {
       // If this is the last segment's in and out degrees and has no out degrees, connect the send nodes to graph's
       // output.

@@ -55,11 +55,11 @@ class GroupManager {
   GroupManager();
   ~GroupManager() = default;
 
-  Status CreateGroup(const std::string &name, const std::vector<Device> &devices, Group *group);
-  Status DestroyGroup(Group *group);
+  Status CreateGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const group);
+  Status DestroyGroup(Group *const group);
   Status DestroyAllGroups();
-  Status GetRankID(const std::string &name, uint32_t *rank_id);
-  Status GetRankSize(const std::string &name, uint32_t *rank_size);
+  Status GetRankID(const std::string &name, uint32_t *const rank_id);
+  Status GetRankSize(const std::string &name, uint32_t *const rank_size);
   Status FindGroup(const std::string &name, Group **group);
   std::string world_group() const { return world_group_; }
   void set_world_group(const std::string &name) { world_group_ = name; }
@@ -68,8 +68,8 @@ class GroupManager {
 
  private:
   bool CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                             const std::vector<uint32_t> ranks, uint32_t device_id);
-  bool DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name, uint32_t device_id);
+                             const std::vector<uint32_t> ranks, uint32_t device_id) const;
+  bool DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name, uint32_t device_id) const;
   Status DestroyGroup(const std::string &group_name);
   // the key is group name (name_)
   std::map<std::string, Group> groups_;

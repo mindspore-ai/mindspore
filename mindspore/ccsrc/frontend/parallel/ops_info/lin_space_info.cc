@@ -112,6 +112,10 @@ ReplaceGraphPtr LinSpaceInfo::replace_graph(const CNodePtr &cnode) {
 
 Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto split_num = GetSplitNum();
+  if (split_num == 0) {
+    MS_LOG(ERROR) << name_ << ": split num is 1, no need to replace graph";
+    return FAILED;
+  }
   if (output_size_ % split_num != 0) {
     return FAILED;
   }
@@ -123,10 +127,6 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed.";
-    return FAILED;
-  }
-  if (InferSliceId() != SUCCESS) {
-    MS_LOG(ERROR) << "Infer slice id failed.";
     return FAILED;
   }
 

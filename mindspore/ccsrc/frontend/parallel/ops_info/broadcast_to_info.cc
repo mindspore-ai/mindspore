@@ -107,7 +107,7 @@ Status BroadcastToInfo::InferTensorMap() {
   for (size_t i = 0; i < len_diff; ++i) {
     out_tensor_map.push_back(MAP_NONE);
   }
-  std::copy(in_tensor_map.begin(), in_tensor_map.end(), std::back_inserter(out_tensor_map));
+  (void)std::copy(in_tensor_map.begin(), in_tensor_map.end(), std::back_inserter(out_tensor_map));
   outputs_tensor_map_.push_back(out_tensor_map);
   return SUCCESS;
 }

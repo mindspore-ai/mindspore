@@ -72,7 +72,7 @@ GroupManager::GroupManager() { groups_.clear(); }
 
 #if (!defined(_WIN32) && !defined(__APPLE__) && !(defined(ENABLE_TESTCASES) || defined(ENABLE_TEST)))
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                         const std::vector<uint32_t> ranks, uint32_t device_id) {
+                                         const std::vector<uint32_t> ranks, uint32_t device_id) const {
   // The group operation thread must be same with nccl init thread in the GPU device.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
@@ -85,7 +85,7 @@ bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const s
 }
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                          uint32_t device_id) {
+                                          uint32_t device_id) const {
   // The group operation thread must be same with nccl init thread in the GPU device.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
@@ -125,7 +125,7 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
 }
 #else
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                         const std::vector<uint32_t> ranks, uint32_t device_id) {
+                                         const std::vector<uint32_t> ranks, uint32_t device_id) const {
   MS_LOG(WARNING) << "Create group in stub";
   auto executor = parallel::ExecutorManager::Instance().GetExecutor(device_name, device_id);
   MS_EXCEPTION_IF_NULL(executor);
@@ -133,7 +133,7 @@ bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const s
 }
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                          uint32_t device_id) {
+                                          uint32_t device_id) const {
   MS_LOG(WARNING) << "Destroy group in stub";
   auto executor = parallel::ExecutorManager::Instance().GetExecutor(device_name, device_id);
   MS_EXCEPTION_IF_NULL(executor);
@@ -190,7 +190,7 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
 
     std::vector<uint32_t> ranks;
     (void)std::transform(std::begin(devices), std::end(devices), std::back_inserter(ranks),
-                         [](const Device dev) { return (uint32_t)dev.rank(); });
+                         [](const Device dev) { return static_cast<uint32_t>(dev.rank()); });
     // Create group through the executor
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
@@ -224,9 +224,9 @@ Status GroupManager::DestroyGroup(const std::string &group_name) {
 }
 
 Status GroupManager::DestroyGroup(mindspore::parallel::Group *const group) {
-  std::string name = (*group).name();
+  const std::string name = (*group).name();
   auto it = groups_.find(name);
-  if (it == groups_.end()) {
+  if (it == groups_.cend()) {
     MS_LOG(ERROR) << "Could not find group name :" << name;
     return Status::FAILED;
   }
@@ -235,8 +235,8 @@ Status GroupManager::DestroyGroup(mindspore::parallel::Group *const group) {
 }
 
 Status GroupManager::DestroyAllGroups() {
-  for (auto &it : groups_) {
-    std::string name = it.first;
+  for (auto it = groups_.cbegin(); it != groups_.cend(); ++it) {
+    std::string name = it->first;
     auto ret = DestroyGroup(name);
     if (ret != Status::SUCCESS) {
       return Status::FAILED;
@@ -248,7 +248,7 @@ Status GroupManager::DestroyAllGroups() {
 
 Status GroupManager::GetRankID(const std::string &name, uint32_t *const rank_id) {
   auto it = groups_.find(name);
-  if (it == groups_.end()) {
+  if (it == groups_.cend()) {
     MS_LOG(ERROR) << "Could not find group name :" << name;
     return Status::FAILED;
   }
@@ -261,7 +261,7 @@ Status GroupManager::GetRankID(const std::string &name, uint32_t *const rank_id)
 
 Status GroupManager::GetRankSize(const std::string &name, uint32_t *const rank_size) {
   auto it = groups_.find(name);
-  if (it == groups_.end()) {
+  if (it == groups_.cend()) {
     MS_LOG(ERROR) << "Could not find group name :" << name;
     return Status::FAILED;
   }
@@ -274,7 +274,7 @@ Status GroupManager::GetRankSize(const std::string &name, uint32_t *const rank_s
 
 Status GroupManager::FindGroup(const std::string &name, mindspore::parallel::Group **group) {
   auto it = groups_.find(name);
-  if (it == groups_.end()) {
+  if (it == groups_.cend()) {
     return Status::FAILED;
   }
   *group = &it->second;

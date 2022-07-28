@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include "utils/hash_map.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"

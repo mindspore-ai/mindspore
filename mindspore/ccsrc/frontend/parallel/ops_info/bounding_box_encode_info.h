@@ -46,7 +46,7 @@ class BoundingBoxEncodeInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; };
 
  private:
-  Status PrepareStrategy(int64_t stage_id, int64_t split_num, size_t dev_num, StrategyPtr *sp);
+  Status PrepareStrategy(int64_t stage_id, int64_t split_num, size_t dev_num, StrategyPtr *sp) const;
 };
 }  // namespace parallel
 }  // namespace mindspore

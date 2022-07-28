@@ -35,12 +35,12 @@ class ArithmeticBase : public OperatorInfo {
                  const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ArithmeticBase() override = default;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
-  Shapes InferParamStrategy(const Shapes &default_strategy) override;
 
  protected:
+  Shapes InferParamStrategy(const Shapes &default_strategy) override;
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
