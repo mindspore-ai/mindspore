@@ -1349,13 +1349,15 @@ class Tensor(Tensor_):
         `x` refer to self tensor.
 
         .. math::
-            y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
-            z_{i} = \begin{cases}
-            x_{i} &amp; \text{if eps is None} \\
-            \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
-            x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
-            1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+            \begin{align}
+            y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+            z_{i} & = \begin{cases}
+            x_{i} & \text{if eps is None} \\
+            \text{eps} & \text{if } x_{i} \lt \text{eps} \\
+            x_{i} & \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+            1 - \text{eps} & \text{if } x_{i} \gt 1 - \text{eps}
             \end{cases}
+            \end{align}
 
         Args:
             eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.

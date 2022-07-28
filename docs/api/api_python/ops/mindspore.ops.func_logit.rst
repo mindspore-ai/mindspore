@@ -7,13 +7,15 @@ mindspore.ops.logit
     当 eps 为 None 时，输入 `x` 不进行数值截断。
 
     .. math::
-        y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
-        z_{i} = \begin{cases}
-        x_{i} &amp; \text{if eps is None} \\
-        \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
-        x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
-        1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+        \begin{align}
+        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} & = \begin{cases}
+        x_{i} & \text{if eps is None} \\
+        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
+        x_{i} & \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} & \text{if } x_{i} \gt 1 - \text{eps}
         \end{cases}
+        \end{align}
 
     参数：
         - **x** (Tensor) - 张量输入。
