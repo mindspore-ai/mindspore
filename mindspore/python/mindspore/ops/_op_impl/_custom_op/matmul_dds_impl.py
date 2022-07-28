@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """matmul dds impl"""
+from __future__ import absolute_import
 from te import tik
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
@@ -60,12 +61,8 @@ def matmul_dds(q,
 
     shape_q = q.get(
         'shape')  # shape_q (embedding_size, bs*seq_length) > (embedding_size//16, bs*seq_length//16, 16, 16) zN
-    shape_k = k.get(
-        'shape')  # shape_k (embedding_size, bs*seq_length) > (embedding_size//16, bs*seq_length//16, 16, 16) nZ
     shape_local_mask = local_mask.get(
         'shape')  # shape_local_mask (16*64, bs*64) > (64, bs*4, 16, 16)    zN
-    shape_global_mask = global_mask.get(
-        'shape')  # shape_global_mask (heads*256, 1024) > (bs*16, 64, 16, 16)  zN
     # sequence length only support 1024 for now
     seq_len = shape_q[1] * shape_q[2] // bs
     # size per head assume 128

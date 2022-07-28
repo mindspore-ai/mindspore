@@ -15,6 +15,8 @@
 """
 Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
+from __future__ import division
 import math
 import numpy as np
 from mindspore.common.tensor import Tensor
@@ -151,18 +153,28 @@ class MoE(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_moeparallel_config):
         super(MoE, self).__init__()
+        self.dp = parallel_config.data_parallel
+        self.ep = parallel_config.expert_parallel
+        self.hidden_size = hidden_size
+        self.expert_dim = moe_config.expert_num
+        self.capacity_factor = moe_config.capacity_factor
+        self.aux_loss_factor = moe_config.aux_loss_factor
+        self.num_experts_chosen = moe_config.num_experts_chosen
+        self.dp_group = parallel_config.data_parallel
+        from .transformer import FeedForward
+        self.reshape = P.Reshape()
+        self.shape = P.Shape()
+        self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
+        self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
+        self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
+        self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
+        self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+        self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+        self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
+                             training=True, parallel_config=parallel_config)
+        self.cast = P.Cast()
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
-            self.hidden_size = hidden_size
-            self.expert_dim = moe_config.expert_num
-            self.capacity_factor = moe_config.capacity_factor
-            self.aux_loss_factor = moe_config.aux_loss_factor
-            self.num_experts_chosen = moe_config.num_experts_chosen
             self.expert_group_size = moe_config.expert_group_size
-            self.dp_group = parallel_config.data_parallel
-            self.dp = parallel_config.data_parallel
-            self.ep = parallel_config.expert_parallel
-            from .transformer import FeedForward
-
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
                                    dropout_rate=dropout_rate,
@@ -171,29 +183,8 @@ class MoE(Cell):
                                    expert_num=self.expert_dim,
                                    param_init_type=param_init_type,
                                    parallel_config=parallel_config)
-            self.reshape = P.Reshape()
-            self.shape = P.Shape()
-            self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
-            self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
-            self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
-            self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
-            self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-            self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
             self.mul = P.Mul()
-            self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
-                                 training=True, parallel_config=parallel_config)
-            self.cast = P.Cast()
         else:
-            self.hidden_size = hidden_size
-            self.expert_dim = moe_config.expert_num
-            self.capacity_factor = moe_config.capacity_factor
-            self.aux_loss_factor = moe_config.aux_loss_factor
-            self.num_experts_chosen = moe_config.num_experts_chosen
-            self.dp_group = parallel_config.data_parallel
-            self.dp = parallel_config.data_parallel
-            self.ep = parallel_config.expert_parallel
-            from .transformer import FeedForward
-
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
                                    dropout_rate=dropout_rate,
@@ -201,18 +192,7 @@ class MoE(Cell):
                                    expert_num=self.expert_dim,
                                    param_init_type=param_init_type,
                                    parallel_config=parallel_config)
-            self.reshape = P.Reshape()
-            self.shape = P.Shape()
-            self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
-            self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
-            self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
-            self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
-            self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-            self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
             self.mul = P.Mul().shard(((), ()))
-            self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
-                                 training=True, parallel_config=parallel_config)
-            self.cast = P.Cast()
 
     def construct(self, input_tensor):
         input_shape = F.shape(input_tensor)

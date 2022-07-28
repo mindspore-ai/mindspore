@@ -16,6 +16,7 @@
 The basic layer of the Transformer Networks. This is an experimental interface that is subject to
 change or deletion.
 """
+from __future__ import absolute_import
 from functools import wraps, partial
 import inspect
 import math
@@ -474,18 +475,18 @@ class _Linear(Cell):
 
     def shard(self, strategy_matmul, strategy_bias=None, strategy_activation=None):
         r"""
-         Set the shard for the linear. the strategy size should be equal to the inputs.
+        Set the shard for the linear. the strategy size should be equal to the inputs.
 
-         Note:
+        Note:
             It is valid only in semi auto parallel or auto parallel mode.
             In other parallel modes, strategies set here will be ignored.
 
-         Args:
+        Args:
              strategy_matmul (tuple): The strategy for the matmul. Should be the same shape as the inputs.
              strategy_bias (tuple): The strategy for the bias_add. Should be the same shape as the inputs.
              strategy_activation (tuple): The strategy for the strategy_activation. Should be the same shape as
                 the inputs.
-         """
+        """
         self.matmul.shard(strategy_matmul)
         if self.has_bias:
             self.bias_add.shard(strategy_bias)

@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Utils of auto parallel"""
+from __future__ import absolute_import
+from __future__ import division
 import numpy as np
 from mindspore import context, log as logger
 from mindspore.context import ParallelMode
@@ -321,7 +323,7 @@ def _infer_rank_list(train_map, predict_map=None):
     """infer checkpoint slices to be loaded"""
     ret = {}
     if _get_pipeline_stages() > 1:
-        local_rank = int(_get_global_rank() % (_get_device_num() / _get_pipeline_stages()))
+        local_rank = _get_global_rank() % int(_get_device_num() / _get_pipeline_stages())
     else:
         local_rank = _get_global_rank()
     for param_name in train_map:

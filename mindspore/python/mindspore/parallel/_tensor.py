@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """load tensor and combine tensor"""
+from __future__ import absolute_import
+from __future__ import division
 import numpy as np
 
 from mindspore.common.tensor import Tensor

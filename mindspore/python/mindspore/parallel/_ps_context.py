@@ -14,6 +14,7 @@
 # ============================================================================
 """Context for parameter server training mode"""
 
+from __future__ import absolute_import
 import os
 from mindspore._checkparam import Validator, Rel
 from mindspore._c_expression import PSContext

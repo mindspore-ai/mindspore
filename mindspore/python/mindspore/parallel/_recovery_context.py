@@ -14,6 +14,7 @@
 # ============================================================================
 """Context for recovery"""
 
+from __future__ import absolute_import
 from mindspore._checkparam import Validator
 from mindspore._c_expression import RecoveryContext
 
