@@ -64,7 +64,7 @@ std::vector<int64_t> CheckAttrTuple(const PrimitivePtr &prim, const std::string 
 }
 
 std::vector<int64_t> CheckAttrTupleAndNCDimensions(const PrimitivePtr &primitive, const std::string &attr_name,
-                                                   size_t num, int n_axis, int c_axis) {
+                                                   size_t num, uint64_t n_axis, uint64_t c_axis) {
   std::vector<int64_t> tuple = CheckAttrTuple(primitive, attr_name, num);
   if (tuple[n_axis] != 1 || tuple[c_axis] != 1) {
     MS_EXCEPTION(ValueError)
@@ -86,17 +86,19 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
   constexpr size_t left_index = 2;
   constexpr size_t right_index = 3;
   if (x_h != abstract::Shape::SHP_ANY) {
-    out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
-                                                 static_cast<float>((kernel_size[0] - 1) * (dilations[h_axis] - 1))) /
-                                                  strides[h_axis]));
+    out_h = static_cast<int64_t>(
+      std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
+                      static_cast<double>((int64_t)LongToInt(kernel_size[0] - 1) * LongToInt(dilations[h_axis] - 1))) /
+                       strides[h_axis]));
     if (is_min_shape && out_h < 1) {
       out_h = 1L;
     }
   }
   if (x_w != abstract::Shape::SHP_ANY) {
-    out_w = static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
-                                                 static_cast<float>((kernel_size[1] - 1) * (dilations[w_axis] - 1))) /
-                                                  strides[w_axis]));
+    out_w = static_cast<int64_t>(
+      std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
+                      static_cast<double>((int64_t)LongToInt(kernel_size[1] - 1) * LongToInt(dilations[w_axis] - 1))) /
+                       strides[w_axis]));
     if (is_min_shape && out_w < 1) {
       out_w = 1L;
     }

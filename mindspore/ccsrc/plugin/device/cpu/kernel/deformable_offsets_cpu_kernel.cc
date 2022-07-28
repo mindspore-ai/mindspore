@@ -180,7 +180,7 @@ int DeformableOffsetsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_h_ = output_shape[h_axis_];
   output_w_ = output_shape[w_axis_];
   position_grid_size_ = output_h_ * output_w_;
-  (void)workspace_size_list_.emplace_back(sizeof(int64_t) * position_grid_size_ * kKernelSizeSize);
+  (void)workspace_size_list_.emplace_back(sizeof(int64_t) * LongToSize(position_grid_size_) * kKernelSizeSize);
   return KRET_OK;
 }
 
@@ -214,7 +214,7 @@ void DeformableOffsetsCpuKernelMod::DeformableOffsets(const T *input_addr, const
   int64_t offset_kh_dim = offset_kw_dim * kernel_size_[kKernelSizeWIndex];
   int64_t offset_group_dim = offset_kh_dim * kernel_size_[kKernelSizeHIndex];
   int64_t offset_mask_dim = offset_group_dim * deformable_groups_;
-  int64_t offset_n_dim = offset_mask_dim * kOffsetsSize;
+  int64_t offset_n_dim = offset_mask_dim * SizeToLong(kOffsetsSize);
   int64_t input_c_dim = input_h_ * input_w_;
   int64_t input_n_dim = input_c_dim * c_;
 
