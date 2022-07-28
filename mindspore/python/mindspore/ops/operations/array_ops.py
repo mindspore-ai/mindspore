@@ -2605,7 +2605,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         validator.check_positive_int(num_segments_v, "num_segments", self.name)
 
 
-class UnsortedSegmentProd(PrimitiveWithInfer):
+class UnsortedSegmentProd(Primitive):
     """
     Computes the product of a tensor along segments.
 
@@ -2632,33 +2632,6 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
     def __init__(self):
         """Initialize UnsortedSegmentProd"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
-
-    def __infer__(self, x, segment_ids, num_segments):
-        x_type = x['dtype']
-        x_shape = x['shape']
-        segment_ids_shape = segment_ids['shape']
-        validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
-        validator.check_value_type("x_shape", x_shape, [list], self.name)
-        valid_type = [mstype.float16, mstype.float32, mstype.int32]
-        validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
-        validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
-
-        # support vmap : segment_ids_shape support batch rank
-        if not hasattr(self, 'batch_rank'):
-            validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
-
-        validator.check(f'first shape of input_x', x_shape[0],
-                        'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
-        num_segments_v = num_segments['value']
-        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_positive_int(num_segments_v, "num_segments", self.name)
-        segment_ids_shape_len = len(segment_ids_shape)
-        out_shape = [num_segments_v]
-        out_shape += x_shape[segment_ids_shape_len:]
-        out = {'shape': out_shape,
-               'dtype': mstype.tensor_type(x_type.element_type()),
-               'value': None}
-        return out
 
 
 class Concat(PrimitiveWithCheck):
