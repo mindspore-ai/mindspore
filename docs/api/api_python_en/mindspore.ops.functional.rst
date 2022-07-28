@@ -143,6 +143,7 @@ Element-by-Element Functions
     mindspore.ops.invert
     mindspore.ops.lerp
     mindspore.ops.log
+    mindspore.ops.log1p
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
