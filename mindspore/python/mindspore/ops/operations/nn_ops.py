@@ -4261,7 +4261,7 @@ class MirrorPad(PrimitiveWithInfer):
         for i in range(0, int(paddings_size / 2)):
             if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
                 msg = "x_shape[D] + 1" if adjust == 1 else "x_shape[D]"
-                paddings_info_value = paddings['value']
+                paddings_info_value = paddings['value'].asnumpy()
                 raise ValueError(f"For '{self.name}', both paddings[D, 0] and paddings[D, 1] must be less than {msg}, "
                                  f"but got paddings[{i}, 0]: {paddings_info_value[i, 0]}, "
                                  f"paddings[{i}, 1]: {paddings_info_value[i, 1]}, x_shape[{i}]: {x_shape[i]}.")
