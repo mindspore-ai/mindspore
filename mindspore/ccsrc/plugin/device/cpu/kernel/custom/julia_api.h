@@ -39,8 +39,8 @@ typedef struct _jl_sym_t jl_sym_t;
 typedef struct _jl_datatype_t jl_datatype_t;
 typedef struct _jl_array_t jl_array_t;
 
-#define GET_HOOK(func, rt, ...) GET_HOOK_INNER(func, _, rt, __VA_ARGS__)
-#define GET_HOOK_INNER(func, _, rt, ...)                                                          \
+#define GET_HOOK(func, suc, rt, ...) GET_HOOK_INNER(func, _, suc, rt, __VA_ARGS__)
+#define GET_HOOK_INNER(func, _, suc, rt, ...)                                                     \
   do {                                                                                            \
     if (!func##_) {                                                                               \
       func##_ = reinterpret_cast<std::add_pointer<rt(__VA_ARGS__)>::type>(dlsym(handle_, #func)); \
@@ -242,24 +242,26 @@ class JuliaAPI {
   bool InitJuliaFunc() {
     bool suc = true;
 #if !defined(_WIN32) && !defined(_WIN64)
-    GET_HOOK(jl_ver_major, int, void);
-    GET_HOOK(jl_ver_minor, int, void);
-    if (!suc) return false;
+    GET_HOOK(jl_ver_major, suc, int, void);
+    GET_HOOK(jl_ver_minor, suc, int, void);
+    if (!suc) {
+      return false;
+    }
     constexpr int SupportedMinor = 6;
     if (JlVerMajor() < 1 || (JlVerMajor() == 1 && JlVerMinor() < SupportedMinor)) {
       MS_LOG(WARNING) << "we only support julia version >= 1.6 now and have tested in version 1.6";
       return false;
     }
-    GET_HOOK(jl_eval_string, jl_value_t *, const char *);
-    GET_HOOK(jl_get_global, jl_value_t *, jl_module_t *, jl_sym_t *);
-    GET_HOOK(jl_symbol, jl_sym_t *, const char *);
-    GET_HOOK(jl_call, jl_value_t *, jl_function_t *, jl_value_t **, int32_t);
-    GET_HOOK(jl_exception_occurred, jl_value_t *, void);
-    GET_HOOK(jl_atexit_hook, void, int);
-    GET_HOOK(jl_init__threading, void, void);
-    GET_HOOK(jl_apply_array_type, jl_value_t *, jl_value_t *, size_t);
-    GET_HOOK(jl_ptr_to_array, jl_array_t *, jl_value_t *, void *, jl_value_t *, int);
-    GET_HOOK(jl_typeof_str, const char *, jl_value_t *);
+    GET_HOOK(jl_eval_string, suc, jl_value_t *, const char *);
+    GET_HOOK(jl_get_global, suc, jl_value_t *, jl_module_t *, jl_sym_t *);
+    GET_HOOK(jl_symbol, suc, jl_sym_t *, const char *);
+    GET_HOOK(jl_call, suc, jl_value_t *, jl_function_t *, jl_value_t **, int32_t);
+    GET_HOOK(jl_exception_occurred, suc, jl_value_t *, void);
+    GET_HOOK(jl_atexit_hook, suc, void, int);
+    GET_HOOK(jl_init__threading, suc, void, void);
+    GET_HOOK(jl_apply_array_type, suc, jl_value_t *, jl_value_t *, size_t);
+    GET_HOOK(jl_ptr_to_array, suc, jl_array_t *, jl_value_t *, void *, jl_value_t *, int);
+    GET_HOOK(jl_typeof_str, suc, const char *, jl_value_t *);
 #else
     suc = false;
 #endif
@@ -288,14 +290,14 @@ class JuliaAPI {
   }
 
   bool RunJuliaKernel() {
-    if (!jl_file_caches_.count(file_)) {
+    if (jl_file_caches_.count(file_) == 0) {
       // include julia file
       (void)JlEvalString("Base.include(Main, \"" + file_ + "\")");
       RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
       (void)jl_file_caches_.insert(file_);
     }
     jl_module_t *jmod = nullptr;
-    if (!jl_module_caches_.count(file_ + module_)) {
+    if (jl_module_caches_.count(file_ + module_) == 0) {
       // using julia module
       (void)JlEvalString("using Main." + module_);
       RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
@@ -306,7 +308,7 @@ class JuliaAPI {
       jmod = jl_module_caches_[file_ + module_];
     }
     jl_function_t *jfunc = nullptr;
-    if (!jl_file_caches_.count(file_ + module_ + func_)) {
+    if (jl_file_caches_.count(file_ + module_ + func_) == 0) {
       // get julia function from module
       jfunc = JlGetFunction(jmod, func_);
       RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
@@ -371,13 +373,13 @@ class JuliaAPI {
       {"float16", "Float16"}, {"float32", "Float32"}, {"float64", "Float64"}, {"int8", "Int8"},
       {"uint8", "UInt8"},     {"int16", "Int16"},     {"uint16", "Uint16"},   {"int32", "Int32"},
       {"uint32", "UInt32"},   {"int64", "Int64"},     {"uint64", "UInt64"}};
-    if (m.count(dtypes)) {
+    if (m.count(dtypes) > 0) {
       type = reinterpret_cast<jl_datatype_t *>(Core(m[dtypes]));
     }
     return type;
   }
 
-  jl_array_t *GetJuliaArray(void *params, size_t ndims, const int64_t *shapes, const std::string &dtypes) {
+  jl_array_t *GetJuliaArray(void *params, size_t ndims, const int64_t *shapes, const std::string &dtypes) const {
     std::string shape_str = "(";
     for (size_t j = 0; j < ndims; j++) {
       shape_str += std::to_string(shapes[j]);

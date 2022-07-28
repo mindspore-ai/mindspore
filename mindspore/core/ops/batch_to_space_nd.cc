@@ -35,8 +35,8 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_min_shape = shape_map[kMinShape];
   auto input_max_shape = shape_map[kMaxShape];
-  constexpr size_t len = 4;
-  CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kGreaterEqual, len, prim_name);
+  constexpr int64_t len = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kGreaterEqual, len, prim_name);
   auto out_shape = x_shape;
 
   int64_t block_shape_prod = 1;
