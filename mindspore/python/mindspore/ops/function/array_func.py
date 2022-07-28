@@ -2229,12 +2229,13 @@ def gather_elements(x, dim, index):
 
     Args:
         x (Tensor): The input tensor.
-        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-x_rank, x_rank).
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-x.ndim, x.ndim).
         index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
+            int32, int64. The value range of each index element is [-x.shape(dim), x.shape(dim)).
 
     Returns:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`, has the same data type with `x`.
+        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`,
+        and has the same data type with `x`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.

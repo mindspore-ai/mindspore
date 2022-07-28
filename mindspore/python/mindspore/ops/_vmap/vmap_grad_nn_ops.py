@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front,\
-     _vmap_clone_prim, _bdim_at_any
+    _vmap_clone_prim, _bdim_at_any
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -67,10 +67,10 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         if w_dim is not None or tw_dim is not None:
             _raise_value_error("The source axis of weight and total_weight in `NLLLossGrad` must be None for now, "
                                "but got {} and {}.".format(w_dim, tw_dim))
-        if lg_dim is not None and (base_x_len != 2 or reduction_type != "none"):
+        if lg_dim is not None and reduction_type != "none":
             _raise_value_error("The source axis of loss_grad in `NLLLossGrad` can be not None "
-                               "just when x is 2d and reduction type is none, "
-                               "but x is {}d and reduction type is {}.".format(base_x_len, reduction_type))
+                               "just when reduction type is none for vmap, "
+                               "but reduction type is {}.".format(reduction_type))
 
         # If stacked, move vmap_dim to first dim and reshape to right shape.
         if x_dim is not None:
