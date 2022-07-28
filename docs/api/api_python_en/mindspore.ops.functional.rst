@@ -298,6 +298,7 @@ Randomly Generating Operators
     mindspore.ops.gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
+    mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform
 
