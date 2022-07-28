@@ -33,17 +33,17 @@ bool Compute(const ComputeParams<T> *params, const size_t start, const size_t en
   T *x = params->x_;
   int *indices = params->indices_;
   T *updates = params->updates_;
-  std::vector<int> *out_strides = params->out_strides_;
+  std::vector<size_t> *out_strides = params->out_strides_;
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(updates);
   MS_EXCEPTION_IF_NULL(out_strides);
 
-  for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
-    int offset = 0;
-    std::vector<int> local_indices;
-    for (int j = 0; j < params->indices_unit_rank_; ++j) {
-      auto index = indices[i * params->indices_unit_rank_ + j];
+  for (size_t i = start; i < end; ++i) {
+    size_t offset = 0;
+    std::vector<size_t> local_indices;
+    for (size_t j = 0; j < params->indices_unit_rank_; ++j) {
+      auto index = IntToSize(indices[i * params->indices_unit_rank_ + j]);
       (void)local_indices.emplace_back(index);
       if (index < 0) {
         MS_LOG(ERROR) << "For '" << kKernelName
@@ -102,20 +102,20 @@ void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                         << indices_shape[i];
     }
   }
-  indices_unit_rank_ = SizeToInt(indices_unit_rank);
+  indices_unit_rank_ = indices_unit_rank;
   unit_size_ = 1;
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
-    unit_size_ *= SizeToInt(updates_shape[i]);
+    unit_size_ *= updates_shape[i];
   }
   num_units_ = 1;
   num_units_ *= updates_shape[indices_shape.size() - 2];
   for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
     num_units_ *= updates_shape[i];
   }
-  int out_stride = 1;
+  size_t out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
-    out_stride *= shape[i + 1];
+    out_stride *= LongToSize(shape[i + 1]);
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
