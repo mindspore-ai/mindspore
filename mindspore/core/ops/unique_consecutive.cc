@@ -47,7 +47,7 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
   // axis may be deleted so as to axis_ptr is nullptr.
   if (axis_ptr->isa<None>() || GetValue<int64_t>(axis_ptr) == kAxisIsNone) {
     MS_LOG(INFO) << "node:" << op_name << " has no axis attribute or axis id None! Deal as flatten";
-    primitive->SetAttrs({{"axis", MakeValue(static_cast<int64_t>(kAxisIsNone))}});
+    (void)primitive->SetAttrs({{"axis", MakeValue(kAxisIsNone)}});
     auto input_total = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
     output_vec = {abstract::Shape::SHP_ANY};
     output_min_vec = {1};
@@ -68,17 +68,18 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     if (axis < 0) {
       axis = axis + ndims;
     }
+    size_t axis_size = LongToSize(axis);
     output_vec = input_shape_vec;
-    output_vec[axis] = abstract::Shape::SHP_ANY;
+    output_vec[axis_size] = abstract::Shape::SHP_ANY;
     output_min_vec = input_shape_vec;
-    output_min_vec[axis] = 1;
+    output_min_vec[axis_size] = 1;
     output_max_vec = input_shape_vec;
 
-    idx_shape_vec = {input_shape_vec[axis]};
+    idx_shape_vec = {input_shape_vec[axis_size]};
 
     counts_shape_vec = {abstract::Shape::SHP_ANY};
     counts_min_vec = {1};
-    counts_max_vec = {input_shape_vec[axis]};
+    counts_max_vec = {input_shape_vec[axis_size]};
   }
 
   auto idx_ptr = primitive->GetAttr("return_idx");
@@ -108,8 +109,7 @@ TypePtr UniqueConsecutiveInferType(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
   const std::set valid_types = {kInt32, kInt64, kFloat16, kFloat, kFloat64};
-  auto input_type =
-    CheckAndConvertUtils::CheckTypeValid("input", input_args[kInputIndex0]->BuildType(), valid_types, name);
+  auto input_type = CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->BuildType(), valid_types, name);
   std::vector<TypePtr> ret_type_vec = {input_type, std::make_shared<TensorType>(kInt32),
                                        std::make_shared<TensorType>(kInt32)};
   return std::make_shared<Tuple>(ret_type_vec);
@@ -119,7 +119,7 @@ TypePtr UniqueConsecutiveInferType(const PrimitivePtr &primitive, const std::vec
 AbstractBasePtr UniqueConsecutiveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUniqueConsecutiveInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUniqueConsecutiveInputNum, primitive->name());
   auto infer_type = UniqueConsecutiveInferType(primitive, input_args);
   auto infer_shape = UniqueConsecutiveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
