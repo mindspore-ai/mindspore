@@ -17,6 +17,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
+__inline__ __device__ size_t GetTargetIndex(size_t output_idx, float dim_scale, size_t input_size) {
+  return min(static_cast<size_t>(floorf(output_idx * dim_scale)), input_size - 1); // NOLINT
+}
+
 template <typename T>
 __global__ void UpsampleNearest3d(const T *input, const size_t n, const size_t c, const size_t in_d, const size_t in_h,
   const size_t in_w, const size_t in_cdhw, const size_t in_dhw, const size_t in_hw, const size_t out_d,
@@ -28,9 +32,9 @@ __global__ void UpsampleNearest3d(const T *input, const size_t n, const size_t c
     const size_t posd = pos / out_hw % out_d;
     const size_t posh = pos / out_w % out_h;
     const size_t posw = pos % out_w;
-    const size_t input_posd = static_cast<size_t>(floorf(posd / d_scale)); // NOLINT
-    const size_t input_posh = static_cast<size_t>(floorf(posh / h_scale)); // NOLINT
-    const size_t input_posw = static_cast<size_t>(floorf(posw / w_scale)); // NOLINT
+    const size_t input_posd = GetTargetIndex(posd, d_scale, in_d);
+    const size_t input_posh = GetTargetIndex(posh, h_scale, in_h);
+    const size_t input_posw = GetTargetIndex(posw, w_scale, in_w);
     const size_t input_pos = posn * in_cdhw + posc * in_dhw + input_posd * in_hw + input_posh * in_w + input_posw;
     output[pos] = input[input_pos];
   }

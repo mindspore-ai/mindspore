@@ -62,6 +62,9 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
     output_shape[kInputIndex3] = output_size[kInputIndex1];
     output_shape[kInputIndex4] = output_size[kInputIndex2];
   }
+  for (size_t i = 0; i < output_shape.size(); i++) {
+    (void)CheckAndConvertUtils::CheckInteger("output shape", output_shape[i], kGreaterThan, 0, op_name);
+  }
   return std::make_shared<abstract::Shape>(output_shape);
 }
 

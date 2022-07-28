@@ -29,6 +29,24 @@
 
 namespace mindspore {
 namespace kernel {
+float UpsampleNearest3dGpuKernelMod::Scaling(const size_t in_size, const size_t out_size, int idx) {
+  // for input/output size
+  if (out_size == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output_size dimension " << idx << " is equal to 0.";
+  } else {
+    return 1.0f * in_size / out_size;
+  }
+}
+
+float UpsampleNearest3dGpuKernelMod::Scaling(const float scale_value, int idx) {
+  // for scale factors
+  if (scale_value == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', scales dimension " << idx << " is <= 0.";
+  } else {
+    return 1.0f / scale_value;
+  }
+}
+
 bool UpsampleNearest3dGpuKernelMod::GetUpsampleNearest3dAttr(const BaseOperatorPtr &base_operator) {
   if (kernel_name_ != prim::kPrimUpsampleNearest3D->name()) {
     MS_LOG(ERROR) << "For '" << prim::kPrimUpsampleNearest3D->name()
@@ -89,21 +107,17 @@ int UpsampleNearest3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   if (!output_volumetric_size_.empty()) {
     scale_factors_.clear();
-    if (input_shape_[kIndex2] == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input D dimension equals 0.";
-    } else {
-      scale_factors_.push_back(1.0f * output_volumetric_size_[kIndex0] / input_shape_[kIndex2]);
-    }
-    if (input_shape_[kIndex3] == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input H dimension equals 0.";
-    } else {
-      scale_factors_.push_back(1.0f * output_volumetric_size_[kIndex1] / input_shape_[kIndex3]);
-    }
-    if (input_shape_[kIndex4] == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input W dimension equals 0.";
-    } else {
-      scale_factors_.push_back(1.0f * output_volumetric_size_[kIndex2] / input_shape_[kIndex4]);
-    }
+    scale_factors_.push_back(Scaling(input_shape_[kIndex2], output_volumetric_size_[kIndex0], kIndex0));
+    scale_factors_.push_back(Scaling(input_shape_[kIndex3], output_volumetric_size_[kIndex1], kIndex1));
+    scale_factors_.push_back(Scaling(input_shape_[kIndex4], output_volumetric_size_[kIndex2], kIndex2));
+  } else {
+    float d_scale = scale_factors_[kIndex0];
+    float h_scale = scale_factors_[kIndex1];
+    float w_scale = scale_factors_[kIndex2];
+    scale_factors_.clear();
+    scale_factors_.push_back(Scaling(d_scale, kIndex0));
+    scale_factors_.push_back(Scaling(h_scale, kIndex1));
+    scale_factors_.push_back(Scaling(w_scale, kIndex2));
   }
   return KRET_OK;
 }
