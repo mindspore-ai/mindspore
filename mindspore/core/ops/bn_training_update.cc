@@ -80,14 +80,17 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   // square_sum shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("square_sum shape", square_sum_shape[0], kEqual, input_x_shape[c_axis], prim_name,
                               TypeError);
-  // scale shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("scale shape", scale_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // offset shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("offset shape", offset_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // mean shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("mean shape", mean_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // variance shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+  if (input_x_shape[c_axis] != -1) {
+    // scale shape must be equal to input_x_shape[1]
+    CheckAndConvertUtils::Check("scale shape", scale_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+    // offset shape must be equal to input_x_shape[1]
+    CheckAndConvertUtils::Check("offset shape", offset_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+    // mean shape must be equal to input_x_shape[1]
+    CheckAndConvertUtils::Check("mean shape", mean_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+    // variance shape must be equal to input_x_shape[1]
+    CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name,
+                                TypeError);
+  }
   auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto variance_shape_ptr = input_args[kInputIndex6]->BuildShape();
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
