@@ -221,6 +221,12 @@ std::shared_ptr<GPUProfiler> &GPUProfiler::GetInstance() {
   return profiler_inst_;
 }
 
+GPUProfiler::~GPUProfiler() {
+  if (subscriber_ != nullptr) {
+    CHECK_CUPTI_RET_WITH_ERROR(CuptiFinalize(), "CuptiFinalize");
+  }
+}
+
 void GPUProfiler::SyncEnable(const bool enable_flag) {
   MS_LOG(INFO) << "GPU Profiler synchronous enable flag:" << enable_flag;
   sync_enable_flag_ = enable_flag;

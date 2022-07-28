@@ -120,7 +120,7 @@ class MS_CORE_API GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> &GetInstance();
   GPUProfiler() = default;
-  ~GPUProfiler() { StopCUPTI(); }
+  ~GPUProfiler();
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;
 
