@@ -32,12 +32,10 @@ inline __device__ T my_pow(T a, double b) {
   return pow(a, static_cast<float>(b));
 }
 
-
 template <>
 inline __device__ half my_pow(half a, double b) {
   return __float2half(pow(__half2float(a), static_cast<float>(b)));
 }
-
 
 template <typename T>
 inline __device__ void GammaAndBetaThreadReduce(const int &col, const int &row_dim, const int &col_dim,
@@ -65,7 +63,6 @@ inline __device__ void GammaAndBetaThreadReduce(const int &col, const int &row_d
   }
 }
 
-
 template <typename T>
 inline __device__ void GammaAndBetaWarpReduce(T *part1, T *part2, T *part3) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
@@ -74,7 +71,6 @@ inline __device__ void GammaAndBetaWarpReduce(T *part1, T *part2, T *part3) {
     part3[0] += __shfl_down_sync(0xffffffff, part3[0], delta);
   }
 }
-
 
 template <typename T>
 inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_dim, T *part1, T *part2, T *part3,
@@ -105,7 +101,6 @@ inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_di
   }
 }
 
-
 template <typename T>
 __global__ void GammaAndBetaPropKernel(const int row_dim, const int col_dim, const int mean_dim, const T epsilon,
                                        const T *dy, const T *x, const T *mean, const T *var, const T *grad_dx,
@@ -121,12 +116,11 @@ __global__ void GammaAndBetaPropKernel(const int row_dim, const int col_dim, con
   }
 }
 
-
 template <typename T>
 inline __device__ void InputThreadReduceInnerMean(const int &row, const int &col_dim, const int &param_dim,
-                                                  const T &epsilon, T *sum1, T *sum2, T *sum3, T *sum4,
-                                                  const T *dy, const T *x, const T *mean, const T *var,
-                                                  const T *gamma, const T *grad_dx) {
+                                                  const T &epsilon, T *sum1, T *sum2, T *sum3, T *sum4, const T *dy,
+                                                  const T *x, const T *mean, const T *var, const T *gamma,
+                                                  const T *grad_dx) {
   int loop_num = (col_dim + NUM_PER_THREAD_REDUCE - 1) / NUM_PER_THREAD_REDUCE;
   for (int i = threadIdx.x; i < loop_num; i += blockDim.x) {
     for (int j = 0; j < NUM_PER_THREAD_REDUCE; j++) {
@@ -150,7 +144,6 @@ inline __device__ void InputThreadReduceInnerMean(const int &row, const int &col
   }
 }
 
-
 template <typename T>
 inline __device__ void InputWarpReduceInnerMean(T *sum1, T *sum2, T *sum3, T *sum4) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
@@ -160,7 +153,6 @@ inline __device__ void InputWarpReduceInnerMean(T *sum1, T *sum2, T *sum3, T *su
     sum4[0] += __shfl_down_sync(0xffffffff, sum4[0], delta);
   }
 }
-
 
 template <typename T>
 inline __device__ void InputBlockReduceInnerMean(const int &col_dim, T *sum1, T *sum2, T *sum3, T *sum4, T *share_mem) {
@@ -188,7 +180,6 @@ inline __device__ void InputBlockReduceInnerMean(const int &col_dim, T *sum1, T 
   __syncthreads();
 }
 
-
 template <typename T>
 inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col_dim, const int &param_dim,
                                                   const T &epsilon, T *sum5, T *sum6, T *sum7, T *share_mem,
@@ -208,7 +199,7 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
       T v2 = my_pow(var[row] + epsilon, -0.5);
       T v3 = dy[pos] * gamma[gamma_offset];
 
-      T v4 = v3 - share_mem[2] * (1.0 / col_dim)  - v1 * v2 * share_mem[3] * (1.0 / col_dim);
+      T v4 = v3 - share_mem[2] * (1.0 / col_dim) - v1 * v2 * share_mem[3] * (1.0 / col_dim);
       T v5 = v3 * share_mem[1] * (1.0 / col_dim);
       T v6 = grad_dx[pos] * v2 * share_mem[3] * (-1.0 / col_dim);
       T v7 = dy[pos] * grad_dg[gamma_offset];
@@ -225,7 +216,6 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
     }
   }
 }
-
 
 template <>
 inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col_dim, const int &param_dim,
@@ -264,7 +254,6 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
   }
 }
 
-
 template <typename T>
 inline __device__ void InputWarpReduceOuterMean(T *sum5, T *sum6, T *sum7) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
@@ -299,12 +288,11 @@ inline __device__ void InputBlockReduceOuterMean(const int &col_dim, T *sum5, T 
   __syncthreads();
 }
 
-
 template <typename T>
 inline __device__ void InputProp(const int &row, const int &col_dim, const int &param_dim, const T &epsilon,
-                                 const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
-                                 const T *grad_dx, const T *grad_dg, const T *grad_db, T *d_dy, T *d_x,
-                                 const T *share_mem, T *global_sum1, T *global_sum2) {
+                                 const T *dy, const T *x, const T *mean, const T *var, const T *gamma, const T *grad_dx,
+                                 const T *grad_dg, const T *grad_db, T *d_dy, T *d_x, const T *share_mem,
+                                 T *global_sum1, T *global_sum2) {
   for (int col = threadIdx.x; col < col_dim; col += blockDim.x) {
     int pos = (row * col_dim + col);
     int gamma_offset = pos % param_dim;
@@ -319,14 +307,13 @@ inline __device__ void InputProp(const int &row, const int &col_dim, const int &
     T part4 = v3 * grad_dg[gamma_offset];
     d_dy[pos] = part1 + part2 + part3 + part4 + grad_db[gamma_offset];
 
-    T part5 = v1 * (my_pow(var[row] + epsilon, -1.5) * ((share_mem[4]+ share_mem[5]) * (-1.0 / col_dim)));
-    d_x[pos] += part5  + share_mem[6] * (1.0 / col_dim);
+    T part5 = v1 * (my_pow(var[row] + epsilon, -1.5) * ((share_mem[4] + share_mem[5]) * (-1.0 / col_dim)));
+    d_x[pos] += part5 + share_mem[6] * (1.0 / col_dim);
 
     global_sum1[pos] = share_mem[0] * (1.0 / col_dim);
     global_sum2[pos] = share_mem[1] * (1.0 / col_dim);
   }
 }
-
 
 template <>
 inline __device__ void InputProp(const int &row, const int &col_dim, const int &param_dim, const half &epsilon,
@@ -347,8 +334,8 @@ inline __device__ void InputProp(const int &row, const int &col_dim, const int &
     half part4 = v3 * grad_dg[gamma_offset];
     d_dy[pos] = part1 + part2 + part3 + part4 + grad_db[gamma_offset];
 
-    half part5 = v1 * (my_pow(var[row] + epsilon, -1.5) *
-                       ((share_mem[4]+ share_mem[5]) * __float2half(-1.0 / col_dim)));
+    half part5 =
+      v1 * (my_pow(var[row] + epsilon, -1.5) * ((share_mem[4] + share_mem[5]) * __float2half(-1.0 / col_dim)));
     d_x[pos] += part5 + share_mem[6] * __float2half(1.0 / col_dim);
 
     global_sum1[pos] = share_mem[0] * __float2half(1.0 / col_dim);
@@ -356,12 +343,10 @@ inline __device__ void InputProp(const int &row, const int &col_dim, const int &
   }
 }
 
-
 template <typename T>
-__global__ void InputPropKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon,
-                                const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
-                                const T *grad_dx, const T *grad_dg, const T *grad_db, T *d_dy, T *d_x, T *global_sum1,
-                                T *global_sum2) {
+__global__ void InputPropKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon, const T *dy,
+                                const T *x, const T *mean, const T *var, const T *gamma, const T *grad_dx,
+                                const T *grad_dg, const T *grad_db, T *d_dy, T *d_x, T *global_sum1, T *global_sum2) {
   for (int row = blockIdx.x; row < row_dim; row += gridDim.x) {
     T sum1 = 0;
     T sum2 = 0;
@@ -386,34 +371,30 @@ __global__ void InputPropKernel(const int row_dim, const int col_dim, const int 
   }
 }
 
-
 template <typename T>
-void LayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, T *global_sum1, T *global_sum2,
-                       const T &epsilon, const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
-                       const T* grad_dx, const T* grad_dg, const T* grad_db, T *d_dy, T *d_x, T *d_gamma,
-                       cudaStream_t stream) {
+void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, T *global_sum1, T *global_sum2,
+                          const T &epsilon, const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
+                          const T *grad_dx, const T *grad_dg, const T *grad_db, T *d_dy, T *d_x, T *d_gamma,
+                          cudaStream_t stream) {
   int share_mem_size = THREAD_PER_BLOCK / WARP_SIZE * NUM_SHARED_SUM_INPUT * sizeof(T);
   InputPropKernel<<<row_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
                                                                          mean, var, gamma, grad_dx, grad_dg, grad_db,
                                                                          d_dy, d_x, global_sum1, global_sum2);
   share_mem_size = THREAD_PER_BLOCK / WARP_SIZE * NUM_SHARED_SUM_GAMMA * sizeof(T);
   int param_reduce_dim = row_dim * col_dim / param_dim;
-  GammaAndBetaPropKernel<<<param_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(param_reduce_dim, param_dim,
-                                                                                  col_dim, epsilon, dy, x, mean, var,
-                                                                                  grad_dx, d_gamma, global_sum1,
-                                                                                  global_sum2);
+  GammaAndBetaPropKernel<<<param_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(
+    param_reduce_dim, param_dim, col_dim, epsilon, dy, x, mean, var, grad_dx, d_gamma, global_sum1, global_sum2);
 }
 
-
-template CUDA_LIB_EXPORT void LayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
-                                                float *global_sum1, float *global_sum2, const float &epsilon,
-                                                const float *dy, const float *x, const float *mean, const float *var,
-                                                const float *gamma, const float *grad_dx, const float *grad_dg,
-                                                const float *grad_db, float *d_dy, float *d_x, float *d_gamma,
-                                                cudaStream_t stream);
-template CUDA_LIB_EXPORT void LayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
-                                                half *global_sum1, half *global_sum2, const half &epsilon,
-                                                const half *dy, const half *x, const half *mean, const half *var,
-                                                const half *gamma, const half *grad_dx, const half *grad_dg,
-                                                const half *grad_db, half *d_dy, half *d_x, half *d_gamma,
-                                                cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
+                                                   float *global_sum1, float *global_sum2, const float &epsilon,
+                                                   const float *dy, const float *x, const float *mean, const float *var,
+                                                   const float *gamma, const float *grad_dx, const float *grad_dg,
+                                                   const float *grad_db, float *d_dy, float *d_x, float *d_gamma,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalLayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim,
+                                                   half *global_sum1, half *global_sum2, const half &epsilon,
+                                                   const half *dy, const half *x, const half *mean, const half *var,
+                                                   const half *gamma, const half *grad_dx, const half *grad_dg,
+                                                   const half *grad_db, half *d_dy, half *d_x, half *d_gamma,
+                                                   cudaStream_t stream);
