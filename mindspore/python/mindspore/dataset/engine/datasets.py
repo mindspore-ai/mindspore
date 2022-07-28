@@ -1606,8 +1606,9 @@ class Dataset:
         # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
         runtime_getter = self._init_tree_getters()
         self.runtime_context = runtime_getter[1]
+        api_tree = runtime_getter[2]
         output_shapes = runtime_getter[0].GetOutputShapes(estimate)
-        self.runtime_context.Terminate()
+        del api_tree
         del self.runtime_context
 
         if estimate:
@@ -1632,8 +1633,9 @@ class Dataset:
             # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
             # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
             self.runtime_context = runtime_getter[1]
+            api_tree = runtime_getter[2]
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
-            self.runtime_context.Terminate()
+            del api_tree
             del self.runtime_context
         return self.saved_output_types
 
@@ -2763,13 +2765,12 @@ class Pipe:
     Class to handle communication between the master process and the worker processes.
     """
 
-    def __init__(self, shared_memory=False, max_rowsize=16):
+    def __init__(self, warning_ctl, shared_memory=False, max_rowsize=16):
         self.shared_memory = shared_memory
         self.eof = multiprocessing.Event()
-        count = multiprocessing.Value('i', 0)
         if self.shared_memory:
-            self.in_queue = _SharedQueue(1, count, max_rowsize=max_rowsize)
-            self.res_queue = _SharedQueue(1, count, max_rowsize=max_rowsize)
+            self.in_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize)
+            self.res_queue = _SharedQueue(1, warning_ctl, max_rowsize=max_rowsize)
         else:
             self.in_queue = _Queue(1)
             self.res_queue = _Queue(1)
@@ -2854,9 +2855,9 @@ class _MPWorker(multiprocessing.Process):
     Worker process for multiprocessing.
     """
 
-    def __init__(self, operations, max_rowsize=16):
+    def __init__(self, operations, warning_ctl, max_rowsize=16):
         shared_memory = get_enable_shared_mem()
-        self.pipe = Pipe(shared_memory=shared_memory, max_rowsize=max_rowsize)
+        self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
         super().__init__(target=worker_target(operations), args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
@@ -2930,6 +2931,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.watch_dog = None
         self.ppid = os.getpid()
         self.hook = None
+        self.warning_ctl = None
         self.threads_to_workers = {}
 
     def __del__(self):
@@ -3090,8 +3092,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
         # Construct python worker processes
         self.workers = []
+        self.warning_ctl = multiprocessing.Value('i', 0)
         for _ in range(self.num_parallel_workers):
-            worker = _MPWorker(self.operations, self.max_row_size)
+            worker = _MPWorker(self.operations, self.warning_ctl, self.max_row_size)
             worker.start()
             self.workers.append(worker)
 
