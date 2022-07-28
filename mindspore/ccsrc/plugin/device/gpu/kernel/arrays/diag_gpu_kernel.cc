@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "mindspore/core/abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/diag_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -51,7 +52,11 @@ std::vector<std::pair<KernelAttr, DiagGpuKernelMod::DiagLaunchFunc>> DiagGpuKern
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
    &DiagGpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &DiagGpuKernelMod::LaunchKernel<uint64_t>}};
+   &DiagGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &DiagGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &DiagGpuKernelMod::LaunchKernel<utils::Complex<double>>}};
 
 std::vector<KernelAttr> DiagGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
@@ -79,7 +84,7 @@ bool DiagGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 
   // Get kernel launch function.
   kernel_launch_func_ = diag_func_list_[index].second;
-  data_taye_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  batch_rank_ = base_operator->get_batch_rank();
   return true;
 }
 
@@ -91,34 +96,56 @@ int DiagGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     return ret;
   }
 
-  if (data_taye_size_ == 0) {
-    return KRET_RESIZE_FAILED;
+  // Get the input size of each batch.
+  auto input = inputs.at(kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
+  auto input_shape = input->GetShapeVector();
+  MS_EXCEPTION_IF_CHECK_FAIL((input_shape.size() > LongToSize(batch_rank_)),
+                             "The input shape should be larger than batch rank.");
+  batch_size_ = 1;
+  for (size_t i = 0; i < LongToSize(batch_rank_); ++i) {
+    batch_size_ *= LongToSize(input_shape[i]);
   }
-  input_size_ = input_size_list_.at(kIndex0) / data_taye_size_;
-  output_size_ = output_size_list_.at(kIndex0) / data_taye_size_;
-  if ((output_size_ == 0) || (input_size_ == 0)) {
-    return KRET_RESIZE_FAILED;
-  }
-  if (output_size_ / input_size_ != input_size_) {
-    MS_LOG(ERROR) << kernel_name_ << " resize failed, input size: " << input_size_ << ", output size: " << output_size_;
-    return KRET_RESIZE_FAILED;
+  input_size_ = 1;
+  for (size_t i = LongToSize(batch_rank_); i < input_shape.size(); ++i) {
+    input_size_ *= LongToSize(input_shape[i]);
   }
 
+  // Get the output size of each batch.
+  auto output = outputs.at(kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
+  auto output_shape = output->GetShapeVector();
+  MS_EXCEPTION_IF_CHECK_FAIL((output_shape.size() > LongToSize(batch_rank_)),
+                             "The output shape should be larger than batch rank.");
+  output_size_ = 1;
+  for (size_t i = LongToSize(batch_rank_); i < output_shape.size(); ++i) {
+    output_size_ *= LongToSize(output_shape[i]);
+  }
+
+  if (output_size_ / input_size_ != input_size_) {
+    MS_LOG(ERROR) << kernel_name_ << " resize failed, input size: " << input_size_ << ", output size: " << output_size_
+                  << ", batch size: " << batch_size_;
+    return KRET_RESIZE_FAILED;
+  }
+  MS_LOG(DEBUG) << kernel_name_ << " input size: " << input_size_ << ", output size: " << output_size_
+                << ", batch size: " << batch_size_;
   return KRET_OK;
 }
 
 template <typename DataType>
 bool DiagGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (input_size_ == 0) {
-    return true;
-  }
-  auto input_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_ptr);
-  auto output_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(output_ptr);
+  auto input_begin_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_begin_ptr);
+  auto output_begin_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_begin_ptr);
 
-  CalDiag(input_ptr, output_ptr, input_size_, output_size_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  // Support the batch calculation of vmap.
+  for (size_t i = 0; i < batch_size_; ++i) {
+    auto input_ptr = input_begin_ptr + i * input_size_;
+    auto output_ptr = output_begin_ptr + i * output_size_;
+    CalDiag(input_ptr, output_ptr, input_size_, output_size_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  }
   return true;
 }
 

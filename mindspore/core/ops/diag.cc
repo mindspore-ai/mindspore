@@ -29,10 +29,30 @@ namespace {
 abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input rank", SizeToLong(input_shape.size()), kGreaterEqual, 1L,
-                                           primitive->name());
-  std::vector<int64_t> out_shape(input_shape);
-  (void)out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
+  std::vector<int64_t> out_shape;
+
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+
+  // Vmap
+  if (batch_rank > 0) {
+    (void)CheckAndConvertUtils::CheckInteger("input rank", SizeToLong(input_shape.size()), kGreaterEqual,
+                                             (batch_rank + 1), primitive->name());
+    // The shape of batch rank.
+    (void)out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.begin() + batch_rank);
+    // The shape of op data.
+    (void)out_shape.insert(out_shape.end(), input_shape.begin() + batch_rank, input_shape.end());
+    (void)out_shape.insert(out_shape.end(), input_shape.begin() + batch_rank, input_shape.end());
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("input rank", SizeToLong(input_shape.size()), kGreaterEqual, 1,
+                                             primitive->name());
+    (void)out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
+    (void)out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
+  }
+
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
