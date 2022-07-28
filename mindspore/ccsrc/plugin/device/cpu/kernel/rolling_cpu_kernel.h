@@ -21,7 +21,6 @@
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
