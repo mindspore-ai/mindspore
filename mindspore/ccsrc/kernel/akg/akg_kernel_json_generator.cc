@@ -703,6 +703,27 @@ void AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vec
   }
 }
 
+size_t AkgKernelJsonGenerator::GenHashId(const std::string &info) const {
+  if (!dump_option_.save_ptr_address) {
+    return std::hash<std::string>()(info);
+  }
+  // gen hash id without node address
+  // the format is like {"ptr_address":"0x12345678"}
+  std::string key = std::string("\"") + kJsonKeyPtrAddress + "\"";
+  std::ostringstream result;
+  size_t begin = 0;
+  size_t pos;
+  while ((pos = info.find(key, begin)) != std::string::npos) {
+    result << info.substr(begin, pos - begin);
+    // skip the address
+    auto addr_begin = info.find('\"', pos + key.size());
+    auto addr_end = info.find('\"', addr_begin + 1);
+    begin = addr_end + 1;
+  }
+  result << info.substr(begin);
+  return std::hash<std::string>()(result.str());
+}
+
 bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_json);
@@ -720,7 +741,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   (*kernel_json)[kJsonKeyVersion] = kCurrentInfoVersion;
 
   // gen hash id with the above info.
-  size_t hash_id = std::hash<std::string>()(kernel_json->dump());
+  size_t hash_id = GenHashId(kernel_json->dump());
   kernel_name_ = op_name + "_";
   (void)kernel_name_.append(std::to_string(hash_id));
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
@@ -822,7 +843,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyVersion] = kCurrentInfoVersion;
 
   // gen hash id with the above info.
-  size_t hash_id = std::hash<std::string>()(kernel_json->dump());
+  size_t hash_id = GenHashId(kernel_json->dump());
   auto fg = anf_nodes[0]->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   GenKernelName(fg, hash_id, kernel_json);

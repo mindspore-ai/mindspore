@@ -154,6 +154,7 @@ class AkgKernelJsonGenerator {
   bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *node_json) const;
   size_t GetTensorSize(const nlohmann::json &node_json) const;
   std::string GetProcessorByTarget() const;
+  size_t GenHashId(const std::string &info) const;
   void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
 
   DumpOption dump_option_;
