@@ -101,6 +101,8 @@ from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
 from .ctcloss import _ctcloss_aicpu
+from .median import _median_aicpu
+from .median_grad import _median_grad_aicpu
 from .multi_margin_loss import _multi_margin_loss_aicpu
 from .multi_margin_loss_grad import _multi_margin_loss_grad_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu

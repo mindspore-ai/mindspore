@@ -37,6 +37,7 @@ from ..operations.math_ops import NextAfter
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import MatrixSolve
+from ..operations.math_ops import Median
 from ..operations.math_ops import Betainc
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
@@ -767,6 +768,18 @@ def get_bprop_cross(self):
 
     def bprop(input1, input2, out, dout):
         return cross(input2, dout), cross(dout, input1)
+
+    return bprop
+
+
+@bprop_getters.register(Median)
+def get_bprop_median(self):
+    """Grad definition for 'Median' operation"""
+    input_grad = G.MedianGrad(global_median=self.global_median, axis=self.axis, keep_dims=self.keep_dims)
+
+    def bprop(x, out, dout):
+        dx = F.cast(input_grad(dout[0], x, out[0], out[1]), F.dtype(x))
+        return (dx,)
 
     return bprop
 

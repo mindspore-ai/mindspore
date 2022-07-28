@@ -6199,6 +6199,70 @@ class Trace(Primitive):
         pass
 
 
+class Median(Primitive):
+    """
+    Computes the median of elements of input tensor in the `axis` dimension. If `global_median` is True, computes the
+    median of all elements of tensor.
+
+    .. warning::
+        When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
+
+    Args:
+        global_median (bool): Whether the output tensor is the median of all input tensor elements or not.
+        axis (int): The dimension need to reduce. Default: 0.
+        keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor, whose dtype is int16, int32, int64, float32 or float64.
+
+    Outputs:
+        - **y** (Tensor) - A Tensor, Has the same dtype as the `x`. If `global_median` is true, the `y` has only one
+          element. If `keep_dims` is true, the `y` has the same shape as the `x` except the shape of `y` in dimension
+          `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
+        - **indices** (Tensor) - A Tensor, Has the same shape as the `y`, but dtype is int64.
+
+    Raises:
+        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, double.
+        TypeError: If input `x` is not a Tensor.
+        TypeError: If `global_median` is not a bool.
+        TypeError: If `axis` is not a int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> # case 1 : common median compute
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.math_ops import Median
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[5, 1, 2],[3, 5, 7], [1, 6, 4]]).astype(np.int64))
+        >>> median = Median(global_median=False, axis=0, keep_dims=False)
+        >>> y = median(x)
+        >>> print(y)
+        (Tensor(shape=[3], dtype=Int64, value= [3, 5, 4]), Tensor(shape=[3], dtype=Int64, value= [1, 1, 2]))
+        >>> # case 2 : global median compute
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.math_ops import Median
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[1, 7, 6],[5, 1, 3],[9, 17, 1]]).astype(np.int32))
+        >>> median = Median(global_median=True)
+        >>> y = median(x)
+        >>> print(y)
+        (Tensor(shape=[], dtype=Int32, value= 5), Tensor(shape=[], dtype=Int64, value= 0))
+    """
+
+    @prim_attr_register
+    def __init__(self, global_median=False, axis=0, keep_dims=False):
+        validator.check_value_type("global_median", global_median, [bool], self.name)
+        self.global_median = global_median
+        if global_median is False:
+            validator.check_value_type("axis", axis, [int], self.name)
+            validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+        self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
+
+
 class SparseSegmentMean(Primitive):
     """
     Computes the mean along sparse segments of a Tensor.

@@ -77,6 +77,8 @@ from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
+from mindspore.ops.operations.math_ops import Median
+from mindspore.ops.operations._grad_ops import MedianGrad
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.image_ops import ResizeBicubic
@@ -2211,6 +2213,18 @@ test_case_math_ops = [
         'block': P.MatrixDeterminant(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([1.0, 2.0]).astype(np.float32))]}),
+    ('Median', {
+        'block': Median(global_median=False, axis=0, keep_dims=False),
+        'desc_inputs': [Tensor(np.array([[1.0, 7.0, 6.0], [5.0, 1.0, 3.0], [9.0, 17.0, 1.0]]).astype(np.float32))],
+        'desc_bprop': []}),
+    ('MedianGrad', {
+        'block': MedianGrad(global_median=False, axis=0, keep_dims=False),
+        'desc_inputs': (Tensor(np.array([21, 56, 31]).astype(np.int32)),
+                        Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.int32)),
+                        Tensor(np.array([4, 5, 6]).astype(np.int32)),
+                        Tensor(np.array([1, 1, 1]).astype(np.int64))),
+        'desc_bprop': [],
+        'skip': ['backward']}),
     ('LogMatrixDeterminant', {
         'block': P.LogMatrixDeterminant(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
