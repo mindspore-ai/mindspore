@@ -28,10 +28,15 @@ constexpr size_t kTruncOutputsNum = 1;
 template <typename T>
 void Trunc(const T *in0, T *out0, size_t start, size_t end) {
   for (size_t index = start; index < end; index++) {
-    auto retp = floor(in0[index]);
-    auto retn = ceil(in0[index]);
     int ind = static_cast<int>(in0[index]);
-    out0[index] = (ind < 0) ? retn : retp;
+    if (std::is_same_v<T, std::uint8_t>) {
+      out0[index] = in0[index];
+    } else {
+      auto absvalue1 = (in0[index]) * (in0[index]);
+      auto absvalue = sqrt(absvalue1);
+      auto retp = floor(absvalue);
+      out0[index] = (ind < 0) ? -retp : retp;
+    }
   }
 }
 }  // namespace
@@ -56,6 +61,14 @@ bool TruncCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     ret = LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     ret = LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    ret = LaunchKernel<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    ret = LaunchKernel<int8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    ret = LaunchKernel<uint8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
+    ret = LaunchKernel<int32_t>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
                             << "]: " << TypeIdToType(dtype_)->ToString();
@@ -75,8 +88,11 @@ bool TruncCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 std::vector<KernelAttr> TruncCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
 
   return support_list;
 }

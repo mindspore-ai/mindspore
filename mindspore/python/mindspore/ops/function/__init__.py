@@ -233,6 +233,7 @@ from .math_func import (
     rad2deg,
     truncate_div,
     truncate_mod,
+    trunc,
     gumbel_softmax,
     matmul,
     baddbmm,

@@ -149,6 +149,7 @@ log_matrix_determinant_ = P.LogMatrixDeterminant()
 exp2_ = P.Pow()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
+trunc_ = P.Trunc()
 sparse_segment_mean_ = SparseSegmentMean()
 xlogy_ = P.Xlogy()
 
@@ -2298,6 +2299,32 @@ def truncate_mod(x, y):
         [ 2  1 -1]
     """
     return truncate_mod_(x, y)
+
+
+def trunc(x):
+    r"""
+    Returns a new tensor with the truncated integer values of the elements of input.
+
+    Args:
+        - **x** (Tensor) - Input_x is a tensor.
+
+    Returns:
+        Tensor, the same shape and data type as the input.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
+        >>> trunc = ops.Trunc()
+        >>> output = trunc(x)
+        >>> print(output)
+        [ 3. 0. 0. -3.]
+    """
+    return trunc_(x)
 
 
 def ldexp(x, other):
@@ -5241,6 +5268,7 @@ __all__ = [
     'rad2deg',
     'truncate_div',
     'truncate_mod',
+    'trunc',
     'gumbel_softmax',
     'matmul',
     'baddbmm',
