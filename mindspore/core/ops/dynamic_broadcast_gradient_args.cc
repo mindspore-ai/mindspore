@@ -40,7 +40,7 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     if (input_shape[0] == abstract::Shape::SHP_ANY) {
       auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kMaxShape];
       if (max_shape.empty()) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name << "', input shape is dynamic, but max shape is empty.";
+        return -1;
       }
       return max_shape[0];
     }
@@ -63,6 +63,10 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   auto y_shape0 = CheckInputsAndGetShape(input_args[1], prim_name);
 
   ShapeVector shape{abstract::Shape::SHP_ANY};
+  if (x_shape0 < 0 && y_shape0 < 0) {
+    auto out_shape = std::make_shared<abstract::Shape>(shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
+  }
   ShapeVector min_shape{1L};
   int64_t max_size = x_shape0 > y_shape0 ? x_shape0 : y_shape0;
   ShapeVector max_shape{max_size};

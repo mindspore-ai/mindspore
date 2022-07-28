@@ -2150,8 +2150,8 @@ class SliceGrad(PrimitiveWithInfer):
             max_shape = x['max_shape']
             min_shape = x['min_shape']
         else:
-            max_shape = [1] * dy_shape_len
-            min_shape = [1] * dy_shape_len
+            max_shape = None
+            min_shape = None
         return {'shape': x_shape,
                 'dtype': x['dtype'],
                 'value': None,

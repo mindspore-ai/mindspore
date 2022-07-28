@@ -137,7 +137,6 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   ShapeVector x_shape = input_x->shape()->shape();
   ShapeVector x_min_shape = input_x->shape()->min_shape();
   ShapeVector x_max_shape = input_x->shape()->max_shape();
-  CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
 
   auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
@@ -179,7 +178,6 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   ShapeVector gamma_shape = input_gamma->shape()->shape();
   ShapeVector gamma_min_shape = input_gamma->shape()->min_shape();
   ShapeVector gamma_max_shape = input_gamma->shape()->max_shape();
-  CheckMinMaxShape(gamma_shape, &gamma_min_shape, &gamma_max_shape);
   ShapePtr output_shape_ptr = std::make_shared<Shape>(x_shape, x_min_shape, x_max_shape);
   AbstractTensorPtr output = std::make_shared<AbstractTensor>(input_x->element(), output_shape_ptr);
   ShapePtr gamma_shape_ptr = std::make_shared<Shape>(gamma_shape, gamma_min_shape, gamma_max_shape);
@@ -243,6 +241,22 @@ AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr 
     args_list.push_back(args_spec_list[i]->Broaden());
   }
   return std::make_shared<AbstractTuple>(args_list);
+}
+
+AbstractBasePtr InferImplDropout(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  ShapeVector shape = x->shape()->shape();
+  ShapeVector min_shape = x->shape()->min_shape();
+  ShapeVector max_shape = x->shape()->max_shape();
+  auto output_shape =
+    std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  AbstractBasePtrList ret = {output_shape, output_shape};
+  return std::make_shared<AbstractTuple>(ret);
 }
 
 AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

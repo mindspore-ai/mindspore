@@ -308,18 +308,9 @@ AnfNodePtr CreateMapCacheIdx(const FuncGraphPtr &func_graph, const AnfNodePtr &i
 
   auto indices_ori_shp = indices->Shape();
   auto indices_shp = indices_ori_shp->cast<abstract::ShapePtr>();
-  ShapeVector shape;
-  ShapeVector min_shape;
-  ShapeVector max_shape;
-  if (!indices_shp->max_shape().empty()) {
-    max_shape = indices_shp->max_shape();
-  } else {
-    max_shape = indices_shp->shape();
-  }
-  for (size_t i = 0; i < max_shape.size(); i++) {
-    shape.emplace_back(-1);
-    min_shape.emplace_back(1);
-  }
+  ShapeVector shape(indices_shp->shape().size(), -1);
+  ShapeVector min_shape = indices_shp->min_shape();
+  ShapeVector max_shape = indices_shp->max_shape();
 
   auto cache_idx = std::make_shared<abstract::AbstractTensor>(indices_element_type, indices_shp);
   auto old_emb_idx = std::make_shared<abstract::AbstractTensor>(

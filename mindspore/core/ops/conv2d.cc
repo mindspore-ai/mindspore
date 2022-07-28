@@ -197,14 +197,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto x_max_shape = x_shape_map[kMaxShape];
   auto w_min_shape = w_shape_map[kMinShape];
   auto w_max_shape = w_shape_map[kMaxShape];
-  CheckAndConvertUtils::CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
-  CheckAndConvertUtils::CheckMinMaxShape(w_shape, &w_min_shape, &w_max_shape);
   CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
   CheckShapeAnyAndPositive(prim_name + " w_shape", w_shape);
-  CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
-  CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
-  CheckShapeAllPositive(prim_name + " w_min_shape", w_min_shape);
-  CheckShapeAllPositive(prim_name + " w_max_shape", w_max_shape);
   const uint64_t n_axis = 0;
   uint64_t c_axis = 1;
   uint64_t h_axis = 2;
@@ -250,36 +244,44 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION(ValueError) << "For 'Conv2d', input shape's h and w after padding must be greater than or equal to "
                                 "kernel_size's h and w respectively.";
   }
-
   std::vector<int64_t> output_hw;
   std::vector<int64_t> pad_list;
+  Conv2DPadFunction(&output_hw, &pad_list, x_shape[h_axis], x_shape[w_axis], kernel_size, stride, dilation, pad_mode,
+                    padding);
+  std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),
+                                        MakeValue(pad_list[3])};
+  primitive->set_attr("pad_list", MakeValue(pad_list_val));
+  ShapeVector output_shape;
+
+  output_shape = (data_format == Format::NHWC) ? ShapeVector{x_shape[n_axis], output_hw[0], output_hw[1], out_channel}
+                                               : ShapeVector{x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
+  CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
+
+  if (x_min_shape.empty() || x_max_shape.empty() || w_min_shape.empty() || w_max_shape.empty()) {
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+  CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
+  CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
+  CheckShapeAllPositive(prim_name + " w_min_shape", w_min_shape);
+  CheckShapeAllPositive(prim_name + " w_max_shape", w_max_shape);
   std::vector<int64_t> output_hw_min;
   std::vector<int64_t> pad_list_min;
   std::vector<int64_t> output_hw_max;
   std::vector<int64_t> pad_list_max;
-  Conv2DPadFunction(&output_hw, &pad_list, x_shape[h_axis], x_shape[w_axis], kernel_size, stride, dilation, pad_mode,
-                    padding);
+
   Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
                     dilation, pad_mode, padding, true);
   Conv2DPadFunction(&output_hw_max, &pad_list_max, x_max_shape[h_axis], x_max_shape[w_axis], kernel_size, stride,
                     dilation, pad_mode, padding);
 
-  std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),
-                                        MakeValue(pad_list[3])};
-  primitive->set_attr("pad_list", MakeValue(pad_list_val));
-  ShapeVector output_shape;
   ShapeVector output_shape_min;
   ShapeVector output_shape_max;
-  if (data_format == Format::NHWC) {
-    output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], out_channel};
-    output_shape_min = {x_min_shape[n_axis], output_hw_min[0], output_hw_min[1], out_channel};
-    output_shape_max = {x_max_shape[n_axis], output_hw_max[0], output_hw_max[1], out_channel};
-  } else {
-    output_shape = {x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
-    output_shape_min = {x_min_shape[n_axis], out_channel, output_hw_min[0], output_hw_min[1]};
-    output_shape_max = {x_max_shape[n_axis], out_channel, output_hw_max[0], output_hw_max[1]};
-  }
-  CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
+  output_shape_min = (data_format == Format::NHWC)
+                       ? ShapeVector{x_min_shape[n_axis], output_hw_min[0], output_hw_min[1], out_channel}
+                       : ShapeVector{x_min_shape[n_axis], out_channel, output_hw_min[0], output_hw_min[1]};
+  output_shape_max = (data_format == Format::NHWC)
+                       ? ShapeVector{x_max_shape[n_axis], output_hw_max[0], output_hw_max[1], out_channel}
+                       : ShapeVector{x_max_shape[n_axis], out_channel, output_hw_max[0], output_hw_max[1]};
   CheckShapeAllPositive(prim_name + " output_shape_min", output_shape_min);
   CheckShapeAllPositive(prim_name + " output_shape_max", output_shape_max);
   return std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);

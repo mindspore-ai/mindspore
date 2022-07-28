@@ -42,19 +42,7 @@ abstract::ShapePtr ResizeLinear1DGradInferShape(const PrimitivePtr &primitive,
   ret_shape.push_back(grad_shape[kInputIndex0]);
   ret_shape.push_back(grad_shape[kInputIndex1]);
   ret_shape.push_back(input_x_shape[kInputIndex2]);
-  if (grad_shape_ptr->IsDynamic()) {
-    auto grad_min_shape = grad_shape_ptr->min_shape();
-    std::vector<int64_t> ret_min_shape;
-    ret_min_shape.push_back(grad_min_shape[kInputIndex0]);
-    ret_min_shape.push_back(grad_min_shape[kInputIndex1]);
-    ret_min_shape.push_back(input_x_shape[kInputIndex2]);
-    auto grad_max_shape = grad_shape_ptr->max_shape();
-    std::vector<int64_t> ret_max_shape;
-    ret_max_shape.push_back(grad_max_shape[kInputIndex0]);
-    ret_max_shape.push_back(grad_max_shape[kInputIndex1]);
-    ret_max_shape.push_back(input_x_shape[kInputIndex2]);
-    return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
-  }
+
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 

@@ -46,7 +46,7 @@ abstract::ShapePtr BinaryCrossEntropyGradInferShape(const PrimitivePtr &primitiv
   auto input_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
-  if (min_shape.empty() && max_shape.empty()) {
+  if (min_shape.empty() || max_shape.empty()) {
     return std::make_shared<abstract::Shape>(input_shape);
   }
   return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);

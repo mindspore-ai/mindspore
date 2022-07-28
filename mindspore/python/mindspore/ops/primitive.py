@@ -603,19 +603,19 @@ class PrimitiveWithInfer(Primitive):
         # calculate min/max shape for output
         def get_specified_shape(elems, attr):
             has_specified_shape = False
+            specified_count = 0
             ret_vals = []
             for elem in elems:
                 if attr in elem:
-                    has_specified_shape = True
+                    specified_count += 1
                     ret_vals.append(elem[attr])
-                else:
-                    ret_vals.append(elem['shape'])
+            if specified_count > 0 and specified_count == len(elems):
+                has_specified_shape = True
             return has_specified_shape, tuple(ret_vals)
 
         has_min_shape, min_shapes = get_specified_shape(args, 'min_shape')
         has_max_shape, max_shapes = get_specified_shape(args, 'max_shape')
-        if not (has_min_shape or has_max_shape):
-            return out
+
         if has_min_shape and has_max_shape:
             fn_infer_min_shape = getattr(self, 'infer_shape')
             fn_infer_max_shape = fn_infer_min_shape
@@ -625,8 +625,8 @@ class PrimitiveWithInfer(Primitive):
                 fn_infer_max_shape = getattr(self, 'infer_max_shape')
             out['min_shape'] = fn_infer_min_shape(*min_shapes)
             out['max_shape'] = fn_infer_max_shape(*max_shapes)
-            return out
-        raise ValueError('Input args has invalid dynamic shape, args info: {args}')
+
+        return out
 
 
 def prim_attr_register(fn):
