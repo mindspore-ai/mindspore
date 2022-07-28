@@ -15,11 +15,15 @@
  */
 
 #include "ops/upsample_trilinear_3d.h"
+#include <algorithm>
+#include <memory>
 #include <set>
+#include <string>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
-#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,81 +40,70 @@ void CheckDims(string check_dim_name, string op_name, std::vector<T> check_vecto
 
 abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
-  string op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  const size_t kDimSize5 = 5;
-  if (input_shape.size() != kDimSize5) {
-    MS_EXCEPTION(TypeError) << "input_shape of UpsampleTrilinear3D must be 5, but got" << input_shape.size();
-  }
+  auto prim_name = primitive->name();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
 
-  const size_t kOutputSizeDims = 3;
-  const size_t kScalesDims = 3;
-  auto output_size = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_size"));
-  auto scales = GetValue<std::vector<float>>(primitive->GetAttr("scales"));
-  if (output_size.empty() && scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', either output_size or scales should be defined.";
+  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim5),
+                                           prim_name);
+
+  auto output_size_ptr = primitive->GetAttr(kOutputSize);
+  MS_EXCEPTION_IF_NULL(output_size_ptr);
+  auto output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
+
+  auto scales_ptr = primitive->GetAttr(kScales);
+  MS_EXCEPTION_IF_NULL(scales_ptr);
+  auto scales = GetValue<std::vector<float>>(scales_ptr);
+
+  ShapeVector output_shape;
+  output_shape.emplace_back(x_shape[kInputIndex0]);
+  output_shape.emplace_back(x_shape[kInputIndex1]);
+
+  if (!output_size.empty() && scales.empty()) {
+    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("the elements number of output_size", SizeToLong(output_size.size()),
+                                             kEqual, SizeToLong(kDim3), prim_name);
+    output_shape.insert(output_shape.end(), output_size.begin(), output_size.end());
+  } else if (output_size.empty() && !scales.empty()) {
+    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("the elements number of scales", SizeToLong(scales.size()), kEqual,
+                                             SizeToLong(kDim3), prim_name);
+    for (size_t idx = 0; idx < kDim3; ++idx) {
+      output_shape.emplace_back(int64_t(floor(x_shape[idx + kDim2] * scales[idx])));
+    }
+  } else if (output_size.empty() && scales.empty()) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                             << " But get both empty or None.";
   } else if (!output_size.empty() && !scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', only one of output_size or scales should be defined.";
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                             << " But get both.";
   }
-  if (!output_size.empty() && output_size.size() != kOutputSizeDims) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', output_size must be size of 3, but got "
-                             << std::to_string(output_size.size()) << ".";
-  }
-  if (!scales.empty() && scales.size() != kScalesDims) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', scales must be size of 3, but got "
-                             << std::to_string(scales.size()) << ".";
-  }
-  string name_ = "scales";
-  std::vector<int64_t> output_shape(input_shape.size());
-  output_shape[0] = input_shape[0];
-  output_shape[1] = input_shape[1];
-  if (output_size.empty()) {
-    CheckDims(name_, op_name, scales);
-    output_shape[kInputIndex2] = static_cast<int64_t>(std::floor(input_shape[kInputIndex2] * scales[kInputIndex0]));
-    output_shape[kInputIndex3] = static_cast<int64_t>(std::floor(input_shape[kInputIndex3] * scales[kInputIndex1]));
-    output_shape[kInputIndex4] = static_cast<int64_t>(std::floor(input_shape[kInputIndex4] * scales[kInputIndex2]));
-  } else {
-    name_ = "output_size";
-    CheckDims(name_, op_name, output_size);
-    output_shape[kInputIndex2] = output_size[kInputIndex0];
-    output_shape[kInputIndex3] = output_size[kInputIndex1];
-    output_shape[kInputIndex4] = output_size[kInputIndex2];
-  }
-  if (input_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-
-  name_ = "output_shape";
-  CheckDims(name_, op_name, output_shape);
+  constexpr auto name_ = "output_shape";
+  CheckDims(name_, prim_name, output_shape);
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr UpsampleTrilinear3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  TypePtr input_type = input_args[kInputIndex0]->BuildType();
-  return CheckAndConvertUtils::CheckTypeValid("x", input_type, valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), common_float_types,
+                                                    primitive->name());
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(UpsampleTrilinear3D, BaseOperator);
 AbstractBasePtr UpsampleTrilinear3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto prim_name = primitive->name();
+  constexpr int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto infer_type = UpsampleTrilinear3DInferType(primitive, input_args);
   auto infer_shape = UpsampleTrilinear3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-
 std::vector<int64_t> UpsampleTrilinear3D::get_out_spatial_size() const {
-  auto value_ptr = this->GetAttr("output_size");
+  auto value_ptr = this->GetAttr(kOutputSize);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 std::vector<float> UpsampleTrilinear3D::get_scale_factors() const {
-  auto value_ptr = this->GetAttr("scales");
+  auto value_ptr = this->GetAttr(kScales);
   return GetValue<std::vector<float>>(value_ptr);
 }
 bool UpsampleTrilinear3D::get_align_corners() const {
@@ -118,6 +111,7 @@ bool UpsampleTrilinear3D::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
+MIND_API_OPERATOR_IMPL(UpsampleTrilinear3D, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleTrilinear3D, prim::kPrimUpsampleTrilinear3D, UpsampleTrilinear3DInfer, nullptr,
                              true);
 }  // namespace ops

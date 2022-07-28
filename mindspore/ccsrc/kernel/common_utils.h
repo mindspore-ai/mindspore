@@ -246,6 +246,51 @@ inline size_t NearestIndex(const size_t &output_index, const size_t &input_size,
 }
 
 template <typename T>
+inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, bool align_corners, double scale) {
+  if (align_corners) {
+    if (output_size > 1) {
+      return static_cast<T>(input_size - 1) / (output_size - 1);
+    } else {
+      return static_cast<T>(0);
+    }
+  } else {
+    return ComputeScales<T>(scale, input_size, output_size);
+  }
+}
+
+template <typename T>
+inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool align_corners) {
+  if (align_corners) {
+    return scale * static_cast<T>(dst_index);
+  } else {
+    constexpr T zero = 0.;
+    T src_idx = scale * (dst_index + 0.5) - 0.5;
+    return src_idx < zero ? zero : src_idx;
+  }
+}
+
+template <typename T>
+inline void ComputeSourceIndexAndLambda(int64_t *const input_index0, int64_t *const input_index1, T *const lambda0,
+                                        T *const lambda1, T ratio, int64_t output_index, int64_t input_size,
+                                        int64_t output_size, bool align_corners) {
+  if (output_size == input_size) {
+    // scale_factor = 1
+    *input_index0 = output_index;
+    *input_index1 = output_index;
+    *lambda0 = static_cast<T>(1);
+    *lambda1 = static_cast<T>(0);
+  } else {
+    const T real_input_index = AreaPixelComputeSourceIndex<T>(ratio, output_index, align_corners);
+    *input_index0 = static_cast<int64_t>(real_input_index);
+    int64_t offset = (*input_index0 < input_size - 1) ? 1 : 0;
+    *input_index1 = *input_index0 + offset;
+    *lambda1 = real_input_index - static_cast<T>(*input_index0);
+    constexpr T one = 1.0;
+    *lambda0 = one - *lambda1;
+  }
+}
+
+template <typename T>
 inline std::string Vector2Str(const std::vector<T> &inputs) {
   if (!inputs.empty()) {
     std::ostringstream oss;

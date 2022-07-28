@@ -246,7 +246,7 @@ def test_upsample_nearest_3d_error():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2), dtype=np.float32))
         net = UpsampleTrilinear3DNet(output_size=[3, 4, 5])
         net(input_tensor)

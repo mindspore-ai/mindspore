@@ -274,7 +274,7 @@ class Validator:
     @staticmethod
     def check_positive_int_sequence(sequence, arg_name=None, prim_name=None):
         """
-        Check argument is positive sequence, which mean all element > 0 in sequence.
+        Check argument is positive int sequence, which mean all element > 0 in sequence.
 
         Usage:
         - sequence = check_positive_int_sequence(sequence)

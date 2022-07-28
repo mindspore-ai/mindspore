@@ -3744,6 +3744,92 @@ class ResizeBilinear(PrimitiveWithInfer):
         return input_dtype
 
 
+class UpsampleTrilinear3D(Primitive):
+    r"""
+    Performs upsampling with trilinear interpolation across 3dims for 5dim inputs.
+
+    This operator scale up the volumetric input with specified `output_size` or `scales` factors,
+    using trilinear upscaling algorithm.
+
+    Note:
+        One of `scales` and `output_size` MUST be specified and it is an error if both are specified.
+
+    Args:
+        output_size (Union[tuple[int], list[int]]):  A tuple or list of 3 int
+            elements :math:`(output\_depth, output\_height, output\_width)`.
+            Defaults to None. Only one of `scales` and `output_size` can be specified.
+        scales (Union[tuple[float], list[float]]): A tuple or list of 3 float
+           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to None.
+        align_corners (bool): An optional bool. Defaults to false.
+            If true, the input and output tensors are aligned by the center points of their corner pixels,
+            preserving the values at the corner pixels.
+            If false, the input and output tensors are aligned by the corner points of their corner pixels,
+            and the interpolation use edge value padding for out of boundary values.
+
+    Inputs:
+        - **x** (Tensor) - A 5-D input tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+          Must be one of the following types: float16, float32, float64.
+
+    Outputs:
+        - **y** (Tensor) - Upsampled output with the same data type as `x`.
+          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
+        TypeError: If type of `align_corners` is not bool.
+        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
+        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
+        ValueError: If shape of `x` is not 5D.
+        ValueError: If none of `scales` and `output_size` is specified or both specified.
+        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
+        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> ops = P.UpsampleTrilinear3D(output_size=[4, 64, 48])
+        >>> out = ops(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)))
+        >>> print(out.shape)
+        (2, 3, 4, 64, 48)
+
+        >>> ops = P.UpsampleTrilinear3D(output_size=[2, 4, 4])
+        >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
+        >>> out = ops(in_x)
+        >>> print(out)
+        [[[[[1.   1.25 1.75 2.  ]
+            [1.5  1.75 2.25 2.5 ]
+            [2.5  2.75 3.25 3.5 ]
+            [3.   3.25 3.75 4.  ]]
+           [[1.   1.25 1.75 2.  ]
+            [1.5  1.75 2.25 2.5 ]
+            [2.5  2.75 3.25 3.5 ]
+            [3.   3.25 3.75 4.  ]]]]]
+    """
+    @prim_attr_register
+    def __init__(self, output_size=None, scales=None, align_corners=False):
+        """Initialize UpsampleTrilinear3D."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        self.output_size = [] if output_size is None else output_size
+        self.scales = [] if scales is None else scales
+        self.align_corners = align_corners
+
+        validator.check_value_type("output_size", self.output_size, [list, tuple], self.name)
+        validator.check_value_type("scales", self.scales, [list, tuple], self.name)
+        validator.check_bool(self.align_corners, "align_corners", self.name)
+        if len(self.output_size) == 3:
+            validator.check_positive_int_sequence(self.output_size, "output_size", self.name)
+        if len(self.scales) == 3:
+            validator.check_positive_float_sequence(self.scales, "scales", self.name)
+
+        self.add_prim_attr('output_size', self.output_size)
+        self.add_prim_attr('scales', self.scales)
+        self.add_prim_attr('align_corners', self.align_corners)
+
+
+
 class OneHot(Primitive):
     r"""
     Computes a one-hot tensor.
@@ -10146,84 +10232,6 @@ class Pdist(Primitive):
         if p < 0:
             raise ValueError('Pdist p must be a non-negative value, but got `{p}`.')
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
-class UpsampleTrilinear3D(Primitive):
-    r"""
-    Performs upsampling with trilinear interpolation across 3dims for 5dim inputs.
-
-    This operator scale up the volumetric input with specified `output_size` or `scales` factors,
-    using trilinear upscaling algorithm.
-
-    One of `output_size` or `scales` must be given, and cannot specify both.
-
-    Args:
-        output_size (Union[tuple[int], list[int]]): A list of int specifying the output volumetric size. Default: None.
-        scales (Union[tuple[float], list[float]]): A list of float specifying the upsampling factors. Default: None.
-        align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
-                       which exactly aligns the 4 corners of images and resized images. If false,
-                       rescale by :math:`new\_height / height`. Default: False.
-
-    Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-
-    Outputs:
-        - **y** (Tensor) - Upsampled output with the same data type as `x`.
-          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: If `x` is not a 5D tensor.
-        TypeError: If data type of `x` is not float16, float32.
-        TypeError: If data type of `output_size` is not list(int).
-        TypeError: If data type of `scales` is not list(float).
-        TypeError: If `align_corners` is not a bool.
-        ValueError: If `output_size` is a list and if `output_size` length is not 3.
-        ValueError: If `scales` is a list and if `scales` length is not 3.
-        ValueError: If both `output_size` and `scales` are None.
-        ValueError: If both `output_size` and `scales` are non-empty lists.
-
-
-    Supported Platforms:
-        ``GPU``
-
-    Examples:
-        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
-        >>> output_size = [3, 4, 5]
-        >>> net = ops.UpsampleTrilinear3D(output_size = output_size)
-        >>> output = net(x)
-        >>> print(output)
-        [[[[[ 1.  1.7       2.5   3.3   4.]
-            [ 2.  2.7       3.5   4.3   5.]
-            [ 4.  4.7       5.5   6.3   7.]
-            [ 5.  5.7       6.5   7.3   8.]]
-           [[ 5.  5.7       6.5   7.3   8.]
-            [ 6.  6.7       7.5   8.3   9.]
-            [ 8.  8.700001  9.5   10.3  11.]
-            [ 9.  9.700001 10.5   11.3  12.]]
-           [[ 9.  9.7       10.5  11.3  12.]
-            [10.  10.7      11.5  12.3  13.]
-            [12.  12.700001 13.5  14.3  15.]
-            [13.  13.700001 14.5  15.3  16.]]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self, output_size=None, scales=None, align_corners=False):
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        if output_size is None:
-            output_size = []
-        if scales is None:
-            scales = []
-        validator.check_value_type('output_size', output_size, [tuple, list], self.name)
-        for item in output_size:
-            validator.check_value_type('output_size_item', item, int, self.name)
-        validator.check_value_type('scales', scales, [tuple, list], self.name)
-        for item in scales:
-            validator.check_value_type('scales_item', item, float, self.name)
-        validator.check_value_type('align_corners', align_corners, bool, self.name)
-        self.add_prim_attr('output_size', output_size)
-        self.add_prim_attr('scales', scales)
-        self.add_prim_attr('align_corners', align_corners)
 
 
 class UpsampleNearest3D(Primitive):
