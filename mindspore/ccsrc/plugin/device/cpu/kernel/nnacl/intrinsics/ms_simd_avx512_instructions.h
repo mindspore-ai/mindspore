@@ -32,6 +32,9 @@
 #pragma GCC push_options
 #pragma GCC target("avx512f")
 
+#define PI 3.1415926f
+#define LN2 0.693147f
+
 #define MS_FLOAT32X16 __m512
 #define MS_FLOAT512_F32 __m512
 #define MS_INT32X16 __m512i
@@ -57,8 +60,6 @@
 #define MS_MIN512_EPI32 _mm512_min_epi32
 #define MS_SQRT512_F32 _mm512_sqrt_ps
 #define MS_RSQRT512_F32 _mm512_rsqrt14_ps
-#define MS_LOG512_F32 _mm512_log_ps
-#define MS_COS512_F32 _mm512_cos_ps
 #define MS_SIN512_F32 _mm512_sin_ps
 #define MS_ERF512_F32 _mm512_erf_ps
 #define MS_ABS512_F32 _mm512_abs_ps
@@ -93,12 +94,19 @@
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 #define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
 
+#define MS512_SRLI_EPI32(src1, src2) _mm512_srli_epi32(src1, src2)
+#define MS512_AND_EPI32(src1, src2) _mm512_and_si512(src1, src2)
+#define MS512_CASTPS_EPI32(src) _mm512_castps_si512(src)
+#define MS_OR512_EPI32(src1, src2) _mm512_or_epi32(src1, src2)
+#define MS_AND512_EPI32(src1, src2) _mm512_and_epi32(src1, src2)
+
 static inline MS_FLOAT512_F32 MS_OR512_F32(MS_FLOAT512_F32 src1, MS_FLOAT512_F32 src2) {
-  /* _mm512_or_ps valid in avx512dq */
-  MS_FLOAT512_F32 result;
-  for (int i = 0; i < 16; i++) {
-    result[i] = (MS512_F32_GETI(src1, i) == 0) ? MS512_F32_GETI(src2, i) : MS512_F32_GETI(src1, i);
-  }
+  MS_FLOAT512_F32 result = MS_CAST512_F32_S32(MS_OR512_EPI32(MS512_CASTPS_EPI32(src1), MS512_CASTPS_EPI32(src2)));
+  return result;
+}
+
+static inline MS_FLOAT512_F32 MS512_ANDNOT_F32(MS_FLOAT512_F32 src1, MS_FLOAT512_F32 src2) {
+  MS_FLOAT512_F32 result = MS_CAST512_F32_S32(MS_AND512_EPI32(~MS512_CASTPS_EPI32(src1), MS512_CASTPS_EPI32(src2)));
   return result;
 }
 
@@ -129,25 +137,90 @@ static inline MS_FLOAT32X16 MS_POW512_F32(MS_FLOAT32X16 src1, MS_FLOAT32X16 src2
   return dst;
 }
 
+static inline MS_FLOAT32X16 MS_COS512_F32(MS_FLOAT32X16 src) {
+  static const MS_FLOAT32X16 pi = {PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI, PI};
+  static const MS_FLOAT32X16 pi2_neg = {-2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI,
+                                        -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI, -2 * PI};
+  static const MS_FLOAT32X16 div_pi2 = {1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI),
+                                        1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI),
+                                        1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI),
+                                        1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI), 1.0f / (2 * PI)};
+  MS_FLOAT512_F32 src_abs = MS_ABS512_F32(src);
+  MS_FLOAT512_F32 src_cycle =
+    MS_ADD512_F32(MS_MUL512_F32(MS_FLOOR512_F32(MS_MUL512_F32(MS_ADD512_F32(src_abs, pi), div_pi2)), pi2_neg), src_abs);
+  static const MS_FLOAT512_F32 data0 = {1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90,
+                                        1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90,
+                                        1.0f / 90, 1.0f / 90, 1.0f / 90, 1.0f / 90};
+  static const MS_FLOAT512_F32 data1 = {1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56,
+                                        1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56,
+                                        1.0f / 56, 1.0f / 56, 1.0f / 56, 1.0f / 56};
+  static const MS_FLOAT512_F32 data2 = {1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30,
+                                        1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30,
+                                        1.0f / 30, 1.0f / 30, 1.0f / 30, 1.0f / 30};
+  static const MS_FLOAT512_F32 data3 = {1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12,
+                                        1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12,
+                                        1.0f / 12, 1.0f / 12, 1.0f / 12, 1.0f / 12};
+  static const MS_FLOAT512_F32 data4 = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+                                        0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+  static const MS_FLOAT32X16 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
+                                    -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X16 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                                    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
+  MS_FLOAT32X16 square = MS_MUL512_F32(src_cycle, src_cycle);
+
+  MS_FLOAT32X16 tmp =
+    MS_MUL512_F32(MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(MS_MUL512_F32(neg, square), data0), pos), square), data1);
+  MS_FLOAT32X16 tmp1 = MS_MUL512_F32(MS_MUL512_F32(MS_ADD512_F32(tmp, neg), square), data2);
+  MS_FLOAT512_F32 res = MS_ADD512_F32(
+    MS_MUL512_F32(
+      MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(MS_MUL512_F32(MS_ADD512_F32(tmp1, pos), square), data3), neg), square),
+      data4),
+    pos);
+  return res;
+}
+
 static inline MS_FLOAT32X16 MS512_LOG_F32(MS_FLOAT32X16 src) {
-  MS_FLOAT32X16 dst;
-  MS512_F32_GETI(dst, 0) = logf(MS512_F32_GETI(src, 0));
-  MS512_F32_GETI(dst, 1) = logf(MS512_F32_GETI(src, 1));
-  MS512_F32_GETI(dst, 2) = logf(MS512_F32_GETI(src, 2));
-  MS512_F32_GETI(dst, 3) = logf(MS512_F32_GETI(src, 3));
-  MS512_F32_GETI(dst, 4) = logf(MS512_F32_GETI(src, 4));
-  MS512_F32_GETI(dst, 5) = logf(MS512_F32_GETI(src, 5));
-  MS512_F32_GETI(dst, 6) = logf(MS512_F32_GETI(src, 6));
-  MS512_F32_GETI(dst, 7) = logf(MS512_F32_GETI(src, 7));
-  MS512_F32_GETI(dst, 8) = logf(MS512_F32_GETI(src, 8));
-  MS512_F32_GETI(dst, 9) = logf(MS512_F32_GETI(src, 9));
-  MS512_F32_GETI(dst, 10) = logf(MS512_F32_GETI(src, 10));
-  MS512_F32_GETI(dst, 11) = logf(MS512_F32_GETI(src, 11));
-  MS512_F32_GETI(dst, 12) = logf(MS512_F32_GETI(src, 12));
-  MS512_F32_GETI(dst, 13) = logf(MS512_F32_GETI(src, 13));
-  MS512_F32_GETI(dst, 14) = logf(MS512_F32_GETI(src, 14));
-  MS512_F32_GETI(dst, 15) = logf(MS512_F32_GETI(src, 15));
-  return dst;
+  const MS_INT512_EPI32 gFloatExpMask = MS_MOV512_EPI32(0xffULL << 23);
+  const MS_INT512_EPI32 gFloatExp0 = MS_MOV512_EPI32(127ULL << 23);
+  const MS_INT512_EPI32 gExpNormalizer = MS_MOV512_EPI32(127);
+  static const MS_FLOAT512_F32 data0 = {1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11,
+                                        1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11,
+                                        1.0f / 11, 1.0f / 11, 1.0f / 11, 1.0f / 11};
+  static const MS_FLOAT512_F32 data1 = {1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9,
+                                        1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9, 1.0f / 9};
+  static const MS_FLOAT512_F32 data2 = {1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7,
+                                        1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7, 1.0f / 7};
+  static const MS_FLOAT512_F32 data3 = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f,
+                                        0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
+  static const MS_FLOAT512_F32 data4 = {1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3,
+                                        1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3, 1.0f / 3};
+  static const MS_FLOAT512_F32 data5 = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                                        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT512_F32 data6 = {2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f,
+                                        2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f, 2.0f};
+  static const MS_FLOAT32X16 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
+                                    -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
+  static const MS_FLOAT32X16 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                                    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT32X16 ln2 = {LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2, LN2};
+
+  const MS_INT512_EPI32 exps32 = MS512_SRLI_EPI32(MS512_AND_EPI32(gFloatExpMask, MS512_CASTPS_EPI32(src)), 23);
+  const MS_INT512_EPI32 normExps = MS_SUB512_EPI32(exps32, gExpNormalizer);
+  const MS_FLOAT32X16 expsPD = MS_CVT512EPI32_PS(normExps);
+  const MS_FLOAT32X16 y =
+    MS_OR512_F32(MS_CAST512_F32_S32(gFloatExp0), MS512_ANDNOT_F32(MS_CAST512_F32_S32(gFloatExpMask), src));
+  MS_FLOAT32X16 div = MS_DIV512_F32(MS_ADD512_F32(y, neg), MS_ADD512_F32(y, pos));
+  MS_FLOAT32X16 square = MS_MUL512_F32(div, div);
+
+  MS_FLOAT32X16 tmp = MS_ADD512_F32(
+    MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(square, MS_ADD512_F32(MS_MUL512_F32(square, data0), data1)), data2),
+                  square),
+    data3);
+  MS_FLOAT32X16 tmp1 = MS_MUL512_F32(square, MS_ADD512_F32(MS_MUL512_F32(square, tmp), data4));
+  MS_FLOAT32X16 res =
+    MS_ADD512_F32(MS_MUL512_F32(ln2, expsPD), MS_MUL512_F32(MS_MUL512_F32(div, MS_ADD512_F32(tmp1, data5)), data6));
+  return res;
 }
 
 #define MS_DIV512_EPI32(src1, src2) \
