@@ -93,15 +93,19 @@ Status OneHotInfo::InferTensorMap() {
   size_t size = outputs_shape_[0].size();
   if (axis_ == 0) {
     for (size_t i = 0; i < size; ++i) {
-      output_tensor_map_index.push_back((int64_t)(i));
+      output_tensor_map_index.push_back(static_cast<int64_t>(i));
     }
     input_tensor_map_index.push_back(1);
   } else {
     for (size_t i = 0; i < size; ++i) {
-      output_tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+      output_tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(size) - i));
+    }
+    if (size < 1) {
+      MS_LOG(ERROR)
+        << "Failure:OneHot outputs_shape_ is less than 1, you should change the strategy of OneHot primitive ";
     }
     for (size_t i = 0; i < size - 1; ++i) {
-      input_tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+      input_tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(size) - i));
     }
   }
   outputs_tensor_map_.push_back(output_tensor_map_index);

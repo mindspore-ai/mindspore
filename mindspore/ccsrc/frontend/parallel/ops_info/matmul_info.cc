@@ -299,12 +299,12 @@ Status MatMulBase::InferTensorMap() {
   Shape tensor_map_index;
   // such as 5: tensor_map_index [4,3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+    tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(size) - i));
   }
 
   // infer output tensor map: [4,3,2,0], delete the second-from-end element
   TensorMap output_tensor_map = tensor_map_index;
-  (void)output_tensor_map.erase(output_tensor_map.begin() + static_cast<different_type>(SECOND_FROM_END(size)));
+  (void)output_tensor_map.erase(output_tensor_map.cbegin() + static_cast<different_type>(SECOND_FROM_END(size)));
 
   // infer mat_a tensor map
   // for example: mat_a_dimension is 4, mat_a tensor map:[4,3,2,1]
@@ -313,23 +313,23 @@ Status MatMulBase::InferTensorMap() {
   mat_a_tensor_map.pop_back();
   // delete the first (dev_matrix_size - 1 - mat_a_dimension) elements
   (void)mat_a_tensor_map.erase(
-    mat_a_tensor_map.begin(),
-    mat_a_tensor_map.begin() + static_cast<different_type>(LAST_INDEX(size) - mat_a_dimension_));
+    mat_a_tensor_map.cbegin(),
+    mat_a_tensor_map.cbegin() + static_cast<different_type>(LAST_INDEX(size) - mat_a_dimension_));
 
   // infer mat_b tensor map
   TensorMap mat_b_tensor_map = tensor_map_index;
   // delete the third-to-last element
-  (void)mat_b_tensor_map.erase(mat_b_tensor_map.begin() + static_cast<different_type>(THIRD_FROM_END(size)));
+  (void)mat_b_tensor_map.erase(mat_b_tensor_map.cbegin() + static_cast<different_type>(THIRD_FROM_END(size)));
   // delete the first (dev_matrix_size - 1 - mat_b_dimension) elements
   (void)mat_b_tensor_map.erase(
-    mat_b_tensor_map.begin(),
-    mat_b_tensor_map.begin() + static_cast<different_type>(LAST_INDEX(size) - mat_b_dimension_));
+    mat_b_tensor_map.cbegin(),
+    mat_b_tensor_map.cbegin() + static_cast<different_type>(LAST_INDEX(size) - mat_b_dimension_));
   if (transpose_b_) {
     // swap the last two elements
     int64_t last_value = mat_b_tensor_map.back();
     mat_b_tensor_map.pop_back();
     (void)mat_b_tensor_map.insert(
-      mat_b_tensor_map.begin() + static_cast<different_type>(LAST_INDEX(mat_b_tensor_map.size())), last_value);
+      mat_b_tensor_map.cbegin() + static_cast<different_type>(LAST_INDEX(mat_b_tensor_map.size())), last_value);
   }
 
   if (forward_reduce_scatter_) {
@@ -351,13 +351,13 @@ Status MatMulBase::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts
     if (repeated_num_in_dev_matrix_right_ || repeated_calc_num_ == 1) {
       // dev_matrix_shape_ is: [a, b, c, repeat_num] or [a, b, c]
       // out_dev_matrix_shape_ is: [a*b, c, repeat_num] or [a*b, c]
-      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.begin(), out_dev_matrix_shape_.begin() + 2);
-      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.begin(), dev_matrix_shape_[0] * dev_matrix_shape_[1]);
+      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.cbegin(), out_dev_matrix_shape_.cbegin() + 2);
+      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.cbegin(), dev_matrix_shape_[0] * dev_matrix_shape_[1]);
     } else {
       // dev_matrix_shape_ is: [repeat_num, a, b, c]
       // out_dev_matrix_shape_ is: [repeat_num, a*b, c]
-      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.begin() + 1, out_dev_matrix_shape_.begin() + 3);
-      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.begin() + 1,
+      (void)out_dev_matrix_shape_.erase(out_dev_matrix_shape_.cbegin() + 1, out_dev_matrix_shape_.cbegin() + 3);
+      (void)out_dev_matrix_shape_.insert(out_dev_matrix_shape_.cbegin() + 1,
                                          dev_matrix_shape_[1] * dev_matrix_shape_[2]);
     }
   }
@@ -469,9 +469,10 @@ std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
     // mat_b_strategy: init [A, B, C, D, E]
     Dimensions mat_b_strategy = tmp_strategy;
     // mat_b_strategy: delete C, [A, B, D, E]
-    (void)mat_b_strategy.erase(mat_b_strategy.end() - 3);
+    (void)mat_b_strategy.erase(mat_b_strategy.cend() - 3);
     // mat_b_strategy: delete A, [B, D, E]
-    (void)mat_b_strategy.erase(mat_b_strategy.begin(), mat_b_strategy.begin() + static_cast<different_type>(diff_len));
+    (void)mat_b_strategy.erase(mat_b_strategy.cbegin(),
+                               mat_b_strategy.cbegin() + static_cast<different_type>(diff_len));
     // handle transpose_b
     if (transpose_b_) {
       (void)SwapLastTwoElements(&mat_b_strategy);
@@ -485,7 +486,7 @@ std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
 
 std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
   Dimensions batch_strategy(inputs_shape_[1].size() - 1, 1);
-  (void)batch_strategy.insert(batch_strategy.begin(), stage_device_size_);
+  (void)batch_strategy.insert(batch_strategy.cbegin(), stage_device_size_);
   Strategies strategy_v = {batch_strategy, batch_strategy};
   return std::make_shared<Strategies>(strategy_v);
 }

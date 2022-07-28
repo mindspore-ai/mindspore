@@ -44,6 +44,7 @@ namespace parallel {
  *  global_size = input_w2_shape[3] * 16
  *  v_embedding = input_v_shape[1] * 16 // head
  */
+constexpr size_t kLocalMaskDim = 2;
 Status DSDMatmulInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
@@ -108,36 +109,36 @@ Status DSDMatmulInfo::InferTensorMap() {
   // input_tensor_map_w1 [6, 5, -1, -1, -1, -1, -1]
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
     if (i <= 1) {
-      input_tensor_map_w1.push_back((int64_t)(inputs_shape_[0].size() - i - 1));
+      input_tensor_map_w1.push_back(static_cast<int64_t>(inputs_shape_[0].size() - i - 1));
     } else {
-      input_tensor_map_w1.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_w1.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap input_tensor_map_w2;
   // input_tensor_map_w2 [6, 5, -1, -1, -1, -1, -1]
   for (size_t i = 0; i < inputs_shape_[1].size(); ++i) {
     if (i <= 1) {
-      input_tensor_map_w2.push_back((int64_t)(inputs_shape_[1].size() - i - 1));
+      input_tensor_map_w2.push_back(static_cast<int64_t>(inputs_shape_[1].size() - i - 1));
     } else {
-      input_tensor_map_w2.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_w2.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap input_tensor_map_v;
   // input_tensor_map_local_mask [6, 5, -1, -1]
-  for (size_t i = 0; i < inputs_shape_[2].size(); ++i) {
+  for (size_t i = 0; i < inputs_shape_[kLocalMaskDim].size(); ++i) {
     if (i <= 1) {
-      input_tensor_map_v.push_back((int64_t)(inputs_shape_[2].size() + 2 - i));
+      input_tensor_map_v.push_back(static_cast<int64_t>(inputs_shape_[kLocalMaskDim].size() + kLocalMaskDim - i));
     } else {
-      input_tensor_map_v.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_v.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap output_tensor_map;
   // output_tensor_map [6, 5, -1, -1, -1, -1]
   for (size_t i = 0; i < outputs_shape_[0].size(); ++i) {
     if (i <= 1) {
-      output_tensor_map.push_back((int64_t)(outputs_shape_[0].size() - i));
+      output_tensor_map.push_back(static_cast<int64_t>(outputs_shape_[0].size() - i));
     } else {
-      output_tensor_map.push_back((int64_t)(MAP_NONE));
+      output_tensor_map.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   inputs_tensor_map_.push_back(input_tensor_map_w1);

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ELEMENTARY_FUNCTION_INFO_H_
 
 #include <string>
-#include <vector>
 #include <memory>
 #include "utils/hash_map.h"
 #include "ir/value.h"

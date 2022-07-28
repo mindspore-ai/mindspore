@@ -44,8 +44,8 @@ class LayerNormInfo : public OperatorInfo {
         begin_norm_axis_(0) {}
   ~LayerNormInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
   Status GetAttrs() override;

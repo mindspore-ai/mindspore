@@ -112,7 +112,7 @@ std::vector<StrategyPtr> DropoutDoMaskInfo::GenerateOpStrategies(int64_t stage_i
 
 std::shared_ptr<Strategies> DropoutDoMaskInfo::GenerateBatchStrategies() {
   Dimensions strategy(inputs_shape_[0].size() - 1, 1);
-  (void)strategy.insert(strategy.begin(), stage_device_size_);
+  (void)strategy.insert(strategy.cbegin(), stage_device_size_);
   Strategies strategy_v = {strategy};
   return std::make_shared<Strategies>(strategy_v);
 }

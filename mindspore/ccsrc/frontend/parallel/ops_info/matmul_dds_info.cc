@@ -43,6 +43,8 @@ namespace parallel {
  *  Only bs and num_heads can be splited, thus the q[0] should at least be size_per_head,
  *  q[1] should at least be seq_len // 16. The strategy check can use bs/head from attrs.
  */
+constexpr size_t kLocalMaskDim2 = 2;
+constexpr size_t kLocalMaskDim3 = 3;
 Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
   if (stras.size() != MATMUL_DDS_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys size should be 4.";
@@ -63,10 +65,11 @@ Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
                   << " ,and should be divisible by num_heads: " << num_heads_;
     return FAILED;
   }
-  if (stras[0][1] != stras[1][1] || stras[0][1] != stras[2][1] || stras[0][1] != stras[3][0]) {
+  if (stras[0][1] != stras[1][1] || stras[0][1] != stras[kLocalMaskDim2][1] ||
+      stras[0][1] != stras[kLocalMaskDim3][0]) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys[0][1]:" << stras[0][1]
-                  << ", strategys[1][1]:" << stras[1][1] << ", strategys[2][1]:" << stras[2][1]
-                  << ", strategys[3][0]:" << stras[3][0] << " should be the same.";
+                  << ", strategys[1][1]:" << stras[1][1] << ", strategys[2][1]:" << stras[kLocalMaskDim2][1]
+                  << ", strategys[3][0]:" << stras[kLocalMaskDim3][0] << " should be the same.";
     return FAILED;
   }
   if (batch_size_ % stras[0][1] != 0) {
@@ -142,58 +145,60 @@ Status MatmulDDSInfo::InferTensorMap() {
   // input_tensor_map_q [6, 5, -1, -1]
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
     if (i <= 1) {
-      input_tensor_map_q.push_back((int64_t)(inputs_shape_[0].size() + 3 - i - 1));
+      input_tensor_map_q.push_back(static_cast<int64_t>(inputs_shape_[0].size() + kLocalMaskDim3 - i - 1));
     } else {
-      input_tensor_map_q.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_q.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap input_tensor_map_k;
   // input_tensor_map_k [6, 5, -1, -1]
   for (size_t i = 0; i < inputs_shape_[1].size(); ++i) {
     if (i <= 1) {
-      input_tensor_map_k.push_back((int64_t)(inputs_shape_[1].size() + 3 - i - 1));
+      input_tensor_map_k.push_back(static_cast<int64_t>(inputs_shape_[1].size() + kLocalMaskDim3 - i - 1));
     } else {
-      input_tensor_map_k.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_k.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap input_tensor_map_local_mask;
   // input_tensor_map_local_mask [-1, 5, -1, -1]
-  for (size_t i = 0; i < inputs_shape_[2].size(); ++i) {
+  for (size_t i = 0; i < inputs_shape_[kLocalMaskDim2].size(); ++i) {
     if (i == 1) {
-      input_tensor_map_local_mask.push_back((int64_t)(inputs_shape_[2].size() + 3 - 2));
+      input_tensor_map_local_mask.push_back(
+        static_cast<int64_t>(inputs_shape_[kLocalMaskDim2].size() + kLocalMaskDim3 - kLocalMaskDim2));
     } else {
-      input_tensor_map_local_mask.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_local_mask.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap input_tensor_map_global_mask;
   // input_tensor_map_local_mask [5, -1, -1, -1]
-  for (size_t i = 0; i < inputs_shape_[3].size(); ++i) {
+  for (size_t i = 0; i < inputs_shape_[kLocalMaskDim3].size(); ++i) {
     if (i == 0) {
-      input_tensor_map_global_mask.push_back((int64_t)(inputs_shape_[3].size() + 3 - 2));
+      input_tensor_map_global_mask.push_back(
+        static_cast<int64_t>(inputs_shape_[kLocalMaskDim3].size() + kLocalMaskDim3 - kLocalMaskDim2));
     } else {
-      input_tensor_map_global_mask.push_back((int64_t)(MAP_NONE));
+      input_tensor_map_global_mask.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap output_tensor_map_local_prob;
   // output_tensor_map_local_prob [5, 6, -1, -1, -1, -1, -1]
   for (size_t i = 0; i < dev_matrix_shape_origin_.size(); ++i) {
     if (i == 0) {
-      output_tensor_map_local_prob.push_back((int64_t)(dev_matrix_shape_origin_.size() - 2));
+      output_tensor_map_local_prob.push_back(static_cast<int64_t>(dev_matrix_shape_origin_.size() - kLocalMaskDim2));
     } else if (i == 1) {
-      output_tensor_map_local_prob.push_back((int64_t)(dev_matrix_shape_origin_.size() - 1));
+      output_tensor_map_local_prob.push_back(static_cast<int64_t>(dev_matrix_shape_origin_.size() - 1));
     } else {
-      output_tensor_map_local_prob.push_back((int64_t)(MAP_NONE));
+      output_tensor_map_local_prob.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   TensorMap output_tensor_map_global_prob;
   // output_tensor_map_global_prob [5, 6, -1, -1, -1, -1, -1]
   for (size_t i = 0; i < dev_matrix_shape_origin_.size(); ++i) {
     if (i == 0) {
-      output_tensor_map_global_prob.push_back((int64_t)(dev_matrix_shape_origin_.size() - 2));
+      output_tensor_map_global_prob.push_back(static_cast<int64_t>(dev_matrix_shape_origin_.size() - kLocalMaskDim2));
     } else if (i == 1) {
-      output_tensor_map_global_prob.push_back((int64_t)(dev_matrix_shape_origin_.size() - 1));
+      output_tensor_map_global_prob.push_back(static_cast<int64_t>(dev_matrix_shape_origin_.size() - 1));
     } else {
-      output_tensor_map_global_prob.push_back((int64_t)(MAP_NONE));
+      output_tensor_map_global_prob.push_back(static_cast<int64_t>(MAP_NONE));
     }
   }
   inputs_tensor_map_.push_back(input_tensor_map_q);

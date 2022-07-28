@@ -153,11 +153,11 @@ void GammaInfo::ResetInputsShape() {
 
   ValueTuplePtr shape_value = input_value_[0]->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
-  (void)inputs_shape_.insert(inputs_shape_.begin(), GetValue<Shape>(shape_value));
+  (void)inputs_shape_.insert(inputs_shape_.cbegin(), GetValue<Shape>(shape_value));
 }
 
-bool GammaInfo::IsNotSplittableStrategy(const Dimensions &strategy) {
-  return std::all_of(strategy.begin(), strategy.end(), [](int64_t val) { return val == 1; });
+bool GammaInfo::IsNotSplittableStrategy(const Dimensions &strategy) const {
+  return std::all_of(strategy.cbegin(), strategy.cend(), [](int64_t val) { return val == 1; });
 }
 
 void GammaInfo::ReComputeBatchSplitFlagList() {

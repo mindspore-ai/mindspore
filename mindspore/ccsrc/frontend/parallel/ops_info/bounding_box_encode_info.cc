@@ -97,7 +97,8 @@ Status BoundingBoxEncodeInfo::SetCostUnderStrategy(const StrategyPtr &strategy) 
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status BoundingBoxEncodeInfo::PrepareStrategy(int64_t stage_id, int64_t split_num, size_t dev_num, StrategyPtr *sp) {
+Status BoundingBoxEncodeInfo::PrepareStrategy(int64_t stage_id, int64_t split_num, size_t dev_num,
+                                              StrategyPtr *sp) const {
   const bool fully_use_device = CostModelContext::GetInstance()->fully_use_device();
   if (split_num == 0 || SizeToLong(dev_num) % split_num != 0 ||
       (fully_use_device && split_num != SizeToLong(dev_num))) {
