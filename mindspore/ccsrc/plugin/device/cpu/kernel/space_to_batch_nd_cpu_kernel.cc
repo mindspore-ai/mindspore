@@ -79,7 +79,7 @@ bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
 
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * output_size_);
+  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * static_cast<size_t>(output_size_));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }
@@ -88,8 +88,8 @@ bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     std::vector<int64_t> input_index(input_shape_.size(), 0);
     int64_t cur_pos = pos;
     for (int rev_i = input_shape_.size() - 1; rev_i >= 0; rev_i -= 1) {
-      input_index[rev_i] = cur_pos % input_shape_[rev_i];
-      cur_pos = cur_pos / input_shape_[rev_i];
+      input_index[rev_i] = cur_pos % input_shape_[IntToSize(rev_i)];
+      cur_pos = cur_pos / input_shape_[IntToSize(rev_i)];
     }
 
     std::vector<int64_t> output_index(input_index);
@@ -142,9 +142,9 @@ bool SpaceToBatchNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost) == KRET_RESIZE_FAILED) {
+  if (KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost) == static_cast<int>(KRET_RESIZE_FAILED)) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return KRET_RESIZE_FAILED;
+    return static_cast<int>(KRET_RESIZE_FAILED);
   }
   // get input_shape
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -153,15 +153,15 @@ int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_size_ = 1;
   output_size_ = 1;
   for (size_t i = 0; i < input_shape_.size(); ++i) {
-    input_size_ = input_shape_[i] * input_size_;
+    input_size_ *= input_shape_[i];
   }
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ = output_shape_[i] * output_size_;
+    output_size_ *= output_shape_[i];
   }
 
   off_set_ = input_shape_.size() - block_size_.size();
 
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SpaceToBatchNDCpuKernelMod::GetFuncList() const {
