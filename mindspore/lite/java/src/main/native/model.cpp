@@ -58,7 +58,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv 
 
   auto status = model->Build(mindspore::GraphCell(*c_graph_ptr), context, cfg);
   if (status != mindspore::kSuccess) {
-    MS_LOG(ERROR) << "Error " << static_cast<int>(status) << " during build of model";
+    MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
     delete model;
     return jlong(nullptr);
   }
@@ -122,7 +122,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
     status = model->Build(model_buf, buffer_len, c_model_type, context);
   }
   if (status != mindspore::kSuccess) {
-    MS_LOG(ERROR) << "Error " << static_cast<int>(status) << " during build of model";
+    MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
     delete model;
     return jlong(nullptr);
   }
@@ -180,7 +180,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
     status = model->Build(c_model_path, c_model_type, context);
   }
   if (status != mindspore::kSuccess) {
-    MS_LOG(ERROR) << "Error (%d) during build of model" << static_cast<int>(status);
+    MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
     delete model;
     return jlong(nullptr);
   }
