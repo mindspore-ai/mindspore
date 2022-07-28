@@ -26,7 +26,7 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
-from .._utils import get_broadcast_shape, is_shape_unknown, is_shape_known
+from .._utils import get_broadcast_shape, is_shape_unknown
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
@@ -1570,7 +1570,7 @@ class Fill(PrimitiveWithInfer):
                         mstype.complex128]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        if is_shape_known(dims['value']):
+        if not is_shape_unknown(dims['value']):
             for i, item in enumerate(dims['value']):
                 validator.check_positive_int(item, f'dims[{i}]', self.name)
             ret = np.full(dims['value'], x['value'], x_nptype)
@@ -2298,7 +2298,6 @@ class Tile(PrimitiveWithInfer):
             for a, b in zip(multiples_v_min, multiples_v_max):
                 if isinstance(a, (Tensor_, Tensor)):
                     a = a.asnumpy()
-                if isinstance(b, (Tensor_, Tensor)):
                     b = b.asnumpy()
                 if x_shp[i] >= 0:
                     x_shp[i] *= a
@@ -2411,7 +2410,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
         validator.check(f'rank of input_x', len(x_shp),
                         'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
-        if is_shape_known(x_shp) and is_shape_known(segment_ids_shp):
+        if not is_shape_unknown(x_shp) and not is_shape_unknown(segment_ids_shp):
             # only validate when both shapes fully known
             for i, value in enumerate(segment_ids_shp):
                 validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
@@ -2495,7 +2494,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
 
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if is_shape_known(x_shape) and is_shape_known(segment_ids_shape):
+        if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -2603,7 +2602,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
 
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if is_shape_known(x_shape) and is_shape_known(segment_ids_shape):
+        if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -3457,63 +3456,6 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
         validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
 
-    def _check_and_get_value(self, slice_input, name):
-        """Check begin, end, strides. Get its length and value."""
-        slice_value = slice_input['value']
-        has_special_value = False
-        if "min_value" in slice_input and "max_value" in slice_input:
-            slice_min = slice_input["min_value"]
-            slice_max = slice_input["max_value"]
-            has_special_value = True
-        else:
-            slice_min = slice_value
-            slice_max = slice_value
-        if slice_value is None:
-            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
-            slice_shape = slice_input['shape']
-            if len(slice_shape) != 1:
-                raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "
-                                 f"but got '{name}' shape: {slice_shape}.")
-            # not support scalar
-            slices = {
-                'value': slice_value,
-                'min_value': slice_min,
-                'max_value': slice_max
-            }
-            return slices, slice_shape[0], has_special_value
-
-        if isinstance(slice_value, Tensor_):
-            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
-            slice_value = slice_value.asnumpy().tolist()
-        elif not isinstance(slice_value, tuple):
-            raise TypeError(f"For '{self.name}', both the 'begin', 'end', and 'strides' must be a tuple or Tensor, "
-                            f"but got '{name}': {slice_value}.")
-
-        if tuple(filter(lambda x: not isinstance(x, int), slice_value)):
-            raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
-                            f"but got {name}: {slice_value}.")
-
-        if name == 'strides':
-            if slice_value is not None and tuple(filter(lambda x: x == 0, slice_value)):
-                raise ValueError(f"For '{self.name}', 'strides' cannot contain 0, but got 'strides': {slice_value}.")
-
-        slices = {
-            'value': slice_value,
-            'min_value': slice_min,
-            'max_value': slice_max
-        }
-        return slices, len(slice_value), has_special_value
-
-    def _check_and_get_shape(self, x):
-        """Check the shape of x. Get its shape and min/max_shape."""
-        x_shape = x['shape']
-        min_shape = None
-        max_shape = None
-        if "min_shape" in x and "max_shape" in x:
-            min_shape = x["min_shape"]
-            max_shape = x["max_shape"]
-        return x_shape, min_shape, max_shape
-
     def __infer__(self, x, begin, end, strides):
         x_shape, min_shape, max_shape = self._check_and_get_shape(x)
         begin_v, begin_len, begin_specical_value = self._check_and_get_value(begin, 'begin')
@@ -3528,7 +3470,7 @@ class StridedSlice(PrimitiveWithInfer):
         if begin_specical_value or end_specical_value:
             bd_has_min_max_value = True
 
-        if bd_has_min_max_value and is_shape_known(x_shape):
+        if bd_has_min_max_value and not is_shape_unknown(x_shape):
             ret_shape = [-1] * len(x_shape)
             ret_min_shape = list(x_shape)
             ret_max_shape = list(x_shape)
@@ -3556,9 +3498,6 @@ class StridedSlice(PrimitiveWithInfer):
             if max_shape is not None and min_shape is not None:
                 rets['min_shape'] = ret_min_shape
                 rets['max_shape'] = ret_max_shape
-
-            if is_shape_known(x_shape):
-                return self._compute_max_min_shape(rets, x_shape, ret_shape)
 
             return rets
 
@@ -3591,17 +3530,16 @@ class StridedSlice(PrimitiveWithInfer):
                 'dtype': x['dtype'],
                 'value': value}
 
-    def _compute_max_min_shape(self, rets, x_shape, ret_shape):
-        """compute max/min shape"""
-        ret_min_shape = [1] * len(x_shape)
-        ret_max_shape = x_shape
-        for i, val in enumerate(ret_shape):
-            if val > 0:
-                ret_min_shape[i] = val
-                ret_max_shape[i] = val
-        rets['max_shape'] = ret_max_shape
-        rets['min_shape'] = ret_min_shape
-        return rets
+    @staticmethod
+    def _check_and_get_shape(x):
+        """Check the shape of x. Get its shape and min/max_shape."""
+        x_shape = x['shape']
+        min_shape = None
+        max_shape = None
+        if "min_shape" in x and "max_shape" in x:
+            min_shape = x["min_shape"]
+            max_shape = x["max_shape"]
+        return x_shape, min_shape, max_shape
 
     def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
         """Computes the shape of the slicing."""
@@ -3737,6 +3675,53 @@ class StridedSlice(PrimitiveWithInfer):
             i += 1
             j += 1
         return ret_shape, ret_min_shape, ret_max_shape
+
+    def _check_and_get_value(self, slice_input, name):
+        """Check begin, end, strides. Get its length and value."""
+        slice_value = slice_input['value']
+        has_special_value = False
+        if "min_value" in slice_input and "max_value" in slice_input:
+            slice_min = slice_input["min_value"]
+            slice_max = slice_input["max_value"]
+            has_special_value = True
+        else:
+            slice_min = slice_value
+            slice_max = slice_value
+        if slice_value is None:
+            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
+            slice_shape = slice_input['shape']
+            if len(slice_shape) != 1:
+                raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "
+                                 f"but got '{name}' shape: {slice_shape}.")
+            # not support scalar
+            slices = {
+                'value': slice_value,
+                'min_value': slice_min,
+                'max_value': slice_max
+            }
+            return slices, slice_shape[0], has_special_value
+
+        if isinstance(slice_value, Tensor_):
+            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
+            slice_value = slice_value.asnumpy().tolist()
+        elif not isinstance(slice_value, tuple):
+            raise TypeError(f"For '{self.name}', both the 'begin', 'end', and 'strides' must be a tuple or Tensor, "
+                            f"but got '{name}': {slice_value}.")
+
+        if tuple(filter(lambda x: not isinstance(x, int), slice_value)):
+            raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
+                            f"but got {name}: {slice_value}.")
+
+        if name == 'strides':
+            if slice_value is not None and tuple(filter(lambda x: x == 0, slice_value)):
+                raise ValueError(f"For '{self.name}', 'strides' cannot contain 0, but got 'strides': {slice_value}.")
+
+        slices = {
+            'value': slice_value,
+            'min_value': slice_min,
+            'max_value': slice_max
+        }
+        return slices, len(slice_value), has_special_value
 
 
 class Diag(PrimitiveWithCheck):

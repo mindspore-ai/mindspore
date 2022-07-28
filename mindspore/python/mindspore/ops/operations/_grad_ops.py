@@ -26,7 +26,7 @@ from ... import context
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
 from ...communication.management import GlobalComm
-from .._utils import is_shape_known
+from .._utils import is_shape_unknown
 
 
 class AbsGrad(PrimitiveWithInfer):
@@ -2123,7 +2123,7 @@ class SliceGrad(PrimitiveWithInfer):
     def __infer__(self, dy, x, begin, size):
         dy_shape, x_shape, size_value, begin_v = dy['shape'], x['shape'], size['value'], begin['value']
         dy_shape_len = len(dy_shape)
-        if (size_value is not None) and is_shape_known(x_shape):
+        if (size_value is not None) and not is_shape_unknown(x_shape):
             size_value = list(size_value)
             for i in range(dy_shape_len):
                 if size_value[i] == -1:
