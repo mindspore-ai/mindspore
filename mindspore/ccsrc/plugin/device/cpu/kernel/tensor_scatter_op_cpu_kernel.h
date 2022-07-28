@@ -26,7 +26,6 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
-#include "Eigen/Eigen"
 
 namespace mindspore {
 namespace kernel {
@@ -53,17 +52,17 @@ class TensorScatterOpCpuKernelMode : public NativeCpuKernelMod, public MatchKern
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   using TensorScatterSupportListType = std::vector<std::pair<KernelAttr, TensorScatterOpCpuKernelMode::KernelRunFunc>>;
 
-  Eigen::DenseIndex slice_size_{1};
-  Eigen::DenseIndex batch_size_{1};
-  Eigen::DenseIndex inner_size_{1};
-  Eigen::DenseIndex total_batch_size_{1};
-  std::vector<Eigen::DenseIndex> batch_strides_;
-  std::vector<Eigen::DenseIndex> input_shape_;
+  size_t slice_size_{1};
+  size_t batch_size_{1};
+  size_t inner_size_{1};
+  size_t total_batch_size_{1};
+  std::vector<size_t> batch_strides_;
+  std::vector<size_t> input_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
