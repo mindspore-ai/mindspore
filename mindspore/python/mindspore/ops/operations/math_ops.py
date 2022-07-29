@@ -4592,7 +4592,7 @@ class Atanh(Primitive):
     Refer to :func:`mindspore.ops.atanh` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, -0.5]), mindspore.float32)
