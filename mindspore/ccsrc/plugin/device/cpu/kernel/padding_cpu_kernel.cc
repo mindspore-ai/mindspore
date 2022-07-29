@@ -41,7 +41,7 @@ bool PaddingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   auto kernel_ptr = std::make_shared<ops::Padding>(base_operator->GetPrim());
-  pad_dim_size_ = kernel_ptr->get_pad_dim_size();
+  pad_dim_size_ = LongToSize(kernel_ptr->get_pad_dim_size());
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -59,7 +59,7 @@ int PaddingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   shapes_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(shapes_), LongToSize);
-  input_element_num_ = std::accumulate(shapes_.begin(), shapes_.end(), 1, std::multiplies<size_t>());
+  input_element_num_ = std::accumulate(shapes_.begin(), shapes_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num_ == 0);
   if (is_null_input_) {
     return KRET_OK;
