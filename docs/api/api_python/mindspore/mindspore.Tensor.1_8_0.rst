@@ -316,6 +316,26 @@ mindspore.Tensor
 
         Tensor，数据类型和shape与 `x` 相同。
 
+    .. py:method:: cumsum(axis=None, dtype=None)
+
+        返回指定轴方向上元素的累加值。
+
+        .. note::
+            如果 `dtype` 为 `int8` , `int16` 或 `bool` ，则结果 `dtype` 将提升为 `int32` ，不支持 `int64` 。
+
+        **参数：**
+
+        - **axis** (int, optional) - 轴，在该轴方向上的累积和。默认情况下，计算所有元素的累加和。
+        - **dtype** (`mindspore.dtype` , optional) - 如果未指定参数值，则保持与原始Tensor相同，除非参数值是一个精度小于 `float32` 的整数。在这种情况下，使用 `float32` 。默认值：None。
+
+        **异常：**
+
+        - **ValueError** - 轴超出范围。
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: diagonal(offset=0, axis1=0, axis2=1)
 
         返回指定的对角线。
@@ -1530,6 +1550,29 @@ mindspore.Tensor
         **异常：**
 
         **ValueError** - 输入Tensor的维度少于2。
+
+    .. py:method:: transpose(*axes)
+
+        返回被转置后的Tensor。
+
+        - 对于一维Tensor，这没有影响，因为转置后的向量是相同的。
+        - 对于二维Tensor，是标准的矩阵转置。
+        - 对于n维Tensor，如果提供了维度，则它们的顺序代表维度的置换方式。
+
+        如果未提供轴，且Tensor.shape等于(i[0], i[1],...i[n-2], i[n-1])，则Tensor.transpose().shape等于(i[n-1], i[n-2], ... i[1], i[0])。
+
+        **参数：**
+
+        - **axes** (Union[None, tuple(int), list(int), int], optional) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。
+
+        **返回：**
+
+        Tensor，具有与输入Tensor相同的维度，其中维度被准确的排列。
+
+        **异常：**
+
+        - **TypeError** - 输入参数类型有误。
+        - **ValueError** - `axes` 的数量不等于Tensor.ndim。
 
     .. py:method:: unique_consecutive(return_idx=False, return_counts=False, axis=None)
 

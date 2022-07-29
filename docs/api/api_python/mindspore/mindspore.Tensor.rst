@@ -1745,6 +1745,7 @@ mindspore.Tensor
 
         - **TypeError** - 当前张量的数据类型既不是int32也不是int64。
         - **ValueError** - 当前张量不是一维张量。
+
     .. py:method:: transpose(*axes)
 
         返回被转置后的Tensor。
