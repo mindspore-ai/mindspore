@@ -286,7 +286,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDictGetKeys, R{InferImplDictGetKeys, nullptr, true}},
     {prim::kPrimDictGetValues, R{InferImplDictGetValues, nullptr, true}},
     {prim::kPrimDictItems, R{InferImplDictItems, nullptr, true}},
-    {prim::kPrimListAppend, R{InferImplListAppend, nullptr, true}},
     {prim::kPrimTupleLen, R{InferImplTupleLen, nullptr, true}},
     {prim::kPrimListLen, R{InferImplListLen, nullptr, true}},
     {prim::kPrimArrayLen, R{InferImplArrayLen, nullptr, true}},
