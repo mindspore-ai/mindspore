@@ -54,8 +54,8 @@ MIND_API_OPERATOR_IMPL(SqrtGrad, BaseOperator);
 AbstractBasePtr SqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  constexpr int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto types = SqrtGradInferType(primitive, input_args);

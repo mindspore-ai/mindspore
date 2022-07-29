@@ -62,7 +62,7 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   int64_t x_last_dim = x_shape[x_shape.size() - 1];
   if (x_last_dim != kNumber1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -70,7 +70,7 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   }
   auto value_ptr = primitive->GetAttr(kPadDimSize);
   auto pad_dim_size = GetValue<int64_t>(value_ptr);
-  CheckAndConvertUtils::CheckInteger("pad_dim_size", pad_dim_size, kGreaterEqual, kNumber1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("pad_dim_size", pad_dim_size, kGreaterEqual, kNumber1, prim_name);
   // Extends the last dimension of the input tensor from 1 to pad_dim_size.
   x_shape[x_shape.size() - 1] += pad_dim_size - 1;
   return std::make_shared<abstract::Shape>(x_shape);

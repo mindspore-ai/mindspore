@@ -41,7 +41,7 @@ bool PaddingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   auto kernel_ptr = std::make_shared<ops::Padding>(base_operator->GetPrim());
-  pad_dim_size_ = kernel_ptr->get_pad_dim_size();
+  pad_dim_size_ = LongToSize(kernel_ptr->get_pad_dim_size());
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
