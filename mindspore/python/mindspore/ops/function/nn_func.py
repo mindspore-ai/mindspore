@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Defines nn operators with functional form."""
+from __future__ import absolute_import
 
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P

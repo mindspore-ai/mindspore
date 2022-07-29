@@ -632,6 +632,7 @@ class ResizeBilinearV2(Primitive):
     @prim_attr_register
     def __init__(self, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
+        super().__init__(name="ResizeBilinearV2")
         self.init_prim_io_names(inputs=['x', 'size'], outputs=['y'])
         self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
         self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
