@@ -315,7 +315,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   }
 }
 
-bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &) {
+bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
@@ -334,14 +334,15 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   return true;
 }
 
-bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &,
-                               std::vector<tensor::Tensor> *, const std::map<string, string> &) {
+bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
+                               std::vector<tensor::Tensor> *outputs,
+                               const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "GE run graph " << graph->ToString() << " start.";
   // copy input from device to host
-  const auto &inputs = graph->get_inputs();
+  const auto &cur_inputs = graph->get_inputs();
   std::vector<tensor::TensorPtr> input_tensors;
-  for (const auto &input : inputs) {
+  for (const auto &input : cur_inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto output_addr = AnfAlgo::GetMutableOutputAddr(input, 0);
     auto shapes = trans::GetRuntimePaddingShape(input, 0);
@@ -384,30 +385,31 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                       << ge_outputs.size();
   }
   // copy output from host to device
-  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-  if (outputs.size() != ge_outputs.size()) {
-    MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << outputs.size() << " tensor size " << ge_outputs.size();
+  auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  if (graph_outputs.size() != ge_outputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << graph_outputs.size() << " tensor size "
+                      << ge_outputs.size();
   }
 
   std::vector<ShapeVector> output_shapes;
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    const auto &[output_node, idx] = outputs[i];
+  for (size_t i = 0; i < graph_outputs.size(); ++i) {
+    const auto &[output_node, idx] = graph_outputs[i];
     const auto &tensor = ge_outputs[i];
     auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx);
     output_addr->set_ptr(device_context_->device_res_manager_->AllocateMemory(tensor->GetSize()));
     output_addr->SetSize(tensor->GetSize());
     output_addr->set_is_ptr_persisted(false);
 
-    if (output_addr->GetSize() < LongToSize(tensor->GetSize())) {
+    if (output_addr->GetSize() < LongToSize(UlongToLong(tensor->GetSize()))) {
       MS_LOG(EXCEPTION) << "Output node " << output_node->DebugString() << "'s mem size " << output_addr->GetSize()
                         << " is less than actual output size " << tensor->GetSize();
     }
     // memcpy_s does not support data that more than 2GB
-    (void)memcpy(output_addr->GetMutablePtr(), tensor->GetData(), tensor->GetSize());
+    (void)memcpy(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), tensor->GetData(), tensor->GetSize());
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
     output_shapes.emplace_back(std::move(actual_shapes));
   }
-  UpdateOutputNodeShape(outputs, me_types, output_shapes);
+  UpdateOutputNodeShape(graph_outputs, me_types, output_shapes);
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
@@ -476,7 +478,7 @@ bool GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
     return true;
   }
 
-  if (inst_context->get_param<uint32_t>(MS_CTX_GE_REF)) {
+  if (static_cast<bool>(inst_context->get_param<uint32_t>(MS_CTX_GE_REF))) {
     inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
     return true;
   }
@@ -506,7 +508,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (!dump_env.empty()) {
     auto &dump_parser = DumpJsonParser::GetInstance();
     dump_parser.Parse();
-    (*ge_options)["ge.exec.enableDump"] = std::to_string(dump_parser.async_dump_enabled());
+    (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
     (*ge_options)["ge.exec.dumpPath"] = dump_parser.path();
     // Parse() make sure that input_output is less than 3.
     (*ge_options)["ge.exec.dumpMode"] = kGeDumpMode[dump_parser.input_output()];
@@ -519,10 +521,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
                  << ", dump step is " << dump_parser.iteration_string() << ".";
   }
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  if (profiler_manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Profiler manager is nullptr";
-  }
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(profiler_manager->GetProfilingEnableFlag());
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
   if (profiler_manager->GetProfilingEnableFlag()) {
     (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();
   }
@@ -616,13 +616,13 @@ void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::strin
   }
 }
 
-void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
+void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_context,
                                      std::map<std::string, std::string> *ge_options) {
-  MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  MS_EXCEPTION_IF_NULL(inst_context);
   MS_EXCEPTION_IF_NULL(ge_options);
   auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
   auto env_rank_id = common::GetEnv("RANK_ID");
-  auto env_device_id = std::to_string(ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
+  auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   if (!(env_table_file.empty() || env_rank_id.empty())) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
     MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
@@ -652,14 +652,14 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &ms_contex
   }
 }
 
-bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
-  MS_EXCEPTION_IF_NULL(ms_context_ptr);
-  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
+bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &inst_context) {
+  MS_EXCEPTION_IF_NULL(inst_context);
+  if (inst_context->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
     return true;
   }
-  ms_context_ptr->decrease_param<uint32_t>(MS_CTX_GE_REF);
-  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
-    ms_context_ptr->set_param<uint32_t>(MS_CTX_GE_REF, 0);
+  inst_context->decrease_param<uint32_t>(MS_CTX_GE_REF);
+  if (inst_context->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
+    inst_context->set_param<uint32_t>(MS_CTX_GE_REF, 0);
     try {
       transform::ClearGeSessionAndRunner();
     } catch (const std::exception &e) {
@@ -671,10 +671,10 @@ bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &ms_context_pt
     if (ge::GEFinalize() != ge::GRAPH_SUCCESS) {
       MS_LOG(WARNING) << "Finalize GE failed!";
     }
-    ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
+    inst_context->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
   } else {
     MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = "
-                 << ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
+                 << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   }
   return true;
 }

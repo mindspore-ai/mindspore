@@ -92,7 +92,8 @@ void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
     }
     auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
     std::vector<CNodePtr> back;
-    auto front = HandleRecursiveCall(kernel_cnodes, label_id, &i, &back);
+    auto index = i;
+    auto front = HandleRecursiveCall(kernel_cnodes, label_id, &index, &back);
     mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
     mem_reuse_order.insert(mem_reuse_order.end(), back.begin(), back.end());
   }

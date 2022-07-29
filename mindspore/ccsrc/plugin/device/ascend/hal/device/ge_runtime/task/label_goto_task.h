@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_LABEL_GOTO_TASK_H_
 
 #include <memory>
-#include <vector>
 #include <map>
 #include <mutex>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"

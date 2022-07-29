@@ -49,7 +49,7 @@ class AscendGraphExecutor : public GraphExecutor {
   // compile graph interface
   void UpdateExecOrder(const KernelGraphPtr &graph) const;
   void AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const;
-  void AssignInputMemory(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
+  void AssignInputMemory(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> const memo) const;
   void LoadModel(const NotNull<KernelGraphPtr> &root_graph) const;
 
   // LaunchGraph interface
