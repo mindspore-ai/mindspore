@@ -513,7 +513,8 @@ void OptimizeNopNode(KernelGraph *graph) {
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if ((!common::AnfAlgo::IsNopNode(cnode)) ||
+    if ((!common::AnfAlgo::IsNopNode(cnode)) || graph->IsInRefOutputMap({cnode, 0}) ||
+        graph->IsRefOutputMapValue({cnode, 0}) ||
         (std::find(graph_outputs.begin(), graph_outputs.end(), KernelWithIndex(cnode, 0)) != graph_outputs.end())) {
       (void)new_execution_order.emplace_back(cnode);
       continue;
