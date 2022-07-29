@@ -379,12 +379,20 @@ def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
     # convert the tensor dtype
     # Do not assume that user passes in values in [0, 255], use data type to detect
     scale_factor = 1
+    shift = 0
+    max_value = np.max(tensor)
+    min_value = np.min(tensor)
     if tensor.dtype == np.uint8:
         scale_factor = 1
-    elif np.max(tensor) <= 1 and np.min(tensor) >= 0:
+    elif max_value <= 1 and min_value >= 0:
         scale_factor = 255
+    else:
+        if max_value != min_value:
+            # Mapping the value to range [0, 255] linearly.
+            scale_factor = 255/(max_value - min_value + 1)
+        shift = min_value
     tensor = tensor.astype(np.float32)
-    tensor = (tensor * scale_factor).astype(np.uint8)
+    tensor = ((tensor - shift) * scale_factor).astype(np.uint8)
 
     # create the image summary
     height, width, channel, image_string = _make_image(tensor)
