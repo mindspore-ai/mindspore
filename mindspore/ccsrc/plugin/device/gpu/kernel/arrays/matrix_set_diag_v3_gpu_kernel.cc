@@ -55,19 +55,13 @@ int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   ResetResource();
   auto origin_input_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<size_t> input_shape;
-  (void)std::transform(origin_input_shape.begin(), origin_input_shape.end(), std::back_inserter(input_shape),
-                       LongToSize);
+  std::vector<size_t> input_shape = LongVecToSizeVec(origin_input_shape);
   auto origin_diag_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<size_t> diag_shape;
-  (void)std::transform(origin_diag_shape.begin(), origin_diag_shape.end(), std::back_inserter(diag_shape), LongToSize);
+  std::vector<size_t> diag_shape = LongVecToSizeVec(origin_diag_shape);
   auto origin_k_shape = inputs.at(kIndex2)->GetShapeVector();
-  std::vector<size_t> k_shape;
-  (void)std::transform(origin_k_shape.begin(), origin_k_shape.end(), std::back_inserter(k_shape), LongToSize);
+  std::vector<size_t> k_shape = LongVecToSizeVec(origin_k_shape);
   auto origin_output_shape = outputs.at(kIndex0)->GetShapeVector();
-  std::vector<size_t> output_shape;
-  (void)std::transform(origin_output_shape.begin(), origin_output_shape.end(), std::back_inserter(output_shape),
-                       LongToSize);
+  std::vector<size_t> output_shape = LongVecToSizeVec(origin_output_shape);
   // For k_shape maybe empty, just ignore it's checking.
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_shape") ||
                    CHECK_SHAPE_NULL(diag_shape, kernel_name_, "diag_shape") ||
@@ -98,6 +92,9 @@ int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 template <typename T>
 bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
   auto input = inputs.at(kIndex0);
   auto diag = inputs.at(kIndex1);
   auto k = inputs.at(kIndex2);
@@ -113,7 +110,7 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(host_k_vec.data(), k_device_address, k->size, cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "MatrixSetDiagV3GpuKernelMod cuda memcopy device to host Fail");
+    "MatrixSetDiagV3GpuKernelMod cuda copy device to host Fail");
 
   lower_ = host_k_vec.at(kIndex0);
   upper_ = host_k_vec.at(kIndex0);
@@ -151,10 +148,8 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 
   // Copy input to output first, then set diagonal value to output.
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(output_device_address, input_device_address, input->size, cudaMemcpyDeviceToDevice,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "matrix_set_diag cuda memcopy input to output Fail");
-
+    cudaMemcpy(output_device_address, input_device_address, input->size, cudaMemcpyDeviceToDevice),
+    "MatrixSetDiagV3GpuKernelMod cuda copy input to output Fail");
   bool right_align_super_diagonal = (alignment_.first == MatrixDiag::RIGHT);
   bool right_align_sub_diagonal = (alignment_.second == MatrixDiag::RIGHT);
   MatrixSetDiag(outer_batch_, inner_rows_, inner_cols_, num_diags_, max_diag_len_, lower_, upper_,
