@@ -36,7 +36,7 @@ class AscendInferenceSession : public AscendSession {
   AscendInferenceSession() = default;
   ~AscendInferenceSession() = default;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
-                     const std::vector<tensor::TensorPtr> &inputs_const) const;
+                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
   bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                         std::string *error_msg) const override;
   bool CompareInput(const tensor::TensorPtr &input, const ParameterPtr &parameter) const;

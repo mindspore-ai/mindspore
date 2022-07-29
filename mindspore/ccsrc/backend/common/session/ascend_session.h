@@ -37,12 +37,15 @@ enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, 
 
 class AscendSession : public SessionBasic {
  public:
-  AscendSession() { final_graph_id_ = kInvalidGraphId; }
+  AscendSession() : final_graph_id_(kInvalidGraphId) {}
   ~AscendSession() = default;
   void Init(uint32_t device_id) override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
   void SyncStream() const override;
+  void ReportWarningMessage() override;
+  void ReportErrorMessage() override;
+  void SetThreadContext() override;
 
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override;
@@ -70,9 +73,6 @@ class AscendSession : public SessionBasic {
                        const std::vector<tensor::TensorPtr> &graph_inputs,
                        const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
-  void ReportWarningMessage() override;
-  void ReportErrorMessage() override;
-  void SetThreadContext() override;
   void UpdateOutputTensors(const VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                            std::map<DeviceAddressPtr, DeviceAddressPtr> *) override;
@@ -82,7 +82,7 @@ class AscendSession : public SessionBasic {
 
  private:
   // compile child graph when session have multiple child graphs
-  void CompileChildGraph(const KernelGraphPtr &child_graph);
+  void CompileChildGraph(const KernelGraphPtr &child_graph) const;
 #ifndef ENABLE_SECURITY
   void RecurseSetSummaryNodes(KernelGraph *graph, std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
   void SetSummaryNodes(KernelGraph *graph) override;
@@ -92,11 +92,11 @@ class AscendSession : public SessionBasic {
   void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
+  void AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   static void BuildKernel(const std::vector<CNodePtr> &kernels);
   void MemoryAlloc(KernelGraph *kernel_graph) const;
-  void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph,
+  void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, const KernelGraphPtr &kernel_graph,
                         bool is_gradient_out) const;
   void RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
@@ -112,9 +112,10 @@ class AscendSession : public SessionBasic {
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
 
-  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph, const std::vector<KernelGraphPtr> &all_graphs);
+  void RootGraphExecutorValidate(const NotNull<KernelGraphPtr> &graph,
+                                 const std::vector<KernelGraphPtr> &all_graphs) const;
   // merge execution order list of child graphs
-  void MergeGraphExecOrder();
+  void MergeGraphExecOrder() const;
   // get graph order vector by graph id
   const std::vector<GraphId> &GetGraphOrder(GraphId final_graph_id) const;
   // get graph order type vector by graph id
@@ -122,14 +123,14 @@ class AscendSession : public SessionBasic {
   // sync initial tensors' data to device
   void SyncInitialTenosrToDevice();
 #ifndef ENABLE_SECURITY
-  void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
+  void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 #endif
   // create parameter to receive data from multiple branch output
   void CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
-  void IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
-  void HardwareOptimize(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
+  void IrFusionPass(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo);
+  void HardwareOptimize(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
 #ifdef ENABLE_DEBUGGER
-  void LoadGraphsToDbg(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
+  void LoadGraphsToDbg(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
 #endif
   void AssignStaticMemory(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void UpdateRefOutputMap(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;

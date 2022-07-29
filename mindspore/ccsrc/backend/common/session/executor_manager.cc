@@ -24,8 +24,8 @@ ExecutorManager &ExecutorManager::Instance() {
 
 std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, uint32_t device_id) {
   std::string device_key = device_name + "_" + std::to_string(device_id);
-  auto iter = executors_.find(device_key);
-  if (iter != executors_.end()) {
+  const auto iter = executors_.find(device_key);
+  if (iter != executors_.cend()) {
     return iter->second;
   }
   auto executor = std::make_shared<Executor>(device_name, device_id);
@@ -34,7 +34,7 @@ std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device
 }
 
 void ExecutorManager::OnEvent(const ExecutorEvent &event) {
-  for (auto &item : executors_) {
+  for (const auto &item : executors_) {
     auto &executor = item.second;
     if (executor != nullptr) {
       executor->OnEvent(event);

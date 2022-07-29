@@ -140,7 +140,7 @@ bool EnableDeviceCopy() {
 }
 
 // Handle control flow by auto-monad.
-void HandleControlFlow(NotNull<KernelGraphPtr> graph) {
+void HandleControlFlow(const NotNull<KernelGraphPtr> &graph) {
   MS_LOG(INFO) << "Status record: start handle control flow. graph id: " << graph->graph_id();
   AscendAutoMonad auto_monad(graph);
   auto_monad.Run();
@@ -270,7 +270,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
   return false;
 }
 
-void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager,
+void AddGraphToManager(const NotNull<KernelGraphPtr> &graph, NotNull<FuncGraphManagerPtr> manager,
                        NotNull<std::set<KernelGraphPtr> *> memo) {
   if (memo->find(graph) != memo->end()) {
     return;
@@ -341,7 +341,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
       auto tensor_shape = tensor->shape();
       common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)},
                                                   {tensor_shape}, input_node.get());
-      size = abstract::ShapeSize(tensor_shape) * abstract::TypeIdSize(tensor->data_type());
+      size = LongToSize(abstract::ShapeSize(tensor_shape)) * abstract::TypeIdSize(tensor->data_type());
     }
     if (AnfAlgo::OutputAddrExist(input_node, 0) &&
         TensorNeedSync(kernel_graph, input_node, tensor, &device_memcpy_nums)) {
@@ -502,7 +502,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 }
 
 #ifndef ENABLE_SECURITY
-void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph) {
+void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_order = GetGraphOrder(kernel_graph->graph_id());
   for (auto graph_id : graph_order) {
@@ -572,7 +572,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   MS_LOG(INFO) << "End";
 }
 
-void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
+void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) const {
   MS_EXCEPTION_IF_NULL(child_graph);
   MS_LOG(INFO) << "CompileChildGraph " << child_graph->ToString();
   opt::AscendBackendIRFusionOptimization(child_graph);
@@ -714,7 +714,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
 
   // malloc mem
   RunOpRemoveNopNode(graph);
-  RunOpMemoryAlloc(*input_tensors, graph.get(), op_run_info->is_gradient_out);
+  RunOpMemoryAlloc(*input_tensors, graph, op_run_info->is_gradient_out);
   RunOpGenKernelEvent(graph.get());
   AnfAlgo::CacheAddrForGraph(graph);
 
@@ -942,7 +942,7 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::AssignStream(NotNull<KernelGraphPtr> kernel_graph) const {
+void AscendSession::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) const {
   MS_LOG(INFO) << "Status record: start assign stream, graph id: " << kernel_graph->graph_id();
   device::ascend::AscendStreamAssign::GetInstance().AssignStream(kernel_graph);
   MS_LOG(INFO) << "Status record: end assign stream, graph id: " << kernel_graph->graph_id();
@@ -998,14 +998,14 @@ static std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &ke
     }
     if (common::AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
       *index = i;
-      back->insert(back->end(), back_temp.begin(), back_temp.end());
+      back->insert(back->cend(), back_temp.cbegin(), back_temp.cend());
       return front;
     }
     if (common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
       back_flag = true;
       if (!common::AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
         auto temp = HandleRecursiveCall(kernel_cnodes, back_label, &(++i), &back_temp);
-        front.insert(front.end(), temp.begin(), temp.end());
+        front.insert(front.cend(), temp.cbegin(), temp.cend());
       }
     }
     i++;
@@ -1029,8 +1029,8 @@ static void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
     auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
     std::vector<CNodePtr> back;
     auto front = HandleRecursiveCall(kernel_cnodes, label_id, &i, &back);
-    mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
-    mem_reuse_order.insert(mem_reuse_order.end(), back.begin(), back.end());
+    mem_reuse_order.insert(mem_reuse_order.cend(), front.cbegin(), front.cend());
+    mem_reuse_order.insert(mem_reuse_order.cend(), back.cbegin(), back.cend());
   }
   kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
 }
@@ -1115,8 +1115,8 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
                << device::ascend::AscendMemoryPool::GetInstance().UsedMemPeakStatistics() / kMBToByte << "M.";
 }
 
-void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph,
-                                     bool is_gradient_out) const {
+void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,
+                                     const KernelGraphPtr &kernel_graph, bool is_gradient_out) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -1215,7 +1215,7 @@ void AscendSession::RecurseSetSummaryNodes(KernelGraph *graph,
   if (graph_order_iter == graph_execute_orders_.end()) {
     SessionBasic::SetSummaryNodes(graph);
     auto summary_nodes = graph->summary_nodes();
-    summary->insert(summary_nodes.begin(), summary_nodes.end());
+    summary->insert(summary_nodes.cbegin(), summary_nodes.cend());
     return;
   }
   // for every child graph, find summary nodes
@@ -1227,7 +1227,7 @@ void AscendSession::RecurseSetSummaryNodes(KernelGraph *graph,
     }
     SessionBasic::SetSummaryNodes(child_graph.get());
     auto child_graph_summary = child_graph->summary_nodes();
-    summary->insert(child_graph_summary.begin(), child_graph_summary.end());
+    summary->insert(child_graph_summary.cbegin(), child_graph_summary.cend());
     RecurseSetSummaryNodes(child_graph.get(), summary);
   }
   graph->set_summary_nodes(*summary);
@@ -1238,14 +1238,14 @@ void AscendSession::SetSummaryNodes(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto summary_nodes = graph->summary_nodes();
   std::map<std::string, std::pair<AnfNodePtr, int>> summary;
-  summary.insert(summary_nodes.begin(), summary_nodes.end());
+  summary.insert(summary_nodes.cbegin(), summary_nodes.cend());
   RecurseSetSummaryNodes(graph, &summary);
   graph->set_summary_nodes(summary);
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 #endif
 
-void AscendSession::MergeGraphExecOrder() {
+void AscendSession::MergeGraphExecOrder() const {
   MS_LOG(INFO) << "Start!";
   // merge graph order
   auto &graph_order = GetGraphOrder(final_graph_id_);
@@ -1266,14 +1266,12 @@ void AscendSession::MergeGraphExecOrder() {
   // if first graph is common,the final graph has no label,then set the stream of final graph same with the first graph
   SetStreamDistinctionLabel(final_graph, graph_order[0], false);
   std::vector<CNodePtr> final_exec_order = final_graph->execution_order();
-  KernelGraphPtr last_graph = nullptr;
   for (size_t i = 0; i < graph_order.size(); i++) {
     auto graph_id = graph_order[i];
     if (graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START) {
       continue;
     }
     auto child_graph = GetGraph(graph_id);
-    last_graph = child_graph;
     MS_EXCEPTION_IF_NULL(child_graph);
     auto exec_order = child_graph->execution_order();
     MS_LOG(INFO) << "Merge graph,graph_id " << graph_id;
@@ -1288,7 +1286,7 @@ void AscendSession::MergeGraphExecOrder() {
     }
     // copy ref map to final graph
     auto child_ref_map = child_graph->GetRefMap();
-    for (auto &item : child_ref_map) {
+    for (const auto &item : child_ref_map) {
       if (final_graph->IsInRefOutputMap(item.first)) {
         MS_LOG(EXCEPTION) << "The ref pair is already in final graph!";
       }
@@ -1320,7 +1318,7 @@ const std::vector<GraphType> &AscendSession::GetGraphOrderType(GraphId final_gra
 }
 
 void AscendSession::SyncInitialTenosrToDevice() {
-  for (auto &item : initial_tenosrs_) {
+  for (const auto &item : initial_tenosrs_) {
     auto to_graph_id = item.first.first;
     auto input_idx = item.first.second;
     auto front_tensor = item.second;
@@ -1344,8 +1342,8 @@ void AscendSession::SyncInitialTenosrToDevice() {
   }
 }
 
-void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph,
-                                              const std::vector<KernelGraphPtr> &all_graphs) {
+void AscendSession::RootGraphExecutorValidate(const NotNull<KernelGraphPtr> &graph,
+                                              const std::vector<KernelGraphPtr> &all_graphs) const {
   AscendAutoMonad auto_monad(graph);
   auto_monad.GenerateExecuteOrder();
   if (graph->label_num() > kLabelNumsThreshold) {
@@ -1355,7 +1353,7 @@ void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph,
   }
 }
 
-void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {
+void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> &graph, NotNull<std::set<KernelGraphPtr> *> memo) {
   if (memo->find(graph) != memo->end()) {
     return;
   }
@@ -1427,8 +1425,8 @@ void AscendSession::SelectKernel(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: end select kernel. graph id: " << graph->graph_id();
 }
 
-void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
-                                     NotNull<std::set<KernelGraphPtr> *> const memo) const {
+void AscendSession::HardwareOptimize(const NotNull<KernelGraphPtr> &graph,
+                                     NotNull<std::set<KernelGraphPtr> *> memo) const {
   if (memo->find(graph) != memo->end()) {
     return;
   }
@@ -1441,8 +1439,8 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
 
 #ifdef ENABLE_DEBUGGER
 // Load graphs and their children for Ascend old runtime.
-void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
-                                    NotNull<std::set<KernelGraphPtr> *> const memo) const {
+void AscendSession::LoadGraphsToDbg(const NotNull<KernelGraphPtr> &graph,
+                                    NotNull<std::set<KernelGraphPtr> *> memo) const {
   if (memo->find(graph) != memo->end()) {
     return;
   }
@@ -1460,8 +1458,7 @@ void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
 }
 #endif
 
-void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
-                                       NotNull<std::set<KernelGraphPtr> *> const memo) const {
+void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const {
   if (memo->find(graph) != memo->end()) {
     return;
   }
@@ -1479,8 +1476,7 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
   MS_LOG(INFO) << "Status record: end assign static memory for parameter in graph. graph id: " << graph->graph_id();
 }
 
-void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
-                                       NotNull<std::set<KernelGraphPtr> *> const memo) const {
+void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const {
   if (memo->find(graph) != memo->end()) {
     return;
   }
@@ -1492,7 +1488,7 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
     UpdateRefOutputMap(NOT_NULL(child_graph_ptr), memo);
     // copy ref map to final graph
     auto child_ref_map = child_graph_ptr->GetRefMap();
-    for (auto &item : child_ref_map) {
+    for (const auto &item : child_ref_map) {
       if (graph->IsInRefOutputMap(item.first)) {
         MS_LOG(DEBUG) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second
                       << "> is already in " << graph->ToString();

@@ -600,7 +600,7 @@ void SessionBasic::ClearGraph() {
   graph_sum_ = 0;
 }
 
-void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) {
+void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
   auto graph_id = GetGraphIdByNode(out_node);
   if (graph_id == kInvalidGraphId) {
     return;
@@ -873,7 +873,7 @@ CNodePtr SessionBasic::CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr
   return partial_node;
 }
 
-std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) {
+std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> cnode_inputs = {
@@ -932,7 +932,7 @@ void SessionBasic::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph,
   if (common::AnfAlgo::CheckPrimitiveType(return_input, prim::kPrimPartial)) {
     auto return_input_cnode = return_input->cast<CNodePtr>();
     auto partial_inputs = return_input_cnode->inputs();
-    call_inputs.insert(call_inputs.end(), partial_inputs.begin() + kFirstDataInputIndex, partial_inputs.end());
+    call_inputs.insert(call_inputs.cend(), partial_inputs.cbegin() + kFirstDataInputIndex, partial_inputs.cend());
   } else if (IsValueNode<KernelGraph>(return_input)) {  // return node is kernel graph
     call_inputs.emplace_back(return_input);
   } else {  // return node is value node
@@ -1020,7 +1020,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchLayerInputs(const CNodePtr
       ProcessNodeRetFunc(cnode, partial_kernel_graph.get(), real_inputs);
     }
     // partial node add input args
-    new_partial_inputs.insert(new_partial_inputs.end(), real_inputs.begin(), real_inputs.end());
+    new_partial_inputs.insert(new_partial_inputs.cend(), real_inputs.cbegin(), real_inputs.cend());
     // create new partial node
     auto new_partial = graph->NewCNode(new_partial_inputs);
     new_make_tuple_inputs.emplace_back(new_partial);
@@ -1198,7 +1198,7 @@ ValueNodePtr SessionBasic::CreateValueNodeKernelGraph(const AnfNodePtr &anf, Ker
   return new_value_node;
 }
 
-ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) {
+ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {
@@ -1281,7 +1281,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   return graph;
 }
 
-void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(manager);
   auto input_nodes = graph->input_nodes();
@@ -1301,7 +1301,7 @@ void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGrap
 }
 
 void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
-                                        GraphInfo *graph_info) {
+                                        GraphInfo *graph_info) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(graph_info);
   // Get input tensor info
@@ -1366,7 +1366,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
 
 OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
                                            const InputTensorInfo &tensor_info,
-                                           GraphOutputInfo *const graph_output_info) {
+                                           GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   const auto &abstract = cnode->abstract();
@@ -1378,7 +1378,7 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
 
   bool is_gradient_out =
     graph_output_info != nullptr &&
-    std::any_of(graph_output_info->output_indexes.begin(), graph_output_info->output_indexes.end(),
+    std::any_of(graph_output_info->output_indexes.cbegin(), graph_output_info->output_indexes.cend(),
                 [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
                   return output_index.first.first == cnode;
                 });
@@ -1450,7 +1450,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
 
 void SessionBasic::CreateOutputPlaceholder(
   const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *const outputs,
-  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
+  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(output_indexes);
@@ -1463,7 +1463,7 @@ void SessionBasic::CreateOutputPlaceholder(
   }
 }
 
-void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) {
+void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) const {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
     for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
@@ -1529,10 +1529,10 @@ void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &
 
 void SessionBasic::HandleOpInputs(const std::set<KernelWithIndex> &input_kernel,
                                   std::map<KernelWithIndex, size_t> *ref_count,
-                                  std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) {
+                                  std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const {
   MS_EXCEPTION_IF_NULL(ref_count);
   MS_EXCEPTION_IF_NULL(op_output_map);
-  for (auto &kernel_with_index : input_kernel) {
+  for (const auto &kernel_with_index : input_kernel) {
     if (!kernel_with_index.first->isa<CNode>()) {
       continue;
     }
@@ -1561,7 +1561,7 @@ void SessionBasic::HandleOpInputs(const std::set<KernelWithIndex> &input_kernel,
 void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                                    const std::map<KernelWithIndex, size_t> &ref_count,
                                    std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map,
-                                   GraphOutputInfo *const graph_output_info) {
+                                   GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
@@ -1603,7 +1603,7 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   }
 }
 
-TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) {
+TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
     return nullptr;
@@ -1640,7 +1640,7 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
 
 TensorPtr SessionBasic::GetParameterOutputTensor(const AnfNodePtr &node,
                                                  const std::map<AnfNodePtr, size_t> &parameter_index,
-                                                 const std::vector<tensor::TensorPtr> &graph_inputs) {
+                                                 const std::vector<tensor::TensorPtr> &graph_inputs) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<Parameter>()) {
     return nullptr;
@@ -1658,7 +1658,7 @@ TensorPtr SessionBasic::GetParameterOutputTensor(const AnfNodePtr &node,
 }
 
 TensorPtr SessionBasic::GetCNodeOutputTensor(const KernelWithIndex &kernel_with_index,
-                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output) {
+                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output) const {
   const auto &iter = op_output.find(kernel_with_index);
   if (iter == op_output.end()) {
     MS_LOG(EXCEPTION) << "Can not find output tensor of cnode, node = " << kernel_with_index.first->DebugString();
@@ -1666,7 +1666,7 @@ TensorPtr SessionBasic::GetCNodeOutputTensor(const KernelWithIndex &kernel_with_
   return iter->second;
 }
 
-void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) {
+void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(const_input_attr_index);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
@@ -2089,12 +2089,12 @@ void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
   summary_callback_ = callback;
 }
 
-void SessionBasic::SetSummaryNodesForAllGraphs(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs) {
+void SessionBasic::SetSummaryNodesForAllGraphs(KernelGraph *graph, const std::vector<KernelGraphPtr> &all_graphs) {
   MS_LOG(DEBUG) << "Set summary nodes for all graphs start.";
   MS_EXCEPTION_IF_NULL(graph);
   auto summary_nodes = graph->summary_nodes();
   std::map<std::string, std::pair<AnfNodePtr, int>> summary;
-  summary.insert(summary_nodes.begin(), summary_nodes.end());
+  summary.insert(summary_nodes.cbegin(), summary_nodes.cend());
   RecurseSetSummaryNodes(graph, all_graphs, &summary);
   graph->set_summary_nodes(summary);
   MS_LOG(INFO) << "The total summary nodes is: " << summary.size();
@@ -2140,7 +2140,7 @@ void SessionBasic::RecurseSetSummaryNodes(KernelGraph *graph, std::vector<Kernel
     MS_EXCEPTION_IF_NULL(child_graph);
     SetSummaryNodes(child_graph.get());
     auto child_graph_summary = child_graph->summary_nodes();
-    summary->insert(child_graph_summary.begin(), child_graph_summary.end());
+    summary->insert(child_graph_summary.cbegin(), child_graph_summary.cend());
   }
   graph->set_summary_nodes(*summary);
 }
@@ -2165,7 +2165,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
   auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions
-  for (auto &output_item : summary_outputs) {
+  for (const auto &output_item : summary_outputs) {
     auto node = output_item.second.first;
     size_t index = IntToSize(output_item.second.second);
     auto address = AnfAlgo::GetOutputAddr(node, index, false);
@@ -2220,10 +2220,10 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
         continue;
       }
       auto res = ExtendNodeUsers(front_func_graph_manager, user.first);
-      result.insert(result.end(), res.begin(), res.end());
+      result.insert(result.cend(), res.cbegin(), res.cend());
     } else if (common::AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimMakeTuple)) {
       auto res = ExtendNodeUsers(front_func_graph_manager, user.first);
-      (void)result.insert(result.end(), res.begin(), res.end());
+      (void)result.insert(result.cend(), res.cbegin(), res.cend());
     } else {
       (void)result.emplace_back(user.first);
     }
@@ -2424,7 +2424,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   return output_node;
 }
 
-void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) {
+void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const {
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   MS_EXCEPTION_IF_NULL(graph);
@@ -2520,7 +2520,7 @@ KernelGraphPtr SessionBasic::NewKernelGraph() {
   return graph;
 }
 
-AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) {
+AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const {
   MS_EXCEPTION_IF_NULL(push_node);
   for (auto &node : node_list) {
     if (node != nullptr && node->isa<CNode>()) {
@@ -2593,7 +2593,7 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
 }
 
 void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
-                                                       const std::vector<tensor::TensorPtr> &input_tensors) {
+                                                       const std::vector<tensor::TensorPtr> &input_tensors) const {
   for (auto &tensor : input_tensors) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (device_address != nullptr) {
@@ -2671,7 +2671,7 @@ void SessionBasic::EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask
   *input_tensors = new_input_tensors;
 }
 
-bool SessionBasic::IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) {
+bool SessionBasic::IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (const auto &kernel_node : kernel_graph->execution_order()) {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -2717,8 +2717,9 @@ uint32_t GetBpropGraphGradsCount(const KernelGraphPtr &graph) {
   MS_LOG(DEBUG) << "Get total graph output size:" << outputs.size();
   // The type of output is CNode or ValueNode.
   // There is no need to calculate grad if the type of output is not CNode.
-  return std::count_if(outputs.begin(), outputs.end(),
-                       [](const AnfNodePtr &output) { return output != nullptr && output->isa<CNode>(); });
+  return static_cast<uint32_t>(std::count_if(outputs.begin(), outputs.end(), [](const AnfNodePtr &output) {
+    return output != nullptr && output->isa<CNode>();
+  }));
 }
 
 void SetGraphBpropAttr(const KernelGraphPtr &graph) {
@@ -2966,7 +2967,7 @@ void SessionBasic::FinalOptimize(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "End FinalOptimize for graph: " << graph->graph_id();
 }
 
-void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
+void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

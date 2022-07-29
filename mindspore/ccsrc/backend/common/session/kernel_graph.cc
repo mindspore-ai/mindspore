@@ -144,7 +144,9 @@ void SetInternalOutputAttr(const AnfNodePtr &node) {
     return;
   }
   auto p = GetCNodePrimitive(node);
-  if (p == nullptr) return;
+  if (p == nullptr) {
+    return;
+  }
   auto prim_node = NewValueNode(p->Clone());
   node->cast<CNodePtr>()->set_input(kAnfPrimitiveIndex, prim_node);
   common::AnfAlgo::SetNodeAttr(kAttrIsInternalOutputNopNode, MakeValue(true), node);
@@ -332,7 +334,7 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
     // This prevent Mul be skipped.
     //
     if (IsPrimitiveCNode(node, prim::kPrimLabelSet) && (re_order.back() != node->input(1))) {
-      auto iter = std::find(re_order.rbegin() + 1, re_order.rend(), node->input(1));
+      auto iter = std::find(re_order.crbegin() + 1, re_order.crend(), node->input(1));
       if (iter != re_order.rend()) {
         re_order.insert(iter.base(), node);
         continue;
@@ -472,7 +474,7 @@ CNodePtr KernelGraph::NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, c
   return cnode;
 }
 
-void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
+void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) const {
   auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -619,7 +621,7 @@ ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract
   return new_parameter;
 }
 
-ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
+ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) const {
   MS_EXCEPTION_IF_NULL(value_node);
   auto new_value_node = MakeValueNode(value_node)->cast<ValueNodePtr>();
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
@@ -642,7 +644,7 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   ValueNodePtr value_node = nullptr;
   if (input_tensor->data_type() == kObjectTypeString) {
     std::string value_string;
-    value_string.assign(reinterpret_cast<char *>(input_tensor->data_c()), LongToSize(input_tensor->data().size()));
+    value_string.assign(static_cast<char *>(input_tensor->data_c()), LongToSize(input_tensor->data().size()));
     StringImmPtr string_imm_value = std::make_shared<StringImm>(value_string);
     value_node = std::make_shared<ValueNode>(string_imm_value);
   } else {
@@ -1158,7 +1160,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   SetInternalOutputAttr(new_node);
 }
 
-void KernelGraph::EnableRuntimeCache() {
+void KernelGraph::EnableRuntimeCache() const {
   auto node_list = TopoSort(get_return());
   for (auto &node : node_list) {
     auto kernel_info = node->kernel_info();
@@ -1254,15 +1256,15 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
   std::vector<KernelWithIndex> backend_output_nodes;
   for (auto &backend_output : backend_outputs) {
     auto temp_backend_outputs = common::AnfAlgo::GetAllOutputWithIndex(backend_output);
-    (void)backend_output_nodes.insert(backend_output_nodes.end(), temp_backend_outputs.begin(),
-                                      temp_backend_outputs.end());
+    (void)backend_output_nodes.insert(backend_output_nodes.end(), temp_backend_outputs.cbegin(),
+                                      temp_backend_outputs.cend());
   }
 
   MS_LOG(INFO) << "Get graph front output nodes.";
   std::vector<KernelWithIndex> front_output_nodes;
   for (auto &front_output : front_outputs) {
     auto temp_front_outputs = common::AnfAlgo::GetAllOutputWithIndex(front_output);
-    (void)front_output_nodes.insert(front_output_nodes.end(), temp_front_outputs.begin(), temp_front_outputs.end());
+    (void)front_output_nodes.insert(front_output_nodes.cend(), temp_front_outputs.cbegin(), temp_front_outputs.cend());
   }
 
   if (backend_output_nodes.size() != front_output_nodes.size()) {
@@ -1466,7 +1468,7 @@ bool KernelGraph::IsChildGraphResult(const AnfNodePtr &node) {
   for (const auto &child_graph_result : child_graph_result_) {
     MS_EXCEPTION_IF_NULL(child_graph_result);
     auto outputs = common::AnfAlgo::GetAllOutput(child_graph_result);
-    (void)child_graph_results.insert(child_graph_results.end(), outputs.begin(), outputs.end());
+    (void)child_graph_results.insert(child_graph_results.cend(), outputs.cbegin(), outputs.cend());
   }
 
   return find(child_graph_results.begin(), child_graph_results.end(), node) != child_graph_results.end();
