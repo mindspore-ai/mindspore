@@ -26,7 +26,7 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 namespace {
-bool CopySameTypeMem(void *dst_ptr, size_t dst_size, void *src_ptr, size_t src_size, TypeId type) {
+bool CopySameTypeMem(void *dst_ptr, size_t dst_size, const void *src_ptr, size_t src_size, TypeId type) {
   if (src_size != dst_size) {
     MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
                   << ", dst device size: " << dst_size;

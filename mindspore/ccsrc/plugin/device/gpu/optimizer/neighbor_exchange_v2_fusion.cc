@@ -422,7 +422,6 @@ int64_t AllToAllRealIds(int64_t ids, const std::vector<int64_t> &recv_rank_ids) 
 }
 }  // namespace
 
-// returns {top_bottom, left_right, top_corner, bottom_corner}, if no split, set it nullptr
 std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraphPtr &graph,
                                                                  const CNodePtr &neighbor_exchange_v2,
                                                                  std::vector<int64_t> *split_num) const {
@@ -735,8 +734,6 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNodes(const FuncGraphPtr &graph, 
   return concat_all;
 }
 
-// grad
-// returns {top_bottom, left_right, top_corner, bottom_corner}, if no split, set it nullptr
 std::vector<CNodePtr> NeighborExchangeV2GradFusion::CreateSplitNodesForGrad(const FuncGraphPtr &graph,
                                                                             const CNodePtr &neighbor_exchange_v2_grad,
                                                                             std::vector<int64_t> *split_num) const {

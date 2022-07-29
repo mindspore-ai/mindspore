@@ -56,7 +56,7 @@ void SparseApplyLazyAdamPSKernelMod::InitKernel(
   if (!IsSameShape(var_shape, v_shape)) {
     MS_LOG(EXCEPTION) << "var and v must have the same shape";
   }
-  var_first_dim_size_ = var_shape[0];
+  var_first_dim_size_ = LongToSize(var_shape[0]);
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "The shape of var and grad must be equal in dimension " << i;

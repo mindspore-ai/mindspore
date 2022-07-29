@@ -37,7 +37,7 @@ bool TopologyNode::Initialize() {
   auto port = tcp_server_->GetPort();
   auto rank_name = "RNAK_ID_" + std::to_string(rank_id_);
   auto address = ip + ":" + std::to_string(port);
-  cgn_->PutMetadata(rank_name, address);
+  (void)cgn_->PutMetadata(rank_name, address);
 
   // Get the address of the topo node of the next rank from meta server node and create an tcp connection to it.
   // A thread is used because all the addresses of other rank are registered asynchronously into the meta server.
@@ -63,8 +63,8 @@ bool TopologyNode::Initialize() {
         }
       }
       MS_LOG(INFO) << "Retry to get the address of next rank : " << next_rank_name;
-      static uint32_t interval = 3;
-      sleep(interval);
+      static const uint32_t interval = 3;
+      (void)sleep(interval);
     }
   });
   return true;
@@ -102,7 +102,7 @@ bool TopologyNode::Finalize() {
   return true;
 }
 
-bool TopologyNode::SendAsync(size_t rank_id, void *data, size_t size) {
+bool TopologyNode::SendAsync(size_t rank_id, const void *data, size_t size) {
   if (tcp_clients_.find(rank_id) == tcp_clients_.end()) {
     MS_LOG(ERROR) << "Cann not find tcp client for rank id: " << rank_id << ", local rank: " << rank_id_;
     return false;
@@ -116,7 +116,7 @@ bool TopologyNode::SendAsync(size_t rank_id, void *data, size_t size) {
   message->name = std::to_string(rank_id_);
   message->to = AID("", node_addresses_[rank_id]);
   message->body.reserve(size);
-  message->body.append(static_cast<char *>(data), size);
+  (void)message->body.append(static_cast<const char *>(data), size);
 
   tcp_client->SendAsync(std::move(message));
   return true;
@@ -158,9 +158,9 @@ bool TopologyNode::Receive(size_t rank_id, MessageBase **message, size_t timeout
   return rt;
 }
 
-size_t TopologyNode::rank_id() { return rank_id_; }
+size_t TopologyNode::rank_id() const { return rank_id_; }
 
-size_t TopologyNode::rank_size() { return total_node_num_; }
+size_t TopologyNode::rank_size() const { return total_node_num_; }
 
 MessageBase *const TopologyNode::HandleMessage(MessageBase *const message) {
   MS_EXCEPTION_IF_NULL(message);
@@ -172,6 +172,7 @@ MessageBase *const TopologyNode::HandleMessage(MessageBase *const message) {
     queue = new std::queue<MessageBase *>();
     received_messages_[rank_id] = queue;
   }
+  MS_EXCEPTION_IF_NULL(queue);
   queue->push(message);
   cond_var_.notify_all();
   return distributed::rpc::NULL_MSG;

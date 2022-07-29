@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
+size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   size_t total_mem_size = 32;
   auto kernels = graph->execution_order();
@@ -63,7 +63,7 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
   return total_mem_size;
 }
 
-void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr) {
+void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(base_ptr);
   uint8_t *mem_ptr = base_ptr;

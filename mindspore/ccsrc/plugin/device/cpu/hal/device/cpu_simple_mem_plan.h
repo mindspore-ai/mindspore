@@ -28,8 +28,8 @@ class CPUSimpleMemPlan {
   CPUSimpleMemPlan() = default;
   ~CPUSimpleMemPlan() = default;
 
-  size_t MemPlan(const session::KernelGraph *graph);
-  void MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr);
+  size_t MemPlan(const session::KernelGraph *graph) const;
+  void MemAssign(const session::KernelGraph *graph, uint8_t *base_ptr) const;
 };
 }  // namespace cpu
 }  // namespace device

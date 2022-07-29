@@ -129,7 +129,7 @@ void CPUMemoryManager::MemFree(void *ptr) {
   }
 }
 
-void CPUMemoryManager::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+void CPUMemoryManager::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) const {
   if (!dynamic_malloc_) {
     return;
   }
@@ -165,7 +165,7 @@ void CPUMemoryManager::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   }
 }
 
-void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph) {
+void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph) const {
   if (!dynamic_malloc_) {
     return;
   }

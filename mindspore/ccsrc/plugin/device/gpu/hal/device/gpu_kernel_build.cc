@@ -81,7 +81,6 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
     } else if (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       std::shared_ptr<kernel::NativeGpuKernelMod> gpu_kernel_mod = nullptr;
       bool new_factory = true;
-      // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
       if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
         gpu_kernel_mod = kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Create(kernel_name);
       } else {
