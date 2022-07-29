@@ -2161,7 +2161,7 @@ class ArgMinWithValue(Primitive):
         - If there are multiple minimum values, the index of the first minimum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
-    Also see: func: `mindspore.ops.arg_min_with_value`.
+    Also see: func: `mindspore.ops.min`.
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
