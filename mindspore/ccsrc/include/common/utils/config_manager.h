@@ -21,7 +21,6 @@
 #include <memory>
 #include <vector>
 #include <map>
-#include <utility>
 #include <sstream>
 
 #include "utils/overload.h"
@@ -88,7 +87,9 @@ class COMMON_EXPORT ConfigManager {
   DatasetMode dataset_mode() const { return dataset_mode_; }
   void set_dataset_mode(DatasetMode mode) { dataset_mode_ = mode; }
   int64_t iter_num() const {
-    if (dataset_mode_ == DS_NORMAL_MODE) return 1;
+    if (dataset_mode_ == DS_NORMAL_MODE) {
+      return 1;
+    }
     return iter_num_;
   }
 
