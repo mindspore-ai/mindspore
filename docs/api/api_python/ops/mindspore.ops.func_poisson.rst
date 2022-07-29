@@ -1,7 +1,7 @@
 ﻿mindspore.ops.poisson
 =====================
 
-.. py:function:: mindspore.ops.poisson(shape, rate, seed=None, dtype=mindspore.dtype.float32)
+.. py:function:: mindspore.ops.poisson(shape, rate, seed=None, dtype=mstype.float32)
 
     根据泊松随机数分布生成随机数。
 
@@ -15,7 +15,7 @@
         - **dtype** (mindspore.dtype) - 输出数据的数据类型。必须是mindspore.dtype.int64，mindspore.dtype.int32，mindspore.dtype.float64，mindspore.dtype.float32或mindspore.dtype.float16中的一种。默认值：mindspore.dtype.float32。
 
     返回：
-        一个shape为`mindspore.concat([shape, mindspore.shape(mean)], axis=0)`，数据类型为`dtype`的Tensor。
+        一个shape为 `mindspore.concat([shape, mindspore.shape(mean)], axis=0)` ，数据类型为 `dtype` 的Tensor。
 
     异常：
         - **TypeError** - `shape` 不是一个Tensor，或者其数据类型不是mindspore.dtype.int64或者mindspore.dtype.int32。
