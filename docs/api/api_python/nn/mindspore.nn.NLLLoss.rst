@@ -5,7 +5,7 @@ mindspore.nn.NLLLoss
 
     计算预测值和目标值之间的负对数似然损失。
 
-    `reduction`为'none'时，负对数似然损失公式如下：
+    `reduction` 为'none'时，负对数似然损失公式如下：
 
     .. math::
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
@@ -15,7 +15,7 @@ mindspore.nn.NLLLoss
 
     其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重， :math:`N`表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]`，表示类索引，其中 :math:`C` 表示类的数量。
 
-    若`reduction`不为'none'（默认为'mean'），则
+    若 `reduction` 不为'none'（默认为'mean'），则
 
     .. math::
         \ell(x, t)=L=\left\{\begin{array}{ll}
@@ -31,8 +31,8 @@ mindspore.nn.NLLLoss
 
     **输入：**
 
-    - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对 :math:`K`维数据)。`inputs` 需为对数概率。数据类型仅支持float32或float16。
-    - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` (针对 :math:`K`维数据)。
+    - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。`inputs` 需为对数概率。数据类型仅支持float32或float16。
+    - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。
       数据类型仅支持int32。
 
     **返回：**
