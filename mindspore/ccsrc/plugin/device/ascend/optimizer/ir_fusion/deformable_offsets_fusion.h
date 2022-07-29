@@ -24,7 +24,7 @@ namespace mindspore {
 namespace opt {
 class DeformableOffsetsFusion : public PatternProcessPass {
  public:
-  explicit DeformableOffsetsFusion(std::string pass_name = "deformable_offsets_fusion", bool multigraph = true)
+  explicit DeformableOffsetsFusion(const std::string &pass_name = "deformable_offsets_fusion", bool multigraph = true)
       : PatternProcessPass(pass_name, multigraph) {}
   ~DeformableOffsetsFusion() override = default;
   const BaseRef DefinePattern() const override;
