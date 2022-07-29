@@ -52,7 +52,7 @@ int SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   return KRET_OK;
 }
@@ -65,13 +65,8 @@ bool SeluGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   float scale_dot_alpha = alpha * scale;
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  if ((std::is_same<T, int32_t>::value) || (std::is_same<T, int8_t>::value)) {
-    CalculateSeluInteger(input, input_elements_, scale_dot_alpha, scale, output, device_id_,
-                         reinterpret_cast<cudaStream_t>(cuda_stream_));
-  } else {
-    CalculateSelu(input, input_elements_, static_cast<T>(scale_dot_alpha), static_cast<T>(scale), output, device_id_,
-                  reinterpret_cast<cudaStream_t>(cuda_stream_));
-  }
+  CalculateSeLU(input, input_elements_, scale_dot_alpha, scale, output, device_id_,
+                reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
