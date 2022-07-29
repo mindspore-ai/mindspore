@@ -26,11 +26,11 @@ class RandomChoiceWithMaskKernel : public KernelBase {
   ~RandomChoiceWithMaskKernel() = default;
 
  protected:
-  int32_t count_ = 0;
+  int64_t count_ = 0;
   std::vector<int64_t> dims_;
   uint32_t DoCompute() override;
   uint32_t ParseKernelParam() override;
-  void UpdateOutputShapeValue(int32_t non_zero_num, int32_t output_length);
+  void UpdateOutputShapeValue(int64_t non_zero_num, int64_t output_length);
 };
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_RANDOM_CHOICE_WITH_MASK_KERNELS_H_

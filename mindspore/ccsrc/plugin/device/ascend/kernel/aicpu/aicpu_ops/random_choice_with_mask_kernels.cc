@@ -25,14 +25,14 @@
 #include "common/tensor.h"
 
 namespace aicpu {
-static void ParseOutputCoordinate(std::vector<int64_t> dims_, int32_t output_length, int32_t input_dim_size,
-                                  int32_t input_total_count, const int *tmp_output, int *output) {
+static void ParseOutputCoordinate(std::vector<int64_t> dims_, int64_t output_length, int64_t input_dim_size,
+                                  int64_t input_total_count, const int *tmp_output, int *output) {
   int it = 0;
-  int column = input_total_count / dims_[0];
-  for (int i = 0; i < output_length; i++) {
-    int32_t tmp_output_number = tmp_output[i];
-    int tmp_column = column;
-    for (int j = 0; j < input_dim_size; j++) {
+  int64_t column = input_total_count / dims_[0];
+  for (int64_t i = 0; i < output_length; i++) {
+    int64_t tmp_output_number = static_cast<int64_t>(tmp_output[i]);
+    int64_t tmp_column = column;
+    for (int64_t j = 0; j < input_dim_size; j++) {
       if (j == input_dim_size - 1) {
         output[it++] = tmp_output_number;
         continue;
@@ -44,8 +44,8 @@ static void ParseOutputCoordinate(std::vector<int64_t> dims_, int32_t output_len
   }
 }
 
-static void GetOutputLength(bool *padding_flag, int32_t *output_length, int32_t *output_non_zero_length, int32_t count,
-                            int32_t non_zero_num) {
+static void GetOutputLength(bool *padding_flag, int64_t *output_length, int64_t *output_non_zero_length, int64_t count,
+                            int64_t non_zero_num) {
   if (count == 0) {
     *padding_flag = false;
     *output_length = non_zero_num;
@@ -63,9 +63,9 @@ static void GetOutputLength(bool *padding_flag, int32_t *output_length, int32_t 
   }
 }
 
-static bool GetInputTotalCount(const std::vector<int64_t> &dims_, int32_t *input_total_count,
-                               const int32_t &input_dim_size) {
-  const int32_t max_inpu_dim = 5;
+static bool GetInputTotalCount(const std::vector<int64_t> &dims_, int64_t *input_total_count,
+                               const int64_t &input_dim_size) {
+  const int64_t max_inpu_dim = 5;
   if (input_dim_size < 1 || input_dim_size > max_inpu_dim) {
     AICPU_LOGE(
       "input dim size is %d, it must greater or equal to 1 channels "
@@ -73,7 +73,7 @@ static bool GetInputTotalCount(const std::vector<int64_t> &dims_, int32_t *input
       input_dim_size);
     return false;
   }
-  for (int32_t i = 0; i < input_dim_size; i++) {
+  for (int64_t i = 0; i < input_dim_size; i++) {
     *input_total_count *= dims_[i];
   }
   if (*input_total_count <= 0) {
@@ -83,23 +83,25 @@ static bool GetInputTotalCount(const std::vector<int64_t> &dims_, int32_t *input
   return true;
 }
 
-static void UpdateOutput(const std::vector<int64_t> &dims_, const int32_t &non_zero_num, const int32_t &count_,
-                         const int32_t &output_length, const int *mask_dim, int32_t *output_coordinate, bool *mask) {
-  for (int32_t i = non_zero_num * dims_.size(); i < static_cast<int32_t>(count_ * dims_.size()); i++) {
+static void UpdateOutput(const std::vector<int64_t> &dims_, const int64_t &non_zero_num, const int64_t &count_,
+                         const int64_t &output_length, const int *mask_dim, int32_t *output_coordinate, bool *mask) {
+  const int64_t dim_size = static_cast<int64_t>(dims_.size());
+  for (int64_t i = non_zero_num * dim_size; i < count_ * dim_size; i++) {
     output_coordinate[i] = 0;
   }
-  for (int32_t i = 0; i < output_length; i++) {
+  for (int64_t i = 0; i < output_length; i++) {
     mask[i] = static_cast<bool>(mask_dim[i]);
   }
-  for (int32_t i = non_zero_num; i < count_; i++) {
+  for (int64_t i = non_zero_num; i < count_; i++) {
     mask[i] = false;
   }
 }
 
-static bool GenerateRandomMask(const int32_t &output_length, const int32_t &non_zero_num,
-                               const int32_t &output_non_zero_length, int **input_dim, int **tmp_output,
+static bool GenerateRandomMask(const int64_t &output_length, const int64_t &non_zero_num,
+                               const int64_t &output_non_zero_length, int **input_dim, int **tmp_output,
                                int **mask_dim) {
-  *tmp_output = reinterpret_cast<int *>(malloc(output_length * sizeof(int)));
+  const int64_t size_int = static_cast<int64_t>(sizeof(int));
+  *tmp_output = reinterpret_cast<int *>(malloc(output_length * size_int));
   if (*tmp_output == nullptr) {
     AICPU_LOGE("malloc memory failed!");
     free(*input_dim);
@@ -108,7 +110,7 @@ static bool GenerateRandomMask(const int32_t &output_length, const int32_t &non_
   std::random_device rd;
   std::mt19937 gen(rd());
   aicpu::distinct_uniform_int_distribution<> dis(0, non_zero_num - 1);
-  *mask_dim = reinterpret_cast<int *>(malloc(output_length * sizeof(int)));
+  *mask_dim = reinterpret_cast<int *>(malloc(output_length * size_int));
   if (*mask_dim == nullptr) {
     AICPU_LOGE("malloc memory failed!");
     free(*input_dim);
@@ -149,9 +151,9 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   auto *input = reinterpret_cast<bool *>(io_addrs_[0]);
   auto *output_coordinate = reinterpret_cast<int32_t *>(io_addrs_[1]);
   auto *mask = reinterpret_cast<bool *>(io_addrs_[2]);
-  int32_t input_dim_size = dims_.size();
-  int32_t non_zero_num = 0;
-  int32_t input_total_count = 1;
+  int64_t input_dim_size = static_cast<int64_t>(dims_.size());
+  int64_t non_zero_num = 0;
+  int64_t input_total_count = 1;
 
   bool ret = GetInputTotalCount(dims_, &input_total_count, input_dim_size);
   if (!ret) {
@@ -164,15 +166,15 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
     AICPU_LOGE("Malloc memory failed!");
     return AICPU_KERNEL_STATE_INTERNAL_ERROR;
   }
-  for (int32_t i = 0; i < input_total_count; i++) {
+  for (int64_t i = 0; i < input_total_count; i++) {
     if (input[i] != 0) {
       input_dim[non_zero_num] = i;
       non_zero_num++;
     }
   }
   bool padding_flag = false;
-  int32_t output_length = 0;
-  int32_t output_non_zero_length = 0;
+  int64_t output_length = 0;
+  int64_t output_non_zero_length = 0;
   GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
 
   int *tmp_output = nullptr;
@@ -184,8 +186,8 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   }
 
   if (padding_flag) {
-    int32_t index = 0;
-    for (int32_t i = output_length - 1; i > non_zero_num; i--) {
+    int64_t index = 0;
+    for (int64_t i = output_length - 1; i > non_zero_num; i--) {
       tmp_output[non_zero_num + index] = 0;
       mask_dim[non_zero_num + index] = 0;
       index++;
@@ -219,7 +221,7 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   }
   ParseOutputCoordinate(dims_, output_length, input_dim_size, input_total_count, tmp_output, output);
 
-  int32_t actual_output_length = count_ * dims_.size();
+  int32_t actual_output_length = static_cast<int32_t>(count_ * input_dim_size);
   copy_output_length = std::min(actual_output_length, copy_output_length);
   int32_t copy_output_bytes = 0;
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
@@ -231,7 +233,7 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
     return AICPU_KERNEL_STATE_INTERNAL_ERROR;
   }
   copy_output_bytes = copy_output_length * sizeof(int32_t);
-  memcpy_s(output_coordinate, copy_output_bytes, output, copy_output_bytes);
+  (void)memcpy_s(output_coordinate, copy_output_bytes, output, copy_output_bytes);
   UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   AICPU_LOGI("no zero num is %d, output_length is %d ", non_zero_num, output_length);
   UpdateOutputShapeValue(non_zero_num, output_length);
@@ -242,7 +244,7 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   return AICPU_KERNEL_STATE_SUCCESS;
 }
 
-void RandomChoiceWithMaskKernel::UpdateOutputShapeValue(int32_t non_zero_num, int32_t output_length) {
+void RandomChoiceWithMaskKernel::UpdateOutputShapeValue(int64_t non_zero_num, int64_t output_length) {
   if (unknow_shape_) {
     output_shape_and_type_[0]->dims[0] = non_zero_num;
     output_shape_and_type_[1]->dims[0] = output_length;
