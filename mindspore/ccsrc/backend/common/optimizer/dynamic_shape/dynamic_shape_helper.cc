@@ -128,7 +128,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
   MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
-  std::set<int64_t> depend_list = abstract::GetDependsFormMap(cnode);
+  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
   auto ret = InferShapeForDefiniteOutputNode(cnode);
   if (ret) {
     return;
@@ -175,7 +175,8 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     }
     common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
   }
-  auto eval_result = opt::CppInferShape(primitive, args_spec_list);
+
+  auto eval_result = opt::CppInferShapeAndType(primitive, args_spec_list);
   cnode->set_abstract(eval_result);
 }
 }  // namespace

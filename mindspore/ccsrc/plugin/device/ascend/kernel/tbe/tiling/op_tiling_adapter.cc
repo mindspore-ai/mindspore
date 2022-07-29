@@ -285,7 +285,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
   ::ge::ComputeGraphPtr *ge_graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  auto depends_list_me = abstract::GetDependsFormMap(node);
+  auto depends_list_me = abstract::GetValueDependArgIndices(node);
   if (depends_list_me.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
     MS_LOG(INFO) << "The node " << op_name_ << " has no infer depend.";
     return {};

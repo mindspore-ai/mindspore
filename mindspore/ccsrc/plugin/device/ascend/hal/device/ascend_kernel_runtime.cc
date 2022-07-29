@@ -982,7 +982,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
     }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto depends = abstract::GetDependsFormMap(kernel);
+    auto depends = abstract::GetValueDependArgIndices(kernel);
     if (!depends.empty() || AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
       MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
       if (!SyncStream()) {

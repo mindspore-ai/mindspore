@@ -228,7 +228,11 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 // Transfer depend or updatestate to the new node
 void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
 
-AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
+// Infer the shape and write to out abstract.
+void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const AbstractBasePtr &out_abs);
+
+// Infer the shape and type.
+AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
 
 // Generate kernel build info for created kernel
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);

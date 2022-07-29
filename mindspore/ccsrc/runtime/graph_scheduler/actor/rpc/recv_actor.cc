@@ -285,7 +285,7 @@ void RecvActor::PreprocessRemoteInput(MessageBase *const msg, bool *need_finaliz
   ParseFinalizeReqData(dynamic_shape_data_msg_len, msg, need_finalize);
 
   // The args_spec_list is updated in ParseDynamicShapeData method. So do the Infer and Resize operation.
-  auto eval_result = opt::CppInferShape(common::AnfAlgo::GetCNodePrimitive(kernel_), args_spec_list);
+  auto eval_result = opt::CppInferShapeAndType(common::AnfAlgo::GetCNodePrimitive(kernel_), args_spec_list);
   kernel_->set_abstract(eval_result);
   auto args = kernel::AbstractArgsFromCNode(kernel_);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);

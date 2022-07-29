@@ -880,6 +880,11 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   ~AbstractTuple() override = default;
   MS_DECLARE_PARENT(AbstractTuple, AbstractSequence)
 
+  /// \brief Set the shape for the AbstractTuple, only use for dynamic shape.
+  ///
+  /// \param[in] shape The shape that will be set to the AbstractTuple.
+  void set_shape(const BaseShapePtr &shape) override;
+
   TypePtr BuildType() const override { return std::make_shared<Tuple>(ElementsType()); }
 
   BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShape()); }

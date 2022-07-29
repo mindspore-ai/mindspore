@@ -60,7 +60,7 @@ void ChangeDynamicAbsToActualAbs(const CNodePtr &cnode) {
     common::AnfAlgo::AddArgList(&args_spec_list, real_input, input_node_with_index.second);
   }
   // Infer real abstract
-  auto eval_result = mindspore::opt::CppInferShape(primitive, args_spec_list);
+  auto eval_result = mindspore::opt::CppInferShapeAndType(primitive, args_spec_list);
   cnode->set_abstract(eval_result);
 }
 }  // namespace
