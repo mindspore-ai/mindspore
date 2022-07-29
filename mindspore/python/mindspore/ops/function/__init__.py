@@ -280,6 +280,7 @@ from .nn_func import (
     selu,
     pdist,
     pad,
+    mirror_pad,
     nll_loss,
     smooth_l1_loss,
     cross_entropy,
