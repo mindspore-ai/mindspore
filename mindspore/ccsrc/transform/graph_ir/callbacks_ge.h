@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
 #include <map>
-#include <vector>
 #include <string>
 #include <memory>
 #include "include/transform/graph_ir/types.h"
