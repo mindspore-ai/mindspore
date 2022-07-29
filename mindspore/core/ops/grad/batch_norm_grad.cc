@@ -53,7 +53,7 @@ abstract::TupleShapePtr BatchNormGradInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto scale_shape_ptr = input_args[kInputIndex2]->BuildShape();
   return std::make_shared<abstract::TupleShape>(
@@ -63,7 +63,7 @@ abstract::TupleShapePtr BatchNormGradInferShape(const PrimitivePtr &primitive,
 TuplePtr BatchNormGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto x_type_ptr = input_args[kInputIndex1]->BuildType();
   auto scale_type_ptr = input_args[kInputIndex2]->BuildType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type_ptr, scale_type_ptr, scale_type_ptr});
