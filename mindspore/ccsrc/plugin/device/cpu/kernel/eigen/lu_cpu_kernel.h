@@ -33,8 +33,6 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
-
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -44,6 +42,7 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows);
   template <typename T>
   void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
+  void DoSafeMemCopy(void *dest, size_t dest_max, const void *src, size_t count);
   template <typename T>
   void InitIOSize(const CNodePtr &kernel_node);
   template <typename T>

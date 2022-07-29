@@ -87,11 +87,11 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   size_t input_byte_size = input_size_ * unit_byte_size;
   if (reduction_ == kNone) {
     // The output is a Tensor in ReductionType none.
-    output_size_list_.emplace_back(input_byte_size);
+    (void)output_size_list_.emplace_back(input_byte_size);
   } else {
     // The output is a scalar in ReductionType mean or sum.
-    output_size_list_.emplace_back(unit_byte_size);
-    workspace_size_list_.emplace_back(thread_num_ * unit_byte_size);
+    (void)output_size_list_.emplace_back(unit_byte_size);
+    (void)workspace_size_list_.emplace_back(thread_num_ * unit_byte_size);
   }
   is_broadcast_ = input_post_weight_shape_ != input_label_shape_ || input_weight_shape_ != input_label_shape_;
   return KRET_OK;
