@@ -193,32 +193,35 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
   buffer << std::endl;
 
   // Dump parameters
-  int32_t para = 1;
-  for (const auto &p : parameters) {
-    if (p == nullptr) {
+  int32_t para_num = 1;
+  for (const auto &param : parameters) {
+    if (param == nullptr) {
       continue;
     }
-    auto parameter_ptr = p->cast<ParameterPtr>();
+    auto parameter_ptr = param->cast<ParameterPtr>();
     if (parameter_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "p cannot cast to ParameterPtr";
+      MS_LOG(EXCEPTION) << "param cannot cast to ParameterPtr";
     }
-    buffer << "%para" << para << "_" << parameter_ptr->name() << " : ";
+    buffer << "%para" << para_num << "_" << parameter_ptr->name() << " : ";
     // Print parameters' type and shape
-    PrintNodeOutputType(buffer, p);
-    auto kernel_info = p->kernel_info();
+    PrintNodeOutputType(buffer, param);
+    if (parameter_ptr->has_default()) {
+      buffer << "  :  has_default";
+    }
+    auto kernel_info = param->kernel_info();
     if (kernel_info != nullptr && kernel_info->has_build_info()) {
       buffer << "  :  ";
-      buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(p, 0);
-      buffer << "  :  IsWeight:" << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
+      buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(param, 0);
+      buffer << "  :  IsWeight: " << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
     }
     buffer << std::endl;
 
     if (para_map != nullptr) {
-      (*para_map)[p] = para++;
+      (*para_map)[param] = para_num++;
     }
-    MS_LOG(DEBUG) << "Record param: " << p->ToString() << " graph belong : " << p->func_graph()->ToString();
+    MS_LOG(DEBUG) << "Record param: " << param->ToString() << " graph belong : " << param->func_graph()->ToString();
   }
-  return para;
+  return para_num;
 }
 
 void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {

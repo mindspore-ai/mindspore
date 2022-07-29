@@ -75,20 +75,30 @@ bool EnableTupleBroaden(const abstract::AbstractBasePtr &abs) {
   return abs->isa<abstract::AbstractTuple>() && abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors();
 }
 
-void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
+void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<ValuePtr> &arguments) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_paras;
-  for (const auto &param : func_graph->parameters()) {
+  for (size_t i = 0; i < func_graph->parameters().size(); ++i) {
+    const auto &param = func_graph->parameters()[i];
     auto param_node = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_node);
     if (param_node->has_default()) {
       new_paras.push_back(param_node);
       continue;
     }
-    AbstractBasePtr par_abs = param_node->abstract();
-    MS_EXCEPTION_IF_NULL(par_abs);
-    if (par_abs->isa<abstract::AbstractUndetermined>() || par_abs->BuildValue() == kAnyValue ||
-        EnableGradForScalar(par_abs) || EnableTupleBroaden(par_abs)) {
+
+    // Handle the Parameter from input arguments.
+    if (i < arguments.size()) {
+      auto param_value = dyn_cast<tensor::MetaTensor>(arguments[i]);
+      if (param_value != nullptr && param_value->is_parameter()) {
+        param_node->set_default_param(param_value);
+      }
+    }
+
+    AbstractBasePtr param_abs = param_node->abstract();
+    MS_EXCEPTION_IF_NULL(param_abs);
+    if (param_abs->isa<abstract::AbstractUndetermined>() || param_abs->BuildValue() == kAnyValue ||
+        EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
       new_paras.push_back(param_node);
     }
   }
@@ -625,7 +635,6 @@ namespace {
 abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   abstract::AbstractBasePtrList args_abs = resource->args_abs();
-  auto arguments = resource->arguments();
 
   // Parallel checking.
   auto context = parallel::ParallelContext::GetInstance();
@@ -646,29 +655,6 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
       (void)args_abs.emplace_back(abs_ref);
       context->ParallelParameterContextCkptShape(func_graph, param_node, abs_ref);
     }
-  }
-  // Handle the Parameter from input arguments.
-  auto arg_size = arguments.size();
-  for (size_t i = 0; i < arg_size; ++i) {
-    auto param_value = dyn_cast<tensor::MetaTensor>(arguments[i]);
-    if (param_value == nullptr || !param_value->is_parameter()) {
-      continue;
-    }
-    const auto &param = func_graph->parameters()[i];
-    auto param_node = std::static_pointer_cast<Parameter>(param);
-    MS_EXCEPTION_IF_NULL(param_node);
-    if (param_node->has_default()) {
-      continue;
-    }
-    // The argument is Parameter.
-    MS_LOG(DEBUG) << "Meet an argument of Parameter, value: " << param_value->ToString()
-                  << ", parameter: " << param->ToString() << ", has_default: " << param_node->has_default();
-    param_node->set_default_param(param_value);
-    // Update the i-th arguments' abstract.
-    auto abs_value = param_value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
-    auto ref_key = std::make_shared<RefKey>(param_node->name());
-    auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(abs_value, ref_key);
-    args_abs[i] = abs_ref;
   }
   return args_abs;
 }
@@ -711,7 +697,7 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
     CheckRootInputShapeAndType(resource, loaded_graph_ptr);
   }
 
-  UpdateFuncGraphParameter(new_fg);
+  UpdateFuncGraphParameter(new_fg, resource->arguments());
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
 }

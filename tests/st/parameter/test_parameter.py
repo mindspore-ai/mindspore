@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+import numpy as np
+
 import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.common.parameter import Parameter
@@ -412,3 +414,43 @@ def test_parameter_argument_and_fv():
     print(Tensor(x))
     print(Tensor(y))
     assert x == y
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_argument_grad():
+    """
+    Feature: Parameter argmument in top func graph.
+    Description: Use Parameter as input argmument, and pass it to varargs.
+    Expectation: Parameter used as argument should equal to used as FV.
+    """
+    class ParameterArgumentCell(Cell):
+        def __init__(self):
+            super(ParameterArgumentCell, self).__init__()
+            self.z = Parameter(Tensor(np.array([[1.0, 4.0], [-1, 8.0]]), ms.float32), name='z')
+
+        def construct(self, param, x, y):
+            ms.ops.Assign()(param, x * self.z)
+            ms.ops.Assign()(x, x + y)
+            ms.ops.Assign()(y, param)
+            return param
+
+    param = Parameter(Tensor(np.array([[0, 0], [0, 0]]), ms.float32), name='param')
+    x = Parameter(Tensor(np.array([[4.0, -8.0], [-2.0, -5.0]]), ms.float32), name='x')
+    y = Parameter(Tensor(np.array([[1, 0], [1, 1]]), ms.float32), name='y')
+    net = ParameterArgumentCell()
+    net(param, x, y)
+
+    bparam = Parameter(Tensor(np.array([[0, 0], [0, 0]]), ms.float32), name='bparam')
+    bx = Parameter(Tensor(np.array([[4.0, -8.0], [-2.0, -5.0]]), ms.float32), name='bx')
+    by = Parameter(Tensor(np.array([[1, 0], [1, 1]]), ms.float32), name='by')
+    grad_by_list = ms.ops.GradOperation(get_by_list=True)
+    grad_by_list(net, ParameterTuple(net.trainable_params()))(bparam, bx, by)
+
+    assert np.array_equal(param.asnumpy(), bparam.asnumpy())
+    assert np.array_equal(x.asnumpy(), bx.asnumpy())
+    assert np.array_equal(y.asnumpy(), by.asnumpy())

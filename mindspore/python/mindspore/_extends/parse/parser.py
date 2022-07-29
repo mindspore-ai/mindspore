@@ -599,7 +599,24 @@ def get_node_type(node):
 
 
 def get_args_default_values(node):
-    """Get the args'default values of parse object."""
+    """
+    Get the args'default values of parse object.
+
+    Examples:
+        - Function:
+        func(a, b, *c, d=0, **e)
+        - The ast is as below:
+        args=arguments(
+            args=[arg(a), arg(b)], vararg=arg(c), kwonlyargs=[arg(d)], kw_defaults=[Num(0)], kwarg=arg(e)
+        )
+
+        - Function:
+        func(a, b, c=1)
+        - The ast is as below:
+        args=arguments(
+            args=[arg(a), arg(b), arg(c)], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[Num(1)]
+        )
+    """
     nondefaults = [None] * (len(node.args.args) - len(node.args.defaults))
     defaults = nondefaults + node.args.defaults + node.args.kw_defaults
     if node.args.vararg:
@@ -618,8 +635,8 @@ def get_args(node):
 
     # Process kwonlyargs: kwonlyargs is append after position args.
     if node.args.kwonlyargs:
-        for kwarg in node.args.kwonlyargs:
-            args.append(kwarg)
+        for kwonlyarg in node.args.kwonlyargs:
+            args.append(kwonlyarg)
     # Process vararg: vararg is append after kwonlyargs.
     if node.args.vararg:
         args.append(node.args.vararg)
