@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, diff_mse
+from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, diff_mse
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -247,7 +247,7 @@ def test_invert_md5_py():
     data = data_set.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images
     filename = "invert_01_result_py_unified.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_invert_md5_c():

@@ -25,7 +25,7 @@ import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
+from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, save_and_check_md5_pil, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -229,7 +229,7 @@ def test_random_rotation_md5():
     filename1 = "random_rotation_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
     filename2 = "random_rotation_01_py_result.npz"
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore configuration
     ds.config.set_seed(original_seed)

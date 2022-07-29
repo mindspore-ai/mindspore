@@ -24,7 +24,7 @@ import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.core.datatypes import nptype_to_detype
-from util import save_and_check_md5
+from util import save_and_check_md5_pil
 
 GENERATE_GOLDEN = False
 
@@ -169,7 +169,7 @@ def test_to_type_01():
 
     # Compare with expected md5 from images
     filename = "to_type_01_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_to_type_02():
@@ -193,7 +193,7 @@ def test_to_type_02():
 
     # Compare with expected md5 from images
     filename = "to_type_02_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_to_type_03():

@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
+from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5, save_and_check_md5_pil
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
@@ -278,7 +278,7 @@ def test_equalize_md5_py():
     data1 = data1.map(operations=transforms, input_columns="image")
     # Compare with expected md5 from images
     filename = "equalize_01_result_py_unified.npz"
-    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_equalize_md5_c():

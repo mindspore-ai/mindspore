@@ -26,7 +26,7 @@ import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import diff_mse, save_and_check_md5, visualize_list, \
+from util import diff_mse, save_and_check_md5, save_and_check_md5_pil, visualize_list, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -218,7 +218,7 @@ def test_random_crop_and_resize_01():
     filename1 = "random_crop_and_resize_01_c_result.npz"
     filename2 = "random_crop_and_resize_01_py_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -255,7 +255,7 @@ def test_random_crop_and_resize_02():
     filename1 = "random_crop_and_resize_02_c_result.npz"
     filename2 = "random_crop_and_resize_02_py_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -292,7 +292,7 @@ def test_random_crop_and_resize_03():
     filename1 = "random_crop_and_resize_03_c_result.npz"
     filename2 = "random_crop_and_resize_03_py_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)

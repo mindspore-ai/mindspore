@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import diff_mse, save_and_check_md5, visualize_image
+from util import diff_mse, save_and_check_md5, save_and_check_md5_pil, visualize_image
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -223,7 +223,7 @@ def test_normalize_md5_01():
     filename1 = "normalize_01_c_result.npz"
     filename2 = "normalize_01_to_pil_result.npz"
     save_and_check_md5(data_c, filename1, generate_golden=GENERATE_GOLDEN)
-    save_and_check_md5(data_py, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data_py, filename2, generate_golden=GENERATE_GOLDEN)
 
 
 def test_normalize_md5_02():
@@ -237,7 +237,7 @@ def test_normalize_md5_02():
 
     # check results with md5 comparison
     filename2 = "normalize_02_to_pil_result.npz"
-    save_and_check_md5(data_py, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data_py, filename2, generate_golden=GENERATE_GOLDEN)
 
 
 def test_normalize_exception_unequal_size_1():
@@ -326,7 +326,7 @@ def test_normalize_grayscale_md5_01():
     data = util_test_normalize_grayscale(1, [0.5], [0.175])
     # check results with md5 comparison
     filename = "normalize_03_to_pil_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_normalize_grayscale_md5_02():
@@ -339,7 +339,7 @@ def test_normalize_grayscale_md5_02():
     data = util_test_normalize_grayscale(3, [0.5, 0.5, 0.5], [0.175, 0.235, 0.512])
     # check results with md5 comparison
     filename = "normalize_04_to_pil_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_normalize_grayscale_exception():

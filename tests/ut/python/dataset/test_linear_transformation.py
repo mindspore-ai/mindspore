@@ -20,7 +20,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import diff_mse, visualize_list, save_and_check_md5
+from util import diff_mse, visualize_list, save_and_check_md5_pil
 
 GENERATE_GOLDEN = False
 
@@ -106,7 +106,7 @@ def test_linear_transformation_md5():
 
     # Compare with expected md5 from images
     filename = "linear_transformation_01_result.npz"
-    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_linear_transformation_exception_01():

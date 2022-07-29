@@ -23,7 +23,7 @@ import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.c_transforms as c
 import mindspore.dataset.vision.py_transforms as f
 from mindspore import log as logger
-from ..dataset.util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
+from ..dataset.util import visualize_image, visualize_list, diff_mse, save_and_check_md5, save_and_check_md5_pil, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -162,7 +162,7 @@ def test_cut_out_md5():
     filename1 = "cut_out_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
     filename2 = "cut_out_01_py_result.npz"
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore config
     ds.config.set_seed(original_seed)

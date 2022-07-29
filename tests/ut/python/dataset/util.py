@@ -68,18 +68,20 @@ def _compare_to_golden_dict(golden_ref_dir, result_dict, check_pillow_version=Fa
     """
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
     # Note: The version of PILLOW that is used in Jenkins CI is compared with below
-    if (not check_pillow_version or PIL.__version__ == '7.1.2'):
-        np.testing.assert_equal(result_dict, dict(golden_array))
-    elif PIL.__version__ >= '9.0.0':
+    if check_pillow_version and PIL.__version__ >= '9.0.0':
         try:
             np.testing.assert_equal(result_dict, dict(golden_array))
         except AssertionError:
             logger.warning(
                 "Results from Pillow >= 9.0.0 is incompatibale with Pillow < 9.0.0, need more validation.")
-    else:
-        # Beware: If error, PILLOW version of golden results may be incompatible with current PILLOW version
+    elif check_pillow_version:
+        # Note: The version of PILLOW that is used in Jenkins CI is >= 9.0.0 and
+        #       some of the md5 results files that are generated with PILLOW 7.2.0
+        #       are not compatible with PILLOW 9.0.0.
         np.testing.assert_equal(result_dict, dict(golden_array),
                                 'Items are not equal and problem may be due to PILLOW version incompatibility')
+    else:
+        np.testing.assert_equal(result_dict, dict(golden_array))
 
 
 def _save_json(filename, parameters, result_dict):
@@ -127,10 +129,9 @@ def save_and_check_dict(data, filename, generate_golden=False):
         _save_json(filename, parameters, result_dict)
 
 
-def save_and_check_md5(data, filename, generate_golden=False):
+def _helper_save_and_check_md5(data, filename, generate_golden=False):
     """
-    Save the dataset dictionary and compare (as dictionary) with golden file (md5).
-    Use create_dict_iterator to access the dataset.
+    Helper for save_and_check_md5 for both PIL and non-PIL
     """
     num_iter = 0
     result_dict = {}
@@ -154,6 +155,25 @@ def save_and_check_md5(data, filename, generate_golden=False):
         # Save as the golden result
         _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
 
+    return golden_ref_dir, result_dict
+
+
+def save_and_check_md5(data, filename, generate_golden=False):
+    """
+    Save the dataset dictionary and compare (as dictionary) with golden file (md5) for non-PIL only.
+    Use create_dict_iterator to access the dataset.
+    """
+    golden_ref_dir, result_dict = _helper_save_and_check_md5(data, filename, generate_golden)
+    _compare_to_golden_dict(golden_ref_dir, result_dict, False)
+
+
+def save_and_check_md5_pil(data, filename, generate_golden=False):
+    """
+    Save the dataset dictionary and compare (as dictionary) with golden file (md5) for PIL only.
+    If PIL version >= 9.0.0, only log warning when assertion fails and allow the test to succeed.
+    Use create_dict_iterator to access the dataset.
+    """
+    golden_ref_dir, result_dict = _helper_save_and_check_md5(data, filename, generate_golden)
     _compare_to_golden_dict(golden_ref_dir, result_dict, True)
 
 
@@ -252,11 +272,11 @@ def visualize_one_channel_dataset(images_original, images_transformed, labels):
         plt.subplot(2, num_samples, i + 1)
         # Note: Use squeeze() to convert (H, W, 1) images to (H, W)
         plt.imshow(images_original[i].squeeze(), cmap=plt.cm.gray)
-        plt.title(PLOT_TITLE_DICT[1][0] + ":" + str(labels[i]))
+        plt.title(PLOT_TITLE_DICT.get(1)[0] + ":" + str(labels[i]))
 
         plt.subplot(2, num_samples, i + num_samples + 1)
         plt.imshow(images_transformed[i].squeeze(), cmap=plt.cm.gray)
-        plt.title(PLOT_TITLE_DICT[1][1] + ":" + str(labels[i]))
+        plt.title(PLOT_TITLE_DICT.get(1)[1] + ":" + str(labels[i]))
     plt.show()
 
 

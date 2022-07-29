@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 
-from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
+from util import visualize_list, save_and_check_md5_pil, config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
 
@@ -215,7 +215,7 @@ def test_c_py_compose_vision_module(plot=False, run_golden=True):
 
         if run_golden:
             # Compare with expected md5 from images
-            save_and_check_md5(
+            save_and_check_md5_pil(
                 data1, file_name, generate_golden=GENERATE_GOLDEN)
 
         if plot:
