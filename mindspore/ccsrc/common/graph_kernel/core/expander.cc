@@ -49,7 +49,7 @@ AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
   auto graph = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(graph->manager());
-  graph->manager()->Replace(cnode, new_node);
+  (void)graph->manager()->Replace(cnode, new_node);
   return decorated_->Run(new_node);
 }
 
