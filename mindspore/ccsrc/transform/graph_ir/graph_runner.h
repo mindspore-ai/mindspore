@@ -18,9 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
 
 #include <set>
-#include <string>
 #include <vector>
-#include <map>
 #include <memory>
 
 #include "transform/graph_ir/transform_util.h"

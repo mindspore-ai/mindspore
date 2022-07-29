@@ -19,9 +19,7 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include <map>
-#include <utility>
 #include "include/transform/graph_ir/types.h"
 #include "transform/graph_ir/convert.h"
 
