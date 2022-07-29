@@ -67,7 +67,7 @@ class ContinuousMemInfoHelper {
   bool IsContinuousInputMem(const void *address_key);
 
   void AddContinuousMallocIndex(const ContinuousMemInfoPtr &mem_info, size_t index) {
-    first_malloc_index_.emplace(mem_info, index);
+    (void)first_malloc_index_.emplace(mem_info, index);
   }
 
   bool NeedMallocContinuousMem(const ContinuousMemInfoPtr &mem_info, size_t index) const {

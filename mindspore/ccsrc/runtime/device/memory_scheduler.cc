@@ -175,11 +175,11 @@ void *MemScheduler::MallocContinuousMem(const std::shared_ptr<MemEvent> &event, 
     for (const auto &key_index : continuous_mem_info->key_index_map_) {
       MS_EXCEPTION_IF_NULL(device_ptr_list[key_index.second]);
       mem_result_[key_index.first] = device_ptr_list[key_index.second];
-      continuous_mem_key_.insert(key_index.first);
+      (void)continuous_mem_key_.insert(key_index.first);
     }
     device_ptr = mem_result_[event->key];
     MS_EXCEPTION_IF_NULL(device_ptr);
-    cur_step_allocated_continuous_mem_.insert(continuous_mem_info);
+    (void)cur_step_allocated_continuous_mem_.insert(continuous_mem_info);
   } else {
     device_ptr = MallocDevice(event->mem_size, stream);
   }

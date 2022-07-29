@@ -156,7 +156,7 @@ void PsDataPrefetch::NotifyFinalize() {
   data_process_.notify_one();
 }
 
-bool PsDataPrefetch::TryWakeChannel(const std::string &channel_name) {
+bool PsDataPrefetch::TryWakeChannel(const std::string &channel_name) const {
   auto channel = ps_data_channel(channel_name);
   if (channel == nullptr) {
     return false;
@@ -165,7 +165,7 @@ bool PsDataPrefetch::TryWakeChannel(const std::string &channel_name) {
   return true;
 }
 
-void PsDataPrefetch::WakeAllChannel() {
+void PsDataPrefetch::WakeAllChannel() const {
   for (auto iter = ps_data_channel_map_.begin(); iter != ps_data_channel_map_.end(); ++iter) {
     auto channel = iter->second;
     if (channel == nullptr) {
