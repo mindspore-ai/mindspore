@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, \
+from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -103,7 +103,10 @@ def run_test_resize_md5(test_name, size, filename, seed, expected_size, to_pil=T
     compose_ops = ds.transforms.Compose([vision.Decode(to_pil=to_pil), vision.Resize(size)])
     transformed_data = dataset.map(operations=compose_ops, input_columns=["image"])
     # Compare with expected md5 from images
-    save_and_check_md5(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
+    if to_pil:
+        save_and_check_md5_pil(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
+    else:
+        save_and_check_md5(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
     for item in transformed_data.create_dict_iterator(num_epochs=1, output_numpy=True):
         resized_image = item["image"]
         assert resized_image.shape == expected_size

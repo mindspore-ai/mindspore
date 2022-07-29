@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import diff_mse, save_and_check_md5
+from util import diff_mse, save_and_check_md5, save_and_check_md5_pil
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -175,7 +175,7 @@ def test_pad_md5():
     filename1 = "pad_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
     filename2 = "pad_01_py_result.npz"
-    save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
 
 if __name__ == "__main__":

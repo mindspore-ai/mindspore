@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5
+from util import visualize_list, save_and_check_md5_pil
 
 GENERATE_GOLDEN = False
 
@@ -122,7 +122,7 @@ def test_ten_crop_md5():
     data2 = data2.map(operations=transform_2, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "ten_crop_01_result.npz"
-    save_and_check_md5(data2, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data2, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_ten_crop_list_size_error_msg():

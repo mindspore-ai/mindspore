@@ -20,7 +20,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
+from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5, save_and_check_md5_pil
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
@@ -88,8 +88,8 @@ def test_auto_contrast_py(plot=False):
 
     # Compare with expected md5 from images
     filename = "autocontrast_01_result_py.npz"
-    save_and_check_md5(ds_auto_contrast, filename,
-                       generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(ds_auto_contrast, filename,
+                           generate_golden=GENERATE_GOLDEN)
 
     if plot:
         visualize_list(images_original, images_auto_contrast)

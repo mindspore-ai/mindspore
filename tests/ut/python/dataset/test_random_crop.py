@@ -23,7 +23,7 @@ import mindspore.dataset.vision as vision
 import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_md5, visualize_list, config_get_set_seed, \
+from util import save_and_check_md5, save_and_check_md5_pil, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers, diff_mse
 
 GENERATE_GOLDEN = False
@@ -150,7 +150,7 @@ def test_random_crop_01_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_01_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -205,7 +205,7 @@ def test_random_crop_02_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_02_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -260,7 +260,7 @@ def test_random_crop_03_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_03_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -362,7 +362,7 @@ def test_random_crop_05_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_05_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -462,7 +462,7 @@ def test_random_crop_07_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_07_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -517,7 +517,7 @@ def test_random_crop_08_py():
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_08_py_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore config setting
     ds.config.set_seed(original_seed)

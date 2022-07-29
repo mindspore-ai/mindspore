@@ -27,7 +27,8 @@ import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 import mindspore.dataset.vision.transforms as vision
 
-from ..dataset.util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
+from ..dataset.util import visualize_list, save_and_check_md5_pil, \
+    config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
 
@@ -62,12 +63,12 @@ def test_compose():
                        c_transforms.Compose(
                            [c_transforms.Duplicate(), c_transforms.Concatenate(), c_transforms.Duplicate(),
                             c_transforms.Concatenate()])) \
-           == [[1, 0] * 4]
+        == [[1, 0] * 4]
 
     # Test one Python transform followed by a C++ transform. Type after OneHot is a float (mixed use-case)
     assert test_config([1, 0],
                        c_transforms.Compose([py_transforms.OneHotOp(2), c_transforms.TypeCast(mstype.int32)])) \
-           == [[0, 1], [1, 0]]
+        == [[0, 1], [1, 0]]
 
     # Test exceptions.
     with pytest.raises(TypeError) as error_info:
@@ -87,12 +88,12 @@ def test_compose():
     # Test nested Python compose op
     assert test_config([1, 0],
                        py_transforms.Compose([py_transforms.Compose([py_transforms.OneHotOp(2)]), (lambda x: x + x)])) \
-           == [[0, 2], [2, 0]]
+        == [[0, 2], [2, 0]]
 
     # Test passing a list of Python ops without Compose wrapper
     assert test_config([1, 0],
                        [py_transforms.Compose([py_transforms.OneHotOp(2)]), (lambda x: x + x)]) \
-           == [[0, 2], [2, 0]]
+        == [[0, 2], [2, 0]]
     assert test_config([1, 0], [py_transforms.OneHotOp(2), (lambda x: x + x)]) == [[0, 2], [2, 0]]
 
     # Test a non callable function
@@ -139,7 +140,7 @@ def test_lambdas():
     assert test_config(arr, ["col0", "col1"], ["a"], py_transforms.Compose([lambda x, y: x, lambda x: x])) == [[1]]
     assert test_config(arr, ["col0", "col1"], ["a", "b"],
                        py_transforms.Compose([lambda x, y: x, lambda x: (x, x * 2)])) == \
-           [[1], [2]]
+        [[1], [2]]
     assert test_config(arr, ["col0", "col1"], ["a", "b"],
                        [lambda x, y: (x, x + y), lambda x, y: (x, y * 2)]) == [[1], [8]]
 
@@ -168,17 +169,17 @@ def test_c_py_compose_transforms_module():
     arr = [1, 0]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), c_transforms.Mask(c_transforms.Relational.EQ, 1)]) == \
-           [[False, True],
-            [True, False]]
+        [[False, True],
+         [True, False]]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), (lambda x: x + x), c_transforms.Fill(1)]) \
-           == [[1, 1], [1, 1]]
+        == [[1, 1], [1, 1]]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), (lambda x: x + x), c_transforms.Fill(1), (lambda x: x + x)]) \
-           == [[2, 2], [2, 2]]
+        == [[2, 2], [2, 2]]
     assert test_config([[1, 3]], ["cols"], ["cols"],
                        [c_transforms.PadEnd([3], -1), (lambda x: x + x)]) \
-           == [[2, 6, -2]]
+        == [[2, 6, -2]]
 
     arr = ([[1]], [[3]])
     assert test_config(arr, ["col0", "col1"], ["a"], [(lambda x, y: x + y), c_transforms.PadEnd([2], -1)]) == [[4, -1]]
@@ -212,7 +213,7 @@ def test_c_py_compose_vision_module(plot=False, run_golden=True):
 
         if run_golden:
             # Compare with expected md5 from images
-            save_and_check_md5(data1, file_name, generate_golden=GENERATE_GOLDEN)
+            save_and_check_md5_pil(data1, file_name, generate_golden=GENERATE_GOLDEN)
 
         if plot:
             visualize_list(original_images, transformed_images)

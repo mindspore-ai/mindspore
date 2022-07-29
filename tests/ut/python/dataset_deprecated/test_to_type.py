@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
-from ..dataset.util import save_and_check_md5
+from ..dataset.util import save_and_check_md5_pil
 
 GENERATE_GOLDEN = False
 
@@ -165,7 +165,7 @@ def test_to_type_01():
 
     # Compare with expected md5 from images
     filename = "to_type_01_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_to_type_02():
@@ -189,7 +189,7 @@ def test_to_type_02():
 
     # Compare with expected md5 from images
     filename = "to_type_02_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_to_type_03():

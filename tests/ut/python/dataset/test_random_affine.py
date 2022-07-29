@@ -24,7 +24,7 @@ import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, \
+from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
@@ -134,7 +134,7 @@ def test_random_affine_md5():
 
     # check results with md5 comparison
     filename = "random_affine_01_result.npz"
-    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
 
     # Restore configuration
     ds.config.set_seed(original_seed)
