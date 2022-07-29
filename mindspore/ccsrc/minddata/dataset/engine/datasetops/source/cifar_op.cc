@@ -117,11 +117,17 @@ Status CifarOp::ReadCifar10BlockData() {
     std::string file_name = file_path.Basename();
 
     if (usage_ == "train") {
-      if (file_name.find("data_batch") == std::string::npos) continue;
+      if (file_name.find("data_batch") == std::string::npos) {
+        continue;
+      }
     } else if (usage_ == "test") {
-      if (file_name.find("test_batch") == std::string::npos) continue;
+      if (file_name.find("test_batch") == std::string::npos) {
+        continue;
+      }
     } else {  // get all the files that contain the word batch, aka any cifar 100 files
-      if (file_name.find("batch") == std::string::npos) continue;
+      if (file_name.find("batch") == std::string::npos) {
+        continue;
+      }
     }
 
     std::ifstream in(file, std::ios::binary);
@@ -159,8 +165,12 @@ Status CifarOp::ReadCifar100BlockData() {
     std::string file_name = file_path.Basename();
 
     // if usage is train/test, get only these 2 files
-    if (usage_ == "train" && file_name.find("train") == std::string::npos) continue;
-    if (usage_ == "test" && file_name.find("test") == std::string::npos) continue;
+    if (usage_ == "train" && file_name.find("train") == std::string::npos) {
+      continue;
+    }
+    if (usage_ == "test" && file_name.find("test") == std::string::npos) {
+      continue;
+    }
 
     if (file_name.find("test") != std::string::npos) {
       num_cifar100_records = num_cifar100_test_records;
@@ -311,11 +321,17 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       std::string file_name = file_path.Basename();
 
       if (op->usage_ == "train") {
-        if (file_name.find("data_batch") == std::string::npos) continue;
+        if (file_name.find("data_batch") == std::string::npos) {
+          continue;
+        }
       } else if (op->usage_ == "test") {
-        if (file_name.find("test_batch") == std::string::npos) continue;
+        if (file_name.find("test_batch") == std::string::npos) {
+          continue;
+        }
       } else {  // get all the files that contain the word batch, aka any cifar 100 files
-        if (file_name.find("batch") == std::string::npos) continue;
+        if (file_name.find("batch") == std::string::npos) {
+          continue;
+        }
       }
 
       std::ifstream in(file, std::ios::binary);
@@ -336,8 +352,12 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
                                    "Invalid cifar100 file, " + file + " does not exist or is a directory.");
 
-      if (op->usage_ == "train" && file_path.Basename().find("train") == std::string::npos) continue;
-      if (op->usage_ == "test" && file_path.Basename().find("test") == std::string::npos) continue;
+      if (op->usage_ == "train" && file_path.Basename().find("train") == std::string::npos) {
+        continue;
+      }
+      if (op->usage_ == "test" && file_path.Basename().find("test") == std::string::npos) {
+        continue;
+      }
 
       if (file_name.find("test") != std::string::npos) {
         num_cifar100_records += kCifar100RecordsPerTestFile;

@@ -24,18 +24,20 @@ namespace mindspore {
 namespace dataset {
 
 uint8_t DataType::SizeInBytes() const {
-  if (type_ < DataType::NUM_OF_TYPES)
+  if (type_ < DataType::NUM_OF_TYPES) {
     return kTypeInfo[type_].sizeInBytes_;
-  else
+  } else {
     return 0;
+  }
 }
 
 #ifdef ENABLE_PYTHON
 py::dtype DataType::AsNumpyType() const {
-  if (type_ < DataType::NUM_OF_TYPES)
+  if (type_ < DataType::NUM_OF_TYPES) {
     return py::dtype(kTypeInfo[type_].pybindType_);
-  else
+  } else {
     return py::dtype("unknown");
+  }
 }
 #endif
 
@@ -88,34 +90,35 @@ DataType DataType::FromCVType(int cv_type) {
 #endif
 
 DataType::DataType(const std::string &type_str) {
-  if (type_str == "bool")
+  if (type_str == "bool") {
     type_ = DE_BOOL;
-  else if (type_str == "int8")
+  } else if (type_str == "int8") {
     type_ = DE_INT8;
-  else if (type_str == "uint8")
+  } else if (type_str == "uint8") {
     type_ = DE_UINT8;
-  else if (type_str == "int16")
+  } else if (type_str == "int16") {
     type_ = DE_INT16;
-  else if (type_str == "uint16")
+  } else if (type_str == "uint16") {
     type_ = DE_UINT16;
-  else if (type_str == "int32")
+  } else if (type_str == "int32") {
     type_ = DE_INT32;
-  else if (type_str == "uint32")
+  } else if (type_str == "uint32") {
     type_ = DE_UINT32;
-  else if (type_str == "int64")
+  } else if (type_str == "int64") {
     type_ = DE_INT64;
-  else if (type_str == "uint64")
+  } else if (type_str == "uint64") {
     type_ = DE_UINT64;
-  else if (type_str == "float16")
+  } else if (type_str == "float16") {
     type_ = DE_FLOAT16;
-  else if (type_str == "float32")
+  } else if (type_str == "float32") {
     type_ = DE_FLOAT32;
-  else if (type_str == "float64")
+  } else if (type_str == "float64") {
     type_ = DE_FLOAT64;
-  else if (type_str == "string")
+  } else if (type_str == "string") {
     type_ = DE_STRING;
-  else
+  } else {
     type_ = DE_UNKNOWN;
+  }
 }
 
 std::string DataType::ToString() const {
@@ -154,7 +157,7 @@ DataType DataType::FromNpArray(const py::array &arr) {
   } else if (arr.dtype().kind() == 'S' || arr.dtype().kind() == 'U') {
     return DataType(DataType::DE_STRING);
   } else {
-    if (arr.shape() == 0) {
+    if (arr.size() == 0) {
       MS_LOG(ERROR) << "Please check input data, the data of numpy array is empty.";
     }
     std::string err_msg = "Cannot convert from numpy type. Unknown data type is returned!";

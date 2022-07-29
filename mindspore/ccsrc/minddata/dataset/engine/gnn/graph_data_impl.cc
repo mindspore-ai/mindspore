@@ -824,8 +824,10 @@ Status GraphDataImpl::RandomWalkBase::GetEdgeProbability(const NodeIdType &src, 
   std::vector<NodeIdType> dst_neighbors;
   RETURN_IF_NOT_OK(dst_node->GetAllNeighbors(meta_path_[meta_path_index + 1], &dst_neighbors, true));
 
-  CHECK_FAIL_RETURN_UNEXPECTED(step_home_param_ != 0, "Invalid data, step home parameter can't be zero.");
-  CHECK_FAIL_RETURN_UNEXPECTED(step_away_param_ != 0, "Invalid data, step away parameter can't be zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(std::fabs(step_home_param_) > std::numeric_limits<float>::epsilon(),
+                               "Invalid data, step home parameter can't be zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(std::fabs(step_away_param_) > std::numeric_limits<float>::epsilon(),
+                               "Invalid data, step away parameter can't be zero.");
   std::sort(dst_neighbors.begin(), dst_neighbors.end());
   std::vector<float> non_normalized_probability;
   for (const auto &dst_nbr : dst_neighbors) {

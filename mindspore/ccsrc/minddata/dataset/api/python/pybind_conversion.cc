@@ -63,10 +63,11 @@ std::vector<std::string> toStringVector(const py::list list) {
   std::vector<std::string> vector;
   if (!list.empty()) {
     for (auto l : list) {
-      if (l.is_none())
+      if (l.is_none()) {
         vector.emplace_back("");
-      else
+      } else {
         vector.push_back(py::str(l));
+      }
     }
   }
   return vector;
@@ -104,10 +105,11 @@ std::vector<std::pair<int, int>> toPairVector(const py::list list) {
   if (list) {
     for (auto data : list) {
       auto l = data.cast<py::tuple>();
-      if (l[1].is_none())
+      if (l[1].is_none()) {
         vector.emplace_back(toInt64(l[0]), 0);
-      else
+      } else {
         vector.emplace_back(toInt64(l[0]), toInt64(l[1]));
+      }
     }
   }
   return vector;

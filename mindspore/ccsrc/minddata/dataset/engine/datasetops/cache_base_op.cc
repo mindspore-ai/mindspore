@@ -143,7 +143,9 @@ Status CacheBase::FetchSamplesToWorkers() {
       RETURN_IF_NOT_OK(WaitForWorkers());
     }
     // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) RETURN_IF_NOT_OK(Reset());
+    if (!IsLastIteration()) {
+      RETURN_IF_NOT_OK(Reset());
+    }
     UpdateRepeatAndEpochCounter();
   } while (true);
   // Flow the eof before exit

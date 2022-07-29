@@ -71,7 +71,9 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
   std::string v1 = (*singleton_plugin)->GetPluginVersion(), v2(plugin::kSharedIncludeVersion);
   if (v1 != v2) {
     std::string err_msg = "[Internal ERROR] expected:" + v2 + ", received:" + v1 + " please recompile.";
-    if (SharedLibUtil::Close(handle) != 0) err_msg += ("\ndlclose() error, err_msg:" + SharedLibUtil::ErrMsg() + ".");
+    if (SharedLibUtil::Close(handle) != 0) {
+      err_msg += ("\ndlclose() error, err_msg:" + SharedLibUtil::ErrMsg() + ".");
+    }
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 

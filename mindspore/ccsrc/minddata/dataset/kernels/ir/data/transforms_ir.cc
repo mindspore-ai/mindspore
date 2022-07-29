@@ -207,7 +207,9 @@ std::shared_ptr<TensorOp> PadEndOperation::Build() { return std::make_shared<Pad
 PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(std::move(tensor_op)) {
 #ifdef ENABLE_PYTHON
   auto pyfunc_tensor_op = std::dynamic_pointer_cast<PyFuncOp>(op_);
-  if (pyfunc_tensor_op && pyfunc_tensor_op->IsRandom()) random_op_ = true;
+  if (pyfunc_tensor_op && pyfunc_tensor_op->IsRandom()) {
+    random_op_ = true;
+  }
 #endif
 }
 

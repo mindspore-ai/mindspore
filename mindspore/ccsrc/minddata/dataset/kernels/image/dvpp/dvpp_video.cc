@@ -415,7 +415,7 @@ void DvppVideo::FrameDecodeThreadFunction(void *decoderSelf) {
 
 // callback of ffmpeg decode frame
 AclLiteError DvppVideo::FrameDecodeCallback(void *decoder, void *frameData, int frameSize) {
-  if ((frameData == NULL) || (frameSize == 0)) {
+  if ((frameData == nullptr) || (frameSize == 0)) {
     MS_LOG(ERROR) << "Frame data is null";
     return ACLLITE_ERROR_H26X_FRAME;
   }
@@ -538,7 +538,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
     }
   } else {
     if (runMode_ == ACL_HOST) {
-      if (outImageBuf == NULL) {
+      if (outImageBuf == nullptr) {
         return;
       }
       // Copy valid Y data
@@ -570,7 +570,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
     } else {
       // Crop the invalid data, then write the valid data to a file
       outImageBuf = reinterpret_cast<uint8_t *>(malloc(imageSize));
-      if (outImageBuf == NULL) {
+      if (outImageBuf == nullptr) {
         MS_LOG(ERROR) << "Chn " << channelId_ << " Malloc failed";
         return;
       }

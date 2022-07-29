@@ -149,8 +149,9 @@ class TensorRow {
     RETURN_UNEXPECTED_IF_NULL(o);
     DataType data_type = DataType::FromCType<T>();
     RETURN_IF_NOT_OK(ValidateTensorRow(input, data_type));
-    if (input.at(0)->Rank() != 1)
+    if (input.at(0)->Rank() != 1) {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensor must have a rank of 1.");
+    }
     for (auto it = input.at(0)->begin<T>(); it != input.at(0)->end<T>(); it++) {
       o->push_back(*it);
     }

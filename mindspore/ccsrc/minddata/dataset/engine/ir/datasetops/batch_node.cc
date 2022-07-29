@@ -169,7 +169,9 @@ Status BatchNode::to_json(nlohmann::json *out_json) {
   args["input_columns"] = in_col_names_;
   args["output_columns"] = out_col_names_;
   args["column_order"] = col_order_;
-  if (batch_map_func_ != nullptr) args["per_batch_map"] = "pyfunc";
+  if (batch_map_func_ != nullptr) {
+    args["per_batch_map"] = "pyfunc";
+  }
 #endif
   *out_json = args;
   return Status::OK();

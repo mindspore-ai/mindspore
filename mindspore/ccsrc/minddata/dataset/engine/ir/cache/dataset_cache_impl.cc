@@ -26,7 +26,9 @@ namespace dataset {
 Status DatasetCacheImpl::Build() {
   // The same DatasetCache instance can be re-used for multiple pipelines for cache sharing,
   // in this case, cache_client_ object might have been created.
-  if (cache_client_) return Status::OK();
+  if (cache_client_) {
+    return Status::OK();
+  }
 
   CacheClient::Builder builder;
   builder.SetSessionId(session_id_).SetCacheMemSz(cache_mem_sz_).SetSpill(spill_);

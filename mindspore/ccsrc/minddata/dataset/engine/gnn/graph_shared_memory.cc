@@ -86,7 +86,7 @@ Status GraphSharedMemory::GetSharedMemory() {
 Status GraphSharedMemory::DeleteSharedMemory() {
   int shmid = shmget(memory_key_, 0, 0);
   CHECK_FAIL_RETURN_UNEXPECTED(shmid != -1, "Failed to get shared memory. key=0x" + memory_key_str_);
-  int result = shmctl(shmid, IPC_RMID, 0);
+  int result = shmctl(shmid, IPC_RMID, nullptr);
   CHECK_FAIL_RETURN_UNEXPECTED(result != -1, "Failed to delete shared memory. key=0x" + memory_key_str_);
   return Status::OK();
 }
