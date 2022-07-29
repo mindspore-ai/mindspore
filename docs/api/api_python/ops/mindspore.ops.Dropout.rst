@@ -24,6 +24,3 @@
         - **TypeError** - `x` 不是Tensor。
 
     更多细节请参考 :func:`mindspore.ops.dropout` 。
-
-    支持平台:
-        ``Ascend`` ``GPU`` ``CPU``

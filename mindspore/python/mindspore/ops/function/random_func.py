@@ -359,7 +359,7 @@ def poisson(shape, rate, seed=None, dtype=mstype.float32):
           mindspore.dtype.float32 nor mindspore.dtype.float16.
 
     Supported Platforms:
-        ``Ascend````CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
