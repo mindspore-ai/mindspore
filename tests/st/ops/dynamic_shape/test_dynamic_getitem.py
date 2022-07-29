@@ -640,3 +640,42 @@ def test_dynamic_getitem_tuple_002():
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_getitem_tuple_003():
+    """
+    Feature: Test Tensor slice for twice for dynamic shape in feed mode.
+    Description: The input shape is dynamic and the tensor index is tuple of advanced indices.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x):
+            x = x[:, :, :, :1]
+            return x
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x):
+            x = x[:, :, :, :1]
+            return x
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(4, None, 5, None, 6, None),
+                           dtype=mstype.float32)  # (1,2,4,5,2,None)
+    input_np = np.random.randn(4, 4, 5, 5, 6, 4).astype(np.float32)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
+    fact.forward_cmp()
+    fact.grad_impl()

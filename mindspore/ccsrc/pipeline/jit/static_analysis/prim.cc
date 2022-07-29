@@ -383,12 +383,14 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   py::tuple min_shape_tuple(len);
   py::tuple max_shape_tuple(len);
   py::tuple shape_value_tuple(len);
+  std::vector<py::dict> res;
 
   bool dyn_shape = false;
   bool dyn_value = false;
   bool dyn_shape_value = false;
   for (size_t i = 0; i < len; i++) {
     py::dict out = ConvertAbstractToPython(arg_tuple->elements()[i]);
+    res.push_back(out);
     shape_tuple[i] = out[ATTR_SHAPE];
     dtype_tuple[i] = out[ATTR_DTYPE];
     value_tuple[i] = out[ATTR_VALUE];
@@ -435,6 +437,20 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
     dic[ATTR_MAX_SHAPE] = max_shape_tuple;
   }
   if (dyn_shape_value) {
+    for (size_t i = 0; i < len; i++) {
+      if (!res[i].contains(py::str(ATTR_SHAPE_VALUE))) {
+        auto const_abstract_value = arg_tuple->elements()[i]->cast<abstract::AbstractTensorPtr>();
+        MS_EXCEPTION_IF_NULL(const_abstract_value);
+        auto const_value = const_abstract_value->BuildValue();
+        MS_EXCEPTION_IF_NULL(const_value);
+        auto const_tensor = const_value->cast<tensor::TensorPtr>();
+        if (const_tensor == nullptr) {
+          return dic;
+        }
+        std::vector<int64_t> const_tensor_vector = TensorValueToVector<int64_t>(const_tensor);
+        shape_value_tuple[i] = BuildValue(MakeValue(const_tensor_vector));
+      }
+    }
     dic[ATTR_SHAPE_VALUE] = shape_value_tuple;
   }
 
@@ -473,6 +489,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   py::list min_shape_list(len);
   py::list max_shape_list(len);
   py::list shape_value_list(len);
+  std::vector<py::dict> res;
 
   bool dyn_value = false;
   bool dyn_shape = false;
@@ -480,6 +497,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
 
   for (size_t i = 0; i < len; i++) {
     py::dict out = ConvertAbstractToPython(arg_list->elements()[i]);
+    res.push_back(out);
     shape_list[i] = out[ATTR_SHAPE];
     dtype_list[i] = out[ATTR_DTYPE];
     value_list[i] = out[ATTR_VALUE];
@@ -527,6 +545,20 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
     dic[ATTR_MAX_SHAPE] = max_shape_list;
   }
   if (shape_value) {
+    for (size_t i = 0; i < len; i++) {
+      if (!res[i].contains(py::str(ATTR_SHAPE_VALUE))) {
+        auto const_abstract_value = arg_list->elements()[i]->cast<abstract::AbstractTensorPtr>();
+        MS_EXCEPTION_IF_NULL(const_abstract_value);
+        auto const_value = const_abstract_value->BuildValue();
+        MS_EXCEPTION_IF_NULL(const_value);
+        auto const_tensor = const_value->cast<tensor::TensorPtr>();
+        if (const_tensor == nullptr) {
+          return dic;
+        }
+        std::vector<int64_t> const_tensor_vector = TensorValueToVector<int64_t>(const_tensor);
+        shape_value_list[i] = BuildValue(MakeValue(const_tensor_vector));
+      }
+    }
     dic[ATTR_SHAPE_VALUE] = shape_value_list;
   }
   return dic;
