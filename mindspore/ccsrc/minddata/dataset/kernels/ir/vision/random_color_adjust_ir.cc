@@ -63,22 +63,30 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
   brightness_lb = brightness_[dimension_zero];
   brightness_ub = brightness_[dimension_zero];
 
-  if (brightness_.size() == size_two) brightness_ub = brightness_[dimension_one];
+  if (brightness_.size() == size_two) {
+    brightness_ub = brightness_[dimension_one];
+  }
 
   contrast_lb = contrast_[dimension_zero];
   contrast_ub = contrast_[dimension_zero];
 
-  if (contrast_.size() == size_two) contrast_ub = contrast_[dimension_one];
+  if (contrast_.size() == size_two) {
+    contrast_ub = contrast_[dimension_one];
+  }
 
   saturation_lb = saturation_[dimension_zero];
   saturation_ub = saturation_[dimension_zero];
 
-  if (saturation_.size() == size_two) saturation_ub = saturation_[dimension_one];
+  if (saturation_.size() == size_two) {
+    saturation_ub = saturation_[dimension_one];
+  }
 
   hue_lb = hue_[dimension_zero];
   hue_ub = hue_[dimension_zero];
 
-  if (hue_.size() == size_two) hue_ub = hue_[dimension_one];
+  if (hue_.size() == size_two) {
+    hue_ub = hue_[dimension_one];
+  }
 
   std::shared_ptr<RandomColorAdjustOp> tensor_op = std::make_shared<RandomColorAdjustOp>(
     brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub);

@@ -26,12 +26,24 @@ void CallbackManager::AddCallbacks(std::vector<std::shared_ptr<DSCallback>> call
   callbacks_.insert(callbacks_.end(), callbacks.begin(), callbacks.end());
   for (size_t ind = 0; ind < callbacks_.size(); ind++) {
     callbacks.push_back(callbacks[ind]);
-    if (callbacks[ind]->IsBeginNeeded()) begin_indices_.push_back(ind);
-    if (callbacks[ind]->IsEndNeeded()) end_indices_.push_back(ind);
-    if (callbacks[ind]->IsEpochBeginNeeded()) epoch_begin_indices_.push_back(ind);
-    if (callbacks[ind]->IsEpochEndNeeded()) epoch_end_indices_.push_back(ind);
-    if (callbacks[ind]->IsNStepBeginNeeded()) step_begin_indices_.push_back(ind);
-    if (callbacks[ind]->IsNStepEndNeeded()) step_end_indices_.push_back(ind);
+    if (callbacks[ind]->IsBeginNeeded()) {
+      begin_indices_.push_back(ind);
+    }
+    if (callbacks[ind]->IsEndNeeded()) {
+      end_indices_.push_back(ind);
+    }
+    if (callbacks[ind]->IsEpochBeginNeeded()) {
+      epoch_begin_indices_.push_back(ind);
+    }
+    if (callbacks[ind]->IsEpochEndNeeded()) {
+      epoch_end_indices_.push_back(ind);
+    }
+    if (callbacks[ind]->IsNStepBeginNeeded()) {
+      step_begin_indices_.push_back(ind);
+    }
+    if (callbacks[ind]->IsNStepEndNeeded()) {
+      step_end_indices_.push_back(ind);
+    }
   }
 }
 
@@ -82,8 +94,9 @@ Status CallbackManager::StepBegin(const CallbackParam &cb_param) {
 
   // Now do the actual callback
   for (size_t ind : step_begin_indices_) {
-    if ((cb_param.cur_epoch_step_num_ - 1) % callbacks_[ind]->step_size() == 0)
+    if ((cb_param.cur_epoch_step_num_ - 1) % callbacks_[ind]->step_size() == 0) {
       RETURN_IF_NOT_OK(callbacks_[ind]->DSNStepBegin(cb_param));
+    }
   }
   return Status::OK();
 }
@@ -118,8 +131,9 @@ Status CallbackManager::StepEnd(const CallbackParam &cb_param) {
 
   // Now do the actual callback
   for (size_t ind : step_end_indices_) {
-    if ((cb_param.cur_epoch_step_num_ - 1) % callbacks_[ind]->step_size() == 0)
+    if ((cb_param.cur_epoch_step_num_ - 1) % callbacks_[ind]->step_size() == 0) {
       RETURN_IF_NOT_OK(callbacks_[ind]->DSNStepEnd(cb_param));
+    }
   }
   return Status::OK();
 }

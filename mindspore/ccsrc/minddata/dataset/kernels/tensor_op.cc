@@ -55,17 +55,19 @@ Status TensorOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared
 }
 
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  if (inputs.size() != NumInput())
+  if (inputs.size() != NumInput()) {
     return Status(StatusCode::kMDUnexpectedError,
                   "The size of the input argument vector does not match the number of inputs");
+  }
   outputs = inputs;
   return Status::OK();
 }
 
 Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
-  if (inputs.size() != NumInput())
+  if (inputs.size() != NumInput()) {
     return Status(StatusCode::kMDUnexpectedError,
                   "The size of the input argument vector does not match the number of inputs");
+  }
   outputs = inputs;
   return Status::OK();
 }

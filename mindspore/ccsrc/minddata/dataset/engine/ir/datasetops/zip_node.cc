@@ -27,7 +27,9 @@ namespace dataset {
 
 ZipNode::ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) {
   nary_op_ = true;
-  for (auto const &child : datasets) AddChild(child);
+  for (auto const &child : datasets) {
+    AddChild(child);
+  }
 }
 
 std::shared_ptr<DatasetNode> ZipNode::Copy() {

@@ -74,17 +74,24 @@ Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
     outputW = inputs[0][1];
   }
   TensorShape out = TensorShape{outputH, outputW};
-  if (inputs[0].Rank() == 2) outputs.emplace_back(out);
-  if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
-  if (!outputs.empty()) return Status::OK();
+  if (inputs[0].Rank() == 2) {
+    (void)outputs.emplace_back(out);
+  }
+  if (inputs[0].Rank() == 3) {
+    (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
+  }
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError,
                 "Rotate: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
                   std::to_string(inputs[0].Rank()));
 #else
-  if (inputs.size() != NumInput())
+  if (inputs.size() != NumInput()) {
     return Status(StatusCode::kMDUnexpectedError,
                   "The size of the input argument vector: " + std::to_string(inputs.size()) +
                     ", does not match the number of inputs: " + std::to_string(NumInput()));
+  }
   outputs = inputs;
   return Status::OK();
 #endif

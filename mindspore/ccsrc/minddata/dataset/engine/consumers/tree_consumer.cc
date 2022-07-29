@@ -497,7 +497,9 @@ Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, in
     auto shapes = column_shape.AsVector();
     std::vector<int> mr_shape(shapes.begin(), shapes.end());
 
-    if (mr_shape.empty() || mr_shape.size() == 1) continue;  // ignore scalar and one dimension tensor
+    if (mr_shape.empty() || mr_shape.size() == 1) {
+      continue;  // ignore scalar and one dimension tensor
+    }
     std::string mr_type;
     std::string el = column_type.ToString();
     if (mindrecord::kTypesMap.find(el) == mindrecord::kTypesMap.end()) {
@@ -506,7 +508,9 @@ Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, in
     } else {
       mr_type = mindrecord::kTypesMap.at(el);
     }
-    if (mr_type == "bytes" || mr_type == "string") continue;
+    if (mr_type == "bytes" || mr_type == "string") {
+      continue;
+    }
     mr_shape.erase(mr_shape.begin());  // ignore the first dimension
     CurrTensorRowShapes[column_name] = mr_shape;
   }
@@ -570,7 +574,9 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
         (*schema)[column_name] = {{"type", mr_type}, {"shape", mr_shape}};
       }
     }
-    if (mr_type == "bytes" || !mr_shape.empty()) continue;
+    if (mr_type == "bytes" || !mr_shape.empty()) {
+      continue;
+    }
     index_fields->emplace_back(column_name);  // candidate of index fields
   }
   MS_LOG(DEBUG) << "Schema of dataset: " << dataset_schema.dump();

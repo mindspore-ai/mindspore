@@ -64,7 +64,9 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   }
   actions.emplace_back(std::make_unique<NodeRemovalPass>());
   actions.emplace_back(std::make_unique<EpochCtrlPass>());
-  if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
+  if (usage_ == kDeGetter) {
+    (void)actions.emplace_back(std::make_unique<GetterPass>());
+  }
 #ifndef ENABLE_ANDROID
   actions.emplace_back(std::make_unique<CacheTransformPass>());
 

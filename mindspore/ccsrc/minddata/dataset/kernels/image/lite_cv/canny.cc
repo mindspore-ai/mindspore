@@ -29,6 +29,7 @@
 constexpr float kAngle22_5 = 0.39269908169872414;
 constexpr float kAngle67_5 = 1.1780972450961724;
 constexpr int kCertainBorder = 2;
+constexpr float kHalf = 0.5;
 constexpr int kUncertainBorder = 1;
 constexpr int kNotBorder = 0;
 
@@ -115,7 +116,7 @@ static float Round(float value) {
   float rnd = round(value);
   float rnd_l = floor(value);
   float rnd_h = ceil(value);
-  if (value - rnd_l == 0.5) {
+  if (std::fabs(value - rnd_l - kHalf) <= std::numeric_limits<float>::epsilon()) {
     if (fmod(rnd, 2) == 0) {
       return rnd;
     } else if (value > 0) {

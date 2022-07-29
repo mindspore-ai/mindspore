@@ -1495,7 +1495,7 @@ APP_ERROR DvppCommon::CombineVdecProcess(const std::shared_ptr<DvppDataInfo> dat
 
   // picOutputDesc_ will be destroyed in vdec callback function
   picOutputDesc_ = acldvppCreatePicDesc();
-  if (picOutputDesc_ == NULL) {
+  if (picOutputDesc_ == nullptr) {
     return APP_ERR_ACL_BAD_ALLOC;
   }
 

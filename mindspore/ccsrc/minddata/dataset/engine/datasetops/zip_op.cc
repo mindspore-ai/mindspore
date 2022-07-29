@@ -49,7 +49,9 @@ Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child
 // drain end of epoch messages from iterator for this epoch
 Status ZipOp::drainPipeline(int32_t skip_child) {
   for (int32_t con = 0; con < child_.size(); ++con) {
-    if (con == skip_child) continue;
+    if (con == skip_child) {
+      continue;
+    }
     MS_LOG(DEBUG) << "Zip operator draining child at " << con << ".";
     TensorRow row;
     while (!row.eoe()) {

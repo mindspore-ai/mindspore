@@ -170,7 +170,9 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
     }
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
-    if (word2id.size() == vocab_size) break;
+    if (word2id.size() == vocab_size) {
+      break;
+    }
   }
 
   handle.close();

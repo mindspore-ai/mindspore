@@ -78,7 +78,6 @@ std::vector<std::string> TFReaderOp::ValidateFirstRowCrc(const std::vector<std::
     // generate crc from data
     uint32_t generated_crc =
       system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
-
     // record invalid tfrecord file
     if (masked_crc != generated_crc) {
       invalid_files.push_back(filename);

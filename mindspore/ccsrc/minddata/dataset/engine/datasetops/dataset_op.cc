@@ -429,7 +429,9 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
 
 void DatasetOp::UpdateRepeatAndEpochCounter() {
   op_current_repeats_++;
-  if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) op_current_epochs_++;
+  if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) {
+    op_current_epochs_++;
+  }
   MS_LOG(DEBUG) << Name() << " current repeats: " << op_current_repeats_ << ", current epochs: " << op_current_epochs_;
 }
 

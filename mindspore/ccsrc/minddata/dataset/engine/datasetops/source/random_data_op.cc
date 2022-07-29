@@ -98,7 +98,9 @@ void RandomDataOp::GenerateSchema() {
       std::make_unique<ColDescriptor>(col_name, DataType(newType), TensorImpl::kFlexible, rank, new_shape.get());
 
     Status rc = data_schema_->AddColumn(*new_col);
-    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Failed to generate a schema. Message:" << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Failed to generate a schema. Message:" << rc;
+    }
   }
 }
 

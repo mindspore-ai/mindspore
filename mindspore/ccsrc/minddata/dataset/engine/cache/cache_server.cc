@@ -1294,7 +1294,9 @@ int32_t CacheServer::Builder::AdjustNumWorkers(int32_t num_workers) {
   num_workers = std::min(kThreadsPerCore * num_cpus, num_workers);
   // Round up num_workers to a multiple of numa nodes.
   auto remainder = num_workers % num_numa_nodes;
-  if (remainder > 0) num_workers += (num_numa_nodes - remainder);
+  if (remainder > 0) {
+    num_workers += (num_numa_nodes - remainder);
+  }
   return num_workers;
 }
 

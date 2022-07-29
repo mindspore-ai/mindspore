@@ -55,7 +55,9 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<BatchNode> node, bool 
   }
 #endif
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // we have an active skip node above.
   skip_count_ *= node->BatchSize();
@@ -65,21 +67,27 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<BatchNode> node, bool 
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<ProjectNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   return Status::OK();
 }
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<RenameNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   return Status::OK();
 }
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MappableSourceNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // we have an active skip node above.
   auto new_sampler = std::make_shared<SkipFirstEpochSamplerObj>(skip_count_);
@@ -96,7 +104,9 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MappableSourceNode> no
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // we have an active skip node above.
   MS_LOG(WARNING)
@@ -106,7 +116,9 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MapNode> node, bool *c
 
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // insert a skip node above
   insert_skip_above_.emplace_back(node, skip_count_);
@@ -118,7 +130,9 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<NonMappableSourceNode>
 // Since MindDataset requires its own SkipFirstEpochSampler (which is not implemented) we insert the skip node above it.
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // insert a skip node above
   insert_skip_above_.emplace_back(node, skip_count_);
@@ -130,7 +144,9 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bo
 // This functions is used for Ops that are random, and the ones in which Visit is Not Implemented yet;
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   CHECK_FAIL_RETURN_UNEXPECTED(skip_count_ >= 0, "The skip size cannot be negative.");
-  if (skip_count_ == 0) return Status::OK();  // no active skip node above. normal flow
+  if (skip_count_ == 0) {
+    return Status::OK();  // no active skip node above. normal flow
+  }
 
   // insert a skip node above
   insert_skip_above_.emplace_back(node, skip_count_);

@@ -82,8 +82,12 @@ Status GraphLoader::GetNodesAndEdges() {
     }
   }
 
-  for (auto &itr : graph_impl_->node_type_map_) itr.second.shrink_to_fit();
-  for (auto &itr : graph_impl_->edge_type_map_) itr.second.shrink_to_fit();
+  for (auto &itr : graph_impl_->node_type_map_) {
+    itr.second.shrink_to_fit();
+  }
+  for (auto &itr : graph_impl_->edge_type_map_) {
+    itr.second.shrink_to_fit();
+  }
 
   MergeFeatureMaps();
   return Status::OK();
@@ -286,10 +290,14 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
 void GraphLoader::MergeFeatureMaps() {
   for (int wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
     for (auto &m : n_feature_maps_[wkr_id]) {
-      for (auto &n : m.second) graph_impl_->node_feature_map_[m.first].insert(n);
+      for (auto &n : m.second) {
+        graph_impl_->node_feature_map_[m.first].insert(n);
+      }
     }
     for (auto &m : e_feature_maps_[wkr_id]) {
-      for (auto &n : m.second) graph_impl_->edge_feature_map_[m.first].insert(n);
+      for (auto &n : m.second) {
+        graph_impl_->edge_feature_map_[m.first].insert(n);
+      }
     }
     for (auto &m : default_node_feature_maps_[wkr_id]) {
       graph_impl_->default_node_feature_map_[m.first] = m.second;

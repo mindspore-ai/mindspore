@@ -73,7 +73,9 @@ CacheClient::~CacheClient() {
   // Manually release the async buffer because we need the comm layer.
   if (async_buffer_stream_) {
     Status rc = async_buffer_stream_->ReleaseBuffer();
-    if (rc.IsError()) MS_LOG(ERROR) << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
+    }
   }
   if (client_id_ != -1) {
     try {
@@ -437,7 +439,9 @@ Status CacheClient::AsyncBufferStream::SyncFlush(AsyncFlushFlag flag) {
       for (auto i = 0; i < kNumAsyncBuffer; ++i) {
         if (buf_arr_[i].rq) {
           Status rc = buf_arr_[i].rq->Wait();
-          if (rc.IsError()) flush_rc_ = rc;
+          if (rc.IsError()) {
+            flush_rc_ = rc;
+          }
           buf_arr_[i].rq.reset();
         }
       }

@@ -49,9 +49,13 @@ void *operator new[](std::size_t s, mindspore::Status *rc, std::shared_ptr<minds
 }
 
 void operator delete(void *p, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
-  if (p != nullptr) b->Deallocate(p);
+  if (p != nullptr) {
+    b->Deallocate(p);
+  }
 }
 
 void operator delete[](void *p, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
-  if (p != nullptr) b->Deallocate(p);
+  if (p != nullptr) {
+    b->Deallocate(p);
+  }
 }

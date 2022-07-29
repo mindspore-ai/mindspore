@@ -497,7 +497,7 @@ Status AutoTune::GetConnectorUtil(double *usage_avg_last, double *avg_size, doub
   std::vector<int32_t> capacities;
   RETURN_IF_NOT_OK(GetConnectorCapacity(&capacities));
   *avg_capacity = Mean(capacities);
-  CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != 0, "Capacities of connectors should not be 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != nullptr, "Capacities of connectors should not be 0");
   // size here means size of queue utilized
   *usage_avg_last = (*avg_size / *avg_capacity);
   return Status::OK();

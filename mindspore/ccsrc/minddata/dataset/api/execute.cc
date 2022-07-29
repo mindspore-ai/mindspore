@@ -67,7 +67,7 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
 }
 
 Execute::Execute(const std::shared_ptr<TensorOperation> &op, MapTargetDevice device_type, uint32_t device_id) {
-  ops_.emplace_back(op);
+  (void)ops_.emplace_back(op);
   device_type_ = device_type;
   info_ = std::make_shared<ExtraInfo>();
   (void)InitResource(device_type, device_id);
@@ -75,7 +75,7 @@ Execute::Execute(const std::shared_ptr<TensorOperation> &op, MapTargetDevice dev
 
 Execute::Execute(const std::shared_ptr<TensorTransform> &op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the op and other context
-  transforms_.emplace_back(op);
+  (void)transforms_.emplace_back(op);
 
   info_ = std::make_shared<ExtraInfo>();
   device_type_ = device_type;
@@ -85,7 +85,7 @@ Execute::Execute(const std::shared_ptr<TensorTransform> &op, MapTargetDevice dev
 Execute::Execute(const std::reference_wrapper<TensorTransform> &op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the transforms_ and other context
   std::shared_ptr<TensorOperation> operation = op.get().Parse();
-  ops_.emplace_back(std::move(operation));
+  (void)ops_.emplace_back(std::move(operation));
 
   info_ = std::make_shared<ExtraInfo>();
   info_->init_with_shared_ptr_ = false;
@@ -96,7 +96,7 @@ Execute::Execute(const std::reference_wrapper<TensorTransform> &op, MapTargetDev
 // Execute function for the example case: auto decode(new vision::Decode());
 Execute::Execute(TensorTransform *op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the transforms_ and other context
-  ops_.emplace_back(op->Parse());
+  (void)ops_.emplace_back(op->Parse());
 
   info_ = std::make_shared<ExtraInfo>();
   info_->init_with_shared_ptr_ = false;
@@ -130,7 +130,7 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> &ops
       [](TensorTransform &operation) -> std::shared_ptr<TensorOperation> { return operation.Parse(); });
   } else {
     for (auto &op : ops) {
-      ops_.emplace_back(op.get().Parse(device_type));
+      (void)ops_.emplace_back(op.get().Parse(device_type));
     }
   }
 
@@ -188,7 +188,7 @@ Status Execute::BuildTransforms() {
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
-    transforms_rt_.emplace_back(ops_[i]->Build());
+    (void)transforms_rt_.emplace_back(ops_[i]->Build());
   }
   return Status::OK();
 }
@@ -294,7 +294,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
         MS_LOG(ERROR) << rc;
         RETURN_IF_NOT_OK(rc);
       }
-      de_tensor_list.emplace_back(std::move(de_tensor));
+      (void)de_tensor_list.emplace_back(std::move(de_tensor));
     }
     // Apply transforms on tensor
     for (auto &t : transforms_rt_) {
@@ -312,7 +312,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
         MS_LOG(WARNING) << ss.str();
       }
       auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
-      output_tensor_list->emplace_back(ms_tensor);
+      (void)output_tensor_list->emplace_back(ms_tensor);
       ++idx;
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid.");
@@ -341,7 +341,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
 
       auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
-      output_tensor_list->emplace_back(ms_tensor);
+      (void)output_tensor_list->emplace_back(ms_tensor);
       // Release the data on the device because we have copied one piece onto host
       RETURN_IF_NOT_OK(device_resource_->DeviceDataRelease());
     }
@@ -603,7 +603,7 @@ std::string Execute::AippCfgGenerator() {
       crop_paras = iter->second;
     }
     if (crop_paras.size() == 1) {
-      crop_paras.emplace_back(crop_paras[0]);
+      (void)crop_paras.emplace_back(crop_paras[0]);
     }
 
     std::vector<uint32_t> aipp_size = AippSizeFilter(resize_paras, crop_paras);
@@ -663,7 +663,7 @@ Status Execute::ParseTransforms() {
                          });
   } else if (device_type_ == MapTargetDevice::kAscend310) {
     for (auto &transform_ : transforms_) {
-      ops_.emplace_back(transform_->Parse(device_type_));
+      (void)ops_.emplace_back(transform_->Parse(device_type_));
     }
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
