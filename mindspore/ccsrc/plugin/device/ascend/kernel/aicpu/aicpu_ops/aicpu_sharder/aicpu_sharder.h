@@ -75,7 +75,7 @@ class SharderNonBlock {
    * @param None
    * @return CPU number
    */
-  uint32_t GetCPUNum();
+  uint32_t GetCPUNum() const { return cpu_core_num_; }
 
  private:
   SharderNonBlock() : schedule_(nullptr), do_task_(nullptr), cpu_core_num_(0) {}
@@ -101,9 +101,8 @@ class SharderNonBlock {
    * @param base An integral as base when cal multiple
    * @return ceiled multiple
    */
-  inline int64_t CeilMultiple(int64_t x, int64_t base);
+  int64_t CeilMultiple(int64_t x, int64_t base) const;
 
- private:
   RunnerBool schedule_;    // enqueue runner
   ClosureBool do_task_;    // a callback, do task from task queue
   uint32_t cpu_core_num_;  // aicpu core number

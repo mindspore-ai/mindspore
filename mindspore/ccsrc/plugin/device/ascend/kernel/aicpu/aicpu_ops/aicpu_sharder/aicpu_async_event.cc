@@ -45,7 +45,7 @@ bool AsyncEventManager::GenTaskInfoFromCtx(AsyncTaskInfo *task_info) {
     AICPU_LOGE("GetThreadLocalCtx failed, ret=%d, key=%s.", status, ker_wait_id.c_str());
     return false;
   }
-  task_info->wait_id = atoi(wait_id_value.c_str());
+  task_info->wait_id = static_cast<uint32_t>(atoi(wait_id_value.c_str()));
   std::string wait_type_value;
   std::string key_wait_type(aicpu::kContextKeyWaitType);
   status = aicpu::GetThreadLocalCtx(key_wait_type, &wait_type_value);
@@ -53,7 +53,7 @@ bool AsyncEventManager::GenTaskInfoFromCtx(AsyncTaskInfo *task_info) {
     AICPU_LOGE("GetThreadLocalCtx failed, ret=%d, key=%s.", status, key_wait_type.c_str());
     return false;
   }
-  task_info->wait_type = atoi(wait_type_value.c_str());
+  task_info->wait_type = static_cast<uint8_t>(atoi(wait_type_value.c_str()));
   std::string start_tick_value;
   std::string key_start_tick(aicpu::kContextKeyStartTick);
   status = aicpu::GetThreadLocalCtx(key_start_tick, &start_tick_value);
@@ -61,7 +61,7 @@ bool AsyncEventManager::GenTaskInfoFromCtx(AsyncTaskInfo *task_info) {
     AICPU_LOGE("GetThreadLocalCtx failed, ret=%d, key=%s.", status, key_start_tick.c_str());
     return false;
   }
-  task_info->start_tick = atol(start_tick_value.c_str());
+  task_info->start_tick = static_cast<uint64_t>(atol(start_tick_value.c_str()));
   status = aicpu::GetOpname(aicpu::GetAicpuThreadIndex(), &task_info->op_name);
   if (status != aicpu::AICPU_ERROR_NONE) {
     AICPU_LOGE("GetOpname failed, ret=%d.", status);
@@ -86,7 +86,7 @@ bool AsyncEventManager::RegEventCb(const uint32_t event_id, const uint32_t sub_e
   info.event_id = event_id;
   info.sub_event_id = sub_event_id;
   {
-    std::unique_lock<std::mutex> lk(map_mutex_);
+    std::unique_lock<std::mutex> _lock(map_mutex_);
     auto iter = asyncTaskMap_.find(info);
     if (iter != asyncTaskMap_.end()) {
       AICPU_LOGE("AsyncEventManager RegEventCb failed.");
@@ -117,7 +117,7 @@ void AsyncEventManager::ProcessEvent(const uint32_t event_id, const uint32_t sub
       return;
     }
     taskCb = iter->second.task_cb;
-    asyncTaskMap_.erase(iter);
+    (void)asyncTaskMap_.erase(iter);
   }
   if (taskCb != nullptr) {
     taskCb(param);

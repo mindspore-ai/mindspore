@@ -17,6 +17,7 @@
 #include "common/kernel_base.h"
 #include "common/kernel_errcode.h"
 #include "common/tensor.h"
+#include "utils/convert_utils_base.h"
 
 namespace aicpu {
 namespace {
@@ -64,7 +65,7 @@ uint32_t KernelBase::ParseParam(void *param) {
                  MAX_IO_ADDR_NUMPARAM_LEN);
       return AICPU_KERNEL_STATE_PARAM_INVALID;
     }
-    uint32_t addr_len = param_head_->ioAddrNum * sizeof(uint64_t);
+    uint32_t addr_len = static_cast<uint32_t>(param_head_->ioAddrNum * sizeof(uint64_t));
     if (extend_param_len_ < addr_len) {
       AICPU_LOGE("Kernel:%s extend param is not enough for io addr, ioAddrNum=%u, extendParamLen=%u.",
                  kernel_name_.c_str(), param_head_->ioAddrNum, extend_param_len_);
@@ -81,8 +82,8 @@ uint32_t KernelBase::ParseParam(void *param) {
   AICPU_CHK_STATUS_RET(ParseExtInfo())
   if (unknow_shape_) {
     AICPU_LOGI("Unknown shape op: %s", kernel_name_.c_str());
-    AICPU_CHK_STATUS_RET(UpdateInputShape())
-    AICPU_CHK_STATUS_RET(UpdateOutputShape())
+    UpdateInputShape();
+    UpdateOutputShape();
   }
   return ParseKernelParam();
 }
@@ -106,7 +107,7 @@ size_t KernelBase::GetDataTypeSize(::aicpuops::DataType data_type) {
 }
 
 template <typename T>
-uint32_t KernelBase::ParseExtendParam(T *param_var, std::string param_name) {
+uint32_t KernelBase::ParseExtendParam(T *param_var, const std::string &param_name) {
   if (extend_param_len_ < sizeof(T)) {
     AICPU_LOGE("Kernel:%s extend param is not enough for [%s] addr, need_len=%u, extendParamLen=%u.",
                kernel_name_.c_str(), param_name.c_str(), sizeof(T), extend_param_len_);
@@ -165,7 +166,7 @@ uint32_t KernelBase::ParseExtInputShape(FWKAdapter::ExtInfo *ext_info) {
   input_shape_and_type_.clear();
   auto input = reinterpret_cast<FWKAdapter::ShapeAndType *>(ext_info->infoMsg);
   for (int index = 0; index < node_def_.inputs_size(); ++index) {
-    input_shape_and_type_.emplace_back(&input[index]);
+    (void)input_shape_and_type_.emplace_back(&input[index]);
   }
   return AICPU_KERNEL_STATE_SUCCESS;
 }
@@ -183,7 +184,7 @@ uint32_t KernelBase::ParseExtOutputShape(FWKAdapter::ExtInfo *ext_info) {
   output_shape_and_type_.clear();
   auto output = reinterpret_cast<FWKAdapter::ShapeAndType *>(ext_info->infoMsg);
   for (int index = 0; index < node_def_.outputs_size(); ++index) {
-    output_shape_and_type_.emplace_back(&output[index]);
+    (void)output_shape_and_type_.emplace_back(&output[index]);
   }
   return AICPU_KERNEL_STATE_SUCCESS;
 }
@@ -221,7 +222,7 @@ uint32_t KernelBase::ParseExtInfo() {
   return AICPU_KERNEL_STATE_SUCCESS;
 }
 
-uint32_t KernelBase::UpdateInputShape() {
+void KernelBase::UpdateInputShape() {
   for (int i = 0; i < node_def_.inputs_size(); ++i) {
     aicpuops::Tensor *input_tensor = node_def_.mutable_inputs(i);
     aicpuops::TensorShape *input_tensor_shape = input_tensor->mutable_tensor_shape();
@@ -234,10 +235,9 @@ uint32_t KernelBase::UpdateInputShape() {
       input_tensor_shape->add_dim()->set_size(input_shape_and_type_[i]->dims[index]);
     }
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
 }
 
-uint32_t KernelBase::UpdateOutputShape() {
+void KernelBase::UpdateOutputShape() {
   for (int i = 0; i < node_def_.outputs_size(); ++i) {
     aicpuops::Tensor *output_tensor = node_def_.mutable_outputs(i);
     aicpuops::TensorShape *output_tensor_shape = output_tensor->mutable_tensor_shape();
@@ -250,6 +250,5 @@ uint32_t KernelBase::UpdateOutputShape() {
       output_tensor_shape->add_dim()->set_size(output_shape_and_type_[i]->dims[index]);
     }
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
 }
 }  // namespace aicpu

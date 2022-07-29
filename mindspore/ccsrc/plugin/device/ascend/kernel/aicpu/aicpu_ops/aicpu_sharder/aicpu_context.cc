@@ -70,7 +70,7 @@ std::map<std::string, std::string> &GetThreadCtx(aicpu::CtxType type, uint32_t t
 }  // namespace
 
 namespace aicpu {
-status_t aicpuSetContext(aicpuContext_t *ctx) {
+status_t aicpuSetContext(const aicpuContext_t *const ctx) {
   g_cur_ctx = *ctx;
   return AICPU_ERROR_NONE;
 }
@@ -190,7 +190,7 @@ status_t GetThreadLocalCtx(const std::string &key, std::string *value) {
 status_t RemoveThreadLocalCtx(const std::string &key) {
   auto iter = g_thread_local_ctx.find(key);
   if (iter != g_thread_local_ctx.end()) {
-    g_thread_local_ctx.erase(iter);
+    (void)g_thread_local_ctx.erase(iter);
     return AICPU_ERROR_NONE;
   }
   AICPU_LOGE("remove thread local context failed, no such key[%s]", key.c_str());
@@ -235,7 +235,7 @@ status_t DoEventCallback(uint32_t event_id, uint32_t subevent_id, void *param) {
   }
   (sub_iter->second)(param);
   // erase func after call
-  sub_map.erase(sub_iter);
+  (void)sub_map.erase(sub_iter);
   return AICPU_ERROR_NONE;
 }
 
@@ -259,7 +259,7 @@ status_t UnRegisterCallback(uint32_t event_id, uint32_t subevent_id) {
       event_id, event_id);
     return AICPU_ERROR_NONE;
   }
-  sub_map.erase(sub_iter);
+  (void)sub_map.erase(sub_iter);
   return AICPU_ERROR_NONE;
 }
 }  // namespace aicpu
@@ -300,7 +300,7 @@ aicpu::status_t RemoveThreadCtxInfo(aicpu::CtxType type, const std::string &key)
   auto &ctx = GetThreadCtx(type, g_thread_index);
   auto iter = ctx.find(key);
   if (iter != ctx.end()) {
-    ctx.erase(iter);
+    (void)ctx.erase(iter);
     return aicpu::AICPU_ERROR_NONE;
   }
   AICPU_LOGE("Remove thread context failed, context type[%d], no such key[%s]", type, key.c_str());
