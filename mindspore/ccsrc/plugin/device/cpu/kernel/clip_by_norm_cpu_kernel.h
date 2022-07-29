@@ -49,7 +49,7 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
   void InitSizeLists();
   // Launch function
   template <typename T, typename S>
-  bool LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  void LaunchFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                   const std::vector<AddressPtr> &outputs);
   // Run `l2_norm(x)` calculation
   template <typename T>

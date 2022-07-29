@@ -278,7 +278,8 @@ class GradExecutor {
                                     const FuncGraphPtr &ms_func_graph) const;
   void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value) const;
   CNodePtr MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                    const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
+                                    const py::object &actual_out, const py::args &args,
+                                    const ValuePtr &actual_out_v) const;
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode) const;
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const CNodePtr &cnode);
@@ -499,13 +500,13 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   ForwardExecutorPtr forward_executor() const;
 
   bool grad_flag() const;
-  void set_grad_flag(bool flag);
+  void set_grad_flag(bool flag) const;
   void SetDynamicInput(const py::object &cell, const py::args &args);
   py::object GetDynamicInput(const py::object &actual_input) const;
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
-  void SetHookChanged(const py::object &cell);
+  void SetHookChanged(const py::object &cell) const;
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
