@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_GRAD_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_GRAD_FUSION_H_
 
-#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_fusion.h"
 
