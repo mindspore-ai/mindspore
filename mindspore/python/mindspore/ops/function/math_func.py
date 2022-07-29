@@ -3760,14 +3760,16 @@ def cdist(x, y, p=2.0):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
-        TypeError: If dtype of `x` or `y` is neither float16 nor float32.
+        TypeError: If dtype of x or y is not in [float32, float64] on GPU, or is not in [float32] on CPU.
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `x` is not the same as `y`.
         ValueError: If dimension of `x` or `y` is neither 2 nor 3.
+        ValueError: If the batch shape of 'x' is not the same as the shape of 'y'
+        ValueError: If the number of columns of 'x' is not the same as the number of 'y'
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))

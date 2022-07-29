@@ -81,23 +81,19 @@ __global__ void PDist_Grad_Lt_Two(const size_t y_size, const T *y_grad, const T 
   const T grad_k = y_grad[k];
   const T dist_k = y[k];
 
-  const T *const begin = x + i * m;
-  const T *const end = begin + m;
-  const T *x_i = begin + init;
-  const T *x_j = x + j * m + init;
-  T *buff1 = buffer + (ib * n + i) * m + init;
-  T *buff2 = buffer + (jb * n + j) * m + init;
-  for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
-    T res;
-    const T diff = *x_i - *x_j;
-    if (dist_k == 0.0 || (diff == 0.0 && p < 1)) {
-      res = 0;
-    } else {
-      res = (sign(diff) * std::pow(std::abs(diff), static_cast<T>(p - 1)) * (grad_k) /
-            std::pow(dist_k, static_cast<T>(p - 1)));
+  if (dist_k != 0.0 && p >= 1) {
+    const T *const begin = x + i * m;
+    const T *const end = begin + m;
+    const T *x_i = begin + init;
+    const T *x_j = x + j * m + init;
+    T *buff1 = buffer + (ib * n + i) * m + init;
+    T *buff2 = buffer + (jb * n + j) * m + init;
+    for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
+      const T diff = *x_i - *x_j;
+      T res = (sign(diff) * std::pow(std::abs(diff), p - 1) * (grad_k) / std::pow(dist_k, p - 1));
+      *buff1 = res;
+      *buff2 = -res;
     }
-    *buff1 = res;
-    *buff2 = -res;
   }
 }
 
@@ -120,19 +116,18 @@ __global__ void PDist_Grad_Two(const size_t y_size, const T *y_grad, const T *x,
   const T grad_k = y_grad[k];
   const T dist_k = y[k];
 
-  const T *const begin = x + i * m;
-  const T *const end = begin + m;
-  const T *x_i = begin + init;
-  const T *x_j = x + j * m + init;
-  T *buff1 = buffer + (ib * n + i) * m + init;
-  T *buff2 = buffer + (jb * n + j) * m + init;
-  for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
-    T res = 0;
-    if (dist_k != 0.0) {
-      res = grad_k * (*x_i - *x_j) / dist_k;
+  if (dist_k != 0.0) {
+    const T *const begin = x + i * m;
+    const T *const end = begin + m;
+    const T *x_i = begin + init;
+    const T *x_j = x + j * m + init;
+    T *buff1 = buffer + (ib * n + i) * m + init;
+    T *buff2 = buffer + (jb * n + j) * m + init;
+    for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
+      T res = grad_k * (*x_i - *x_j) / dist_k;
+      *buff1 = res;
+      *buff2 = -res;
     }
-    *buff1 = res;
-    *buff2 = -res;
   }
 }
 
@@ -155,20 +150,19 @@ __global__ void PDist_Grad_P(const size_t y_size, const T *y_grad, const T *x, c
   const T grad_k = y_grad[k];
   const T dist_k = y[k];
 
-  const T *const begin = x + i * m;
-  const T *const end = begin + m;
-  const T *x_i = begin + init;
-  const T *x_j = x + j * m + init;
-  T *buff1 = buffer + (ib * n + i) * m + init;
-  T *buff2 = buffer + (jb * n + j) * m + init;
-  for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
-    T res = 0;
-    const T diff = (*x_i - *x_j);
-    if (dist_k != (0.0)) {
-      res = diff * std::pow(std::abs(diff), static_cast<T>(p - 2)) * grad_k / std::pow(dist_k, static_cast<T>(p - 1));
+  if (dist_k != 0.0) {
+    const T *const begin = x + i * m;
+    const T *const end = begin + m;
+    const T *x_i = begin + init;
+    const T *x_j = x + j * m + init;
+    T *buff1 = buffer + (ib * n + i) * m + init;
+    T *buff2 = buffer + (jb * n + j) * m + init;
+    for (; x_i < end; x_i += s, x_j += s, buff1 += s, buff2 += s) {
+      const T diff = (*x_i - *x_j);
+      T res = diff * std::pow(std::abs(diff), p - 2) * grad_k / std::pow(dist_k, p - 1);
+      *buff1 = res;
+      *buff2 = -res;
     }
-    *buff1 = res;
-    *buff2 = -res;
   }
 }
 
@@ -238,12 +232,18 @@ void CalPDistGrad(const size_t x_size, const size_t y_size, const size_t grad_si
   if (p == 1.0) {
     PDist_Grad_One<T><<<grid, block, 0, cuda_stream>>>(y_size, y_grad, x, y, buffer, n, m, p, n1, n2);
   } else if (p < 2.0) {
+    InitOutput<<<CUDA_BLOCKS(device_id, (n-1) * x_size), CUDA_THREADS(device_id), 0, cuda_stream>>>
+                                                                                (buffer, (n-1) * x_size);
     PDist_Grad_Lt_Two<T><<<grid, block, 0, cuda_stream>>>(y_size, y_grad, x, y, buffer, n, m, p, n1, n2);
   } else if (p == 2.0) {
+    InitOutput<<<CUDA_BLOCKS(device_id, (n-1) * x_size), CUDA_THREADS(device_id), 0, cuda_stream>>>
+                                                                                (buffer, (n-1) * x_size);
     PDist_Grad_Two<T><<<grid, block, 0, cuda_stream>>>(y_size, y_grad, x, y, buffer, n, m, p, n1, n2);
   } else if (std::isinf(p)) {
     PDist_Grad_Inf<T><<<grid, block, 0, cuda_stream>>>(y_size, y_grad, x, y, buffer, n, m, p, n1, n2);
   } else {
+    InitOutput<<<CUDA_BLOCKS(device_id, (n-1) * x_size), CUDA_THREADS(device_id), 0, cuda_stream>>>
+                                                                                (buffer, (n-1) * x_size);
     PDist_Grad_P<T><<<grid, block, 0, cuda_stream>>>(y_size, y_grad, x, y, buffer, n, m, p, n1, n2);
   }
   AddBuffer<<<CUDA_BLOCKS(device_id, x_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(x_grad, buffer, n, x_size);

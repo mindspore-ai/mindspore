@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kCdistInputDimsMin = 2;
+
 abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &item : input_args) {
@@ -69,6 +70,13 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
       }
     }
   }
+  if (x_shape[x_size - kInputIndex1] != y_shape[y_size - kInputIndex1]) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the number of columns of 'x' must be the same as the number of 'y', "
+                                "but got 'x_shape["
+                             << x_size - kInputIndex1 << "]': " << x_shape[x_size - kInputIndex1] << " and 'y_shape["
+                             << y_size - kInputIndex1 << "]': " << y_shape[y_size - kInputIndex1];
+  }
   int64_t dim_R = y_shape[y_size - kCdistInputDimsMin];
   auto out_shape = x_shape;
   out_shape.pop_back();
@@ -80,7 +88,7 @@ TypePtr CdistInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("input_x", input_args[0]->BuildType());
   (void)types.emplace("input_y", input_args[1]->BuildType());

@@ -1211,9 +1211,11 @@ class Cdist(Primitive):
     Refer to :func:`mindspore.ops.cdist` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
         >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
         >>> input_y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
         >>> op = ops.Cdist(p=2.0)
