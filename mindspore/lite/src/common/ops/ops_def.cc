@@ -565,6 +565,7 @@ OP_SCHEMA_DEF(FftImag)
 OP_SCHEMA_DEF_END(FftImag)
 
 OP_SCHEMA_DEF(Flatten)
+OP_ATTR_WITH_VALUE(axis, long, 0)
 OP_SCHEMA_DEF_END(Flatten)
 
 OP_SCHEMA_DEF(FlattenGrad)

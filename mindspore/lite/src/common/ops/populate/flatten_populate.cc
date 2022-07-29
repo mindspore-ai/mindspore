@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
+#include "nnacl/flatten_parameter.h"
 using mindspore::schema::PrimitiveType_Flatten;
 
 namespace mindspore {
@@ -21,15 +22,19 @@ namespace lite {
 OpParameter *PopulateFlattenParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
-
-  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto value = primitive->value_as_Flatten();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
+  auto *param = reinterpret_cast<FlattenParameter *>(malloc(sizeof(FlattenParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc FlattenParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(OpParameter));
-
-  param->type_ = primitive->value_type();
+  memset(param, 0, sizeof(FlattenParameter));
+  param->axis_ = static_cast<int>(value->axis());
+  param->op_parameter_.type_ = static_cast<int>(primitive->value_type());
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_Flatten, PopulateFlattenParameter, SCHEMA_CUR)
