@@ -4459,6 +4459,38 @@ def xdivy(x, y):
     return tensor_xdivy(x, y)
 
 
+def log1p(x):
+    r"""
+    Returns the natural logarithm of one plus the input tensor element-wise.
+
+    .. math::
+        out_i = {log_e}(x_i + 1)
+
+    Args:
+        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
+          The value must be greater than -1.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+
+    Returns:
+        Tensor, has the same shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> output = ops.log1p(x)
+        >>> print(output)
+        [0.6931472 1.0986123 1.609438 ]
+    """
+    _log1p = _get_cache_prim(P.Log1p)()
+    return _log1p(x)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -4577,6 +4609,7 @@ __all__ = [
     'mean',
     'prod',
     'log2',
+    'log1p',
     'approximate_equal',
     'xlogy'
 ]

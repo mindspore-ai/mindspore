@@ -1222,6 +1222,34 @@ class Tensor(Tensor_):
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
 
+    def log1p(self):
+        r"""
+        Returns the natural logarithm of one plus the input tensor element-wise.
+
+        `x` refer to self tensor.
+
+        .. math::
+            out_i = {log_e}(x_i + 1)
+
+        Returns:
+            Tensor, has the same shape as the `x`.
+
+        Raises:
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of `x` is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = x.log1p()
+            >>> print(output)
+            [0.6931472 1.0986123 1.609438 ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log1p')(self)
+
     def isclose(self, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         """
         Returns a boolean Tensor where two Tensors are element-wise equal within a tolerance.

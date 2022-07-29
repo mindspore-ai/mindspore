@@ -229,6 +229,7 @@ from .math_func import (
     mean,
     prod,
     log2,
+    log1p,
     approximate_equal,
     xlogy
 )

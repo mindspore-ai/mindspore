@@ -2177,6 +2177,14 @@ def str_bool(x):
     return True
 
 
+def log1p(x):
+    r"""
+    Returns the natural logarithm of one plus the input tensor element-wise.
+    Refer to :func:`mindspore.ops.log1p` for more detail.
+    """
+    return F.log1p(x)
+
+
 def lerp(start, end, weight):
     """Does a linear interpolation of two tensors start and end based on a float or tensor weight."""
     return F.lerp(start, end, weight)

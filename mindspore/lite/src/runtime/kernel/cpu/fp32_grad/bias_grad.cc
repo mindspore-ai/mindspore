@@ -67,10 +67,11 @@ int BiasGradCPUKernel::DoExecute(int task_id) {
 
   size_t total_size = channels * nhw_size;
   for (size_t c = 0; c < channels; ++c) {
-    out[c] = 0;
+    float tmp = 0.0f;
     for (size_t offset = 0; offset < total_size; offset += channels) {
-      out[c] += in[offset + c];
+      tmp += in[offset + c];
     }
+    out[c] = tmp;
   }
 
   return RET_OK;

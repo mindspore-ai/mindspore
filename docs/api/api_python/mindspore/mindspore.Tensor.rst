@@ -817,6 +817,22 @@ mindspore.Tensor
         - **ValueError** - 如果 `end` 的维度信息无法相互广播到当前Tensor。
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
+    .. py:method:: log1p()
+
+        对当前Tensor逐元素加一后计算自然对数。
+
+        .. math::
+            out_i = {log_e}(x_i + 1)
+
+        **返回：**
+
+        Tensor，与 `x` 的shape相同。
+
+        **异常：**
+
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `x` 的数据类型非float16或float32。
+
     .. py:method:: norm(axis, p=2, keep_dims=False, epsilon=1e-12)
 
         返回给定Tensor的矩阵范数或向量范数。

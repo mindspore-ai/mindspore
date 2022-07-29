@@ -2632,20 +2632,7 @@ class Log1p(Primitive):
     r"""
     Returns the natural logarithm of one plus the input tensor element-wise.
 
-    .. math::
-        out_i = {log_e}(x_i + 1)
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-          The value must be greater than -1.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.log1p` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
