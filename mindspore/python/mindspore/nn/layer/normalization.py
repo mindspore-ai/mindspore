@@ -879,7 +879,7 @@ class _InstanceNorm(Cell):
                  gamma_init='ones',
                  beta_init='zeros',
                  input_dims='2d'):
-        """Initialize InstanceNorm2d."""
+        """Initialize Normalization base class."""
         super(_InstanceNorm, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         validator.check_value_type('eps', eps, [float], self.cls_name)
@@ -962,9 +962,11 @@ class InstanceNorm1d(_InstanceNorm):
             running_mean and running_var computation. Default: 0.1.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, L)`. Data type: float16 or float32.
@@ -985,6 +987,7 @@ class InstanceNorm1d(_InstanceNorm):
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
 
@@ -1049,9 +1052,11 @@ class InstanceNorm2d(_InstanceNorm):
             running_mean and running_var computation. Default: 0.1.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
@@ -1072,6 +1077,7 @@ class InstanceNorm2d(_InstanceNorm):
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
 
@@ -1136,9 +1142,11 @@ class InstanceNorm3d(_InstanceNorm):
             running_mean and running_var computation. Default: 0.1.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D, H, W)`. Data type: float16 or float32.
@@ -1159,6 +1167,7 @@ class InstanceNorm3d(_InstanceNorm):
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
 

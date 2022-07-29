@@ -26,8 +26,8 @@ mindspore.nn.InstanceNorm1d
         - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值：1e-5。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.1。
         - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值：True。
-        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
-        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
+        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值：'ones'。
+        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值：'zeros'。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C, L)` 的Tensor。数据类型为float16或float32。
@@ -43,4 +43,5 @@ mindspore.nn.InstanceNorm1d
         - **TypeError** - `gamma_init` / `beta_init` 的类型不相同，或者初始化的元素类型不是float32。
         - **ValueError** - `num_features` 小于1。
         - **ValueError** - `momentum` 不在范围[0, 1]内。
+        - **ValueError** - `gamma_init` / `beta_init` 的shape不为 :math:`(C)` 。
         - **KeyError** - `gamma_init` / `beta_init` 中的任何一个是str，并且不存在继承自 `Initializer` 的同义类。
