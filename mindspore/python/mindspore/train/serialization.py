@@ -23,6 +23,7 @@ import stat
 import threading
 from threading import Thread, Lock
 from collections import defaultdict, OrderedDict
+from io import BytesIO
 
 import math
 import sys
@@ -207,8 +208,8 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                 os.remove(ckpt_file_name)
             with open(ckpt_file_name, "ab") as f:
                 if enc_key is not None:
-                    plain_data = bytes(0)
-                    cipher_data = bytes(0)
+                    plain_data = BytesIO()
+                    cipher_data = BytesIO()
 
                 for name, value in data_list.items():
                     data_size = value[2].nbytes / 1024
@@ -230,18 +231,23 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                         if enc_key is None:
                             f.write(checkpoint_list.SerializeToString())
                         else:
-                            plain_data += checkpoint_list.SerializeToString()
-
+                            plain_data.write(checkpoint_list.SerializeToString())
+                            plain_data.seek(0)
                             max_block_size = ENCRYPT_BLOCK_SIZE * 1024
-                            while len(plain_data) >= max_block_size:
-                                cipher_data += _encrypt(plain_data[0: max_block_size], max_block_size, enc_key,
-                                                        len(enc_key), enc_mode)
-                                plain_data = plain_data[max_block_size:]
+                            block_data = plain_data.read(max_block_size)
+
+                            while len(block_data) == max_block_size:
+                                cipher_data.write(_encrypt(block_data, max_block_size, enc_key,
+                                                           len(enc_key), enc_mode))
+                                block_data = plain_data.read(max_block_size)
+                            if block_data:
+                                plain_data = BytesIO()
+                                plain_data.write(block_data)
 
                 if enc_key is not None:
-                    if plain_data:
-                        cipher_data += _encrypt(plain_data, len(plain_data), enc_key, len(enc_key), enc_mode)
-                    f.write(cipher_data)
+                    if block_data:
+                        cipher_data.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
+                    f.write(cipher_data.getvalue())
 
                 os.chmod(ckpt_file_name, stat.S_IRUSR)
 
