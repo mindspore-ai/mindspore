@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, context, nn
+from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -28,14 +29,151 @@ context.set_context(mode=context.GRAPH_MODE)
 def test_fallback_abs_tensor():
     """
     Feature: JIT Fallback
-    Description: Test abs(Tensor) a variable tensor in construct function in graph mode
+    Description: Test abs(Tensor) with a variable tensor in graph mode
     Expectation: No exception
     """
 
-    class TestCell(nn.Cell):
+    class Net(nn.Cell):
         def construct(self, y):
             x = Tensor([-1, 2])
             return abs(x + y)
 
-    test_cell = TestCell()
-    assert np.all(test_cell(Tensor([-1, 2])).asnumpy() == np.array([2, 4]))
+    net = Net()
+    assert np.all(net(Tensor([-1, 2])).asnumpy() == np.array([2, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_all_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test all(Tensor) with a variable tensor in graph mode
+    Expectation: No exception
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return all(x), all(y)
+
+    net = Net()
+    x = Tensor(np.array([0, 1, 2, 3]))
+    y = Tensor(np.array([1, 1]))
+    out1, out2 = net(x, y)
+    assert (not out1) and out2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_all_tensor_constant():
+    """
+    Feature: JIT Fallback
+    Description: Test all(Tensor) with a constant tensor in graph mode
+    Expectation: No exception
+    """
+
+    class Net(nn.Cell):
+        def construct(self):
+            x = Tensor(np.array([0, 1, 2, 3]))
+            y = Tensor(np.array([1, 1]))
+            return all(x), all(y)
+
+    net = Net()
+    out1, out2 = net()
+    assert (not out1) and out2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_any_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test any(Tensor) with a variable tensor in graph mode
+    Expectation: No exception
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return any(x), any(y)
+
+    net = Net()
+    x = Tensor(np.array([0, 0]))
+    y = Tensor(np.array([1, 0]))
+    out1, out2 = net(x, y)
+    assert (not out1) and out2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_any_tensor_constant():
+    """
+    Feature: JIT Fallback
+    Description: Test any(Tensor) with a constant tensor in graph mode
+    Expectation: No exception
+    """
+
+    class Net(nn.Cell):
+        def construct(self):
+            x = Tensor(np.array([0, 0]))
+            y = Tensor(np.array([1, 0]))
+            return any(x), any(y)
+
+    net = Net()
+    out1, out2 = net()
+    assert (not out1) and out2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_round_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test round(Tensor) with a variable tensor in graph mode
+    Expectation: No exception
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            return round(x)
+
+    net = Net()
+    x = Tensor(np.array([0.1, 4.51, 9.9]), mstype.float32)
+    out = net(x)
+    expect = Tensor(np.array([0.0, 5.0, 10.0]))
+    np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_round_tensor_constant():
+    """
+    Feature: JIT Fallback
+    Description: Test any(Tensor) with a constant tensor in graph mode
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = Tensor(np.array([0.1, 4.51, 9.9]), mstype.float32)
+            return round(x)
+
+    net = Net()
+    out = net()
+    expect = Tensor(np.array([0.0, 5.0, 10.0]))
+    np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())

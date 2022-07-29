@@ -14,8 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 import numpy as np
-
-from mindspore import ms_function, context, Tensor
+from mindspore import ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -71,38 +70,6 @@ def test_fallback_all_numpy():
     assert (not x) and y
 
 
-def test_fallback_all_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test all(Tensor) in graph mode
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        return all(Tensor(np.array([0, 1, 2, 3]))), all(Tensor(np.array([1, 1])))
-
-    x, y = foo()
-    assert (not x) and y
-
-
-def test_fallback_all_tensor_construct():
-    """
-    Feature: JIT Fallback
-    Description: Test all(Tensor) in graph mode
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = Tensor(np.array([0, 1, 2, 3]))
-        y = Tensor(np.array([1, 1]))
-        return all(x), all(y)
-
-    x, y = foo()
-    assert (not x) and y
-
-
 def test_fallback_any_tuple():
     """
     Feature: JIT Fallback
@@ -148,38 +115,6 @@ def test_fallback_any_numpy():
     def foo():
         x = np.array([0, 0, 0])
         y = np.array([1, 0])
-        return any(x), any(y)
-
-    x, y = foo()
-    assert (not x) and y
-
-
-def test_fallback_any_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test all(Tensor) in graph mode
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        return any(Tensor(np.array([0, 0]))), any(Tensor(np.array([1, 0])))
-
-    x, y = foo()
-    assert (not x) and y
-
-
-def test_fallback_any_tensor_construct():
-    """
-    Feature: JIT Fallback
-    Description: Test all(Tensor) in graph mode
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = Tensor(np.array([0, 0, 0]))
-        y = Tensor(np.array([1, 0]))
         return any(x), any(y)
 
     x, y = foo()
