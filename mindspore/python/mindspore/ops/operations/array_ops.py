@@ -2853,6 +2853,15 @@ class Stack(PrimitiveWithInfer):
                    'dtype': x_type[0],
                    'value': infered_value}
 
+        if 'shape_value' in value and value['shape_value'] is not None:
+            input_shape_value = []
+            for item in value['shape_value']:
+                item = item[0]
+                item = np.array(item)
+                input_shape_value.append(item)
+            infered_shape_value = np.stack(input_shape_value, axis=self.axis)
+            infered_shape_value = tuple(infered_shape_value.tolist())
+            out['shape_value'] = infered_shape_value
         if 'min_value' in value and 'max_value' in value:
             min_value_array = []
             max_value_array = []
@@ -3171,56 +3180,6 @@ class Select(Primitive):
         self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
 
-def _compute_slicing_length(begin, end, stride, x_shape, i):
-    """Computes the length of the slicing."""
-    if i >= len(x_shape):
-        raise ValueError(f"For 'StridedSlice', the index must be less than "
-                         f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
-                         f"and the index: {i}.")
-    x_dim = x_shape[i]
-    if stride > 0:
-        # When slicing forward, convert begin and end to positive numbers.
-        if begin >= x_dim or end < -x_dim:
-            # When slicing forward, if begin >= x_dim or end < -x_dim, the length of the slicing is 0.
-            slicing_length = 0
-        else:
-            if -x_dim <= begin < 0:
-                begin += x_dim
-            if begin < -x_dim:
-                # When slicing forward, if begin < -x_dim, set begin = 0, which means start from the 0th element.
-                begin = 0
-            if -x_dim <= end < 0:
-                end += x_dim
-            if end > x_dim:
-                # When slicing forward, if end > x_dim, set end = x_dims, which means slice to the last element.
-                end = x_dim
-            if begin >= end:
-                # When slicing forward, if begin >= end, the length of the slicing is 0.
-                slicing_length = 0
-            else:
-                slicing_length = 1 + (end - 1 - begin) // stride
-    else:
-        # When slicing backward, convert begin and end to negative numbers.
-        if begin < -x_dim or end >= x_dim:
-            # When slicing backward, if begin < -x_dim or end >= x_dim, the length of the slicing is 0.
-            slicing_length = 0
-        else:
-            if 0 <= begin < x_dim:
-                begin += -x_dim
-            if begin >= x_dim:
-                begin = -1
-            if 0 <= end < x_dim:
-                end += -x_dim
-            if end < -x_dim - 1:
-                # Slicing to the 0th element.
-                end = -x_dim - 1
-            if begin <= end:
-                slicing_length = 0
-            else:
-                slicing_length = 1 + (end + 1 - begin) // stride
-    return slicing_length
-
-
 class StridedSlice(PrimitiveWithInfer):
     r"""
 
@@ -3400,51 +3359,28 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
 
     def __infer__(self, x, begin, end, strides):
-        x_shape, min_shape, max_shape = self._check_and_get_shape(x)
-        begin_v, begin_len, begin_specical_value = self._check_and_get_value(begin, 'begin')
-        end_v, end_len, end_specical_value = self._check_and_get_value(end, 'end')
-        strides_v, strides_len = self._check_and_get_value(strides, 'strides')[0:2]
+        begin_v, begin_len = self._check_and_get_value(begin, 'begin')
+        end_v, end_len = self._check_and_get_value(end, 'end')
+        strides_v, strides_len = self._check_and_get_value(strides, 'strides')
 
         if begin_len != strides_len or end_len != strides_len:
             raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
                              f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
-        bd_has_min_max_value = False
-        if begin_specical_value or end_specical_value:
-            bd_has_min_max_value = True
-
-        if bd_has_min_max_value and not is_shape_unknown(x_shape):
-            ret_shape = [-1] * len(x_shape)
-            ret_min_shape = list(x_shape)
-            ret_max_shape = list(x_shape)
-            for i, _ in enumerate(ret_shape):
-                ret_min_shape[i] = end_v['min_value'][i] - begin_v['min_value'][i]
-                ret_max_shape[i] = end_v['max_value'][i] - begin_v['max_value'][i]
-            i = 0
-            for a, b in zip(ret_min_shape, ret_max_shape):
-                if a == b:
-                    ret_shape[i] = a
-                i += 1
-            return {'shape': tuple(ret_shape),
-                    'dtype': x['dtype'],
-                    'value': None,
-                    'max_shape': tuple(ret_max_shape),
-                    'min_shape': tuple(ret_min_shape)}
-
-        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x_shape):
+        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x['shape']):
             ret_shape, ret_min_shape, ret_max_shape = \
-                self._compute_dynamic_slicing_shape(x_shape, begin_len, max_shape)
+                self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
             rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None}
 
-            if max_shape is not None and min_shape is not None:
+            if "min_shape" in x and "max_shape" in x:
                 rets['min_shape'] = ret_min_shape
                 rets['max_shape'] = ret_max_shape
 
             return rets
 
-        ret_shape = self._compute_slicing_shape(x_shape, begin_v['value'], end_v['value'], strides_v['value'])
+        ret_shape = self._compute_slicing_shape(x['shape'], begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
             value = None
         else:
@@ -3474,15 +3410,87 @@ class StridedSlice(PrimitiveWithInfer):
                 'value': value}
 
     @staticmethod
-    def _check_and_get_shape(x):
-        """Check the shape of x. Get its shape and min/max_shape."""
-        x_shape = x['shape']
-        min_shape = None
-        max_shape = None
-        if "min_shape" in x and "max_shape" in x:
-            min_shape = x["min_shape"]
-            max_shape = x["max_shape"]
-        return x_shape, min_shape, max_shape
+    def _compute_slicing_len_for_positive_stride(begin, end, stride, x_dim):
+        """Compute slice length for positive stride."""
+        if x_dim == -1:
+            if begin >= end:
+                # When slicing forward, if begin >= end, the length of the slicing is 0.
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end - 1 - begin) // stride
+            return slicing_length
+        # When slicing forward, convert begin and end to positive numbers.
+        if begin >= x_dim or end < -x_dim:
+            # When slicing forward, if begin >= x_dim or end < -x_dim, the length of the slicing is 0.
+            slicing_length = 0
+        else:
+            if -x_dim <= begin < 0:
+                begin += x_dim
+            if begin < -x_dim:
+                # When slicing forward, if begin < -x_dim, set begin = 0, which means start from the 0th element.
+                begin = 0
+            if -x_dim <= end < 0:
+                end += x_dim
+            if end > x_dim:
+                # When slicing forward, if end > x_dim, set end = x_dims, which means slice to the last element.
+                end = x_dim
+            if begin >= end:
+                # When slicing forward, if begin >= end, the length of the slicing is 0.
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end - 1 - begin) // stride
+        return slicing_length
+
+    @staticmethod
+    def _compute_slicing_len_for_negative_stride(begin, end, stride, x_dim):
+        """Compute slice length for negative stride."""
+        if x_dim == -1:
+            if begin <= end:
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end + 1 - begin) // stride
+            return slicing_length
+        # When slicing backward, convert begin and end to negative numbers.
+        if begin < -x_dim or end >= x_dim:
+            # When slicing backward, if begin < -x_dim or end >= x_dim, the length of the slicing is 0.
+            slicing_length = 0
+        else:
+            if 0 <= begin < x_dim:
+                begin += -x_dim
+            if begin >= x_dim:
+                begin = -1
+            if 0 <= end < x_dim:
+                end += -x_dim
+            if end < -x_dim - 1:
+                # Slicing to the 0th element.
+                end = -x_dim - 1
+            if begin <= end:
+                slicing_length = 0
+            else:
+                slicing_length = 1 + (end + 1 - begin) // stride
+        return slicing_length
+
+    @staticmethod
+    def _get_slice_value(begin_v, end_v, strides_v):
+        """Get the slice value from value or shape_value."""
+        begin_value = begin_v['value']
+        end_value = end_v['value']
+        strides_value = strides_v['value']
+        if begin_value is None:
+            begin_value = begin_v['shape_value']
+        if end_value is None:
+            end_value = end_v['shape_value']
+        if strides_value is None:
+            strides_value = strides_v['shape_value']
+        return begin_value, end_value, strides_value
+
+    def _compute_slicing_length(self, begin, end, stride, x_dim):
+        """Computes the length of the slicing."""
+        if stride > 0:
+            slicing_length = self._compute_slicing_len_for_positive_stride(begin, end, stride, x_dim)
+        else:
+            slicing_length = self._compute_slicing_len_for_negative_stride(begin, end, stride, x_dim)
+        return slicing_length
 
     def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
         """Computes the shape of the slicing."""
@@ -3528,7 +3536,7 @@ class StridedSlice(PrimitiveWithInfer):
             else:
                 begin, end, stride = 0, x_shape[i], 1
 
-            slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+            slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
             ret_shape.append(slicing_length)
             i += 1
             j += 1
@@ -3562,13 +3570,14 @@ class StridedSlice(PrimitiveWithInfer):
                     i += 1
                     continue
 
-                slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+                slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
                 ret_shape.append(slicing_length)
                 i += 1
                 j += 1
         return ret_shape
 
     def _compute_dynamic_slicing_value(self, shape_value, begin_v, end_v, strides_v):
+        """Computes the length of the slicing for dynamic shape."""
         shape_value_np = np.array(shape_value)
         slice_index = []
         for begin_i, end_i, strides_i in zip(begin_v['value'], end_v['value'], strides_v['value']):
@@ -3579,8 +3588,17 @@ class StridedSlice(PrimitiveWithInfer):
         shape_value_slice = tuple(shape_value_slice.tolist())
         return shape_value_slice
 
-    def _compute_dynamic_slicing_shape(self, x_shape, slice_len, max_shape):
+    def _compute_dynamic_slicing_length(self, begin, end, stride, x_dim):
+        """Computes the length of the slicing for dynamic shape."""
+        slicing_length = -1
+        if -1 in (begin, end, stride):
+            return slicing_length
+        slicing_length = self._compute_slicing_length(begin, end, stride, x_dim)
+        return slicing_length
+
+    def _compute_dynamic_slicing_shape(self, x, begin_v, end_v, strides_v, slice_len):
         """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
+        x_shape = x['shape']
         x_rank = len(x_shape)
         new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
         shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
@@ -3590,8 +3608,12 @@ class StridedSlice(PrimitiveWithInfer):
         ret_min_shape = []
         ret_max_shape = []
         i, j = 0, 0
+        slice_has_special_value = False
+        begin_value, end_value, strides_value = self._get_slice_value(begin_v, end_v, strides_v)
+        if None in (begin_v['value'], end_v['value'], strides_v['value']):
+            slice_has_special_value = True
         while i < x_rank or j < slice_len:
-            slicing_length = -1 if x_shape[i] != 1 else 1
+            slicing_length = -1
             if j < slice_len:
                 if j < len(new_axis_pos) and new_axis_pos[j] == '1':
                     ret_shape.append(1)
@@ -3603,6 +3625,14 @@ class StridedSlice(PrimitiveWithInfer):
                     j += 1
                     i += 1
                     continue
+                if None in (begin_value, end_value, strides_value):
+                    slicing_length = -1
+                elif slice_has_special_value:
+                    slicing_length = self._compute_dynamic_slicing_length(
+                        begin_value[j], end_value[j], strides_value[j], x_shape[i])
+                else:
+                    slicing_length = \
+                        self._compute_slicing_length(begin_value[j], end_value[j], strides_value[j], x_shape[i])
             else:
                 if i >= len(x_shape):
                     raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
@@ -3610,11 +3640,14 @@ class StridedSlice(PrimitiveWithInfer):
                                      f"and the index: {i}.")
                 begin, end, stride = 0, x_shape[i], 1
                 if end > 0:
-                    slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+                    slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
             ret_shape.append(slicing_length)
-            if max_shape is not None:
+            if "min_shape" in x and "max_shape" in x and x['max_shape'] is not None:
                 ret_min_shape.append(1)
-                ret_max_shape.append(max_shape[i])
+                if slicing_length == -1:
+                    ret_max_shape.append(x['max_shape'][i])
+                else:
+                    ret_max_shape.append(slicing_length)
             i += 1
             j += 1
         return ret_shape, ret_min_shape, ret_max_shape
@@ -3622,14 +3655,14 @@ class StridedSlice(PrimitiveWithInfer):
     def _check_and_get_value(self, slice_input, name):
         """Check begin, end, strides. Get its length and value."""
         slice_value = slice_input['value']
-        has_special_value = False
+        slice_min = None
+        slice_max = None
+        slice_special_value = None
         if "min_value" in slice_input and "max_value" in slice_input:
             slice_min = slice_input["min_value"]
             slice_max = slice_input["max_value"]
-            has_special_value = True
-        else:
-            slice_min = slice_value
-            slice_max = slice_value
+        elif "shape_value" in slice_input:
+            slice_special_value = slice_input["shape_value"]
         if slice_value is None:
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
             slice_shape = slice_input['shape']
@@ -3639,10 +3672,11 @@ class StridedSlice(PrimitiveWithInfer):
             # not support scalar
             slices = {
                 'value': slice_value,
+                'shape_value': slice_special_value,
                 'min_value': slice_min,
                 'max_value': slice_max
             }
-            return slices, slice_shape[0], has_special_value
+            return slices, slice_shape[0]
 
         if isinstance(slice_value, Tensor_):
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
@@ -3661,10 +3695,11 @@ class StridedSlice(PrimitiveWithInfer):
 
         slices = {
             'value': slice_value,
+            'shape_value': slice_special_value,
             'min_value': slice_min,
             'max_value': slice_max
         }
-        return slices, len(slice_value), has_special_value
+        return slices, len(slice_value)
 
 
 class Diag(PrimitiveWithCheck):
