@@ -35,10 +35,10 @@ class MindDataTestToTensorOp : public UT::CVOP::CVOpCommon {
 };
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to int8
+/// Description: Check type changing with ToTensor C op to int8 (string param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpInt8) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt8.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt8String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt8String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("int8");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -46,10 +46,21 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInt8) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to int16
+/// Description: Check type changing with ToTensor C op to int8 (DataType param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpInt16) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt16.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt8DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt8DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_INT8);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("int8") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to int16 (string param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt16String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt16String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("int16");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -57,10 +68,21 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInt16) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to int32
+/// Description: Check type changing with ToTensor C op to int16 (DataType param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpInt32) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt32.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt16DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt16DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_INT16);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("int16") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to int32 (String Param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt32String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt32String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("int32");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -68,10 +90,21 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInt32) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to int64
+/// Description: Check type changing with ToTensor C op to int32 (DataType param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpInt64) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt64.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt32DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt32DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_INT32);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("int32") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to int64 (String param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt64String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt64String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("int64");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -79,10 +112,21 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInt64) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to float16
+/// Description: Check type changing with ToTensor C op to int64 (DataType param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat16) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat16.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpInt64DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpInt64DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_INT64);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("int64") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to float16 (String param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat16String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat16String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("float16");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -90,10 +134,21 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat16) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to float32
+/// Description: Check type changing with ToTensor C op to float16 (Datatype Param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat32) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat32.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat16DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat16DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT16);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("float16") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to float32 (String param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat32String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat32String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("float32");
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
@@ -101,11 +156,33 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat32) {
 }
 
 /// Feature: ToTensor Op
-/// Description: Check type changing with ToTensor C op to float64
+/// Description: Check type changing with ToTensor C op to float32 (DataType param)
 /// Expectation: Run successfully
-TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat64) {
-  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat64.";
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat32DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat32DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT32);
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("float32") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to float64 (String param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat64String) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat64String.";
   auto to_tensor_op = std::make_unique<ToTensorOp>("float64");
+  std::shared_ptr<Tensor> output_tensor;
+  Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
+  ASSERT_TRUE(DataType("float64") == output_tensor->type());
+}
+
+/// Feature: ToTensor Op
+/// Description: Check type changing with ToTensor C op to float64 (DataType param)
+/// Expectation: Run successfully
+TEST_F(MindDataTestToTensorOp, TestToTensorOpFloat64DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestToTensorOp::TestToTensorOpFloat64DataType.";
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT64);
   std::shared_ptr<Tensor> output_tensor;
   Status s = to_tensor_op->Compute(input_tensor_, &output_tensor);
   ASSERT_TRUE(DataType("float64") == output_tensor->type());
@@ -123,7 +200,7 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInputUInt32Invalid) {
   Status s_cast = type_cast_op->Compute(input_tensor_, &interim_tensor);
   ASSERT_OK(s_cast);
 
-  auto to_tensor_op = std::make_unique<ToTensorOp>("float32");
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT32);
   std::shared_ptr<Tensor> output_tensor;
   Status s_to_tensor = to_tensor_op->Compute(interim_tensor, &output_tensor);
   ASSERT_ERROR(s_to_tensor);
@@ -141,7 +218,7 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInputUInt64Invalid) {
   Status s_cast = type_cast_op->Compute(input_tensor_, &interim_tensor);
   ASSERT_OK(s_cast);
 
-  auto to_tensor_op = std::make_unique<ToTensorOp>("float32");
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT32);
   std::shared_ptr<Tensor> output_tensor;
   Status s_to_tensor = to_tensor_op->Compute(interim_tensor, &output_tensor);
   ASSERT_ERROR(s_to_tensor);
@@ -159,7 +236,7 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInputInt64Invalid) {
   Status s_cast = type_cast_op->Compute(input_tensor_, &interim_tensor);
   ASSERT_OK(s_cast);
 
-  auto to_tensor_op = std::make_unique<ToTensorOp>("float32");
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT32);
   std::shared_ptr<Tensor> output_tensor;
   Status s_to_tensor = to_tensor_op->Compute(interim_tensor, &output_tensor);
   ASSERT_ERROR(s_to_tensor);
@@ -176,7 +253,7 @@ TEST_F(MindDataTestToTensorOp, TestToTensorOpInputStringInvalid) {
   std::shared_ptr<Tensor> string_tensor;
   Tensor::CreateFromVector(strings, TensorShape({1, 2, 3}), &string_tensor);
 
-  auto to_tensor_op = std::make_unique<ToTensorOp>("float32");
+  auto to_tensor_op = std::make_unique<ToTensorOp>(DataType::DE_FLOAT32);
   std::shared_ptr<Tensor> output_tensor;
   Status s_to_tensor = to_tensor_op->Compute(string_tensor, &output_tensor);
   ASSERT_ERROR(s_to_tensor);

@@ -34,6 +34,7 @@ constexpr char kToTensorOperation[] = "ToTensor";
 class ToTensorOperation : public TensorOperation {
  public:
   explicit ToTensorOperation(const std::string &output_type);
+  explicit ToTensorOperation(const DataType &output_type);
 
   ~ToTensorOperation();
 
