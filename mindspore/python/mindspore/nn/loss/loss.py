@@ -1253,7 +1253,7 @@ class BCEWithLogitsLoss(LossBase):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
-            If 'none', do not perform reduction. Default:'mean'.
+            If 'none', do not perform reduction. Default: 'mean'.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, it can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: None.
@@ -1267,15 +1267,17 @@ class BCEWithLogitsLoss(LossBase):
         - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)`, same shape and dtype as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is 'none', its shape is the same as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
+        TypeError: If input `logits` or `labels` is not Tensor.
         TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
         TypeError: If `weight` or `pos_weight` is a parameter.
         TypeError: If data type of `weight` or `pos_weight` is neither float16 nor float32.
+        TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of `none`, `mean`, `sum`.
 
     Supported Platforms:
         ``Ascend``  ``GPU``  ``CPU``
