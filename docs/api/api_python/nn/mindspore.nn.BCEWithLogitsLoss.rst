@@ -47,4 +47,3 @@ mindspore.nn.BCEWithLogitsLoss
     - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
     - **ValueError** - `reduction` 不为 'none'、'mean' 或 'sum'。
 
-    
