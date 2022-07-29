@@ -297,8 +297,8 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
 #endif
-  auto ret = ProgramSpecialize(resource, func_graph, result.context);
-  resource->set_func_graph(ret);
+  auto res = ProgramSpecialize(resource, func_graph, result.context);
+  resource->set_func_graph(res);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
   MsProfile::StatTime("renormalize.infer", t2 - t1);
@@ -307,7 +307,7 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
 
   MS_LOG(DEBUG) << "Renormalize end";
 
-  return ret;
+  return res;
 }
 
 const FuncGraphPtr GetLoadedGraph(const ResourcePtr &resource) {
@@ -610,29 +610,29 @@ bool OrderEnforceAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool InferenceOptPrepareAction(const ResourcePtr &resource) {
+bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, manager is null.";
+    MS_LOG(EXCEPTION) << "MetaUnpackPrepareAction error, manager is null.";
   }
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, graph is null.";
+    MS_LOG(EXCEPTION) << "MetaUnpackPrepareAction error, graph is null.";
   }
-  return InferenceOptPreparePass(resource);
+  return MetaUnpackPreparePass(resource);
 }
 
 namespace {
 abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   abstract::AbstractBasePtrList args_abs = resource->args_abs();
+  auto arguments = resource->arguments();
 
   // Parallel checking.
   auto context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   context->ParallelParameterContextInitShape(func_graph);
 
-  // Suppose that there is not KeywordArgument for the top graph
-  // get the hyper parameter
+  // Handle the Parameter from FV inputs.
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     MS_EXCEPTION_IF_NULL(param_node);
@@ -643,9 +643,32 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
       auto ref_key = std::make_shared<RefKey>(param_node->name());
       auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(abs_value, ref_key);
       context->ParallelParameterContextRestoreShape(func_graph, param_node, abs_ref);
-      args_abs.push_back(abs_ref);
+      (void)args_abs.emplace_back(abs_ref);
       context->ParallelParameterContextCkptShape(func_graph, param_node, abs_ref);
     }
+  }
+  // Handle the Parameter from input arguments.
+  auto arg_size = arguments.size();
+  for (size_t i = 0; i < arg_size; ++i) {
+    auto param_value = dyn_cast<tensor::MetaTensor>(arguments[i]);
+    if (param_value == nullptr || !param_value->is_parameter()) {
+      continue;
+    }
+    const auto &param = func_graph->parameters()[i];
+    auto param_node = std::static_pointer_cast<Parameter>(param);
+    MS_EXCEPTION_IF_NULL(param_node);
+    if (param_node->has_default()) {
+      continue;
+    }
+    // The argument is Parameter.
+    MS_LOG(DEBUG) << "Meet an argument of Parameter, value: " << param_value->ToString()
+                  << ", parameter: " << param->ToString() << ", has_default: " << param_node->has_default();
+    param_node->set_default_param(param_value);
+    // Update the i-th arguments' abstract.
+    auto abs_value = param_value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+    auto ref_key = std::make_shared<RefKey>(param_node->name());
+    auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(abs_value, ref_key);
+    args_abs[i] = abs_ref;
   }
   return args_abs;
 }
@@ -1504,7 +1527,7 @@ static std::vector<ActionItem> CommonPipeline() {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 
-  (void)actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
+  (void)actions.emplace_back(std::make_pair("meta_unpack_prepare", MetaUnpackPrepareAction));
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
   // Auto-monad for side-effects handling.

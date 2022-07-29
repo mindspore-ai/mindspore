@@ -584,10 +584,10 @@ OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPa
   return map;
 }
 
-OptPassGroupMap GetInferenceOptPreparePhases() {
-  opt::irpass::InferenceOptPrepareLib irpass;
-  auto meta_fg_var_prepare = opt::OptPassConfig({irpass.meta_fg_var_prepare_});
-  opt::OptPassGroupMap prepare_map({{"inference_opt_prep", meta_fg_var_prepare}});
+OptPassGroupMap GetMetaUnpackPreparePhases() {
+  opt::irpass::MetaUnpackPrepareLib irpass;
+  auto meta_unpack_prepare = opt::OptPassConfig({irpass.meta_unpack_prepare_});
+  opt::OptPassGroupMap prepare_map({{"meta_unpack_prepare", meta_unpack_prepare}});
   return prepare_map;
 }
 
@@ -797,11 +797,11 @@ bool ValidatePass(const ResourcePtr &resource) {
   return true;
 }
 
-bool InferenceOptPreparePass(const ResourcePtr &resource) {
+bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto prepare_map = GetInferenceOptPreparePhases();
-  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", resource, prepare_map);
+  auto prepare_map = GetMetaUnpackPreparePhases();
+  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
   return true;
 }

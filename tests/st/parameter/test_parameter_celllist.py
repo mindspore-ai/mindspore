@@ -137,9 +137,9 @@ def test_two_net():
     print("res2:", res2)
 
 
-class OutNet_1(nn.Cell):
+class OutNet1(nn.Cell):
     def __init__(self, net1, net2):
-        super(OutNet_1, self).__init__()
+        super(OutNet1, self).__init__()
         self.param1 = ParameterTuple(net1.get_parameters())
         self.param2 = ParameterTuple(net2.get_parameters())
 
@@ -160,14 +160,14 @@ def test_inner_out_net_1():
     with pytest.raises(RuntimeError, match="its name 'name_a' already exists."):
         net1 = InnerNet()
         net2 = InnerNet()
-        out_net = OutNet_1(net1, net2)
+        out_net = OutNet1(net1, net2)
         res = out_net(Tensor([1], ms.float32))
         print("res:", res)
 
 
-class OutNet_2(nn.Cell):
+class OutNet2(nn.Cell):
     def __init__(self, net1, net2):
-        super(OutNet_2, self).__init__()
+        super(OutNet2, self).__init__()
         self.cell_list = nn.CellList()
         self.cell_list.append(net1)
         self.cell_list.append(net2)
@@ -190,6 +190,6 @@ def test_inner_out_net_2():
     """
     net1 = InnerNet()
     net2 = InnerNet()
-    out_net = OutNet_2(net1, net2)
+    out_net = OutNet2(net1, net2)
     res = out_net(Tensor([1], ms.float32))
     print("res:", res)
