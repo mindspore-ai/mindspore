@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_UTILS_H_
+#define MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_UTILS_H_
 
 #include <iostream>
 #include <vector>
@@ -56,3 +58,4 @@ void SuperKernelE2eDump(const KernelGraphPtr &graph);
 int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size);
 #endif
 }  // namespace mindspore
+#endif
