@@ -456,20 +456,21 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
 }
 
 // Resolve Cell GetAttr operation.
-AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj, const AnfNodePtr &node,
-                               const AnfNodePtr &attr) {
-  MS_EXCEPTION_IF_NULL(node);
+AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
+                               const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
+                               const AnfNodePtr &get_attr_node) {
+  MS_EXCEPTION_IF_NULL(resolve_node);
   MS_EXCEPTION_IF_NULL(attr);
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Manager is nullptr.";
   }
   MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", attr: " << attr->ToString();
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
   if (!data_converter::IsCellInstance(obj)) {
-    AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
+    AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, resolve_node);
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-    AnfNodePtr res_node = node->func_graph()->NewCNode(std::move(inputs));
+    MS_EXCEPTION_IF_NULL(get_attr_node->func_graph());
+    AnfNodePtr res_node = get_attr_node->func_graph()->NewCNodeInOrder(std::move(inputs));
     TraceManager::ClearParseOrResolveDebugInfo();
     return res_node;
   }
@@ -482,15 +483,15 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
-  MS_EXCEPTION_IF_NULL(node->func_graph());
-  AnfNodePtr resolved_node = node->func_graph()->NewCNode(std::move(inputs));
+  MS_EXCEPTION_IF_NULL(get_attr_node->func_graph());
+  AnfNodePtr resolved_node = get_attr_node->func_graph()->NewCNodeInOrder(std::move(inputs));
   TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
 
 AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
                                    const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
-                                   const CNodePtr &operand_cnode) {
+                                   const CNodePtr &get_attr_node) {
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   auto sequence = obj.cast<py::sequence>();
@@ -508,14 +509,14 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
   if (count_cell == sequence_size) {
     // Resolve Cell instances.
     for (size_t i = 0; i < sequence_size; ++i) {
-      auto res = ResolveCellWithAttr(manager, sequence[i], resolve_node, attr);
+      auto res = ResolveCellWithAttr(manager, sequence[i], resolve_node, attr, get_attr_node);
       inputs.emplace_back(res);
     }
   } else if (count_msclass == sequence_size) {
     // Resolve MsClass instances.
     for (size_t i = 0; i < sequence_size; ++i) {
       auto attr_str = GetValue<std::string>(GetValueNode(attr));
-      auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, operand_cnode);
+      auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, get_attr_node);
       (void)inputs.emplace_back(res);
     }
   } else {
@@ -524,33 +525,33 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
 
   constexpr auto prim_index = 0;
   constexpr auto index_index = 2;
-  auto fg = operand_cnode->func_graph();
+  auto fg = get_attr_node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto make_tuple_node = fg->NewCNodeInOrder(inputs);
-  return fg->NewCNodeInOrder({operand_cnode->input(prim_index), make_tuple_node, operand_cnode->input(index_index)});
+  return fg->NewCNodeInOrder({get_attr_node->input(prim_index), make_tuple_node, get_attr_node->input(index_index)});
 }
 
 AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &object_node,
-                                 const AnfNodePtr &attr_node, const AnfNodePtr &node) {
+                                 const AnfNodePtr &attr_node, const AnfNodePtr &get_attr_node) {
   // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
   auto [name_space, symbol] = GetNamespaceAndSymbol(object_node);
   auto module_name = name_space->module();
   constexpr std::string_view parse_super_name = "namespace";
   if (module_name.find(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER) != std::string::npos &&
       symbol->symbol() != parse_super_name) {
-    auto symbol_obj = GetSymbolObject(name_space, symbol, node);
-    return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node);
+    auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
+    return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
   }
   return nullptr;
 }
 
 AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &cls_obj,
-                                  const std::string &attr, const AnfNodePtr &node) {
+                                  const std::string &attr, const AnfNodePtr &get_attr_node) {
   // Get attribute or method from ms_class obj.
   MS_EXCEPTION_IF_NULL(manager);
-  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(get_attr_node);
   MS_LOG(DEBUG) << "Resolve ms_class obj (" << py::str(cls_obj) << ") with attr " << attr << ".";
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
 
   constexpr size_t prefix_index = 0;
   if (attr.size() > 0 && attr[prefix_index] == '_') {
@@ -560,7 +561,7 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::
     MS_LOG(EXCEPTION) << py::str(cls_obj) << " has not attribute: " << attr << ".";
   }
   py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
-  AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, node);
+  AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, get_attr_node);
   TraceManager::ClearParseOrResolveDebugInfo();
   return res_node;
 }
