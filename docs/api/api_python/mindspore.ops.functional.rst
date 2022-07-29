@@ -463,8 +463,9 @@ Parameter操作函数
     mindspore.ops.assign_sub
     mindspore.ops.scatter_add
     mindspore.ops.scatter_div
-    mindspore.ops.scatter_min
     mindspore.ops.scatter_max
+    mindspore.ops.scatter_min
+    mindspore.ops.scatter_mul
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
     mindspore.ops.scatter_nd_min

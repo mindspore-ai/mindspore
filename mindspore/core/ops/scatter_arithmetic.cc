@@ -22,6 +22,7 @@
 #include "ops/scatter_min.h"
 #include "ops/scatter_max.h"
 #include "ops/scatter_div.h"
+#include "ops/scatter_mul.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -100,5 +101,8 @@ REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMax, prim::kPrimScatterMax, ScatterArithmeti
 
 MIND_API_OPERATOR_IMPL(ScatterDiv, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ScatterDiv, prim::kPrimScatterDiv, ScatterArithmeticInfer, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(ScatterMul, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMul, prim::kPrimScatterMul, ScatterArithmeticInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
