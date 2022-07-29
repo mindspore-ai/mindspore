@@ -46,7 +46,6 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
   if (input_args.size() != 1) {
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the num of input args should be 1, but got "
                              << input_args.size();
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>());
   }
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -68,14 +67,13 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the shape size of input argument[input_x] must be 3 "
                                 "or 4 and the size of attr[output_size] must be 2, but got shape size:"
                              << in_shape_vector.size() << " and output_size size:" << output_size.size();
-    return nullptr;
   }
 
   // Update the output shape by output size and input shape.
   if (in_shape_vector.size() != 1) {
     auto input_size_iter = in_shape_vector.rbegin();
     auto output_size_iter = output_size.rbegin();
-    for (; output_size_iter != output_size.rend(); output_size_iter++, input_size_iter++) {
+    for (; output_size_iter != output_size.rend(); ++output_size_iter, ++input_size_iter) {
       // If output size is none, the input shape should be used.
       if (*output_size_iter != kPyValueNone) {
         *input_size_iter = *output_size_iter;
@@ -100,7 +98,6 @@ TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<A
   if (input_args.size() != 1) {
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the num of input args should be 1, but got "
                              << input_args.size();
-    return nullptr;
   }
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};

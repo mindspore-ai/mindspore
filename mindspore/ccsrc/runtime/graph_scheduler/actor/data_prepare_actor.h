@@ -101,7 +101,7 @@ class DataPrepareActor : public DebugAwareActor {
   // by the kernel graph, and addresses need to be specially allocated for these parameters.
   void PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
                                               const std::vector<TensorPtr> &tensors,
-                                              OpContext<DeviceTensor> *const context);
+                                              OpContext<DeviceTensor> *const context) const;
   void PrepareHostTensorQueueForControlNode(const std::vector<TensorPtr> &tensors,
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
