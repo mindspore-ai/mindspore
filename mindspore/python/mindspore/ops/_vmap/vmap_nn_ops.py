@@ -23,9 +23,10 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
-from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
-    _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
+    _bdim_at_front, _bdim_at_back, _handle_broadcasting, \
+    get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
+from ..primitive import Primitive
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -203,6 +204,79 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
 
         var, accum = batch_prim(var, accum, lr, l1, l2, grad, u_monad)
         return (var, 0), (accum, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.BCEWithLogitsLoss)
+def get_bce_with_logits_loss_vamp_rule(prim, axis_size):
+    """VmapRule for 'BCEWithLogitsLoss' ."""
+
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        prim_reduction = 'none'
+    else:
+        prim_reduction = prim.reduction
+    prim_name = prim.name
+    bce_logits_with_loss_op = NN.BCEWithLogitsLoss('none')
+    if prim_reduction == 'mean':
+        reduce_op = P.ReduceMean()
+    elif prim_reduction == "sum":
+        reduce_op = P.ReduceSum()
+
+    def vmap_rule(logits_bdim, label_bdim, weight_bdim, pos_weight_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, logits_bdim, label_bdim,
+                                                      weight_bdim, pos_weight_bdim)
+        if is_all_none:
+            return result
+        logits, logits_dim = logits_bdim
+        label, label_dim = label_bdim
+        weight, weight_dim = weight_bdim
+        pos_weight, pos_weight_dim = pos_weight_bdim
+        logits_rank = F.rank(logits)
+        label_rank = F.rank(label)
+        weight_rank = F.rank(weight)
+        pos_weight_rank = F.rank(pos_weight)
+        max_rank = max(logits_rank, label_rank)
+        max_rank = max(max_rank, weight_rank)
+        max_rank = max(max_rank, pos_weight_rank)
+        reduce_indexes = None
+        # If rank is larger than 1, we need to reduce result when reduction != 'none'
+        if max_rank > 1:
+            reduce_indexes = tuple(range(1, max_rank))
+        if logits_dim == label_dim and F.shape(logits) == F.shape(label) \
+                and logits_dim == weight_dim and F.shape(logits) == F.shape(weight) \
+                and logits_dim == pos_weight_dim and F.shape(logits) == F.shape(pos_weight):
+            if prim_reduction == 'none':
+                output = prim(logits, label, weight, pos_weight)
+            elif prim_reduction in ('mean', 'sum'):
+                out = bce_logits_with_loss_op(logits, label, weight, pos_weight)
+                output = reduce_op(out, reduce_indexes)
+            else:
+                raise RuntimeError("For {} vmap, the attribute of reduction must in "
+                                   "('none', 'mean', 'sum'), but got {}."
+                                   .format(prim_name, prim_reduction))
+            return output, logits_dim
+
+        logits = _bdim_at_front(logits, logits_dim, axis_size)
+        label = _bdim_at_front(label, label_dim, axis_size)
+        weight = _bdim_at_front(weight, weight_dim, axis_size)
+        pos_weight = _bdim_at_front(pos_weight, pos_weight_dim, axis_size)
+        logits_shape = F.shape(logits)
+        weight_shape = F.shape(weight)
+        pos_weight_shape = F.shape(pos_weight)
+        weight = _handle_broadcasting(weight, weight_shape, logits_shape)
+        pos_weight = _handle_broadcasting(pos_weight, pos_weight_shape, logits_shape)
+        if prim_reduction == 'none':
+            output = prim(logits, label, weight, pos_weight)
+        elif prim_reduction in ('mean', 'sum'):
+            out = bce_logits_with_loss_op(logits, label, weight, pos_weight)
+            output = reduce_op(out, reduce_indexes)
+        else:
+            raise RuntimeError("For {} vmap, the attribute of reduction must in "
+                               "('none', 'mean', 'sum'), but got {}."
+                               .format(prim_name, prim_reduction))
+        return output, 0
 
     return vmap_rule
 

@@ -109,6 +109,15 @@ static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
   return dst;
 }
 
+static inline MS_FLOAT32X4 MS128_LOG_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = logf(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = logf(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = logf(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = logf(MS_F32X4_GETI(src, 3));
+  return dst;
+}
+
 #ifdef ENABLE_AVX  // only enable sse, dont support fma instruction.
 #define MS_FMADD128_F32(src1, src2, src3) _mm_fmadd_ps(src1, src2, src3)
 #define MS_FMSUB128_F32(src1, src2, src3) _mm_fmsub_ps(src1, src2, src3)
@@ -217,6 +226,15 @@ static inline MS_FLOAT32X4 simd_exp128_f32(MS_FLOAT32X4 input) {
   static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
   input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
   return VexpFp32(input);
+}
+
+static inline MS_FLOAT32X4 simd_hexp128_f32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = exp(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = exp(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = exp(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = exp(MS_F32X4_GETI(src, 3));
+  return dst;
 }
 
 static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {

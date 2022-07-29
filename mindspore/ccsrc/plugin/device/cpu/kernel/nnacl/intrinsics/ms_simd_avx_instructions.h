@@ -94,6 +94,19 @@ static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
   return dst;
 }
 
+static inline MS_FLOAT32X8 MS256_LOG_F32(MS_FLOAT32X8 src) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = logf(MS_F32X8_GETI(src, 0));
+  MS_F32X8_GETI(dst, 1) = logf(MS_F32X8_GETI(src, 1));
+  MS_F32X8_GETI(dst, 2) = logf(MS_F32X8_GETI(src, 2));
+  MS_F32X8_GETI(dst, 3) = logf(MS_F32X8_GETI(src, 3));
+  MS_F32X8_GETI(dst, 4) = logf(MS_F32X8_GETI(src, 4));
+  MS_F32X8_GETI(dst, 5) = logf(MS_F32X8_GETI(src, 5));
+  MS_F32X8_GETI(dst, 6) = logf(MS_F32X8_GETI(src, 6));
+  MS_F32X8_GETI(dst, 7) = logf(MS_F32X8_GETI(src, 7));
+  return dst;
+}
+
 static inline MS_FLOAT32X8 MS_ABS256_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 dst;
   MS_F32X8_GETI(dst, 0) = fabsf(MS_F32X8_GETI(src, 0));
@@ -247,6 +260,19 @@ static inline MS_FLOAT32X8 simd_exp256_f32(MS_FLOAT32X8 input) {
   tmp = MS_FMADD256_F32(decimal, MS_FMADD256_F32(decimal, tmp, param[4]), param[5]);
   MS_FLOAT32X8 decimal_exp = MS_FMADD256_F32(decimal, tmp, param[5]);
   return MS_MUL256_F32(decimal_exp, MS_CAST256_F32_S32(int_exp));
+}
+
+static inline MS_FLOAT32X8 simd_hexp256_f32(MS_FLOAT32X8 src) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = exp(MS_F32X8_GETI(src, 0));
+  MS_F32X8_GETI(dst, 1) = exp(MS_F32X8_GETI(src, 1));
+  MS_F32X8_GETI(dst, 2) = exp(MS_F32X8_GETI(src, 2));
+  MS_F32X8_GETI(dst, 3) = exp(MS_F32X8_GETI(src, 3));
+  MS_F32X8_GETI(dst, 4) = exp(MS_F32X8_GETI(src, 4));
+  MS_F32X8_GETI(dst, 5) = exp(MS_F32X8_GETI(src, 5));
+  MS_F32X8_GETI(dst, 6) = exp(MS_F32X8_GETI(src, 6));
+  MS_F32X8_GETI(dst, 7) = exp(MS_F32X8_GETI(src, 7));
+  return dst;
 }
 
 static inline void simd_exp256(MS_FLOAT32X8 input, float *dst) {

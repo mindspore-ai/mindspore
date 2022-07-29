@@ -16,12 +16,13 @@
 
 #include "plugin/device/cpu/kernel/bce_with_logits_loss_cpu_kernel.h"
 #include <vector>
-#include <algorithm>
 #include <utility>
+#include <algorithm>
 #include <string>
 #include <map>
-#include <functional>
 #include <memory>
+#include "plugin/device/cpu/kernel/nnacl/fp32/bce_with_logits_loss_fp32.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "mindspore/core/ops/bce_with_logits_loss.h"
 
 namespace mindspore {
@@ -45,10 +46,13 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   const auto reduction = kernel_ptr->get_reduction();
   if (reduction == NONE) {
     reduction_ = kNone;
+    is_reduction_ = false;
   } else if (reduction == MEAN) {
     reduction_ = kMean;
+    is_reduction_ = true;
   } else if (reduction == SUM) {
     reduction_ = kSum;
+    is_reduction_ = true;
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
                   << reduction;
@@ -75,9 +79,10 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_label_shape_ = inputs.at(kIndex1)->GetShapeVector();
   input_weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
   input_post_weight_shape_ = inputs.at(kIndex3)->GetShapeVector();
-
   // output_size_list_ should be clear and reset.
+  thread_num_ = std::min(input_size_, pool_->GetKernelThreadNum());
   output_size_list_.clear();
+  workspace_size_list_.clear();
   size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
   size_t input_byte_size = input_size_ * unit_byte_size;
   if (reduction_ == kNone) {
@@ -86,80 +91,104 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   } else {
     // The output is a scalar in ReductionType mean or sum.
     output_size_list_.emplace_back(unit_byte_size);
+    workspace_size_list_.emplace_back(thread_num_ * unit_byte_size);
   }
+  is_broadcast_ = input_post_weight_shape_ != input_label_shape_ || input_weight_shape_ != input_label_shape_;
   return KRET_OK;
 }
 
-template <typename T>
+bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
+  auto stride_per_thread = SizeToInt(UP_DIV(input_size_, thread_num_));
+  int start = stride_per_thread * task_id;
+  int end = start + stride_per_thread;
+  end = std::min(end, SizeToInt(input_size_));
+  auto per_logits = reinterpret_cast<float *>(logits_);
+  auto per_label = reinterpret_cast<float *>(label_);
+  auto per_weight = reinterpret_cast<float *>(weight_);
+  auto per_post_weight = reinterpret_cast<float *>(post_weight_);
+  float *per_output = nullptr;
+  float *per_reduction_sum = nullptr;
+  if (is_reduction_) {
+    per_reduction_sum = reinterpret_cast<float *>(reduction_output_) + task_id;
+  } else {
+    per_output = reinterpret_cast<float *>(output_);
+  }
+  if (!is_broadcast_) {
+    per_logits += start;
+    per_label += start;
+    per_weight += start;
+    per_post_weight += start;
+    per_output += start;
+    BCEWithLogitLoss(per_logits, per_label, per_weight, per_post_weight, (end - start), is_reduction_, per_output,
+                     per_reduction_sum);
+    return true;
+  }
+  MultipleBroadcastIterator multi_broadcast_iterator(
+    {input_logits_shape_, input_label_shape_, input_weight_shape_, input_post_weight_shape_}, input_logits_shape_);
+  constexpr float zero = 0.0f;
+  constexpr float one = 1.0f;
+  auto iter = multi_broadcast_iterator;
+  float broadcast_reduction_sum = 0.0f;
+  iter.SetPos(start);
+  for (int i = start; i < end; i++) {
+    auto logits_value = per_logits[iter.GetInputPos(kIndex0)];
+    auto label_value = per_label[iter.GetInputPos(kIndex1)];
+    auto weight_value = per_weight[iter.GetInputPos(kIndex2)];
+    auto post_weight_value = per_post_weight[iter.GetInputPos(kIndex3)];
+    float max_value = -logits_value;
+    max_value = max_value > zero ? max_value : zero;
+    const auto log_weight = (post_weight_value - one) * label_value + one;
+    const auto log_exp_value = std::log(std::exp(-max_value) + std::exp(-logits_value - max_value));
+    float loss = (one - label_value) * logits_value + log_weight * (log_exp_value + max_value);
+    if (is_reduction_) {
+      broadcast_reduction_sum += loss * weight_value;
+    } else {
+      per_output[i] = loss * weight_value;
+    }
+    iter.GenNextPos();
+  }
+  if (is_reduction_) {
+    *per_reduction_sum = broadcast_reduction_sum;
+  }
+  return true;
+}
+
+namespace {
+int BCERun(void *c_data, int task_id, float, float) {
+  auto bce_kernel = reinterpret_cast<BCEWithLogitsLossCpuKernelMod *>(c_data);
+  if (!bce_kernel->RunTask(task_id)) {
+    MS_LOG(ERROR) << "bce_with_logits_loss kernel DoLaunch failed, task id: " << task_id;
+    return -1;
+  }
+  return 0;
+}
+}  // namespace
+
 bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
-  const auto input_logits = GetDeviceAddress<T>(inputs, kIndex0);
-  const auto input_label = GetDeviceAddress<T>(inputs, kIndex1);
-  const auto input_weight = GetDeviceAddress<T>(inputs, kIndex2);
-  const auto input_pos_weight = GetDeviceAddress<T>(inputs, kIndex3);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
-  ReductionType reduction = reduction_;
-  // High precision.
-  float middle_output[1] = {};
-  if (input_post_weight_shape_ == input_label_shape_ && input_weight_shape_ == input_label_shape_) {
-    auto task = [&input_logits, &input_label, &input_weight, &input_pos_weight, &output, &reduction, &middle_output](
-                  size_t start, size_t end) {
-      const auto template_zero = static_cast<T>(0);
-      const auto template_one = static_cast<T>(1);
-      for (size_t i = start; i < end; i++) {
-        auto logits_value = input_logits[i];
-        auto label_value = input_label[i];
-        auto weight_value = input_weight[i];
-        auto post_weight_value = input_pos_weight[i];
-        T max_value = -logits_value;
-        max_value = max_value > template_zero ? max_value : template_zero;
-        const auto log_weight = (post_weight_value - template_one) * label_value + template_one;
-        const auto log_exp_value = static_cast<T>(
-          std::log(std::exp(static_cast<float>(-max_value)) + std::exp(static_cast<float>(-logits_value - max_value))));
-        T loss = (template_one - label_value) * logits_value + log_weight * (log_exp_value + max_value);
-        if (reduction == kNone) {
-          output[i] = loss * weight_value;
-        } else {
-          middle_output[0] += static_cast<float>(loss * weight_value);
-        }
-      }
-    };
-    ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_, pool_);
-  } else {
-    MultipleBroadcastIterator multi_broadcast_iterator(
-      {input_logits_shape_, input_label_shape_, input_weight_shape_, input_post_weight_shape_}, input_logits_shape_);
-    auto task = [&multi_broadcast_iterator, &input_logits, &input_label, &input_weight, &input_pos_weight, &output,
-                 &reduction, &middle_output](size_t start, size_t end) {
-      const auto template_zero = static_cast<T>(0);
-      const auto template_one = static_cast<T>(1);
-      auto iter = multi_broadcast_iterator;
-      iter.SetPos(start);
-      for (size_t i = start; i < end; i++) {
-        auto logits_value = input_logits[iter.GetInputPos(kIndex0)];
-        auto label_value = input_label[iter.GetInputPos(kIndex1)];
-        auto weight_value = input_weight[iter.GetInputPos(kIndex2)];
-        auto post_weight_value = input_pos_weight[iter.GetInputPos(kIndex3)];
-        T max_value = -logits_value;
-        max_value = max_value > template_zero ? max_value : template_zero;
-        const auto log_weight = (post_weight_value - template_one) * label_value + template_one;
-        const auto log_exp_value = static_cast<T>(
-          std::log(std::exp(static_cast<float>(-max_value)) + std::exp(static_cast<float>(-logits_value - max_value))));
-        T loss = (template_one - label_value) * logits_value + log_weight * (log_exp_value + max_value);
-        if (reduction == kNone) {
-          output[i] = loss * weight_value;
-        } else {
-          middle_output[0] += static_cast<float>(loss * weight_value);
-        }
-        iter.GenNextPos();
-      }
-    };
-    ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_, pool_);
+  logits_ = inputs.at(kIndex0)->addr;
+  label_ = inputs.at(kIndex1)->addr;
+  weight_ = inputs.at(kIndex2)->addr;
+  post_weight_ = inputs.at(kIndex3)->addr;
+  if (is_reduction_) {
+    reduction_output_ = workspace.at(kIndex0)->addr;
   }
-  if (reduction == kMean) {
-    output[0] = static_cast<T>(middle_output[0] / static_cast<double>(input_size_));
-  } else if (reduction == kSum) {
-    output[0] = static_cast<T>(middle_output[0]);
+  output_ = outputs.at(kIndex0)->addr;
+  if (pool_->ParallelLaunch(BCERun, this, SizeToInt(thread_num_)) != THREAD_OK) {
+    return false;
+  }
+  // Do Small Reduction.
+  if (is_reduction_) {
+    auto output = reinterpret_cast<float *>(output_);
+    output[0] = 0.0f;
+    auto reduction_output = reinterpret_cast<float *>(reduction_output_);
+    for (size_t i = 0; i < thread_num_; ++i) {
+      output[0] += reduction_output[i];
+    }
+    if (reduction_ == kMean) {
+      output[0] = output[0] / static_cast<float>(input_size_);
+    }
   }
   return true;
 }
@@ -177,19 +206,12 @@ void BCEWithLogitsLossCpuKernelMod::ResetResource() noexcept {
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &BCEWithLogitsLossCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
-     &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float>},
+     &BCEWithLogitsLossCpuKernelMod::LaunchKernel},
   };
   return func_list;
 }

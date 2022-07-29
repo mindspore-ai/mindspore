@@ -129,6 +129,27 @@ static inline MS_FLOAT32X16 MS_POW512_F32(MS_FLOAT32X16 src1, MS_FLOAT32X16 src2
   return dst;
 }
 
+static inline MS_FLOAT32X16 MS512_LOG_F32(MS_FLOAT32X16 src) {
+  MS_FLOAT32X16 dst;
+  MS512_F32_GETI(dst, 0) = logf(MS512_F32_GETI(src, 0));
+  MS512_F32_GETI(dst, 1) = logf(MS512_F32_GETI(src, 1));
+  MS512_F32_GETI(dst, 2) = logf(MS512_F32_GETI(src, 2));
+  MS512_F32_GETI(dst, 3) = logf(MS512_F32_GETI(src, 3));
+  MS512_F32_GETI(dst, 4) = logf(MS512_F32_GETI(src, 4));
+  MS512_F32_GETI(dst, 5) = logf(MS512_F32_GETI(src, 5));
+  MS512_F32_GETI(dst, 6) = logf(MS512_F32_GETI(src, 6));
+  MS512_F32_GETI(dst, 7) = logf(MS512_F32_GETI(src, 7));
+  MS512_F32_GETI(dst, 8) = logf(MS512_F32_GETI(src, 8));
+  MS512_F32_GETI(dst, 9) = logf(MS512_F32_GETI(src, 9));
+  MS512_F32_GETI(dst, 10) = logf(MS512_F32_GETI(src, 10));
+  MS512_F32_GETI(dst, 11) = logf(MS512_F32_GETI(src, 11));
+  MS512_F32_GETI(dst, 12) = logf(MS512_F32_GETI(src, 12));
+  MS512_F32_GETI(dst, 13) = logf(MS512_F32_GETI(src, 13));
+  MS512_F32_GETI(dst, 14) = logf(MS512_F32_GETI(src, 14));
+  MS512_F32_GETI(dst, 15) = logf(MS512_F32_GETI(src, 15));
+  return dst;
+}
+
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))
 
@@ -186,6 +207,27 @@ static inline MS_FLOAT32X16 simd_exp512_f32(MS_FLOAT32X16 input) {
   tmp = MS_FMADD512_F32(decimal, MS_FMADD512_F32(decimal, tmp, param[4]), param[5]);
   MS_FLOAT32X16 decimal_exp = MS_FMADD512_F32(decimal, tmp, param[5]);
   return MS_MUL512_F32(decimal_exp, MS_CAST512_F32_S32(int_exp));
+}
+
+static inline MS_FLOAT32X16 simd_hexp512_f32(MS_FLOAT32X16 src) {
+  MS_FLOAT32X16 dst;
+  MS512_F32_GETI(dst, 0) = exp(MS512_F32_GETI(src, 0));
+  MS512_F32_GETI(dst, 1) = exp(MS512_F32_GETI(src, 1));
+  MS512_F32_GETI(dst, 2) = exp(MS512_F32_GETI(src, 2));
+  MS512_F32_GETI(dst, 3) = exp(MS512_F32_GETI(src, 3));
+  MS512_F32_GETI(dst, 4) = exp(MS512_F32_GETI(src, 4));
+  MS512_F32_GETI(dst, 5) = exp(MS512_F32_GETI(src, 5));
+  MS512_F32_GETI(dst, 6) = exp(MS512_F32_GETI(src, 6));
+  MS512_F32_GETI(dst, 7) = exp(MS512_F32_GETI(src, 7));
+  MS512_F32_GETI(dst, 8) = exp(MS512_F32_GETI(src, 8));
+  MS512_F32_GETI(dst, 9) = exp(MS512_F32_GETI(src, 9));
+  MS512_F32_GETI(dst, 10) = exp(MS512_F32_GETI(src, 10));
+  MS512_F32_GETI(dst, 11) = exp(MS512_F32_GETI(src, 11));
+  MS512_F32_GETI(dst, 12) = exp(MS512_F32_GETI(src, 12));
+  MS512_F32_GETI(dst, 13) = exp(MS512_F32_GETI(src, 13));
+  MS512_F32_GETI(dst, 14) = exp(MS512_F32_GETI(src, 14));
+  MS512_F32_GETI(dst, 15) = exp(MS512_F32_GETI(src, 15));
+  return dst;
 }
 
 static inline void simd_exp512(MS_FLOAT32X16 input, float *dst) {

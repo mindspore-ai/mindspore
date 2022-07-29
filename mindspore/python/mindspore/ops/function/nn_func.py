@@ -17,7 +17,7 @@
 
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
-from mindspore.ops.operations import nn_ops as NN
+from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import image_ops as IMG
 import mindspore.common.dtype as mstype
 from .math_func import logsumexp
@@ -31,8 +31,8 @@ slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
-mish_ = NN.Mish()
-selu_ = NN.SeLU()
+mish_ = NN_OPS.Mish()
+selu_ = NN_OPS.SeLU()
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -234,11 +234,94 @@ def adaptive_max_pool3d(x, output_size, return_indices=False):
         >>> print(output[1].asnumpy())
         [[[[33 35]]]]
     """
-    adaptive_max_pool3d_ = _get_cache_prim(NN.AdaptiveMaxPool3D)()
+    adaptive_max_pool3d_ = _get_cache_prim(NN_OPS.AdaptiveMaxPool3D)()
     output_size_ = Tensor(output_size, dtype=mstype.int32)
     out = adaptive_max_pool3d_(x, output_size_)
     output = out if return_indices else out[0]
     return output
+
+
+def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reduction='mean'):
+    r"""
+    Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
+    between the logits and the label.
+
+    Sets input logits as :math:`X`, input label as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
+
+    .. math::
+
+        \begin{array}{ll} \\
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+        \end{array}
+
+    :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    :math:`\ell` indicates the method of calculating the loss. There are three methods:
+    the first method is to provide the loss value directly,
+    the second method is to calculate the average value of all losses,
+    and the third method is to calculate the sum of all losses.
+
+    This operator will multiply the output by the corresponding weight.
+    The tensor weight assigns different weights to each piece of data in the batch,
+    and the tensor pos_weight adds corresponding weights to the positive examples of each category.
+
+    In addition, it can trade off recall and precision by adding weights to positive examples.
+    In the case of multi-label classification the loss can be described as:
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
+    n is the number of the sample in the batch and :math:`p_c` is the weight of the positive answer for the class c.
+    :math:`p_c>1` increases the recall, :math:`p_c<1` increases the precision.
+
+    Args:
+        logits (Tensor): Input logits. Data type must be float16 or float32.
+          Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        label (Tensor): Ground truth label, has the same shape as `logits`.
+          Data type must be float16 or float32.
+        weight (Tensor): A rescaling weight applied to the loss of each batch element. It can be
+          broadcast to a tensor with shape of `logits`. Data type must be float16 or float32.
+        pos_weight (Tensor): A weight of positive examples. Must be a vector with length equal to the
+          number of classes. It can be broadcast to a tensor with shape of `logits`.
+          Data type must be float16 or float32.
+        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
+             not case sensitive. If 'none', do not perform reduction. Default:'mean'.
+    Returns:
+        Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
+        Otherwise, the output is a scalar.
+
+    Raises:
+        TypeError: If data type of any input is neither float16 nor float32.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+        >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> output = ops.bce_with_logits_loss(logits, label, weight, pos_weight, reduction)
+        >>> print(output)
+        0.3463612
+    """
+
+    bce_with_logits_loss_op = _get_cache_prim(NN_OPS.BCEWithLogitsLoss)(reduction)
+    return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
 def celu(x, alpha=1.0):
@@ -326,7 +409,7 @@ def dropout2d(x, p=0.5):
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
-    dropout_2d_op = NN.Dropout2D(p)
+    dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
     return dropout_2d_op(x)
 
 
@@ -372,7 +455,7 @@ def dropout3d(x, p=0.5):
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
-    dropout_3d_op = NN.Dropout3D(p)
+    dropout_3d_op = NN_OPS.Dropout3D(1.0 - p)
     return dropout_3d_op(x)
 
 
@@ -838,9 +921,9 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         >>> print(output.shape)
         (4, 5, 8, 8)
     """
-    deformable_offsets = _get_cache_prim(NN.DeformableOffsets)(strides, padding, kernel_size, dilations, "NCHW",
-                                                               deformable_groups,
-                                                               modulated)
+    deformable_offsets = _get_cache_prim(NN_OPS.DeformableOffsets)(strides, padding, kernel_size, dilations, "NCHW",
+                                                                   deformable_groups,
+                                                                   modulated)
     fm_offset = deformable_offsets(x, offsets)
 
     weight_shape = weight.shape
@@ -890,7 +973,7 @@ def pdist(x, p=2.0):
         >>> print(y)
         [1.4142135 2.828427 1.4142135]
     """
-    pdist_ = _get_cache_prim(NN.Pdist)(p=p)
+    pdist_ = _get_cache_prim(NN_OPS.Pdist)(p=p)
     return pdist_(x)
 
 
@@ -1388,7 +1471,7 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
           [[0.2860388 ]
            [0.3651484 ]]]]
     """
-    lrn_op = NN.LRN(depth_radius, bias, alpha, beta, norm_region)
+    lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
     return lrn_op(x)
 
 
@@ -1483,7 +1566,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         (2, 1, 3, 3, 3)
     """
     strides = stride if (stride is not None) else kernel_size
-    max_pool3d_with_argmax_ = _get_cache_prim(NN.MaxPool3DWithArgmax)(
+    max_pool3d_with_argmax_ = _get_cache_prim(NN_OPS.MaxPool3DWithArgmax)(
         kernel_size, strides, padding, dilation, ceil_mode)
     out, indices = max_pool3d_with_argmax_(x)
     if return_indices:
@@ -1564,9 +1647,9 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
            [14.8      ]]]]
     """
     if input_x.ndim == 4:
-        _grid_sampler_2d = _get_cache_prim(NN.GridSampler2D)(interpolation_mode, padding_mode, align_corners)
+        _grid_sampler_2d = _get_cache_prim(NN_OPS.GridSampler2D)(interpolation_mode, padding_mode, align_corners)
         return _grid_sampler_2d(input_x, grid)
-    _grid_sampler_3d = _get_cache_prim(NN.GridSampler3D)(interpolation_mode, padding_mode, align_corners)
+    _grid_sampler_3d = _get_cache_prim(NN_OPS.GridSampler3D)(interpolation_mode, padding_mode, align_corners)
     return _grid_sampler_3d(input_x, grid)
 
 
@@ -1630,6 +1713,7 @@ __all__ = [
     'adaptive_avg_pool2d',
     'adaptive_max_pool3d',
     'avg_pool2d',
+    'binary_cross_entropy_with_logits',
     'max_pool3d',
     'celu',
     'deformable_conv2d',

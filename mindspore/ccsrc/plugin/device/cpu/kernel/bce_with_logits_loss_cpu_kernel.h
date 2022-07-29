@@ -32,6 +32,8 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
   BCEWithLogitsLossCpuKernelMod() = default;
   ~BCEWithLogitsLossCpuKernelMod() override = default;
 
+  using bce_ptr = void *;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -47,14 +49,23 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
+  bool RunTask(int task_id);
+
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-
+  bool is_broadcast_{false};
+  bool is_reduction_{false};
   size_t input_size_{1};
+  size_t thread_num_{1};
+  bce_ptr logits_{nullptr};
+  bce_ptr label_{nullptr};
+  bce_ptr weight_{nullptr};
+  bce_ptr post_weight_{nullptr};
+  bce_ptr reduction_output_{nullptr};
+  bce_ptr output_{nullptr};
   ShapeVector input_logits_shape_;
   ShapeVector input_label_shape_;
   ShapeVector input_weight_shape_;
