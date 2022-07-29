@@ -511,7 +511,7 @@ void Debugger::DumpParamsAndConstAndHistory() {
     }
   }
   for (auto kernel_graph = executed_graph_ptr_set_.cbegin(); kernel_graph != executed_graph_ptr_set_.cend();
-       kernel_graph++) {
+       ++kernel_graph) {
     // Dump graph run hisotry for each graph.
     E2eDump::DumpRunIter(*kernel_graph, GetRankID());
   }
@@ -1078,7 +1078,7 @@ void Debugger::ViewValueLevel(const EventReply &reply) {
   MS_LOG(INFO) << "Sending tensors";
   std::list<TensorProto> tensors = LoadTensors(GetTensors(reply));
   // print view cmd reply
-  for (auto tensor = tensors.cbegin(); tensor != tensors.cend(); tensor++) {
+  for (auto tensor = tensors.cbegin(); tensor != tensors.cend(); ++tensor) {
     MS_LOG(INFO) << "tensor node name: " << tensor->node_name();
     MS_LOG(INFO) << "tensor slot: " << tensor->slot();
     MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor->finished() << std::noboolalpha;
@@ -1132,7 +1132,7 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
   TensorSummary tensor_summary_item;
   TensorBase *tensor_base = tensor_summary_item.mutable_tensor_base();
   tensor_base->set_data_type(tensor_stat.dtype);
-  tensor_base->set_data_size((int64_t)tensor_stat.data_size);
+  tensor_base->set_data_size(static_cast<int64_t>(tensor_stat.data_size));
   for (auto elem : tensor_stat.shape) {
     tensor_base->add_shape(elem);
   }
@@ -1143,12 +1143,12 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
   tensor_statistics->set_min_value(static_cast<float>(tensor_stat.min_value));
   tensor_statistics->set_avg_value(static_cast<float>(tensor_stat.avg_value));
   tensor_statistics->set_count(SizeToInt(tensor_stat.count));
-  tensor_statistics->set_neg_zero_count(SizeToInt(tensor_stat.neg_zero_count));
-  tensor_statistics->set_pos_zero_count(SizeToInt(tensor_stat.pos_zero_count));
-  tensor_statistics->set_nan_count(SizeToInt(tensor_stat.nan_count));
-  tensor_statistics->set_neg_inf_count(SizeToInt(tensor_stat.neg_inf_count));
-  tensor_statistics->set_pos_inf_count(SizeToInt(tensor_stat.pos_inf_count));
-  tensor_statistics->set_zero_count(SizeToInt(tensor_stat.zero_count));
+  tensor_statistics->set_neg_zero_count(tensor_stat.neg_zero_count);
+  tensor_statistics->set_pos_zero_count(tensor_stat.pos_zero_count);
+  tensor_statistics->set_nan_count(tensor_stat.nan_count);
+  tensor_statistics->set_neg_inf_count(tensor_stat.neg_inf_count);
+  tensor_statistics->set_pos_inf_count(tensor_stat.pos_inf_count);
+  tensor_statistics->set_zero_count(tensor_stat.zero_count);
 
   tensor_summary_list->push_back(tensor_summary_item);
 }
@@ -1168,7 +1168,8 @@ void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCon
     [](const WatchCondition_Parameter &parameter) -> DebugServices::parameter_t {
       return DebugServices::parameter_t{parameter.name(), parameter.disabled(), parameter.value(), parameter.hit()};
     });
-  debug_services_->AddWatchpoint(id, condition.condition(), condition.value(), check_node_list, parameter_list);
+  debug_services_->AddWatchpoint(id, static_cast<int>(condition.condition()), condition.value(), check_node_list,
+                                 parameter_list);
 }
 
 void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatchpoint(id); }
@@ -1212,7 +1213,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
 
       tensor_item.set_tensor_content(data_ptr[result_index] + size_iter, chunk_size);
 
-      tensor_item.set_data_type((debugger::DataType)dtype[result_index]);
+      tensor_item.set_data_type(static_cast<debugger::DataType>(dtype[result_index]));
       for (auto &elem : shape[result_index]) {
         tensor_item.add_dims(elem);
       }
@@ -1297,7 +1298,6 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   std::vector<std::string> slot;
   std::vector<int> condition;
   std::vector<unsigned int> watchpoint_id;
-  std::vector<std::string> overflow_ops;
   std::vector<std::vector<DebugServices::parameter_t>> parameters;
   std::vector<int32_t> error_codes;
   std::vector<std::shared_ptr<TensorData>> tensor_list;
@@ -1308,7 +1308,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   }
   DebugServices::ProcessedNPYFiles processed_npy_files;
   MS_LOG(INFO) << "checkwatchpoints call for step " << num_step_;
-  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes,
                                     &processed_npy_files, &tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
@@ -1609,7 +1609,9 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
  * Description: Load all the parameters and value nodes for the last loaded graph.
  */
 void Debugger::LoadParametersAndConst() {
-  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
+  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
   MS_LOG(INFO) << "Start to load Parameters for graph " << graph_ptr_->graph_id() << ".";
@@ -1634,7 +1636,9 @@ void Debugger::LoadParametersAndConst() {
  * Description: Load all the parameters and value nodes for the given graph.
  */
 void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
-  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
+  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   // load parameters
   MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id() << ".";

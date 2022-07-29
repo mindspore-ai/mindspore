@@ -125,7 +125,7 @@ void DataDumper::LoadDumpInfo() {
       continue;
     }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->UniqueName();
-    dump_kernel_names_.emplace_back(kernel->UniqueName());
+    (void)dump_kernel_names_.emplace_back(kernel->UniqueName());
     DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
 
     aicpu::dump::Task task;
@@ -305,16 +305,16 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
   task.mutable_op()->set_op_type(kOpTypeOpDebug);
 
   aicpu::dump::Output output;
-  output.set_data_type(ge::proto::DataType::DT_UINT8);
-  output.set_format(ge::Format::FORMAT_ND);
+  output.set_data_type(static_cast<int>(ge::proto::DataType::DT_UINT8));
+  output.set_format(static_cast<int>(ge::Format::FORMAT_ND));
 
   MS_EXCEPTION_IF_NULL(output.mutable_shape());
   output.mutable_shape()->add_dim(kOpDebugShape);
 
   output.set_original_name(kNodeNameOpDebug);
   output.set_original_output_index(0);
-  output.set_original_output_format(ge::Format::FORMAT_ND);
-  output.set_original_output_data_type(ge::proto::DataType::DT_UINT8);
+  output.set_original_output_format(static_cast<int>(ge::Format::FORMAT_ND));
+  output.set_original_output_data_type(static_cast<int>(ge::proto::DataType::DT_UINT8));
   // due to lhisi virtual addr bug, cannot use args now
   output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(op_debug_dump_args_)));
   output.set_size(kOpDebugHostMemSize);
@@ -441,12 +441,13 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     auto output_origin_shape = common::AnfAlgo::GetOutputInferShape(kernel, i);
 
     aicpu::dump::Output output;
-    output.set_data_type(GeTypesConvert::GetGeDataType(data_type));
-    output.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
+    output.set_data_type(static_cast<int>(GeTypesConvert::GetGeDataType(data_type)));
+    output.set_format(static_cast<int>(GeTypesConvert::GetGeFormat(output_format, output_shape.size())));
     SetDumpShape(output_shape, NOT_NULL(output.mutable_shape()));
     SetDumpShape(output_origin_shape, NOT_NULL(output.mutable_origin_shape()));
 
-    output.set_original_output_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
+    output.set_original_output_format(
+      static_cast<int>(GeTypesConvert::GetGeFormat(output_format, output_shape.size())));
     output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
     // device address data size
     auto address = AnfAlgo::GetOutputAddr(kernel, i);
@@ -490,8 +491,8 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     auto output_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
     auto output_origin_shape = common::AnfAlgo::GetOutputInferShape(input_node, input_index);
 
-    input.set_data_type(GeTypesConvert::GetGeDataType(output_type));
-    input.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
+    input.set_data_type(static_cast<int>(GeTypesConvert::GetGeDataType(output_type)));
+    input.set_format(static_cast<int>(GeTypesConvert::GetGeFormat(output_format, output_shape.size())));
     SetDumpShape(output_shape, NOT_NULL(input.mutable_shape()));
     SetDumpShape(output_origin_shape, NOT_NULL(input.mutable_origin_shape()));
 

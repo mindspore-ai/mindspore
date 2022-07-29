@@ -599,7 +599,8 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
   }
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || graph->IsDatasetGraph());
+  bool sink_mode =
+    (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph->IsDatasetGraph());
   auto iter_num = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
   if (graph->IsDatasetGraph()) {
     MS_LOG(INFO) << "graph: " << graph->graph_id() << " is dataset graph, not creating graph history file.";
@@ -800,21 +801,21 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
     ConvertFormatForTensors(&dump_tensor_vec, 0, dump_tensor_vec.size() - 1);
   } else {
     // In multi_thread process, we only use 1/4 of the total concurrent threads.
-    uint32_t ratio_divider = 4;
-    auto default_num_workers = std::max<uint32_t>(1, std::thread::hardware_concurrency() / ratio_divider);
-    auto num_threads = std::min<uint32_t>(default_num_workers, dump_tensor_vec.size());
-    uint32_t task_size = dump_tensor_vec.size() / num_threads;
-    uint32_t remainder = dump_tensor_vec.size() % num_threads;
+    size_t ratio_divider = 4;
+    auto default_num_workers = std::max<size_t>(1, std::thread::hardware_concurrency() / ratio_divider);
+    auto num_threads = std::min<size_t>(default_num_workers, dump_tensor_vec.size());
+    size_t task_size = dump_tensor_vec.size() / num_threads;
+    size_t remainder = dump_tensor_vec.size() % num_threads;
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
     MS_LOG(INFO) << "Number of threads used for A+M dump: " << num_threads;
     for (size_t t = 0; t < num_threads; t++) {
-      uint32_t start_idx = t * task_size;
-      uint32_t end_idx = start_idx + task_size - 1;
+      size_t start_idx = t * task_size;
+      size_t end_idx = start_idx + task_size - 1;
       if (t == num_threads - 1) {
         end_idx += remainder;
       }
-      threads.emplace_back(std::thread(&E2eDump::ConvertFormatForTensors, &dump_tensor_vec, start_idx, end_idx));
+      (void)threads.emplace_back(std::thread(&E2eDump::ConvertFormatForTensors, &dump_tensor_vec, start_idx, end_idx));
     }
     for (auto &thd : threads) {
       if (thd.joinable()) {
@@ -827,8 +828,8 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
   }
 }
 
-void E2eDump::ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, uint32_t start_idx, uint32_t end_idx) {
-  for (uint32_t idx = start_idx; idx <= end_idx; idx++) {
+void E2eDump::ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, size_t start_idx, size_t end_idx) {
+  for (size_t idx = start_idx; idx <= end_idx; idx++) {
     auto &dump_data_obj = dump_tensor_vec->at(idx);
     auto succ = ConvertFormatForOneTensor(&dump_data_obj);
     if (!succ) {
@@ -975,7 +976,7 @@ std::string IntToHexString(const uint64_t value) {
   return ss.str();
 }
 
-nlohmann::json E2eDump::ParseOverflowInfo(char *data_ptr) {
+nlohmann::json E2eDump::ParseOverflowInfo(const char *data_ptr) {
   uint32_t index = 0;
   uint64_t model_id = UnpackUint64Value(data_ptr);
   index += kUint64Size;

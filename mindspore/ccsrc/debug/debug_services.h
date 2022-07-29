@@ -24,7 +24,7 @@
 #include "base/float16.h"
 #endif
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <future>
 #include <string>
@@ -298,26 +298,26 @@ class DebugServices {
                                   std::vector<unsigned int> *const root_graph_id, const int exec_order,
                                   const std::string time_stamp, const std::string &qualified_tensor_name,
                                   const std::string &tensor_slot, const unsigned int device_id_val,
-                                  const unsigned int root_graph_id_val, const std::vector<parameter_t> &parameter_list);
+                                  const unsigned int root_graph_id_val,
+                                  const std::vector<parameter_t> &parameter_list) const;
 #endif
 
   const void *PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name);
 
   void CheckHistoryErrorCode(int *error_code, bool history_not_found) const;
 
-  void CheckWatchpointsForTensor(ChunkData *chunk_data, const std::vector<std::string> &op_overflows,
-                                 ProcessedNPYFiles *const processed_npy_files,
+  void CheckWatchpointsForTensor(ChunkData *chunk_data, ProcessedNPYFiles *const processed_npy_files,
                                  std::vector<std::shared_ptr<TensorData>> *const tensor_list, int begin, int end,
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
 
-  void AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names);
+  void AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names) const;
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
                         std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
-                        const std::vector<std::string> &op_overflows, ProcessedNPYFiles *const processed_npy_files,
+                        ProcessedNPYFiles *const processed_npy_files,
                         std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr, bool error_on_no_value = false);
@@ -403,7 +403,7 @@ class DebugServices {
   void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
 
   void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                  const std::string &dump_key, NPYFilePool *const result_list);
+                                  const std::string &dump_key, NPYFilePool *const result_list) const;
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
