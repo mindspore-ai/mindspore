@@ -28,7 +28,7 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-#define CONV_MIN_CALC_BLOCK C32NUM
+#define CONV_MIN_CALC_BLOCK C1NUM
 #ifdef ENABLE_AVX
 #define OC_BLOCK C16NUM
 #elif defined(ENABLE_ARM32)
@@ -126,7 +126,7 @@ int ConvolutionCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t pe
   const int cal_num = C12NUM;
 #endif
 
-  conv_param_->thread_num_ = MSMIN(UP_DIV(UP_DIV(output_hw, cal_num), CONV_MIN_CALC_BLOCK), conv_param_->thread_num_);
+  conv_param_->thread_num_ = MSMIN(UP_DIV(UP_DIV(output_hw, cal_num), CONV_MIN_CALC_BLOCK), op_parameter_->thread_num_);
   thread_count_ = conv_param_->thread_num_;
   return RET_OK;
 }

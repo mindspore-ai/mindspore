@@ -65,7 +65,6 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
   bool output_need_align_ = false;
-  bool use_batch_cut_flag_ = false;
 };
 }  // namespace mindspore::kernel
 

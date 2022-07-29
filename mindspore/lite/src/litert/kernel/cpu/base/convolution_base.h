@@ -91,6 +91,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   bool is_repack_ = false;
   void *origin_weight_;  // do not free
   void *origin_bias_;    // do not free
+  bool use_batch_cut_flag_ = false;
 };
 }  // namespace mindspore::kernel
 
