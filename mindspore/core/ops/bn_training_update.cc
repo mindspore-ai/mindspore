@@ -33,7 +33,9 @@ constexpr auto kBNTrainingUpdateInputNum = 7;
 int64_t BNTrainingUpdateGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
+  if (!result ||
+      (data_format != static_cast<int64_t>(Format::NHWC) && data_format != static_cast<int64_t>(Format::NCHW) &&
+       data_format != static_cast<int64_t>(Format::NCDHW))) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC and NCDHW, but got "
                       << data_format << ".";
   }
@@ -58,7 +60,7 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = BNTrainingUpdateGetAndCheckFormat(primitive, data_format_ptr);
   size_t c_axis = kInputIndex1;
-  if (data_format == Format::NHWC) {
+  if (data_format == static_cast<int64_t>(Format::NHWC)) {
     c_axis = kInputIndex3;
   }
   // input_x rank must be equal to 4
@@ -110,19 +112,19 @@ TuplePtr BNTrainingUpdateInferType(const PrimitivePtr &primitive, const std::vec
   auto variance_type = input_args[kInputIndex6]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // input_x type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, valid_types, prim_name);
   // sum type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("sum type", sum_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("sum type", sum_type, valid_types, prim_name);
   // square_sum type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("square_sum type", square_sum_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("square_sum type", square_sum_type, valid_types, prim_name);
   // scale type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("scale_type", scale_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("scale_type", scale_type, valid_types, prim_name);
   // offset type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("offset_type", offset_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offset_type", offset_type, valid_types, prim_name);
   // mean type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("mean_type", mean_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mean_type", mean_type, valid_types, prim_name);
   // variance type must be valid
-  CheckAndConvertUtils::CheckTensorTypeValid("variance_type", variance_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("variance_type", variance_type, valid_types, prim_name);
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{input_x_type, variance_type, variance_type, variance_type, variance_type});
 }

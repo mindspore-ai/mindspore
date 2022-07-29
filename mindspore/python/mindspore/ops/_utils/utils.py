@@ -147,14 +147,6 @@ def is_shape_unknown(shape):
 
 
 @constexpr
-def is_shape_known(shape):
-    for i in shape:
-        if i < 0:
-            return False
-    return True
-
-
-@constexpr
 def is_dim_unknown(shape):
     for i in shape:
         if i == -2:
