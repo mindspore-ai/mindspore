@@ -177,8 +177,6 @@ py::function PrimitivePy::GetBpropFunction() {
     auto fn = GetBpropFunctionByObj(python_obj_);
     return fn;
   }
-  auto fn = GetBpropFunctionByObj(python_obj_);
-  return fn;
 }
 
 py::function PrimitivePy::GetTaylorRuleFunction() {

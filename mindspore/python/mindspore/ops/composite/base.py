@@ -104,6 +104,18 @@ def core(fn=None, **flags):
     return ret
 
 
+def _get_weights_id(weights=None):
+    """generate id of parameters"""
+    res = ""
+    if isinstance(weights, Parameter):
+        res = weights.name
+    if isinstance(weights, ParameterTuple):
+        res = ''.join(item.name for item in weights)
+    if isinstance(weights, list):
+        res = ''.join(item.name for item in weights if isinstance(item, Parameter))
+    return res
+
+
 class GradOperation(GradOperation_):
     """
     A higher-order function which is used to generate the gradient function for the input function.
@@ -364,7 +376,7 @@ class GradOperation(GradOperation_):
                 fn.set_grad(False)
 
     def __call__(self, fn, weights=None):
-        weights_id = self._get_weights_id(weights)
+        weights_id = _get_weights_id(weights)
         if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
             return self.grad_fn
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
@@ -411,17 +423,6 @@ class GradOperation(GradOperation_):
         self.fn = fn
         self.weights_id = weights_id
         return self.grad_fn
-
-    def _get_weights_id(self, weights=None):
-        if isinstance(weights, Parameter):
-            return weights.name
-        if isinstance(weights, ParameterTuple):
-            res = ''.join(item.name for item in weights)
-            return res
-        if isinstance(weights, list):
-            res = ''.join(item.name for item in weights if isinstance(item, Parameter))
-            return res
-        return None
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -477,7 +478,7 @@ class _Grad(GradOperation_):
         self.weights_id = None
 
     def __call__(self, fn, weights=None, grad_position=0):
-        weights_id = self._get_weights_id(weights)
+        weights_id = _get_weights_id(weights)
         if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
                 self.weights_id == weights_id:
             return self.grad_fn
@@ -558,17 +559,6 @@ class _Grad(GradOperation_):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
                 fn.set_grad(False)
-
-    def _get_weights_id(self, weights=None):
-        if isinstance(weights, Parameter):
-            return weights.name
-        if isinstance(weights, ParameterTuple):
-            res = ''.join(item.name for item in weights)
-            return res
-        if isinstance(weights, list):
-            res = ''.join(item.name for item in weights if isinstance(item, Parameter))
-            return res
-        return None
 
 
 class _Vmap(VmapOperation_):
