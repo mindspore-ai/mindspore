@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace trans {
-static auto SHP_ANY = abstract::Shape::SHP_ANY;
+static const ShapeValueDType SHP_ANY = abstract::Shape::SHP_ANY;
 
 const int b1 = 1;
 const int b2 = 2;
@@ -418,7 +418,7 @@ bool DataTypeTransfer::TransDataType(const TypeIdArgs &args, void *result) const
 /**###################### DATA SHAPE TRANS ################################*/
 ShapeVector DeviceShapeTransfer::GetDeviceShapeByFormat(const ShapeVector &shape, const std::string &format,
                                                         const AnfNodePtr &node, size_t index, const TypeId &type,
-                                                        bool is_output) {
+                                                        bool is_output) const {
   auto dev_shape = GetFixedDeviceShape(shape, node, index, is_output);
   if (dev_shape.has_value()) {
     return dev_shape.value();
@@ -440,7 +440,7 @@ ShapeVector DeviceShapeTransfer::GetDeviceShapeByFormat(const ShapeVector &shape
 
 ShapeVector DeviceShapeTransfer::GetDeviceShapeByFormat(const ShapeVector &shape, const std::string &format,
                                                         const TypeId &type, int64_t groups,
-                                                        const ShapeVector &input_hidden_size) {
+                                                        const ShapeVector &input_hidden_size) const {
   return TransCore(shape, format, type, groups, input_hidden_size);
 }
 
