@@ -74,11 +74,13 @@ bool BatchToSpaceNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
                                               const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
   // check all shapes, blocks and crops are valid
-  if (!CheckParam()) return false;
+  if (!CheckParam()) {
+    return false;
+  }
 
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * output_size_);
+  int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * LongToSize(output_size_));
   if (ret != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }
@@ -86,9 +88,10 @@ bool BatchToSpaceNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   for (int64_t pos = 0; pos < output_size_; pos += 1) {
     std::vector<int64_t> output_index(output_shape_.size(), 0);
     int64_t cur_pos = pos;
-    for (int rev_i = output_shape_.size() - 1; rev_i >= 0; rev_i -= 1) {
-      output_index[rev_i] = cur_pos % output_shape_[rev_i];
-      cur_pos = cur_pos / output_shape_[rev_i];
+    for (int rev_i = SizeToInt(output_shape_.size()) - 1; rev_i >= 0; rev_i -= 1) {
+      auto idx = IntToSize(rev_i);
+      output_index[idx] = cur_pos % output_shape_[idx];
+      cur_pos = cur_pos / output_shape_[idx];
     }
 
     std::vector<int64_t> input_index(output_index);
