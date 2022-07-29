@@ -83,7 +83,7 @@ __device__ __forceinline__ void Update(BinaryFunctor fun, DataType *dst_data, In
 
 template <typename BinaryFunctor, typename DataType, typename IndexType>
 __global__ void CumMinMaxKernel(BinaryFunctor fun, const DataType *input_ptr, DataType *value_ptr, IndexType *index_ptr,
-                                int axis_size, int inner_size, int axis_inner_size, int outer_inner_size,
+                                uint axis_size, uint inner_size, uint axis_inner_size, uint outer_inner_size,
                                 DataType init) {
   uint tid = threadIdx.y;
   uint tid_d = tid << 1;  // The suffix `d` represents double.
@@ -191,6 +191,34 @@ struct BinaryFunctor {
 };
 
 template <typename BinaryFunctor, typename DataType, typename IndexType>
+__global__ void CumMinMaxSlowKernel(BinaryFunctor functor, const DataType *input_ptr, DataType *value_ptr,
+                                    IndexType *index_ptr, uint axis_size, uint inner_size, uint axis_inner_size,
+                                    uint outer_inner_size) {
+  for (uint tid = blockIdx.x * blockDim.x + threadIdx.x; tid < outer_inner_size; tid += blockDim.x * gridDim.x) {
+    uint outer_idx = tid / inner_size;
+    uint inner_idx = tid % inner_size;
+    uint offset = outer_idx * axis_inner_size + inner_idx;
+    auto cur_input_ptr = input_ptr + offset;
+    auto cur_value_ptr = value_ptr + offset;
+    auto cur_index_ptr = index_ptr + offset;
+    DataType out_val = *cur_value_ptr = *cur_input_ptr;
+    IndexType out_idx = *cur_index_ptr = 0;
+    for (uint j = 1; j < axis_size; j++) {
+      cur_input_ptr += inner_size;
+      cur_value_ptr += inner_size;
+      cur_index_ptr += inner_size;
+      DataType cur_val = *cur_input_ptr;
+      if (!functor(out_val, cur_val)) {
+        out_val = cur_val;
+        out_idx = static_cast<IndexType>(j);
+      }
+      *cur_value_ptr = out_val;
+      *cur_index_ptr = out_idx;
+    }
+  }
+}
+
+template <typename BinaryFunctor, typename DataType, typename IndexType>
 void KernelHelper(BinaryFunctor fun, DataType init, const DataType *input_ptr, DataType *value_ptr,
                   IndexType *index_ptr, size_t outer_size_st, size_t axis_size_st, size_t inner_size_st,
                   const uint32_t &device_id, cudaStream_t cuda_stream) {
@@ -222,25 +250,32 @@ void KernelHelper(BinaryFunctor fun, DataType init, const DataType *input_ptr, D
     auto axis_size = static_cast<uint>(axis_size_st);
     auto outer_inner_size = outer_size * inner_size;
     auto axis_inner_size = axis_size * inner_size;
-    // The partitioning strategy is as follows:
-    // 1. The block has two dimensions, the y dimension with max size is 128, scan an array with axis_size, while the
-    // other one is used to process batch dimension on parallel, and the specific size depends on the max size of shared
-    // memory and max threads number.
-    // 2. The gird has only one dimension, which requires to take over the remaining batch dimension.
-    constexpr uint max_block_y = 128;
-    uint max_share_size = GetMaxSharedMemoryPerBlock(device_id);
-    uint max_thread_size = GetMaxThreadsPerBlock(device_id);
-    uint max_grid_size = GetMaxGridDimX(device_id);
-    uint axis_power2 = 1u << Log2Ceil(axis_size);
-    uint block_y = std::min(max_block_y, axis_power2);
-    uint has_allocate = block_y * 2 * (sizeof(DataType) + sizeof(IndexType));
-    uint block_x = std::min(max_thread_size / block_y, max_share_size / has_allocate);
-    uint grid_x = std::min(max_grid_size, UP_DIV(outer_inner_size, block_x));
-    dim3 block = {block_x, block_y};
-    dim3 grid = {grid_x};
-    uint share_size = block_x * has_allocate;
-    CumMinMaxKernel<BinaryFunctor, DataType, IndexType><<<grid, block, share_size, cuda_stream>>>(
-      fun, input_ptr, value_ptr, index_ptr, axis_size, inner_size, axis_inner_size, outer_inner_size, init);
+    if (inner_size_st == 1) {
+      // The partitioning strategy is as follows:
+      // 1. The block has two dimensions, the y dimension with max size is 128, scan an array with axis_size, while the
+      // other one is used to process batch dimension on parallel, and the specific size depends on the max size of
+      // shared memory and max threads number.
+      // 2. The gird has only one dimension, which requires to take over the remaining batch dimension.
+      constexpr uint max_block_y = 128;
+      uint max_share_size = GetMaxSharedMemoryPerBlock(device_id);
+      uint max_thread_size = GetMaxThreadsPerBlock(device_id);
+      uint max_grid_size = GetMaxGridDimX(device_id);
+      uint axis_power2 = 1u << Log2Ceil(axis_size);
+      uint block_y = std::min(max_block_y, axis_power2);
+      uint has_allocate = block_y * 2 * (sizeof(DataType) + sizeof(IndexType));
+      uint block_x = std::min(max_thread_size / block_y, max_share_size / has_allocate);
+      uint grid_x = std::min(max_grid_size, UP_DIV(outer_inner_size, block_x));
+      dim3 block = {block_x, block_y};
+      dim3 grid = {grid_x};
+      uint share_size = block_x * has_allocate;
+      CumMinMaxKernel<BinaryFunctor, DataType, IndexType><<<grid, block, share_size, cuda_stream>>>(
+        fun, input_ptr, value_ptr, index_ptr, axis_size, inner_size, axis_inner_size, outer_inner_size, init);
+    } else {
+      // A useless case. If you don't like this branch, please delete it.
+      CumMinMaxSlowKernel<BinaryFunctor, DataType, IndexType>
+        <<<CUDA_BLOCKS(device_id, outer_inner_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+          fun, input_ptr, value_ptr, index_ptr, axis_size, inner_size, axis_inner_size, outer_inner_size);
+    }
   }
 }
 
