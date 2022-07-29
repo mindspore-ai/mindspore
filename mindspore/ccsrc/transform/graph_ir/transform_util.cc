@@ -17,6 +17,7 @@
 #include "transform/graph_ir/transform_util.h"
 #include <utility>
 #include <map>
+#include <algorithm>
 
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
@@ -202,9 +203,10 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     }
     size_t elements_num = (data_buff_size / single_char_offset) / string_max_length;
     std::vector<std::string> string_vector;
+    char *string_element = new char[string_max_length];
+    size_t string_length = 0;
     for (size_t i = 0; i < elements_num; i++) {
-      char *string_element = new char[string_max_length];
-      size_t string_length = 0;
+      std::fill_n(string_element, string_max_length, '\0');
       for (size_t j = 0; j < string_max_length; j++) {
         char char_element = data_ptr[i * string_max_length * single_char_offset + single_char_offset * j];
         if (static_cast<int>(char_element) == 0) {
@@ -217,6 +219,8 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
       std::string string_to_add(string_element, string_length);
       (void)string_vector.emplace_back(string_to_add);
     }
+    delete string_element;
+    string_element = nullptr;
     tensor_ptr = make_shared<GeTensor>(*desc);
     (void)tensor_ptr->SetData(string_vector);
   } else {
@@ -232,6 +236,8 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     std::string string_to_add(string_element, string_length);
     tensor_ptr = make_shared<GeTensor>(*desc);
     (void)tensor_ptr->SetData(string_to_add);
+    delete string_element;
+    string_element = nullptr;
   }
   return tensor_ptr;
 }

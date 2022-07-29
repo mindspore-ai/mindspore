@@ -550,11 +550,11 @@ bool IrExportBuilder::SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_
   mind_ir::AttributeProto *indptr = attr_proto->add_values();
   bool res = SetAbstractToNodeProto(csr_tensor_abs->indptr(), indptr);
   mind_ir::AttributeProto *indices = attr_proto->add_values();
-  res &= SetAbstractToNodeProto(csr_tensor_abs->indices(), indices);
+  res = res && SetAbstractToNodeProto(csr_tensor_abs->indices(), indices);
   mind_ir::AttributeProto *values = attr_proto->add_values();
-  res &= SetAbstractToNodeProto(csr_tensor_abs->values(), values);
+  res = res && SetAbstractToNodeProto(csr_tensor_abs->values(), values);
   mind_ir::AttributeProto *shape = attr_proto->add_values();
-  res &= SetAbstractToNodeProto(csr_tensor_abs->shape(), shape);
+  res = res && SetAbstractToNodeProto(csr_tensor_abs->shape(), shape);
   return res;
 }
 
@@ -565,9 +565,9 @@ bool IrExportBuilder::SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_
   mind_ir::AttributeProto *indices = attr_proto->add_values();
   bool res = SetAbstractToNodeProto(coo_tensor_abs->indices(), indices);
   mind_ir::AttributeProto *values = attr_proto->add_values();
-  res &= SetAbstractToNodeProto(coo_tensor_abs->values(), values);
+  res = res && SetAbstractToNodeProto(coo_tensor_abs->values(), values);
   mind_ir::AttributeProto *shape = attr_proto->add_values();
-  res &= SetAbstractToNodeProto(coo_tensor_abs->shape(), shape);
+  res = res && SetAbstractToNodeProto(coo_tensor_abs->shape(), shape);
   return res;
 }
 
