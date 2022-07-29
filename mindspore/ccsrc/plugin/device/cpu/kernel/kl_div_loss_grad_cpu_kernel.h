@@ -48,15 +48,14 @@ class KLDivLossGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
 
-  bool CheckParams();
+  bool CheckParams() const;
 
   using KLDivLossGradFunc = std::function<bool(KLDivLossGradCpuKernelMod *, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 
- private:
   static std::vector<std::pair<KernelAttr, KLDivLossGradFunc>> func_list_;
   KLDivLossGradFunc kernel_func_;
   std::string reductionMode_ = "mean";
