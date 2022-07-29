@@ -32,7 +32,8 @@ template <typename T>
 T GetInitValue(std::string kernel_name) {
   static const std::map<std::string, T> UnsortedSegmentArithmeticInitValueMap{
     {prim::kPrimUnsortedSegmentMax->name(), std::numeric_limits<T>::lowest()},
-    {prim::kPrimUnsortedSegmentMin->name(), std::numeric_limits<T>::max()}};
+    {prim::kPrimUnsortedSegmentMin->name(), std::numeric_limits<T>::max()},
+    {prim::kPrimUnsortedSegmentSum->name(), static_cast<T>(0.0)}};
 
   if (UnsortedSegmentArithmeticInitValueMap.find(kernel_name) == UnsortedSegmentArithmeticInitValueMap.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name << "', the current operator does not support this operation.";
@@ -41,6 +42,63 @@ T GetInitValue(std::string kernel_name) {
 
   T init_value = UnsortedSegmentArithmeticInitValueMap.at(kernel_name);
   return init_value;
+}
+
+template <typename T, typename S>
+bool UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(T *input_addr, S *ids_addr, T *output_addr) {
+  if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
+    for (size_t loop = 0; loop < loop_size_; loop++) {
+      auto output_index = ids_addr[loop];
+      if (output_index >= num_segments_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
+        return false;
+      }
+      if (output_index < 0) {
+        /* segment_ids is less than 0, drop it */
+        continue;
+      }
+      T *cur_input = input_addr + loop * comp_size_;
+      T *cur_output = output_addr + output_index * comp_size_;
+      for (size_t comp = 0; comp < comp_size_; comp++) {
+        cur_output[comp] = cur_input[comp] > cur_output[comp] ? cur_input[comp] : cur_output[comp];
+      }
+    }
+  } else if (kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
+    for (size_t loop = 0; loop < loop_size_; loop++) {
+      auto output_index = ids_addr[loop];
+      if (output_index >= num_segments_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
+        return false;
+      }
+      if (output_index < 0) {
+        /* segment_ids is less than 0, drop it */
+        continue;
+      }
+      T *cur_input = input_addr + loop * comp_size_;
+      T *cur_output = output_addr + output_index * comp_size_;
+      for (size_t comp = 0; comp < comp_size_; comp++) {
+        cur_output[comp] = cur_input[comp] < cur_output[comp] ? cur_input[comp] : cur_output[comp];
+      }
+    }
+  } else if (kernel_name_ == prim::kPrimUnsortedSegmentSum->name()) {
+    for (size_t loop = 0; loop < loop_size_; loop++) {
+      auto output_index = ids_addr[loop];
+      if (output_index >= num_segments_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
+        return false;
+      }
+      if (output_index < 0) {
+        /* segment_ids is less than 0, drop it */
+        continue;
+      }
+      T *cur_input = input_addr + loop * comp_size_;
+      T *cur_output = output_addr + output_index * comp_size_;
+      for (size_t comp = 0; comp < comp_size_; comp++) {
+        cur_output[comp] += cur_input[comp];
+      }
+    }
+  }
+  return true;
 }
 
 template <typename T, typename S>
@@ -64,41 +122,9 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
       }
     };
     ParallelLaunchAutoSearch(task, out_size_, this, &parallel_search_info_);
-
-    if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
-      for (size_t loop = 0; loop < loop_size_; loop++) {
-        auto output_index = ids_addr[loop];
-        if (output_index >= num_segments_) {
-          MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
-          return false;
-        }
-        if (output_index < 0) {
-          /* segment_ids is less than 0, drop it */
-          continue;
-        }
-        T *cur_input = input_addr + loop * comp_size_;
-        T *cur_output = output_addr + output_index * comp_size_;
-        for (size_t comp = 0; comp < comp_size_; comp++) {
-          cur_output[comp] = cur_input[comp] > cur_output[comp] ? cur_input[comp] : cur_output[comp];
-        }
-      }
-    } else if (kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
-      for (size_t loop = 0; loop < loop_size_; loop++) {
-        auto output_index = ids_addr[loop];
-        if (output_index >= num_segments_) {
-          MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
-          return false;
-        }
-        if (output_index < 0) {
-          /* segment_ids is less than 0, drop it */
-          continue;
-        }
-        T *cur_input = input_addr + loop * comp_size_;
-        T *cur_output = output_addr + output_index * comp_size_;
-        for (size_t comp = 0; comp < comp_size_; comp++) {
-          cur_output[comp] = cur_input[comp] < cur_output[comp] ? cur_input[comp] : cur_output[comp];
-        }
-      }
+    bool result = UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(input_addr, ids_addr, output_addr);
+    if (!result) {
+      return false;
     }
   }
   return true;
@@ -206,5 +232,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMin, UnsortedSegmentArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMax, UnsortedSegmentArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentSum, UnsortedSegmentArithmeticCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -216,6 +217,43 @@ def test_slice_functional():
     assert (output.asnumpy() == expect).all()
 
 
+def vmap_1_batch():
+    def calc(x):
+        return Slice()(x)
+
+    def vmap_calc(x):
+        return vmap(calc, in_axes=0)(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    x1 = np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]).astype(np.int32)
+    expect1 = [[[2., 2., 2.]],
+               [[4., 4., 4.]]]
+    x2 = np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(np.int32)
+    expect2 = [[[2., -2., 2.]],
+               [[4., -4., 4.]]]
+    xs = np.stack([x1, x2])
+    expect = np.stack([expect1, expect2])
+    output = vmap_calc(Tensor(xs)).asnumpy()
+
+    error = np.ones(shape=output.shape) * 1.0e-6
+    diff = output - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice_vmap():
+    """
+    Feature: Slice
+    Description: slice vmap with 1 batch dim
+    Expectation: success
+    """
+    vmap_1_batch()
+
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
@@ -225,3 +263,4 @@ if __name__ == '__main__':
     test_slice6()
     test_strided_slice_bool_type()
     test_slice_functional()
+    test_slice_vmap()
