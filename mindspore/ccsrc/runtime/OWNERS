@@ -13,11 +13,10 @@ approvers:
 - hwcaifubi
 
 reviewers:
-- john_tzanakakis
 - ouwenchang
 - robingrosman
-- yelihua
 - yanghaitao1
-- lilongfei15
 - wangyue01
 - wenkai_dist
+- zangqx
+- maning202007
