@@ -121,62 +121,6 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   return std::make_shared<AbstractTuple>(elems);
 }
 
-AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple or tensor.
-  const std::string op_name = primitive->name();
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
-  }
-
-  AbstractTuplePtr arg = nullptr;
-  AbstractTensorPtr tensor_base = nullptr;
-  size_t tuple_len = 0;
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  if (args_spec_list[0]->isa<AbstractTuple>()) {
-    CheckArgsSize(op_name, args_spec_list, 1);
-    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-    tuple_len = arg->elements().size();
-    tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
-    tuple_len = args_spec_list.size();
-    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  }
-
-  MS_EXCEPTION_IF_NULL(tensor_base);
-  auto shape = tensor_base->shape();
-  MS_EXCEPTION_IF_NULL(shape);
-  int64_t rank_base = SizeToLong(shape->shape().size());
-
-  ValuePtr axis = primitive->GetAttr("axis");
-  // Axis value should be in [-(rank_base + 1), rank_base).
-  int64_t axis_value = CheckAxis(op_name, "axis", axis, -(rank_base + 1), rank_base + 1, "input_x");
-
-  for (size_t i = 1; i < tuple_len; ++i) {
-    AbstractTensorPtr tensor = nullptr;
-    if (args_spec_list[0]->isa<AbstractTuple>()) {
-      tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
-    } else if (args_spec_list[0]->isa<AbstractTensor>()) {
-      tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
-    }
-    (void)CheckDtypeSame(op_name, tensor_base, tensor);
-    CheckShapeSame(op_name, tensor_base, tensor);
-  }
-  auto element = tensor_base->element();
-  MS_EXCEPTION_IF_NULL(element);
-  primitive->set_attr("N", MakeValue(SizeToLong(tuple_len)));
-  primitive->set_attr("T", element->BuildType());
-
-  AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
-  MS_EXCEPTION_IF_NULL(ret);
-  auto ret_shape_ptr = ret->shape();
-  MS_EXCEPTION_IF_NULL(ret_shape_ptr);
-  auto ret_shape = ret_shape_ptr->shape();
-  (void)ret_shape.insert(ret_shape.begin() + axis_value, SizeToLong(tuple_len));
-  ret->set_shape(std::make_shared<Shape>(ret_shape));
-  return ret;
-}
-
 AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
   // inputs: a 1-d Tensor
@@ -262,67 +206,6 @@ AbstractBasePtr InferImplUniqueWithPad(const AnalysisEnginePtr &, const Primitiv
 
   AbstractBasePtr ids = input->Broaden();
   return std::make_shared<AbstractTuple>(AbstractBasePtrList({ids, ids_idx}));
-}
-
-AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  // Infer output tensor.
-  auto shape = input->shape();
-  MS_EXCEPTION_IF_NULL(shape);
-  ShapeVector out_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape;
-  ShapeVector max_shape;
-  if (!IsDynamic(shape->shape())) {
-    max_shape = shape->shape();
-    min_shape.push_back(1);
-  }
-
-  auto out =
-    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(out_shape, min_shape, max_shape));
-  AbstractBasePtrList elements = {out};
-
-  // Currently we choose the same data type as input for the idx.
-  TypePtr idx_type = kInt32;
-  MS_EXCEPTION_IF_NULL(input->element());
-  MS_EXCEPTION_IF_NULL(input->element()->GetTypeTrack());
-  if (input->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
-    idx_type = kInt64;
-  }
-  // Check return_idx.
-  auto attr_idx = primitive->GetAttr("return_idx");
-  if (attr_idx == nullptr) {
-    MS_LOG(EXCEPTION) << "The attr(return_idx) of operator(" << op_name << ") not exist";
-  }
-  bool return_idx = GetValue<bool>(attr_idx);
-  if (return_idx) {
-    ShapeVector idx_shape = shape->shape();
-    ShapeVector idx_min_shape = shape->min_shape();
-    ShapeVector idx_max_shape = shape->max_shape();
-    auto idx = std::make_shared<AbstractTensor>(idx_type, idx_shape);
-    idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
-    (void)elements.emplace_back(idx);
-  } else {
-    ShapeVector idx_shape = {0};
-    (void)elements.emplace_back(std::make_shared<AbstractTensor>(idx_type, idx_shape));
-  }
-
-  // Check return_counts.
-  auto attr_counts = primitive->GetAttr("return_counts");
-  if (attr_counts == nullptr) {
-    MS_LOG(EXCEPTION) << "The attr(attr_counts) of operator(" << op_name << ") not exist";
-  }
-  bool return_counts = GetValue<bool>(attr_counts);
-  if (return_counts) {
-    auto counts = std::make_shared<AbstractTensor>(idx_type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
-    (void)elements.emplace_back(counts);
-  } else {
-    ShapeVector counts_shape = {0};
-    (void)elements.emplace_back(std::make_shared<AbstractTensor>(idx_type, counts_shape));
-  }
-  return std::make_shared<AbstractTuple>(elements);
 }
 
 AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -550,19 +433,6 @@ AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePt
   const std::string op_name = primitive->name();
   CheckRequiredArgsSize(op_name, args_spec_list, kScatterSubInputNum);
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector shape = x->shape()->shape();
-  ShapeVector min_shape = x->shape()->min_shape();
-  ShapeVector max_shape = x->shape()->max_shape();
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
-}
-
-AbstractBasePtr InferImplScatterElements(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, kSizeThree);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
@@ -1302,55 +1172,6 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
   ShapePtr shape = std::make_shared<Shape>(output_shape, min_shape, max_shape);
 
   return std::make_shared<AbstractTensor>(range_start_type, shape);
-}
-
-AbstractBasePtr InferImplSort(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-
-  TypePtrList supported_types = {kFloat16, kFloat32};
-  (void)CheckTensorDType(input, supported_types, "input for Sort should be %s");
-
-  ValuePtr axis_ptr = primitive->GetAttr("axis");
-  int64_t axis = GetValue<int64_t>(axis_ptr);
-  int64_t input_rank = input->shape()->shape().size();
-  if (input_rank == 0) {
-    MS_LOG(EXCEPTION) << "input must be a Tensor with dimension > 0.";
-  }
-
-  if (!(axis >= -input_rank && axis < input_rank)) {
-    MS_LOG(EXCEPTION) << "axis is not in the valid range [" << -input_rank << ", " << input_rank << ").";
-  }
-
-  auto sorted_values = std::make_shared<AbstractTensor>(input->element(), input->shape());
-  TypePtr idx_type = kInt32;
-  auto indices = std::make_shared<AbstractTensor>(idx_type, input->shape());
-  AbstractBasePtrList result = {sorted_values, indices};
-  return std::make_shared<AbstractTuple>(result);
-}
-
-AbstractBasePtr InferImplMaskedSelect(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  const size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  AbstractTensorPtr x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  AbstractTensorPtr mask = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-
-  auto x_shape = x->shape();
-  auto mask_shape = mask->shape();
-  auto broadcast_shape = BroadcastShape(x_shape->shape(), mask_shape->shape());
-  ShapeVector y_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape;
-  ShapeVector max_shape;
-  if (!IsDynamic(x_shape->shape())) {
-    int64_t max_size = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
-    max_shape = {max_size};
-    min_shape = {1};
-  }
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(y_shape, min_shape, max_shape));
 }
 
 AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

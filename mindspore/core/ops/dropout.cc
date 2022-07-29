@@ -39,7 +39,6 @@ float Dropout::get_keep_prob() const {
   auto value_ptr = this->GetAttr(kKeepProb);
   return GetValue<float>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameDropout, Dropout);
 AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<abstract::AbstractBasePtr> &args_spec_list) {
   auto op_name = primitive->name();
@@ -55,5 +54,6 @@ AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const Prim
   AbstractBasePtrList ret = {output_shape, output_shape};
   return std::make_shared<abstract::AbstractTuple>(ret);
 }
+REGISTER_PRIMITIVE_EVAL_IMPL(Dropout, prim::kPrimDropout, InferImplDropout, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

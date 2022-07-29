@@ -235,10 +235,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimIsConsant, R{InferImplIsConstant, nullptr, true}},
     // Maths
     {prim::kPrimMatMul, R{InferImplMatMul, nullptr, true}},
-    {prim::kPrimBatchMatMul, R{InferImplBatchMatMul, nullptr, true}},
-    {prim::kPrimMaximumGrad, R{InferImplMinOrMaxGrad, nullptr, true}},
-    {prim::kPrimMinimumGrad, R{InferImplMinOrMaxGrad, nullptr, true}},
-    {prim::kPrimSqrt, R{InferImplSqrt, nullptr, true}},
     {prim::kPrimRealInner, R{InferImplReal, nullptr, true}},
     // Array
     {prim::kPrimRange, R{InferImplRange, nullptr, true}},
@@ -248,7 +244,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUnique, R{InferImplUnique, nullptr, true}},
     {prim::kPrimUniqueWithPad, R{InferImplUniqueWithPad, nullptr, true}},
     {prim::kPrimUniqueGrad, R{InferImplUniqueGrad, nullptr, true}},
-    {prim::kPrimUniqueConsecutive, R{InferImplUniqueConsecutive, nullptr, true}},
     {prim::kPrimEmbeddingLookup, R{InferImplEmbeddingLookup, nullptr, true}},
     {prim::kPrimSparseGatherV2, R{InferImplGatherV2, nullptr, true}},
     {prim::kPrimUnsortedSegmentMax, R{InferImplUnsortedSegmentMax, nullptr, true}},
@@ -266,8 +261,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMapUniform, R{InferImplMapUniform, nullptr, true}},
     {prim::kPrimSplit, R{InferImplSplit, nullptr, true}},
     {prim::kPrimSequenceMask, R{InferImplSequenceMask, nullptr, true}},
-    {prim::kPrimSort, R{InferImplSort, nullptr, true}},
-    {prim::kPrimMaskedSelect, R{InferImplMaskedSelect, nullptr, true}},
     {prim::kPrimTensorCopySlices, R{InferImplTensorCopySlices, nullptr, true}},
     {prim::kPrimFlattenConcat, R{InferImplFlattenConcat, nullptr, true}},
     {prim::kPrimOCRRecognitionPreHandle, R{InferImplOCRRecognitionPreHandle, nullptr, true}},
@@ -295,11 +288,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimPoolingGrad, R{InferImplPoolingGrad, nullptr, true}},
     {prim::kPrimBatchNorm, R{InferImplBatchNorm, nullptr, true}},
     {prim::kPrimBpropCut, R{InferImplBpropCut, nullptr, true}},
-    {prim::kPrimDropout, R{InferImplDropout, nullptr, true}},
-    {prim::kPrimSparseApplyFtrl, R{InferImplSparseApplyFtrl, nullptr, true}},
     {prim::kPrimSparseApplyProximalAdagrad, R{InferImplSparseApplyProximalAdagrad, nullptr, true}},
     {prim::kPrimSGD, R{InferImplSGD, nullptr, true}},
-    {prim::kPrimCTCGreedyDecoder, R{InferImplCTCGreedyDecoder, nullptr, true}},
     {prim::kPrimHSigmoid, R{InferImplHSigmoid, nullptr, true}},
     {prim::kPrimHSigmoidGrad, R{InferImplHSigmoidGrad, nullptr, true}},
     // Others
@@ -352,10 +342,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // RL Ops
     {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
     {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, true}},
-
-    // RPC Ops
-    {prim::kPrimRpcRecv, R{ops::RpcRecvInfer, nullptr, true}},
-    {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
   };
   return prim_eval_implement_map;
 }
