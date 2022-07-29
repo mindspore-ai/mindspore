@@ -89,7 +89,7 @@ DeviceQueueOp::~DeviceQueueOp() {
 
 #ifdef ENABLE_GPUQUE
 void DeviceQueueOp::ReleaseData(void *addr, int32_t worker_id) {
-  if (addr != nullptr) {
+  if (addr != nullptr && worker_id >= 0 && worker_id < pool_.size()) {
     pool_[worker_id]->Deallocate(addr);
   }
 }
@@ -277,15 +277,10 @@ Status DeviceQueueOp::SendDataToAscend() {
 #endif
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
     }
-    if (curr_row.eoe() && send_epoch_end_) {
-      TensorRow dummy_row;
-      auto status =
-        tdtInstancePtr->hostPush(dummy_row, is_profiling_enable, &tdt_cost, ACL_TENSOR_DATA_END_OF_SEQUENCE);
 
-      RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, &is_break_loop));
-      MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
-      stop_send_ = true;
-    }
+    // send epoch end flag: ACL_TENSOR_DATA_END_OF_SEQUENCE to tdt
+    RETURN_IF_NOT_OK(SendEpochEndToAscend(curr_row, is_profiling_enable, &tdt_cost, &is_break_loop));
+
 #ifndef ENABLE_SECURITY
     if (is_profiling_enable) {
       connector_size = ChildOpConnectorSize();
@@ -304,6 +299,21 @@ Status DeviceQueueOp::SendDataToAscend() {
   tree_->SetFinished();
   MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
 
+  return Status::OK();
+}
+
+Status DeviceQueueOp::SendEpochEndToAscend(const TensorRow &curr_row, const bool &is_profiling_enable,
+                                           int32_t *tdt_cost, bool *is_break_loop) {
+  RETURN_UNEXPECTED_IF_NULL(tdt_cost);
+  RETURN_UNEXPECTED_IF_NULL(is_break_loop);
+  if (curr_row.eoe() && send_epoch_end_ && tdtInstancePtr->acl_handle_ != nullptr) {
+    TensorRow dummy_row;
+    auto status = tdtInstancePtr->hostPush(dummy_row, is_profiling_enable, tdt_cost, ACL_TENSOR_DATA_END_OF_SEQUENCE);
+
+    RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, is_break_loop));
+    MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
+    stop_send_ = true;
+  }
   return Status::OK();
 }
 
