@@ -69,11 +69,6 @@ CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType o
                                          Complex<T3> *y, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<T> *x0,
-                                         const Complex<T> *x1, Complex<T> *y, cudaStream_t stream);
-
-
-template <typename T>
 CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                   const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
                                   bool *y, cudaStream_t stream);
@@ -87,15 +82,6 @@ template <typename T1, typename T2, typename T3>
 CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T1 *x0,
                                            const T2 *x1, Complex<T3> *y, cudaStream_t stream);
-template <typename T>
-CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0,
-                                           const T *x1, Complex<T> *y, cudaStream_t stream);
-template <typename T>
-CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                           const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                           const Complex<T> *x0, const Complex<T> *x1, Complex<T> *y,
-                                           cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
