@@ -40,8 +40,8 @@ abstract::ShapePtr LrnGradInferShape(const PrimitivePtr &primitive, const std::v
   auto grad_out_shape = grad_out_shape_map[kShape];
   // Check LrnGrad input shape equal to 4D.
   constexpr int64_t input_rank = 4;
-  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+                                                  primitive->name());
   if (input_shape == grad_out_shape) {
     return std::make_shared<abstract::Shape>(input_shape);
   }
@@ -106,7 +106,7 @@ AbstractBasePtr LrnGradInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto type = LrnGradInferType(primitive, input_args);
   auto shape = LrnGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

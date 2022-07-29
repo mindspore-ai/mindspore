@@ -46,8 +46,8 @@ int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   end_shape_ = inputs.at(kIndex1)->GetShapeVector();
   weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), decltype(output_shape_)::value_type(1),
-                                 std::multiplies{});
+  output_size_ = LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(),
+                                            decltype(output_shape_)::value_type(1), std::multiplies{}));
   return KRET_OK;
 }
 

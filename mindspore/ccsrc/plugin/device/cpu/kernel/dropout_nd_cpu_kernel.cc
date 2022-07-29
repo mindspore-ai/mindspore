@@ -109,8 +109,7 @@ int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspaces,
+bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -127,25 +126,23 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
     return true;
   }
-  int inner_size = SizeToInt(input_elements_ / channels_);
+  size_t inner_size = input_elements_ / channels_;
   // Get channel index over all samples.
   CTask task;
   int ret_code = EOK;
-  task = [this, &input, &output, &mask, &inner_size, &ret_code](size_t start_, size_t end_) {
-    auto start = SizeToInt(start_);
-    auto end = SizeToInt(end_);
+  task = [this, &input, &output, &mask, &inner_size, &ret_code](size_t start, size_t end) {
     auto per_input = input + start * inner_size;
     auto per_output = output + start * inner_size;
     auto per_mask = mask + start * inner_size;
-    for (int i = start; i < end; ++i) {
+    for (size_t i = start; i < end; ++i) {
       bool drop = static_cast<float>(distribution_(generator_)) <= keep_prob_;
       if (drop) {
         std::fill(per_mask, per_mask + inner_size, drop);
         if constexpr (std::is_same<T, float>::value) {
-          DropoutFp32(per_input, scale_, inner_size, per_output);
+          DropoutFp32(per_input, scale_, SizeToInt(inner_size), per_output);
         } else {
-          for (int j = 0; j < inner_size; ++j) {
-            per_output[j] = scale_ * per_input[j];
+          for (size_t j = 0; j < inner_size; ++j) {
+            per_output[j] = static_cast<T>(scale_) * per_input[j];
           }
         }
       } else {
