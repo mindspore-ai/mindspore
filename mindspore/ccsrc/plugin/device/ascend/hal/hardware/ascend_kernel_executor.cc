@@ -307,7 +307,7 @@ bool AscendKernelExecutor::PySyncRuning() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream()) {
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream(0)) {
     return false;
   }
   return true;
@@ -435,7 +435,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   MS_EXCEPTION_IF_NULL(ascend_instance);
   if ((ascend_instance->GetNetDynamicShapeStatus() ||
        ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
-      ascend_instance->GetProfilingEnableFlag()) {
+      ascend_instance->GetEnableFlag()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type);
   }
 

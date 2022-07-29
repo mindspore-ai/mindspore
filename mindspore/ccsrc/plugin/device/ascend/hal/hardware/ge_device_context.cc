@@ -380,7 +380,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   }
 }
 
-bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
+bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
@@ -400,7 +400,8 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
 }
 
 bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
-                               std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
+                               std::vector<tensor::Tensor> *outputs,
+                               const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "GE run graph " << graph->ToString() << " start.";
   // copy input from device to host
@@ -585,9 +586,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
                  << ", dump step is " << dump_parser.iteration_string() << ".";
   }
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  if (profiler_manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Profiler manager is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(profiler_manager);
   (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
   if (profiler_manager->GetProfilingEnableFlag()) {
     (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();

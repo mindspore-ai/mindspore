@@ -34,6 +34,7 @@ constexpr size_t kExtraReservedMemory = 10485760;   // 10mb
 constexpr double kHalfRatio = 0.5;
 // The Ascend max available device memory is 32GB.
 constexpr float kAscendMaxDeviceMemory = 32;
+constexpr uint64_t kOverflowAddrSize = 512;
 
 size_t AscendMemAdapter::GetRoundDownAlignSize(size_t input_size) {
   return (input_size / kAscendMemAlignSize) * kAscendMemAlignSize;
@@ -175,10 +176,18 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   return memory_block_ptr;
 }
 
-uint8_t *AscendMemAdapter::MallocOverflowMem(size_t size) {
-  auto memory_block_ptr = MallocStaticDevMem(size, "overflow_memory");
-  MS_EXCEPTION_IF_NULL(memory_block_ptr);
-  return memory_block_ptr;
+uint8_t *AscendMemAdapter::MallocOverflowMem(const CNodePtr &kernel) {
+  std::lock_guard<std::mutex> locker(overflow_mutex_);
+  auto funcGraph = kernel->func_graph();
+  MS_EXCEPTION_IF_NULL(funcGraph);
+  if (overflow_memory_info_map_.find(funcGraph->ToString()) != overflow_memory_info_map_.cend()) {
+    return overflow_memory_info_map_.find(funcGraph->ToString())->second;
+  } else {
+    auto overflow_memory_ptr = MallocStaticDevMem(kOverflowAddrSize, "overflow memory ptr");
+    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
+    overflow_memory_info_map_.insert({funcGraph->ToString(), overflow_memory_ptr});
+    return overflow_memory_ptr;
+  }
 }
 
 void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }
