@@ -205,6 +205,7 @@ constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kApplyRMSProp = "ApplyRMSProp";
 constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 constexpr auto kSparseApplyAdagrad = "SparseApplyAdagrad";
+constexpr auto kSparseApplyAdagradV2 = "SparseApplyAdagradV2";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 constexpr auto kMish = "Mish";
@@ -708,6 +709,7 @@ GVAR_DEF(PrimitivePtr, kSoftmaxGradExt, std::make_shared<Primitive>("SoftmaxGrad
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdadelta, std::make_shared<Primitive>(kSparseApplyAdadelta));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyCenteredRMSProp, std::make_shared<Primitive>(kSparseApplyCenteredRMSProp));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagrad, std::make_shared<Primitive>("SparseApplyAdagrad"));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradV2, std::make_shared<Primitive>("SparseApplyAdagradV2"));
 GVAR_DEF(PrimitivePtr, kSquareSumV1, std::make_shared<Primitive>("SquareSumV1"));
 GVAR_DEF(PrimitivePtr, kFusedMulAdd, std::make_shared<Primitive>("FusedMulAdd"));
 GVAR_DEF(PrimitivePtr, kPrimSoftShrink, std::make_shared<Primitive>("SoftShrink"));

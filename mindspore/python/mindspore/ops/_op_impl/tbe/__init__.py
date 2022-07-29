@@ -452,6 +452,7 @@ from .reduce_all import _reduce_all_tbe
 from .reduce_any import _reduce_any_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .sparse_apply_adagrad_ds import _sparse_apply_adagrad_ds
+from .sparse_apply_adagrad_v2_ds import _sparse_apply_adagrad_v2_ds
 from .unsorted_segment_min import _unsorted_segment_min_tbe
 from .unsorted_segment_min_ds import _unsorted_segment_min_ds_tbe
 from .unsorted_segment_max import _unsorted_segment_max_tbe

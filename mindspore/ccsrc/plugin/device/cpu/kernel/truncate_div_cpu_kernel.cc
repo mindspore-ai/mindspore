@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/truncate_div_cpu_kernel.h"
 
+#include <limits>
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -74,7 +75,22 @@ bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   if (input_shape_1_ == input_shape_2_) {
     auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        output_addr[i] = static_cast<T>(input_addr_a[i] / input_addr_b[i]);
+        auto dividend = input_addr_a[i];
+        auto divisor = input_addr_b[i];
+        auto zero = (T)0;
+        if (divisor == zero) {
+          if (dividend == zero) {
+            output_addr[i] = std::numeric_limits<T>::quiet_NaN();
+            continue;
+          }
+          if (std::numeric_limits<T>::has_infinity) {
+            output_addr[i] = dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+          } else {
+            output_addr[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+          }
+          continue;
+        }
+        output_addr[i] = static_cast<T>(dividend / divisor);
       }
     };
     ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
@@ -84,7 +100,22 @@ bool TruncateDivCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       auto iter = base_iter;
       iter.SetPos(start);
       for (size_t i = start; i < end; ++i) {
-        output_addr[i] = static_cast<T>(input_addr_a[iter.GetInputPosA()] / input_addr_b[iter.GetInputPosB()]);
+        auto dividend = input_addr_a[iter.GetInputPosA()];
+        auto divisor = input_addr_b[iter.GetInputPosB()];
+        auto zero = (T)0;
+        if (divisor == zero) {
+          if (dividend == zero) {
+            output_addr[i] = std::numeric_limits<T>::quiet_NaN();
+            continue;
+          }
+          if (std::numeric_limits<T>::has_infinity) {
+            output_addr[i] = dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+          } else {
+            output_addr[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+          }
+          continue;
+        }
+        output_addr[i] = static_cast<T>(dividend / divisor);
         iter.GenNextPos();
       }
     };
