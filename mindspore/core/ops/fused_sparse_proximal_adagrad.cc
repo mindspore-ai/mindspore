@@ -55,17 +55,17 @@ abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr 
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "accum shape", accum_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("indices rank", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   // grad_shape[0] == indices_shape[0]
-  (void)CheckAndConvertUtils::CheckInteger("grad rank", grad_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad rank", SizeToLong(grad_shape.size()), kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue("grad_shape[0]", grad_shape[0], kEqual, "indices_shape[0]", indices_shape[0],
                                          prim_name);
   // grad_shape[1:] == var_shape[1:] while grad_shape[0] == indices_shape[0]
   if (var_shape.size() > 1) {
     auto left_shape = var_shape;
     auto right_shape = grad_shape;
-    left_shape.erase(left_shape.begin());
-    right_shape.erase(right_shape.begin());
+    (void)left_shape.erase(left_shape.begin());
+    (void)right_shape.erase(right_shape.begin());
     (void)CheckAndConvertUtils::CheckValue("var_shape[1:]", left_shape, kEqual, "grad_shape[1:]", right_shape,
                                            prim_name);
   }
@@ -114,8 +114,9 @@ AbstractBasePtr FusedSparseProximalAdagradInfer(const abstract::AnalysisEnginePt
     MS_EXCEPTION_IF_NULL(item);
   }
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
-                                           fused_sparse_proximal_adagrad::kFusedSparseProximalAdagradInputNum, op_name);
+  (void)CheckAndConvertUtils::CheckInteger(
+    "input numbers", SizeToLong(input_args.size()), kGreaterEqual,
+    SizeToLong(fused_sparse_proximal_adagrad::kFusedSparseProximalAdagradInputNum), op_name);
   auto types = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferType(primitive, input_args);
   auto shapes = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
