@@ -40,7 +40,7 @@ class MIND_API MatrixBandPart : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixBandPart);
   MatrixBandPart() : BaseOperator(kNameMatrixBandPart) { InitIOName({"x"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
