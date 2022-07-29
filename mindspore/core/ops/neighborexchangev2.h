@@ -28,7 +28,7 @@ class MIND_API NeighborExchangeV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NeighborExchangeV2);
   NeighborExchangeV2() : BaseOperator(kNameNeighborExchangeV2) {}
-  void Init() {}
+  void Init() const {}
 };
 using kPrimNeighborExchangeV2Ptr = std::shared_ptr<NeighborExchangeV2>;
 
