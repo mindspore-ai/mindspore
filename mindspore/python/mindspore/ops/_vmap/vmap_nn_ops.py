@@ -1177,6 +1177,119 @@ def get_max_pool3d_with_argmax_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyRMSProp)
+def get_rmsprop_vmap_rule(prim, axis_size):
+    """VmapRule for `ApplyRMSProp` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim_name = prim.name
+
+    def vmap_rule(var_bdim, mean_square_bdim, moment_bdim, lr_bdim, grad_bdim, decay_bdim, momentum_bdim,
+                  epsilon_bdim, u_monad):
+        var, var_dim = var_bdim
+        mean_square, mean_square_dim = mean_square_bdim
+        moment, moment_dim = moment_bdim
+        grad, grad_dim = grad_bdim
+        lr, lr_dim = lr_bdim
+        decay, decay_dim = decay_bdim
+        momentum, momentum_dim = momentum_bdim
+        epsilon, epsilon_dim = epsilon_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in
+                   [mean_square_dim, moment_dim, grad_dim, lr_dim, decay_dim, momentum_dim, epsilon_dim]):
+                raise ValueError("The source axis of 'var' is None, but the source "
+                                 "axis of 'mean_square/moment/lr/grad/decay/momentum/epsilon'"
+                                 " is not None. The execution order of "
+                                 "operator '{}' cannot be guaranteed.".format(prim_name))
+
+            res = prim(var, mean_square, moment, lr, grad, decay, momentum, epsilon,
+                       u_monad)  # low dimensional operator;
+            return (res, None)
+        if var_dim != 0 or var_dim != mean_square_dim or var_dim != moment_dim or var_dim != grad_dim:
+            raise ValueError(
+                f"For '{prim_name}', the source axis of 'var' must be equal to 'mean_square_dim' "
+                f"and 'moment_dim' and 'grad_dim' and not equal to 0, "
+                f"but got the source axis of 'var': {var_dim}, "
+                f"'mean_square_dim': {mean_square_dim}, "
+                f"'moment_dim': {moment_dim},"
+                f"'gradient_dim':{grad_dim}.")
+
+        mean_square = _bdim_at_front(mean_square, mean_square_dim, axis_size)
+        moment = _bdim_at_front(moment, moment_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+
+        res = batch_prim(var, mean_square, moment, lr, grad, decay, momentum, epsilon,
+                         u_monad)  # High dimensional operator;
+
+        return (res, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.ApplyCenteredRMSProp)
+def get_apply_centered_rmsprop_vmap_rule(prim, axis_size):
+    """VmapRule for `ApplyCenteredRMSProp` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(var_bdim, mean_grad_bdim, mean_square_bdim, mom_bdim, grad_bdim, lr_bdim, rho_bdim,
+                  momentum_bdim, eps_bdim, u_monad):
+        var, var_dim = var_bdim
+        mean_grad, mean_grad_dim = mean_grad_bdim
+        mean_square, mean_square_dim = mean_square_bdim
+        mom, mom_dim = mom_bdim
+        grad, grad_dim = grad_bdim
+        lr, lr_dim = lr_bdim
+        rho, rho_dim = rho_bdim
+        momentum, momentum_dim = momentum_bdim
+        eps, eps_dim = eps_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in
+                   [mean_grad_dim, mean_square_dim, mom_dim, grad_dim, lr_dim, rho_dim,
+                    momentum_dim, eps_dim]):
+                raise ValueError("The source axis of 'var' is None, but the source "
+                                 "axis of 'mean_gradient/mean_square/mom/grad/lr/rho/momentum/eps'"
+                                 " is not None. The execution order of "
+                                 "operator '{}' cannot be guaranteed.".format(prim_name))
+            var = prim(var, mean_grad, mean_square,
+                       mom, grad, lr, rho, momentum, eps, u_monad)
+            return (var, None)
+
+        if var_dim != 0 or var_dim != mean_grad_dim or var_dim != mean_square_dim or var_dim != mom_dim:
+            raise ValueError(
+                f"For '{prim_name}', the source axis of 'var' must be equal to 'mean_grad_dim' "
+                f"and 'mean_square_dim' and 'mom_dim' and not equal to 0, "
+                f"but got the source axis of 'var': {var_dim}, "
+                f"'mean_grad_dim': {mean_grad_dim}, "
+                f"'mean_square_dim': {mean_square_dim},"
+                f"'mom_dim': {mom_dim}.")
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        rho = _bdim_at_front(rho, rho_dim, axis_size)
+        momentum = _bdim_at_front(momentum, momentum_dim, axis_size)
+        eps = _bdim_at_front(eps, eps_dim, axis_size)
+
+        var = batch_prim(var, mean_grad, mean_square,
+                         mom, grad, lr, rho, momentum, eps, u_monad)
+        return (var, 0)
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

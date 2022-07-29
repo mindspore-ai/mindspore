@@ -3087,30 +3087,6 @@ class ApplyRMSProp(PrimitiveWithInfer):
                                         'rho', 'momentum', 'epsilon'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, mean_square_shape, moment_shape, learning_rate_shape, grad_shape, decay_shape,
-                    momentum_shape, epsilon_shape):
-        validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
-        return var_shape
-
-    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, learning_rate_dtype, grad_dtype, decay_dtype,
-                    momentum_dtype, epsilon_dtype):
-        args = {"var": var_dtype, "mean_square": mean_square_dtype, "moment": moment_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args_decay = {"decay": decay_dtype, 'momentum': momentum_dtype, "epsilon": epsilon_dtype}
-        validator.check_types_same_and_valid(args_decay, valid_dtypes, self.name)
-        args_lr = {"learning_rate": learning_rate_dtype, "decay": decay_dtype}
-        validator.check_scalar_or_tensor_types_same(args_lr, valid_dtypes, self.name, allow_mix=True)
-        return var_dtype
-
-    def infer_value(self, var, mean_square, moment, learning_rate, grad, decay, momentum, epsilon):
-        if decay is None or momentum is None or epsilon is None:
-            raise ValueError(f"For '{self.name}', 'decay', 'momentum' and 'epsilon' can not be None, "
-                             f"but got 'decay': {decay}, 'momentum': {momentum} and 'epsilon':{epsilon}.")
-
 
 class ApplyCenteredRMSProp(Primitive):
     r"""
@@ -8658,7 +8634,7 @@ class ApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class ApplyAdagradDANet(nn.Cell):
