@@ -25,15 +25,14 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
+enum CumOpType { CUMMIN = 0, CUMMAX, CUM_OP_INVALID_TYPE = 255 };
+
 namespace mindspore {
 namespace kernel {
-constexpr auto kCummin = "Cummin";
-constexpr auto kCummax = "Cummax";
-constexpr auto kUnKnown = "UnKnown";
 class CumMinMaxCpuKernelMod : public NativeCpuKernelMod {
  public:
   CumMinMaxCpuKernelMod() = default;
-  explicit CumMinMaxCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit CumMinMaxCpuKernelMod(const CumOpType &cum_op_type) : cum_op_type_(cum_op_type) {}
   ~CumMinMaxCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -52,22 +51,19 @@ class CumMinMaxCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t GetRealIndex(size_t index);
-
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   using CumMinMaxLaunchFunc = std::function<bool(CumMinMaxCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &)>;
-  static std::map<std::string, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
+  static std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
   CumMinMaxLaunchFunc kernel_func_;
   BaseOperatorPtr base_operator_;
-  int64_t inner_size_{1};
-  int64_t outer_size_{1};
-  int64_t axis_size_{1};
-  int64_t element_size_{1};     // Avoid repeated calculation
-  int64_t axis_inner_size_{1};  // Avoid repeated calculation
-  std::string kernel_type_{kUnKnown};
+  CumOpType cum_op_type_{CUM_OP_INVALID_TYPE};
+  int64_t axis_{0};
+  size_t inner_size_{1};
+  size_t outer_size_{1};
+  size_t axis_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

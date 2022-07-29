@@ -2016,7 +2016,7 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
@@ -3897,6 +3897,7 @@ __all__ = [
     'scatter_nd_sub',
     'scatter_nd_mul',
     'scatter_nd_div',
+    'scatter_nd_max',
     'scatter_nd_min',
     'tensor_scatter_add',
     'tensor_scatter_sub',
@@ -3911,6 +3912,7 @@ __all__ = [
     'gather_d',
     'gather_nd',
     'one_hot',
+    'index_fill',
     'masked_fill',
     'masked_select',
     'scatter_add',

@@ -1506,13 +1506,7 @@ def get_tensor_scatter_elements_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(IndexFill)
 def get_index_fill_rule(prim, axis_size):
     """VmapRule for `IndexFill` operation."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
-    else:
-        batch_rank = 1
-
-    batch_prim = IndexFill()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim_vmap = _VmapGeneralRule(prim, axis_size)
 
     def vmap_rule(x_bdim, dim_bdim, index_bdim, value_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, dim_bdim, index_bdim, value_bdim)
@@ -1523,13 +1517,12 @@ def get_index_fill_rule(prim, axis_size):
         dim, dim_dim = dim_bdim
         index, index_dim = index_bdim
         value, value_dim = value_bdim
+        if dim_dim is not None or index_dim is not None or value_dim is not None:
+            return prim_vmap(x_bdim, dim_bdim, index_bdim, value_bdim)
 
         x = _bdim_at_front(x, x_dim, axis_size)
-        dim = _bdim_at_front(dim, dim_dim, axis_size)
-        index = _bdim_at_front(index, index_dim, axis_size)
-        value = _bdim_at_front(value, value_dim, axis_size)
-
-        out = batch_prim(x, dim, index, value)
+        new_dim = F.select(dim < 0, dim, dim + 1)
+        out = prim(x, new_dim, index, value)
         return out, 0
 
     return vmap_rule

@@ -61,6 +61,10 @@ void IndexFill(DataType *out_ptr, const int *index_ptr, int64_t index_size, int6
   }
 }
 
+template CUDA_LIB_EXPORT void IndexFill<bool>(bool *out_ptr, const int *index_ptr, int64_t index_size,
+                                              int64_t outer_size, int64_t dim_size, int64_t inner_size,
+                                              const bool *value_ptr, bool *out_bound_ptr, const uint32_t &device_id,
+                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void IndexFill<uint8_t>(uint8_t *out_ptr, const int *index_ptr, int64_t index_size,
                                                  int64_t outer_size, int64_t dim_size, int64_t inner_size,
                                                  const uint8_t *value_ptr, bool *out_bound_ptr,
