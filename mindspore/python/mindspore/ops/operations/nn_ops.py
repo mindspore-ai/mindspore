@@ -3970,7 +3970,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
-             not case sensitive. If 'none', do not perform reduction. Default:'mean'.
+             not case sensitive. If 'none', do not perform reduction. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -3984,13 +3984,15 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
           Data type must be float16 or float32.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is `none`, it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
+        TypeError: If any input is not Tensor.
         TypeError: If data type of any input is neither float16 nor float32.
+        TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of `none`, `mean` or `sum`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

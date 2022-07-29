@@ -335,6 +335,7 @@ Array操作
 
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.batch_to_space_nd
+    mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
@@ -350,6 +351,7 @@ Array操作
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
+    mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
     mindspore.ops.narrow
     mindspore.ops.nonzero

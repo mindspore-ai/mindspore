@@ -5372,8 +5372,8 @@ class LogMatrixDeterminant(Primitive):
         >>> op = LogMatrixDeterminant()
         >>> sign, output = op(input_x)
         >>> print(sign)
-        >>> print(output)
         [-1.   1.]
+        >>> print(output)
         [2.80336046e+00    3.04452229e+00]
     """
 
