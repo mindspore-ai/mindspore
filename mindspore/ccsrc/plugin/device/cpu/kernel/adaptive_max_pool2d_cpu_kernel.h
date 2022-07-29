@@ -28,11 +28,11 @@
 namespace mindspore {
 namespace kernel {
 static inline size_t start_index(size_t dim, size_t output_range, size_t input_range) {
-  return static_cast<size_t>(std::floor(static_cast<float>(dim * input_range) / static_cast<float>(output_range)));
+  return static_cast<size_t>(std::floor(dim * input_range / static_cast<float>(output_range)));
 }
 
 static inline size_t end_index(size_t dim, size_t output_range, size_t input_range) {
-  return static_cast<size_t>(std::ceil(static_cast<float>((dim + 1) * input_range) / static_cast<float>(output_range)));
+  return static_cast<size_t>(std::ceil((dim + 1) * input_range / static_cast<float>(output_range)));
 }
 
 class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
