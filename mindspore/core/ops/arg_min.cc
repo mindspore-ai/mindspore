@@ -101,7 +101,8 @@ abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   return abstract::MakeAbstract(ArgMinInferShape(primitive, input_args), ArgMinInferType(primitive, input_args));
 }
 
