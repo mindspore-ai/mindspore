@@ -30,9 +30,9 @@ struct ComputeParams {
   T *x_{nullptr};
   int *indices_{nullptr};
   T *updates_{nullptr};
-  int unit_size_{0};
-  int indices_unit_rank_{0};
-  std::vector<int> *out_strides_{nullptr};
+  size_t unit_size_{0};
+  size_t indices_unit_rank_{0};
+  std::vector<size_t> *out_strides_{nullptr};
   size_t x_mem_size_{0};
 };
 
@@ -55,10 +55,10 @@ class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
-  int unit_size_{0};
+  size_t unit_size_{0};
   size_t num_units_{0};
-  int indices_unit_rank_{0};
-  std::vector<int> out_strides_;
+  size_t indices_unit_rank_{0};
+  std::vector<size_t> out_strides_;
 };
 
 class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
