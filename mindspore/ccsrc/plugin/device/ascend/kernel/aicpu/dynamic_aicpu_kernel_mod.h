@@ -43,7 +43,7 @@ class DynamicAicpuOpKernelMod : public AicpuOpKernelMod {
 
  private:
   void AllocateExtInfoDeviceAddr(const CNodePtr &cnode);
-  bool UpdateOutputShapeFromExtInfo(const CNodePtr &cnode);
+  void UpdateOutputShapeFromExtInfo(const CNodePtr &cnode);
 
   std::shared_ptr<device::ascend::AicpuExtInfoHandler> ext_info_handler_ = nullptr;
   size_t ext_info_size_ = 0;

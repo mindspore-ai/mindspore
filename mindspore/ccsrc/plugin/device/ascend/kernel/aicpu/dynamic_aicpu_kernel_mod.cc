@@ -87,14 +87,14 @@ int DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return 0;
   }
 
-  for (size_t i = 0; i < input_num; ++i) {
+  for (uint32_t i = 0; i < input_num; ++i) {
     if (!ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode))) {
       MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
     }
   }
 
   if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
-    for (size_t i = 0; i < output_num; ++i) {
+    for (uint32_t i = 0; i < output_num; ++i) {
       if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
         MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
       }
@@ -205,7 +205,7 @@ void DynamicAicpuOpKernelMod::SyncData() {
   UpdateOutputShapeFromExtInfo(cnode);
 }
 
-bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {
+void DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "UpdateOutputShapeFromExtInfo start. Op name " << cnode->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
@@ -217,12 +217,11 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
     std::vector<int64_t> shape;
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
-    type_ids.emplace_back(type_id);
+    (void)type_ids.emplace_back(type_id);
     (void)shapes.emplace_back(shape);
   }
 
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
-  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
