@@ -16,13 +16,8 @@
 
 #include "ops/fusion/add_fusion.h"
 #include <string>
-#include <algorithm>
 #include <memory>
-#include <vector>
-#include <map>
-
 #include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
