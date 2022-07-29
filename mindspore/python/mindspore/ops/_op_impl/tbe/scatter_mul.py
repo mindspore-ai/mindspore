@@ -23,6 +23,8 @@ scatter_mul_op_info = TBERegOp("ScatterMul") \
     .compute_cost(10) \
     .kernel_name("scatter_mul") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("use_locking", "optional", "bool", "all") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \

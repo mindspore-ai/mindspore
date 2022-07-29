@@ -543,6 +543,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.ScatterAdd)
+@vmap_rules_getters.register(P.ScatterMul)
 @vmap_rules_getters.register(P.ScatterMin)
 @vmap_rules_getters.register(P.ScatterMax)
 @vmap_rules_getters.register(P.ScatterDiv)
@@ -557,12 +558,13 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 def get_scatter_op_vmap_rule(prim, axis_size):
     """
     VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd`, `ScatterMin` and `ScatterMax`.
-    sactter_func_map: high-dimensional implementation for recording Scatter class operators
+    scatter_func_map: high-dimensional implementation for recording Scatter class operators
     and ScatterNd class operators.
-    sactter_func_list: used to record all Scatter class operators.
+    scatter_func_list: used to record all Scatter class operators.
     """
-    sactter_func_map = {
+    scatter_func_map = {
         "ScatterAdd": P.ScatterNdAdd,
+        "ScatterMul": P.array_ops.ScatterNdMul,
         "ScatterMin": P.ScatterNdMin,
         "ScatterMax": P.ScatterNdMax,
         "ScatterDiv": P.ScatterNdDiv,
@@ -575,7 +577,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
         "ScatterNdUpdate": P.ScatterNdUpdate,
         "ScatterUpdate": P.ScatterNdUpdate
     }
-    sactter_func_list = ["ScatterAdd", "ScatterMin", "ScatterMax", "ScatterDiv", "ScatterUpdate"]
+    scatter_func_list = ["ScatterAdd", "ScatterMul", "ScatterMin", "ScatterMax", "ScatterDiv", "ScatterUpdate"]
     if isinstance(prim, str):
         prim_name = prim
         prim = Primitive(prim)
@@ -584,7 +586,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
         prim_name = prim.name
         use_locking = prim.use_locking
 
-    scatter_func = sactter_func_map.get(prim_name)(use_locking)
+    scatter_func = scatter_func_map.get(prim_name)(use_locking)
     concat = P.Concat(-1)
 
     def vmap_rule(ref_bdim, indices_bdim, updates_bdim, u_monad):
@@ -601,7 +603,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
         elif ref_dim == 0:
             indices = _bdim_at_front(indices, indices_dim, axis_size)
             updates = _bdim_at_front(updates, updates_dim, axis_size)
-            if prim_name in sactter_func_list:
+            if prim_name in scatter_func_list:
                 indices = F.expand_dims(indices, -1)
 
             indices_shape = F.shape(indices)
