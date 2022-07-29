@@ -116,7 +116,7 @@ int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
   output_outer_size_ = 1;
   for (size_t i = 0; i < output_shape.size() - kDim2; i++) {
-    output_outer_size_ *= output_shape[i];
+    output_outer_size_ *= LongToSize(output_shape[i]);
   }
   output_element_num_ = output_outer_size_ * m_ * n_;
 
@@ -195,7 +195,7 @@ bool MatrixBandPartCpuKernelMod::LaunchKernelBroadcast(const T *x_ptr, const LU 
       if ((lower < 0 || (ii - jj) <= lower) && (upper < 0 || (jj - ii) <= upper)) {
         output_ptr[i] = x_value;
       } else {
-        output_ptr[i] = 0;
+        output_ptr[i] = static_cast<T>(0.0);
       }
       iter.GenNextPos();
     }
@@ -214,8 +214,7 @@ bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   auto output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
 
   if (need_broadcast_) {
-    LaunchKernelBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);
-    return true;
+    return LaunchKernelBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);
   } else {
     return LaunchKernelNotBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);
   }

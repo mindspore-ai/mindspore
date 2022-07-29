@@ -38,7 +38,7 @@ void ImplSqrt(void *origin, void *target, size_t size) {
     if constexpr (std::is_same_v<T, float16>) {
       target_data[i] = sqrt(origin_data[i]);
     } else {
-      target_data[i] = std::sqrt(origin_data[i]);
+      target_data[i] = static_cast<T>(std::sqrt(origin_data[i]));
     }
   }
 }
@@ -49,7 +49,7 @@ abstract::ShapePtr SqrtInferShape(const PrimitivePtr &primitive, const std::vect
   constexpr int64_t kNumber1 = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kNumber1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();

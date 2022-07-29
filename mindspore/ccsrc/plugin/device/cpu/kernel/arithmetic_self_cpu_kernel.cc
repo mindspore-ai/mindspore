@@ -182,7 +182,6 @@ template <typename T>
 void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, float16>)) {
     MS_LOG(EXCEPTION) << "'Invert' cannot be instantiated.";
-    return;
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
@@ -459,7 +458,6 @@ void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Abs' cannot be instantiated.";
-    return;
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
@@ -515,7 +513,6 @@ void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t 
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";
-    return;
   } else if constexpr (std::is_same_v<T, float>) {
     auto task = [&in, &out](size_t start, size_t end) { (void)SoftsignFp32Opt(in + start, end - start, out + start); };
     constexpr float min_batch_size = 5000;
@@ -523,7 +520,7 @@ void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t 
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        out[i] = in[i] / (1.0 + abs(in[i]));
+        out[i] = in[i] / (static_cast<T>(1.0) + abs(in[i]));
       }
     };
     constexpr float min_batch_size = 1024;
@@ -705,7 +702,9 @@ class SqrtMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
 
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
-    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+    if (!EltWiseCpuKernelMod::Init(base_operator, inputs, outputs)) {
+      MS_LOG(EXCEPTION) << "For 'Sqrt', init failed.";
+    }
   }
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -728,7 +727,9 @@ class LogMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
   ~LogMKLKernelFunc() override = default;
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
-    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+    if (!EltWiseCpuKernelMod::Init(base_operator, inputs, outputs)) {
+      MS_LOG(EXCEPTION) << "For 'Log', init failed.";
+    }
   }
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -751,7 +752,9 @@ class ExpMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
   ~ExpMKLKernelFunc() override = default;
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
-    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+    if (!EltWiseCpuKernelMod::Init(base_operator, inputs, outputs)) {
+      MS_LOG(EXCEPTION) << "For 'Exp', init failed.";
+    }
   }
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -775,7 +778,9 @@ class TanhMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
 
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
-    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+    if (!EltWiseCpuKernelMod::Init(base_operator, inputs, outputs)) {
+      MS_LOG(EXCEPTION) << "For 'Tanh', init failed.";
+    }
   }
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
