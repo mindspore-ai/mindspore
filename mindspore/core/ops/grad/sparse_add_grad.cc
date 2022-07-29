@@ -49,9 +49,8 @@ inline void CheckSparseAddGradNNZ(const int64_t indices_nnz, const int64_t value
                                   const std::string &value_name, const std::string &op_name) {
   if (indices_nnz != value_nnz) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", the length of " << indices_name << " and "
-                                        << value_name << " must be same, but got"
-                                        << "length of " << indices_name << " is " << indices_nnz << ", and length of "
-                                        << value_name << " is " << value_nnz;
+                                        << value_name << " must be same, but got length of " << indices_name << " is "
+                                        << indices_nnz << ", and length of " << value_name << " is " << value_nnz;
   }
 }
 
@@ -124,8 +123,10 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   }
   auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->BuildShape());
   (void)CheckSparseAddGradShape(sum_shape[kShape].size(), kIndicesShapeSize, "sum_indices", name);
-  (void)CheckSparseAddGradNNZ(sum_shape[kShape][0], val_grad_shape[kShape][0], "sum_indices", "backprop_val_grad",
-                              name);
+  if (sum_shape[kShape][0] >= 0 && val_grad_shape[kShape][0] >= 0) {
+    (void)CheckSparseAddGradNNZ(sum_shape[kShape][0], val_grad_shape[kShape][0], "sum_indices", "backprop_val_grad",
+                                name);
+  }
   AbstractBasePtrList ret = {dx1, dx2};
   return std::make_shared<AbstractTuple>(ret);
 }
