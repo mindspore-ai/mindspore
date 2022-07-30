@@ -23,6 +23,7 @@ namespace kernel {
 namespace {
 constexpr size_t kDepthToSpaceInputsNum = 1;
 constexpr size_t kDepthToSpaceOutputsNum = 1;
+constexpr size_t kDepthToSpaceInputDimension = 4;
 }  // namespace
 
 void DepthToSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -46,6 +47,11 @@ bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDepthToSpaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDepthToSpaceOutputsNum, kernel_name_);
+  auto input_rank = input_shape_.size();
+  if (input_rank != kDepthToSpaceInputDimension) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input should have a rank of 4, but got input of rank "
+                      << input_rank;
+  }
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t size = inputs[0]->size / sizeof(T);
