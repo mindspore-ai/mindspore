@@ -29,14 +29,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t kIndexFillInputsNum = 4;
-constexpr int64_t kIndexFillOutputsNum = 1;
 TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kIndexFillInputsNum, prim_name);
+  constexpr int64_t input_num = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
 
-  const std::set<TypePtr> valid_data_types = common_valid_types_with_bool;
+  const std::set<TypePtr> valid_data_types = common_valid_types_with_complex_and_bool;
   const std::set<TypePtr> valid_dim_types = {kInt32, kInt64};
 
   // Input 'dim' can be scalar or tensor.
@@ -47,7 +46,7 @@ TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto index_type = input_args[kInputIndex2]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("index", index_type, {kInt32}, prim_name);
 
-  // Input 'x' must must be a tensor.
+  // Input 'x' must be a tensor.
   auto x_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_data_types, prim_name);
 
