@@ -63,7 +63,7 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto updates_shape = inputs.at(kIndex2)->GetShapeVector();
   const auto indices_rank = indices_shape.size();
-  const auto last_indices_value = indices_shape.back();
+  const auto last_indices_value = LongToSize(indices_shape.back());
   const auto update_rank = updates_shape.size();
   constexpr size_t min_indices_rank = 2;
   slice_size_ = last_indices_value;
@@ -98,8 +98,10 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-inline void ComputeFunc(const string &kernel_name, MatrixXd<T> eigen_output, size_t out_index, MatrixXd<T> eigen_update,
-                        size_t upd_index) {
+inline void ComputeFunc(const string &kernel_name, MatrixXd<T> eigen_output, size_t output_index,
+                        MatrixXd<T> eigen_update, size_t update_index) {
+  auto out_index = SizeToLong(output_index);
+  auto upd_index = SizeToLong(update_index);
   switch (OpMap[kernel_name]) {
     case Op::ADD:
       eigen_output.row(out_index) += eigen_update.row(upd_index);
@@ -154,8 +156,8 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
   for (size_t i = 0; i < batch_size_; ++i) {
     size_t out_index = 0;
     for (size_t j = 0; j < slice_size_; ++j) {
-      S idx_index = eigen_indices(i, j);
-      out_index += batch_strides_[j] * idx_index;
+      S idx_index = eigen_indices(SizeToLong(i), SizeToLong(j));
+      out_index += batch_strides_[j] * static_cast<size_t>(idx_index);
       if (idx_index < 0 || idx_index >= static_cast<S>(input_shape_[j])) {
         invalid_index_pos = SizeToLong(i * slice_size_);
         break;
@@ -174,7 +176,7 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
         indices_ss << ", ";
         input_shape_ss << ", ";
       }
-      indices_ss << std::to_string(indices[invalid_index_pos + i]);
+      indices_ss << std::to_string(indices[LongToSize(invalid_index_pos) + i]);
       input_shape_ss << std::to_string(input_shape_[i]);
     }
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the " << invalid_index_pos << "-th value of 'indices'["
