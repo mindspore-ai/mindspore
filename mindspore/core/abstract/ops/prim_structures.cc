@@ -300,38 +300,6 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractList>(items);
 }
 
-AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a list and an object of a subclass of AbstractBase.
-  const std::string op_name = primitive->name();
-  constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractListPtr list = CheckArg<AbstractList>(op_name, args_spec_list, 0);
-  AbstractBasePtr item = dyn_cast<AbstractBase>(args_spec_list[1]);
-  MS_EXCEPTION_IF_NULL(item);
-  auto new_list = AbstractBasePtrList(list->elements());
-  (void)new_list.emplace_back(item);
-  MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-  if (enable_eliminate_unused_element && list->sequence_nodes() != nullptr) {
-    for (auto &weak_node : *list->sequence_nodes()) {
-      auto node = weak_node.lock();
-      if (node == nullptr) {
-        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
-        continue;
-      }
-      // Add one element in flag list.
-      auto flags = GetSequenceNodeElementsUseFlags(node);
-      MS_EXCEPTION_IF_NULL(flags);
-      if (flags->size() >= new_list.size()) {
-        continue;
-      }
-      (void)flags->emplace_back(false);
-    }
-  }
-  return std::make_shared<AbstractList>(new_list, list->sequence_nodes());
-}
-
 AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   return InferTupleOrListOrDictLen<AbstractTuple>(primitive->name(), args_spec_list);
