@@ -3039,8 +3039,8 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodeP
                        [](auto x) { return x - 1; });
   size_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
-  size_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1UL, std::multiplies<size_t>());
-  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1UL, std::multiplies<size_t>());
+  int64_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
+  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<size_t>());
   MS_EXCEPTION_IF_CHECK_FAIL(value_size == flat_end_index - flat_begin_index, "Cannot copy 'value' to target slice");
 
   auto flat_x_name = node_name + "_flat_x";
@@ -3048,8 +3048,7 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodeP
   auto begin_slice_name = node_name + "_begin_slice";
   AddSliceOp(flat_x_name, begin_slice_name, {0}, {static_cast<int64_t>(flat_begin_index)}, {0}, {1}, graph_proto);
   auto end_slice_name = node_name + "_end_slice";
-  AddSliceOp(flat_x_name, end_slice_name, {static_cast<int64_t>(flat_end_index)}, {static_cast<int64_t>(x_size)}, {0},
-             {1}, graph_proto);
+  AddSliceOp(flat_x_name, end_slice_name, {static_cast<int64_t>(flat_end_index)}, {x_size}, {0}, {1}, graph_proto);
 
   auto flat_value_name = node_name + "_flat_value";
   AddReshapeOp(value_input_name, flat_value_name, {-1}, graph_proto);
