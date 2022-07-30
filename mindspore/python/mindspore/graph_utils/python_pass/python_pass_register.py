@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Python pass register"""
+from __future__ import absolute_import
 from inspect import isfunction
 from mindspore.graph_utils.graph_pattern import Pattern, NewParameter
 from mindspore._c_expression import PyPassManager_

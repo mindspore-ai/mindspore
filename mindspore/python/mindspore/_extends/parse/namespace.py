@@ -16,6 +16,7 @@
 # ============================================================================
 """Define the namespace of parse."""
 
+from __future__ import absolute_import
 import builtins
 
 from mindspore import log as logger
