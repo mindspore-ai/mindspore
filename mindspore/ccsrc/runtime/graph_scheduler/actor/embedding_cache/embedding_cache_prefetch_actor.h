@@ -109,9 +109,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool WaitGraphRun();
 
   // Parse the hit and swap information of the currently preprocessed id in the device cache.
-  bool ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
+  bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
-  bool ParseHostDataHostToDevice(size_t id);
+  bool ParseHostDataHostToDevice(int id);
   // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
   bool ParseHostDataDeviceToHost();
 
@@ -181,7 +181,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Wait response of remote and get return result.
   // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
   std::unique_ptr<std::vector<char>> ReceiveFromRemote(const std::string &cache_operation, int32_t param_key,
-                                                       size_t server_rank_id);
+                                                       size_t server_rank_id) const;
   // Retrieve embeddings by input ids order.
   bool RetrieveEmbeddings(const int *ids, size_t ids_num, const std::vector<std::vector<int>> &slice_ids_list,
                           const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list,
@@ -251,9 +251,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   size_t stream_id_{0};
 
   // The embedding cache look up kernel node(operator name: 'Gather').
-  CNodePtr embedding_cache_lookup_node_;
+  CNodePtr embedding_cache_lookup_node_{nullptr};
   // The embedding cache update kernel node(operator name: 'ScatterUpdate').
-  CNodePtr embedding_cache_update_node_;
+  CNodePtr embedding_cache_update_node_{nullptr};
 
   // Cache embeding cache ops kernel graphs.
   std::vector<KernelGraphPtr> embedding_cache_graphs_;
@@ -269,10 +269,10 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Record the public information of all device embedding cache tables, such as the mapping relationship of id to
   // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_;
+  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_{nullptr};
   // Record the public information of all local host embedding cache tables, such as the mapping relationship of id to
   // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_;
+  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_{nullptr};
 
   // Statistics on the cache hit rate of the host and device and the information used to update cache.
   EmbeddingCacheStatisticsInfo statistics_info_;
@@ -313,7 +313,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   size_t data_step_{0};
 
   // Dataset channel name, used in dataset switching scenarios.
-  std::string channel_name_;
+  std::string channel_name_{""};
   // The mutex to access channel_name_.
   std::mutex channel_mutex_;
 
@@ -334,7 +334,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool host_cache_need_wait_graph_{false};
 
   // Record latest error information user related.
-  std::string error_info_;
+  std::string error_info_{""};
 };
 
 // RpcOperator is used to do rpc with other processes in distributed execution.

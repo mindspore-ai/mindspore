@@ -18,6 +18,7 @@
 
 #include <dirent.h>
 #include <algorithm>
+#include <map>
 #include <utility>
 
 #include "nlohmann/json.hpp"
@@ -73,6 +74,10 @@ void RemoveAllCkptFiles(const std::string &directory, const std::vector<std::str
   }
 }
 }  // namespace
+
+bool IsEnableRecovery() { return common::GetEnv(kEnvEnableRecovery) == std::string("1"); }
+
+std::string RecoveryPath() { return common::GetEnv(kEnvRecoveryPath); }
 
 void RecoveryContext::Initialize() {
   if (initialized_) {
@@ -213,7 +218,7 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
 
   // 5. Remove useless ckpt
   for (int i = SizeToInt(ckpt_files_.size()) - 1; i >= 0; i--) {
-    const auto &last_ckpt_name = ckpt_files_[i];
+    const auto &last_ckpt_name = ckpt_files_[IntToSize(i)];
     const auto &last_ckpt_file = GetCkptPath() + "/" + last_ckpt_name;
     if (last_ckpt_file != latest_ckpt_file_) {
       (void)remove(last_ckpt_file.c_str());
