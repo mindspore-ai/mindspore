@@ -843,14 +843,7 @@ Status ModelPool::InitAdvancedStrategy(const char *model_buf, size_t size, int b
   return kSuccess;
 }
 
-Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  size_t size = 0;
-  auto model_buf = lite::ReadFile(model_path.c_str(), &size);
-  if (model_buf == nullptr) {
-    MS_LOG(ERROR) << "read ms model failed, model path: " << model_path;
-    return kLiteNullptr;
-  }
-
+Status ModelPool::Init(const char *model_buf, size_t size, const std::shared_ptr<RunnerConfig> &runner_config) {
   auto status = InitNumaParameter(runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Init numa parameter failed.";
@@ -885,6 +878,27 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
     free_tasks_id_.push(i);
+  }
+  return kSuccess;
+}
+
+Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shared_ptr<RunnerConfig> &runner_config) {
+  return Init(model_data, size, runner_config);
+}
+
+Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  size_t size = 0;
+  auto model_buf = lite::ReadFile(model_path.c_str(), &size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "read ms model failed, model path: " << model_path;
+    return kLiteNullptr;
+  }
+  auto status = Init(model_buf, size, runner_config);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "init failed.";
+    delete[] model_buf;
+    model_buf = nullptr;
+    return kLiteError;
   }
   if (model_buf != nullptr) {
     delete[] model_buf;

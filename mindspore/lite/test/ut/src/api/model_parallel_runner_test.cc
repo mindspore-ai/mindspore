@@ -23,6 +23,7 @@ namespace {
 const char in_data_path[] = "./mobilenetv2.ms.bin";
 const char model_path[] = "./mobilenetv2.ms";
 const size_t kInputDataSize = 1 * 224 * 224 * 3 * sizeof(float);
+const size_t kOutputDataSize = 1 * 1001 * sizeof(float);
 
 void SetInputTensorData(std::vector<MSTensor> *inputs) {
   ASSERT_EQ(inputs->size(), 1);
@@ -188,6 +189,54 @@ TEST_F(ModelParallelRunnerTest, RunnerPredict) {
   for (auto &tensor : inputs) {
     char *data = static_cast<char *>(tensor.MutableData());
     delete[] data;
+    tensor.SetData(nullptr);
+  }
+}
+
+TEST_F(ModelParallelRunnerTest, RunnerInitByBuf) {
+  auto config = std::make_shared<RunnerConfig>();
+  ASSERT_NE(nullptr, config);
+
+  auto context = std::make_shared<Context>();
+  ASSERT_NE(nullptr, context);
+  auto &device_list = context->MutableDeviceInfo();
+  auto device_info = std::make_shared<mindspore::CPUDeviceInfo>();
+  ASSERT_NE(nullptr, device_info);
+  device_list.push_back(device_info);
+  ASSERT_EQ(device_list.size(), 1);
+  config->SetContext(context);
+  config->SetWorkersNum(2);
+  ModelParallelRunner runner;
+
+  size_t size = 0;
+  auto model_buf = lite::ReadFile(model_path, &size);
+  ASSERT_NE(nullptr, model_buf);
+  auto status = runner.Init(model_buf, size, config);
+  delete[] model_buf;  // after init, users can release buf data
+  ASSERT_EQ(status, kSuccess);
+  auto inputs = runner.GetInputs();
+  SetInputTensorData(&inputs);
+  std::vector<MSTensor> outputs;
+  for (auto &tensor : outputs) {
+    auto tensor_size = tensor.DataSize();
+    ASSERT_NE(0, tensor_size);
+    ASSERT_EQ(tensor_size, kOutputDataSize);
+    auto data = malloc(tensor_size);
+    ASSERT_NE(nullptr, data);
+    tensor.SetShape({1, 1001});
+    tensor.SetData(data);
+  }
+  status = runner.Predict(inputs, &outputs);
+  ASSERT_EQ(status, kSuccess);
+  // free user data
+  for (auto &tensor : inputs) {
+    char *input_data = static_cast<char *>(tensor.MutableData());
+    delete[] input_data;
+    tensor.SetData(nullptr);
+  }
+  for (auto &tensor : outputs) {
+    auto *output_data = tensor.MutableData();
+    free(output_data);
     tensor.SetData(nullptr);
   }
 }

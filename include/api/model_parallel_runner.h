@@ -92,6 +92,16 @@ class MS_API ModelParallelRunner {
   /// \return Status.
   inline Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
+  /// \brief build a model parallel runner from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] data_size Define bytes number of model buffer.
+  /// \param[in] runner_config Define the config used to store options during model pool init.
+  ///
+  /// \return Status.
+  Status Init(const void *model_data, const size_t data_size,
+              const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+
   /// \brief Obtains all input tensors information of the model.
   ///
   /// \return The vector that includes all input tensors.
