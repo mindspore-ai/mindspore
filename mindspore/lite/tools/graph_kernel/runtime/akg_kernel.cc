@@ -163,5 +163,10 @@ int AkgKernel::Run() {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)
 }  // namespace mindspore::kernel

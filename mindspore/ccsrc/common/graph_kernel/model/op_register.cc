@@ -116,6 +116,7 @@ OP_REGISTER("StridedSlice", StridedSliceOp);
 OP_REGISTER("Concat", ConcatOp);
 OP_REGISTER("Gather", GatherOp);
 OP_REGISTER("Shape", ShapeOp);
+OP_REGISTER("ConstantOfShape", ConstantOfShapeOp);
 OP_REGISTER("TensorScatterAdd", OpaqueOp);
 OP_REGISTER("GatherNd", OpaqueOp);
 OP_REGISTER("UnsortedSegmentSum", OpaqueOp);
