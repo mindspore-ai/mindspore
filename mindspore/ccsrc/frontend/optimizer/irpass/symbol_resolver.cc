@@ -32,6 +32,7 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
 
     // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
     if (IsPrimitiveCNode(object_node, prim::kPrimResolve)) {
+      // node is get_attr node
       return parse::ResolveSymbolWithAttr(optimizer->manager(), object_node, attr_node, node);
     }
     // {prim::kPrimGetAttr, namespace, attr}
