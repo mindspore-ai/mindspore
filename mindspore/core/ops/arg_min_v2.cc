@@ -53,9 +53,9 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
       MS_EXCEPTION_IF_NULL(axis_ptr_list);
       axis_ptr_value_list = axis_ptr_list->value();
     }
-    if (!axis_ptr_value_list.size()) {
+    if (axis_ptr_value_list.size() < 1) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', element of 'axis' must not be noe if it is one of these types: [tuple/list].";
+                        << "', element of 'axis' must not be none if it is one of these types: [tuple/list].";
     } else {
       (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
       ValuePtrList axis_items = axis_ptr_value_list;
@@ -152,7 +152,8 @@ abstract::AbstractBasePtr ArgminV2Infer(const abstract::AnalysisEnginePtr &, con
                                         const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   return abstract::MakeAbstract(ArgminV2InferShape(primitive, input_args), ArgminV2InferType(primitive, input_args));
 }
 
