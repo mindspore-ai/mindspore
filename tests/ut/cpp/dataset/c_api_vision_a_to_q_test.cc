@@ -2139,3 +2139,58 @@ TEST_F(MindDataTestPipeline, TestPadToSizeInvalid) {
   // Expect failure: Invalid offset value
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: Solarize
+/// Description: Test default usage
+/// Expectation: The returned result is as expected
+TEST_F(MindDataTestPipeline, TestSolarize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSolarize.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  EXPECT_NE(ds, nullptr);
+
+  std::vector<float> threshold = {1.0, 255.0};
+  auto solarize_op = vision::Solarize(threshold);
+
+  ds = ds->Map({solarize_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: Solarize
+/// Description: Test parameter check
+/// Expectation: Error logs are as expected
+TEST_F(MindDataTestPipeline, TestSolarizeInvalidFillValue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSolarizeInvalidFillValue.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  std::vector<float> threshold = {150, 100};
+  auto solarize_op = vision::Solarize(threshold);
+
+  ds = ds->Map({solarize_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

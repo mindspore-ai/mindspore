@@ -70,7 +70,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_augment, che
     check_random_affine, check_random_auto_contrast, check_random_color_adjust, check_random_crop, \
     check_random_erasing, check_random_perspective, check_random_resize_crop, check_random_rotation, \
     check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
-    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_ten_crop, \
+    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, \
     check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
@@ -3290,6 +3290,40 @@ class SlicePatches(ImageTensorOperation):
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
                                          SliceMode.to_c_type(self.slice_mode), self.fill_value)
+
+
+class Solarize(ImageTensorOperation):
+    """
+    Solarize the image by inverting all pixel values within the threshold.
+
+    Args:
+        threshold (Union[float, tuple[float, float]]): Range of solarize threshold, should always
+            be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
+            If min=max, then invert all pixel values above min(max).
+
+    Raises:
+        TypeError: If `threshold` is not of type float or tuple[float, float].
+        ValueError: If `threshold` is not in range of [0, 255].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.Solarize(threshold=(10, 100))]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_solarize
+    def __init__(self, threshold):
+        super().__init__()
+        if isinstance(threshold, (float, int)):
+            threshold = (threshold, threshold)
+        self.threshold = threshold
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.SolarizeOperation(self.threshold)
 
 
 class TenCrop(PyTensorOperation):

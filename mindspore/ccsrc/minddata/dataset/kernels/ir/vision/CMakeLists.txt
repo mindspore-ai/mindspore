@@ -57,6 +57,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         rgba_to_rgb_ir.cc
         rotate_ir.cc
         slice_patches_ir.cc
+        solarize_ir.cc
         swap_red_blue_ir.cc
         to_tensor_ir.cc
         uniform_aug_ir.cc
