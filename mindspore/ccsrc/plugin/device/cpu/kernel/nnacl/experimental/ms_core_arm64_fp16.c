@@ -17,10 +17,18 @@
 #ifdef ENABLE_FP16
 #include "nnacl/experimental/ms_core.h"
 #include "nnacl/fp16/exp_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/kernel/matmul_experimental.h"
 
 void InitFp16Core(CoreFuncs *funcs_) {
   funcs_->pack = C8NUM;
   funcs_->byte = sizeof(float16_t);
   funcs_->ExpFusion = ExpFusionFp16;
+  funcs_->ExpMatmulTile = InitExpMMFp16TileCount;
+  funcs_->PackNcX = PackNCHWFp32ToNC8HW8Fp16;
+  funcs_->UnPackNcX = PackNC8HW8ToNCHWFp16;
+  funcs_->ExpMatmulPackIn = PackExpMatmulInFp16;
+  funcs_->ExpMatmulBlock = ExpMatMulBlockFp16;
+  funcs_->ExpMatMulRemain = ExpMatmulRemainFp16;
 }
 #endif

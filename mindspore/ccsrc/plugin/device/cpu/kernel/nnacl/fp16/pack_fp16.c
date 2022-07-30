@@ -325,7 +325,9 @@ void PackNC4HW4ToNCHWFp16(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
-void PackNCHWFp32ToNC8HW8Fp16(const float *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNCHWFp32ToNC8HW8Fp16(const void *src_ptr, void *dst_ptr, int batch, int plane, int channel) {
+  const float *src = (const float *)src_ptr;
+  float16_t *dst = (float16_t *)dst_ptr;
   int c8 = UP_DIV(channel, C8NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -344,7 +346,9 @@ void PackNCHWFp32ToNC8HW8Fp16(const float *src, float16_t *dst, int batch, int p
   }
 }
 
-void PackNCHWFp16ToNC8HW8Fp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNCHWFp16ToNC8HW8Fp16(const void *src_ptr, void *dst_ptr, int batch, int plane, int channel) {
+  const float16_t *src = (const float16_t *)src_ptr;
+  float16_t *dst = (float16_t *)dst_ptr;
   int c8 = UP_DIV(channel, C8NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -358,6 +362,26 @@ void PackNCHWFp16ToNC8HW8Fp16(const float16_t *src, float16_t *dst, int batch, i
         int src_kernel_offset = src_c_offset + k;
         int dst_kernel_offset = dst_c_offset + C8NUM * k + c8_block_rem;
         (dst + dst_kernel_offset)[0] = (float16_t)(src + src_kernel_offset)[0];
+      }
+    }
+  }
+}
+
+void PackNC8HW8ToNCHWFp16(const void *src_ptr, void *dst_ptr, int batch, int plane, int channel) {
+  const float16_t *src = (const float16_t *)src_ptr;
+  float16_t *dst = (float16_t *)dst_ptr;
+  int c8 = UP_ROUND(channel, C8NUM);
+  for (int b = 0; b < batch; b++) {
+    const float16_t *batch_src = src + b * plane * c8;
+    float16_t *batch_dst = dst + b * plane * channel;
+
+    for (size_t c = 0; c < channel; c++) {
+      size_t c_div = c / C8NUM;
+      size_t c_mod = c % C8NUM;
+      for (size_t p = 0; p < plane; p++) {
+        int src_offset = c_div * plane * C8NUM + p * C8NUM + c_mod;
+        int dst_offset = c * plane + p;
+        batch_dst[dst_offset] = batch_src[src_offset];
       }
     }
   }

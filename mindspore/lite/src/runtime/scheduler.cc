@@ -517,6 +517,7 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
         MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] "
                       << "TypeId(" << kernel->desc().data_type << "); "
                       << "OpType(" << PrimitiveCurVersionTypeName(kernel->desc().type) << "); "
+                      << "format(" << kernel->desc().format << "); "
                       << "arch(" << kernel->desc().arch << ")";
       }
     }

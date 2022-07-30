@@ -75,6 +75,15 @@ int conv1x1_exp_compute(struct KernelBase *self) {
 
 KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
                           FormatC format) {
+  if (format == Format_NHWC) {
+    return NULL;
+  }
+
+  ConvParameter *conv_param = (ConvParameter *)param;
+  if (conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) {
+    return NULL;
+  }
+
   Conv1x1Stru *conv1x1 = (Conv1x1Stru *)malloc(sizeof(Conv1x1Stru));
   conv1x1->base.param = param;
   conv1x1->base.in = in;
@@ -83,13 +92,10 @@ KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, Tensor
   conv1x1->base.outsize = outsize;
   conv1x1->base.env = GetExecEnv();
   conv1x1->base.funcs = GetCoreFuncs(data_type == kNumberTypeFloat16);
-
-  if (format == Format_NC4HW4) {
-    conv1x1->base.prepare = conv1x1_exp_prepare;
-    conv1x1->base.resize = conv1x1_exp_resize;
-    conv1x1->base.release = conv1x1_exp_release;
-    conv1x1->base.compute = conv1x1_exp_compute;
-  }
+  conv1x1->base.prepare = conv1x1_exp_prepare;
+  conv1x1->base.resize = conv1x1_exp_resize;
+  conv1x1->base.release = conv1x1_exp_release;
+  conv1x1->base.compute = conv1x1_exp_compute;
 
   return (KernelBase *)conv1x1;
 }

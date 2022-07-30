@@ -279,6 +279,7 @@ int KernelRegistry::ReplaceKernelExec(kernel::KernelExec *kernel_exec, const ker
   lite_kernel->set_name(kernel_exec->name());
   std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
   kernel_exec->RepalceKernel(shared_kernel);
+  kernel_exec->set_desc(key);
   return RET_OK;
 }
 }  // namespace mindspore::lite
