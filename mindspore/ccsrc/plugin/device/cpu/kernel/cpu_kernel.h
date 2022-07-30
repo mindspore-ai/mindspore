@@ -251,7 +251,11 @@ class CPUKernelUtils {
   static ShapeVector FlatShapeByAxis(const ShapeVector &shape, int axis);
   static ShapeVector GetBroadcastShape(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
   static void ParallelForAutoSearch(const CTask &task, size_t count, ParallelSearchInfo *parallel_search_info);
-  static size_t CalcElementNum(const std::vector<size_t> &shape);
+  template <typename T>
+  inline static T CalcElementNum(const std::vector<T> &shape) {
+    T total = std::accumulate(shape.begin(), shape.end(), T(1), std::multiplies<T>());
+    return total;
+  }
 };
 
 class BroadcastIterator {

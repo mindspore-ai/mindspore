@@ -275,11 +275,6 @@ void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, Para
   }
 }
 
-size_t CPUKernelUtils::CalcElementNum(const std::vector<size_t> &shape) {
-  size_t total = std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
-  return total;
-}
-
 ActorThreadPool *GetActorMgrInnerThreadPool() {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);

@@ -40,6 +40,8 @@ from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
 from ..operations.nn_ops import AvgPoolV1
 from ..operations._grad_ops import AvgPoolGradV1
+from ..operations.nn_ops import UpsampleNearest3D
+from ..operations._grad_ops import UpsampleNearest3DGrad
 from ..operations.nn_ops import MaxPoolV1
 from ..operations._grad_ops import MaxPoolGradV1
 from ..operations.nn_ops import ReLUV3
@@ -150,6 +152,20 @@ def get_bprop_multi_margin_loss(self):
     def bprop(x, target, weight, out, dout):
         dx = input_grad(dout, x, target, weight)
         return dx, zeros_like(target), zeros_like(weight)
+
+    return bprop
+
+
+@bprop_getters.register(UpsampleNearest3D)
+def get_bprop_upsample_nearest_3d(self):
+    """Grad definition for `UpsampleNearest3D` operation."""
+    output_size = self.output_size
+    scales = self.scales
+    def bprop(x, out, dout):
+        x_shape = P.Shape()(x)
+        grad_op = UpsampleNearest3DGrad(x_shape, output_size, scales)
+        dx = grad_op(dout)
+        return (dx,)
 
     return bprop
 

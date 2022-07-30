@@ -10330,24 +10330,26 @@ class UpsampleNearest3D(Primitive):
             Default: None.
 
     Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Must be one of the
+          following types: [float16, float32, float64].
 
     Outputs:
         - **y** (Tensor) - Upsampled output with the same data type as `x`.
           Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `x` is not a 5D tensor.
-        TypeError: If data type of `x` is not float16, float32.
-        TypeError: If data type of `output_size` is not list(int).
-        TypeError: If data type of `scales` is not list(float).
-        ValueError: If `output_size` is a list and if `output_size` length is not 3.
-        ValueError: If `scales` is a list and if `scales` length is not 3.
-        ValueError: If both `output_size` and `scales` are None.
-        ValueError: If both `output_size` and `scales` are non-empty lists.
+        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
+        TypeError: If dtype of `x` is not int [float16, float32, float64].
+        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
+        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
+        ValueError: If shape of `x` is not 5D.
+        ValueError: If none of `scales` and `output_size` is specified or both specified.
+        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
+        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
@@ -10372,6 +10374,7 @@ class UpsampleNearest3D(Primitive):
 
     @prim_attr_register
     def __init__(self, output_size=None, scales=None):
+        """Initialize UpsampleNearest3D."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         if output_size is None:
             output_size = []

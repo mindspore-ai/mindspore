@@ -2022,6 +2022,61 @@ class ResizeNearestNeighborV2Grad(Primitive):
         self.add_prim_attr('data_format', self.format)
 
 
+class UpsampleNearest3DGrad(Primitive):
+    r"""
+    Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
+
+    Args:
+        input_size (listInt): An required listInt. contain 5 elements: [min_batch, channels, depth, height, width].
+            Must: input_size[0] == grad_output_tensor_size[0], input_size[1] == grad_output_tensor_size[1].
+        output_size (listInt): An optional listInt. Defaults to none.
+            contain 3 elements: depth, height, width. The number of elements of 'output_size' should
+            be the same as the rank of input 'grad_output'. Only one of 'scales' and 'output_size' can be specified.
+            Must: grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
+            grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
+            grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
+        scales (listFloat): An optional listFloat. Defaults to none.
+            The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
+            The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
+            One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
+    Inputs:
+        - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
+            float16, float32, float64.
+
+    Outputs:
+        Tensor, A 5-D tensor. Has the same type as input grad_output, shape depends on x and output_size/scales.
+
+    Raises:
+        TypeError: If `input_size` is not listInt.
+        TypeError: When `output_size` is not none and `output_size` is not listInt.
+        TypeError: When `scales` is not none and `scales` is not listFloat.
+        TypeError: If dtype of `x` is not int [float16, float32, float64].
+        ValueError: If any value of `input_size` is negative.
+        ValueError: If any value of `output_size` is negative.
+        ValueError: If any value of `scales` is negative.
+        ValueError: If shape of `x` is not 5D.
+
+    Supported Platforms:
+        ``GPU`` ``Ascend`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self, input_size, output_size=None, scales=None):
+        """Initialize UpsampleNearest3DGrad."""
+        self.init_prim_io_names(inputs=['grad_output'], outputs=['y'])
+        validator.check_value_type("input_size", input_size, [list, tuple], self.name)
+        validator.check_positive_int_sequence(input_size, "input_size", self.name)
+        if output_size is not None:
+            validator.check_value_type("output_size", output_size, [list, tuple], self.name)
+            validator.check_positive_int_sequence(output_size, "output_size", self.name)
+        else:
+            self.add_prim_attr("output_size", [])
+        if scales is not None:
+            validator.check_value_type("scales", scales, [list, tuple], self.name)
+            validator.check_positive_float_sequence(scales, "scales", self.name)
+        else:
+            self.add_prim_attr("scales", [])
+
+
 class ROIAlignGrad(PrimitiveWithInfer):
     """
     ROIAlignGrad operator.
@@ -3462,57 +3517,3 @@ class ResizeBicubicGrad(Primitive):
         return {'shape': out_shape,
                 'dtype': original_image_dtype,
                 'value': None}
-
-
-class UpsampleNearest3DGrad(Primitive):
-    """
-    Computes gradients for UpsampleNearest3DGrad operation.
-
-    Args:
-        input_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the forward pass
-            input Tensor size.
-        output_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the output volumetric size.
-            Default: None.
-        scales (Union[tuple[float], list[float]]): A list or tuple of float specifying the upsampling factors.
-            Default: None.
-
-    Inputs:
-        - **dy** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. With float16 or
-            float32 data type.
-
-    Outputs:
-        - **dx** (Tensor) - A 5-D tensor whose dtype and shape are the same as `input_x` and 'dy'.
-
-    Raises:
-        TypeError: If data type of `dy` is not float16, float32.
-        TypeError: If `input_size` is not provided.
-        ValueError: If size of `dy` is not a 5D tensor.
-        ValueError: If `output_size` is a list or tuple and if `output_size` length is not 3.
-        ValueError: If `scales` is a list or tuple and if `scales` length is not 3.
-        ValueError: If both `output_size` and `scales` are None.
-        ValueError: If both `output_size` and `scales` are non-empty lists.
-
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, input_size, output_size=None, scales=None):
-        self.init_prim_io_names(inputs=['dy'], outputs=['dx'])
-        if output_size is None:
-            output_size = []
-        if scales is None:
-            scales = []
-        validator.check_value_type('output_size', output_size, [list, tuple], self.name)
-        for item in output_size:
-            validator.check_value_type('output_size_item', item, int, self.name)
-        validator.check_value_type('scales', scales, [list, tuple], self.name)
-        for item in scales:
-            validator.check_value_type('scales_item', item, float, self.name)
-        validator.check_value_type('input_size', input_size, [list, tuple], self.name)
-        for item in input_size:
-            validator.check_value_type('input_size_item', item, int, self.name)
-        self.add_prim_attr('output_size', output_size)
-        self.add_prim_attr('scales', scales)
-        self.add_prim_attr('input_size', input_size)

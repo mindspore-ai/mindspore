@@ -18,6 +18,7 @@
 
 #include <dirent.h>
 #include <limits>
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -212,6 +213,36 @@ struct HalfPixelFunc {
 
 void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
                                  CachedInterpolation *interpolation);
+
+template <typename T>
+inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {
+  if (scale > 0.) {
+    return static_cast<T>(1.0 / scale);
+  } else if (output_size > 0) {
+    return (static_cast<T>(input_size) / output_size);
+  }
+  return 0;
+}
+
+inline size_t NearestNeighborSourceIndex(const float &scale, const size_t &dst_index, const size_t &input_size) {
+  size_t src_index = std::min(static_cast<size_t>(floorf(dst_index * scale)), input_size - 1);
+  return src_index;
+}
+
+inline size_t NearestIndex(const size_t &output_index, const size_t &input_size, const size_t &output_size,
+                           const double &scales) {
+  constexpr size_t kNumberTwo = 2;
+  if (output_size == input_size) {
+    // scale_factor = 1
+    return output_index;
+  } else if (output_size == kNumberTwo * input_size) {
+    // scale_factor = 2, shift input index
+    return output_index >> 1;
+  } else {
+    float scale = ComputeScales<float>(scales, input_size, output_size);
+    return NearestNeighborSourceIndex(scale, output_index, input_size);
+  }
+}
 
 template <typename T>
 inline std::string Vector2Str(const std::vector<T> &inputs) {

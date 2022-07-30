@@ -367,6 +367,20 @@ class Validator:
         return check_number(arg_value, 0, Rel.GT, float, arg_name, prim_name)
 
     @staticmethod
+    def check_positive_float_sequence(sequence, arg_name=None, prim_name=None):
+        """
+        Check argument is positive sequence, which mean all element > 0 in sequence.
+
+        Usage:
+        - sequence = check_positive_float_sequence(sequence)
+        - sequence = check_positive_float_sequence(sequence, "dims")
+        """
+        for idx, element in enumerate(sequence):
+            arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+            check_number(element, 0, Rel.GT, float, arg_idx, prim_name)
+        return sequence
+
+    @staticmethod
     def check_negative_float(arg_value, arg_name=None, prim_name=None):
         """
         Check argument is negative float, which mean arg_value < 0.

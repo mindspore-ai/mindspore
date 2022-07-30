@@ -15,68 +15,69 @@
  */
 
 #include "ops/upsample_nearest_3d.h"
+#include <algorithm>
+#include <memory>
 #include <set>
+#include <string>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
-#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  const size_t kDimSize5 = 5;
-  if (input_shape.size() != kDimSize5) {
-    MS_EXCEPTION(TypeError) << "input_shape of UpsampleNearest3D must be 5, but got" << input_shape.size();
-  }
-  const size_t kOutputSizeDims = 3;
-  const size_t kScalesDims = 3;
-  auto output_size = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_size"));
-  auto scales = GetValue<std::vector<float>>(primitive->GetAttr("scales"));
-  if (output_size.empty() && scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', either output_size or scales should be defined.";
+  auto prim_name = primitive->name();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+
+  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim5),
+                                           prim_name);
+
+  auto output_size_ptr = primitive->GetAttr(kOutputSize);
+  MS_EXCEPTION_IF_NULL(output_size_ptr);
+  auto output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
+
+  auto scales_ptr = primitive->GetAttr(kScales);
+  MS_EXCEPTION_IF_NULL(scales_ptr);
+  auto scales = GetValue<std::vector<float>>(scales_ptr);
+
+  ShapeVector y_shape;
+  y_shape.emplace_back(x_shape[kInputIndex0]);
+  y_shape.emplace_back(x_shape[kInputIndex1]);
+
+  if (!output_size.empty() && scales.empty()) {
+    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("elements number of output_size", SizeToLong(output_size.size()), kEqual,
+                                             SizeToLong(kDim3), prim_name);
+    y_shape.insert(y_shape.end(), output_size.begin(), output_size.end());
+  } else if (output_size.empty() && !scales.empty()) {
+    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual,
+                                             SizeToLong(kDim3), prim_name);
+    for (size_t idx = 0; idx < kDim3; ++idx) {
+      y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + kDim2] * scales[idx])));
+    }
+  } else if (output_size.empty() && scales.empty()) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                             << " But get both empty or None.";
   } else if (!output_size.empty() && !scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', only one of output_size or scales should be defined.";
-  }
-  if (!output_size.empty() && output_size.size() != kOutputSizeDims) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', output_size must be size of 3, but got "
-                             << std::to_string(output_size.size()) << ".";
-  }
-  if (!scales.empty() && scales.size() != kScalesDims) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', scales must be size of 3, but got "
-                             << std::to_string(scales.size()) << ".";
-  }
-  std::vector<int64_t> output_shape(input_shape.size());
-  output_shape[0] = input_shape[0];
-  output_shape[1] = input_shape[1];
-  if (output_size.empty()) {
-    output_shape[kInputIndex2] = static_cast<int64_t>(std::floor(input_shape[kInputIndex2] * scales[kInputIndex0]));
-    output_shape[kInputIndex3] = static_cast<int64_t>(std::floor(input_shape[kInputIndex3] * scales[kInputIndex1]));
-    output_shape[kInputIndex4] = static_cast<int64_t>(std::floor(input_shape[kInputIndex4] * scales[kInputIndex2]));
-  } else {
-    output_shape[kInputIndex2] = output_size[kInputIndex0];
-    output_shape[kInputIndex3] = output_size[kInputIndex1];
-    output_shape[kInputIndex4] = output_size[kInputIndex2];
-  }
-  if (input_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(output_shape);
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                             << " But get both.";
   }
 
-  for (size_t i = 0; i < output_shape.size(); i++) {
-    (void)CheckAndConvertUtils::CheckInteger("output shape", output_shape[i], kGreaterThan, 0, op_name);
+  for (size_t i = 0; i < y_shape.size(); i++) {
+    (void)CheckAndConvertUtils::CheckInteger("output shape", y_shape[i], kGreaterThan, 0, prim_name);
   }
-  return std::make_shared<abstract::Shape>(output_shape);
+  return std::make_shared<abstract::Shape>(y_shape);
 }
 
 TypePtr UpsampleNearest3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  TypePtr input_type = input_args[kInputIndex0]->BuildType();
-  return CheckAndConvertUtils::CheckTypeValid("x", input_type, valid_types, primitive->name());
+  const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64};
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), common_float_types,
+                                                    primitive->name());
 }
 }  // namespace
 
@@ -84,20 +85,22 @@ MIND_API_OPERATOR_IMPL(UpsampleNearest3D, BaseOperator);
 AbstractBasePtr UpsampleNearest3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  auto infer_type = UpsampleNearest3DInferType(primitive, input_args);
-  auto infer_shape = UpsampleNearest3DInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  auto prim_name = primitive->name();
+  constexpr int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto type = UpsampleNearest3DInferType(primitive, input_args);
+  auto shape = UpsampleNearest3DInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 
 std::vector<int64_t> UpsampleNearest3D::get_output_size_attr() const {
-  auto value_ptr = this->GetAttr("output_size");
+  auto value_ptr = this->GetAttr(kOutputSize);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 std::vector<float> UpsampleNearest3D::get_scales_attr() const {
-  auto value_ptr = this->GetAttr("scales");
+  auto value_ptr = this->GetAttr(kScales);
   return GetValue<std::vector<float>>(value_ptr);
 }
 
