@@ -189,21 +189,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterDiv(T *input, const int *indices,
     for (size_t j = 0; j < inner_size_; j++) {
       auto dividend = input[indices[i] * inner_size_ + j];
       auto divisor = updates[i * inner_size_ + j];
-      if (divisor != 0) {
-        input[indices[i] * inner_size_ + j] = dividend / divisor;
-        continue;
+      if (std::equal_to<T>()(divisor, 0)) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', updates must not contain 0";
       }
-      if (dividend == 0) {
-        input[indices[i] * inner_size_ + j] = std::numeric_limits<T>::quiet_NaN();
-        continue;
-      }
-      if (std::numeric_limits<T>::has_infinity) {
-        input[indices[i] * inner_size_ + j] =
-          dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-      } else {
-        input[indices[i] * inner_size_ + j] =
-          dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-      }
+      input[indices[i] * inner_size_ + j] = dividend / divisor;
     }
   }
 }
