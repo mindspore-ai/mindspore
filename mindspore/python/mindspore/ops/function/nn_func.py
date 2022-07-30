@@ -1190,6 +1190,82 @@ def pad(input_x, paddings):
     return slice_(out, slice_begin, slice_size)
 
 
+def mirror_pad(input_x, paddings, mode):
+    """
+    Pads the input tensor according to the paddings and mode.
+
+    Args:
+        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
+            Default: "REFLECT".
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions.
+        - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
+          matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
+          are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
+          to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]
+          indicates how many sizes to be extended behind the input tensor in the `D` th dimension. Both
+          paddings[D, 0] and paddings[D, 1] must be no greater than input_x.dim_size(D)
+          (or input_x.dim_size(D) - 1) if mode is SYMMETRIC (if REFLECT, respectively).
+
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+        - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
+          If the `input_x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
+          `Outputs` is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
+          For a more intuitive understanding, please see the example below.
+        - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the `Outputs` is
+          [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
+          For a more intuitive understanding, please see the example below.
+
+    Raises:
+        TypeError: If `input_x` or `paddings` is not a Tensor.
+        TypeError: If `mode` is not a str.
+        ValueError: If paddings.size is not equal to 2 * rank of input_x.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, nn, ops
+        >>> # case1: mode="REFLECT"
+        >>> class Net(nn.Cell):
+        ...    def __init__(self, mode):
+        ...        super(Net, self).__init__()
+        ...        self.pad = ops.MirrorPad(mode=mode)
+        ...        self.paddings = Tensor([[1, 1], [2, 2]])
+        ...    def construct(self, input_x):
+        ...        return self.pad(input_x, self.paddings)
+        ...
+        >>> input_x = Tensor([[1,2,3], [4,5,6], [7,8,9]])
+        >>> pad = Net("REFLECT")
+        >>> output = pad(input_x)
+        >>> print(output)
+        [[6 5 4 5 6 5 4]
+         [3 2 1 2 3 2 1]
+         [6 5 4 5 6 5 4]
+         [9 8 7 8 9 8 7]
+         [6 5 4 5 6 5 4]]
+        >>> # case2: mode="SYMMETRIC"
+        >>> pad = Net("SYMMETRIC")
+        >>> output = pad(input_x)
+        >>> print(output)
+        [[2 1 1 2 3 3 2]
+         [2 1 1 2 3 3 2]
+         [5 4 4 5 6 6 5]
+         [8 7 7 8 9 9 8]
+         [8 7 7 8 9 9 8]]
+    """
+
+    _mirror_pad = _get_cache_prim(P.MirrorPad)(mode)
+    return _mirror_pad(input_x, paddings)
+
+
 def _innner_log_softmax(inputs, axis):
     """inner implementation of log_softmax, since the LogSoftmaxGrad op do not support inputs > 2d"""
     return inputs - logsumexp(inputs, axis, True)
@@ -1928,6 +2004,7 @@ __all__ = [
     'selu',
     'pdist',
     'pad',
+    'mirror_pad',
     'cross_entropy',
     'grid_sample',
     'smooth_l1_loss',
