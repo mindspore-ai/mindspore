@@ -451,13 +451,13 @@ class GpuFrameWorkParser:
             framework_file_path = validate_and_normalize_path(framework_file_path)
             with open(framework_file_path, 'r') as f_obj:
                 framework_info = f_obj.readlines()
-                for line_info in framework_info:
-                    line_info = line_info.strip(' ').strip('\n').split(';')
-                    input_shape = ':'.join(line_info[2:]).split(':')[1::2]
-                    # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
-                    item = [line_info[0], line_info[1], input_shape, op_side]
-                    if item not in self.framework_list:
-                        self.framework_list.append(item)
+            for line_info in framework_info:
+                line_info = line_info.strip(' ').strip('\n').split(';')
+                input_shape = ':'.join(line_info[2:]).split(':')[1::2]
+                # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
+                item = [line_info[0], line_info[1], input_shape, op_side]
+                if item not in self.framework_list:
+                    self.framework_list.append(item)
 
     def get_cpu_op_detail_info(self):
         """Get cpu operators detail data."""
@@ -467,11 +467,11 @@ class GpuFrameWorkParser:
             op_detail_file_path = validate_and_normalize_path(op_detail_file_path)
             with open(op_detail_file_path, 'r') as f_obj:
                 op_detail_info = f_obj.readlines()
-                for line_info in op_detail_info[1:]:
-                    line_info = line_info.strip(' ').strip('\n').split(',')
-                    if not self.op_detail.get(line_info[2]):
-                        # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                        self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
+            for line_info in op_detail_info[1:]:
+                line_info = line_info.strip(' ').strip('\n').split(',')
+                if not self.op_detail.get(line_info[2]):
+                    # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
+                    self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
 
     def get_execute_times(self):
         """Get gpu operators execute times."""
@@ -499,21 +499,21 @@ class GpuFrameWorkParser:
             activity_file_path = validate_and_normalize_path(activity_file_path)
             with open(activity_file_path, 'r') as file:
                 activity_info = file.readlines()
-                for line_info in activity_info[1:]:
-                    line_info = line_info.strip(' ').strip('\n').replace(', ', ';').split(',')
-                    op_name = line_info[2].split('/')[-1]
-                    op_occurrences = int(self.op_execute_times.get(op_name))
-                    op_total_time = float(line_info[-4])
-                    if not self.op_detail.get(op_name):
-                        # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                        self.op_detail[op_name] = [op_occurrences, op_total_time,
-                                                   round(op_total_time/op_occurrences, 4), op_side]
-                    else:
-                        self.op_detail.get(op_name)[1] += op_total_time
-                        self.op_detail.get(op_name)[2] = self.op_detail.get(op_name)[1] / self.op_detail.get(op_name)[0]
-                        self.op_detail[op_name] = [self.op_detail.get(op_name)[0],
-                                                   round(self.op_detail.get(op_name)[1], 4),
-                                                   round(self.op_detail.get(op_name)[2], 4), op_side]
+            for line_info in activity_info[1:]:
+                line_info = line_info.strip(' ').strip('\n').replace(', ', ';').split(',')
+                op_name = line_info[2].split('/')[-1]
+                op_occurrences = int(self.op_execute_times.get(op_name))
+                op_total_time = float(line_info[-4])
+                if not self.op_detail.get(op_name):
+                    # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
+                    self.op_detail[op_name] = [op_occurrences, op_total_time,
+                                               round(op_total_time / op_occurrences, 4), op_side]
+                else:
+                    self.op_detail.get(op_name)[1] += op_total_time
+                    self.op_detail.get(op_name)[2] = self.op_detail.get(op_name)[1] / self.op_detail.get(op_name)[0]
+                    self.op_detail[op_name] = [self.op_detail.get(op_name)[0],
+                                               round(self.op_detail.get(op_name)[1], 4),
+                                               round(self.op_detail.get(op_name)[2], 4), op_side]
 
     def combine_performance_data(self, op_name):
         """Combine operator detail info with framework info."""
