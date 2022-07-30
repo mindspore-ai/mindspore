@@ -21,7 +21,7 @@ from mindspore.common.dtype import type_size_in_bytes
 import mindspore.context as context
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from ..._checkparam import Rel
 
 
@@ -499,6 +499,131 @@ class PriorityReplayBufferDestroy(PrimitiveWithInfer):
 
     def infer_dtype(self):
         return mstype.int64
+
+
+class ReservoirReplayBufferCreate(Primitive):
+    r"""
+    ReservoirReplayBufferCreate is experience container used in reinforcement learning.
+    The algorithm is proposed in `Random sampling with a reservoir <https://dl.acm.org/doi/pdf/10.1145/3147.3165>`
+    which used in `Deep Counterfactual Regret Minimization <https://arxiv.org/abs/1811.00164>`.
+    It lets the reinforcement learning agents remember and reuse experiences from the past. Besides, It keeps an
+    'unbiased' sample of previous iterations.
+
+    Args:
+        capcity (int64): Capacity of the buffer.
+        shapes (list[tuple[int]]): The dimensionality of the transition.
+        dtypes (list[:class:`mindspore.dtype`]): The type of the transition.
+        seed0 (int): Random seed0, must be non-negative. Default: 0.
+        seed1 (int): Random seed1, must be non-negative. Default: 0.
+
+    Outputs:
+        handle(Tensor): Handle of created replay buffer instance with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The args not provided.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, capacity, shapes, dtypes, seed0, seed1):
+        """Initialize ReservoirReplayBufferCreate."""
+        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
+        validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
+        validator.check_non_negative_int(seed0, "seed0", self.name)
+        validator.check_non_negative_int(seed1, "seed1", self.name)
+
+        schema = []
+        for shape, dtype in zip(shapes, dtypes):
+            num_element = functools.reduce(lambda x, y: x * y, shape)
+            schema.append(num_element * type_size_in_bytes(dtype))
+        self.add_prim_attr("schema", schema)
+
+
+class ReservoirReplayBufferPush(Primitive):
+    r"""
+    Push a transition to the replay buffer.
+
+    Args:
+        handle(Tensor): The replay buffer instance handle with dtype int64 and shape (1,).
+
+    Outputs:
+        handle(Tensor): The replay buffer instance handle with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The replay buffer not created before.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle):
+        """Initialize ReservoirReplayBufferPush."""
+        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+
+
+class ReservoirReplayBufferSample(Primitive):
+    r"""
+    Sample a transition to the replay buffer.
+
+    .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+        batch_size (int): The size of the sampled transitions.
+        shapes (list[tuple[int]]): The dimensionality of the transition.
+        dtypes (list[:class:`mindspore.dtype`]): The type of the transition.
+
+    Outputs:
+        tuple(Tensor): Transition with its indices and bias correction weights.
+
+    Raises:
+        TypeError: The replay buffer not created before.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle, batch_size, shapes, dtypes):
+        """Initialize PriorityReplaBufferSample."""
+        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
+        validator.check_int(batch_size, 1, Rel.GE, "batch_size", self.name)
+        validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
+        validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
+
+        schema = []
+        for shape, dtype in zip(shapes, dtypes):
+            num_element = functools.reduce(lambda x, y: x * y, shape)
+            schema.append(num_element * type_size_in_bytes(dtype))
+        self.add_prim_attr("schema", schema)
+
+
+class ReservoirReplayBufferDestroy(PrimitiveWithInfer):
+    r"""
+    Destroy the replay buffer.
+
+    Args:
+        handle(Tensor): The Replay buffer instance handle with dtype int64 and shape (1,).
+
+    Outputs:
+        Replay buffer instance handle with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The replay buffer not created before.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle):
+        """Initialize ReservoirReplayBufferDestroy."""
+        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
 
 
 class BatchAssign(PrimitiveWithInfer):

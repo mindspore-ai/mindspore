@@ -325,6 +325,14 @@ constexpr auto kSearchStep = "search_step";
 constexpr auto kWithOffset = "with_offset";
 constexpr auto kLinearSumAssignment = "linear_sum_assignment";
 constexpr auto kNbins = "nbins";
+constexpr auto kCapacity = "capacity";
+constexpr auto kShapes = "shapes";
+constexpr auto kTypes = "types";
+constexpr auto kSchema = "schema";
+constexpr auto kSeed0 = "seed0";
+constexpr auto kSeed1 = "seed1";
+constexpr auto kHandle = "handle";
+constexpr auto kBatchSize = "batch_size";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;
