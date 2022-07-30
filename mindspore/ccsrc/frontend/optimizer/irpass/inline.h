@@ -221,7 +221,7 @@ class InlinerBase : public AnfVisitor {
   }
 
   void ReplaceParams(const FuncGraphManagerPtr &mng, const std::vector<AnfNodePtr> &new_params,
-                     const FuncGraphPtr &fg) {
+                     const FuncGraphPtr &fg) const {
     auto params = fg->parameters();
     auto old_size = params.size();
     if (old_size != new_params.size()) {
@@ -249,7 +249,7 @@ class InlinerBase : public AnfVisitor {
   // For after block which contains branch call, delete the parameters which is not used.
   // In most cases, it may be a `Module` or other constant input.
   AnfNodePtr SimplifyAfterParameter(const FuncGraphPtr &fg, const AnfNodePtr &node,
-                                    const std::vector<AnfNodePtr> &args) {
+                                    const std::vector<AnfNodePtr> &args) const {
     auto &fg_params = fg->parameters();
     std::vector<int64_t> used_param_index;
     auto mng = fg->manager();
