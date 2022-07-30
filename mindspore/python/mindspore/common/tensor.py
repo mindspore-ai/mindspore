@@ -2180,7 +2180,7 @@ class Tensor(Tensor_):
         # P.Argmin is currently not supported
         return tensor_operator_registry.get('argmax')(axis)(tensor_operator_registry.get('__neg__')(a))
 
-    def arg_min_with_value(self, axis=0, keep_dims=False):
+    def argmin_with_value(self, axis=0, keep_dims=False):
         """
         Returns the minimum value with corresponding index.
 
@@ -2215,15 +2215,15 @@ class Tensor(Tensor_):
 
         Examples:
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-            >>> output = x.arg_min_with_value()
+            >>> output = x.argmin_with_value()
             >>> print(output)
             0 0.0
-            >>> output = x.arg_min_with_value(keep_dims=True)
+            >>> output = x.argmin_with_value(keep_dims=True)
             >>> print(output)
             [0] [0.0]
         """
         self._init_check()
-        return tensor_operator_registry.get('arg_min_with_value')(self, axis, keep_dims)
+        return tensor_operator_registry.get('argmin_with_value')(self, axis, keep_dims)
 
     def cumsum(self, axis=None, dtype=None):
         """

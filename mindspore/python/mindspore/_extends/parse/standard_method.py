@@ -540,7 +540,7 @@ def argmax(x, axis=None):
     return P.Argmax(axis)(x)
 
 
-def arg_min_with_value(x, axis=0, keep_dims=False):
+def argmin_with_value(x, axis=0, keep_dims=False):
     """
     Calculates the minimum value with corresponding index, and returns indices and values.
 
