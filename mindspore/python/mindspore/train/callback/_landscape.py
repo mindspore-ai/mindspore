@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Process data and Calc loss landscape."""
+from __future__ import absolute_import
+
 import os
 import time
 import json
@@ -76,7 +78,6 @@ def nptype_to_prototype(np_value):
     proto = np2pt_tbl.get(np_type, None)
     if proto is None:
         raise TypeError("No match for proto data type.")
-
     return proto
 
 
@@ -232,6 +233,7 @@ class SummaryLandscape:
         # save the model params file, key is epoch, value is the ckpt file path
         self._model_params_file_map = {}
         self._epoch_group = defaultdict(list)
+        self._metric_fns = None
 
     def _get_model_params(self, epochs):
         """Get the model params."""

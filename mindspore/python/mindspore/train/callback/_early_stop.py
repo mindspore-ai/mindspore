@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ReduceLROnPlateau Callback class."""
+from __future__ import absolute_import
+from __future__ import division
 
 import copy
 import numpy as np
@@ -27,7 +29,7 @@ from mindspore.ops import ReduceOp
 from mindspore.communication import get_group_size
 from mindspore.context import ParallelMode
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from ._callback import Callback
+from ._callback import Callback, _handle_loss
 
 
 _smaller_better_metrics = ['hausdorff_distance', 'mae', 'mse', 'loss', 'perplexity',
@@ -81,8 +83,6 @@ class EarlyStopping(Callback):
         ValueError: The monitor value is not a scalar.
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
         >>> from mindspore.train.callback import EarlyStopping
         >>> from mindspore import Model, nn
         >>> net = LeNet5()
@@ -203,15 +203,9 @@ class EarlyStopping(Callback):
         monitor_candidates = {}
         if self.monitor == "loss":
             loss = cb_params.get("net_outputs")
-            monitor_value = loss
-            if isinstance(loss, (tuple, list)):
-                if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
-                    monitor_value = loss[0]
-            if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
-                monitor_value = float(np.mean(loss.asnumpy()))
+            monitor_value = _handle_loss(loss)
             if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
                 logger.warning("Invalid %s.", self.monitor)
-                monitor_value = loss
         else:
             monitor_candidates = cb_params.get("eval_results", {})
             monitor_value = monitor_candidates.get(self.monitor)

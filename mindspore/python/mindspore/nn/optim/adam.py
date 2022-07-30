@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """adam"""
+from __future__ import absolute_import
+
 import numpy as np
 
 from mindspore import context

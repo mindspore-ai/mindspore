@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """OcclusionSensitivity."""
+from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore import nn
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator

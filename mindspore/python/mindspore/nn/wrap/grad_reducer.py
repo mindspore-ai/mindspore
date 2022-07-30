@@ -13,18 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """grad reducer cell for distributed training"""
+from __future__ import absolute_import
+
 from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.cell import Cell
 from mindspore.communication.management import GlobalComm, get_group_size
-from mindspore.common.tensor import RowTensor
+from mindspore.common.tensor import RowTensor, Tensor
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
-from mindspore.common.api import is_pynative_parallel
+from mindspore.common.api import ms_function, is_pynative_parallel
+
 
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")

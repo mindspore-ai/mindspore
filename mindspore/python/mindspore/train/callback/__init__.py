@@ -14,6 +14,7 @@
 # ============================================================================
 """Callback related classes and functions."""
 
+from __future__ import absolute_import
 from ._callback import Callback
 from ._callback import CallbackManager as _CallbackManager
 from ._callback import InternalCallbackParam as _InternalCallbackParam

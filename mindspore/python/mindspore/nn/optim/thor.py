@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """thor"""
+from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple

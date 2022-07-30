@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """History Callback class."""
+from __future__ import absolute_import
 
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 from ._callback import Callback
 

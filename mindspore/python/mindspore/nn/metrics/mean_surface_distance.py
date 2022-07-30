@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """MeanSurfaceDistance."""
+from __future__ import absolute_import
+
 from scipy.ndimage import morphology
 import numpy as np
+
 from mindspore._checkparam import Validator as validator
 from .metric import Metric, rearrange_inputs
 

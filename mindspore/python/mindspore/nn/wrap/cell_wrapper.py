@@ -13,11 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """Cell_wrapper."""
+from __future__ import absolute_import
+from __future__ import division
+
 from types import FunctionType, MethodType
 
 from mindspore import log as logger
-from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
-                                       _get_parallel_mode, _get_enable_parallel_optimizer)
+from mindspore.parallel._utils import _get_device_num, _get_gradients_mean,\
+    _get_parallel_mode, _get_enable_parallel_optimizer
 from mindspore.context import ParallelMode
 from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn

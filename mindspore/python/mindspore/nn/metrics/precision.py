@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Precision."""
-import sys
+from __future__ import absolute_import
 
+import sys
 import numpy as np
 
 from mindspore._checkparam import Validator as validator

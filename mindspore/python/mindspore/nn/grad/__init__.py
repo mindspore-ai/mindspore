@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-Grad
-
-Cells of grad function. Calculate the gradient of input network or function.
-"""
+"""Cells of grad function. Calculate the gradient of input network or function."""
+from __future__ import absolute_import
 
 from .cell_grad import Jvp, Vjp
 

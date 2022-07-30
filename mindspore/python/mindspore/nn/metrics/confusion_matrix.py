@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ConfusionMatrixMetric & ConfusionMatrix."""
+from __future__ import absolute_import
+
 import numpy as np
 from mindspore._checkparam import Validator as validator
 from .metric import Metric, rearrange_inputs

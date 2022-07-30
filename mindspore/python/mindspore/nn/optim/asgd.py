@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """asgd"""
+from __future__ import absolute_import
+
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import ms_function

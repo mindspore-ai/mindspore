@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Dataset help for minddata dataset"""
+from __future__ import absolute_import
+
 import math
 
 from mindspore._checkparam import Validator
@@ -166,7 +168,7 @@ def _check_inputs(network, dataset_shapes):
 class _DatasetAux:
     @staticmethod
     def __deepcopy__(memodict):
-        return None
+        return
 
 
 def _get_dataset_aux(dataset):

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """convert to second order related classes and functions."""
+from __future__ import absolute_import
 
 from .convert_utils import ConvertNetUtils, ConvertModelUtils
 
