@@ -167,7 +167,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.cbegin() + 1, call_node);
+      (void)inputs.insert(inputs.cbegin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -658,7 +658,7 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad) {
+                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad) const {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   k_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);

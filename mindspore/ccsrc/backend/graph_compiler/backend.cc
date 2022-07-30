@@ -58,10 +58,9 @@ bool Backend::GetCond(const BaseRef &c, bool *value) {
 }
 bool Backend::GetIndex(const BaseRef &c, int64_t *value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
-Backend::Backend(const std::string &name) : name_(name) {
+Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(false) {
   MS_LOG(DEBUG) << "Select backend:" << name;
   convert_fn_ = MsVmConvert;
-  is_multi_graph_sink_ = false;
 }
 
 LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std::string &target) {
