@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "tools/common/meta_graph_serializer.h"
 
 namespace mindspore {

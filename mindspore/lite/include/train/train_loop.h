@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "include/train/train_loop_callback.h"
 #include "include/train/metrics.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 
 namespace mindspore {
 class MSTensor;

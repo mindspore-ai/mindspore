@@ -21,7 +21,7 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {

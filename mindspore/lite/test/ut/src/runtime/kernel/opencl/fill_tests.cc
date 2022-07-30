@@ -17,8 +17,8 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/fill.h"
+#include "mindspore/lite/src/litert/kernel/opencl/opencl_subgraph.h"
+#include "mindspore/lite/src/litert/kernel/opencl/kernel/fill.h"
 using mindspore::lite::Tensor;
 using mindspore::schema::PrimitiveType_Fill;
 using mindspore::schema::PrimitiveType_Shape;

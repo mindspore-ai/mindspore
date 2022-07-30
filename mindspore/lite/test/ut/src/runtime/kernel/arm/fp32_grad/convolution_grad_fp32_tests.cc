@@ -20,11 +20,11 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/convolution.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/convolution_grad_filter.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/convolution_grad_input.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/convolution.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/convolution_grad_filter.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/convolution_grad_input.h"
 #include "nnacl/conv_parameter.h"
-#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/litert/kernel_registry.h"
 
 namespace mindspore {
 class TestConvolutionGradFp32 : public mindspore::CommonTest {

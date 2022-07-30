@@ -23,12 +23,12 @@
 #include <unordered_map>
 #include <set>
 #include <memory>
-#include "src/runtime/lite_kernel.h"
-#include "src/runtime/executor.h"
+#include "src/litert/lite_kernel.h"
+#include "src/litert/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
-#include "src/runtime/cpu_info.h"
-#include "src/runtime/sub_graph_kernel.h"
+#include "src/litert/cpu_info.h"
+#include "src/litert/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 // Identity kernel is used to update a reference to a tensor. This is useful in control flow model.

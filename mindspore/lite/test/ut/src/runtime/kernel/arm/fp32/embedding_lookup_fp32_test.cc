@@ -15,12 +15,12 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/cpu/fp32/embedding_lookup_fp32.h"
+#include "src/litert/kernel/cpu/fp32/embedding_lookup_fp32.h"
 #include "nnacl/fp32/embedding_lookup_fp32.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

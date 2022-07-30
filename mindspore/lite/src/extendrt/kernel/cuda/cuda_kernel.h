@@ -21,8 +21,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "src/runtime/inner_kernel.h"
-#include "src/runtime/lite_kernel.h"
+#include "src/litert/inner_kernel.h"
+#include "src/litert/lite_kernel.h"
 #include "cuda_impl/cuda_class/helper_base.h"
 
 using mindspore::lite::RET_ERROR;

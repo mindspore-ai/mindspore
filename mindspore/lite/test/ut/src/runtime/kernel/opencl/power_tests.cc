@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "ut/src/runtime/kernel/opencl/common.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/power.h"
+#include "mindspore/lite/src/litert/kernel/opencl/kernel/power.h"
 
 // PrimitiveType_PowFusion: src/ops/populate/power_populate.cc
 

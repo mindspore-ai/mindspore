@@ -17,6 +17,7 @@
 #include "src/extendrt/delegate/tensorrt/op/normalize_tensorrt.h"
 #include <memory>
 #include <numeric>
+#include <functional>
 #include "src/extendrt/delegate/tensorrt/op/normalize_opt_plugin.h"
 
 namespace mindspore::lite {

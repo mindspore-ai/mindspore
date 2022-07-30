@@ -20,7 +20,7 @@
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "coder/log.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 #include "src/common/quant_utils.h"
 namespace mindspore::lite::micro {
 namespace {

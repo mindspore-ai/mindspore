@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_ACTOR_CREATOR_H_
 
 #include <memory>
-#include "src/runtime/lite_kernel.h"
-#include "src/runtime/lite_mindrt.h"
+#include "src/litert/lite_kernel.h"
+#include "src/litert/lite_mindrt.h"
 
 namespace mindspore::lite {
 std::shared_ptr<LiteOpActor> CreateActor(kernel::KernelExec *kernel, lite::InnerContext *ctx);

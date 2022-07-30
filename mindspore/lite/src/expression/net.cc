@@ -16,7 +16,7 @@
 
 #include "src/expression/net.h"
 #include <vector>
-#include "src/runtime/cxx_api/expression/net_impl.h"
+#include "src/litert/cxx_api/expression/net_impl.h"
 #include "src/expression/ops.h"
 #include "src/expression/export.h"
 #include "src/expression/ops/addn.h"

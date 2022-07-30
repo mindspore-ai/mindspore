@@ -20,9 +20,9 @@
 #include "src/expression/node.h"
 #include "src/expression/ops.h"
 #include "src/expression/export.h"
-#include "src/runtime/infer_manager.h"
+#include "src/litert/infer_manager.h"
 #include "src/common/utils.h"
-#include "src/runtime/cxx_api/expression/net_impl.h"
+#include "src/litert/cxx_api/expression/net_impl.h"
 
 namespace mindspore {
 namespace lite {

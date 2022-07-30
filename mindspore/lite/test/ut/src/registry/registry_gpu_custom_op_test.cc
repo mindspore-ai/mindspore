@@ -23,7 +23,7 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 #include "include/registry/opencl_runtime_wrapper.h"

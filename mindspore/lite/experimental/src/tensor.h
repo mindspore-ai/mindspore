@@ -25,11 +25,11 @@
 #include <functional>
 #include <atomic>
 #include "include/api/format.h"
-#include "src/runtime/inner_allocator.h"
+#include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #include "src/common/utils.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 #include "nnacl/tensor_c.h"
 
 namespace mindspore {

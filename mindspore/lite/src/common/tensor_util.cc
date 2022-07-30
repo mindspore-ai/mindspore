@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #ifdef ENABLE_FP16
-#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
+#include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 namespace mindspore {
 namespace lite {

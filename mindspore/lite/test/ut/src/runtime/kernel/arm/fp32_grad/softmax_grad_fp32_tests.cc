@@ -22,9 +22,9 @@
 #include "common/common_test.h"
 #include "src/common/utils.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/softmax_grad.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/softmax_grad.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
-#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/litert/kernel_registry.h"
 
 namespace mindspore {
 class TestSoftmaxGradFp32 : public mindspore::CommonTest {

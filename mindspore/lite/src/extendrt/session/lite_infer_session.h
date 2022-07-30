@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "src/extendrt/infer_session.h"
-#include "runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 
 namespace mindspore {
 class LiteInferSession : public InferSession {

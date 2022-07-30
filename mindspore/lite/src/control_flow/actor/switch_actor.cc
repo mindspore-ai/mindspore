@@ -18,11 +18,11 @@
 #include <utility>
 #include <algorithm>
 #include "mindrt/include/mindrt.hpp"
-#include "src/runtime/kernel_exec_util.h"
+#include "src/litert/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
-#include "src/runtime/inner_allocator.h"
+#include "src/litert/inner_allocator.h"
 #ifdef ENABLE_FP16
-#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
+#include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 namespace {
 const constexpr int kSwitchMaxInputKernelSize = 3;

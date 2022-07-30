@@ -23,7 +23,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
-#include "src/runtime/infer_manager.h"
+#include "src/litert/infer_manager.h"
 #include "mindspore/core/ops/switch.h"
 #include "mindspore/core/ops/call.h"
 #include "mindspore/core/ops/fusion/partial_fusion.h"

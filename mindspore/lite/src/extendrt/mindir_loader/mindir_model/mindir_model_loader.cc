@@ -19,7 +19,7 @@
 
 #include "extendrt/mindir_loader/mindir_model/mindir_model_loader.h"
 #include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
-#include "src/runtime/kernel_registry.h"
+#include "src/litert/kernel_registry.h"
 #include "ops/primitive_c.h"
 
 namespace mindspore::infer::mindir {

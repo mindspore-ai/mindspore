@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_EXPERIMENTAL_SRC_EXEC_ENV_UTILS_H_
 
 #include "thread/threadpool.h"
-#include "src/runtime/inner_allocator.h"
+#include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
 

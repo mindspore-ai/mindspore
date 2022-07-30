@@ -15,7 +15,7 @@
  */
 #include "common/common_test.h"
 #include "src/tensorlist.h"
-#include "mindspore/lite/src/runtime/infer_manager.h"
+#include "mindspore/lite/src/litert/infer_manager.h"
 
 namespace mindspore::lite {
 

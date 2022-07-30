@@ -15,9 +15,9 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32/l2_norm_fp32.h"
-#include "src/runtime/kernel_registry.h"
-#include "src/runtime/kernel_exec.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32/l2_norm_fp32.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/kernel_exec.h"
 
 namespace mindspore {
 class TestL2NormFp32 : public mindspore::CommonTest {

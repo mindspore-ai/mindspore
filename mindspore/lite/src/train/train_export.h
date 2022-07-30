@@ -23,8 +23,8 @@
 #include <utility>
 #include <set>
 #include "schema/inner/model_generated.h"
-#include "src/runtime/kernel_exec.h"
-#include "src/runtime/lite_model.h"
+#include "src/litert/kernel_exec.h"
+#include "src/litert/lite_model.h"
 #include "include/train/train_cfg.h"
 
 namespace mindspore {

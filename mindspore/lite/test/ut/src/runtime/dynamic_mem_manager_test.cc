@@ -17,8 +17,8 @@
 #include "common/common_test.h"
 #include "src/common/utils.h"
 #define private public
-#include "src/runtime/dynamic_mem_manager.h"
-#include "src/runtime/numa_adapter.h"
+#include "src/litert/dynamic_mem_manager.h"
+#include "src/litert/numa_adapter.h"
 #undef private
 
 namespace mindspore {

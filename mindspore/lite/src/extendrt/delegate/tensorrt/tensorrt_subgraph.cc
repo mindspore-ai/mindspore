@@ -21,7 +21,7 @@
 #include <set>
 #include <queue>
 #include <algorithm>
-#include "src/runtime/delegate/delegate_utils.h"
+#include "src/litert/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
 TensorRTSubGraph::~TensorRTSubGraph() {

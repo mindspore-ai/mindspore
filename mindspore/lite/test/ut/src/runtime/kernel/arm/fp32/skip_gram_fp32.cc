@@ -15,10 +15,10 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/cpu/string/skip_gram.h"
+#include "src/litert/kernel/cpu/string/skip_gram.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
 #include "src/common/string_utils.h"

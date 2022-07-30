@@ -15,8 +15,8 @@
  */
 #include "common/common_test.h"
 #include "nnacl/fp32/crop_fp32.h"
-#include "src/runtime/tensor_category.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32/crop_fp32.h"
+#include "src/litert/tensor_category.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32/crop_fp32.h"
 
 namespace mindspore {
 class CropTestFp32 : public mindspore::CommonTest {

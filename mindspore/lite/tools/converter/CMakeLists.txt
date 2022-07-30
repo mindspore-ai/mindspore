@@ -105,13 +105,13 @@ if(MSLITE_ENABLE_ACL)
 endif()
 
 file(GLOB CXX_API_SRCS
-        ${SRC_DIR}/runtime/cxx_api/*.cc
-        ${SRC_DIR}/runtime/cxx_api/model/*.cc
-        ${SRC_DIR}/runtime/cxx_api/graph/*.cc
-        ${SRC_DIR}/runtime/cxx_api/tensor/*.cc)
+        ${SRC_DIR}/litert/cxx_api/*.cc
+        ${SRC_DIR}/litert/cxx_api/model/*.cc
+        ${SRC_DIR}/litert/cxx_api/graph/*.cc
+        ${SRC_DIR}/litert/cxx_api/tensor/*.cc)
 
 file(GLOB RUNTIME_PASS_SRCS
-        ${SRC_DIR}/runtime/pass/*.cc)
+        ${SRC_DIR}/litert/pass/*.cc)
 
 set(LITE_SRC ${API_SRC}
         ${CXX_API_SRCS}
@@ -128,32 +128,32 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/common/decrypt.cc
-        ${SRC_DIR}/runtime/allocator.cc
-        ${SRC_DIR}/runtime/inner_allocator.cc
-        ${SRC_DIR}/runtime/runtime_allocator.cc
-        ${SRC_DIR}/runtime/infer_manager.cc
-        ${SRC_DIR}/runtime/runtime_shape_fusion_pass.cc
-        ${SRC_DIR}/runtime/runtime_pass.cc
-        ${SRC_DIR}/runtime/inner_context.cc
+        ${SRC_DIR}/litert/allocator.cc
+        ${SRC_DIR}/litert/inner_allocator.cc
+        ${SRC_DIR}/litert/runtime_allocator.cc
+        ${SRC_DIR}/litert/infer_manager.cc
+        ${SRC_DIR}/litert/runtime_shape_fusion_pass.cc
+        ${SRC_DIR}/litert/runtime_pass.cc
+        ${SRC_DIR}/litert/inner_context.cc
         ${SRC_DIR}/tensor.cc
-        ${SRC_DIR}/runtime/tensor_category.cc
-        ${SRC_DIR}/runtime/schema_tensor_wrapper.cc
+        ${SRC_DIR}/litert/tensor_category.cc
+        ${SRC_DIR}/litert/schema_tensor_wrapper.cc
         ${SRC_DIR}/tensorlist.cc
-        ${SRC_DIR}/runtime/kernel_registry.cc
+        ${SRC_DIR}/litert/kernel_registry.cc
         ${SRC_DIR}/registry/register_kernel_impl.cc
-        ${SRC_DIR}/runtime/lite_kernel.cc
-        ${SRC_DIR}/runtime/kernel_exec.cc
-        ${SRC_DIR}/runtime/kernel_exec_util.cc
-        ${SRC_DIR}/runtime/scheduler.cc
-        ${SRC_DIR}/runtime/sub_graph_kernel.cc
-        ${SRC_DIR}/runtime/sub_graph_split.cc
-        ${SRC_DIR}/runtime/lite_session.cc
-        ${SRC_DIR}/runtime/executor.cc
-        ${SRC_DIR}/runtime/lite_model.cc
+        ${SRC_DIR}/litert/lite_kernel.cc
+        ${SRC_DIR}/litert/kernel_exec.cc
+        ${SRC_DIR}/litert/kernel_exec_util.cc
+        ${SRC_DIR}/litert/scheduler.cc
+        ${SRC_DIR}/litert/sub_graph_kernel.cc
+        ${SRC_DIR}/litert/sub_graph_split.cc
+        ${SRC_DIR}/litert/lite_session.cc
+        ${SRC_DIR}/litert/executor.cc
+        ${SRC_DIR}/litert/lite_model.cc
         ${SRC_DIR}/errorcode.cc
-        ${SRC_DIR}/runtime/weight_decoder.cc
-        ${SRC_DIR}/runtime/pack_weight_manager.cc
-        ${SRC_DIR}/runtime/huffman_decode.cc
+        ${SRC_DIR}/litert/weight_decoder.cc
+        ${SRC_DIR}/litert/pack_weight_manager.cc
+        ${SRC_DIR}/litert/huffman_decode.cc
         ${SRC_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
@@ -196,9 +196,9 @@ set(LITE_SRC
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/runtime/dynamic_mem_allocator.cc
-        ${SRC_DIR}/runtime/dynamic_mem_manager.cc
-        ${SRC_DIR}/runtime/numa_adapter.cc
+        ${SRC_DIR}/litert/dynamic_mem_allocator.cc
+        ${SRC_DIR}/litert/dynamic_mem_manager.cc
+        ${SRC_DIR}/litert/numa_adapter.cc
         )
 endif()
 
@@ -211,14 +211,14 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/runtime/pack_weight.cc
+        ${SRC_DIR}/litert/pack_weight.cc
         )
 endif()
 
 if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/runtime/thread_cost_model.cc
+        ${SRC_DIR}/litert/thread_cost_model.cc
         )
 endif()
 
@@ -250,8 +250,8 @@ if(MSLITE_ENABLE_MINDRT)
     set(LITE_SRC
             ${LITE_SRC}
             ${MINDRT_SRC}
-            ${SRC_DIR}/runtime/lite_mindrt.cc
-            ${SRC_DIR}/runtime/mindrt_executor.cc
+            ${SRC_DIR}/litert/lite_mindrt.cc
+            ${SRC_DIR}/litert/mindrt_executor.cc
             ${SRC_DIR}/control_flow/control_actor_creator.cc
             )
 
@@ -265,7 +265,7 @@ endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
-            ${SRC_DIR}/runtime/kernel/gpu/opencl/*.cc
+            ${SRC_DIR}/litert/kernel/gpu/opencl/*.cc
             )
     set(LITE_SRC
             ${LITE_SRC}
@@ -326,7 +326,7 @@ if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
-    include_directories(${SRC_DIR}/runtime/kernel/opencl)
+    include_directories(${SRC_DIR}/litert/kernel/opencl)
     target_link_libraries(mindspore_converter opencl_kernel_mid)
 endif()
 

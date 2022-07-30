@@ -25,7 +25,7 @@
 #include "src/common/utils.h"
 #include "src/common/ops/populate/populate_register.h"
 #include "src/common/ops/anf_utils.h"
-#include "src/runtime/infer_manager.h"
+#include "src/litert/infer_manager.h"
 #include "src/tensorlist.h"
 #include "src/registry/kernel_interface_registry.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"

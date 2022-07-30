@@ -24,7 +24,7 @@
 #include <vector>
 #include "gtest/gtest.h"
 #include "include/api/format.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 
 namespace mindspore {
 namespace lite {

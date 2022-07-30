@@ -23,7 +23,7 @@
 #include "include/api/status.h"
 #include "include/api/cfg.h"
 #include "include/train/train_cfg.h"
-#include "src/runtime/inner_context.h"
+#include "src/litert/inner_context.h"
 
 namespace mindspore {
 class ContextUtils {
