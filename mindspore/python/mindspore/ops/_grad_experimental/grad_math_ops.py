@@ -36,6 +36,7 @@ from ..primitive import constexpr
 from ..operations.math_ops import NextAfter
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
+from ..operations.math_ops import LuUnpack
 from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import Median
 from ..operations.math_ops import Betainc
@@ -119,6 +120,19 @@ def get_bprop_index_lerp(self):
         dstart = F.cast(dstart, F.dtype(start))
         dend = F.cast(dend, F.dtype(end))
         return dstart, dend, dweight
+
+    return bprop
+
+
+@bprop_getters.register(LuUnpack)
+def get_bprop_lu_unpack(self):
+    """Grad definition for `LuUnpack` operation."""
+    input_grad = G.LuUnpackGrad(L_grad_flag=True, U_grad_flag=True)
+
+    def bprop(lu_data, lu_pivots, out, dout):
+        dl, du = input_grad(dout[1], dout[2], lu_data)
+        lu_data_grad = dl + du
+        return (lu_data_grad, zeros_like(lu_pivots))
 
     return bprop
 

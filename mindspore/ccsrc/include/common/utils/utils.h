@@ -38,6 +38,7 @@ constexpr auto kSegmentMinOpName = "SegmentMin";
 constexpr auto kSegmentSumOpName = "SegmentSum";
 constexpr auto kSegmentMeanOpName = "SegmentMean";
 constexpr auto kSegmentProdOpName = "SegmentProd";
+constexpr auto kLuUnpackOpName = "LuUnpack";
 constexpr auto kConcatOpName = "Concat";
 constexpr auto kListDiffOpName = "ListDiff";
 constexpr auto kUniqueOpName = "Unique";
@@ -892,6 +893,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentMaxOpName,
                                               kCSRSparseMatrixToSparseTensorOpName,
                                               kSegmentMinOpName,
+                                              kLuUnpackOpName,
                                               kSegmentSumOpName,
                                               kResizeBicubicOpName,
                                               kResizeAreaOpName,

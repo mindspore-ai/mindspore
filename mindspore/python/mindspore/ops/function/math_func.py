@@ -28,6 +28,7 @@ from mindspore.ops.operations._inner_ops import Cummin
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
+from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from ..operations.math_ops import (
@@ -4272,6 +4273,85 @@ def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     """
     lp_norm_inner = _get_cache_prim(P.LpNorm)(axis, p, keep_dims, epsilon)
     return lp_norm_inner(input_x)
+
+
+def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
+    """
+    Unpack the LU_data and LU_pivots from a LU factorization of a tensor.
+
+    Args:
+        LU_data (Tensor): The packed LU factorization data. A tensor of size [*, M, N], where * is batch
+          dimensions, with data type int8, uint8, int16, int32, int64, float16, float32, float64. The dims of LU_data
+          must be equal to or greater than 2.
+        LU_pivots (Tensor): The packed LU factorization pivots. A tensor of size [*, min(M, N)], where * is
+          batch dimensions, with data type int8, uint8, int16, int32, int64.
+        unpack_data (bool): A flag indicating if the LU_data should be unpacked. If False, then the returned L and U
+            are None. Default: True.
+        unpack_pivots (bool): A flag indicating if the LU_pivots should be unpacked into a permutation matrix P. If
+            False, then the returned P is None. Default: True.
+
+    Returns:
+        pivots (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`, the dtype is
+        same as `LU_data`.
+        L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
+        U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
+
+    Raises:
+        TypeError: If the dtype of `LU_data` is not one of the following: int8, uint8, int16, int32,
+                   int64, float16, float32, float64.
+        TypeError: If the dtype of `LU_pivots` is not one of the following: int8, uint8, int16, int32, int64.
+        ValueError: If the dimension of `LU_data` is less than 2.
+        ValueError: If the dimension of `LU_pivots` is less than 1.
+        ValueError: If the size of the last dimension of LU_pivots is not equal to the minimum of the sizes of the last
+                    two dimensions of LU_data.
+        ValueError: If the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.
+        ValueError: On the CPU platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
+        RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
+        ...                             [-0.1287,  0.6508, -0.2396],
+        ...                             [ 0.2583,  0.5239,  0.6902]],
+        ...                            [[ 0.6706, -1.1782,  0.4574],
+        ...                             [-0.6401, -0.4779,  0.6701],
+        ...                             [ 0.1015, -0.5363,  0.6165]]]), mstype.float64)
+        >>> LU_pivots = Tensor(np.array([[1, 3, 3],
+        ...                              [2, 3, 3]]), mstype.int32)
+        >>> pivots, L, U = F.lu_unpack(LU_data, LU_pivots, unpack_data, unpack_pivots)
+        >>> print(pivots)
+        [[[1. 0. 0.]
+          [0. 0. 1.]
+          [0. 1. 0.]]
+         [[0. 0. 1.]
+          [1. 0. 0.]
+          [0. 1. 0.]]]
+        >>> print(L)
+        [[[ 1.       0.       0.]
+          [-0.1287   1.       0.]
+          [ 0.2583   0.5239   1.]]
+         [[ 1.0000   0.       0.]
+          [-0.6401   1.       0.]
+          [ 0.1015  -0.5363   1.]]]
+        >>> print(U)
+        [[[-0.3806  -0.4872   0.5536]
+          [ 0.       0.6508  -0.2396]
+          [ 0.       0.       0.6902]]
+         [[ 0.6706  -1.1782   0.4574]
+          [ 0.      -0.4779   0.6701]
+          [ 0.       0.       0.6165]]]
+    """
+    pivots, l, u = LuUnpack(LU_data, LU_pivots)
+    if unpack_data:
+        if unpack_pivots:
+            return pivots, l, u
+        return None, l, u
+    if unpack_pivots:
+        return pivots, None, None
+    return None, None, None
 
 
 def renorm(input_x, p, dim, maxnorm):

@@ -203,6 +203,16 @@ class BinaryCrossEntropyGrad(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
 
+class LuUnpackGrad(Primitive):
+    """Computes gradients for `LuUnpack` operation."""
+
+    @prim_attr_register
+    def __init__(self, L_grad_flag, U_grad_flag):
+        validator.check_value_type("L_grad_flag", L_grad_flag, [bool], self.name)
+        validator.check_value_type("U_grad_flag", U_grad_flag, [bool], self.name)
+        self.add_prim_attr("cust_aicpu", self.name)
+
+
 class ConcatOffset(PrimitiveWithInfer):
     """primitive for computing Concat's gradient."""
 
