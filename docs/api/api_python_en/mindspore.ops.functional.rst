@@ -203,11 +203,15 @@ Reduction Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.amax
+    mindspore.ops.amin
     mindspore.ops.argmin
     mindspore.ops.logsumexp
     mindspore.ops.max
-    mindspore.ops.norm
+    mindspore.ops.mean
     mindspore.ops.min
+    mindspore.ops.norm
+    mindspore.ops.prod
 
 .. list-table::
    :widths: 50 50
@@ -215,14 +219,6 @@ Reduction Functions
 
    * - functional
      - Description
-   * - mindspore.ops.amax
-     - Refer to :class:`mindspore.ops.ReduceMax`.
-   * - mindspore.ops.mean
-     - Refer to :class:`mindspore.ops.ReduceMean`.
-   * - mindspore.ops.amin
-     - Refer to :class:`mindspore.ops.ReduceMin`.
-   * - mindspore.ops.prod
-     - Refer to :class:`mindspore.ops.ReduceProd`.
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
 

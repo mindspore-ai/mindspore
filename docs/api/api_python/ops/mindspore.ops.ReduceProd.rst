@@ -17,7 +17,7 @@
 
     **输出：**
 
-    bool类型的Tensor。
+    Tensor。
 
     - 如果 `axis` 为()，且 `keep_dims` 为False，
       则输出一个0维Tensor，表示输入Tensor中所有元素的乘积。
