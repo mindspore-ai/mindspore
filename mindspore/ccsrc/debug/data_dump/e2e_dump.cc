@@ -1007,7 +1007,7 @@ nlohmann::json E2eDump::ParseOverflowInfo(const char *data_ptr) {
  * Description: This function is for Ascend A+M dump. It parses and dump op overflow info in json file.
  */
 void E2eDump::DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
-                                char *data_ptr) {
+                                const char *data_ptr) {
   std::string out_path = dump_path + ".output.";
   std::vector<debugger::dump::OpOutput> op_debug(dump_data.output().begin(), dump_data.output().end());
   for (uint32_t slot = 0; slot < op_debug.size(); slot++) {
