@@ -55,15 +55,17 @@ using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::Ker
 
 class BACKEND_EXPORT KernelGraph : public FuncGraph {
  public:
-  KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), current_epoch_(0), is_dynamic_shape_(false) {
-    inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
-    execution_order_ = {};
-    mem_reuse_exec_order_ = {};
-    executable_ = true;
-    summary_node_exist_ = false;
-    stream_distinction_label_ = kInvalidDistincLabel;
-    device_target_ = DeviceType::kUnknown;
-  }
+  KernelGraph()
+      : inputs_(std::make_shared<std::vector<AnfNodePtr>>()),
+        graph_id_(0),
+        stream_distinction_label_(kInvalidDistincLabel),
+        device_target_(DeviceType::kUnknown),
+        executable_(true),
+        summary_node_exist_(false),
+        start_label_(nullptr),
+        end_goto_(nullptr),
+        current_epoch_(0),
+        is_dynamic_shape_(false) {}
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
     inputs_ = graph.inputs_;
