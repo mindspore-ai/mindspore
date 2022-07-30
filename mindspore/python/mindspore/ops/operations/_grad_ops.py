@@ -2840,6 +2840,67 @@ class GridSampler2DGrad(Primitive):
         self.add_prim_attr('align_corners', align_corners)
 
 
+class UpsampleTrilinear3DGrad(Primitive):
+    """
+    Computes gradients for UpsampleTrilinear3DGrad operation.
+
+    Args:
+        input_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the forward pass
+            input Tensor size, identical to the gradient tensor returned by this op.
+        output_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the output
+            volumetric size, identical to the backprop gradient entering this op. Defaults to None.
+        scales (Union[tuple[float], list[float]]): A list or tuple of float specifying the upsampling factors.
+            Defaults to None.
+        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
+            tensors are aligned. Defaults to "false".
+
+    Inputs:
+        - **grad** (Tensor) - 5D tensor of shape :math:`(N, C, D_{grad}, H_{grad}, W_{grad})`. With float16 or
+            float32 data type.
+
+    Outputs:
+        - **dx** (Tensor) - 5D tensor of shape :math:`(N, C, D_{dx}, H_{dx}, W_{dx})`. With float16 or
+            float32 data type.
+
+    Raises:
+        TypeError: If data type of `grad` is not float16, float32.
+        TypeError: If `input_size` is not provided.
+        ValueError: If size of `grad` is not a 5D tensor.
+        ValueError: If `output_size` is a list or tuple and if `output_size` length is not 3.
+        ValueError: If `scales` is a list or tuple and if `scales` length is not 3.
+        ValueError: If both `output_size` and `scales` are None.
+        ValueError: If both `output_size` and `scales` are non-empty lists.
+
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, input_size, output_size=None, scales=None, align_corners=None):
+        self.init_prim_io_names(inputs=['grad'], outputs=['dx'])
+        if output_size is None:
+            output_size = []
+        if scales is None:
+            scales = []
+        if align_corners is None:
+            align_corners = False
+        validator.check_value_type('input_size', input_size, [list, tuple], self.name)
+        for item in input_size:
+            validator.check_value_type('input_size_item', item, int, self.name)
+        validator.check_value_type('output_size', output_size, [list], self.name)
+        for item in output_size:
+            validator.check_value_type('output_size_item', item, int, self.name)
+        validator.check_value_type('scales', scales, [list], self.name)
+        for item in scales:
+            validator.check_value_type('scales_item', item, float, self.name)
+        validator.check_value_type('align_corners', align_corners, bool, self.name)
+        self.add_prim_attr('input_size', input_size)
+        self.add_prim_attr('output_size', output_size)
+        self.add_prim_attr('scales', scales)
+        self.add_prim_attr('align_corners', align_corners)
+
+
 class ResizeBicubicGrad(Primitive):
     """
     Computes gradients for ResizeBicubicGrad operation.

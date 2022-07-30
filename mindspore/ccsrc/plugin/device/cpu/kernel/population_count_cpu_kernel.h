@@ -20,7 +20,6 @@
 #include <vector>
 #include <utility>
 #include <memory>
-#include "mindspore/core/ops/population_count.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -28,28 +27,27 @@ namespace mindspore {
 namespace kernel {
 class PopulationCountCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PopulationCountCpuKernelMod() {}
+  PopulationCountCpuKernelMod() = default;
   ~PopulationCountCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_;
-  TypeId dtype_{kTypeUnknown};
-
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using PopulationCountFunc = std::function<bool(PopulationCountCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, PopulationCountFunc>> func_list_;
-  PopulationCountFunc kernel_func_;
+  using PopCntKernel = std::function<bool(PopulationCountCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &)>;
+  PopCntKernel kernel_func_;
+
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

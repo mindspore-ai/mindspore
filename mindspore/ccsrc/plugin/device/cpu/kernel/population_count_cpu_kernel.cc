@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/population_count_cpu_kernel.h"
+#include <algorithm>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -57,39 +58,43 @@ bool PopulationCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                                        const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto input_shape = inputs[kZero]->GetShapeVector();
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
-  dtype_ = inputs[kZero]->GetDtype();
-  return true;
-}
-
-bool PopulationCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  bool ret = true;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPopulationCountInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPopulationCountOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeInt8) {
-    ret = LaunchKernel<int8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    ret = LaunchKernel<int16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    ret = LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    ret = LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt8) {
-    ret = LaunchKernel<uint8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt16) {
-    ret = LaunchKernel<uint16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt32) {
-    ret = LaunchKernel<uint32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt64) {
-    ret = LaunchKernel<uint64_t>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
-                            << "]: " << TypeIdToType(dtype_)->ToString();
+  if (inputs.size() != kPopulationCountInputsNum || outputs.size() != kPopulationCountOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kPopulationCountInputsNum
+                  << " and " << kPopulationCountOutputsNum << ", but get " << inputs.size() << " and "
+                  << outputs.size();
+    return false;
   }
-  return ret;
+  dtype_ = inputs[kZero]->GetDtype();
+  switch (dtype_) {
+    case kNumberTypeInt8:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int8_t>;
+      break;
+    case kNumberTypeInt16:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int16_t>;
+      break;
+    case kNumberTypeInt32:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int32_t>;
+      break;
+    case kNumberTypeInt64:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int64_t>;
+      break;
+    case kNumberTypeUInt8:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<uint8_t>;
+      break;
+    case kNumberTypeUInt16:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<uint16_t>;
+      break;
+    case kNumberTypeUInt32:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<uint32_t>;
+      break;
+    case kNumberTypeUInt64:
+      kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<uint64_t>;
+      break;
+    default:
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "': cat not support the data type " << TypeIdToString(dtype_);
+      return false;
+  }
+  return true;
 }
 
 template <typename T>
@@ -97,22 +102,23 @@ bool PopulationCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &outputs) {
   const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   uint8_t *output_0_addr = reinterpret_cast<uint8_t *>(outputs[kZero]->addr);
+  size_t length = inputs[kZero]->size / sizeof(T);
+  constexpr size_t min_block_size = 1024;
+  auto block_size = std::max(min_block_size, length / GetActorMgrInnerThreadPool()->GetKernelThreadNum());
   auto task = std::bind(PopulationCount<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
-  ParallelLaunchAutoSearch(task, input_size_ * kPopulationCountInputsNum, this, &parallel_search_info_);
+  ParallelLaunch(task, length, block_size, this);
   return true;
 }
 
 std::vector<KernelAttr> PopulationCountCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt8)};
-
+  std::vector<KernelAttr> support_list = {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
+                                          KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt8)};
   return support_list;
 }
 
