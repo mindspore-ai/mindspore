@@ -2190,12 +2190,12 @@ class ArgMinWithValue(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = ops.ArgMinWithValue()(x)
-        >>> print(output)
-        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
-        >>> output = ops.ArgMinWithValue(keep_dims=True)(x)
-        >>> print(output)
-        (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
+        >>> index, output = ops.ArgMinWithValue()(x)
+        >>> print(index, output)
+        0 0.0
+        >>> index, output = ops.ArgMinWithValue(keep_dims=True)(x)
+        >>> print(index, output)
+        [0] [0.0]
     """
 
     @prim_attr_register
