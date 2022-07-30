@@ -22,6 +22,7 @@
 #include "utils/profile.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 #include "nnacl/fp32_grad/maxpool_grad_grad.h"
+#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {

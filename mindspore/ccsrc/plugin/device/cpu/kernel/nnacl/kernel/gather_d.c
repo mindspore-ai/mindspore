@@ -106,6 +106,7 @@ int gather_d_compute(struct KernelBase *self) {
 KernelBase *CreateGatherD(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
                           FormatC format) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
+  NNACL_CHECK_NULL_RETURN_NULL(gather_d);
   gather_d->base.param = param;
   gather_d->base.in = in;
   gather_d->base.insize = insize;

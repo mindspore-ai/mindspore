@@ -173,6 +173,7 @@
 #define NNACL_CHECK_ZERO_RETURN(val)
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr)
 #define NNACL_CHECK_NULL_RETURN_VOID(ptr)
+#define NNACL_CHECK_NULL_RETURN_NULL(ptr)
 #else
 // Check whether value is true, if not return 'errcode'
 #define MS_CHECK_TRUE_RET(value, errcode) \
@@ -288,6 +289,12 @@
     }                                     \
   } while (0)
 
+#define NNACL_CHECK_NULL_RETURN_NULL(ptr) \
+  do {                                    \
+    if ((ptr) == NULL) {                  \
+      return NULL;                        \
+    }                                     \
+  } while (0)
 #endif
 
 enum PrimType {
