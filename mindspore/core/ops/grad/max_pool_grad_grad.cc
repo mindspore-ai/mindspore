@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace ops {
+MIND_API_OPERATOR_IMPL(MaxPoolGradGrad, BaseOperator);
+
 void MaxPoolGradGrad::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   (void)this->AddAttr(kKernelSize, api::MakeValue(kernel_size));
 }
@@ -44,13 +46,15 @@ std::vector<int64_t> MaxPoolGradGrad::get_strides() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void MaxPoolGradGrad::set_pad_mode(const PadMode &pad_mode) { (void)this->AddAttr(kPadMode, api::MakeValue(pad_mode)); }
+void MaxPoolGradGrad::set_pad_mode(const PadMode &pad_mode) {
+  (void)this->AddAttr(kPadMode, api::MakeValue(static_cast<int>(pad_mode)));
+}
 
 PadMode MaxPoolGradGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto mode_str = GetValue<std::string>(value_ptr);
-  std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
   MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),
                              "MaxPoolGradGrad only supports pad mode same or valid, but get " + mode_str);
   return mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
@@ -98,7 +102,6 @@ AbstractBasePtr MaxPoolGradGradInfer(const abstract::AnalysisEnginePtr &, const 
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
 
-MIND_API_OPERATOR_IMPL(MaxPoolGradGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxPoolGradGrad, prim::kPrimMaxPoolGradGrad, MaxPoolGradGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
