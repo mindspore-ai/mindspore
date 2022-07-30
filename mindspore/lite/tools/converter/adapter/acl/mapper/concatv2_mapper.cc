@@ -18,6 +18,7 @@
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -25,26 +26,38 @@ const auto kNameConcatV2 = "ConcatV2";
 
 namespace {
 constexpr auto kNameInputNums = "N";
+constexpr auto kNumFlagThree = 3;
+constexpr int64_t kInputMinNum = 2;
 }  // namespace
 
-STATUS ConcatV2DMapper::Mapper(const CNodePtr &cnode) {
-  if (AddAttrForDynInputPrimitive(cnode, kNameInputNums) != RET_OK) {
-    MS_LOG(ERROR) << "ConcatV2 add attr dynamic num failed.";
-    return RET_ERROR;
-  }
+STATUS ConcatV2Mapper::Mapper(const CNodePtr &cnode) {
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
   if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<acl::ConcatV2D>();
+  auto dst_prim = std::make_shared<acl::ConcatV2>();
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
+  int64_t num = static_cast<int64_t>(cnode->inputs().size());
+  if (num < kInputMinNum) {
+    MS_LOG(ERROR) << "Input size " << num << " is less than " << kInputMinNum;
+    return RET_ERROR;
+  }
+  dst_prim->AddAttr(kNameInputNums, MakeValue(num - 1));
   value_node->set_value(dst_prim);
+
+  auto func_graph = cnode->func_graph();
+  CHECK_NULL_RETURN(func_graph);
+  auto status = AddAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, kNumFlagThree);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "Add constant value to input failed.";
+    return lite::RET_ERROR;
+  }
   return RET_OK;
 }
 
-REGISTER_PRIMITIVE_MAPPER(kNameConcatV2, ConcatV2DMapper)
+REGISTER_PRIMITIVE_MAPPER(kNameConcatV2, ConcatV2Mapper)
 }  // namespace lite
 }  // namespace mindspore

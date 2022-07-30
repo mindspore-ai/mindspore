@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SELECTION_OPS_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SELECTION_OPS_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
+#include "ops/fusion/slice_fusion.h"
 
 namespace mindspore {
 namespace lite {
-class ConcatV2Mapper : public PrimitiveMapper {
- public:
-  ConcatV2Mapper() : PrimitiveMapper(acl::kNameConcatV2) {}
+using mindspore::ops::kNameSliceFusion;
 
-  ~ConcatV2Mapper() override = default;
+class SliceFusionMapper : public PrimitiveMapper {
+ public:
+  SliceFusionMapper() : PrimitiveMapper(kNameSliceFusion) {}
+
+  ~SliceFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONCATV2_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SELECTION_OPS_MAPPER_H_

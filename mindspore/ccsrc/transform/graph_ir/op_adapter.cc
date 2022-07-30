@@ -15,6 +15,7 @@
  */
 #include "transform/graph_ir/op_adapter.h"
 #include "utils/check_convert_utils.h"
+#include "ops/split_combination_ops.h"
 
 namespace mindspore {
 namespace transform {
@@ -240,7 +241,12 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
   MS_EXCEPTION_IF_NULL(op);
   auto it = dyn_input_map_.find(index);
   if (it != dyn_input_map_.end()) {
-    it->second.create_dyn_input(op, static_cast<unsigned int>(handler_vec->size()));
+    if (op->GetOpType() == "ConcatV2") {
+      auto concat = std::static_pointer_cast<::ge::op::ConcatV2>(op);
+      (void)concat->create_dynamic_input_byindex_x(static_cast<unsigned int>(handler_vec->size()), 0);
+    } else {
+      it->second.create_dyn_input(op, static_cast<unsigned int>(handler_vec->size()));
+    }
     for (unsigned int i = 0; i < handler_vec->size(); ++i) {
       OutHandler h = (*handler_vec)[i];
       MS_EXCEPTION_IF_NULL(h.op);

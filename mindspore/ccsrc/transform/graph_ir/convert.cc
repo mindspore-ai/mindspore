@@ -2624,7 +2624,11 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *i
     error_ = INVALID_ARGUMENT;
     MS_LOG(EXCEPTION) << "can't convert get item with non-constant index";
   }
-  *index = LongToUlong(GetValue<int64_t>(GetValueNode(index_node)));
+  auto index_vec = CastToInt(GetValueNode(index_node));
+  if (index_vec.empty()) {
+    MS_LOG(EXCEPTION) << "Get index failed from index node of tuple get item.";
+  }
+  *index = LongToUlong(index_vec[0]);
   return node->inputs()[1];
 }
 

@@ -52,13 +52,12 @@ ATTR_MAP(ConcatD) = {
 OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
 
-// ConcatV2D Inference for tf
-INPUT_MAP(ConcatV2D) = EMPTY_INPUT_MAP;
-DYN_INPUT_MAP(ConcatV2D) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(ConcatV2D) = {
-  {"axis", ATTR_DESC(concat_dim, AnyTraits<int64_t>())},
+// ConcatV2 Inference for tf
+DYN_INPUT_MAP(ConcatV2) = {{1, DYN_INPUT_DESC(x)}};
+INPUT_MAP(ConcatV2) = {{2, INPUT_DESC(concat_dim)}};
+ATTR_MAP(ConcatV2) = {
   {"N", ATTR_DESC(N, AnyTraits<int64_t>())},
 };
-OUTPUT_MAP(ConcatV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ConcatV2D, kNameConcatV2D, ADPT_DESC(ConcatV2D))
+OUTPUT_MAP(ConcatV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ConcatV2, kNameConcatV2, ADPT_DESC(ConcatV2))
 }  // namespace mindspore::transform

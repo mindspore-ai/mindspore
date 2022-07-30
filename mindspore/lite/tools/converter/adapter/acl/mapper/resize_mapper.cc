@@ -57,9 +57,11 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
       return lite::RET_ERROR;
     }
     dst_prim = std::make_shared<acl::ResizeNearestNeighborV2>();
+  } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::LINEAR)) {
+    dst_prim = std::make_shared<acl::ResizeBilinearV2>();
   } else {
-    MS_LOG(WARNING) << "Not support method " << method;
-    return lite::RET_OK;
+    MS_LOG(ERROR) << "Not support resize method " << method;
+    return RET_ERROR;
   }
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
