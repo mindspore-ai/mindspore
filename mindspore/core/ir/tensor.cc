@@ -598,8 +598,7 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
 }
 
 TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
-  const size_t data_bytes = data->nbytes();
-  if (data_bytes == 0) {
+  if (data->nbytes() == 0) {
     MS_LOG(EXCEPTION) << "Tensor data size is 0.";
   }
   auto sub_data = MakeTensorData<TensorSubDataImpl>(owner->data_type(), owner, offset, data->size(), data->ndim());
@@ -941,7 +940,7 @@ TensorPtrList Tensor::FlattenTensors(const TensorPtrList &tensors, size_t fusion
       size_t offset = 0;
       for (auto &tensor : chunk.tensors) {
         auto sub_data = MakeTensorSubData(chunk_tensor, offset, tensor->data_ptr());
-        offset += sub_data->nbytes();
+        offset += static_cast<size_t>(sub_data->nbytes());
         tensor->data_ = sub_data;
       }
       // Save chunk tensor to result list.
