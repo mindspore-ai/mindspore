@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,9 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
     auto matchedTensor =
       std::find_if(gOutTensorIdx.begin(), gOutTensorIdx.end(),
                    [&outDataTensorIdx](const unsigned int &idx) { return (idx == outDataTensorIdx); });
-    *matchedTensor = inDataTensorIdx;
+    if (matchedTensor != gOutTensorIdx.end()) {
+      *matchedTensor = inDataTensorIdx;
+    }
     // find poseNode
     auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 0);
     for (auto postNodeIdx : postNodeIdxes) {
@@ -71,7 +73,9 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
       MS_ASSERT(postNode != nullptr);
       auto iter = std::find_if(postNode->inputIndex.begin(), postNode->inputIndex.end(),
                                [&outDataTensorIdx](const unsigned int &idx) { return (idx == outDataTensorIdx); });
-      *iter = inDataTensorIdx;
+      if (iter != postNode->inputIndex.end()) {
+        *iter = inDataTensorIdx;
+      }
     }
   }
 
