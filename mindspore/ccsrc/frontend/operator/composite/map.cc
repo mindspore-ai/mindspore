@@ -43,7 +43,7 @@ AnfNodePtr Map::FullMakeLeaf(const FuncGraphPtr &func_graph, const AnfNodePtr &f
   } else {
     inputs.emplace_back(NewValueNode(fn_leaf_));
   }
-  inputs.insert(inputs.cend(), args.cbegin(), args.cend());
+  (void)inputs.insert(inputs.cend(), args.cbegin(), args.cend());
   return func_graph->NewCNodeInOrder(inputs);
 }
 

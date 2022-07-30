@@ -214,7 +214,7 @@ class ConvertSwitchReplacement {
   // Determine whether there are graphs inside the branch graph.
   bool CheckSwitchBranch(const AnfNodePtr &node) const;
   // Determine whether node matches {{prim::kPrimSwitch, X, G1, G2}, Xs}.
-  bool CheckSwitchWrapNode(const AnfNodePtr &node);
+  bool CheckSwitchWrapNode(const AnfNodePtr &node) const;
   // Replace switch branch.
   void TransformSwitchBranchReplace(const AnfNodePtr &node) const;
 };

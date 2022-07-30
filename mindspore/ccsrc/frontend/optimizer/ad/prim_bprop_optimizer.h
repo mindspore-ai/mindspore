@@ -165,7 +165,7 @@ class PrimBpropOptimizer {
 
   // do opt with input info
   PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
-                                                   const abstract::AbstractBasePtrList &abs_list_input);
+                                                   const abstract::AbstractBasePtrList &abs_list_input) const;
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const;
 
