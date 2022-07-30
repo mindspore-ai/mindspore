@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_FUSION_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_FUSION_H_
 
-#include <vector>
 #include <string>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
@@ -51,8 +50,8 @@ class AllCommFusion {
   Status ProcessCommOpsFusion(const CNodePtr &ret, const std::string &comm_name);
 
  private:
-  Status SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp);
-  Status SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp);
+  Status SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) const;
+  Status SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) const;
   AllreduceGraph allreduce_graph_;
   CNodePtr ret_;
   CNodePtr forward_ret_;

@@ -20,7 +20,6 @@
 #include <memory>
 #include <utility>
 #include <map>
-#include <cmath>
 #include <complex>
 
 #include "mindspore/core/ops/renorm.h"
@@ -95,7 +94,7 @@ void RenormCpuKernelMod::CheckAndInitParams() {
                       << ", " << x_rank << "), but got " << axis_;
   }
   if (axis_ < 0) {
-    axis_ += x_rank;
+    axis_ += SizeToLong(x_rank);
   }
 
   stride_size_ = 1;
@@ -104,13 +103,13 @@ void RenormCpuKernelMod::CheckAndInitParams() {
   total_size_ = 1;
   for (size_t i = 0; i < x_rank; ++i) {
     if (SizeToLong(i) == axis_) {
-      axis_size_ *= x_shape_[i];
+      axis_size_ *= LongToSize(x_shape_[i]);
     } else if (SizeToLong(i) < axis_) {
-      stride_size_ *= x_shape_[i];
+      stride_size_ *= LongToSize(x_shape_[i]);
     } else {
-      inner_size_ *= x_shape_[i];
+      inner_size_ *= LongToSize(x_shape_[i]);
     }
-    total_size_ *= x_shape_[i];
+    total_size_ *= LongToSize(x_shape_[i]);
   }
 }
 
@@ -173,7 +172,7 @@ std::vector<std::pair<KernelAttr, RenormCpuKernelMod::RenormFunc>> RenormCpuKern
    &RenormCpuKernelMod::LaunchKernel<std::complex<double>>}};
 
 std::vector<KernelAttr> RenormCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list;
+  std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, RenormFunc> &pair) { return pair.first; });
   return support_list;

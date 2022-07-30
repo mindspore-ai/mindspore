@@ -165,7 +165,7 @@ CostPtrList Edge::GetCostList(StrategyPtr output_str, StrategyPtr input_str) {
 }
 
 CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr, const std::vector<EdgePtr> &edges,
-                                                const StrategyPtr &input_st_ptr) {
+                                                const StrategyPtr &input_st_ptr) const {
   std::function<CostPtrList(EdgePtr)> LocalGetCostList = [&](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge);
     return edge->GetCostList(output_st_ptr, input_st_ptr);
@@ -228,7 +228,7 @@ void Edge::EdgeEliminationSetNewCost(OperatorInfoPtr, const std::vector<EdgePtr>
 
 void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &left_cost_list,
                                           const CostPtrList &middle_cost_list, const CostPtrList &right_cost_list,
-                                          CostPtrList *ret_cost_list) {
+                                          CostPtrList *ret_cost_list) const {
   for (auto &left_cost : left_cost_list) {
     MS_EXCEPTION_IF_NULL(left_cost);
     for (auto &middle_cost : middle_cost_list) {

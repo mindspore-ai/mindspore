@@ -303,7 +303,7 @@ void CostGraph::DFS(const OperatorInfoPtr &current_op, std::map<OperatorInfoPtr,
 
 // Create final cost list for the graph: u --> v
 CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr &u, const std::shared_ptr<Edge> &e,
-                                           const OperatorInfoPtr &v) {
+                                           const OperatorInfoPtr &v) const {
   MS_EXCEPTION_IF_NULL(u);
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(e);
@@ -380,7 +380,7 @@ CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr &u) const
   return ret;
 }
 
-CostPtr CostGraph::SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory) {
+CostPtr CostGraph::SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory) const {
   // Select the cost with minimum inference time. Currently, the inference time is modeled as =
   // costmodel_alpha_ * computation_cost + costmodel_beta_ * communication_forward_
   if (cost_list.empty()) {
@@ -435,7 +435,7 @@ CostPtr CostGraph::SelectCostWithMinInferenceTime(const CostPtrList &cost_list, 
   return ret;
 }
 
-CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory) {
+CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory) const {
   // Select the cost with minimum training time. Currently, the training time is modeled as =
   // costmodel_alpha_ * computation_cost + costmodel_beta_ * communication_with_partial_para_
   if (cost_list.empty()) {
@@ -793,7 +793,9 @@ OperatorInfoPtr CostGraph::CheckOpElimination() const {
 std::vector<std::shared_ptr<Edge>> CostGraph::CheckEdgeElimination() const {
   for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
-    if (!op->is_alive()) continue;
+    if (!op->is_alive()) {
+      continue;
+    }
     std::map<void *, int64_t> count;
     for (auto &edge_su : op->GetAliveSuccEdges()) {
       MS_EXCEPTION_IF_NULL(edge_su);
@@ -954,7 +956,7 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
 }
 
 std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> CostGraph::EliminationSources(
-  const OperatorInfoPtr op1, const OperatorInfoPtr op2) {
+  const OperatorInfoPtr op1, const OperatorInfoPtr op2) const {
   MS_EXCEPTION_IF_NULL(op1);
   MS_EXCEPTION_IF_NULL(op2);
   MS_LOG(INFO) << "Now source eliminating node: " << op2->name() << " to node: " << op1->name();
@@ -989,7 +991,7 @@ std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>
     for (const auto &key_value : op2_cost_map) {
       const auto &from_to_strategies = key_value.first;
       const auto &costlist = key_value.second;
-      from_tocost[from_to_strategies.first].emplace_back(std::make_pair(from_to_strategies.second, costlist));
+      from_tocost[from_to_strategies.first].push_back(std::make_pair(from_to_strategies.second, costlist));
     }
     op2_edges_reorganised_cost[i] = from_tocost;
   }
@@ -1093,7 +1095,7 @@ OperatorInfoPtr CostGraph::CheckStarElimination() const {
 
 // This method is for 'eliminating operator' operation in the DP algorithm. It creates a new edge to replace
 // 'lefe_edge', 'op' and 'right_edge'. As a consequence, it creates new costlist for the new edge.
-std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr &op) {
+std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr &op) const {
   // in this case, the operators are organised in the form of u-->op-->v, and the goal
   // is to eliminate 'op'.
   MS_EXCEPTION_IF_NULL(op);
@@ -1141,7 +1143,7 @@ std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr &op) {
 
 // This method is for 'eliminating edges' operation in the DP algorithm. It creates a new edge to replace the 'edges',
 // and sets new costlist for the new edge.
-std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_ptr<Edge>> &edges) {
+std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_ptr<Edge>> &edges) const {
   MS_LOG(INFO) << "Now eliminating " << edges.size() << " edges.";
   MS_EXCEPTION_IF_NULL(edges[0]);
   auto u = edges[0]->prev_operator();
@@ -1182,7 +1184,7 @@ std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_
 void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &op_cost_list,
                                                   const CostPtrList &edge_cost_list, StrategyPtr tar_op_strategy,
                                                   const CostPtrList &tar_cost_list,
-                                                  CostPtrList *const tar_cost_list_new) {
+                                                  CostPtrList *const tar_cost_list_new) const {
   for (size_t i = 0; i < op_cost_list.size(); ++i) {
     auto &op_cost = op_cost_list[i];
     MS_EXCEPTION_IF_NULL(op_cost);
@@ -1213,7 +1215,7 @@ void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const
         new_cost->memory_with_reuse_ = memory;
         new_cost->communication_forward_ = communication_forward;
         MS_EXCEPTION_IF_NULL(tar_cost_list_new);
-        tar_cost_list_new->emplace_back(std::move(new_cost));
+        tar_cost_list_new->push_back(std::move(new_cost));
       }
     }
   }
@@ -1265,7 +1267,8 @@ OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr &op) {
 void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_stra,
                                                      const CostPtrList &contract_op_cost_list,
                                                      const CostPtrList &edge_cost_list, StrategyPtr target_op_stra,
-                                                     const CostPtrList &tar_cost_list, CostPtrList *tar_cost_list_new) {
+                                                     const CostPtrList &tar_cost_list,
+                                                     CostPtrList *tar_cost_list_new) const {
   for (size_t i = 0; i < contract_op_cost_list.size(); ++i) {
     auto &contract_op_cost = contract_op_cost_list[i];
     MS_EXCEPTION_IF_NULL(contract_op_cost);
@@ -1345,7 +1348,7 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
                                                      const CostPtrList &elimi_op_clist,
                                                      const CostPtrList &left_edge_clist, const CostPtr &right_edge_cost,
                                                      const CostPtrList &left_node_clist_origin,
-                                                     CostPtrList *left_node_clist_new) {
+                                                     CostPtrList *left_node_clist_new) const {
   MS_EXCEPTION_IF_NULL(right_edge_cost);
   MS_EXCEPTION_IF_NULL(right_op_cost);
   MS_EXCEPTION_IF_NULL(left_node_clist_new);
@@ -1479,7 +1482,7 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr &first_succ_n
                                                  const StrategyPtr &merged_op_stra, const CostPtrList &merged_op_clist,
                                                  std::vector<StrategyPtr> succ_nodes_stras,
                                                  CostPtrList &succ_edges_costs, CostPtrList &succ_nodes_costs,
-                                                 CostPtrList *first_succ_node_clist_new) {
+                                                 CostPtrList *first_succ_node_clist_new) const {
   for (auto &first_succ_node_cost : first_succ_node_clist) {
     for (auto &first_succ_edge_cost : first_succ_edge_clist) {
       for (auto &merged_node_cost : merged_op_clist) {
@@ -1654,7 +1657,7 @@ Status CostGraph::InitReshapeStrategy() {
       });
       bool reshape_is_first_op = reshape_info->pre_operator_name() == reshape_info->name();
       if (reshape_is_first_op) {
-        reshape_info->InitSelectedStrategy(reshape_info->selected_strategy());
+        (void)reshape_info->InitSelectedStrategy(reshape_info->selected_strategy());
       }
       if (pre_iter != in_edges.end() || reshape_is_first_op) {
         MS_LOG(DEBUG) << "Set reshape input layout by " << reshape_info->pre_operator_name();
