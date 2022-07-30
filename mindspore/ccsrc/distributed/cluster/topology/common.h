@@ -111,7 +111,7 @@ static const uint32_t kExecuteInterval = 3;
       success = func;                                                \
       if (!success) {                                                \
         MS_LOG(WARNING) << err_msg << ", retry...";                  \
-        sleep(interval);                                             \
+        (void)sleep(interval);                                       \
         if ((time - interval) < 0) break;                            \
         time -= interval;                                            \
       } else {                                                       \
@@ -131,7 +131,7 @@ static const uint32_t kExecuteInterval = 3;
       success = (func == expected);                                    \
       if (!success) {                                                  \
         MS_LOG(WARNING) << err_msg << ", retry...";                    \
-        sleep(interval);                                               \
+        (void)sleep(interval);                                         \
         if ((time - interval) < 0) break;                              \
         time -= interval;                                              \
       } else {                                                         \

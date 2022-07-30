@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include "utils/dlopen_macro.h"
 #include "runtime/collective/collective_communication_lib.h"
 
