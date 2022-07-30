@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -390,3 +390,34 @@ def test_return_const_value_with_side_effect_op():
         output = net(x)
         print(output)
     assert "Side Effect Invalid" in str(info.value)
+
+
+def test_grad_with_high_order_cnode():
+    """
+    Feature: Side effect
+    Description: Test side effect detecting with high order cnode.
+    Expectation: Not parameter size miss match error.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor(np.array([2, 2], np.float32)))
+
+        def construct(self, x, y):
+            return x * y * self.w
+
+    class Grad(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_net = ms.ops.grad(self.net)
+            return grad_net(x, y)
+
+    net = Net()
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    y = Tensor(np.array([3, 4]).astype(np.float32))
+    grad_net = Grad(net)
+    grad = grad_net(x, y)
+    print(grad)
