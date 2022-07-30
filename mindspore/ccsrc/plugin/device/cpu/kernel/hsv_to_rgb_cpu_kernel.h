@@ -31,7 +31,6 @@ class HSVToRGBCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
@@ -43,10 +42,10 @@ class HSVToRGBCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   TypeId input_dtype;
   template <typename T1>
-  void ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b);
+  void ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) const;
   template <typename T1>
-  void ComputeFloat(void *input, void *output, int64_t pixel_num);
-  void ComputeHalf(void *input, void *output, int64_t pixel_num);
+  void ComputeFloat(void *input, void *output, int64_t pixel_num) const;
+  void ComputeHalf(void *input, void *output, int64_t pixel_num) const;
   ShapeVector shape;
   const size_t kInputNum = 1;
   const size_t kOutputNum = 1;

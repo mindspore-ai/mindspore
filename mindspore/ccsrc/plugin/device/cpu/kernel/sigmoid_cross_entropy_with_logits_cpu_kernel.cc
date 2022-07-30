@@ -48,7 +48,7 @@ bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel:
 
 template <typename T>
 void SigmoidCrossEntropyWithLogitsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) {
+                                                             const std::vector<AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsOutputsNum, kernel_name_);
   auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);

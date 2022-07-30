@@ -41,7 +41,7 @@ void HSVToRGBCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T1>
-void HSVToRGBCpuKernelMod::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) {
+void HSVToRGBCpuKernelMod::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) const {
   const T1 kNumber6 = 6;
   T1 c = s * v;
   T1 m = v - c;
@@ -103,7 +103,7 @@ void HSVToRGBCpuKernelMod::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b
 }
 
 template <typename T1>
-void HSVToRGBCpuKernelMod::ComputeFloat(void *input, void *output, int64_t pixel_num) {
+void HSVToRGBCpuKernelMod::ComputeFloat(void *input, void *output, int64_t pixel_num) const {
   T1 *input_ptr = reinterpret_cast<T1 *>(input);
   T1 *output_ptr = reinterpret_cast<T1 *>(output);
   auto shard_hsv_to_rgb = [&input_ptr, &output_ptr, this](size_t start, size_t end) {
@@ -124,7 +124,7 @@ void HSVToRGBCpuKernelMod::ComputeFloat(void *input, void *output, int64_t pixel
   CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, static_cast<size_t>(pixel_num));
 }
 
-void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_num) {
+void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_num) const {
   float16 *input_ptr = reinterpret_cast<float16 *>(input);
   float16 *output_ptr = reinterpret_cast<float16 *>(output);
   auto shard_hsv_to_rgb = [&input_ptr, &output_ptr, this](size_t start, size_t end) {

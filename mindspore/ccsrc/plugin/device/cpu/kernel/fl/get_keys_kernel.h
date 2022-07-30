@@ -32,27 +32,26 @@ class GetKeysKernelMod : public DeprecatedNativeCpuKernelMod {
   GetKeysKernelMod() = default;
   ~GetKeysKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override;
 
   void Init(const CNodePtr &kernel_node) override;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  void InitKernel(const CNodePtr &) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+    const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
  private:
   void BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb);
   bool SavePublicKeyList(
-    const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key);
+    const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key) const;
 
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  uint32_t rank_id_{0};
+  uint32_t server_num_{0};
+  uint32_t target_server_rank_{0};
   std::string fl_id_;
   std::shared_ptr<fl::FBBuilder> fbb_;
 };

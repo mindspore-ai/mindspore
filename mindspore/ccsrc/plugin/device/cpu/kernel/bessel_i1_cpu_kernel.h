@@ -44,7 +44,6 @@ class BesselI1CpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   static void BesselI1Func(const T *input, T *output, size_t start, size_t end);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -78,7 +77,6 @@ class BesselI1eCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   static void BesselI1eFunc(const T *input, T *output, size_t start, size_t end);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

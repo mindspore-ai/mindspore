@@ -47,7 +47,6 @@ class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void CheckArgs();
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

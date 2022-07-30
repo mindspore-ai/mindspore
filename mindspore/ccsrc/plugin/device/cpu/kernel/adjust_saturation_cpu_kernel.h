@@ -33,11 +33,10 @@ class AdjustSaturationCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs);
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   TypeId input_type_{kTypeUnknown};
-
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
 }  // namespace mindspore

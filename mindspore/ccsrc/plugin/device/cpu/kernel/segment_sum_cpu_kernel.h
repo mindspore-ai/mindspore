@@ -38,7 +38,6 @@ class SegmentSumCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

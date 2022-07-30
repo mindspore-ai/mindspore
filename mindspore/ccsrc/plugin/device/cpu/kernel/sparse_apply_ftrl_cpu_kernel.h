@@ -44,8 +44,9 @@ class BACKEND_EXPORT FusedSparseFtrlCpuKernelMod : public SparseOptimizerCpuKern
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+ protected:
   void ResetResource() noexcept;
 
   float lr_{0.0};
@@ -81,11 +82,11 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
-  void ResetResource() noexcept;
 
  protected:
+  void ResetResource() noexcept;
+
   float lr_{0.0};
   float l1_{0.0};
   float l2_{0.0};

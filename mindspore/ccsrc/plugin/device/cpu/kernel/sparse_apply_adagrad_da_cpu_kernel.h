@@ -49,8 +49,9 @@ class SparseApplyAdagradDACpuKernelMod : public SparseOptimizerCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+ protected:
   void ResetResource() noexcept;
 };
 }  // namespace kernel

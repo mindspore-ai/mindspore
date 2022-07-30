@@ -52,7 +52,7 @@ void ConcatOffsetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = func_list_[index].second;
 }
 template <typename T>
-bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOffsetOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();

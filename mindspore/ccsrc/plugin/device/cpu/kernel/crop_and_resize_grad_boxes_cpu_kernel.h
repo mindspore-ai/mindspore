@@ -65,7 +65,6 @@ class CropAndResizeGradBoxesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void OutputZeroing(const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

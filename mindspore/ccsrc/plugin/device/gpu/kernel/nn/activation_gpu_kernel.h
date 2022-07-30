@@ -61,7 +61,6 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
                                         "For 'Activation', cudnnDestroyTensorDescriptor failed.");
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

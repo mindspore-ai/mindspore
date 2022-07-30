@@ -50,7 +50,6 @@ class MultinomialCpuKernelMod : public NativeCpuKernelMod {
 
   void ResetResource() noexcept;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

@@ -207,7 +207,7 @@ T GridSampler3DCpuKernelMod::grid_sampler_compute_source_index(T coord, int64_t 
 }
 
 template <typename T>
-T GridSampler3DCpuKernelMod::reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high) {
+T GridSampler3DCpuKernelMod::reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high) const {
   if (twice_low == twice_high) {
     return static_cast<T>(kZero);
   }

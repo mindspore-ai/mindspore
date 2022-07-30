@@ -69,7 +69,7 @@ bool PrintCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-TypeId PrintCpuKernelMod::CheckType() {
+TypeId PrintCpuKernelMod::CheckType() const {
   if constexpr (std::is_same_v<T, bool>) {
     return kNumberTypeBool;
   } else if constexpr (std::is_same_v<T, int8_t>) {

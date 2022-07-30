@@ -48,7 +48,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
   return support_map_[kernel_name];
 }
 
-std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) {
+std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) const {
   static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
                                                "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
   std::vector<KernelAttr> support_kernel_attrs;
@@ -134,7 +134,7 @@ void DeprecatedNativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
   InitInputOutputSize(kernel_node);
 }
 
-std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) {
+std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) const {
   std::vector<TypeId> input_types;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
@@ -144,7 +144,7 @@ std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr 
   return input_types;
 }
 
-std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) {
+std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) const {
   std::vector<TypeId> output_types;
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {

@@ -137,13 +137,14 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) { return; }
 
- protected:
-  void InitSizeLists() { return; }
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
+
+ protected:
+  void InitSizeLists() { return; }
 
  private:
   bool BuildUpdateModelReq(const std::shared_ptr<fl::FBBuilder> &fbb, const std::vector<AddressPtr> &weights) {
@@ -267,13 +268,13 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
   std::shared_ptr<fl::FBBuilder> fbb_;
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  uint32_t rank_id_{0};
+  uint32_t server_num_{0};
+  uint32_t target_server_rank_{0};
   std::string fl_name_;
   std::string fl_id_;
-  int data_size_;
-  uint64_t iteration_;
+  int data_size_{0};
+  uint64_t iteration_{0};
   std::vector<std::string> weight_full_names_;
   std::string encrypt_mode;
   std::vector<EncryptPublicKeys> client_keys;

@@ -91,7 +91,7 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) {
+float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) const {
   if (elem_num == 0 || input == nullptr) {
     return 0.0f;
   }
@@ -123,7 +123,7 @@ float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) {
 
 template <typename T>
 void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspaces) {
+                                              const std::vector<AddressPtr> &workspaces) const {
   auto beta2t = reinterpret_cast<float *>(inputs[kBeta2tIndex]->addr)[kScalarIndex];
   auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
   auto exp_avg_sq_row = reinterpret_cast<T *>(inputs[kExpAvgSQRowIndex]->addr);

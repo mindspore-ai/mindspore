@@ -34,16 +34,15 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j);
+  T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) const;
   template <typename T>
-  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows);
+  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows) const;
   template <typename T>
-  void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
+  void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value) const;
   template <typename T>
   void InitIOSize(const CNodePtr &kernel_node);
   template <typename T>
@@ -59,7 +58,7 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
 
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
-  void InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
+  void InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) const;
   size_t batch_size_{1};
   size_t a_row_{1};
   size_t a_col_{1};

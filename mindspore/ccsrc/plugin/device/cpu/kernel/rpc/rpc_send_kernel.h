@@ -28,14 +28,13 @@ class RpcSendKernelMod : public RpcKernelMod {
   RpcSendKernelMod() = default;
   ~RpcSendKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override {
     return true;
   }
 
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel

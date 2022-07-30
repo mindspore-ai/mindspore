@@ -42,6 +42,8 @@ class NonZeroCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   template <typename T>
   size_t NonZeroCompute(const T *input, int64_t *output, size_t input_num);
@@ -55,9 +57,6 @@ class NonZeroCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   size_t input_rank_{0};
-
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
 }  // namespace mindspore

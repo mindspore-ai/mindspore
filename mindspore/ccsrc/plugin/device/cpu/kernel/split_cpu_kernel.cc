@@ -44,7 +44,7 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
                       << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();
   }
-  CheckParam(kernel_node);
+  CheckParam();
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
@@ -107,7 +107,7 @@ bool SplitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-void SplitCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod::CheckParam() {
   int64_t dims = SizeToLong(input_shape_.size());
   if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
