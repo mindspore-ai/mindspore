@@ -1182,7 +1182,7 @@ def get_gatherd_vmap_rule(prim, axis_size):
             _raise_value_error("The source axis of `dim` in `GatherD` must be None, "
                                "but got {}.".format(axis_dim))
         if not isinstance(dim_value, int):
-            _raise_value_error("The `dim` in `GatherD` must be a const, but got {}.".format(dim_value))
+            _raise_value_error("The `dim` in `GatherD` must be a int, but got {}.".format(dim_value))
 
         out_dim = index_dim
 
@@ -1196,7 +1196,8 @@ def get_gatherd_vmap_rule(prim, axis_size):
             mnp.moveaxis(x, x_dim, index_dim)
 
         # Adapt `dim` to vmap case.
-        dim_value = dim_value + 1 if dim_value >= out_dim else dim_value
+        x_ndim = ops.rank(x)
+        dim_value = _get_reduce_batch_axis(dim_value, x_dim, x_ndim)
 
         out = prim(x, dim_value, index)
         return (out, out_dim)

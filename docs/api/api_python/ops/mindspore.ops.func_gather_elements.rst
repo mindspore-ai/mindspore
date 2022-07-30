@@ -19,8 +19,8 @@ mindspore.ops.gather_elements
 
     参数：
         - **x** (Tensor) - 输入Tensor。
-        - **dim** (int) - 获取元素的轴。数据类型为int32或int64。取值范围为[-x_rank, x_rank)。
-        - **index** (Tensor) - 获取收集元素的索引。支持的数据类型包括：int32，int64。每个索引元素的取值范围为[-x_rank[dim], x_rank[dim])。
+        - **dim** (int) - 获取元素的轴。数据类型为int32或int64。取值范围为[-x.ndim, x.ndim)。
+        - **index** (Tensor) - 获取收集元素的索引。支持的数据类型包括：int32，int64。每个索引元素的取值范围为[-x.shape(dim), x.shape(dim))。
 
     返回：
         Tensor，shape与 `index` 相同，即其shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})`，数据类型与 `x` 相同。
