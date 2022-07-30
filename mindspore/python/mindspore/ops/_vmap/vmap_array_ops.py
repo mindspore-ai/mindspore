@@ -1112,6 +1112,38 @@ def get_matrix_diag_part_v3_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.array_ops.MatrixSetDiagV3)
+def get_matrix_set_diag_v3_vmap_rule(prim, axis_size):
+    """VmapRule for `MatrixSetDiagV3` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        align = "RIGHT_LEFT"
+    else:
+        prim_name = prim.name
+        align = prim.align
+
+    matrix_set_diag_op = P.array_ops.MatrixSetDiagV3(align=align)
+
+    def vmap_rule(x_bdim, diagonal_bdim, k_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, diagonal_bdim, k_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        k, k_dim = k_bdim
+        diagonal, diagonal_dim = diagonal_bdim
+        if k_dim is not None:
+            _raise_value_error("The source axis of `k` in {} must be None, but got {}.".format(prim_name, k_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        diagonal = _bdim_at_front(diagonal, diagonal_dim, axis_size)
+        out = matrix_set_diag_op(x, diagonal, k)
+
+        return out, 0
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Padding)
 def get_padding_vmap_rule(prim, axis_size):
     """VmapRule for `Padding` operation."""

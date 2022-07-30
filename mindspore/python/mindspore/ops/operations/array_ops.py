@@ -1447,7 +1447,7 @@ class MatrixSetDiagV3(Primitive):
     Outputs:
         A Tensor. Has the same type as x.
         Let x has r+1 dimensions [I, J, ..., L, M, N].
-        The output is a tensor of rank k+1 with dimensions [I, J, ..., L, M, N], the same as input x.
+        The output is a tensor of rank r+1 with dimensions [I, J, ..., L, M, N], the same as input x.
 
     Raises:
         TypeError: If any input is not Tensor.
@@ -1466,7 +1466,7 @@ class MatrixSetDiagV3(Primitive):
             0), x.shape[-1] + min(-k[0], 0)).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[7, 7, 7, 7],

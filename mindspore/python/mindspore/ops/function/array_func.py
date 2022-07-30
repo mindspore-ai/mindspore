@@ -24,6 +24,7 @@ from ..operations.array_ops import (
     NonZero,
     MatrixDiagV3,
     MatrixDiagPartV3,
+    MatrixSetDiagV3,
     Fills,
     Col2Im,
     ScatterNdMax,
@@ -2943,6 +2944,80 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
     return matrix_diag_part_v3(x, k, padding_value)
 
 
+def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
+    r"""
+    Returns a batched matrix tensor with new batched diagonal values.
+    Given x and diagonal, this operation returns a tensor with the same shape and values as x, except for the specified
+    diagonals of the innermost matrices. These will be overwritten by the values in diagonal. Some diagonals are shorter
+    than max_diag_len and need to be padded.
+    The diagonal.shape[-2] must be equal to num_diags calculated by k[1] - k[0] + 1. The diagonal.shape[-1] must be
+    equal to the longest diagonal value max_diag_len calculated by min(x.shape[-2] + min(k[1], 0), x.shape[-1] +
+    min(-k[0], 0)). Let x have r + 1 dimensions [I, J, ..., L, M, N]. The diagonal tensor has rank r with shape [I, J,
+    ..., L, max_diag_len] when k is an integer or k[0] == k[1]. Otherwise, it has rank r + 1 with shape [I, J, ..., L,
+    num_diags, max_diag_len].
+
+    Args:
+        x (Tensor): Rank r + 1, where r >= 1.
+        diagonal (Tensor): A Tensor. Have the same dtype as x. Rank r when k is an integer or k[0] == k[1].
+          Otherwise, it has rank r + 1.
+        k (Union[int, Tensor], optional): A int32 Scalar or int32 Tensor. Diagonal offset(s). Positive value means
+          superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a
+          single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
+          a matrix band. k[0] must not be larger than k[1].
+          The alue of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
+          Input k must be const Tensor when taking Graph mode.
+
+        align (string): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
+          is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
+          aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+
+    Returns:
+        Tensor, The same type as x. Let x has r+1 dimensions [I, J, ..., L, M, N].
+        The output is a tensor of rank r+1 with dimensions [I, J, ..., L, M, N], the same as input x.
+
+    Raises:
+        TypeError: If input `x` or `diagonal` is not Tensor.
+        TypeError: If input `x` and `diagonal` are not the same dtype.
+        TypeError: If `k` is not int32 dtype.
+        ValueError: If `align` is not a string or not in the valid range.
+        ValueError: If rank of `k` is not equal to 0 or 1.
+        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If size of `k` is not equal to 1 or 2.
+        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If the `diagonal` rank size don't match with input `x` rank size.
+        ValueError: If the `diagonal` shape value don't match with input `x` shape value.
+        ValueError: If the diagonal.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1.
+        ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
+        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by min(x.shape[-2] + min(k[1],
+            0), x.shape[-1] + min(-k[0], 0)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[7, 7, 7, 7],
+        ...                      [7, 7, 7, 7],
+        ...                      [7, 7, 7, 7]]), mindspore.float32)
+        >>> diagonal = Tensor(np.array([[0, 9, 1],
+        ...                             [6, 5, 8],
+        ...                             [1, 2, 3],
+        ...                             [4, 5, 0]]), mindspore.float32)
+        >>> k = Tensor(np.array([-1, 2]), mindspore.int32)
+        >>> align = 'RIGHT_LEFT'
+        >>> output = ops.matrix_set_diag(x, diagonal, k, align)
+        >>> print(output)
+        [[1. 6. 9. 7.]
+         [4. 2. 5. 1.]
+         [7. 5. 3. 8.]]
+        >>> print(output.shape)
+        (3, 4)
+    """
+    matrix_set_diag_v3_op = _get_cache_prim(MatrixSetDiagV3)(align)
+    if isinstance(k, int) and not isinstance(k, bool):
+        k = cast_(k, mstype.int32)
+    return matrix_set_diag_v3_op(x, diagonal, k)
+
+
 def meshgrid(inputs, indexing='xy'):
     """
     Generates coordinate matrices from given coordinate tensors.
@@ -4051,6 +4126,7 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
+    'matrix_set_diag',
     'diag',
     'meshgrid',
     'adaptive_max_pool2d',
