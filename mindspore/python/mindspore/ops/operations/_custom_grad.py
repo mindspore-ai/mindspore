@@ -15,37 +15,38 @@
 
 """Register bprop function for Custom Hybrid Autodiff"""
 
-from collections import UserDict
 from mindspore import log as logger
 
+BPROP_FACTORY = dict()
 
-class Registry(UserDict):
+
+class Registry():
     """
     Registry class inherits from UserDict.
     Key: length of signatures
     Value : bprop function for custom hybrid op
     """
-
-    def register(self, sig_number):
+    @staticmethod
+    def register(sig_number):
         def deco(fn):
-            self[sig_number] = fn
+            global BPROP_FACTORY
+            BPROP_FACTORY[sig_number] = fn
             return fn
         return deco
 
-    def get(self, sig_number):
-        if sig_number not in self:
+    @staticmethod
+    def get(sig_number):
+        global BPROP_FACTORY
+        if sig_number not in BPROP_FACTORY:
             logger.error(f"Autodiff currently doesn't support hyrbrid function with input num :{sig_number}. \
                 Supported input num is from 1 to 10")
-        fn = self[sig_number]
+        fn = BPROP_FACTORY.get(sig_number)
         return fn
-
-
-bprop_factory = Registry()
 
 
 def autodiff_bprop(n):
     """get bprop function"""
-    return bprop_factory.get(n)
+    return Registry.get(n)
 
 
 def get_outs(out, dout):
@@ -61,7 +62,7 @@ def get_outs(out, dout):
     return tupleout + tupledout
 
 
-@bprop_factory.register(1)
+@Registry.register(1)
 def bprop_one(op):
     """bprop func for custom op with one input"""
     def bprop(x1, out, dout):
@@ -71,7 +72,7 @@ def bprop_one(op):
     return bprop
 
 
-@bprop_factory.register(2)
+@Registry.register(2)
 def bprop_two(op):
     """bprop func for custom op with two inputs"""
     def bprop(x1, x2, out, dout):
@@ -81,7 +82,7 @@ def bprop_two(op):
     return bprop
 
 
-@bprop_factory.register(3)
+@Registry.register(3)
 def bprop_three(op):
     """bprop func for custom op with three inputs"""
     def bprop(x1, x2, x3, out, dout):
@@ -91,7 +92,7 @@ def bprop_three(op):
     return bprop
 
 
-@bprop_factory.register(4)
+@Registry.register(4)
 def bprop_four(op):
     """bprop func for custom op with four inputs"""
     def bprop(x1, x2, x3, x4, out, dout):
@@ -101,7 +102,7 @@ def bprop_four(op):
     return bprop
 
 
-@bprop_factory.register(5)
+@Registry.register(5)
 def bprop_five(op):
     """bprop func for custom op with five inputs"""
     def bprop(x1, x2, x3, x4, x5, out, dout):
@@ -111,7 +112,7 @@ def bprop_five(op):
     return bprop
 
 
-@bprop_factory.register(6)
+@Registry.register(6)
 def bprop_six(op):
     """bprop func for custom op with six inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, out, dout):
@@ -121,7 +122,7 @@ def bprop_six(op):
     return bprop
 
 
-@bprop_factory.register(7)
+@Registry.register(7)
 def bprop_seven(op):
     """bprop func for custom op with seven inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, out, dout):
@@ -131,7 +132,7 @@ def bprop_seven(op):
     return bprop
 
 
-@bprop_factory.register(8)
+@Registry.register(8)
 def bprop_eight(op):
     """bprop func for custom op with eight inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, out, dout):
@@ -141,7 +142,7 @@ def bprop_eight(op):
     return bprop
 
 
-@bprop_factory.register(9)
+@Registry.register(9)
 def bprop_nine(op):
     """bprop func for custom op with nine inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, x9, out, dout):
@@ -151,7 +152,7 @@ def bprop_nine(op):
     return bprop
 
 
-@bprop_factory.register(10)
+@Registry.register(10)
 def bprop_ten(op):
     """bprop func for custom op with ten inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, out, dout):
