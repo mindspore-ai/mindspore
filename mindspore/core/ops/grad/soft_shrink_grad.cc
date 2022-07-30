@@ -35,7 +35,7 @@ void SoftShrinkGrad::Init(const float &lambd) {
 }
 
 void SoftShrinkGrad::set_lambd(const float &lambd) {
-  AddAttr(kLambd, api::MakeValue(lambd));
+  (void)AddAttr(kLambd, api::MakeValue(lambd));
   return;
 }
 
