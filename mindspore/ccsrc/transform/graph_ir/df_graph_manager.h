@@ -41,7 +41,7 @@ class DfGraphManager {
   void AddSavedGraphs(const std::string &id);
   DfGraphWrapperPtr GetGraphByName(const std::string &name);
   DfGraphManager(const DfGraphManager &) = delete;
-  DfGraphManager operator=(const DfGraphManager &) = delete;
+  DfGraphManager &operator=(const DfGraphManager &) = delete;
   void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
   AnfGraphPtr GetAnfGraph(uint32_t graph_id);
   std::shared_ptr<transform::GraphRunner> GetGraphRunner();
