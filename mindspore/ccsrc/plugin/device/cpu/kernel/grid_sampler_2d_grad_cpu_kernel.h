@@ -128,7 +128,7 @@ struct Vec256 {
     }
   }
 
-  template <typename... Args, typename std::enable_if<(sizeof...(Args) == size()), void>::type>
+  template <typename... Args, typename = typename std::enable_if<(sizeof...(Args) == size()), void>::type>
   explicit Vec256(Args... vals) {
     values = {vals...};
   }
