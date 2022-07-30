@@ -64,6 +64,21 @@ bool LogSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();
+
+  // Filter positive values
+  auto output_ptr = reinterpret_cast<float *>(outputs[0]->addr);
+  size_t num = outputs[0]->size / sizeof(float);
+
+  auto task = [output_ptr](size_t start_index, size_t end_index) {
+    for (size_t i = start_index; i < end_index; i++) {
+      if (output_ptr[i] > 0) {
+        output_ptr[i] = 0;
+      }
+    }
+  };
+
+  ParallelLaunchAutoSearch(task, num, this, &parallel_search_info_);
+
   return true;
 }
 
