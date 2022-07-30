@@ -179,7 +179,7 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
       caller->inputs().size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
     size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + 1;
     size_t end_offset = called->fv_param_count();
-    (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - end_offset);
+    (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
   }
 
   TraceGuard trace_guard(std::make_shared<TraceCopy>(caller->debug_info()));

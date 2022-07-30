@@ -17,7 +17,6 @@
 #include "frontend/optimizer/irpass/ge/dropout_for_ge.h"
 
 #include <functional>
-#include "pybind_api/pybind_patch.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/jit/static_analysis/prim.h"
