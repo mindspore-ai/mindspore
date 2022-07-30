@@ -1850,9 +1850,10 @@ class NLLLoss(LossBase):
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}\{c \not= \text{ignore_index}\}
 
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
-    N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+    :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
+    where :math:`C` is the number of classes.
 
-    If reduction is not 'none' (default 'mean'), then
+    If `reduction` is not 'none' (default 'mean'), then
 
     .. math::
 
@@ -1862,7 +1863,7 @@ class NLLLoss(LossBase):
         \end{array}\right.
 
     Args:
-        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is (C,).
+        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is :math:`(C,)`.
             The data type only supports float32 or float16. Default: None.
         ignore_index (int): Specifies a target value that is ignored (typically for padding value)
             and does not contribute to the gradient. Default: -100.
@@ -1870,10 +1871,10 @@ class NLLLoss(LossBase):
             Default: 'mean'.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
-          in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`(for high-dimensional data).
+        - **logits** (Tensor) - Tensor of shape :math:`(N, C)`
+          or :math:`(N, C, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data, where `C = number of classes`.
           Data type must be float16 or float32. `inputs` needs to be logarithmic probability.
-        - **labels** (Tensor) -:math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for high-dimensional data.
+        - **labels** (Tensor) -:math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data.
           Data type must be int32.
 
     Returns:
