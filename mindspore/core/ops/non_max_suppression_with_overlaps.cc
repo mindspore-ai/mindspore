@@ -16,8 +16,8 @@
 
 #include <set>
 
-#include "ops/non_max_suppression_with_overlaps.h"
 #include "mindapi/src/helper.h"
+#include "ops/non_max_suppression_with_overlaps.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,20 +48,23 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
   auto score_threshold_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape]);
 
-  (void)CheckAndConvertUtils::CheckInteger("size of the second dimension of overlaps", overlaps_shape->shape()[1],
-                                           kEqual, overlaps_shape->shape()[0], prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of overlaps", overlaps_shape->shape().size(), kEqual, kOverlapsRank,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of scores", scores_shape->shape().size(), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("length of scores", scores_shape->shape()[0], kEqual,
-                                           overlaps_shape->shape()[0], prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of max_output_size", max_output_size_shape->shape().size(), kEqual, 0,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of overlap_threshold", overlap_threshold_shape->shape().size(), kEqual,
-                                           0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of score_threshold", score_threshold_shape->shape().size(), kEqual, 0,
-                                           prim_name);
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  if (scores_shape_map[kShape][0] != -1) {
+    (void)CheckAndConvertUtils::CheckInteger("size of the second dimension of overlaps", overlaps_shape->shape()[1],
+                                             kEqual, overlaps_shape->shape()[0], prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of overlaps", overlaps_shape->shape().size(), kEqual, kOverlapsRank,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of scores", scores_shape->shape().size(), kEqual, 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("length of scores", scores_shape->shape()[0], kEqual,
+                                             overlaps_shape->shape()[0], prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of max_output_size", max_output_size_shape->shape().size(), kEqual,
+                                             0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of overlap_threshold", overlap_threshold_shape->shape().size(),
+                                             kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of score_threshold", score_threshold_shape->shape().size(), kEqual,
+                                             0, prim_name);
+  }
+
   // calculate output shape
   ShapeVector selected_indices_shape = {abstract::Shape::SHP_ANY};
   ShapeVector selected_indices_min_shape = {0};
@@ -92,7 +95,7 @@ TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,
   auto overlap_threshold_type = input_args[3]->BuildType();
   auto score_threshold_type = input_args[4]->BuildType();
 
-  const std::set<TypePtr> valid_types = {kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   args.insert({"overlaps", overlaps_type});
   args.insert({"scores", scores_type});
@@ -111,7 +114,7 @@ TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(NonMaxSuppressionWithOverlaps, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(NonMaxSuppressionWithOverlaps, BaseOperator);
 AbstractBasePtr NonMaxSuppressionWithOverlapsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

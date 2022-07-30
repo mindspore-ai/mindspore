@@ -932,7 +932,8 @@ static inline uint64_t GetCurrentUSec() {
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Fail gettimeofday, ret = " << ret;
   }
-  return static_cast<uint64_t>(tv.tv_usec + tv.tv_sec * 1000000);
+  constexpr int64_t constNum = 1000000;
+  return static_cast<uint64_t>(tv.tv_usec + tv.tv_sec * constNum);
 }
 
 #define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
