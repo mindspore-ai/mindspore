@@ -109,7 +109,7 @@ def argminwithvalue_tensor(context_mode, np_type):
                          [67., 8., 9.],
                          [130., 24., 15.],
                          [0.3, -0.4, -15.]]).astype(np_type))
-    return x.arg_min_with_value(axis=-1)
+    return x.argmin_with_value(axis=-1)
 
 
 @pytest.mark.level1
@@ -184,7 +184,7 @@ def test_argminwithvalue_functional():
 @pytest.mark.env_onecard
 def test_argminwithvalue_tensor():
     """
-    Feature: support tensor's arg_min_with_value op.
+    Feature: support tensor's argmin_with_value op.
     Description: test the op using tensor.
     Expectation: expect correct result.
     """
@@ -210,7 +210,7 @@ def test_argminwithvalue_tensor():
 @pytest.mark.env_onecard
 def test_argminwithvalue_dynamic_shape():
     """
-    Feature: support arg_min_with_value op with dynamic shape.
+    Feature: support argmin_with_value op with dynamic shape.
     Description: test the op with dynamic shape
     Expectation: expect correct result.
     """
