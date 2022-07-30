@@ -236,7 +236,7 @@ float CoreAffinity::GetServerFrequency() {
       max_freq = freq;
     }
   }
-  (void)fclose(fp);
+  (void)pclose(fp);
 #endif
   return max_freq;  // MHz
 }

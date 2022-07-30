@@ -53,7 +53,9 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
     copy_context->SetThreadNum(origin_context->GetThreadNum());
     copy_context->SetEnableParallel(origin_context->GetEnableParallel());
+    copy_context->SetInterOpParallelNum(origin_context->GetInterOpParallelNum());
     copy_context->SetThreadAffinity(origin_context->GetThreadAffinityMode());
+    copy_context->SetThreadAffinity(origin_context->GetThreadAffinityCoreList());
     auto &copy_device_list = copy_context->MutableDeviceInfo();
     auto origin_device_list = origin_context->MutableDeviceInfo();
     for (size_t i = 0; i < origin_device_list.size(); i++) {

@@ -95,7 +95,7 @@ endif()
 
 set(LITE_SO_NAME mindspore-lite)
 
-set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
+set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
         LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
