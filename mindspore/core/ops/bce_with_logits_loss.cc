@@ -90,7 +90,7 @@ TypePtr BCEWithLogitsLossInferType(const PrimitivePtr &prim, const std::vector<A
 }  // namespace
 
 void BCEWithLogitsLoss::set_reduction(const std::string &reduction) {
-  CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
+  (void)CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
   (void)this->AddAttr(kReduction, api::MakeValue(reduction));
 }
 

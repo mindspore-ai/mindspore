@@ -124,6 +124,12 @@ bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_v
   return max_major_value != static_cast<T>(kZeroThreshold);
 }
 
+void LUCpuKernelMod::DoSafeMemCopy(void *dest, size_t dest_max, const void *src, size_t count) {
+  if (memcpy_s(dest, dest_max, src, count) != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' It does memory copy failed.";
+  }
+}
+
 template <typename T>
 void LUCpuKernelMod::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
                                         const T &value) {
@@ -155,8 +161,7 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
       per_value[i] = SizeToInt(i);
     }
     // 1. memcpy input to output, do full lu inplace.
-    (void)memcpy_s(lu_value, lu_row_ * lu_col_ * sizeof(T), a_value, a_row_ * a_col_ * sizeof(T));
-
+    DoSafeMemCopy(lu_value, lu_row_ * lu_col_ * sizeof(T), a_value, a_row_ * a_col_ * sizeof(T));
     size_t s = std::min(a_row_, a_col_);
     // 2. do lu decompose inplace
     for (size_t k = 0; k < s; ++k) {
@@ -202,9 +207,10 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
       T *lu_ori_row = lu_value + index * SizeToInt(lu_col_);
       T *lu_trans_row = lu_value + key * SizeToInt(lu_col_);
       // copy ori data to trans lu
-      (void)memcpy_s(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
+      DoSafeMemCopy(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
       // copy new data to ori data ptr
-      (void)memcpy_s(lu_ori_row, lu_col_ * sizeof(T), lu_trans_row, lu_col_ * sizeof(T));
+      DoSafeMemCopy(lu_ori_row, lu_col_ * sizeof(T), lu_trans_row, lu_col_ * sizeof(T));
+
       // update pivot map
       pivots_map[key] = {index, true};
       // put ori data which stored in workspace to mapped new place
@@ -218,26 +224,26 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
         lu_trans_wk = lu_ori_wk;
         lu_ori_wk = tmp_wk;
         // copy new ori data to trans workspace
-        (void)memcpy_s(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
+        DoSafeMemCopy(lu_trans_wk, lu_col_ * sizeof(T), lu_ori_row, lu_col_ * sizeof(T));
         // copy new data to ori data place
-        (void)memcpy_s(lu_ori_row, lu_col_ * sizeof(T), lu_ori_wk, lu_col_ * sizeof(T));
+        DoSafeMemCopy(lu_ori_row, lu_col_ * sizeof(T), lu_ori_wk, lu_col_ * sizeof(T));
         pivots_map[key] = {index, true};
       }
     }
-
     // 4. calculate final permutation matrix
     // for PA = LU get: base + row * permutation_row_ + col
     // for A = PLU  get: base + col * permutation_row_ + row
     // here, we do A = PLU which is same as scipy.
     size_t count = permutation_col_ * permutation_row_ * sizeof(int);
-    (void)memset_s(reinterpret_cast<void *>(permutation_value), count, 0, count);
+    if (memset_s(reinterpret_cast<void *>(permutation_value), count, 0, count) != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' It does memset_s failed.";
+    }
     for (size_t i = 0; i < pivots_col_; ++i) {
       int position = per_value[i];
       int *per_addr = permutation_value + position * SizeToInt(permutation_row_) + SizeToInt(i);
       *per_addr = 1;
     }
   }
-
   return true;
 }
 

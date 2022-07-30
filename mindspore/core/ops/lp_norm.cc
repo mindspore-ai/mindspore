@@ -39,7 +39,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
   if (input_rank == 0) {
-    CheckAndConvertUtils::CheckInteger("axis size", SizeToLong(axis.size()), kEqual, input_rank + 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("axis size", SizeToLong(axis.size()), kEqual, input_rank + 1, prim_name);
     return std::make_shared<abstract::Shape>(input_shape);
   } else {
     CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeNeither, {0, input_rank + 1}, prim_name);
@@ -61,15 +61,15 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', the element of the axis must be different, but got axis: " << axis << ".";
       }
-      if (keep_dims == false) {
-        // Here, we need a place holder for infer shape, but dynamic shape using -1, so just change to INT64_MAX.
-        output_shape[axis[i]] = place_holder;
+      if (!keep_dims) {
+        // Here, we need a placeholder for infer shape, but dynamic shape using -1, so just change to INT64_MAX.
+        output_shape[LongToSize(axis[i])] = place_holder;
       } else {
-        output_shape[axis[i]] = 1;
+        output_shape[LongToSize(axis[i])] = 1;
       }
     }
-    if (keep_dims == false) {
-      for (std::vector<int64_t>::iterator iter = output_shape.begin(); iter != output_shape.end(); ++iter) {
+    if (!keep_dims) {
+      for (auto iter = output_shape.begin(); iter != output_shape.end(); ++iter) {
         if (*iter == place_holder) {
           iter = output_shape.erase(iter);
           iter -= 1;
@@ -80,10 +80,10 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
     if (axis[0] < 0) {
       axis[0] += input_rank;
     }
-    if (keep_dims == false) {
-      (void)output_shape.erase(output_shape.begin() + axis[0]);
+    if (!keep_dims) {
+      (void)output_shape.erase(output_shape.begin() + LongToSize(axis[0]));
     } else {
-      output_shape[axis[0]] = 1;
+      output_shape[LongToSize(axis[0])] = 1;
     }
   }
   return std::make_shared<abstract::Shape>(output_shape);

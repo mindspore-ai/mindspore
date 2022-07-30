@@ -46,7 +46,8 @@ int SeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   output_shape_.clear();
   (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  output_size_ =
+    LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>()));
   return KRET_OK;
 }
 
@@ -63,8 +64,8 @@ bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     for (size_t i = start; i < end; i++) {
       T input_value = input[i];
       output[i] = input_value >= template_zero
-                    ? scale * input_value
-                    : scale_dot_alpha * static_cast<T>(std::expm1(static_cast<float>(input_value)));
+                    ? (scale * input_value)
+                    : (scale_dot_alpha * static_cast<T>(std::expm1(static_cast<float>(input_value))));
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_, pool_);

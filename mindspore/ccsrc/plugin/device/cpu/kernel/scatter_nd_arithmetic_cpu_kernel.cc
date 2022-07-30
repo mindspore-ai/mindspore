@@ -119,7 +119,7 @@ std::pair<bool, ScatterNdArithmeticCpuKernelMod::ComputeFunc<T>> ScatterNdArithm
     return init_result;
   }
   auto &binary_func = func_iter->second;
-  compute_func = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
+  compute_func = [&binary_func](T *a, size_t a_idx, const T *b, size_t b_idx) {
     auto &atomic_ = reinterpret_cast<std::atomic<T> *>(a)[a_idx];
     T expect = atomic_.load();
     T result;
@@ -146,18 +146,18 @@ bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   auto updates = GetDeviceAddress<T>(inputs, kIndex2);
   int64_t invalid_index_pos = -1;
   auto task = [this, &compute_func, &input, &indices, &updates, &invalid_index_pos](size_t start, size_t end) {
-    size_t pre_batch_idx = -1;
+    int pre_batch_idx = -1;
     for (size_t upd_idx = start, out_idx = 0; upd_idx < end; ++upd_idx, ++out_idx) {
       size_t batch_idx = upd_idx / inner_size_;
       // If current position in the same batch, we can same some duplicate computation,
       // otherwise, recompute the out_idx and check if index is valid.
-      if (batch_idx != pre_batch_idx) {
-        pre_batch_idx = batch_idx;
+      if (SizeToInt(batch_idx) != pre_batch_idx) {
+        pre_batch_idx = SizeToInt(batch_idx);
         out_idx = upd_idx % inner_size_;
         size_t index_idx = batch_idx * slice_size_;
         for (size_t i = 0; i < slice_size_; i++) {
           auto index = indices[index_idx + i];
-          out_idx += batch_strides_[i] * index * inner_size_;
+          out_idx += batch_strides_[i] * static_cast<size_t>(index) * inner_size_;
           if (index < 0 || index >= static_cast<S>(input_shape_[i])) {
             invalid_index_pos = SizeToLong(index_idx);
             break;
