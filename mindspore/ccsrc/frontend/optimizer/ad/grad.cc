@@ -174,18 +174,11 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
-  if (enable_closure) {
-    if (func_graph->func_graphs_used().size() != 0 && optimizer->is_first_order_j()) {
-      lift_fv_before_grad = true;
-      grad_fg = LiftFv(resources, func_graph);
-    } else {
-      lift_fv_before_grad = false;
-    }
+  if (func_graph->func_graphs_used().size() != 0 && optimizer->is_first_order_j()) {
+    lift_fv_before_grad = true;
+    grad_fg = LiftFv(resources, func_graph);
   } else {
-    if (func_graph->func_graphs_used().size() != 0) {
-      grad_fg = LiftFv(resources, func_graph);
-    }
+    lift_fv_before_grad = false;
   }
   return GradOneFuncGraph(grad_fg, optimizer, is_top);
 }
@@ -222,18 +215,12 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
     manager_ptr->AddFuncGraph(func_graph);
   }
   FuncGraphVector before_grad_fgs;
-  static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
-  if (enable_closure) {
-    if (optimizer->is_first_order_j()) {
-      lift_fv_before_grad = true;
-      before_grad_fgs = LiftFvMulti(resources, func_graphs);
-    } else {
-      before_grad_fgs = func_graphs;
-      lift_fv_before_grad = false;
-    }
-  } else {
+  if (optimizer->is_first_order_j()) {
     lift_fv_before_grad = true;
     before_grad_fgs = LiftFvMulti(resources, func_graphs);
+  } else {
+    before_grad_fgs = func_graphs;
+    lift_fv_before_grad = false;
   }
 
   for (const auto &func_graph : before_grad_fgs) {

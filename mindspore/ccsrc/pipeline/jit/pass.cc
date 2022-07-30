@@ -233,7 +233,6 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
     opt::OptPassConfig environ_eliminate = opt::OptPassConfig({
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
-      irpass.incorporate_getitem_set_,
     });
     (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
   }
@@ -348,11 +347,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.updatestate_useless_node_eliminater_,
       irpass.tuple_list_set_item_eliminator_,
       irpass.tuple_list_get_item_eliminator_,
-      irpass.incorporate_getitem_set_,
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
-      irpass.incorporate_environ_get_bypass_recursive_,
-      irpass.incorporate_environ_get_switch_,
       irpass.environ_get_eliminate_,
       irpass.depend_value_elim_,
       irpass.all_reduce_const_elim_,
@@ -479,14 +475,11 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.load_eliminater_,
                                                irpass.stopgrad_eliminater_,
                                                irpass.special_op_eliminate_,
-                                               irpass.incorporate_environ_get_,
-                                               irpass.incorporate_environ_get_switch_,
                                                irpass.environ_get_eliminate_,
                                                irpass.environ_get_add_eliminate_,
                                                irpass.environ_get_set_eliminate_,
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
-                                               irpass.incorporate_environ_get_switch_layer_,
                                                irpass.value_based_eliminate_,
                                                irpass.virtual_accu_grad_,
                                                irpass.virtual_assign_add_,
@@ -876,10 +869,7 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
 
 bool EnvironConversionPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
-  if (enable_closure) {
-    (void)opt::EnvironConversion(resource);
-  }
+  (void)opt::EnvironConversion(resource);
   return true;
 }
 
