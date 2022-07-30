@@ -18,6 +18,8 @@ Optimizer.
 Provide common optimizers for training, such as SGD, ADAM, Momentum.
 The optimizer is used to calculate and update the gradients.
 """
+from __future__ import absolute_import
+
 from .optimizer import Optimizer
 from .momentum import Momentum
 from .adam import Adam, AdamWeightDecay, AdamOffload

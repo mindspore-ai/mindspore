@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Top-level reference to dtype of common module."""
+from __future__ import absolute_import
 from . import dtype
 from .api import ms_function, ms_memory_recycle, ms_class, _convert_python_data
 from .dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \

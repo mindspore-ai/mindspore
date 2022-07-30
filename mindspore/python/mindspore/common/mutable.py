@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """mutable function for setting constants mutable."""
+from __future__ import absolute_import
 
 from ..common.tensor import Tensor
 

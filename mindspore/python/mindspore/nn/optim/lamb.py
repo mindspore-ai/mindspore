@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """lamb"""
+from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F

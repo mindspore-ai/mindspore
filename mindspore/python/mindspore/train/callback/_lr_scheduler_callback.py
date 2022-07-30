@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """LearningRateScheduler Callback class."""
+from __future__ import absolute_import
 
 import math
 import numpy as np

@@ -18,6 +18,7 @@
 
 
 def is_shape_unknown(shape):
+    """Check whether the shape is unknown."""
     for i in shape:
         if i < 0:
             return True
@@ -25,6 +26,7 @@ def is_shape_unknown(shape):
 
 
 def is_dim_unknown(shape):
+    """Check whether the dim is unknown."""
     for i in shape:
         if i == -2:
             return True

@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Topk."""
+from __future__ import absolute_import
+
 import numpy as np
+
 from .metric import Metric, rearrange_inputs, _check_onehot_data
 
 

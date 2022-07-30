@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Lambda Callback class."""
+from __future__ import absolute_import
 
 from ._callback import Callback
 

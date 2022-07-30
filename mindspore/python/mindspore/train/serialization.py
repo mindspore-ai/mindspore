@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Model and parameters serialization."""
+from __future__ import absolute_import
+from __future__ import division
 
 import copy
 import json
@@ -42,17 +44,15 @@ from mindspore import log as logger
 from mindspore._checkparam import check_input_data, check_input_dataset, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
-from mindspore.common.initializer import initializer
+from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.common.initializer import One
 from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.compression.export import quant_export
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
-from mindspore.parallel._tensor import _reshape_param_data
-from mindspore.parallel._tensor import _reshape_param_data_with_weight
+from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from mindspore.train._utils import read_proto
 from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file

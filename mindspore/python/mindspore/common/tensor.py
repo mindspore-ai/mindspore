@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Tensor implementation."""
+from __future__ import absolute_import
+
 import numbers
 
 import numpy as np

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Checkpoint related classes and functions."""
+from __future__ import absolute_import
 
 import os
 import stat

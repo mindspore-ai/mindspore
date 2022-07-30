@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Accuracy."""
+from __future__ import absolute_import
+
 import numpy as np
 from .metric import EvaluationBase, rearrange_inputs, _check_onehot_data
 

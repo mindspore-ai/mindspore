@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Parameter for cell."""
+from __future__ import absolute_import
+
 from copy import copy
 import sys
 import numbers

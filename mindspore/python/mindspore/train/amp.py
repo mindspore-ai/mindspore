@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Auto mixed precision."""
+from __future__ import absolute_import
 from .. import nn
 from .._checkparam import Validator as validator
 from .._checkparam import Rel

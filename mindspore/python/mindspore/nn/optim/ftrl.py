@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """FTRL"""
+from __future__ import absolute_import
+
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.api import ms_function
-from mindspore.common import Tensor
-import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer, _apply_decay, _grad_scale
+from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
 from ._dist_optimizer_registry import _register_dist_optimizer
 

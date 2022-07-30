@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Define Monad default value."""
+from __future__ import absolute_import
 from .._c_expression import IOMonad, UMonad
 
 # Universe monad default value.
