@@ -18,11 +18,13 @@
 #include "hccl/hccl.h"
 #include "runtime/rt.h"
 #include "plugin/device/ascend/hal/device/distribute/mpi_collective_group.h"
+#include "utils/convert_utils_base.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
 namespace collective {
-MPICollective::MPICollective() : mpi_inited_(false), rank_id_(0), local_rank_id_(0), rank_size_(0) {}
+MPICollective::MPICollective()
+    : mpi_inited_(false), rank_id_(0), local_rank_id_(0), rank_size_(0), comm_group_world_(MPI_GROUP_NULL) {}
 void MPICollective::FinalizeMPI() {
   group_info_.clear();
   group_comm_.clear();
@@ -73,7 +75,7 @@ int MPICollective::GetWorldRankIdFromGroup(const std::string &name, const int ra
   CHECK_RET(world_map_.count(name), 1, ("Failed to get MPI world rank from group by group name " + name));
   CHECK_RET(static_cast<int>(world_map_[name].size()) > rank_id && rank_id >= 0, 1,
             ("The rank_id " + std::to_string(rank_id) + "is not in the range of group " + name));
-  return static_cast<int>(world_map_[name][rank_id]);
+  return world_map_[name][LongToUlong(rank_id)];
 }
 
 int MPICollective::GetGroupRankIdFromWorld(const std::string &name, const int rank_id) {
