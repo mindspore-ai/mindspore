@@ -177,6 +177,14 @@ const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, c
   if (cnode == nullptr || func_graph == nullptr) {
     return nullptr;
   }
+  // Graph output cannot be eliminated.
+  if (func_graph->output() != nullptr) {
+    const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(func_graph->output());
+    if ((std::find(graph_outputs.begin(), graph_outputs.end(), session::KernelWithIndex(node, 0)) !=
+         graph_outputs.end())) {
+      return nullptr;
+    }
+  }
   return DoEliminate(func_graph, cnode);
 }
 }  // namespace opt
