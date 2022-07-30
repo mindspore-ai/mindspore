@@ -39,7 +39,6 @@ class MeshgridCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

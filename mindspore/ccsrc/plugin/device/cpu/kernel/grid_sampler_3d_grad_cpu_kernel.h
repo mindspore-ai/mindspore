@@ -36,7 +36,6 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -71,10 +70,11 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t grid_size_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
-  void BilinearKernel(std::vector<T *> addr, std::vector<T> location, std::vector<T> mult, std::vector<size_t> ptr);
+  void BilinearKernel(std::vector<T *> addr, std::vector<T> location, std::vector<T> mult,
+                      std::vector<size_t> ptr) const;
 
   template <typename T>
-  void ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr, const size_t &n);
+  void ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr, const size_t &n) const;
 
   template <typename T>
   T grid_sampler_compute_source_index_set_grad(T coord, int64_t size, const std::string &padding_mode,
@@ -88,7 +88,7 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   template <typename T>
   void safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW, int64_t D, int64_t H,
-                   int64_t W, T delta);
+                   int64_t W, T delta) const;
 
   bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) const;
 };

@@ -52,8 +52,9 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
 
   void DestroyResource() noexcept override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ protected:
   void InitResource() override;
   void InitSizeLists();
 

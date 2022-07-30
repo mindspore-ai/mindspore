@@ -143,15 +143,16 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
   }
 
   auto reduce_kernel_attr = kernel_attr_to_check;
+  const size_t kTwo = 2;
   for (const auto &reduce_item : input_reduce_index) {
     auto reduce_idx = std::get<0>(reduce_item);
     auto cur_attr = reduce_kernel_attr.GetInputAttr(reduce_idx);
-    reduce_kernel_attr.SetInputAttr(reduce_idx, std::get<2>(reduce_item), cur_attr.second);
+    reduce_kernel_attr.SetInputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.second);
   }
   for (const auto &reduce_item : output_reduce_index) {
     auto reduce_idx = std::get<0>(reduce_item);
     auto cur_attr = reduce_kernel_attr.GetOutputAttr(reduce_idx);
-    reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<2>(reduce_item), cur_attr.second);
+    reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.second);
   }
 
   MS_LOG(WARNING) << "Kernel [" << kernel_name << "] reduce precision attr: " << reduce_kernel_attr;

@@ -61,7 +61,7 @@ bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 
 template <typename T>
 void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+                                           const std::vector<kernel::AddressPtr> &) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);

@@ -38,7 +38,6 @@ class MatrixDiagPartV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

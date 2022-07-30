@@ -69,7 +69,8 @@ void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, co
 bool GatherDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  if (inputs.size() != 3) {
+  const size_t kThree = 3;
+  if (inputs.size() != kThree) {
     MS_LOG(ERROR) << "GatherD input size must be equal to 3!";
     return false;
   }

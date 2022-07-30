@@ -35,9 +35,9 @@ class SortCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
+ protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:

@@ -41,7 +41,6 @@ class UnaryOpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

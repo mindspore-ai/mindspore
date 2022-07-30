@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &) {
   MS_LOG(INFO) << "Launching client GetKeysKernelMod";
   BuildGetKeysReq(fbb_);
@@ -86,7 +86,7 @@ void GetKeysKernelMod::Init(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "Initialize GetKeys kernel successfully.";
 }
 
-void GetKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
+void GetKeysKernelMod::InitKernel(const CNodePtr &) { return; }
 
 void GetKeysKernelMod::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
@@ -101,7 +101,7 @@ void GetKeysKernelMod::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb
 }
 
 bool GetKeysKernelMod::SavePublicKeyList(
-  const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key) {
+  const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key) const {
   if (remote_public_key == nullptr) {
     MS_LOG(EXCEPTION) << "Input remote_pubic_key is nullptr.";
   }

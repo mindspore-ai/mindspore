@@ -43,10 +43,12 @@ class BACKEND_EXPORT SparseApplyAdamCpuKernelMod : public SparseOptimizerCpuKern
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  protected:
   void ResetResource() noexcept;
+
   bool use_nesterov_{false};
 
  private:

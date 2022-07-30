@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
 
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LRN_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LRN_GRAD_CPU_KERNEL_H_
+#include <string>
 #include <vector>
 #include <utility>
-
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class IOUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LrnGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
-  IOUCpuKernelMod() = default;
-  ~IOUCpuKernelMod() override = default;
+  LrnGradCpuKernelMod() = default;
+  ~LrnGradCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -40,19 +39,18 @@ class IOUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using IOUFunc = std::function<bool(IOUCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IOUFunc>> func_list_;
-  IOUFunc kernel_func_;
-  size_t anchor_boxes_size_{0};
-  size_t gt_boxes_size_{0};
-  size_t iou_size_{0};
-  enum input_list_ { ANCHOR_BOXES, GT_BOXES };
-  enum output_list_ { IOU_VALUE };
-  enum iou_mod_ { IOU_MODE, IOF_MODE };
-  int mode_{IOU_MODE};
+  using LrnGradFunc = std::function<bool(LrnGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &)>;
+  void GetLrnAttr(const CNodePtr &kernel_node);
+  int64_t depth_radius_{1};
+  float bias_{0.0};
+  float alpha_{0.0};
+  float beta_{0.0};
+  LrnGradFunc kernel_func_;
+  dnnl::algorithm dnnl_algorithm_{};
+  std::vector<size_t> input_shape_;
+  static std::vector<std::pair<KernelAttr, LrnGradFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LRN_GRAD_CPU_KERNEL_H_

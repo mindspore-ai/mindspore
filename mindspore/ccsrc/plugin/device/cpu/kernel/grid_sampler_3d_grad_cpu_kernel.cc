@@ -73,7 +73,7 @@ bool GridSampler3DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 
 template <typename T>
 void GridSampler3DGradCpuKernelMod::BilinearKernel(std::vector<T *> addr, std::vector<T> location, std::vector<T> mult,
-                                                   std::vector<size_t> ptr) {
+                                                   std::vector<size_t> ptr) const {
   T x = location[kZero], y = location[kOne], z = location[kTwo];
   int64_t x_tnw = static_cast<int64_t>(std::floor(x));
   int64_t y_tnw = static_cast<int64_t>(std::floor(y));
@@ -173,7 +173,7 @@ void GridSampler3DGradCpuKernelMod::BilinearKernel(std::vector<T *> addr, std::v
 
 template <typename T>
 void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr,
-                                                const size_t &n) {
+                                                const size_t &n) const {
   size_t grid_ptr_N = n * grid_stride_[kZero];
   size_t dgrid_ptr_NDHW = n * dgrid_stride_[kZero];
   for (size_t d = kZero; d < LongToSize(grid_shape_[kOne]); d++) {
@@ -317,7 +317,7 @@ T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice
 
 template <typename T>
 void GridSampler3DGradCpuKernelMod::safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH,
-                                                size_t sW, int64_t D, int64_t H, int64_t W, T delta) {
+                                                size_t sW, int64_t D, int64_t H, int64_t W, T delta) const {
   if (within_bounds_3d(d, h, w, D, H, W)) {
     data[d * sD + h * sH + w * sW] += static_cast<T>(delta);
   }

@@ -33,7 +33,7 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
   auto dim_type_ptr = dim_ptr->BuildType();
   MS_EXCEPTION_IF_NULL(dim_type_ptr);
   int64_t dim_v = 0;
-  bool value_type_error = false;
+  bool dim_value_type_error = false;
   if (dim_value_ptr->isa<tensor::Tensor>()) {
     auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(dim_tensor);
@@ -43,26 +43,26 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
     MS_EXCEPTION_IF_NULL(dim_type_id);
     auto element = dim_type_id->element();
     MS_EXCEPTION_IF_NULL(element);
-    if (element->type_id() == kNumberTypeInt32) {
-      auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(dim_data32);
-      dim_v = static_cast<int64_t>(*dim_data32);
-    } else if (element->type_id() == kNumberTypeInt64) {
+    if (element->type_id() == kNumberTypeInt64) {
       auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data64);
       dim_v = static_cast<int64_t>(*dim_data64);
+    } else if (element->type_id() == kNumberTypeInt32) {
+      auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(dim_data32);
+      dim_v = static_cast<int64_t>(*dim_data32);
     } else {
-      value_type_error = true;
+      dim_value_type_error = true;
     }
   } else {
     if (dim_value_ptr->isa<Int32Imm>() || dim_value_ptr->isa<Int64Imm>()) {
       dim_v = GetValue<int64_t>(dim_value_ptr);
     } else {
-      value_type_error = true;
+      dim_value_type_error = true;
     }
   }
 
-  if (value_type_error) {
+  if (dim_value_type_error) {
     MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
   }
 
@@ -80,7 +80,9 @@ void CheckGatherShapeEqual(const std::string &prim_name, const ShapeVector &x_sh
 
   CheckAndConvertUtils::Check("x_rank", SizeToLong(x_shape.size()), kEqual, SizeToLong(index_shape.size()), prim_name);
   for (size_t i = 0; i < x_shape.size(); ++i) {
-    if (SizeToLong(i) == dim_v) continue;
+    if (SizeToLong(i) == dim_v) {
+      continue;
+    }
     MS_LOG(INFO) << "For '" << prim_name << "', it's now checking " << i << "th x shape.";
     CheckAndConvertUtils::Check("x shape", x_shape[i], kEqual, index_shape[i], prim_name);
   }

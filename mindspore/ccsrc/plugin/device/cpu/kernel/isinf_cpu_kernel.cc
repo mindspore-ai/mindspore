@@ -55,7 +55,7 @@ bool IsInfCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 void IsInfCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+                                            const std::vector<kernel::AddressPtr> &outputs) const {
   float16 *input = reinterpret_cast<float16 *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
@@ -69,7 +69,7 @@ void IsInfCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &input
 
 template <typename T>
 void IsInfCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                          const std::vector<kernel::AddressPtr> &outputs) const {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 

@@ -45,7 +45,7 @@ void SelectCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool SelectCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+                                      const std::vector<AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSelectOutputsNum, kernel_name_);
   auto *input_cond = reinterpret_cast<bool *>(inputs[0]->addr);

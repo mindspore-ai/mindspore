@@ -37,7 +37,6 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -64,7 +63,7 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   T grid_sampler_compute_source_index(T coord, int64_t size, const std::string &padding_mode, bool align_corners);
 
   template <typename T>
-  T reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high);
+  T reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high) const;
 
   bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) const;
 };

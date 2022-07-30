@@ -58,7 +58,7 @@ bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 
 template <typename T>
 void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+                                             const std::vector<kernel::AddressPtr> &) {
   auto node = node_wpt_.lock();
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;

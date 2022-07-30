@@ -37,11 +37,10 @@ class ScatterNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void Check(const CNodePtr &kernel_node);
+  void Check(const CNodePtr &kernel_node) const;
 
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);

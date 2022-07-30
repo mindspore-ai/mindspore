@@ -35,7 +35,6 @@ class BucketizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool BucketizeCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

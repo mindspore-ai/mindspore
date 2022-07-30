@@ -61,7 +61,8 @@ class MinimumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                    const std::vector<kernel::AddressPtr> &outputs) const;
 
   using MinimumLaunchFunc = std::function<bool(MinimumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;

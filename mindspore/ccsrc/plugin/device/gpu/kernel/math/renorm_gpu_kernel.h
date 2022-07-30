@@ -43,7 +43,6 @@ class RenormGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

@@ -146,7 +146,7 @@ void NMSWithMaskCpuKernelMod::Preprocess(const int num, int *sel_idx, bool *sel_
 }
 
 template <typename T>
-bool NMSWithMaskCpuKernelMod::IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) {
+bool NMSWithMaskCpuKernelMod::IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) const {
   constexpr int X1_OFFSET = 0;
   constexpr int Y1_OFFSET = 1;
   constexpr int X2_OFFSET = 2;

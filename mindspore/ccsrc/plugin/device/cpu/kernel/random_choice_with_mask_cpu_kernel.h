@@ -37,14 +37,14 @@ class RandomChoiceWithMaskCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
   int32_t input_dim_size = 0;

@@ -154,7 +154,7 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kScatterNdInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num

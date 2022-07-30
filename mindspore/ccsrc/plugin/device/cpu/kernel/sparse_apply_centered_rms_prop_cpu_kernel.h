@@ -48,6 +48,7 @@ class SparseApplyCenteredRMSPropCpuKernelMod : public SparseOptimizerCpuKernelMo
   template <typename I, typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
+
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  protected:

@@ -28,6 +28,14 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kReduceMean = "ReduceMean";
+constexpr auto kReduceMax = "ReduceMax";
+constexpr auto kReduceSum = "ReduceSum";
+constexpr auto kReduceMin = "ReduceMin";
+constexpr auto kReduceProd = "ReduceProd";
+constexpr auto kReduceAll = "ReduceAll";
+constexpr auto kReduceAny = "ReduceAny";
+
 constexpr size_t kReduceSmallVectorSize = 200000;
 constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
@@ -204,39 +212,39 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
 template <typename T>
 void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
   if constexpr (std::is_same<T, bool>::value) {
-    if (kernel_name_ == prim::kPrimReduceAll->name()) {
+    if (kernel_name_ == kReduceAll) {
       reduce_type_ = ReduceFuncType::kReduceAllType;
       reduce_func_ = ReduceAll<T>;
-    } else if (kernel_name_ == prim::kPrimReduceAny->name()) {
+    } else if (kernel_name_ == kReduceAny) {
       reduce_type_ = ReduceFuncType::kReduceAnyType;
       reduce_func_ = ReduceAny<T>;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
     }
   } else if constexpr (((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {  // NOLINT
-    if (kernel_name_ == prim::kPrimReduceProd->name()) {
+    if (kernel_name_ == kReduceProd) {
       reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = ReduceProd<T>;
-    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
+    } else if (kernel_name_ == kReduceMean) {
       reduce_type_ = ReduceFuncType::kReduceMeanType;
       reduce_func_ = ReduceMean<T>;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
     }
   } else {
-    if (kernel_name_ == prim::kPrimReduceMax->name()) {
+    if (kernel_name_ == kReduceMax) {
       reduce_type_ = ReduceFuncType::kReduceMaxType;
       reduce_func_ = ReduceMax<T>;
-    } else if (kernel_name_ == prim::kPrimReduceMin->name()) {
+    } else if (kernel_name_ == kReduceMin) {
       reduce_type_ = ReduceFuncType::kReduceMinType;
       reduce_func_ = ReduceMin<T>;
-    } else if (kernel_name_ == prim::kPrimReduceSum->name()) {
+    } else if (kernel_name_ == kReduceSum) {
       reduce_type_ = ReduceFuncType::kReduceSumType;
       reduce_func_ = ReduceSum<T>;
-    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
+    } else if (kernel_name_ == kReduceMean) {
       reduce_type_ = ReduceFuncType::kReduceMeanType;
       reduce_func_ = ReduceMean<T>;
-    } else if (kernel_name_ == prim::kPrimReduceProd->name()) {
+    } else if (kernel_name_ == kReduceProd) {
       reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = ReduceProd<T>;
     } else {
@@ -365,7 +373,7 @@ std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
 }
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
-  {prim::kPrimReduceMean->name(),
+  {kReduceMean,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
@@ -380,23 +388,23 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceF
      SpecializeReduceFunc<complex64>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      SpecializeReduceFunc<complex128>}}},
-  {prim::kPrimReduceMax->name(),
+  {kReduceMax,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {prim::kPrimReduceSum->name(),
+  {kReduceSum,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {prim::kPrimReduceMin->name(),
+  {kReduceMin,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {prim::kPrimReduceProd->name(),
+  {kReduceProd,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
@@ -411,9 +419,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceF
      SpecializeReduceFunc<complex64>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      SpecializeReduceFunc<complex128>}}},
-  {prim::kPrimReduceAll->name(),
+  {kReduceAll,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {prim::kPrimReduceAny->name(),
+  {kReduceAny,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}}};
 }  // namespace
 
@@ -457,18 +465,18 @@ int ReduceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMean,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMean->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMean); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMax,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMax->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMax); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceSum,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceSum->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceSum); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMin,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMin->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMin); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceProd,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceProd->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceProd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAll,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceAll->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAll); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAny,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceAny->name()); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAny); });
 }  // namespace kernel
 }  // namespace mindspore

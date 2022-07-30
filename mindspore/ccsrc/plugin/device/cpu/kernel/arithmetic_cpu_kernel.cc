@@ -36,11 +36,22 @@ namespace {
 constexpr float kMaxSubSerialSize = 10000.0;
 constexpr float kMaxPowSerialSize = 700.0;
 
+constexpr auto kAdd = "Add";
+constexpr auto kAddV2 = "AddV2";
 constexpr auto kSub = "Sub";
 constexpr auto kMul = "Mul";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kAssignAdd = "AssignAdd";
 constexpr auto kAssignSub = "AssignSub";
+constexpr auto kDiv = "Div";
+constexpr auto kDivNoNan = "DivNoNan";
+constexpr auto kPow = "Pow";
+constexpr auto kFloorDiv = "FloorDiv";
+constexpr auto kMod = "Mod";
+constexpr auto kFloorMod = "FloorMod";
+constexpr auto kSquaredDifference = "SquaredDifference";
+constexpr auto kXlogy = "Xlogy";
+constexpr auto kAtan2 = "Atan2";
 
 template <typename T>
 void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
@@ -155,9 +166,9 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
       MS_LOG(WARNING) << kernel_name_ << " output shape contain 0, output_shape: " << output_shape_;
       return true;
     }
-    if (kernel_name_ == prim::kPrimAssignAdd->name()) {
+    if (kernel_name_ == kAssignAdd) {
       AssignAdd(input1, input2, output);
-    } else if (kernel_name_ == prim::kPrimAssignSub->name()) {
+    } else if (kernel_name_ == kAssignSub) {
       AssignSub(input1, input2, output);
     } else {
       compute_func_(this, input1, input2, output);
@@ -167,38 +178,37 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
 
  private:
   void InitComputeFunc() {
-    if (kernel_name_ == prim::kPrimAssignAdd->name() || kernel_name_ == prim::kPrimAssignSub->name()) {
+    if (kernel_name_ == kAssignAdd || kernel_name_ == kAssignSub) {
       return;
     }
     string dtype_desc;
     static std::unordered_map<std::string, TypeComputeFunc> arithmeticMathFuncMap;
     if constexpr (!((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {
       dtype_desc = "real data";
-      arithmeticMathFuncMap = {{prim::kPrimAdd->name(), &ArithmeticCpuTypeFunc<T>::Add},
-                               {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2},
-                               {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
-                               {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
-                               {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::Div},
-                               {prim::kPrimDivNoNan->name(), &ArithmeticCpuTypeFunc<T>::DivNoNan},
-                               {prim::kPrimMod->name(), &ArithmeticCpuTypeFunc<T>::Mod},
-                               {prim::kPrimFloorMod->name(), &ArithmeticCpuTypeFunc<T>::FloorMod},
-                               {prim::kPrimPow->name(), &ArithmeticCpuTypeFunc<T>::Pow},
-                               {prim::kPrimFloorDiv->name(), &ArithmeticCpuTypeFunc<T>::FloorDiv},
-                               {prim::kPrimAtan2->name(), &ArithmeticCpuTypeFunc<T>::Atan2},
-                               {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDiv},
-                               {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference},
-                               {prim::kPrimXlogy->name(), &ArithmeticCpuTypeFunc<T>::Xlogy}};
+      arithmeticMathFuncMap = {{kAdd, &ArithmeticCpuTypeFunc<T>::Add},
+                               {kAddV2, &ArithmeticCpuTypeFunc<T>::AddV2},
+                               {kSub, &ArithmeticCpuTypeFunc<T>::Sub},
+                               {kMul, &ArithmeticCpuTypeFunc<T>::Mul},
+                               {kDiv, &ArithmeticCpuTypeFunc<T>::Div},
+                               {kDivNoNan, &ArithmeticCpuTypeFunc<T>::DivNoNan},
+                               {kMod, &ArithmeticCpuTypeFunc<T>::Mod},
+                               {kFloorMod, &ArithmeticCpuTypeFunc<T>::FloorMod},
+                               {kPow, &ArithmeticCpuTypeFunc<T>::Pow},
+                               {kFloorDiv, &ArithmeticCpuTypeFunc<T>::FloorDiv},
+                               {kAtan2, &ArithmeticCpuTypeFunc<T>::Atan2},
+                               {kRealDiv, &ArithmeticCpuTypeFunc<T>::RealDiv},
+                               {kSquaredDifference, &ArithmeticCpuTypeFunc<T>::SquaredDifference},
+                               {kXlogy, &ArithmeticCpuTypeFunc<T>::Xlogy}};
     } else {
       dtype_desc = "complex data";
-      arithmeticMathFuncMap = {
-        {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
-        {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
-        {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex},
-        {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
-        {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
-        {prim::kPrimDivNoNan->name(), &ArithmeticCpuTypeFunc<T>::DivNoNan},
-        {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2},
-        {prim::kPrimXlogy->name(), &ArithmeticCpuTypeFunc<T>::Xlogy}};
+      arithmeticMathFuncMap = {{kSquaredDifference, &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
+                               {kSub, &ArithmeticCpuTypeFunc<T>::Sub},
+                               {kDiv, &ArithmeticCpuTypeFunc<T>::DivComplex},
+                               {kRealDiv, &ArithmeticCpuTypeFunc<T>::RealDivComplex},
+                               {kMul, &ArithmeticCpuTypeFunc<T>::Mul},
+                               {kDivNoNan, &ArithmeticCpuTypeFunc<T>::DivNoNan},
+                               {kAddV2, &ArithmeticCpuTypeFunc<T>::AddV2},
+                               {kXlogy, &ArithmeticCpuTypeFunc<T>::Xlogy}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Map2Str(arithmeticMathFuncMap)
@@ -775,7 +785,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<complex128>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithFunc<bool>}}},
-  {prim::kPrimDiv->name(),
+  {kDiv,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      SpecializeArithFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
@@ -804,7 +814,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {prim::kPrimDivNoNan->name(),
+  {kDivNoNan,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      SpecializeArithFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -821,7 +831,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {prim::kPrimPow->name(),
+  {kPow,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -859,7 +869,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {prim::kPrimFloorDiv->name(),
+  {kFloorDiv,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      SpecializeArithFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
@@ -876,14 +886,14 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>}}},
-  {prim::kPrimMod->name(),
+  {kMod,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>}}},
-  {prim::kPrimFloorMod->name(),
+  {kFloorMod,
    {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
@@ -922,7 +932,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>}}},
-  {prim::kPrimSquaredDifference->name(),
+  {kSquaredDifference,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
@@ -943,7 +953,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {prim::kPrimXlogy->name(),
+  {kXlogy,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
@@ -960,12 +970,12 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {prim::kPrimAtan2->name(),
+  {kAtan2,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>}}},
-  {prim::kPrimAddV2->name(),
+  {kAddV2,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      SpecializeArithFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
@@ -1027,35 +1037,31 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sub,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mul,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kMul); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Div,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimDiv->name()); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, DivNoNan, []() {
-  return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimDivNoNan->name());
-});
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kDiv); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, DivNoNan,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kDivNoNan); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Pow,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimPow->name()); });
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kPow); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, RealDiv,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kRealDiv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FloorDiv, []() {
-  return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimFloorDiv->name());
-});
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FloorDiv,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kFloorDiv); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mod,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimMod->name()); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FloorMod, []() {
-  return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimFloorMod->name());
-});
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kMod); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FloorMod,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kFloorMod); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignAdd,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kAssignAdd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignSub,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kAssignSub); });
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference, []() {
-  return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimSquaredDifference->name());
-});
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kSquaredDifference); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xlogy,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimXlogy->name()); });
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kXlogy); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan2,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAtan2->name()); });
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kAtan2); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AddV2,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAddV2->name()); });
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kAddV2); });
 }  // namespace kernel
 }  // namespace mindspore

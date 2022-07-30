@@ -48,7 +48,6 @@ class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -76,7 +75,6 @@ class IdentityCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
