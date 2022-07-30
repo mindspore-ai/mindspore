@@ -85,11 +85,18 @@ class StrategyWithCost {
       : strategy_ptr(std::move(strategy)), cost_list(std::move(c_list)) {}
 
   StrategyWithCost(const StrategyWithCost &swc) = delete;
+  void operator=(const StrategyWithCost &swc) = delete;
   StrategyWithCost(StrategyWithCost &&swc)
       : strategy_ptr(swc.strategy_ptr),
         inputs_ptr(swc.inputs_ptr),
         outputs_ptr(swc.outputs_ptr),
         cost_list(swc.cost_list) {}
+  void operator=(StrategyWithCost &&swc) {
+    strategy_ptr = swc.strategy_ptr;
+    inputs_ptr = swc.inputs_ptr;
+    outputs_ptr = swc.outputs_ptr;
+    cost_list = swc.cost_list;
+  }
   ~StrategyWithCost() = default;
 
   StrategyPtr strategy_ptr;

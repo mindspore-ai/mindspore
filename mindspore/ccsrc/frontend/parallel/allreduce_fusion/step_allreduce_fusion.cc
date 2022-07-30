@@ -15,7 +15,6 @@
  */
 
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
-#include <ctime>
 #include <string>
 #include <vector>
 #include "frontend/optimizer/optimizer.h"
