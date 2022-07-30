@@ -26,6 +26,7 @@
 #include "kernel/common_utils.h"
 #include "include/common/thread_pool.h"
 #include "utils/ms_utils.h"
+#include "utils/file_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 
 namespace mindspore {
@@ -42,16 +43,12 @@ class AkgParallelLaunch {
 };
 
 struct AkgCallBack {
-  void *parallel_launch_func;
+  int (*parallel_launch_func)(AkgParallelLaunch::AkgParallelLambda, void *, int);
   void *(*malloc_func)(size_t);
   void (*free_func)(void *);
   void *extend_data = nullptr;
 
-  AkgCallBack() {
-    parallel_launch_func = reinterpret_cast<void *>(&AkgParallelLaunch::AkgLaunchFunc);
-    malloc_func = &malloc;
-    free_func = &free;
-  }
+  AkgCallBack() : parallel_launch_func(&AkgParallelLaunch::AkgLaunchFunc), malloc_func(&malloc), free_func(&free) {}
   ~AkgCallBack() = default;
 };
 
@@ -101,7 +98,12 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   KernelMeta *bin_map = KernelMeta::GetInstance();
   auto fn_so = bin_map->kernel_meta_path();
   (void)fn_so.append(fn + ".so");
-  auto handle = dlopen(fn_so.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  auto realfile = FileUtils::GetRealPath(fn_so.c_str());
+  if (!realfile.has_value()) {
+    MS_LOG(ERROR) << "Invalid file path " << fn_so << ". kernel: " << kernel_name;
+    return nullptr;
+  }
+  auto handle = dlopen(realfile.value().c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (handle == nullptr) {
     MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;
     return nullptr;
