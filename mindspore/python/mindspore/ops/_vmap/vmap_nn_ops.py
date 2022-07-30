@@ -771,7 +771,7 @@ def get_smooth_l1_loss_grad_vmap_rule(prim, axis_size):
         beta = prim.beta
     smooth_l1_loss_grad = G.SmoothL1LossGrad(beta, reduction)
 
-    def vmap_rule(dy_bdim, x_bdim, target_bdim):
+    def vmap_rule(x_bdim, target_bdim, dy_bdim):
         is_all_none, result = vmap_general_preprocess(
             prim, dy_bdim, x_bdim, target_bdim)
         if is_all_none:
