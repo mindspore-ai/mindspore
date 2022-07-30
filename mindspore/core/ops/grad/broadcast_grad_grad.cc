@@ -66,7 +66,7 @@ abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitiv
   }
   MS_EXCEPTION(ValueError)
     << "For '" << prim_name
-    << "', it's input 'grad_x1', 'grad_x2' should have same shape and equal to x1 and x2 shape, but got 'x1' shape:"
+    << "', Its input 'grad_x1', 'grad_x2' should have same shape and equal to x1 and x2 shape, but got 'x1' shape:"
     << x1_shape << " vs 'grad_x1' shape: " << dx1_shape << ", 'x2' shape:" << x2_shape
     << " vs 'grad_x2' shape: " << dx2_shape;
 }
@@ -85,7 +85,8 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
   (void)abstract::CheckDtypeSame(prim_name, x1, dy1);
   auto x_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
+  const std::set<TypePtr> broadcast_grad_grad_valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, broadcast_grad_grad_valid_types, prim_name);
   std::vector<TypePtr> type_tuple{x_type, x_type, x_type};
   return std::make_shared<Tuple>(type_tuple);
 }
