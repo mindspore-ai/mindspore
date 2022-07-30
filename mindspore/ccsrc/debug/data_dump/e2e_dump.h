@@ -91,7 +91,7 @@ class E2eDump {
   static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);
 
   static void DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
-                                char *data_ptr);
+                                const char *data_ptr);
 #endif
 
   static bool IsDeviceTargetGPU();

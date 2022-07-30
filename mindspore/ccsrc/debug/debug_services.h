@@ -400,10 +400,10 @@ class DebugServices {
 
   ProcessedNPYFiles ProcessNPYFilePool(const NPYFilePool &npy_file_pool) const;
 
-  void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
+  static void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
 
-  void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                  const std::string &dump_key, NPYFilePool *const result_list) const;
+  static void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
+                                         const std::string &dump_key, NPYFilePool *const result_list);
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
@@ -482,9 +482,9 @@ class DebugServices {
   bool GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *const task_id,
                             uint64_t *const stream_id) const;
 
-  std::string RealPath(const std::string &input_path) const;
+  static std::string RealPath(const std::string &input_path);
 
-  uint64_t BytestoUInt64(const std::vector<char> &buffer) const;
+  static uint64_t BytestoUInt64(const std::vector<char> &buffer);
 
   bool TensorExistsInCurrent(const std::string &tensor_name);
 
