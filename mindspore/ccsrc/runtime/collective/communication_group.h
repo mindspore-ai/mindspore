@@ -88,7 +88,7 @@ using CommunicationGroupPtr = std::shared_ptr<CommunicationGroup>;
 #define CHECK_RET(expression, result, message)                                                     \
   do {                                                                                             \
     auto ret = (expression);                                                                       \
-    if (ret != result) {                                                                           \
+    if (ret != (result)) {                                                                         \
       std::ostringstream oss;                                                                      \
       oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": " << (message); \
       pybind11::pybind11_fail(oss.str());                                                          \

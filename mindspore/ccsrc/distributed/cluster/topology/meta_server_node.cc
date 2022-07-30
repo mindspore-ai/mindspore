@@ -39,8 +39,10 @@ constexpr char kRole[] = "role";
 constexpr char kRankId[] = "rank_id";
 
 MetaServerNode::~MetaServerNode() {
-  if (!finalized_) {
+  try {
     (void)Finalize(true);
+  } catch (std::exception &) {
+    MS_LOG(ERROR) << "Failed to finalize MetaServerNode.";
   }
 }
 
@@ -161,7 +163,7 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
 MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   RegistrationMessage registration;
   const std::string &body = message->Body();
-  registration.ParseFromArray(body.c_str(), body.length());
+  (void)registration.ParseFromArray(body.c_str(), body.length());
 
   // Add the compute graph node into registered nodes.
   const auto &node_id = registration.node_id();
@@ -175,16 +177,16 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     node_info->role = role;
     node_info->rank_id = rank_id;
     node_info->state = NodeState::kRegistered;
-    time(&(node_info->last_update));
+    (void)time(&(node_info->last_update));
     nodes_[node_id] = node_info;
     MS_LOG(INFO) << "The new node: " << node_id << "(role: " << role << ")"
                  << " is registered successfully.";
-    TransitionToInitialized();
+    (void)TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
     reg_resp_msg.set_success(true);
     reg_resp_msg.set_rank_id(rank_id);
-    reg_resp_msg.set_node_num(total_node_num_);
+    reg_resp_msg.set_node_num(SizeToUint(total_node_num_));
     std::string content = reg_resp_msg.SerializeAsString();
 
     auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
@@ -209,7 +211,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
 MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message) {
   UnregistrationMessage unregistration;
   const std::string &body = message->Body();
-  unregistration.ParseFromArray(body.c_str(), body.length());
+  (void)unregistration.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   const auto &node_id = unregistration.node_id();
 
@@ -230,7 +232,7 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
     MS_EXCEPTION_IF_NULL(response);
     return response.release();
   }
-  nodes_.erase(node_id);
+  (void)nodes_.erase(node_id);
   if (nodes_.size() == 0) {
     topo_state_ = TopoState::kFinished;
   }
@@ -243,21 +245,21 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
 MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) {
   HeartbeatMessage heartbeat;
   const std::string &body = message->Body();
-  heartbeat.ParseFromArray(body.c_str(), body.length());
+  (void)heartbeat.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   // Update the state(timestamp) of this node.
   const auto &node_id = heartbeat.node_id();
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) != nodes_.end()) {
     auto &node = nodes_[node_id];
-    time(&(node->last_update));
+    (void)time(&(node->last_update));
     node->state = NodeState::kRegistered;
 
     HeartbeatRespMessage resp_msg;
     resp_msg.set_success(static_cast<bool>(MessageName::kSuccess));
     resp_msg.set_topo_state(static_cast<uint32_t>(topo_state_));
-    resp_msg.set_nodes_num(total_node_num_);
-    resp_msg.set_abnormal_nodes_num(abnormal_node_num_);
+    resp_msg.set_nodes_num(SizeToUint(total_node_num_));
+    resp_msg.set_abnormal_nodes_num(SizeToUint(abnormal_node_num_));
     auto content = resp_msg.SerializeAsString();
     auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
     MS_EXCEPTION_IF_NULL(response);
@@ -271,7 +273,7 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
 MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const message) {
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
-  meta_msg.ParseFromArray(body.c_str(), body.length());
+  (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
   if (meta_msg.name().length() == 0) {
     MS_LOG(ERROR) << "Empty metadata name.";
     return rpc::NULL_MSG;
@@ -284,7 +286,7 @@ MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const messa
 MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const message) {
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
-  meta_msg.ParseFromArray(body.c_str(), body.length());
+  (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   std::shared_lock<std::shared_mutex> lock(meta_mutex_);
   MessageName result;
@@ -305,7 +307,7 @@ MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const messag
 MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const message) {
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
-  meta_msg.ParseFromArray(body.c_str(), body.length());
+  (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   std::shared_lock<std::shared_mutex> lock(meta_mutex_);
   MessageName result;
@@ -315,7 +317,7 @@ MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const mess
     result = MessageName::kInvalidMetadata;
   } else {
     result = MessageName::kValidMetadata;
-    metadata_.erase(meta_msg.name());
+    (void)metadata_.erase(meta_msg.name());
   }
   response = CreateMessage(meta_server_addr_.GetUrl(), result, meta_msg.SerializeAsString());
   MS_EXCEPTION_IF_NULL(response);
@@ -419,7 +421,7 @@ void MetaServerNode::UpdateTopoState() {
       nodes_mutex_.unlock();
 
       static const size_t interval = 3;
-      sleep(interval);
+      (void)sleep(interval);
     }
   } catch (const std::exception &e) {
     nodes_mutex_.unlock();
@@ -472,7 +474,7 @@ bool MetaServerNode::Recovery() {
     for (auto iter = node_states.begin(); iter != node_states.end(); ++iter) {
       const auto &node_id = iter.key();
       std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
-      time(&(node_info->last_update));
+      (void)time(&(node_info->last_update));
       node_info->host_name = iter.value().at(kHostName);
       node_info->role = iter.value().at(kRole);
       node_info->rank_id = iter.value().at(kRankId);
@@ -511,7 +513,7 @@ bool MetaServerNode::Persist() {
   }
 
   configuration_->Put(kComputeNodeStates, node_states.dump());
-  configuration_->Flush();
+  RETURN_IF_FALSE_WITH_LOG(configuration_->Flush(), "Failed to flush configuration.");
   return true;
 }
 
@@ -525,7 +527,7 @@ uint32_t MetaServerNode::AllocateRankId(const std::string &role) {
   return next_rank_ids_[role];
 }
 
-TopoState MetaServerNode::TopologyState() { return topo_state_; }
+TopoState MetaServerNode::TopologyState() const { return topo_state_; }
 
 size_t MetaServerNode::GetAliveNodeNum() {
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
