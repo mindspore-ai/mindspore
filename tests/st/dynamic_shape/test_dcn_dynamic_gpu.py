@@ -22,6 +22,7 @@ import mindspore.dataset as ds
 from mindspore.train.callback import Callback
 from mindspore.train import Model
 from mindspore.common import dtype as mstype
+import mindspore as ms
 
 
 class CrossNet(nn.Cell):
@@ -197,13 +198,14 @@ def get_train_loss(numeric_columns, sparse_columns, data_list, mode):
     dataset = ds.GeneratorDataset(
         data_list, ["dense", "category", "label"], shuffle=False)
     numeric_size = numeric_columns[0].size
-    dataset.set_dynamic_columns(columns={"dense": [None, numeric_size],
-                                         "category": [len(sparse_columns), None], "label": [None]})
     net = DCN(numeric_size, sparse_columns, hidden_units=(32, 32), cross_layer=2, output_num=1)
     loss_fn = PairWiseLoss()
     loss_net = MyWithLossCell(net, loss_fn)
     train_net = nn.TrainOneStepCell(loss_net, nn.Adam(net.trainable_params(), learning_rate=1e-3, weight_decay=1e-5))
     train_net.set_train()
+    train_net.set_inputs(Tensor(shape=[None, numeric_size], dtype=ms.float32),
+                         Tensor(shape=[len(sparse_columns), None], dtype=ms.int32),
+                         Tensor(shape=[None], dtype=ms.float32))
     loss_callback = LossCallback()
     model = Model(train_net)
     sink_step = dataset.get_dataset_size()
