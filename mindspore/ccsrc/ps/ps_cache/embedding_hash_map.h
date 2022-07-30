@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PS_PS_CACHE_EMBEDDING_HASH_MAP_H_
 #define MINDSPORE_CCSRC_PS_PS_CACHE_EMBEDDING_HASH_MAP_H_
 
-#include <math.h>
+#include <cmath>
 #include <utility>
 #include <memory>
 #include <vector>

@@ -22,7 +22,6 @@
 
 #include "distributed/persistent/storage/json_utils.h"
 #include "nlohmann/json.hpp"
-#include "distributed/persistent/storage/constants.h"
 
 namespace mindspore {
 namespace distributed {
