@@ -88,7 +88,7 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   template <typename T>
   void safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW, int64_t D, int64_t H,
-                   int64_t W, T delta);
+                   int64_t W, T delta) const;
 
   bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) const;
 };
