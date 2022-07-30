@@ -18,7 +18,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <utility>
 #include <stack>
 #include <map>
 #include <tuple>
@@ -35,8 +34,6 @@ class AscendInferenceSession : public AscendSession {
  public:
   AscendInferenceSession() = default;
   ~AscendInferenceSession() = default;
-  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
-                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
   bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                         std::string *error_msg) const override;
   bool CompareInput(const tensor::TensorPtr &input, const ParameterPtr &parameter) const;
@@ -45,6 +42,8 @@ class AscendInferenceSession : public AscendSession {
   std::string InputsInfo(const std::vector<ParameterPtr> &paras, const std::vector<tensor::TensorPtr> &inputs) const;
 
  protected:
+  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
 };
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
