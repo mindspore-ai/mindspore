@@ -718,9 +718,11 @@ void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name)
   std::ostringstream oss;
   for (size_t i = 0; i < name.size(); i++) {
     if (name[i] == '<') {
-      oss << "「";
+      // ⎡: \u23A1
+      oss << "\u23A1";
     } else if (name[i] == '>') {
-      oss << "」";
+      // ⎦: \u23A6
+      oss << "\u23A6";
     } else {
       oss << name[i];
     }

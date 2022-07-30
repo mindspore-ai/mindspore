@@ -39,9 +39,11 @@ std::string ReplaceSpecialChar(const std::string &str) {
   std::ostringstream oss;
   for (size_t i = 0; i < str.size(); i++) {
     if (str[i] == '<') {
-      oss << "「";
+      // ⎡: \u23A1
+      oss << "\u23A1";
     } else if (str[i] == '>') {
-      oss << "」";
+      // ⎦: \u23A6
+      oss << "\u23A6";
     } else {
       oss << str[i];
     }

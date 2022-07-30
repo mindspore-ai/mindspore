@@ -355,7 +355,8 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   int64_t tuple_size = SizeToLong(args_spec_list.size());
 
   std::ostringstream ss;
-  ss << "▶make_tuple_" << tuple_size;
+  // ▶make_tuple_
+  ss << "\u25B8make_tuple_" << tuple_size;
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   fg->debug_info()->set_name(ss.str());
 
@@ -373,7 +374,8 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 
   ss.str(std::string());
   ss.clear();
-  ss << "◀make_tuple_" << tuple_size;
+  // ◀make_tuple_
+  ss << "\u25C2make_tuple_" << tuple_size;
   b->debug_info()->set_name(ss.str());
   AnfNodePtr dout = b->add_parameter();
 
@@ -397,7 +399,8 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   int64_t list_size = SizeToLong(args_spec_list.size());
 
   std::ostringstream ss;
-  ss << "▶make_list_" << list_size;
+  // ▶make_list_
+  ss << "\u25B8make_list_" << list_size;
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   fg->debug_info()->set_name(ss.str());
 
@@ -415,7 +418,8 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 
   ss.str(std::string());
   ss.clear();
-  ss << "◀make_list_" << list_size;
+  // ◀make_list_
+  ss << "\u25C2make_list_" << list_size;
   b->debug_info()->set_name(ss.str());
   AnfNodePtr dout = b->add_parameter();
 
