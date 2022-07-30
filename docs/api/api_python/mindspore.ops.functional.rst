@@ -322,6 +322,7 @@ Tensor创建
     mindspore.ops.multinomial
     mindspore.ops.normal
     mindspore.ops.poisson
+    mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform
 

@@ -14,8 +14,10 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 
 import mindspore.context as context
+from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -92,3 +94,33 @@ def test_standard_laplace_functional():
     assert output.shape == shape
     output_numpy_flatten_2 = output.asnumpy().flatten()
     assert (output_numpy_flatten_1 == output_numpy_flatten_2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_standard_laplace_dynamic_shape():
+    """
+    Feature: Dynamic shape inference of StandardLaplace CPU operation
+    Description: input a dynamic shape, test the output shape
+    Expectation: the shape of output match the input shape Tensor
+    """
+    class DynamicShapeStandardLaplaceNet(nn.Cell):
+        def __init__(self, axis=0):
+            super().__init__()
+            self.unique = P.Unique()
+            self.gather = P.Gather()
+            self.get_shape = P.TensorShape()
+            self.random_op = P.StandardLaplace()
+            self.axis = axis
+
+        def construct(self, x, indices):
+            unique_indices, _ = self.unique(indices)
+            res = self.gather(x, unique_indices, self.axis)
+            dshape = self.get_shape(res)
+            return self.random_op(dshape), dshape
+    net = DynamicShapeStandardLaplaceNet()
+    input_x = Tensor(np.random.randint(1, 10, size=10))
+    indices_x = Tensor(np.random.randint(1, 10, size=7))
+    out, dshape = net(input_x, indices_x)
+    assert out.shape == tuple(dshape.asnumpy())

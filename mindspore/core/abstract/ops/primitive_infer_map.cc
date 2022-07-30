@@ -102,6 +102,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kExpand = prim::kPrimExpand->name();
   static const auto &kSspaddmm = prim::kPrimSspaddmm->name();
   static const auto &kBartlettWindow = prim::kPrimBartlettWindow->name();
+  static const auto &kStandardLaplace = prim::kPrimStandardLaplace->name();
   static const auto &kStandardNormal = prim::kPrimStandardNormal->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{kSegmentMax, ShapeSet{1}},
@@ -152,6 +153,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kExpand, ShapeSet{1}},
                                          {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
                                          {kBartlettWindow, ShapeSet{0}},
+                                         {kStandardLaplace, ShapeSet{0}},
                                          {kStandardNormal, ShapeSet{0}}};
   return host_depends;
 }

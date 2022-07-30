@@ -45,33 +45,52 @@ int64_t StandardLaplace::get_seed2() const {
 namespace {
 abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto shape_value = input_args[kInputIndex0]->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value);
-  if (shape_value->isa<ValueList>()) {
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+    std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+    if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
+      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
+      return std::make_shared<abstract::Shape>(input_shape);
+    } else {
+      constexpr int dynamic_rank_value = -2;
+      ShapeVector shape = {dynamic_rank_value};
+      ShapeVector min_shape = {0};
+      ShapeVector max_shape = {abstract::Shape::SHP_ANY};
+      return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    }
+  } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input must be a Int or a tuple with all Int elements, but got: "
-                            << shape_value->ToString() << ".";
+                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
+                            << input_args[kInputIndex0]->ToString() << ".";
   }
-  std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
-  (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
-  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr StandardLaplaceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  if (!input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+    auto elements = input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements();
+    const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
+    for (size_t i = 0; i < elements.size(); ++i) {
+      auto input_dtype = elements[i]->BuildType();
+      (void)CheckAndConvertUtils::CheckTypeValid("shape", input_dtype, valid_shape_types, prim_name);
+    }
+  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+    const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
+    auto input_dtype = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_dtype, valid_shape_types, prim_name);
+  } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input must be a Int or a tuple with all Int elements, but got: "
+                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
                             << input_args[kInputIndex0]->ToString() << ".";
-  }
-  auto elements = input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements();
-  const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-  for (size_t i = 0; i < elements.size(); ++i) {
-    auto x_type = elements[i]->BuildType();
-    (void)CheckAndConvertUtils::CheckTypeValid("shape", x_type, valid_shape_types, prim_name);
   }
   return std::make_shared<TensorType>(kFloat32);
 }
@@ -80,13 +99,22 @@ TypePtr StandardLaplaceInferType(const PrimitivePtr &primitive, const std::vecto
 AbstractBasePtr StandardLaplaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  auto prim_name = primitive->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t kMinInputNum = 1;
+  const int64_t kMaxInputNum = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, kMinInputNum,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kLessEqual, kMaxInputNum,
+                                           prim_name);
   auto type = StandardLaplaceInferType(primitive, input_args);
   auto shape = StandardLaplaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
+REGISTER_HOST_DEPENDS(kNameStandardLaplace, {0});
 MIND_API_OPERATOR_IMPL(StandardLaplace, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(StandardLaplace, prim::kPrimStandardLaplace, StandardLaplaceInfer, nullptr, true);
 }  // namespace ops
