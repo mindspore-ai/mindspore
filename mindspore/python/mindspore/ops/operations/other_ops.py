@@ -1123,7 +1123,7 @@ class PyFunc(PrimitiveWithInfer):
         ...     return x1 + x2
         >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> x2 = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> op = P.PyFunc(func, [x1.dtype, x2.dtype], [x1.shape, x2.shape], [x1.dtype], [x1.dtype])
+        >>> op = P.PyFunc(func, [x1.dtype, x2.dtype], [x1.shape, x2.shape], [x1.dtype], [x1.shape])
         >>> output = op((x1, x2))
         >>> print(output[0].asnumpy())
         [2. 4. 6.]
