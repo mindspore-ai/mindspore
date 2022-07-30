@@ -61,8 +61,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
-        ret = get_all_files(name, files);
-        if (ret) {
+        if (!get_all_files(name, files)) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
           closedir(open_dir);
           return false;

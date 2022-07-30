@@ -676,7 +676,7 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
   buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
   std::set<string> order_set;
   for (const auto &item : template_types) {
-    order_set.emplace(item->ToString());
+    (void)order_set.emplace(item->ToString());
   }
   for (const auto &item : order_set) {
     buffer << item;
