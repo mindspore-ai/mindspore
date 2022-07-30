@@ -64,18 +64,11 @@ CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, N
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
-  if (value == nullptr) {
+  if (value == nullptr || inputs_.empty()) {
     return false;
   }
-
-  if (inputs_.size() != 0 && IsValueNode<Primitive>(inputs_[0])) {
-    PrimitivePtr fn_value = GetValueNode<PrimitivePtr>(inputs_[0]);
-    if (fn_value->Hash() == value->Hash() && fn_value->name() == value->name()) {
-      return true;
-    }
-  }
-
-  return false;
+  auto prim = GetValuePtr<Primitive>(inputs_[0]);
+  return (prim != nullptr) && (prim->Hash() == value->Hash()) && (prim->name() == value->name());
 }
 
 void CNode::add_input(const AnfNodePtr &input) {
@@ -137,7 +130,7 @@ void CNode::AddFusedDebugInfo(const AnfNodePtr &node) {
     this->AddFusedDebugInfo(node->debug_info());
     return;
   }
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   auto node_fused_debug_infos = cnode->fused_debug_infos();
   if (!node_fused_debug_infos.empty()) {
     (void)std::for_each(node_fused_debug_infos.begin(), node_fused_debug_infos.end(),
@@ -193,7 +186,7 @@ ParamInfoPtr Parameter::param_info() const {
   if (!has_default()) {
     return nullptr;
   }
-  auto tensor = default_param()->cast<tensor::MetaTensorPtr>();
+  auto tensor = default_param()->cast_ptr<tensor::MetaTensor>();
   if (tensor == nullptr || !tensor->is_parameter()) {
     return nullptr;
   }
@@ -229,30 +222,29 @@ std::string ValueNode::fullname_with_scope() {
 }
 
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
-  auto cnode = dyn_cast<CNode>(node);
-  if (cnode == nullptr) {
+  auto cnode = dyn_cast_ptr<CNode>(node);
+  if (cnode == nullptr || cnode->size() == 0) {
     return false;
   }
-  if (value != nullptr) {
-    return cnode->IsApply(value);
+  auto prim = GetValuePtr<Primitive>(cnode->input(0));
+  if (prim == nullptr) {
+    return false;
   }
-  const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  return prim != nullptr;
+  return (value == nullptr) || ((prim->Hash() == value->Hash()) && (prim->name() == value->name()));
 }
 
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
-  auto cnode = dyn_cast<CNode>(node);
-  if (cnode != nullptr && cnode->size() > 0) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    return prim;
+  auto cnode = dyn_cast_ptr<CNode>(node);
+  if (cnode == nullptr || cnode->size() == 0) {
+    return nullptr;
   }
-  return nullptr;
+  return GetValueNode<PrimitivePtr>(cnode->input(0));
 }
 
 // Return the function Primitive if DoSignaturePrimitive,
 // otherwise return the Primitive directly.
 PrimitivePtr GetPrimitiveWithoutDoSignature(const AnfNodePtr &node) {
-  const auto &do_signature_prim = GetValueNode<prim::DoSignaturePrimitivePtr>(node);
+  auto do_signature_prim = GetValuePtr<prim::DoSignaturePrimitive>(node);
   if (do_signature_prim != nullptr) {
     return dyn_cast<Primitive>(do_signature_prim->function());
   }
@@ -263,7 +255,7 @@ PrimitivePtr GetPrimitiveWithoutDoSignature(const AnfNodePtr &node) {
 // Return the function Primitive if DoSignaturePrimitive,
 // otherwise return the Primitive directly.
 PrimitivePtr GetCNodePrimitiveWithoutDoSignature(const AnfNodePtr &node) {
-  auto cnode = dyn_cast<CNode>(node);
+  auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr || cnode->size() == 0) {
     return nullptr;
   }
@@ -273,7 +265,7 @@ PrimitivePtr GetCNodePrimitiveWithoutDoSignature(const AnfNodePtr &node) {
 // Return the function value if DoSignaturePrimitive,
 // otherwise return the value directly.
 ValuePtr GetValueWithoutDoSignature(const ValuePtr &value) {
-  auto do_signature_prim = dyn_cast<prim::DoSignaturePrimitive>(value);
+  auto do_signature_prim = dyn_cast_ptr<prim::DoSignaturePrimitive>(value);
   if (do_signature_prim != nullptr) {
     return do_signature_prim->function();
   }
@@ -294,7 +286,7 @@ ValuePtr GetValueWithoutDoSignature(const AnfNodePtr &node) {
 // Return the function value if DoSignaturePrimitive,
 // otherwise return the value directly.
 ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node) {
-  auto cnode = dyn_cast<CNode>(node);
+  auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr || cnode->size() == 0) {
     return nullptr;
   }
@@ -307,19 +299,19 @@ std::string GetCNodeFuncName(const CNodePtr &cnode) {
   }
 
   AnfNodePtr valuenode = cnode->input(0);
-  auto value = GetValueNode(valuenode);
-  if (value != nullptr) {
-    // check whether the valuenode is primitive
-    if (value->isa<Primitive>()) {
-      return value->cast<PrimitivePtr>()->name();
-    }
-    return value->ToString();
+  auto value = GetValuePtr(valuenode);
+  if (value == nullptr) {
+    return "";
   }
-  return "";
+  auto prim = value->cast_ptr<Primitive>();
+  if (prim != nullptr) {
+    return prim->name();
+  }
+  return value->ToString();
 }
 
 FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node) {
-  auto cnode = dyn_cast<CNode>(node);
+  auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode != nullptr && cnode->size() > 0) {
     return GetValueNode<FuncGraphPtr>(cnode->input(0));
   }
@@ -328,9 +320,9 @@ FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node) {
 
 bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
   if (IsValueNode<Primitive>(node)) {
-    PrimitivePtr fn_value = GetValueNode<PrimitivePtr>(node);
+    auto prim = GetValuePtr<Primitive>(node);
     MS_EXCEPTION_IF_NULL(value);
-    if (fn_value->Hash() == value->Hash() && fn_value->name() == value->name()) {
+    if (prim->Hash() == value->Hash() && prim->name() == value->name()) {
       return true;
     }
   }
@@ -387,7 +379,7 @@ EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim) {
 
 std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {
   std::set<CNodePtr> loads;
-  auto cnode = dyn_cast<CNode>(node);
+  auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr) {
     return loads;
   }
@@ -467,18 +459,11 @@ __attribute__((unused)) void SetCNodeNotSupported(const CNodePtr &node, const st
 }
 
 PrimitivePtr GetPrimitiveFromValueNode(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return nullptr;
-  }
-  auto value_node = node->cast<ValueNodePtr>();
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
   if (value_node == nullptr) {
     return nullptr;
   }
-  auto value = value_node->value();
-  if (value == nullptr || !value->isa<Primitive>()) {
-    return nullptr;
-  }
-  return value->cast<PrimitivePtr>();
+  return dyn_cast<Primitive>(value_node->value());
 }
 
 static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
@@ -518,7 +503,7 @@ static inline bool IsSummaryPrimitiveCNode(const AnfNodePtr &node) {
 
 std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
 #ifndef ENABLE_SECURITY
@@ -592,7 +577,7 @@ std::string GetVirtualNodeTarget(const AnfNodePtr &node) {
 
 std::string GetTargetFromAttr(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto attr_input = cnode->input(0);
   auto primitive = GetPrimitiveFromValueNode(attr_input);
@@ -619,7 +604,7 @@ std::string GetOriginNodeTarget(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return kTargetUnDefined;
   }
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto ud_target = cnode->user_data<std::string>(kPrimitiveTarget);
   if (ud_target != nullptr) {
@@ -703,7 +688,7 @@ bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
 
 bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   if (cnode == nullptr || cnode->size() == 0) {
     return false;
   }
@@ -717,7 +702,7 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, 
     return;
   }
 
-  auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
+  auto sequence_abs = dyn_cast_ptr<abstract::AbstractSequence>(abs);
   if (sequence_abs == nullptr) {
     return;
   }
@@ -751,7 +736,7 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
     return;
   }
 
-  auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
+  auto sequence_abs = dyn_cast_ptr<abstract::AbstractSequence>(abs);
   if (sequence_abs == nullptr) {
     return;
   }
@@ -783,7 +768,7 @@ void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new
   SetSequenceElementsUseFlags(abs, new_flag);
 
   // Check its elements if it's a sequence node.
-  auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
+  auto sequence_abs = dyn_cast_ptr<abstract::AbstractSequence>(abs);
   if (sequence_abs != nullptr) {
     for (auto &element : sequence_abs->elements()) {
       SetSequenceElementsUseFlagsRecursively(element, new_flag);
@@ -792,7 +777,7 @@ void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new
   }
 
   // Check its elements if it's a dictionary node.
-  auto dictionary_abs = dyn_cast<abstract::AbstractDictionary>(abs);
+  auto dictionary_abs = dyn_cast_ptr<abstract::AbstractDictionary>(abs);
   if (dictionary_abs != nullptr) {
     for (auto &element : dictionary_abs->elements()) {
       SetSequenceElementsUseFlagsRecursively(element.second, new_flag);

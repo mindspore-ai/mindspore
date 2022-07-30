@@ -1052,7 +1052,7 @@ inline ValuePtr MakeValue(S v) {
 template <typename S, typename U = typename ImmTraits<S>::type>
 static S GetValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  U imm = value->cast<U>();
+  auto imm = value->cast_ptr<typename U::element_type>();
   if (imm == nullptr) {
     MS_LOG(EXCEPTION) << "Cast failed, original value: " << value->ToString() << ", type: " << value->type_name();
   }
@@ -1076,7 +1076,7 @@ MS_CORE_API std::string GetCNodeFuncName(const CNodePtr &cnode);
 // Used to get FuncGraphPtr from a cnode first input
 MS_CORE_API FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
 
-// Used to check whether an AnfNode is a cnode with a kind of Primitive as first input
+// Used to check whether an AnfNode is a cnode with a kind of Primitive as first input.
 MS_CORE_API bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
 // Used to get PrimitivePtr from a cnode first input
@@ -1142,39 +1142,39 @@ MS_CORE_API EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
 // Check if monad state is equivalent for the connected two nodes, not strict but more faster.
 MS_CORE_API bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
 
-// used to check whether a ValueNode has some kind of value
+// Used to check whether a ValueNode has some kind of value.
 template <typename T>
-static bool IsValueNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto anode = node->cast<ValueNodePtr>();
-  if (anode != nullptr) {
-    auto value = anode->value();
-    if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "Const value is nullptr.";
-    }
-    return value->isa<T>();
+inline bool IsValueNode(const AnfNodePtr &node) {
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
+  if (value_node == nullptr) {
+    return false;
   }
-  return false;
+  const auto &value = value_node->value();
+  return (value != nullptr) && (value->isa<T>());
 }
 
 inline ValuePtr GetValueNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<ValueNode>()) {
-    return nullptr;
-  }
-  return node->cast<ValueNodePtr>()->value();
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
+  return (value_node == nullptr) ? nullptr : value_node->value();
+}
+
+inline Value *GetValuePtr(const AnfNodePtr &node) {
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
+  return (value_node == nullptr) ? nullptr : value_node->value().get();
 }
 
 template <typename S,
           typename std::enable_if<is_shared_ptr<S>::value && std::is_base_of<Value, typename S::element_type>::value,
                                   S>::type * = nullptr>
 inline S GetValueNode(const AnfNodePtr &node) {
-  auto value = GetValueNode(node);
-  if (value == nullptr) {
-    return nullptr;
-  }
-  auto s = value->cast<S>();
-  return s;
+  auto value = GetValuePtr(node);
+  return (value == nullptr) ? nullptr : value->cast<S>();
+}
+
+template <typename S, typename std::enable_if<std::is_base_of<Value, S>::value, S>::type * = nullptr>
+inline S *GetValuePtr(const AnfNodePtr &node) {
+  auto value = GetValuePtr(node);
+  return (value == nullptr) ? nullptr : value->cast_ptr<S>();
 }
 
 MS_CORE_API SeenNum NewSeenGeneration();

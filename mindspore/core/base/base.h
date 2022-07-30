@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,9 +147,19 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   inline T cast() {
     if (isa<U>()) {
       return std::static_pointer_cast<U>(shared_from_this());
-    } else {
-      return nullptr;
     }
+    return nullptr;
+  }
+
+  /// \brief Cast to a raw pointer of the given class.
+  ///
+  /// \return If success, a raw pointer of the given class will be returned. Otherwise a nullptr will be returned.
+  template <typename T, typename U = typename std::enable_if<std::is_base_of<Base, T>::value>::type>
+  inline T *cast_ptr() {
+    if (isa<T>()) {
+      return static_cast<T *>(this);
+    }
+    return nullptr;
   }
 
  protected:
@@ -169,9 +179,8 @@ template <typename T, typename U>
 inline T *cast(U *source) {
   if (source != nullptr && source->template isa<T>()) {
     return static_cast<T *>(source);
-  } else {
-    return nullptr;
   }
+  return nullptr;
 }
 
 template <
@@ -180,9 +189,18 @@ template <
 inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
   if (r != nullptr && r->template isa<T>()) {
     return std::static_pointer_cast<T>(r);
-  } else {
-    return std::shared_ptr<T>();
   }
+  return std::shared_ptr<T>();
+}
+
+template <
+  typename T, typename U,
+  typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type * = nullptr>
+inline T *dyn_cast_ptr(const std::shared_ptr<U> &r) {
+  if (r != nullptr && r->template isa<T>()) {
+    return static_cast<T *>(r.get());
+  }
+  return nullptr;
 }
 
 #define MS_DECLARE_PARENT(current_t, parent_t)                                             \
