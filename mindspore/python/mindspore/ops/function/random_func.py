@@ -328,7 +328,7 @@ def uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range
     return sampled_candidates, true_expected_count, sampled_expected_count
 
 
-def poisson(shape, rate, seed=None, dtype=mstype.float32):
+def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     r"""
     Generates random numbers according to the Poisson random number distribution.
 
@@ -358,9 +358,10 @@ def poisson(shape, rate, seed=None, dtype=mstype.float32):
         TypeError: If `seed` is not an int.
         TypeError: If `dtype` is not mindspore.dtype.int64, mindspore.dtype.int32, mindspore.dtype.float64,
           mindspore.dtype.float32 nor mindspore.dtype.float16.
+        ValueError: If elements of input `shape` tensor is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -368,19 +369,19 @@ def poisson(shape, rate, seed=None, dtype=mstype.float32):
         >>> # case 1: It can be broadcast.
         >>> shape = Tensor(np.array([4, 1]), mindspore.int32)
         >>> rate = Tensor(np.array([5.0, 10.0]), mindspore.float32)
-        >>> output = ops.poisson(shape, rate, seed=5, dtype=mindspore.float64)
+        >>> output = ops.random_poisson(shape, rate, seed=5, dtype=mindspore.float64)
         >>> print(output.shape, output.dtype)
         (4, 1, 2) Float64
         >>> # case 2: It can not be broadcast. It is recommended to use the same shape.
         >>> shape = Tensor(np.array([2, 2]), mindspore.int32)
         >>> rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
-        >>> output = ops.poisson(shape, rate, seed=5, dtype=mindspore.int64)
+        >>> output = ops.random_poisson(shape, rate, seed=5, dtype=mindspore.int64)
         >>> print(output.shape, output.dtype)
         (2, 2, 2, 2) Int64
     """
     seed1, seed2 = _get_seed(seed, "poisson")
-    random_poisson = P.random_ops.RandomPoisson(seed1, seed2, dtype)
-    value = random_poisson(shape, rate)
+    prim_random_poisson = P.random_ops.RandomPoisson(seed1, seed2, dtype)
+    value = prim_random_poisson(shape, rate)
     return value
 
 
@@ -391,6 +392,5 @@ __all__ = [
     'standard_normal',
     'random_gamma',
     'uniform_candidate_sampler',
-    'poisson'
 ]
 __all__.sort()
