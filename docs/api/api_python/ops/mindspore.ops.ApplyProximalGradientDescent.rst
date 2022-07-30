@@ -22,7 +22,7 @@ mindspore.ops.ApplyProximalGradientDescent
         - **alpha** (Union[Number, Tensor]) - 比例系数，必须为标量。数据类型为float16或float32。
         - **l1** (Union[Number, Tensor]) - l1正则化强度，必须为标量。数据类型为float16或float32。
         - **l2** (Union[Number, Tensor]) - l2正则化强度，必须为标量。数据类型为float16或float32。
-        - **delta** (Tensor) - 梯度Tensor，shape和数据类型与 `var` 相同。
+        - **delta** (Tensor) - 梯度Tensor。
 
     输出：
         Tensor，更新后的 `var` 。

@@ -6655,7 +6655,7 @@ class ApplyProximalGradientDescent(Primitive):
           With float32 or float16 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a scalar.
           With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change, has the same shape and data type as `var`.
+        - **delta** (Tensor) - A tensor for the change.
 
     Outputs:
         Tensor, represents the updated `var`.
