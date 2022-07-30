@@ -31,29 +31,31 @@ namespace mindspore {
 namespace kernel {
 using OpsDeformableOffsetsGradPtr = std::shared_ptr<ops::DeformableOffsetsGrad>;
 struct DeformableOffsetGradDims {
-  size_t x_n;
-  size_t x_h;
-  size_t x_w;
-  size_t offset_h;
-  size_t offset_w;
-  size_t grad_h;
-  size_t grad_w;
-  size_t kernel_h;
-  size_t kernel_w;
-  size_t pad_top;
-  size_t pad_left;
-  size_t stride_h;
-  size_t stride_w;
-  size_t dilation_h;
-  size_t dilation_w;
-  size_t deformable_group;
-  size_t deformable_group_channel;
+  size_t x_n = 0;
+  size_t x_h = 0;
+  size_t x_w = 0;
+  size_t offset_h = 0;
+  size_t offset_w = 0;
+  size_t grad_h = 0;
+  size_t grad_w = 0;
+  size_t kernel_h = 0;
+  size_t kernel_w = 0;
+  size_t pad_top = 0;
+  size_t pad_left = 0;
+  size_t stride_h = 0;
+  size_t stride_w = 0;
+  size_t dilation_h = 0;
+  size_t dilation_w = 0;
+  size_t deformable_group = 0;
+  size_t deformable_group_channel = 0;
 };
 
 class DeformableOffsetsGradCpuKernelMod : public NativeCpuKernelMod,
                                           public MatchKernelHelper<DeformableOffsetsGradCpuKernelMod> {
  public:
-  DeformableOffsetsGradCpuKernelMod() { ResetResource(); }
+  DeformableOffsetsGradCpuKernelMod() : deformable_kernel_operator_(nullptr), data_format_(kOpFormat_NCHW) {
+    ResetResource();
+  }
   ~DeformableOffsetsGradCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -76,11 +78,10 @@ class DeformableOffsetsGradCpuKernelMod : public NativeCpuKernelMod,
 
   void GetDataFormat();
 
-  void SetDims(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-               const std::vector<KernelTensorPtr> &outputs);
+  void SetDims(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs);
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
@@ -89,8 +90,6 @@ class DeformableOffsetsGradCpuKernelMod : public NativeCpuKernelMod,
   template <typename T>
   void DeformableOffsetGradNCHWKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, T *input_x,
                                       T *input_offset, T *input_grad, T *output_grad_x, T *output_grad_offset);
-
-  std::string kernel_name_;
   OpsDeformableOffsetsGradPtr deformable_kernel_operator_;
   std::string data_format_ = kOpFormat_NCHW;
   DeformableOffsetGradDims dims_;

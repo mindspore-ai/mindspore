@@ -18,6 +18,7 @@
 #include <set>
 #include <map>
 #include <functional>
+#include <tuple>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/grad/deformable_offsets_grad.h"
 
@@ -106,26 +107,55 @@ struct OffsetIndex {
 };
 
 struct InputXIndex {
-  float i;
-  float j;
+  size_t i;
+  size_t j;
 };
 }  // namespace
 
 std::mutex mutex_;
 
 template <typename T>
-void MsAtomicAdd(T *output_grad_x, size_t output_grad_base_pos, T added_value) {
+void MsAtomicAdd(T *output_grad_x, const size_t &output_grad_base_pos, const T &added_value) {
   std::lock_guard<std::mutex> lock(mutex_);
   output_grad_x[output_grad_base_pos] += added_value;
+}
+
+inline std::tuple<size_t, size_t, size_t> CalPosition(const OffsetIndex &offset_index,
+                                                      const OffsetStride &offset_stride, const GradStride &grad_stride,
+                                                      const InputXStride &input_x_stride) {
+  const size_t offset_index_base_pos =
+    offset_index.n_i * offset_stride.n_stride +
+    offset_index.deformable_group_i * offset_stride.deformable_group_stride +
+    offset_index.kernel_i * offset_stride.kernel_h_stride + offset_index.kernel_j * offset_stride.kernel_w_stride +
+    offset_index.offset_i * offset_stride.offset_h_stride + offset_index.offset_j * offset_stride.offset_w_stride;
+
+  const size_t input_grad_base_pos =
+    offset_index.n_i * grad_stride.n_stride + offset_index.offset_i * grad_stride.offset_h_stride +
+    offset_index.offset_j * grad_stride.offset_w_stride + offset_index.kernel_i * grad_stride.kernel_h_stride +
+    offset_index.kernel_j * grad_stride.kernel_w_stride +
+    offset_index.deformable_group_i * grad_stride.deformable_group_stride;
+  const size_t input_x_base_pos = offset_index.n_i * input_x_stride.n_stride +
+                                  offset_index.deformable_group_i * input_x_stride.deformable_group_stride;
+  return {offset_index_base_pos, input_grad_base_pos, input_x_base_pos};
+}
+
+inline InputXIndex CalInputXIndex(const OffsetIndex &offset_index, const DeformableOffsetGradDims &dims) {
+  InputXIndex input_x_index;
+  input_x_index.i = dims.pad_top;
+  input_x_index.j = dims.pad_left;
+  input_x_index.i += offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h;
+  input_x_index.j += offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w;
+  return input_x_index;
 }
 
 template <typename T>
 void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStride &offset_stride,
                                 const GradStride &grad_stride, const DeformableOffsetGradDims &dims,
-                                const InputXIndex &input_x_index, const InputXStride &input_x_stride,
-                                const size_t &offset_index_base_pos, const size_t &input_grad_base_pos,
-                                const size_t &input_x_base_pos, T *input_x, T *input_offset, T *input_grad,
-                                T *output_grad_x, T *output_grad_offset) {
+                                const InputXStride &input_x_stride, const T *input_x, const T *input_offset,
+                                const T *input_grad, T *output_grad_x, T *output_grad_offset) {
+  const auto [offset_index_base_pos, input_grad_base_pos, input_x_base_pos] =
+    CalPosition(offset_index, offset_stride, grad_stride, input_x_stride);
+  const auto input_x_index = CalInputXIndex(offset_index, dims);
   const size_t offset_index_i = offset_index_base_pos + offset_stride.position_stride;
   const size_t offset_index_weight = offset_index_base_pos + 2 * offset_stride.position_stride;
   float offset_i = static_cast<float>(input_offset[offset_index_i]);
@@ -137,10 +167,10 @@ void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStr
   float ceil_offset_i = floor_offset_i + 1;
   float ceil_offset_j = floor_offset_j + 1;
 
-  float floor_i = input_x_index.i + floor_offset_i;
-  float floor_j = input_x_index.j + floor_offset_j;
-  float ceil_i = input_x_index.i + ceil_offset_i;
-  float ceil_j = input_x_index.j + ceil_offset_j;
+  float floor_i = SizeToFloat(input_x_index.i) + floor_offset_i;
+  float floor_j = SizeToFloat(input_x_index.j) + floor_offset_j;
+  float ceil_i = SizeToFloat(input_x_index.i) + ceil_offset_i;
+  float ceil_j = SizeToFloat(input_x_index.j) + ceil_offset_j;
 
   float ceil_weight_i = offset_i + 1 - ceil_offset_i;
   float ceil_weight_j = offset_j + 1 - ceil_offset_j;
@@ -276,28 +306,7 @@ void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNHWCKernel(size_t nu
       offset_index.offset_i = tmp % dims.offset_h;
       offset_index.n_i = tmp / dims.offset_h;
 
-      const size_t offset_index_base_pos =
-        offset_index.n_i * offset_stride.n_stride +
-        offset_index.deformable_group_i * offset_stride.deformable_group_stride +
-        offset_index.kernel_i * offset_stride.kernel_h_stride + offset_index.kernel_j * offset_stride.kernel_w_stride +
-        offset_index.offset_i * offset_stride.offset_h_stride + offset_index.offset_j * offset_stride.offset_w_stride;
-
-      const size_t input_grad_base_pos =
-        offset_index.n_i * grad_stride.n_stride + offset_index.offset_i * grad_stride.offset_h_stride +
-        offset_index.offset_j * grad_stride.offset_w_stride + offset_index.kernel_i * grad_stride.kernel_h_stride +
-        offset_index.kernel_j * grad_stride.kernel_w_stride +
-        offset_index.deformable_group_i * grad_stride.deformable_group_stride;
-      const size_t input_x_base_pos = offset_index.n_i * input_x_stride.n_stride +
-                                      offset_index.deformable_group_i * input_x_stride.deformable_group_stride;
-
-      InputXIndex input_x_index;
-      input_x_index.i = -1.0 * dims.pad_top;
-      input_x_index.j = -1.0 * dims.pad_left;
-      input_x_index.i += offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h;
-      input_x_index.j += offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w;
-
-      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_index, input_x_stride,
-                                 offset_index_base_pos, input_grad_base_pos, input_x_base_pos, input_x, input_offset,
+      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_stride, input_x, input_offset,
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
@@ -351,27 +360,7 @@ void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNCHWKernel(size_t nu
       offset_index.deformable_group_i = tmp % dims.deformable_group;
       offset_index.n_i = tmp / dims.deformable_group;
 
-      const size_t offset_index_base_pos =
-        offset_index.n_i * offset_stride.n_stride +
-        offset_index.deformable_group_i * offset_stride.deformable_group_stride +
-        offset_index.kernel_i * offset_stride.kernel_h_stride + offset_index.kernel_j * offset_stride.kernel_w_stride +
-        offset_index.offset_i * offset_stride.offset_h_stride + offset_index.offset_j * offset_stride.offset_w_stride;
-      const size_t input_grad_base_pos =
-        offset_index.n_i * grad_stride.n_stride + offset_index.offset_i * grad_stride.offset_h_stride +
-        offset_index.offset_j * grad_stride.offset_w_stride + offset_index.kernel_i * grad_stride.kernel_h_stride +
-        offset_index.kernel_j * grad_stride.kernel_w_stride +
-        offset_index.deformable_group_i * grad_stride.deformable_group_stride;
-      const size_t input_x_base_pos = offset_index.n_i * input_x_stride.n_stride +
-                                      offset_index.deformable_group_i * input_x_stride.deformable_group_stride;
-
-      InputXIndex input_x_index;
-      input_x_index.i = -1.0 * dims.pad_top;
-      input_x_index.j = -1.0 * dims.pad_left;
-      input_x_index.i += offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h;
-      input_x_index.j += offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w;
-
-      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_index, input_x_stride,
-                                 offset_index_base_pos, input_grad_base_pos, input_x_base_pos, input_x, input_offset,
+      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_stride, input_x, input_offset,
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
@@ -401,7 +390,7 @@ bool DeformableOffsetsGradCpuKernelMod::Launch(const std::vector<kernel::Address
 
 template <typename T>
 bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &workspace,
+                                                     const std::vector<kernel::AddressPtr> &,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
   const size_t num_kernels =
     dims_.x_n * dims_.offset_h * dims_.offset_w * dims_.kernel_h * dims_.kernel_w * dims_.deformable_group;
@@ -451,7 +440,7 @@ int DeformableOffsetsGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
                   << ", but get " << input_size_list_.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
-  SetDims(base_operator, inputs, outputs);
+  SetDims(base_operator, inputs);
   return KRET_OK;
 }
 
@@ -490,8 +479,7 @@ void DeformableOffsetsGradCpuKernelMod::CheckInOutNum(size_t inputs_num, size_t 
 }
 
 void DeformableOffsetsGradCpuKernelMod::SetDims(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
+                                                const std::vector<KernelTensorPtr> &inputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast DeformableOffsetsGrad failed!";
