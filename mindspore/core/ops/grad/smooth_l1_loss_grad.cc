@@ -58,11 +58,9 @@ abstract::ShapePtr SmoothL1LossGradInferShape(const PrimitivePtr &primitive,
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   abstract::CheckShapeSame(prim_name, prediction, target);
   std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
+  auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
   if (reduction == kNone) {
-    auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
     abstract::CheckShapeSame(prim_name, prediction, dloss);
-  } else {
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(prim_name, input_args, kInputIndex2);
   }
   auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
