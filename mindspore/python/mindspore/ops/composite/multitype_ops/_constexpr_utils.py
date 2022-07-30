@@ -291,9 +291,9 @@ def check_type_valid(dtype, target_type, op_name):
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         if op_name in (TENSOR_GETITEM, TENSOR_SETITEM):
             raise IndexError(
-                f"The '{op_name}' doesn't support {dtype}' and expect to receive {target_type}.")
+                f"The '{op_name}' doesn't support '{dtype}' and expect to receive {target_type}.")
         raise TypeError(
-            f"The '{op_name}' doesn't support {dtype}' and expect to receive {target_type}.")
+            f"The '{op_name}' doesn't support '{dtype}' and expect to receive {target_type}.")
 
 
 @constexpr
