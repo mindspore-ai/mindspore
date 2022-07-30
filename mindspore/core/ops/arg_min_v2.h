@@ -22,7 +22,6 @@
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "mindapi/base/type_id.h"
 
 namespace mindspore {
 namespace ops {
