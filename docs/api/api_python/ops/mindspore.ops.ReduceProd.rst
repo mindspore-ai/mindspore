@@ -14,7 +14,7 @@
         - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。取值必须在[-rank( `x` ), rank( `x` ))范围内。
 
     输出：
-        bool类型的Tensor。
+        Tensor。
 
         - 如果 `axis` 为()，且 `keep_dims` 为False，
           则输出一个0维Tensor，表示输入Tensor中所有元素的乘积。
