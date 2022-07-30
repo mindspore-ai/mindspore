@@ -1195,19 +1195,17 @@ def mirror_pad(input_x, paddings, mode):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
-            Default: "REFLECT".
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
-        - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
+        **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
           matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
           are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
           to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]
           indicates how many sizes to be extended behind the input tensor in the `D` th dimension. Both
           paddings[D, 0] and paddings[D, 1] must be no greater than input_x.dim_size(D)
           (or input_x.dim_size(D) - 1) if mode is SYMMETRIC (if REFLECT, respectively).
+        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
+            Default: "REFLECT".
 
 
     Outputs:
@@ -1232,34 +1230,16 @@ def mirror_pad(input_x, paddings, mode):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor, nn, ops
-        >>> # case1: mode="REFLECT"
-        >>> class Net(nn.Cell):
-        ...    def __init__(self, mode):
-        ...        super(Net, self).__init__()
-        ...        self.pad = ops.MirrorPad(mode=mode)
-        ...        self.paddings = Tensor([[1, 1], [2, 2]])
-        ...    def construct(self, input_x):
-        ...        return self.pad(input_x, self.paddings)
-        ...
         >>> input_x = Tensor([[1,2,3], [4,5,6], [7,8,9]])
-        >>> pad = Net("REFLECT")
-        >>> output = pad(input_x)
+        >>> mode = "REFLECT"
+        >>> paddings = Tensor([[1, 1], [2, 2]])
+        >>> output = ops.mirror_pad(input_x, paddings, mode)
         >>> print(output)
         [[6 5 4 5 6 5 4]
          [3 2 1 2 3 2 1]
          [6 5 4 5 6 5 4]
          [9 8 7 8 9 8 7]
          [6 5 4 5 6 5 4]]
-        >>> # case2: mode="SYMMETRIC"
-        >>> pad = Net("SYMMETRIC")
-        >>> output = pad(input_x)
-        >>> print(output)
-        [[2 1 1 2 3 3 2]
-         [2 1 1 2 3 3 2]
-         [5 4 4 5 6 6 5]
-         [8 7 7 8 9 9 8]
-         [8 7 7 8 9 9 8]]
     """
 
     _mirror_pad = _get_cache_prim(P.MirrorPad)(mode)

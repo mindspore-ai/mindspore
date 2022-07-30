@@ -1016,7 +1016,6 @@ def get_mirror_pad_vmap_rule(prim, axis_size):
         pad_dim = F.shape(paddings)[0]
         x_ndim = F.rank(x)
 
-        # pylint: disable=chained-comparison
         if pad_dim == x_ndim and x_ndim <= input_max_dim:
             out = prim(x, paddings)
         elif x_ndim > input_max_dim:
