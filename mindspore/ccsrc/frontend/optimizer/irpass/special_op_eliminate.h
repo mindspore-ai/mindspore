@@ -600,7 +600,7 @@ class PynativeEliminater : public OptimizerCaller {
   }
 
   AnfNodePtr OperatorHandle4(const PatternNode<AnfNodePtr> &arg, const PatternNode<AnfNodePtr> &arg1,
-                             const AnfNodePtr &node) {
+                             const AnfNodePtr &node) const {
     auto rep = (arg).GetNode(node);
     if (rep != nullptr) {
       if (rep->isa<ValueNode>()) {
