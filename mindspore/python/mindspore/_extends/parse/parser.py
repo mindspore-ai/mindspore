@@ -452,11 +452,6 @@ def ms_isinstance(x, cmp_type):
     return isinstance(x, pytype_to_mstype.get(cmp_type))
 
 
-def is_cell_list(obj):
-    """Check if obj is nn.CellList"""
-    return isinstance(obj, nn.CellList)
-
-
 def get_module_namespace(obj):
     """Get the module's namespace."""
     logger.debug("get module namespace, module: %r", obj)

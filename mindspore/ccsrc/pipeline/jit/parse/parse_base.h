@@ -73,7 +73,6 @@ const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespac
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
-const char PYTHON_MOD_IS_CELL_LIST[] = "is_cell_list";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 const char PYTHON_MOD_EVAL_PY_SCRIPT[] = "eval_script";
 const char PYTHON_MOD_GET_SCRIPT_IDS[] = "get_script_ids";

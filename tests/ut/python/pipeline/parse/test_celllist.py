@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,23 +15,15 @@
 """ test_celllist """
 import numpy as np
 
-from mindspore import Tensor, Model
-from mindspore import context
-from mindspore.nn import AvgPool2d
-from mindspore.nn import Cell
-from mindspore.nn import Flatten
-from mindspore.nn import ReLU
-from mindspore.nn import SequentialCell
+from mindspore import context, nn, Tensor, Model, ParameterTuple
+from mindspore import dtype as mstype
 from ...ut_filter import non_graph_engine
 
 
-# pylint: disable=W0212
-
-
-class Net3(Cell):
+class Net(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.tuple = (ReLU(), ReLU())
+        self.tuple = (nn.ReLU(), nn.ReLU())
 
     def construct(self, x):
         for op in self.tuple:
@@ -43,18 +35,38 @@ class Net3(Cell):
 def test_cell_list():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
-    net = Net3()
+    net = Net()
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net)
     model.predict(input_me)
 
 
-class SequenceNet(Cell):
+class CellListNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.seq = SequentialCell([AvgPool2d(3, 1), ReLU(), Flatten()])
-        self.values = list(self.seq._cells.values())
+        self.all = nn.CellList([nn.Conv2d(120, 240, 4, has_bias=False,
+                                          weight_init=Tensor(np.ones([240, 120, 4, 4]), mstype.float32)),
+                                nn.Conv2d(240, 480, 4, has_bias=False,
+                                          weight_init=Tensor(np.ones([480, 240, 4, 4]), mstype.float32))])
+        self.params = ParameterTuple(self.get_parameters())
+        self.weight_list = [(240, 120, 4, 4), (480, 240, 4, 4)]
+        self.info = [self.all, self.params, self.weight_list]
 
     def construct(self, x):
-        x = self.seq(x)
-        return x
+        func = None
+        conv, params, weight_list = self.info
+        for _, (_conv, _, _weight_list) in enumerate(zip(conv, params, weight_list)):
+            if _weight_list[0] == 240:
+                func = _conv
+        out = func(x)
+        return out
+
+
+def test_cell_list_zip():
+    """
+    Feature: nn.CellList
+    Description: Fix the problem of no manager for this func graph when using nn.CellList.
+    Expectation: No exception.
+    """
+    x = Tensor(np.ones([1, 120, 1024, 640]), mstype.float32)
+    CellListNet()(x)
