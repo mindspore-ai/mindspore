@@ -161,11 +161,9 @@ void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
 py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
-    py::function fn = python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
-    return fn;
+    return python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
   }
-  auto fn = GetVmapRuleFunctionByObj(python_obj_, axis_size);
-  return fn;
+  return GetVmapRuleFunctionByObj(python_obj_, axis_size);
 }
 
 py::function PrimitivePy::GetBpropFunction() {
@@ -173,10 +171,8 @@ py::function PrimitivePy::GetBpropFunction() {
   if (py::hasattr(python_obj_, get_bprop_func_name)) {
     py::function fn = python_obj_.attr(get_bprop_func_name)().cast<py::function>();
     return fn;
-  } else {
-    auto fn = GetBpropFunctionByObj(python_obj_);
-    return fn;
   }
+
   auto fn = GetBpropFunctionByObj(python_obj_);
   return fn;
 }
