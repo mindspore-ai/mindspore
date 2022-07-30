@@ -43,7 +43,6 @@ class ExpandCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <size_t RANK, typename T>
   bool ExpandCalculate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

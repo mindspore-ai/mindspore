@@ -43,7 +43,6 @@ class ApplyAdadeltaCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -62,6 +61,7 @@ class ApplyAdadeltaCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 
+ protected:
   int CheckInputShape(const std::vector<KernelTensorPtr> &inputs);
   int CheckShapeSize(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape);
 

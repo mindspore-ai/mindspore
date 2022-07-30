@@ -42,7 +42,7 @@ constexpr size_t kGlobalNormIndex = 9;
 }  // namespace
 
 void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs,
-                                                                   const std::vector<AddressPtr> &) {
+                                                                   const std::vector<AddressPtr> &) const {
   auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
   auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
   auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[kScalarIndex];
@@ -97,7 +97,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::ve
 }
 
 void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs,
-                                                                   const std::vector<AddressPtr> &) {
+                                                                   const std::vector<AddressPtr> &) const {
   auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
   auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
   auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[kScalarIndex];

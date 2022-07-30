@@ -54,7 +54,6 @@ class SparseApplyAdagradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

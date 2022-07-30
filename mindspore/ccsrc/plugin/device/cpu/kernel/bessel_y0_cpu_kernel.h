@@ -45,7 +45,6 @@ class BesselY0CpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   static void BesselY0Func(const T *input, T *output, size_t start, size_t end);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

@@ -52,7 +52,6 @@ class BroadcastOpGradGradGpuKernelMod : public NativeGpuKernelMod,
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
   using KernelFunc = std::vector<std::pair<KernelAttr, BroadcastOpGradGradGpuKernelMod::KernelRunFunc>>;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:

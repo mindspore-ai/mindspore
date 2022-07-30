@@ -39,7 +39,6 @@ class EighCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
   void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

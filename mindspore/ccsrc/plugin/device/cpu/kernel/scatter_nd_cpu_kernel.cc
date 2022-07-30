@@ -160,7 +160,7 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   constexpr size_t kDynamicInputNum = 3;
   if (input_num != kScatterNdInputSize && input_num != kDynamicInputNum) {

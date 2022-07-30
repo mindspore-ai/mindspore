@@ -40,7 +40,7 @@ class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
   std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
   void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
   std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
-  void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss);
+  void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss) const;
   void GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
                  const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
   std::vector<ShapeVector> input_shape_list_;
@@ -155,7 +155,8 @@ std::vector<T> L2NormalizeGradCpuFunc<T>::GetVector(const std::vector<size_t> &h
 }
 
 template <typename T>
-void L2NormalizeGradCpuFunc<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss) {
+void L2NormalizeGradCpuFunc<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector,
+                                                T *ss) const {
   size_t len = x_vector.size();
   std::vector<T> tmp_vector(len);
   for (size_t i = 0; i < len; i++) {

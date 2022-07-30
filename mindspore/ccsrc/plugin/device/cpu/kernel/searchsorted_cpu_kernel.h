@@ -36,12 +36,11 @@ class SearchSortedCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename S>
-  const S *CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key);
+  const S *CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) const;
   template <typename S, typename T>
   void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename S, typename T>

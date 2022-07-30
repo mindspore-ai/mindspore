@@ -48,7 +48,6 @@ class BatchToSpaceNDCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

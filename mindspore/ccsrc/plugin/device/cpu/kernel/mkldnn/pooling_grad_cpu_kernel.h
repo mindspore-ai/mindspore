@@ -43,7 +43,6 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::unordered_map<std::string, std::vector<KernelAttr>> support_list = {
       {kAvgPoolGrad,

@@ -45,7 +45,6 @@ class NMSWithMaskCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitInputOutputSize(const CNodePtr &kernel_node) override { Init_func_(this, kernel_node); }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -58,7 +57,7 @@ class NMSWithMaskCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                       bool flip_mode);
   void Preprocess(const int num, int *sel_idx, bool *sel_boxes);
   template <typename T>
-  bool IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value);
+  bool IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) const;
   template <typename T>
   void NmsPass(const int num, const float IOU_value, const T *output, int box_size, bool *row_mask);
   void ReducePass(const int num, bool *sel_boxes, const bool *row_mask);

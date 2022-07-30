@@ -43,7 +43,6 @@ class ApplyProximalAdagradGpuKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

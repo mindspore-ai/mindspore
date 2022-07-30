@@ -42,7 +42,6 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -66,7 +65,7 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
   size_t n_{1};
   size_t lower_{0};
   size_t upper_{0};
-  bool need_broadcast_;
+  bool need_broadcast_{false};
   ShapeVector broadcast_x_shape_;
   ShapeVector broadcast_lower_shape_;
   ShapeVector broadcast_upper_shape_;

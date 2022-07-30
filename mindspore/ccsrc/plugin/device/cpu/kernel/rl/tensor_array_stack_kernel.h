@@ -34,10 +34,6 @@ class TensorArrayStackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
- protected:
-  void PostExecute();
-  void ResetResource() noexcept;
-
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
@@ -52,6 +48,10 @@ class TensorArrayStackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
+
+ protected:
+  void PostExecute();
+  void ResetResource() noexcept;
 
  private:
   CNodeWeakPtr kernel_node_;

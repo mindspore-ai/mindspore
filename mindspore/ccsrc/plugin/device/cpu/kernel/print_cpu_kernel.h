@@ -38,9 +38,8 @@ class PrintCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
   template <typename T>
-  TypeId CheckType();
+  TypeId CheckType() const;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

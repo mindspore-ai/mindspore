@@ -32,26 +32,25 @@ class ExchangeKeysKernelMod : public DeprecatedNativeCpuKernelMod {
   ExchangeKeysKernelMod() = default;
   ~ExchangeKeysKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override;
 
   void Init(const CNodePtr &kernel_node) override;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  void InitKernel(const CNodePtr &) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   bool BuildExchangeKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb);
-  std::vector<uint8_t> GetPubicKeyBytes();
+  std::vector<uint8_t> GetPubicKeyBytes() const;
 
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  uint32_t rank_id_{0};
+  uint32_t server_num_{0};
+  uint32_t target_server_rank_{0};
   std::string fl_id_;
   std::shared_ptr<fl::FBBuilder> fbb_;
-  armour::PrivateKey *secret_prikey_;
+  armour::PrivateKey *secret_prikey_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

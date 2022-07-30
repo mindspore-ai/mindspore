@@ -52,7 +52,6 @@ class PushKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

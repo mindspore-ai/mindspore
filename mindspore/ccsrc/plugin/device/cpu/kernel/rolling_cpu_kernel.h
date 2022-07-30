@@ -47,9 +47,9 @@ class RollingCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
+ protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override {
     DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
     func_obj_->InitInputOutputSize(kernel_node, &input_size_list_, &output_size_list_, &workspace_size_list_);

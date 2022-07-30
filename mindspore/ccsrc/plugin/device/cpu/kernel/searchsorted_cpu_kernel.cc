@@ -46,7 +46,7 @@ void SearchSortedCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename S>
-const S *SearchSortedCpuKernelMod::CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) {
+const S *SearchSortedCpuKernelMod::CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) const {
   while (seq_start < seq_end) {
     const S *mid = seq_start + ((seq_end - seq_start) / 2);
     if (!(key <= *mid)) {

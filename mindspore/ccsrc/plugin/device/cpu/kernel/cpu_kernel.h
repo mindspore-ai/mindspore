@@ -167,7 +167,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
 
  private:
   std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
-  std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name);
+  std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name) const;
   static mindspore::HashMap<std::string, std::vector<KernelAttr>> support_map_;
 };
 
@@ -208,8 +208,8 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   }
 
  private:
-  std::vector<TypeId> GetInputDtypes(const CNodePtr &kernel_node);
-  std::vector<TypeId> GetOutputDtypes(const CNodePtr &kernel_node);
+  std::vector<TypeId> GetInputDtypes(const CNodePtr &kernel_node) const;
+  std::vector<TypeId> GetOutputDtypes(const CNodePtr &kernel_node) const;
 };
 
 class DeprecatedCpuKernelFunc {

@@ -59,7 +59,7 @@ class SplitCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam();
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);

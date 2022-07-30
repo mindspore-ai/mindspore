@@ -50,7 +50,7 @@ bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Launch(const std::vector<ker
 
 template <typename T>
 void SigmoidCrossEntropyWithLogitsGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                 const std::vector<AddressPtr> &outputs) {
+                                                                 const std::vector<AddressPtr> &outputs) const {
   auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto *dloss_addr = reinterpret_cast<T *>(inputs[2]->addr);

@@ -21,7 +21,7 @@ namespace kernel {
 constexpr int iv_vec_len = 16;
 constexpr int salt_len = 32;
 
-bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &) {
   MS_LOG(INFO) << "Launching client ExchangeKeysKernelMod";
   if (!BuildExchangeKeysReq(fbb_)) {
@@ -81,7 +81,7 @@ void ExchangeKeysKernelMod::Init(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "Initialize ExchangeKeys kernel successfully.";
 }
 
-void ExchangeKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
+void ExchangeKeysKernelMod::InitKernel(const CNodePtr &) { return; }
 
 bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
@@ -128,7 +128,7 @@ bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBui
   return true;
 }
 
-std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
+std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() const {
   // generate private key of secret
   armour::PrivateKey *sPriKeyPtr = armour::KeyAgreement::GeneratePrivKey();
   fl::worker::FLWorker::GetInstance().set_secret_pk(sPriKeyPtr);
@@ -164,7 +164,7 @@ std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
 }
 
 std::vector<KernelAttr> ExchangeKeysKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+  const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }
 

@@ -115,7 +115,7 @@ void Sign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 }
 
 template <typename T>
-void Neg(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+void Neg(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
@@ -511,7 +511,7 @@ void Rsqrt(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t siz
 }
 
 template <typename T>
-void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+void Softsign(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";

@@ -44,13 +44,13 @@ class ArithmeticLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
   std::string kernel_type_{"Unknown"};
 };
+
 class ArithmeticComplexLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArithmeticComplexLogicCpuKernelMod() = default;
@@ -68,7 +68,6 @@ class ArithmeticComplexLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

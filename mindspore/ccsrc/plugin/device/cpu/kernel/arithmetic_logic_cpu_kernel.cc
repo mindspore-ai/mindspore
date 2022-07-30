@@ -34,6 +34,13 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
 constexpr size_t kMaxLessSerialSize = 15000;
+constexpr auto kLess = "Less";
+constexpr auto kLessEqual = "LessEqual";
+constexpr auto kGreater = "Greater";
+constexpr auto kGreaterEqual = "GreaterEqual";
+constexpr auto kLogicalAnd = "LogicalAnd";
+constexpr auto kLogicalOr = "LogicalOr";
+constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
 
@@ -85,16 +92,16 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
     }
     static std::unordered_map<std::string, TypeComputeFunc> arithmetic_logic_func_map;
     if constexpr (!((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {
-      arithmetic_logic_func_map = {{prim::kPrimGreater->name(), &ArithLogicCpuTypeFunc<T>::Greater},
-                                   {prim::kPrimGreaterEqual->name(), &ArithLogicCpuTypeFunc<T>::GreaterEqual},
-                                   {prim::kPrimLogicalAnd->name(), &ArithLogicCpuTypeFunc<T>::LogicalAnd},
-                                   {prim::kPrimLessEqual->name(), &ArithLogicCpuTypeFunc<T>::LessEqual},
-                                   {prim::kPrimLogicalOr->name(), &ArithLogicCpuTypeFunc<T>::LogicalOr},
-                                   {prim::kPrimLogicalXor->name(), &ArithLogicCpuTypeFunc<T>::LogicalXor},
-                                   {prim::kPrimLess->name(), &ArithLogicCpuTypeFunc<T>::Less},
-                                   {prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
+      arithmetic_logic_func_map = {{kGreater, &ArithLogicCpuTypeFunc<T>::Greater},
+                                   {kGreaterEqual, &ArithLogicCpuTypeFunc<T>::GreaterEqual},
+                                   {kLogicalAnd, &ArithLogicCpuTypeFunc<T>::LogicalAnd},
+                                   {kLessEqual, &ArithLogicCpuTypeFunc<T>::LessEqual},
+                                   {kLogicalOr, &ArithLogicCpuTypeFunc<T>::LogicalOr},
+                                   {kLogicalXor, &ArithLogicCpuTypeFunc<T>::LogicalXor},
+                                   {kLess, &ArithLogicCpuTypeFunc<T>::Less},
+                                   {kNotEqual, &ArithLogicCpuTypeFunc<T>::NotEqual}};
     } else {
-      arithmetic_logic_func_map = {{prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
+      arithmetic_logic_func_map = {{kNotEqual, &ArithLogicCpuTypeFunc<T>::NotEqual}};
     }
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
       MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
@@ -114,7 +121,7 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
   void LessEqual(const T *input1, const T *input2, bool *out);
   void LogicalAnd(const T *input1, const T *input2, bool *out);
   void LogicalOr(const T *input1, const T *input2, bool *out);
-  void LogicalXor(const T *input1, const T *input2, bool *out);
+  void LogicalXor(const T *input1, const T *input2, bool *out) const;
 
   using TypeComputeFunc = std::function<void(ArithLogicCpuTypeFunc *, const T *, const T *, bool *)>;
   TypeComputeFunc compute_func_{nullptr};
@@ -178,7 +185,7 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
                         << dtype_ << ", and the type of 'input2': " << dtype_1;
     }
     static const std::unordered_map<std::string, ComplexTypeComputeFunc> arithmetic_logic_func_map{
-      {prim::kPrimEqual->name(), &ArithComplexLogicCpuTypeFunc<T>::Equal}};
+      {kEqual, &ArithComplexLogicCpuTypeFunc<T>::Equal}};
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
       MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
                         << ", but got " << kernel_name_;
@@ -329,7 +336,7 @@ void ArithLogicCpuTypeFunc<T>::LogicalOr(const T *input1, const T *input2, bool 
 }
 
 template <typename T>
-void ArithLogicCpuTypeFunc<T>::LogicalXor(const T *input1, const T *input2, bool *out) {
+void ArithLogicCpuTypeFunc<T>::LogicalXor(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [input1, input2, out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -367,7 +374,7 @@ std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithLogComplexFunc() {
 }
 using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFuncCreator>>> kernel_attr_lists = {
-  {prim::kPrimLess->name(),
+  {kLess,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
@@ -438,7 +445,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<complex128>}}},
-  {prim::kPrimGreater->name(),
+  {kGreater,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
@@ -447,7 +454,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int64_t>}}},
-  {prim::kPrimGreaterEqual->name(),
+  {kGreaterEqual,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
@@ -462,7 +469,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<double>}}},
-  {prim::kPrimLessEqual->name(),
+  {kLessEqual,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
@@ -471,13 +478,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<double>}}},
-  {prim::kPrimLogicalAnd->name(),
+  {kLogicalAnd,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<bool>}}},
-  {prim::kPrimLogicalOr->name(),
+  {kLogicalOr,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<bool>}}},
-  {prim::kPrimLogicalXor->name(),
+  {kLogicalXor,
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<bool>}}}};
 }  // namespace
@@ -540,30 +547,23 @@ std::vector<KernelAttr> ArithmeticComplexLogicCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Less, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimLess->name());
-});
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Less,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kLess); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Equal,
                                  []() { return std::make_shared<ArithmeticComplexLogicCpuKernelMod>(kEqual); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, NotEqual,
                                  []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kNotEqual); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Greater, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimGreater->name());
-});
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GreaterEqual, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimGreaterEqual->name());
-});
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LessEqual, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimLessEqual->name());
-});
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalAnd, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimLogicalAnd->name());
-});
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalOr, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimLogicalOr->name());
-});
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalXor, []() {
-  return std::make_shared<ArithmeticLogicCpuKernelMod>(prim::kPrimLogicalXor->name());
-});
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Greater,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kGreater); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GreaterEqual,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kGreaterEqual); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LessEqual,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kLessEqual); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalAnd,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kLogicalAnd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalOr,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kLogicalOr); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalXor,
+                                 []() { return std::make_shared<ArithmeticLogicCpuKernelMod>(kLogicalXor); });
 }  // namespace kernel
 }  // namespace mindspore
