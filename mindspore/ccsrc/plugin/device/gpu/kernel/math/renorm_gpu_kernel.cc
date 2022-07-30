@@ -34,14 +34,12 @@ bool RenormGpuKernelMod::GetRenormAttr(const BaseOperatorPtr &base_operator) {
   dim_ = GetValue<int64_t>(base_operator->GetAttr("dim"));
   p_ = GetValue<float>(base_operator->GetAttr("p"));
   if (p_ <= 0.0f) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'p'" << p_
-                  << "less than or equals to zero is invalid.";
+    MS_LOG(ERROR) << "For 'Renorm', it's op attribute 'p'" << p_ << "less than or equals to zero is invalid.";
     return false;
   }
   max_norm_ = GetValue<float>(base_operator->GetAttr("maxnorm"));
   if (max_norm_ < 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'maxnorm'" << max_norm_
-                  << "less than zero is invalid.";
+    MS_LOG(ERROR) << "For 'Renorm', it's op attribute 'maxnorm'" << max_norm_ << "less than zero is invalid.";
     return false;
   }
   return true;
@@ -102,8 +100,8 @@ void RenormGpuKernelMod::InitParams() {
   auto shape_size = input_shape_.size();
   MS_EXCEPTION_IF_ZERO("input shape", shape_size);
   if (dim_ >= SizeToLong(shape_size) || dim_ < -SizeToLong(shape_size)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's op attribute 'dim' must be in range [" << -shape_size
-                      << ", " << shape_size << "), but got " << dim_;
+    MS_LOG(EXCEPTION) << "For 'Renorm', it's op attribute 'dim' must be in range [" << -SizeToLong(shape_size) << ", "
+                      << shape_size << "), but got " << dim_;
   }
   if (dim_ < 0) {
     dim_ += shape_size;
