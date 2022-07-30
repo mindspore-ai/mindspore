@@ -127,7 +127,7 @@ class DfGraphConvertor {
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
   void MakeDatasetHandler(const std::string &name, const size_t &input_idx, const AnfNodePtr &it);
-  void SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<::ge::Operator> *init_input);
+  void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input);
   void DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it);
 
   DfGraphPtr GetComputeGraph();

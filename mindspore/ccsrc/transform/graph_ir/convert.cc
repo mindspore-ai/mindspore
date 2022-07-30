@@ -205,7 +205,7 @@ void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfN
 }
 
 void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
-                                              std::vector<::ge::Operator> *const init_input) {
+                                              const std::vector<::ge::Operator> *const init_input) {
   DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
