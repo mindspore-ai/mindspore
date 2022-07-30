@@ -1861,9 +1861,14 @@ def check_gnn_graph(method):
          hostname, port, num_client, auto_shutdown], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(edges, (list, np.ndarray), "edges")
-        if len(np.array(edges).shape) != 2:
-            raise ValueError(
-                "Input 'edges' should be with 2 dimension, but got {} dimension.".format(len(np.array(edges).shape)))
+        edges = np.asarray(edges)
+        if len(edges.shape) != 2 or edges.shape[0] != 2:
+            raise ValueError("Input 'edges' should be of 2 dimension, here got {}."
+                             " And shape of first dimension should be 2, here got {}.".format(len(edges.shape),
+                                                                                              edges.shape[0]))
+        if not np.issubdtype(edges.dtype, np.integer):
+            raise TypeError("Each element in input 'edges' should be int, got value: {}.".format(edges))
+
         check_dict(node_feat, str, np.ndarray, "node_feat")
         check_dict(edge_feat, str, np.ndarray, "edge_feat")
         check_dict(graph_feat, str, np.ndarray, "graph_feat")
@@ -1873,18 +1878,16 @@ def check_gnn_graph(method):
                 raise TypeError("Type of each element in 'node_type' should be str.")
         if edge_type is not None:
             type_check(edge_type, (list, np.ndarray), "edge_type")
-            edge_type = np.array(edge_type)
-            if len(edge_type.shape) != 1 or edge_type.shape[0] != edges.shape[1]:
-                raise ValueError(
-                    "Input 'edge_type' should be 1 dimension, and its length should be {}, but got {}.".format(
-                        edges.shape[1], edge_type.shape[0]))
             if not all(isinstance(item, str) for item in list(edge_type)):
                 raise TypeError("Type of each element in 'edge_type' should be str.")
+            edge_type = np.asarray(edge_type)
+            if len(edge_type.shape) != 1 or edge_type.shape[0] != edges.shape[1]:
+                raise ValueError(
+                    "Input 'edge_type' should be of 1 dimension, and its length should be {}, but got {}.".format(
+                        edges.shape[1], edge_type.shape[0]))
 
         # check shape of node_feat and edge_feat
         num_nodes = np.max(edges) + 1
-        if node_feat and isinstance(node_feat, dict):
-            num_nodes = node_feat[list(node_feat.keys())[0]].shape[0]
         check_feature_shape(node_feat, num_nodes, "node_feat")
         check_feature_shape(edge_feat, edges.shape[1], "edge_feat")
 
@@ -1992,6 +1995,7 @@ def check_gnn_get_sampled_neighbors(method):
         check_gnn_list_or_ndarray(node_list, 'node_list')
 
         check_gnn_list_or_ndarray(neighbor_nums, 'neighbor_nums')
+        neighbor_nums = list(neighbor_nums)
         if not neighbor_nums or len(neighbor_nums) > 6:
             raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}.".format(
                 'neighbor_nums', len(neighbor_nums)))
@@ -2000,6 +2004,7 @@ def check_gnn_get_sampled_neighbors(method):
             check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
         else:
             check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types', str)
+        neighbor_types = list(neighbor_types)
         if not neighbor_types or len(neighbor_types) > 6:
             raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}.".format(
                 'neighbor_types', len(neighbor_types)))

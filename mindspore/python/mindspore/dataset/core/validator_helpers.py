@@ -739,9 +739,14 @@ def check_gnn_list_or_ndarray(param, param_name, data_type=int):
         type_check_list(param, (data_type,), param_names)
 
     elif isinstance(param, np.ndarray):
-        if not param.dtype == np.int32:
-            raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
-                param_name, param.dtype))
+        if data_type == int:
+            data_type = np.int32
+        elif data_type == str:
+            data_type = np.str_
+
+        if param.dtype.type != data_type:
+            raise TypeError("Each member in {0} should be of type {1}. Got {2}.".format(
+                param_name, data_type, param.dtype.type))
 
 
 def check_tensor_op(param, param_name):
@@ -825,5 +830,5 @@ def check_feature_shape(data, shape, param_name):
     if isinstance(data, dict):
         for key, value in data.items():
             if len(value.shape) != 2 or value.shape[0] != shape:
-                raise ValueError("Shape of item '{0}' in '{1}' should be 2 dimension, and shape of first dimension "
+                raise ValueError("Shape of '{0}' in '{1}' should be of 2 dimension, and shape of first dimension "
                                  "should be: {2}, but got: {3}.".format(key, param_name, shape, value.shape))
