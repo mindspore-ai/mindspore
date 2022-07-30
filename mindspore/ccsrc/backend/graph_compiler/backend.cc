@@ -987,6 +987,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       const auto &graph = graphs[i];
       MS_EXCEPTION_IF_NULL(graph);
       graph->set_flag(kFlagPyNativeRunInGraph, true);
+      graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
 
       // The size of control_nodes is at least 1 since there is return node in the graph.
       if (control_nodes_.size() == 1 && graphs.size() == 1) {

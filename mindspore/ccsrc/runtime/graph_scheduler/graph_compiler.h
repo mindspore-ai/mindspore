@@ -201,8 +201,7 @@ class GraphCompiler {
   void UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) const;
 
   // Create device address for all anf nodes of graph.
-  void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                           bool is_gradient_out) const;
+  void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Create device address for input and output of ops.
   void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context,

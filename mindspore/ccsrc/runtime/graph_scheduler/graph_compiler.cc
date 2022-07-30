@@ -190,12 +190,19 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
                                      bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
+
+  bool is_pynative_bprop_graph = graph->has_flag(kFlagIsPynativeBpropGraph);
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
+
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       continue;
     }
+
+    bool is_from_persistent_mem =
+      (is_gradient_out || (is_pynative_bprop_graph && (find(outputs.begin(), outputs.end(), kernel) != outputs.end())));
 
     auto output_size = AnfAlgo::GetOutputAddressNum(kernel);
     for (size_t i = 0; i < output_size; ++i) {
@@ -207,7 +214,7 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i));
-      if (is_gradient_out) {
+      if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
       }
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
@@ -772,7 +779,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   device_context->kernel_executor_->PreprocessBeforeRun(graph);
 
   // Create device address for all anf nodes of graph.
-  CreateDeviceAddress(graph, device_context, false);
+  CreateDeviceAddress(graph, device_context);
 
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
@@ -919,12 +926,11 @@ void GraphCompiler::AddOutInRefToGraph(const KernelGraphPtr &graph) const {
   }
 }
 
-void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                        bool is_gradient_out) const {
+void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
   MS_LOG(INFO) << "Status record: start create device address. graph id: " << graph->graph_id();
   CreateParameterDeviceAddress(device_context, graph);
   CreateValueNodeDeviceAddress(device_context, graph);
-  CreateKernelOutputDeviceAddress(device_context, graph, is_gradient_out);
+  CreateKernelOutputDeviceAddress(device_context, graph, false);
   CreateKernelWorkspaceDeviceAddress(device_context, graph);
   UpdateDeviceAddressForInplaceNode(graph);
   UpdateDeviceAddressForRefNode(graph);
