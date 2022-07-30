@@ -3992,11 +3992,11 @@ def min(x, axis=0, keep_dims=False):
 
     Examples:
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = ops.min(x)
-        >>> print(output)
+        >>> index, output = ops.min(x)
+        >>> print(index, output)
         0 0.0
-        >>> output = ops.min(x, keep_dims=True)
-        >>> print(output)
+        >>> index, output = ops.min(x, keep_dims=True)
+        >>> print(index, output)
         [0] [0.0]
     """
     argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
