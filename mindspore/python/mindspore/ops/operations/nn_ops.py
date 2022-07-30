@@ -9504,7 +9504,7 @@ class PSROIPooling(Primitive):
         ...                [778.7322],
         ...                [562.7321]]])).astype(mindspore.float32)
         >>> psROIPooling = nn_ops.PSROIPooling(spatial_scale=1.0/16, output_dim=3,
-        >>>                                       group_size=7)
+        ...                                       group_size=7)
         >>> out = psROIPooling(features, rois)
         >>> print(out.shape)
             (4, 3, 7, 7)
