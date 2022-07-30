@@ -854,36 +854,44 @@ BIN_OPERATION_PATTERN(operator-, prim::kPrimSub, false);
 
 // Macros for match and replace
 #define MATCH_REPLACE(OrigNode, CaptureNode, ReplaceWith) \
-  if ((CaptureNode).TryCapture(OrigNode)) {               \
-    auto rep = (ReplaceWith).GetNode(OrigNode);           \
-    if (rep != nullptr) {                                 \
-      return rep;                                         \
+  do {                                                    \
+    if ((CaptureNode).TryCapture(OrigNode)) {             \
+      auto rep = (ReplaceWith).GetNode(OrigNode);         \
+      if (rep != nullptr) {                               \
+        return rep;                                       \
+      }                                                   \
     }                                                     \
-  }
+  } while (0)
 
 #define MATCH_REPLACE_IF(OrigNode, CaptureNode, ReplaceWith, Condition) \
-  if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {              \
-    auto rep = (ReplaceWith).GetNode(OrigNode);                         \
-    if (rep != nullptr) {                                               \
-      return rep;                                                       \
+  do {                                                                  \
+    if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {            \
+      auto rep = (ReplaceWith).GetNode(OrigNode);                       \
+      if (rep != nullptr) {                                             \
+        return rep;                                                     \
+      }                                                                 \
     }                                                                   \
-  }
+  } while (0)
 
 #define MATCH_REPLACE_LAMBDA(OrigNode, CaptureNode, Lambda) \
-  if ((CaptureNode).TryCapture(OrigNode)) {                 \
-    auto rep = (Lambda)();                                  \
-    if (rep != nullptr) {                                   \
-      return rep;                                           \
+  do {                                                      \
+    if ((CaptureNode).TryCapture(OrigNode)) {               \
+      auto rep = (Lambda)();                                \
+      if (rep != nullptr) {                                 \
+        return rep;                                         \
+      }                                                     \
     }                                                       \
-  }
+  } while (0)
 
 #define MATCH_REPLACE_LAMBDA_IF(OrigNode, CaptureNode, Lambda, Condition) \
-  if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {                \
-    auto rep = (Lambda)();                                                \
-    if (rep != nullptr) {                                                 \
-      return rep;                                                         \
+  do {                                                                    \
+    if ((CaptureNode).TryCapture(OrigNode) && (Condition)) {              \
+      auto rep = (Lambda)();                                              \
+      if (rep != nullptr) {                                               \
+        return rep;                                                       \
+      }                                                                   \
     }                                                                     \
-  }
+  } while (0)
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_PATTERN_MATCHER_H_
