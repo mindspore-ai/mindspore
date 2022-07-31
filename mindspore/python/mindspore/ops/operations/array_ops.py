@@ -5556,23 +5556,24 @@ class SpaceToBatchND(PrimitiveWithInfer):
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
         validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
-        validator.check('paddings length', len(paddings), '', 2, Rel.EQ, self.name)
+        validator.check('paddings length', len(paddings), 'default value', 2, Rel.EQ, self.name)
 
         if isinstance(block_shape, int):
             block_shape = (block_shape,) * np.array(paddings).shape[0]
 
         self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
-        validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
+        validator.check('block_shape shape', len(np.array(block_shape).shape), 'default value', 1, Rel.EQ, self.name)
         block_rank = len(block_shape)
         if context.get_context("device_target") == "Ascend":
-            validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
+            validator.check('block_shape length', block_rank, 'default value', 2, Rel.EQ, self.name)
         for elem in block_shape:
-            validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
+            validator.check('block_shape element', elem, 'min value', 1, Rel.GE, self.name)
             validator.check_value_type('block_shape element', elem, [int], self.name)
         self.block_shape = block_shape
 
-        validator.check('paddings shape', np.array(paddings).shape, '', (block_rank, 2), Rel.EQ, self.name)
+        validator.check(
+            'paddings shape', np.array(paddings).shape, 'default value', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*paddings):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
