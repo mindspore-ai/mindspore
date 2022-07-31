@@ -24,19 +24,6 @@
 
 namespace mindspore {
 namespace ops {
-int64_t InferImplReduceFuncCheckAxis(const PrimitivePtr &prim, const int64_t &axis, const size_t &dim) {
-  int64_t dim_ = static_cast<int64_t>(dim);
-  if (axis < -dim_ || axis >= dim_) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
-                      << "). But got 'axis' = " << axis << ".";
-  }
-  int64_t ret_axis = axis;
-  if (axis >= -dim_ && axis < 0) {
-    ret_axis += dim_;
-  }
-  return ret_axis;
-}
-
 void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *shape, const ShapeVector &x_shape,
                                  const ValuePtr &axis) {
   MS_EXCEPTION_IF_NULL(axis);
@@ -63,7 +50,7 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
       std::vector<int64_t> axis_value_list;
       for (it = axis_items.begin(); it != axis_items.end(); ++it) {
         auto axis_value = GetValue<int64_t>(*it);
-        auto axis_positive_value = InferImplReduceFuncCheckAxis(primitive, axis_value, x_shape.size());
+        auto axis_positive_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
         axis_value_list.push_back(axis_positive_value);
       }
       std::sort(axis_value_list.begin(), axis_value_list.end());
@@ -75,7 +62,7 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
   } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
     (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
     int64_t axis_value = GetValue<int64_t>(axis);
-    axis_value = InferImplReduceFuncCheckAxis(primitive, axis_value, x_shape.size());
+    axis_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
     (void)shape->erase(shape->begin() + axis_value);
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'axis' must be one of these types: [int/tuple/list].";
