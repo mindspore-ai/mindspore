@@ -187,8 +187,12 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
+    mindspore.ops.GridSampler2D
+    mindspore.ops.GridSampler3D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
+    mindspore.ops.UpsampleNearest3D
+    mindspore.ops.UpsampleTrilinear3D
     
 图像处理
 ^^^^^^^^^^
@@ -291,6 +295,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.SquareSumAll
     mindspore.ops.Sub
     mindspore.ops.Tan
+    mindspore.ops.Trunc
     mindspore.ops.TruncateDiv
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
