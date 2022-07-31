@@ -68,7 +68,7 @@ ShapeVector SpaceToBatchNDInferShapeImpl(const string &kernel_name_, const std::
     auto tmp_shape = input_shape_[idx_i + off_set_] + paddings_[idx_i][0] + paddings_[idx_i][1];
     if (input_shape_[idx_i + off_set_] > 0 && (tmp_shape % block_size_[idx_i]) != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', padded shape should be divisible by block_size, , but got padded shape: " << tmp_shape
+                        << "', padded shape should be divisible by block_size, but got padded shape: " << tmp_shape
                         << ", block_size: " << block_size_[idx_i];
     }
     if (input_shape_[idx_i + off_set_] > 0 && (tmp_shape / block_size_[idx_i]) == 0) {
