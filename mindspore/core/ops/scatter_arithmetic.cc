@@ -45,7 +45,7 @@ abstract::ShapePtr ScatterArithmeticInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
   std::vector<int64_t> check_update_shape(indices_shape);
-  for (int64_t i = 1; i < SizeToLong(input_x_shape.size()); ++i) {
+  for (size_t i = 1; i < input_x_shape.size(); ++i) {
     check_update_shape.push_back(input_x_shape[i]);
   }
   if ((indices_shape != std::vector<int64_t>{-1}) && (!updates_shape.empty()) &&
@@ -72,8 +72,8 @@ TypePtr ScatterArithmeticInferType(const PrimitivePtr &primitive, const std::vec
                                                    prim_name);
 
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_x_type_ptr);
-  type_dict.emplace("updates", updates_type_ptr);
+  (void)type_dict.emplace("input_x", input_x_type_ptr);
+  (void)type_dict.emplace("updates", updates_type_ptr);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex, prim_name);
 }
 }  // namespace
@@ -82,7 +82,7 @@ AbstractBasePtr ScatterArithmeticInfer(const abstract::AnalysisEnginePtr &, cons
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ScatterArithmeticInferType(primitive, input_args);
   auto infer_shape = ScatterArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
