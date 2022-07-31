@@ -33,7 +33,6 @@ ACL_FUNC_VISIBILITY aclError aclrtMemcpy(void *dst, size_t destMax, const void *
   return ACL_ERROR_NONE;
 }
 
-
 /**
  * @ingroup AscendCL
  * @brief  Asynchronous memory replication between Host and Device
@@ -74,5 +73,29 @@ ACL_FUNC_VISIBILITY aclError aclrtMemcpyAsync(void *dst, size_t destMax, const v
  * @retval OtherValues Failure
  */
 ACL_FUNC_VISIBILITY aclError aclrtSetDevice(int32_t deviceId) {
+  return ACL_ERROR_NONE;
+}
+
+/**
+ * @ingroup AscendCL
+ * @brief asynchronously initialize memory and set contents to specified value
+ *
+ * @par Function
+ * The memory to be initialized is on the Host or Device side
+ * and the system uses address to recognize that
+ *
+ * @param dst [IN]      destination address pointer
+ * @param destMax [IN]      max length of the destination address memory
+ * @param value [IN]      set value
+ * @param count [IN]      the number of byte to set
+ * @param stream [IN]      asynchronized task stream
+ *
+ * @retval ACL_SUCCESS The function is successfully executed.
+ * @retval OtherValues Failure
+ *
+ * @see aclrtSynchronizeStream
+ */
+ACL_FUNC_VISIBILITY aclError aclrtMemsetAsync(void *dst, size_t destMax, int32_t value, size_t count,
+                                              aclrtStream stream) {
   return ACL_ERROR_NONE;
 }
