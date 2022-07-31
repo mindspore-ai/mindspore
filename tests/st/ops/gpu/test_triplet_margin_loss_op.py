@@ -24,7 +24,7 @@ class NetTripletMarginLoss(nn.Cell):
 def test_triplet_margin_loss_float64():
     """
     Feature: Input type of float64
-    Description: Input type of [float64, float64, float64, float64].
+    Description: Input type of [float64, float64, float64, float32].
     Expectation: success.
     """
     for mode in [context.PYNATIVE_MODE, context.GRAPH_MODE]:
@@ -59,8 +59,8 @@ def test_triplet_margin_loss_float64():
         expect = torch_loss(torch_anchor, torch_positive, torch_negative)
         assert np.allclose(output_ms.asnumpy(),
                            expect.numpy(),
-                           rtol=1e-5,
-                           atol=1e-5,
+                           rtol=1e-4,
+                           atol=1e-4,
                            equal_nan=False)
 
 

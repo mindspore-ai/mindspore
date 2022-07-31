@@ -77,7 +77,7 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kComplex64, kComplex128, kFloat64, kFloat32, kFloat16, kInt16, kInt32,
                                          kInt64,     kInt8,       kUInt16,  kUInt32,  kUInt64,  kUInt8};
-  const std::set<TypePtr> valid_types2 = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types2 = {kFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[kInputIndex0]->BuildType());
   types.emplace("positive", input_args[kInputIndex1]->BuildType());
@@ -93,8 +93,6 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
   }
   if (IsIdentidityOrSubclass(x_type, kFloat16)) {
     output = kFloat16;
-  } else if (IsIdentidityOrSubclass(x_type, kFloat64) || IsIdentidityOrSubclass(x_type, kComplex128)) {
-    output = kFloat64;
   } else {
     output = kFloat32;
   }
