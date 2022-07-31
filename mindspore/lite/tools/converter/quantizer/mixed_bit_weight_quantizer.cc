@@ -17,9 +17,12 @@
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include <cmath>
 #include <cfloat>
+#include <map>
 #include "tools/common/statistic_utils.h"
 
 namespace mindspore::lite::quant {
+constexpr float kTwentyFour = 24.0f;
+
 void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num, float scale,
                                                 float *origin_dequant_datas) {
   MS_ASSERT(weights != nullptr);
@@ -119,6 +122,17 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
   return mean_error;
 }
 
+LayerParam MixedBitWeightQuantizer::CalculateLayerParams(const float *weights, int element_num) {
+  MS_ASSERT(weights != nullptr);
+  float temp_norm_tot = 0.0;
+  for (int i = 0; i < element_num; i++) {
+    temp_norm_tot += weights[i] * weights[i];
+  }
+
+  LayerParam ret = {std::sqrt(1.0f / temp_norm_tot), GetMinMax(weights, element_num)};
+  return ret;
+}
+
 MinMax MixedBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
   MS_ASSERT(arr != nullptr);
   MinMax min_max = {INFINITY, -INFINITY};
@@ -177,9 +191,32 @@ BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(flo
   }
 }
 
+float MixedBitWeightQuantizer::GetDx(float *weights, int *shape, int dims, int preferred_dim,
+                                     const std::string &description) {
+  MS_ASSERT(weights != nullptr);
+  MS_ASSERT(shape != nullptr);
+  static std::map<std::string, LayerParam> param_map;
+
+  int element_num = 1;
+  for (int i = 0; i < dims; i++) {
+    element_num *= shape[i];
+  }
+
+  LayerParam params;
+  auto params_it = param_map.find(description);
+  if (params_it == param_map.end()) {
+    params = CalculateLayerParams(weights, element_num);
+    param_map.insert({description, params});
+  } else {
+    params = params_it->second;
+  }
+  return (target_relative_err_ + target_search_tolerance_ * std::sqrt(kTwentyFour / element_num)) / params.inv_norm;
+}
+
 int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
                                             std::vector<schema::QuantParamT> *quant_params,
-                                            std::vector<int16_t> *quant_datas) {
+                                            std::vector<int16_t> *quant_datas, const std::string &description,
+                                            bool use_auto_tune_alg) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(quant_params != nullptr);
   MS_ASSERT(quant_datas != nullptr);
@@ -192,14 +229,21 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
     input_shape[i] = shape[i];
   }
 
-  BinarySearchResult br = BinarySearchForQuantizationScale(weights, input_shape, dims, preferred_dim, max_search_iters_,
-                                                           target_relative_err_, target_search_tolerance_);
-  if (br.status != RET_OK) {
-    MS_LOG(WARNING) << "this layer reached max iters.";
-    return RET_NO_CHANGE;
+  float scale = 1.0;
+  if (use_auto_tune_alg) {
+    scale = GetDx(weights, input_shape, dims, preferred_dim, description);
+  } else {
+    BinarySearchResult br = BinarySearchForQuantizationScale(
+      weights, input_shape, dims, preferred_dim, max_search_iters_, target_relative_err_, target_search_tolerance_);
+    if (br.status != RET_OK) {
+      MS_LOG(WARNING) << "this layer reached max iters.";
+      return RET_NO_CHANGE;
+    }
+    scale = br.scale;
   }
+
   schema::QuantParamT quant_param;
-  int qr = QuantizeByScale(weights, weight_count, br.scale, &quant_param, quant_datas);
+  int qr = QuantizeByScale(weights, weight_count, scale, &quant_param, quant_datas);
   if (qr != RET_OK) {
     MS_LOG(ERROR) << "quant failed.";
     return RET_ERROR;

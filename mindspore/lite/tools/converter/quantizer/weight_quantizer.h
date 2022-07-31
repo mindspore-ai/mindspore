@@ -47,6 +47,7 @@ class WeightQuantizer : public Quantizer {
       type_id_ = kNumberTypeInt16;
       is_mixed_bit_ = true;
       mixed_bit_init_scale_ = param_->mixedBitWeightQuantParam.init_scale;
+      is_auto_tune_ = param_->mixedBitWeightQuantParam.auto_tune;
     }
     // parse param for fixed bit quant.
     if (!is_mixed_bit_) {
@@ -72,6 +73,8 @@ class WeightQuantizer : public Quantizer {
                   const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
                   bool compression = true);
 
+  float GetMinScale() const;
+
  private:
   int MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   int DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
@@ -85,6 +88,7 @@ class WeightQuantizer : public Quantizer {
   size_t bit_num_{8};
   // delete it in the future.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
+  bool is_auto_tune_ = false;
   bool is_mixed_bit_ = false;
   double mixed_bit_init_scale_ = 0.02;
   int quant_min_{-128};

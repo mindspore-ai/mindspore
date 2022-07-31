@@ -31,7 +31,7 @@
 namespace mindspore::lite::quant {
 namespace {
 constexpr int kFseTableExtendSize = 3;
-constexpr int kFrenqTableExtendSize = 2;
+constexpr int kFreqTableExtendSize = 2;
 constexpr int kAlignSize = 8;
 constexpr float kUpRoundOffSet = 0.5;
 constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;  // 2G
@@ -61,7 +61,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
     return RET_ERROR;
   }
 
-  std::vector<uint32_t> cfreqs(frequency_count + kFrenqTableExtendSize);
+  std::vector<uint32_t> cfreqs(frequency_count + kFreqTableExtendSize);
   cfreqs[0] = 0;
   for (int i = 1; i < frequency_count + 1; i++) {
     cfreqs[i] = cfreqs[i - 1] + frequency[i - 1];
@@ -75,7 +75,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
 
   int total = 0;
   for (int sym = 0; sym < frequency_count; sym++) {
-    if (frequency[sym] >= kFrenqTableExtendSize) {
+    if (frequency[sym] >= kFreqTableExtendSize) {
       int max_bits_out = table_log - FSEBitStream::CountBits(frequency[sym] - 1);
       int min_state_plus = frequency[sym] << max_bits_out;
       delta_bit_count[sym] = (static_cast<size_t>(max_bits_out) << k16Bit) - min_state_plus;
@@ -222,8 +222,8 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   CHECK_NULL_RETURN(q);
   CHECK_NULL_RETURN(table_log);
   // The higher the number, the more accurate we'll be to the shannon entropy,
-  // but also the larger the table, so `+3` is a good compromise.
-  *table_log = std::min(MAX_TABLE_LOG, (FSEBitStream::CountBits((uint32_t)q->size) + kFseTableExtendSize));
+  // but also the larger the table, so `+3` is a good compromise. +1 inorder to round up
+  *table_log = std::min(MAX_TABLE_LOG, (FSEBitStream::CountBits((uint32_t)q->size) + 1 + kFseTableExtendSize));
   const int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
   for (int i = 0; i < q->size; i++) {

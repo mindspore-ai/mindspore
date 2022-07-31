@@ -26,6 +26,8 @@ namespace lite {
 namespace preprocess {
 int ReadImage(const std::string &image_path, cv::Mat *image);
 
+int DecodeBuffer(const unsigned char *buffer, int length, cv::Mat *image);
+
 int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format);
 
 int Normalize(cv::Mat *image, const std::vector<double> &mean, const std::vector<double> &standard_deviation);
