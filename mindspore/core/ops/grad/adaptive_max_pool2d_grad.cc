@@ -29,6 +29,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t inputArgLen = 3;
+constexpr int64_t kDynamicRankVal = -2;
+constexpr size_t kDynamicRankL = 1;
 
 abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
@@ -49,12 +51,17 @@ abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive
   const int64_t x_dims = SizeToLong(x_shape.size());
   const int64_t argmax_dims = SizeToLong(argmax_shape.size());
 
+  (void)CheckAndConvertUtils::CheckInteger("y_grad_dims", y_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
+  (void)CheckAndConvertUtils::CheckInteger("argmax_dims", argmax_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
+  if (y_grad_shape.size() == kDynamicRankL && y_grad_shape[0] == kDynamicRankVal) {
+    ShapeVector out_shape = {kDynamicRankVal};
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   CheckAndConvertUtils::CheckInRange("y_grad_dim", y_grad_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
   CheckAndConvertUtils::CheckInRange("x_dim", x_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
   CheckAndConvertUtils::CheckInRange("argmax_dim", argmax_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
 
-  (void)CheckAndConvertUtils::CheckInteger("y_grad_dims", y_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
-  (void)CheckAndConvertUtils::CheckInteger("argmax_dims", argmax_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
   if (y_grad_shape != argmax_shape) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the shape of 'y_grad' should be consistent with the shape of 'argmax'.";
