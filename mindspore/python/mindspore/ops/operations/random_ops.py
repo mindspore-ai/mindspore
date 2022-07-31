@@ -52,15 +52,14 @@ class NonDeterministicInts(Primitive):
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> shape = Tensor(np.array([2,2]), mstype.int32)
-        >>> ndints = ops.NonDeterministicInts(dtype=mstype.int32)
+        >>> shape = Tensor((3,4), mstype.int32)
+        >>> ndints = P.NonDeterministicInts(dtype=mstype.int32)
         >>> output = ndints(shape)
-        >>> print(output)
-        [[13031056   -141954883 ]
-         [ 140364228  290834494 ]]
+        >>> print(output.shape)
+        (3, 4)
     """
 
     @prim_attr_register
@@ -69,7 +68,7 @@ class NonDeterministicInts(Primitive):
         self.dtype = dtype
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=["shape"], outputs=["output"])
-        valid_values = (mstype.int32, mstype.int64)
+        valid_values = (mstype.int32, mstype.int64, mstype.uint32, mstype.uint64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
