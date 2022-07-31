@@ -24,30 +24,30 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/log.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
-        ${LITE_DIR}/src/runtime/allocator.cc
-        ${LITE_DIR}/src/runtime/inner_allocator.cc
-        ${LITE_DIR}/src/runtime/runtime_allocator.cc
-        ${LITE_DIR}/src/runtime/infer_manager.cc
-        ${LITE_DIR}/src/runtime/runtime_shape_fusion_pass.cc
-        ${LITE_DIR}/src/runtime/runtime_pass.cc
-        ${LITE_DIR}/src/runtime/pass/runtime_ncx_pass.cc
-        ${LITE_DIR}/src/runtime/schema_tensor_wrapper.cc
+        ${LITE_DIR}/src/litert/allocator.cc
+        ${LITE_DIR}/src/litert/inner_allocator.cc
+        ${LITE_DIR}/src/litert/runtime_allocator.cc
+        ${LITE_DIR}/src/litert/infer_manager.cc
+        ${LITE_DIR}/src/litert/runtime_shape_fusion_pass.cc
+        ${LITE_DIR}/src/litert/runtime_pass.cc
+        ${LITE_DIR}/src/litert/pass/runtime_ncx_pass.cc
+        ${LITE_DIR}/src/litert/schema_tensor_wrapper.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/tensorlist.cc
-        ${LITE_DIR}/src/runtime/tensor_category.cc
-        ${LITE_DIR}/src/runtime/executor.cc
-        ${LITE_DIR}/src/runtime/inner_context.cc
-        ${LITE_DIR}/src/runtime/lite_model.cc
-        ${LITE_DIR}/src/runtime/kernel_registry.cc
-        ${LITE_DIR}/src/runtime/lite_kernel.cc
-        ${LITE_DIR}/src/runtime/kernel_exec.cc
-        ${LITE_DIR}/src/runtime/kernel_exec_util.cc
-        ${LITE_DIR}/src/runtime/sub_graph_kernel.cc
-        ${LITE_DIR}/src/runtime/scheduler.cc
-        ${LITE_DIR}/src/runtime/lite_session.cc
+        ${LITE_DIR}/src/litert/tensor_category.cc
+        ${LITE_DIR}/src/litert/executor.cc
+        ${LITE_DIR}/src/litert/inner_context.cc
+        ${LITE_DIR}/src/litert/lite_model.cc
+        ${LITE_DIR}/src/litert/kernel_registry.cc
+        ${LITE_DIR}/src/litert/lite_kernel.cc
+        ${LITE_DIR}/src/litert/kernel_exec.cc
+        ${LITE_DIR}/src/litert/kernel_exec_util.cc
+        ${LITE_DIR}/src/litert/sub_graph_kernel.cc
+        ${LITE_DIR}/src/litert/scheduler.cc
+        ${LITE_DIR}/src/litert/lite_session.cc
         ${LITE_DIR}/src/errorcode.cc
-        ${LITE_DIR}/src/runtime/cpu_info.cc
-        ${LITE_DIR}/src/runtime/pack_weight_manager.cc
+        ${LITE_DIR}/src/litert/cpu_info.cc
+        ${LITE_DIR}/src/litert/pack_weight_manager.cc
         ${LITE_DIR}/src/control_flow/control_flow_scheduler.cc
         ${LITE_DIR}/src/control_flow/control_subgraph_creator.cc
         )
@@ -68,23 +68,23 @@ endif()
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
-        ${LITE_DIR}/src/runtime/dynamic_mem_allocator.cc
-        ${LITE_DIR}/src/runtime/dynamic_mem_manager.cc
-        ${LITE_DIR}/src/runtime/numa_adapter.cc
+        ${LITE_DIR}/src/litert/dynamic_mem_allocator.cc
+        ${LITE_DIR}/src/litert/dynamic_mem_manager.cc
+        ${LITE_DIR}/src/litert/numa_adapter.cc
         )
 endif()
 
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${LITE_DIR}/src/runtime/pack_weight.cc
+        ${LITE_DIR}/src/litert/pack_weight.cc
         )
 endif()
 
 if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
     set(LITE_SRC
         ${LITE_SRC}
-        ${LITE_DIR}/src/runtime/thread_cost_model.cc
+        ${LITE_DIR}/src/litert/thread_cost_model.cc
         )
 endif()
 
@@ -114,7 +114,7 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             ${LITE_DIR}/src/common/ops/ops_def.cc
             ${LITE_DIR}/src/common/ops/ops_utils.cc
             ${LITE_DIR}/src/common/ops/anf_utils.cc
-            ${LITE_DIR}/src/runtime/runtime_convert.cc)
+            ${LITE_DIR}/src/litert/runtime_convert.cc)
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
 endif()
 
@@ -127,20 +127,20 @@ endif()
 
 if(ENABLE_RUNTIME_NCX_PASS)
     file(GLOB RUNTIME_NCX_PASS_SRC
-            ${LITE_DIR}/src/runtime/pass/decrease_transpose_algo.cc
-            ${LITE_DIR}/src/runtime/pass/delete_isolated_kernel.cc
-            ${LITE_DIR}/src/runtime/pass/infershape_pass.cc
-            ${LITE_DIR}/src/runtime/pass/pass_utils.cc
-            ${LITE_DIR}/src/runtime/pass/runtime_optimizer.cc
-            ${LITE_DIR}/src/runtime/pass/to_nchw_format.cc
-            ${LITE_DIR}/src/runtime/pass/transpose_strategy.cc
+            ${LITE_DIR}/src/litert/pass/decrease_transpose_algo.cc
+            ${LITE_DIR}/src/litert/pass/delete_isolated_kernel.cc
+            ${LITE_DIR}/src/litert/pass/infershape_pass.cc
+            ${LITE_DIR}/src/litert/pass/pass_utils.cc
+            ${LITE_DIR}/src/litert/pass/runtime_optimizer.cc
+            ${LITE_DIR}/src/litert/pass/to_nchw_format.cc
+            ${LITE_DIR}/src/litert/pass/transpose_strategy.cc
             )
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_NCX_PASS_SRC})
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
     set(LITE_SRC ${LITE_SRC}
-            ${LITE_DIR}/src/runtime/huffman_decode.cc)
+            ${LITE_DIR}/src/litert/huffman_decode.cc)
     if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
         set(LITE_SRC ${LITE_SRC}
             ${TOOLS_DIR}/converter/quantizer/fse_decoder.cc
@@ -151,7 +151,7 @@ endif()
 if(MSLITE_ENABLE_AUTO_PARALLEL)
     set(LITE_SRC
             ${LITE_SRC}
-            ${LITE_DIR}/src/runtime/sub_graph_split.cc
+            ${LITE_DIR}/src/litert/sub_graph_split.cc
             )
 endif()
 
@@ -162,12 +162,12 @@ endif()
 set(LITE_SRC
     ${LITE_SRC}
     ${KERNEL_REG_SRC}
-    ${LITE_DIR}/src/runtime/weight_decoder.cc
+    ${LITE_DIR}/src/litert/weight_decoder.cc
     )
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
-            ${LITE_DIR}/src/runtime/kernel/gpu/opencl/*.cc
+            ${LITE_DIR}/src/litert/kernel/gpu/opencl/*.cc
             )
     set(LITE_SRC
             ${LITE_SRC}
@@ -177,8 +177,8 @@ endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     file(GLOB CUDA_RUNTIME_SRC
-            ${LITE_DIR}/src/runtime/gpu/*.cc
-            ${LITE_DIR}/src/runtime/gpu/cuda/*.cc
+            ${LITE_DIR}/src/litert/gpu/*.cc
+            ${LITE_DIR}/src/litert/gpu/cuda/*.cc
             )
     set(LITE_SRC
             ${LITE_SRC}
@@ -193,7 +193,7 @@ endif()
 
 
 file(GLOB CXX_API_EXPRESSION
-  ${LITE_DIR}/src/runtime/cxx_api/expression/*.cc
+  ${LITE_DIR}/src/litert/cxx_api/expression/*.cc
   )
 
 file(GLOB EXPRESSION_OPS
@@ -219,11 +219,11 @@ set(TRAIN_SRC
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
         ${LITE_DIR}/src/common/quant_utils.cc
-        ${LITE_DIR}/src/runtime/cxx_api/metrics/accuracy.cc
-        ${LITE_DIR}/src/runtime/cxx_api/train/model_build.cc
-        ${LITE_DIR}/src/runtime/cxx_api/train/model_build_impl.cc
-        ${LITE_DIR}/src/runtime/cxx_api/train/converters.cc
-        ${LITE_DIR}/src/runtime/cxx_api/train/train_support.cc
+        ${LITE_DIR}/src/litert/cxx_api/metrics/accuracy.cc
+        ${LITE_DIR}/src/litert/cxx_api/train/model_build.cc
+        ${LITE_DIR}/src/litert/cxx_api/train/model_build_impl.cc
+        ${LITE_DIR}/src/litert/cxx_api/train/converters.cc
+        ${LITE_DIR}/src/litert/cxx_api/train/train_support.cc
         ${LITE_DIR}/src/train/train_populate_parameter.cc
         ${LITE_DIR}/src/train/train_session.cc
         ${LITE_DIR}/src/train/graph_fusion.cc
@@ -250,8 +250,8 @@ set(TRAIN_SRC
 
 if(MSLITE_ENABLE_MINDRT)
     set(LITE_SRC ${LITE_SRC}
-        ${LITE_DIR}/src/runtime/lite_mindrt.cc
-        ${LITE_DIR}/src/runtime/mindrt_executor.cc
+        ${LITE_DIR}/src/litert/lite_mindrt.cc
+        ${LITE_DIR}/src/litert/mindrt_executor.cc
         ${LITE_DIR}/src/control_flow/control_actor_creator.cc
         )
     if(MSLITE_ENABLE_CONTROLFLOW)
@@ -277,7 +277,7 @@ endif()
 
 if(NOT MSLITE_ENABLE_COREML)
     set(LITE_SRC ${LITE_SRC}
-        ${LITE_DIR}/src/runtime/delegate/coreml/stub/coreml_delegate_stub.cc)
+        ${LITE_DIR}/src/litert/delegate/coreml/stub/coreml_delegate_stub.cc)
 endif()
 
 add_library(infer_lite_src_mid OBJECT ${LITE_SRC})

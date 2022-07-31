@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "src/runtime/lite_model.h"
+#include "src/litert/lite_model.h"
 #include "extendrt/mindir_loader/mindir_model/mindir_model.h"
 
 namespace mindspore::infer::mindir {

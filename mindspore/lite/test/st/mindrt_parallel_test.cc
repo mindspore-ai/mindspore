@@ -20,9 +20,9 @@
 #include "include/errorcode.h"
 #include "tools/converter/converter.h"
 #include "tools/benchmark/run_benchmark.h"
-#include "src/runtime/mindrt_executor.h"
-#include "src/runtime/lite_session.h"
-#include "src/runtime/kernel_exec.h"
+#include "src/litert/mindrt_executor.h"
+#include "src/litert/lite_session.h"
+#include "src/litert/kernel_exec.h"
 #include "src/common/file_utils.h"
 #include "include/converter.h"
 

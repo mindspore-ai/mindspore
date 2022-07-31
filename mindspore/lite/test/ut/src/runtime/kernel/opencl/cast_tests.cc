@@ -18,8 +18,8 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/cast.h"
+#include "mindspore/lite/src/litert/kernel/opencl/opencl_subgraph.h"
+#include "mindspore/lite/src/litert/kernel/opencl/kernel/cast.h"
 
 // PrimitiveType_Cast: src/ops/populate/cast_populate.cc
 

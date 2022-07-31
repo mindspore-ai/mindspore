@@ -19,9 +19,9 @@
 #include <vector>
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/deconvolution_grad_filter.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/deconvolution_grad_filter.h"
 #include "nnacl/conv_parameter.h"
-#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/litert/kernel_registry.h"
 
 namespace mindspore {
 class TestDeConvolutionGradFp32 : public mindspore::CommonTest {

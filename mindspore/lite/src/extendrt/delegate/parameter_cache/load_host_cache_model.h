@@ -24,7 +24,7 @@
 #include "include/api/types.h"
 #include "include/api/kernel.h"
 #include "include/api/delegate.h"
-#include "src/runtime/lite_model.h"
+#include "src/litert/lite_model.h"
 
 namespace mindspore {
 namespace cache {

@@ -21,7 +21,7 @@
 #include <string>
 
 #include "extendrt/mindir_loader/abstract_base_model.h"
-#include "src/runtime/schema_tensor_wrapper.h"
+#include "src/litert/schema_tensor_wrapper.h"
 #include "proto/mind_ir.pb.h"
 
 namespace mindspore::infer::mindir {

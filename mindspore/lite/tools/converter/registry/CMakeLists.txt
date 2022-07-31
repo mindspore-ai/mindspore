@@ -4,12 +4,12 @@ file(GLOB CONVERT_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 file(GLOB KERNEL_REG_SRC ${KERNEL_REG_DIR}/*.cc)
 set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_SRC}
-        ${KERNEL_REG_DIR}/../runtime/cxx_api/context.cc
-        ${KERNEL_REG_DIR}/../runtime/cxx_api/types.cc
-        ${KERNEL_REG_DIR}/../runtime/cxx_api/tensor/tensor_impl.cc
-        ${KERNEL_REG_DIR}/../runtime/cxx_api/tensor_utils.cc
+        ${KERNEL_REG_DIR}/../litert/cxx_api/context.cc
+        ${KERNEL_REG_DIR}/../litert/cxx_api/types.cc
+        ${KERNEL_REG_DIR}/../litert/cxx_api/tensor/tensor_impl.cc
+        ${KERNEL_REG_DIR}/../litert/cxx_api/tensor_utils.cc
         ${KERNEL_REG_DIR}/../tensor.cc
-        ${KERNEL_REG_DIR}/../runtime/inner_allocator.cc
+        ${KERNEL_REG_DIR}/../litert/inner_allocator.cc
         ${KERNEL_REG_DIR}/../common/string_util.cc
         ${KERNEL_REG_DIR}/../common/utils.cc
         ${KERNEL_REG_DIR}/../extendrt/delegate/tensorrt/distribution/distribution_base.cc

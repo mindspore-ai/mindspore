@@ -16,7 +16,7 @@
 
 #include "common/common_test.h"
 #include "schema/inner/model_generated.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "ir/dtype/type_id.h"
 
 using mindspore::kernel::KernelExec;

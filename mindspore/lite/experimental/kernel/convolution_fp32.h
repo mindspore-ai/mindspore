@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_EXPERIMENTAL_KERNEL_CONVOLUTION_FP32_H_
 
 #include <vector>
-#include "src/runtime/lite_kernel.h"
+#include "src/litert/lite_kernel.h"
 #include "nnacl/kernel.h"
 
 namespace mindspore::kernel {

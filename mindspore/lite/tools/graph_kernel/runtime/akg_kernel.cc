@@ -22,7 +22,7 @@
 #include <functional>
 #include "src/tensor.h"
 #include "src/common/utils.h"
-#include "src/runtime/kernel_registry.h"
+#include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {

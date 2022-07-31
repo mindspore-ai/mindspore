@@ -19,7 +19,7 @@
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "include/lite_types.h"
-#include "src/runtime/inner_allocator.h"
+#include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
 

@@ -27,12 +27,12 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/context_util.h"
 #include "src/common/ops/populate/populate_register.h"
-#include "src/runtime/kernel_exec.h"
-#include "src/runtime/kernel_registry.h"
-#include "src/runtime/inner_context.h"
+#include "src/litert/kernel_exec.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/inner_context.h"
 #include "src/tensor.h"
 #include "src/common/ops/anf_utils.h"
-#include "src/runtime/infer_manager.h"
+#include "src/litert/infer_manager.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 
 using mindspore::lite::KernelRegistry;

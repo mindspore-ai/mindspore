@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "mindrt/include/mindrt.hpp"
 #include "src/common/tensor_util.h"
-#include "src/runtime/inner_allocator.h"
+#include "src/litert/inner_allocator.h"
 
 namespace {
 const constexpr int kToExitIndex = 0;

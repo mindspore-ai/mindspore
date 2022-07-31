@@ -18,11 +18,11 @@
 #include "schema/inner/model_generated.h"
 #include "include/context.h"
 #include "src/tensor.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "nnacl/pad_parameter.h"
-#include "src/runtime/kernel/cpu/int8/pad_int8.h"
+#include "src/litert/kernel/cpu/int8/pad_int8.h"
 
 namespace mindspore {
 using mindspore::lite::LiteQuantParam;

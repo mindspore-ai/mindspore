@@ -19,8 +19,8 @@
 #include <vector>
 #include <fstream>
 #include <string>
-#include "src/runtime/delegate/delegate_utils.h"
-#include "src/runtime/delegate/auto_registration_factory.h"
+#include "src/litert/delegate/delegate_utils.h"
+#include "src/litert/delegate/auto_registration_factory.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {

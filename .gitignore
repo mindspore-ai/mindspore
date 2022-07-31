@@ -28,8 +28,8 @@ mindspore/lite/tools/converter/schema/inner
 mindspore/lite/schema/*.h
 mindspore/lite/schema/inner
 
-mindspore/lite/src/runtime/kernel/opencl/cl/fp16/*.inc
-mindspore/lite/src/runtime/kernel/opencl/cl/fp32/*.inc
+mindspore/lite/src/litert/kernel/opencl/cl/fp16/*.inc
+mindspore/lite/src/litert/kernel/opencl/cl/fp32/*.inc
 
 # Cmake files
 CMakeFiles/

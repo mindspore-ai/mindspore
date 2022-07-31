@@ -25,7 +25,7 @@
 #include "include/errorcode.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "src/runtime/delegate/auto_registration_factory.h"
+#include "src/litert/delegate/auto_registration_factory.h"
 #include "src/common/log_util.h"
 
 namespace mindspore::lite {

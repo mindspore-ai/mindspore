@@ -25,7 +25,7 @@
 #include "src/tensorlist.h"
 #include "src/common/prim_util.h"
 #include "src/common/ops/populate/populate_register.h"
-#include "src/runtime/infer_manager.h"
+#include "src/litert/infer_manager.h"
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/string_utils.h"

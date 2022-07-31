@@ -24,7 +24,7 @@
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "include/api/kernel.h"
-#include "src/runtime/inner_context.h"
+#include "src/litert/inner_context.h"
 // #include "include/api/context.h"
 #include "kernel/kernel.h"
 #include "extendrt/mindir_loader/abstract_kernel.h"

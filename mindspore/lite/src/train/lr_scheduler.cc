@@ -23,7 +23,7 @@
 #include <fstream>
 #include <memory>
 #include "include/errorcode.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 

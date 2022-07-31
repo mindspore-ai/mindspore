@@ -16,11 +16,11 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/int8/fullconnection_int8.h"
+#include "mindspore/lite/src/litert/kernel/cpu/int8/fullconnection_int8.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
-#include "mindspore/lite/src/runtime/kernel_registry.h"
-#include "mindspore/lite/src/runtime/kernel_exec.h"
+#include "mindspore/lite/src/litert/kernel_registry.h"
+#include "mindspore/lite/src/litert/kernel_exec.h"
 
 namespace mindspore {
 using lite::Tensor;

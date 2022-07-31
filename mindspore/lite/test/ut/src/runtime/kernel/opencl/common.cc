@@ -16,8 +16,8 @@
 #include <set>
 #include <algorithm>
 #include "ut/src/runtime/kernel/opencl/common.h"
-#include "src/runtime/kernel_registry.h"
-#include "src/runtime/kernel/opencl/opencl_subgraph.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/kernel/opencl/opencl_subgraph.h"
 #include "nnacl/conv_parameter.h"
 
 using mindspore::kernel::KernelExec;

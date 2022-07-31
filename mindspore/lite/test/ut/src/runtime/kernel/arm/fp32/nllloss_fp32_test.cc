@@ -16,10 +16,10 @@
 
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32/nllloss_fp32.h"
-#include "src/runtime/kernel_registry.h"
-#include "src/runtime/kernel_exec.h"
-#include "src/runtime/tensor_category.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32/nllloss_fp32.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/kernel_exec.h"
+#include "src/litert/tensor_category.h"
 
 namespace mindspore {
 class TestNLLLossFp32 : public mindspore::CommonTest {

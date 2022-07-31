@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "src/runtime/kernel_exec.h"
-#include "src/runtime/kernel_registry.h"
-#include "src/runtime/runtime_pass.h"
+#include "src/litert/kernel_exec.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/instance_norm_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"

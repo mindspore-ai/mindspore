@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include "securec/include/securec.h"
-#include "src/runtime/kernel/cpu/base/convolution_base.h"
+#include "src/litert/kernel/cpu/base/convolution_base.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
 #include "coder/opcoders/parallel.h"

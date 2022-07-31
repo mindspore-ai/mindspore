@@ -47,7 +47,7 @@
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
-#include "src/runtime/lite_session.h"
+#include "src/litert/lite_session.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
 #include "include/api/model.h"

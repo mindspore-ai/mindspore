@@ -18,10 +18,10 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/cpu/fp32/deconvolution_fp32.h"
+#include "mindspore/lite/src/litert/kernel/cpu/fp32/deconvolution_fp32.h"
 #include "nnacl/fp32/deconv_fp32.h"
 #include "nnacl/op_base.h"
-#include "src/runtime/tensor_category.h"
+#include "src/litert/tensor_category.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {
