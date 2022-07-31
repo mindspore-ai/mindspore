@@ -35,7 +35,7 @@ namespace kernel {
 namespace {
 template <typename S>
 S Probability(int64_t range_max) {
-  if (range_max == 0) {
+  if (range_max <= 0) {
     return S(0);
   }
   return static_cast<S>(1.0f / range_max);
@@ -43,6 +43,7 @@ S Probability(int64_t range_max) {
 
 template <typename S>
 S ApproximateExpectedCount(S p, int64_t sampled_size, int64_t counter) {
+  // p >= 0 && p < 1.0
   if (sampled_size == counter) {
     return p * sampled_size;
   }
@@ -58,11 +59,12 @@ const size_t kInputRank = 2;
 template <typename T>
 int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, const size_t length) {
   int64_t counter = 0;
-  if (length != static_cast<size_t>(num_sampled_ * sizeof(T))) {
+  size_t target_length = LongToSize(num_sampled_) * sizeof(T);
+  if (length != target_length) {
     return 0;
   }
   // pick between [0, range_max_-1]
-  T range = static_cast<T>(range_max_);
+  T range = LongToSize(range_max_);
   std::uniform_int_distribution<T> distribution(0, range - 1);
   if (!unique_) {
     auto task = [this, &sampled_candidates_, &distribution](size_t start, size_t end) {
@@ -70,7 +72,7 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
         sampled_candidates_[i] = distribution(generator_);
       }
     };
-    ParallelLaunchAutoSearch(task, num_sampled_, this, &parallel_search_info_, pool_);
+    ParallelLaunchAutoSearch(task, LongToSize(num_sampled_), this, &parallel_search_info_, pool_);
     counter = num_sampled_;
     std::ostringstream oss;
     for (int64_t i = 0; i < num_sampled_; i++) {
@@ -87,7 +89,7 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
     counter++;
     if ((set_container.find(sample) == set_container.end()) &&
         ((!remove_accidental_hits_) || set_input_.find(sample) == set_input_.end())) {
-      set_container.insert(sample);
+      (void)set_container.insert(sample);
       sampled_candidates_[picked] = sample;
       picked++;
     }
@@ -118,7 +120,7 @@ void UniformCandidateSamplerCpuKernelMod::ExpectedCount(const int64_t counter, S
       sampled_expected_count[i] = value;
     }
   };
-  ParallelLaunchAutoSearch(task2, num_sampled_, this, &parallel_search_info_, pool_);
+  ParallelLaunchAutoSearch(task2, LongToSize(num_sampled_), this, &parallel_search_info_, pool_);
 }
 
 void UniformCandidateSamplerCpuKernelMod::CheckAttribute() {
@@ -148,12 +150,12 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
                              << ", outputs' size: " << outputs.size();
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto input_rank = static_cast<size_t>(batch_rank_ + kInputRank);
+  auto input_rank = LongToSize(batch_rank_) + kInputRank;
   if (input_shape.size() != input_rank) {
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the dimension of input 'true_classes' must be "
                              << input_rank << ", but got " << input_shape.size();
   }
-  auto kindex = static_cast<size_t>(batch_rank_ + kIndex1);
+  auto kindex = LongToSize(batch_rank_) + kIndex1;
   if (input_shape[kindex] != num_true_) {
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the input 'true_classes' must have 'num_true' columns, "
                              << "but got 'true_classes': (" << input_shape[0] << ", " << input_shape[1] << ")"
@@ -162,7 +164,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
 
   auto output_kIndex0_type = outputs.at(kIndex0)->GetDtype();
   if (output_kIndex0_type == kNumberTypeInt32) {
-    if (range_max_ > static_cast<int64_t>(std::numeric_limits<int>::max())) {
+    if (range_max_ > std::numeric_limits<int>::max()) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'range_max' can not exceed the range of int32, but "
                                << "got" << range_max_ << ". The input data type should be changed to int64.";
     }
@@ -180,12 +182,12 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   if (batch_size_ == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-  input_size_ = input_size_ / batch_size_;
+  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1));
+  input_size_ = input_size_ / LongToSize(batch_size_);
 
-  output_sizes_.emplace_back(num_sampled_);
-  output_sizes_.emplace_back(input_size_);
-  output_sizes_.emplace_back(num_sampled_);
+  (void)output_sizes_.emplace_back(num_sampled_);
+  (void)output_sizes_.emplace_back(input_size_);
+  (void)output_sizes_.emplace_back(num_sampled_);
 }
 
 bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -194,33 +196,35 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   // delete the operator in r1.8 version
   MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', it's not supported on CPU device recently and"
                     << " it will be provided in later version.";
-
-  if (!base_operator) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniformCandidateSampler>(base_operator);
+  if (!kernel_ptr) {
     MS_LOG(ERROR) << "UniformCandiadataSampler ops is null.";
     return false;
   }
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  kernel_name_ = kernel_ptr->name();
+  batch_rank_ = kernel_ptr->get_batch_rank();
 
   if (kernel_name_ != prim::kPrimUniformCandidateSampler->name()) {
     MS_LOG(EXCEPTION) << "For UniformCandidateSamplerCpuKernelMod, it's name must be UniformCandidateSampler, but got "
                       << "invalid kernel name " << prim::kPrimUniformCandidateSampler->name();
-    return false;
   }
 
   // get attribute
-  auto kernel_ptr_ = std::make_shared<ops::UniformCandidateSampler>(base_operator->GetPrim());
-  num_true_ = kernel_ptr_->get_num_true();
-  num_sampled_ = kernel_ptr_->get_num_sampled();
-  unique_ = kernel_ptr_->get_unique();
-  range_max_ = kernel_ptr_->get_range_max();
-  init_seed_ = kernel_ptr_->get_seed();
-  remove_accidental_hits_ = kernel_ptr_->get_remove_accidental_hits();
+  num_true_ = kernel_ptr->get_num_true();
+  num_sampled_ = kernel_ptr->get_num_sampled();
+  unique_ = kernel_ptr->get_unique();
+  range_max_ = kernel_ptr->get_range_max();
+  int64_t seed_ = kernel_ptr->get_seed();
+  remove_accidental_hits_ = kernel_ptr->get_remove_accidental_hits();
 
-  if (init_seed_ == 0) {
-    cur_seed_ = time(nullptr);
+  if (seed_ < 0) {
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'seed' can not be less than 0, but got: "
+                             << seed_;
+  } else if (seed_ == 0) {
+    cur_seed_ = LongToSize(time(nullptr));
     generator_.seed(cur_seed_);
   } else {
+    init_seed_ = LongToSize(seed_);
     generator_.seed(init_seed_);
   }
 
@@ -239,7 +243,7 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
                                                 const std::vector<KernelTensorPtr> &outputs,
                                                 const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != KRET_OK) {
+  if (ret != 0) {
     return ret;
   }
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
@@ -248,17 +252,16 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   batch_size_ = batch_size_ / num_sampled_;
   if (batch_size_ == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
-    return false;
   }
 
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-  input_size_ = input_size_ / batch_size_;
+  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>()));
+  input_size_ = input_size_ / LongToSize(batch_size_);
 
-  output_sizes_.emplace_back(num_sampled_);
-  output_sizes_.emplace_back(input_size_);
-  output_sizes_.emplace_back(num_sampled_);
-  return KRET_OK;
+  (void)output_sizes_.emplace_back(num_sampled_);
+  (void)output_sizes_.emplace_back(input_size_);
+  (void)output_sizes_.emplace_back(num_sampled_);
+  return 0;
 }
 
 template <typename T, typename S>
@@ -269,8 +272,9 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
     MS_LOG(WARNING) << "For 'UniformCandidateSampler', the input 'true_classes' was empty.";
     return true;
   }
+  (void)workspaces;
   if (init_seed_ == 0 && cur_seed_ == 0) {
-    cur_seed_ = time(nullptr);
+    cur_seed_ = LongToSize(time(nullptr));
     generator_.seed(cur_seed_);
   } else if (init_seed_ != 0) {
     generator_.seed(init_seed_);
@@ -285,16 +289,16 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
   for (int64_t j = 0; j < batch_size_; ++j) {
     if (remove_accidental_hits_) {
       for (size_t i = 0; i < input_size_; i++) {
-        set_input_.insert(static_cast<int64_t>(input[i]));
+        set_input_.insert(input[i]);
       }
-      if (num_sampled_ + static_cast<int64_t>(set_input_.size()) > range_max_) {
+      if (num_sampled_ + SizeToLong(set_input_.size()) > range_max_) {
         MS_LOG(WARNING) << "For 'UniformCandidateSampler', the parameter 'range_max' can not be less than the sum of "
                         << "'num_sampled' and the num of unrepeat elements of input 'true_classes', "
                         << " set remove_accidental_hits = false.";
         remove_accidental_hits_ = false;
       }
     }
-    size_t sampled_candidate_size = static_cast<size_t>(num_sampled_ * sizeof(T));
+    size_t sampled_candidate_size = LongToSize(num_sampled_) * sizeof(T);
     int64_t counter = Sampling<T>(sampled_candidates, sampled_candidate_size);
     // calculate expected count.
     ExpectedCount<S>(counter, true_expected_count, sampled_expected_count);
