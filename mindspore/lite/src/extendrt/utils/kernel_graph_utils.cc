@@ -923,10 +923,14 @@ void KernelGraphUtils::UpdateCustomAscendOutputNames(const std::vector<AnfNodePt
                                                      std::vector<std::string> *output_names) const {
   MS_EXCEPTION_IF_NULL(output_names);
   for (const auto &output : outputs) {
-    std::string node_name = common::AnfAlgo::GetCNodeName(output);
+    auto real_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(output, 0);
+    auto real_output = real_output_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_output);
+    MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
+    std::string node_name = common::AnfAlgo::GetCNodeName(real_output);
     if (node_name == "CustomAscend") {
-      if (output->isa<CNode>()) {
-        auto primitive = GetCNodePrimitive(output);
+      if (real_output->isa<CNode>()) {
+        auto primitive = GetCNodePrimitive(real_output);
         if (primitive != nullptr) {
           auto val_ptr = primitive->GetAttr("outputs_names");
           if (val_ptr != nullptr) {

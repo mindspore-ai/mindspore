@@ -67,12 +67,6 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
     MS_LOG(ERROR) << "Create AclModelOptions failed.";
     return false;
   }
-  //  AclOptionsParser parser;
-  //  if (parser.ParseAclOptions(context_, &acl_options_) != lite::RET_OK) {
-  //    MS_LOG(ERROR) << "Parse model options failed.";
-  //    return false;
-  //  }
-  // last input is om data tensor
   int idx = inputs.size() - 1;
   if (inputs[idx] == nullptr || inputs[idx]->GetData() == nullptr) {
     MS_LOG(ERROR) << "Input " << idx << " is invalid.";
@@ -169,7 +163,7 @@ int CustomAscendKernelMod::SetInputAndOutputAddr(const std::vector<AddressPtr> &
     inputs_[i]->SetData(inputs[i]);
   }
   for (size_t j = 0; j < outputs_.size(); ++j) {
-    if (outputs[j]->addr == nullptr || inputs[j]->size == 0) {
+    if (outputs[j]->addr == nullptr || outputs[j]->size == 0) {
       MS_LOG(ERROR) << "Output " << j << " addr is invalid.";
       return lite::RET_ERROR;
     }
