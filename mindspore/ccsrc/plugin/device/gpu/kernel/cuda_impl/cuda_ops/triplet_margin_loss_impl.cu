@@ -53,44 +53,44 @@ __global__ void FillAndBroadcast(const int64_t size, const size_t shape_size,
   return;
 }
 
-template <typename T, typename S>
+template <typename T>
 __global__ void PairwiseDistance(const T *anchor, const T *positive, const T *negative,
                                  const size_t *bound_list, const size_t bound, const size_t outer_size,
-                                 const size_t inner_size, S *tem_output, const size_t n, const int64_t p,
+                                 const size_t inner_size, float *tem_output, const size_t n, const int64_t p,
                                  const float eps) {
   const T *pair_tensor[3] = {anchor, positive, negative};
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
        pos < n * outer_size * inner_size; pos += gridDim.x * blockDim.x) {
     size_t mode = pos / (outer_size * inner_size);
     size_t idx = pos % (outer_size * inner_size);
-    S res = 0;
+    float res = 0;
     size_t x = idx / inner_size % outer_size;
     size_t y = idx % inner_size;
     for (int i = 0; i < bound_list[mode]; i++) {
       size_t input_offset = x * bound * inner_size + i * inner_size + y;
-      S base =
+      float base =
         abs(static_cast<T>(pair_tensor[mode / 2][input_offset] - pair_tensor[(mode + 3) / 2][input_offset]) + eps);
-      S tem = pow(base, static_cast<S>(p));
+      float tem = pow(base, static_cast<float>(p));
       res += tem;
     }
-    tem_output[pos] = pow(res, static_cast<S>(1.0 / p));
+    tem_output[pos] = pow(res, static_cast<float>(1.0 / p));
   }
   return;
 }
 
-template <typename S>
+
 __global__ void PairwiseDistancePzero(const size_t *bound_list, const size_t output_size,
-                                                 S *tem_output, const size_t n) {
+                                                 float *tem_output, const size_t n) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < n * output_size; pos += gridDim.x * blockDim.x) {
     size_t mode = pos / output_size;
-    tem_output[pos] = static_cast<S>(bound_list[mode]);
+    tem_output[pos] = static_cast<float>(bound_list[mode]);
   }
   return;
 }
 
 
-template <typename S>
-__global__ void SwapTrue(S *tem_output, const size_t output_size) {
+
+__global__ void SwapTrue(float *tem_output, const size_t output_size) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_size; pos += gridDim.x * blockDim.x) {
     tem_output[pos + output_size] = tem_output[pos + output_size] > tem_output[pos + 2 * output_size] ?
                                     tem_output[pos + 2 * output_size] :  tem_output[pos + output_size];
@@ -98,30 +98,27 @@ __global__ void SwapTrue(S *tem_output, const size_t output_size) {
   return;
 }
 
-template <typename M, typename S>
-__global__ void MaxReduction(S *tem_output, S *output, const size_t output_size, const M *margin) {
-  S lower_bound = 0;
+
+__global__ void MaxReduction(float *tem_output, float *output, const size_t output_size, const float *margin) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_size; pos += gridDim.x * blockDim.x) {
-    output[pos] = max(static_cast<float>(margin[0]) + tem_output[pos] - tem_output[pos + output_size], lower_bound);
+    output[pos] = max(static_cast<float>(margin[0]) + tem_output[pos] - tem_output[pos + output_size], 0.0);
   }
   return;
 }
 
 
-template <typename S>
-__global__ void AddTile(S *tmp_loss, size_t index) {
+__global__ void AddTile(float *tmp_loss, size_t index) {
   tmp_loss[0] += tmp_loss[index];
 }
 
-template <typename S>
-__global__ void PartialSum(S *tmp_loss, size_t stride) {
+__global__ void PartialSum(float *tmp_loss, size_t stride) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < stride; i += blockDim.x * gridDim.x) {
     tmp_loss[i] += tmp_loss[i + stride];
   }
 }
 
 template <typename S>
-__global__ void ReductionDivde(S *output, S *tem_output, const size_t k) {
+__global__ void ReductionDivde(S *output, float *tem_output, const size_t k) {
   output[0] = tem_output[0] / k;
 }
 
@@ -153,8 +150,7 @@ __global__ void PairwiseDistance(const half *anchor, const half *positive, const
 
 
 // half
-template <typename M>
-__global__ void MaxReduction(float *tem_output, half *output, const size_t output_size, const M *margin) {
+__global__ void MaxReduction(float *tem_output, half *output, const size_t output_size, const float *margin) {
   float lower_bound = 0;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_size; pos += gridDim.x * blockDim.x) {
     output[pos] = __float2half(max(margin[0] + tem_output[pos] - tem_output[pos + output_size], lower_bound));
@@ -164,6 +160,7 @@ __global__ void MaxReduction(float *tem_output, half *output, const size_t outpu
 
 
 // half
+template <>
 __global__ void ReductionDivde(half *output, float *tem_output, const size_t k) {
   output[0] = __float2half((tem_output[0] / k));
 }
@@ -173,7 +170,7 @@ template <typename S>
 __global__ void PairwiseDistance(const Complex<S> *anchor, const Complex<S> *positive,
                                                  const Complex<S> *negative, const size_t *bound_list,
                                                  const size_t bound, const size_t outer_size, const size_t inner_size,
-                                                 S *tem_output, const size_t n, const int64_t p, const float eps) {
+                                                 float *tem_output, const size_t n, const int64_t p, const float eps) {
   const Complex<S> *pair_tensor[3] = {anchor, positive, negative};
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
        pos < n * outer_size * inner_size; pos += gridDim.x * blockDim.x) {
@@ -195,12 +192,12 @@ __global__ void PairwiseDistance(const Complex<S> *anchor, const Complex<S> *pos
   return;
 }
 
-template <typename T, typename M, typename S, typename H>
+template <typename T, typename S>
 void CalTripletMarginLoss(const T *anchor, const T *positive, const T *negative, T *anchor_broadcast,
-                          T *positive_broadcast, T *negative_broadcast, S *output, H *tem_output,
+                          T *positive_broadcast, T *negative_broadcast, S *output, float *tem_output,
                           const int64_t *tensor_shapes, const int64_t *dst_shape, const size_t outer_size,
                           const size_t inner_size, const size_t *bound_list, const size_t bound,
-                          const size_t shape_size, M *margin, const int64_t p, const float eps,
+                          const size_t shape_size, float *margin, const int64_t p, const float eps,
                           const std::string reduction, const bool swap, const bool need_broadcast,
                           const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int64_t size = outer_size * inner_size * bound;
@@ -255,7 +252,7 @@ void CalTripletMarginLoss(const T *anchor, const T *positive, const T *negative,
 }
 
 
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int8_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<int8_t, float>(
     const int8_t *anchor, const int8_t *positive, const int8_t *negative,
     int8_t *anchor_broadcast, int8_t *positive_broadcast, int8_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -264,7 +261,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<int8_t, float, float, float>(
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int16_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<int16_t, float>(
     const int16_t *anchor, const int16_t *positive, const int16_t *negative,
     int16_t *anchor_broadcast, int16_t *positive_broadcast, int16_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -273,7 +270,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<int16_t, float, float, float>
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int32_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<int32_t, float>(
     const int32_t *anchor, const int32_t *positive, const int32_t *negative,
     int32_t *anchor_broadcast, int32_t *positive_broadcast, int32_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -282,7 +279,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<int32_t, float, float, float>
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int64_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<int64_t, float>(
     const int64_t *anchor, const int64_t *positive, const int64_t *negative,
     int64_t *anchor_broadcast, int64_t *positive_broadcast, int64_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -291,7 +288,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<int64_t, float, float, float>
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint8_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint8_t, float>(
     const uint8_t *anchor, const uint8_t *positive, const uint8_t *negative,
     uint8_t *anchor_broadcast, uint8_t *positive_broadcast, uint8_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -300,7 +297,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint8_t, float, float, float>
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint16_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint16_t, float>(
     const uint16_t *anchor, const uint16_t *positive, const uint16_t *negative,
     uint16_t *anchor_broadcast, uint16_t *positive_broadcast, uint16_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -309,7 +306,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint16_t, float, float, float
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint32_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint32_t, float>(
     const uint32_t *anchor, const uint32_t *positive, const uint32_t *negative,
     uint32_t *anchor_broadcast, uint32_t *positive_broadcast, uint32_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -318,7 +315,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint32_t, float, float, float
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint64_t, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint64_t, float>(
     const uint64_t *anchor, const uint64_t *positive, const uint64_t *negative,
     uint64_t *anchor_broadcast, uint64_t *positive_broadcast, uint64_t *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -327,16 +324,16 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint64_t, float, float, float
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<double, float, double, double>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<double, float>(
     const double *anchor, const double *positive, const double *negative,
     double *anchor_broadcast, double *positive_broadcast, double *negative_broadcast,
-    double *output, double *tem_output, const int64_t *tensor_shapes,
+    float *output, float *tem_output, const int64_t *tensor_shapes,
     const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
     const size_t *bound_list, const size_t bound, const size_t shape_size, float *margin,
     const int64_t p, const float eps, const std::string reduction,
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<float, float, float, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<float, float>(
     const float *anchor, const float *positive, const float *negative,
     float *anchor_broadcast, float *positive_broadcast, float *negative_broadcast,
     float *output, float *tem_output, const int64_t *tensor_shapes,
@@ -346,7 +343,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<float, float, float, float>(
     const bool swap, const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<half, float, half, float>(
+template CUDA_LIB_EXPORT void CalTripletMarginLoss<half, half>(
     const half *anchor, const half *positive, const half *negative,
     half *anchor_broadcast, half *positive_broadcast, half *negative_broadcast,
     half *output, float *tem_output, const int64_t *tensor_shapes,
@@ -357,7 +354,7 @@ template CUDA_LIB_EXPORT void CalTripletMarginLoss<half, float, half, float>(
     cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void
-CalTripletMarginLoss<Complex<float>, float, float, float>(
+CalTripletMarginLoss<Complex<float>, float>(
     const Complex<float> *anchor, const Complex<float> *positive, const Complex<float> *negative,
     Complex<float> *anchor_broadcast, Complex<float> *positive_broadcast, Complex<float> *negative_broadcast,
      float *output, float *tem_output,
@@ -369,140 +366,14 @@ CalTripletMarginLoss<Complex<float>, float, float, float>(
     cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void
-CalTripletMarginLoss<Complex<double>, float, double, double>(
+CalTripletMarginLoss<Complex<double>, float>(
     const Complex<double> *anchor, const Complex<double> *positive,
     const Complex<double> *negative,
     Complex<double> *anchor_broadcast, Complex<double> *positive_broadcast, Complex<double> *negative_broadcast,
-    double *output, double *tem_output,
+    float *output, float *tem_output,
     const int64_t *tensor_shapes, const int64_t *dst_shape,
     const size_t outer_size, const size_t inner_size, const size_t *bound_list, const size_t bound,
     const size_t shape_size, float *margin, const int64_t p,
     const float eps, const std::string reduction, const bool swap,
     const bool need_broadcast, const uint32_t &device_id,
     cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int8_t, double, float, float>(
-    const int8_t *anchor, const int8_t *positive, const int8_t *negative,
-    int8_t *anchor_broadcast, int8_t *positive_broadcast, int8_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int16_t, double, float, float>(
-    const int16_t *anchor, const int16_t *positive, const int16_t *negative,
-    int16_t *anchor_broadcast, int16_t *positive_broadcast, int16_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int32_t, double, float, float>(
-    const int32_t *anchor, const int32_t *positive, const int32_t *negative,
-    int32_t *anchor_broadcast, int32_t *positive_broadcast, int32_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<int64_t, double, float, float>(
-    const int64_t *anchor, const int64_t *positive, const int64_t *negative,
-    int64_t *anchor_broadcast, int64_t *positive_broadcast, int64_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint8_t, double, float, float>(
-    const uint8_t *anchor, const uint8_t *positive, const uint8_t *negative,
-    uint8_t *anchor_broadcast, uint8_t *positive_broadcast, uint8_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint16_t, double, float, float>(
-    const uint16_t *anchor, const uint16_t *positive, const uint16_t *negative,
-    uint16_t *anchor_broadcast, uint16_t *positive_broadcast, uint16_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint32_t, double, float, float>(
-    const uint32_t *anchor, const uint32_t *positive, const uint32_t *negative,
-    uint32_t *anchor_broadcast, uint32_t *positive_broadcast, uint32_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<uint64_t, double, float, float>(
-    const uint64_t *anchor, const uint64_t *positive, const uint64_t *negative,
-    uint64_t *anchor_broadcast, uint64_t *positive_broadcast, uint64_t *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<double, double, double, double>(
-    const double *anchor, const double *positive, const double *negative,
-    double *anchor_broadcast, double *positive_broadcast, double *negative_broadcast,
-    double *output, double *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<float, double, float, float>(
-    const float *anchor, const float *positive, const float *negative,
-    float *anchor_broadcast, float *positive_broadcast, float *negative_broadcast,
-    float *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalTripletMarginLoss<half, double, half, float>(
-    const half *anchor, const half *positive, const half *negative,
-    half *anchor_broadcast, half *positive_broadcast, half *negative_broadcast,
-    half *output, float *tem_output, const int64_t *tensor_shapes,
-    const int64_t *dst_shape, const size_t outer_size, const size_t inner_size,
-    const size_t *bound_list, const size_t bound, const size_t shape_size, double *margin,
-    const int64_t p, const float eps, const std::string reduction,
-    const bool swap, const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void
-CalTripletMarginLoss<Complex<float>, double, float, float>(
-    const Complex<float> *anchor, const Complex<float> *positive,
-    const Complex<float> *negative, Complex<float> *anchor_broadcast, Complex<float> *positive_broadcast,
-    Complex<float> *negative_broadcast, float *output, float *tem_output,
-    const int64_t *tensor_shapes, const int64_t *dst_shape,
-    const size_t outer_size, const size_t inner_size, const size_t *bound_list, const size_t bound,
-    const size_t shape_size, double *margin, const int64_t p,
-    const float eps, const std::string reduction, const bool swap,
-    const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void
-CalTripletMarginLoss<Complex<double>, double, double, double>(
-    const Complex<double> *anchor, const Complex<double> *positive,
-    const Complex<double> *negative, Complex<double> *anchor_broadcast, Complex<double> *positive_broadcast,
-    Complex<double> *negative_broadcast, double *output, double *tem_output,
-    const int64_t *tensor_shapes, const int64_t *dst_shape,
-    const size_t outer_size, const size_t inner_size, const size_t *bound_list, const size_t bound,
-    const size_t shape_size, double *margin, const int64_t p,
-    const float eps, const std::string reduction, const bool swap,
-    const bool need_broadcast, const uint32_t &device_id,
-    cudaStream_t cuda_stream);
-

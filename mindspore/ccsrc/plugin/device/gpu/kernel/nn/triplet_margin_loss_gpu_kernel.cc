@@ -19,10 +19,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-template <typename T, typename M, typename S>
+template <typename T, typename S>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateTripletMarginLossKernelPtr(const std::string &kernel_name,
                                                                                 const uint32_t &device_id) {
-  return std::make_unique<cukernel::TripletMarginLossHelperGpuKernel<T, M, S>>(kernel_name, device_id);
+  return std::make_unique<cukernel::TripletMarginLossHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
 
 using TripletMarginLossPtrCreatorFunc =
@@ -35,182 +35,91 @@ const std::vector<std::pair<KernelAttr, TripletMarginLossPtrCreatorFunc>> kernel
      .AddInputAttr(kNumberTypeComplex64)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<Complex<float>, float, float>},
+   CreateTripletMarginLossKernelPtr<Complex<float>, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeComplex128)
      .AddInputAttr(kNumberTypeComplex128)
      .AddInputAttr(kNumberTypeComplex128)
      .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateTripletMarginLossKernelPtr<Complex<double>, float, double>},
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateTripletMarginLossKernelPtr<Complex<double>, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateTripletMarginLossKernelPtr<double, float, double>},
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateTripletMarginLossKernelPtr<double, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<float, float, float>},
+   CreateTripletMarginLossKernelPtr<float, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat16),
-   CreateTripletMarginLossKernelPtr<half, float, half>},
+   CreateTripletMarginLossKernelPtr<half, half>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int16_t, float, float>},
+   CreateTripletMarginLossKernelPtr<int16_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int32_t, float, float>},
+   CreateTripletMarginLossKernelPtr<int32_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int64_t, float, float>},
+   CreateTripletMarginLossKernelPtr<int64_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int8_t, float, float>},
+   CreateTripletMarginLossKernelPtr<int8_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt16)
      .AddInputAttr(kNumberTypeUInt16)
      .AddInputAttr(kNumberTypeUInt16)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint16_t, float, float>},
+   CreateTripletMarginLossKernelPtr<uint16_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt32)
      .AddInputAttr(kNumberTypeUInt32)
      .AddInputAttr(kNumberTypeUInt32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint32_t, float, float>},
+   CreateTripletMarginLossKernelPtr<uint32_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt64)
      .AddInputAttr(kNumberTypeUInt64)
      .AddInputAttr(kNumberTypeUInt64)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint64_t, float, float>},
+   CreateTripletMarginLossKernelPtr<uint64_t, float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint8_t, float, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<Complex<float>, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateTripletMarginLossKernelPtr<Complex<double>, double, double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateTripletMarginLossKernelPtr<double, double, double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<float, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   CreateTripletMarginLossKernelPtr<half, double, half>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int16_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int32_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int64_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<int8_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint16_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint32_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint64_t, double, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateTripletMarginLossKernelPtr<uint8_t, double, float>}};
+   CreateTripletMarginLossKernelPtr<uint8_t, float>}};
 }  // namespace
 
 bool TripletMarginLossGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
@@ -241,8 +150,6 @@ bool TripletMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   attr_ptr_->reduction = kernel_ptr->get_reduction();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
-
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 
