@@ -11,7 +11,7 @@
         \end{matrix}\right.
     
     .. note::
-        SquareSumAll只支持float32和float64类型的输入值。
+        SquareSumAll只支持float16和float32类型的输入值。
 
     **输入：**
 
