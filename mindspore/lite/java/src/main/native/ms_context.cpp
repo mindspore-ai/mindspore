@@ -203,7 +203,6 @@ Java_com_mindspore_config_MSContext_getThreadAffinityCoreList(JNIEnv *env, jobje
   auto *c_context_ptr = static_cast<mindspore::Context *>(reinterpret_cast<void *>(context_ptr));
   std::vector<int32_t> core_list_tmp = c_context_ptr->GetThreadAffinityCoreList();
   jobject core_list = newObjectArrayList<int32_t>(env, core_list_tmp, "java/lang/Integer", "(I)V");
-  // env->DeleteLocalRef(core_list);
   return core_list;
 }
 
