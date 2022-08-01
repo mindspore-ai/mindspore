@@ -34,7 +34,7 @@ from .activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
            'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout2d',
-           'Dropout3d', 'Roll', 'Identity']
+           'Dropout3d', 'Roll', 'Identity', 'Unflatten']
 
 
 class L1Regularizer(Cell):
@@ -1617,3 +1617,60 @@ class Roll(Cell):
                 input_x = input_x.transpose(transpose_perm)
             output = input_x
         return output
+
+
+class Unflatten(Cell):
+    r"""
+    Summary:
+        Unflattens a tensor dim according to axis and unflattened_size.
+
+    Args:
+        axis (int): specifies the dimension of the input tensor to be unflattened.
+        unflattened_size (Union(tuple[int], list[int])): is the new shape of the unflattened dimension of
+            the tensor and it can be a tuple of ints or a list of ints. The product of unflattened_size
+            must equal to input_shape[axis].
+
+    Inputs:
+        - **input** (Tensor) - The input Tensor to be unflattened.
+
+    Outputs:
+        Tensor that has been unflattend.
+
+    Raises:
+        TypeError: If `axis` is not int.
+        TypeError: If `unflattened_size` is neither tuple of ints nor list of ints.
+        TypeError: If the value specified by `axis` is not equal to product of `unflattened_size`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.arange(0, 100).reshape(2, 10, 5), mindspore.float32)
+        >>> net = nn.Unflatten(1, (2, 5))
+        >>> output = net(input)
+        >>> print(f"before unflatten the input shape is {input.shape}")
+        before unflatten the input shape is  (2, 10, 5)
+        >>> print(f"after unflatten the output shape is {output.shape}")
+        after unflatten the output shape is (2, 2, 5, 5)
+    """
+
+    def __init__(self, axis, unflattened_size):
+        """Initialize Unflatten."""
+        super(Unflatten, self).__init__()
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
+        Validator.check_is_int(axis, 'axis', 'Unflatten')
+        Validator.check_value_type('unflattended_size', unflattened_size, (list, tuple), 'Unflatten')
+        self.axis = axis
+        if isinstance(unflattened_size, list):
+            unflattened_size = tuple(unflattened_size)
+        self.unflattened_size = unflattened_size
+
+    def construct(self, input_x):
+        input_shape = self.shape(input_x)
+        new_shape = tuple()
+        new_shape += input_shape[: self.axis]
+        new_shape += self.unflattened_size
+        if self.axis != -1:
+            new_shape += input_shape[self.axis+1 :]
+        return self.reshape(input_x, new_shape)
