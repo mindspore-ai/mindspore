@@ -898,7 +898,7 @@ KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
 void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
                                           const std::vector<tensor::TensorPtr> &graph_inputs,
                                           const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                                          InputTensorInfo *input_tensor_info) {
+                                          InputTensorInfo *input_tensor_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
