@@ -26,6 +26,8 @@ from mindspore.nn.loss.loss import _check_is_tensor
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
+from mindspore.log import _LogActionOnce
+from mindspore import log as logger
 from .layers import _check_input_dtype, _check_input_shape
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
@@ -181,7 +183,8 @@ class CrossEntropyLoss(Cell):
         >>> print(output.shape)
         (1,)
     """
-
+    @_LogActionOnce(logger=logger, key='CrossEntropyLoss',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     def __init__(self, parallel_config=default_dpmp_config):
         super(CrossEntropyLoss, self).__init__()
         if not isinstance(parallel_config, OpParallelConfig):
