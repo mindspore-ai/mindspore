@@ -83,10 +83,7 @@ def normal(shape, mean, stddev, seed=None):
     const_utils.check_type_valid(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
-    if not isinstance(shape, tuple):
-        const_utils.raise_value_error("Type of 'shape' should be tuple, but got: {}".format(type(shape)))
-    if not _check_shape(shape):
-        const_utils.raise_value_error("All values of 'shape' should be positive integer, but got: {}".format(shape))
+    _check_shape(shape)
     random_normal = stdnormal(shape)
     value = random_normal * stddev + mean
     return value
@@ -135,10 +132,7 @@ def laplace(shape, mean, lambda_param, seed=None):
     const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
     seed1, seed2 = _get_seed(seed, "laplace")
     stdlaplace = P.StandardLaplace(seed1, seed2)
-    if not isinstance(shape, tuple):
-        const_utils.raise_value_error("Type of 'shape' should be tuple, but got: {}".format(type(shape)))
-    if not _check_shape(shape):
-        const_utils.raise_value_error("All values of 'shape' should be positive integer, but got: {}".format(shape))
+    _check_shape(shape)
     rnd = stdlaplace(shape)
     value = rnd * lambda_param + mean
     return value
@@ -417,7 +411,11 @@ def _check_shape(input_shape):
     """
     Check 'shape' value.
     """
+    if not isinstance(input_shape, tuple):
+        const_utils.raise_type_error("Type of 'shape' must be tuple, but got: {}".format(type(input_shape)))
     for item in input_shape:
-        if not (isinstance(item, int) and item >= 1):
-            return False
+        if not isinstance(item, int):
+            const_utils.raise_type_error("Elements of 'shape' must be int, but got: {}".format(type(item)))
+        if item < 1:
+            const_utils.raise_value_error("Elements of 'shape' must be positive int, but got: {}".format(item))
     return True
