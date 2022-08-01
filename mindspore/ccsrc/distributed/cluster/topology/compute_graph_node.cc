@@ -36,7 +36,11 @@ constexpr char kMetaDeleteFlagValue[] = "";
 
 ComputeGraphNode::~ComputeGraphNode() {
   if (!finalized_) {
-    (void)Finalize(true);
+    try {
+      (void)Finalize(true);
+    } catch (std::exception &) {
+      MS_LOG(ERROR) << "Failed to finalize ComputeGraphNode.";
+    }
   }
 }
 
@@ -70,12 +74,12 @@ bool ComputeGraphNode::Initialize() {
       }
 
       if (tcp_client_ != nullptr) {
-        tcp_client_->Disconnect(server_url);
+        (void)tcp_client_->Disconnect(server_url);
         tcp_client_->Finalize();
         tcp_client_.reset();
       }
       if (hb_client_ != nullptr) {
-        hb_client_->Disconnect(server_url);
+        (void)hb_client_->Disconnect(server_url);
         hb_client_->Finalize();
         hb_client_.reset();
       }
@@ -133,7 +137,7 @@ bool ComputeGraphNode::Finalize(bool force) {
   const auto &server_url = meta_server_addr_.GetUrl();
   if (tcp_client_ != nullptr) {
     if (!(enable_ssl && !authenticated_)) {
-      tcp_client_->Disconnect(server_url);
+      (void)tcp_client_->Disconnect(server_url);
     }
     tcp_client_->Finalize();
     tcp_client_.reset();
@@ -141,7 +145,7 @@ bool ComputeGraphNode::Finalize(bool force) {
 
   if (hb_client_ != nullptr) {
     if (!(enable_ssl && !authenticated_)) {
-      hb_client_->Disconnect(server_url);
+      (void)hb_client_->Disconnect(server_url);
     }
     hb_client_->Finalize();
     hb_client_.reset();
@@ -191,7 +195,7 @@ bool ComputeGraphNode::Register() {
   response = nullptr;
 
   RegistrationRespMessage reg_resp_msg;
-  reg_resp_msg.ParseFromArray(body.c_str(), body.length());
+  (void)reg_resp_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   if (reg_resp_msg.success()) {
     authenticated_ = true;
@@ -214,7 +218,7 @@ bool ComputeGraphNode::Unregister() {
   auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUnregistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  const size_t timeout = 6;
+  const uint32_t timeout = 6;
   MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
   if (response == nullptr) {
     return false;
@@ -236,7 +240,7 @@ bool ComputeGraphNode::Heartbeat() {
 
     MS_LOG(INFO) << "The heartbeat thread is started.";
     size_t interval = 3;
-    size_t timeout = 10;
+    uint32_t timeout = 10;
 
     while (enable_hb_) {
       if (topo_state_ == TopoState::kInitializing && ElapsedTime(start_time_) > kTopoInitTimeout) {
@@ -268,7 +272,7 @@ bool ComputeGraphNode::Heartbeat() {
       } else {
         auto &body = response->body;
         HeartbeatRespMessage resp_msg;
-        resp_msg.ParseFromArray(body.c_str(), body.length());
+        (void)resp_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
         topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
         auto nodes_num = resp_msg.nodes_num();
         auto abnormal_nodes_num = resp_msg.abnormal_nodes_num();
@@ -282,7 +286,7 @@ bool ComputeGraphNode::Heartbeat() {
         }
       }
 
-      sleep(interval);
+      (void)sleep(interval);
     }
 
     MS_LOG(INFO) << "The heartbeat thread is finished.";
@@ -300,7 +304,7 @@ bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const s
     if (!success) {
       // Retry to reconnect to the meta server.
       MS_LOG(WARNING) << error;
-      sleep(kExecuteInterval);
+      (void)sleep(kExecuteInterval);
       (void)Reconnect();
     }
     --retry;
@@ -312,10 +316,10 @@ bool ComputeGraphNode::Reconnect() {
   auto server_url = meta_server_addr_.GetUrl();
   // Disconnect from meta server node firstly.
   while (tcp_client_->IsConnected(server_url)) {
-    tcp_client_->Disconnect(server_url);
+    (void)tcp_client_->Disconnect(server_url);
   }
   while (hb_client_->IsConnected(server_url)) {
-    hb_client_->Disconnect(server_url);
+    (void)hb_client_->Disconnect(server_url);
   }
 
   // Reconnect to the meta server node.
@@ -380,7 +384,7 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
   MS_EXCEPTION_IF_NULL(tcp_client_);
   auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
   if (retval != rpc::NULL_MSG && (retval->name == std::to_string(static_cast<int>(MessageName::kValidMetadata)))) {
-    metadata.ParseFromArray(retval->body.c_str(), retval->body.length());
+    (void)metadata.ParseFromArray(retval->body.c_str(), SizeToInt(retval->body.length()));
     return metadata.value();
   }
   return "";
@@ -454,7 +458,7 @@ bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &ra
           break;
         } else {
           MS_LOG(WARNING) << "Failed to get metadata " << other_name << " from rank " << i;
-          sleep(kExecuteInterval);
+          (void)sleep(kExecuteInterval);
         }
       }
     }

@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_NODE_BASE_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_NODE_BASE_H_
 
-#include <time.h>
 #include <chrono>
 #include <string>
 #include <memory>
@@ -60,9 +59,9 @@ class NodeBase {
   std::string node_id() const { return node_id_; }
 
   void set_rank_id(uint32_t rank_id) { rank_id_ = rank_id; }
-  uint32_t rank_id() { return rank_id_; }
+  uint32_t rank_id() const { return rank_id_; }
 
-  std::string role() { return role_; }
+  std::string role() const { return role_; }
 
  protected:
   // Each node process has a unique node id which is immutable during the life cycle of this node.

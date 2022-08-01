@@ -73,7 +73,7 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
 
   const void *need_finalize_actor_data = msg_body.c_str() + data_len + finalize_header_size;
   MS_EXCEPTION_IF_NULL(need_finalize_actor_data);
-  bool finalize_in_msg = *(reinterpret_cast<const bool *>(need_finalize_actor_data));
+  bool finalize_in_msg = *(static_cast<const bool *>(need_finalize_actor_data));
   MS_LOG(INFO) << "Received a message which contains finalize command: " << finalize_in_msg;
   if (!finalize_in_msg) {
     return;

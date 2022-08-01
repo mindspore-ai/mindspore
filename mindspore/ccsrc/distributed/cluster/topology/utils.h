@@ -45,8 +45,8 @@ __attribute__((unused)) static bool FillMetaServerAddress(struct MetaServerAddre
   }
   auto port = std::strtol(ms_port.c_str(), nullptr, kDecimal);
   // Valid port number range.
-  static int min_port = 1;
-  static int max_port = 65535;
+  static const int min_port = 1;
+  static const int max_port = 65535;
   if (port < min_port || port > max_port) {
     MS_LOG(ERROR) << "The port number of meta server node: " << port << " is invalid (1~65535).";
     return false;

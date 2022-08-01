@@ -86,7 +86,7 @@ class MetaServerNode : public NodeBase {
   bool Finalize(bool force = false) override;
 
   // Get the current topology state.
-  TopoState TopologyState();
+  TopoState TopologyState() const;
 
   // Get the number of alive compute graph node.
   size_t GetAliveNodeNum();
