@@ -78,12 +78,15 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimiz
 #endif
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(kAutoParallel) || (parallel_mode != kAutoParallel) ||
-      root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (root->has_flag(kStandalone) || parallel_mode != kAutoParallel || root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
+    return changes;
+  }
+
+  if (IsPynativeParallel() && !root->has_flag(kPynativeShard)) {
     return changes;
   }
 

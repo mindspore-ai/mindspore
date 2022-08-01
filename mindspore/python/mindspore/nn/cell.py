@@ -1639,7 +1639,6 @@ class Cell(Cell_):
             this interface needs to be called by the cell.
         """
         self._auto_parallel_mode = True
-        self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
     def set_jit_config(self, jit_config):

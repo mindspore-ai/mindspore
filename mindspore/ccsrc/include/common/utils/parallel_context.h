@@ -49,6 +49,7 @@ constexpr char kSameServerGroupParallel[] = "same_server_group_parallel";
 constexpr char kNoGroupParallel[] = "no_group_parallel";
 
 constexpr char kIsFirstIteration[] = "is_first_iteration";
+constexpr char kPynativeShard[] = "pynative_shard";
 
 constexpr char kFusionAuto[] = "auto";
 constexpr char kFusionSize[] = "size";
@@ -182,6 +183,7 @@ class COMMON_EXPORT ParallelContext {
 
  private:
   ParallelContext();
+  bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const;
 
   bool gradients_mean_;
   bool full_batch_;
@@ -226,5 +228,4 @@ class COMMON_EXPORT ParallelContext {
   std::string fusion_mode_;
 };
 }  // namespace mindspore::parallel
-
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PARALLEL_CONTEXT_H_

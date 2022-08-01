@@ -234,7 +234,7 @@ bool ParallelContext::set_communi_parallel_mode(const std::string &communi_paral
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (!func_graph->has_flag(kAutoParallel)) {
+  if (!IsAutoParallelCareGraph(func_graph)) {
     return;
   }
   if (func_graph->has_flag(kIsFirstIteration)) {
@@ -266,7 +266,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!func_graph->has_flag(kAutoParallel)) {
+  if (!IsAutoParallelCareGraph(func_graph)) {
     return;
   }
 
@@ -294,7 +294,7 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!func_graph->has_flag(kAutoParallel)) {
+  if (!IsAutoParallelCareGraph(func_graph)) {
     return;
   }
 
@@ -308,6 +308,20 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
   }
 
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
+}
+
+bool ParallelContext::IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->has_flag(kStandalone)) {
+    return false;
+  }
+
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kAutoParallel && parallel_mode != kSemiAutoParallel) {
+    return false;
+  }
+
+  return true;
 }
 
 void ParallelContext::set_enable_all2all(const bool enable) { enable_all2all_ = enable; }

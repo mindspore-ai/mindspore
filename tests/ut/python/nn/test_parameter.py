@@ -240,8 +240,11 @@ def test_parameter_lazy_init():
 
 
 def test_parameter_as_output():
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    """
+    Feature: test parameter as output
+    Description:
+    Expectation: The output has the right data
+    """
     initial_input = initializer('One', shape=(2,), dtype=mstype.int32)
     updated_input = Tensor([2, 2], mstype.int32)
 
@@ -260,7 +263,6 @@ def test_parameter_as_output():
     net = Net(initial_input, updated_input)
     output = net()
     assert np.array_equal(output.asnumpy(), np.array([2, 2], np.int32))
-    context.reset_auto_parallel_context()
 
 
 def test_parameter_init_from_tensor():

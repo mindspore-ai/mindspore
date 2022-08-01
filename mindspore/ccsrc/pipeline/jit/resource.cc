@@ -24,6 +24,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -445,9 +446,7 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
 
 void Resource::CacheFuncGraph() const {
   FuncGraphPtr layout_fg = nullptr;
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (func_graph_->has_flag(parallel::kAutoParallel) &&
-      ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel))) {
+  if (parallel::IsAutoParallelCareGraph(func_graph_)) {
     layout_fg = GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
   }
   compile_cache_manager_->CacheFuncGraph(func_graph_, layout_fg);

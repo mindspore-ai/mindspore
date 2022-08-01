@@ -257,7 +257,7 @@ static void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
   root->set_flag("training", true);
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimShard)) {
-      root->set_flag("auto_parallel", true);
+      root->set_flag(kPynativeShard, true);
       auto cnode = node->cast<CNodePtr>();
       auto vnode = cnode->input(1)->cast<ValueNodePtr>();
       auto in_strategy = cnode->input(2);

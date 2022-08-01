@@ -32,6 +32,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/tensor_construct_utils.h"
@@ -691,8 +692,7 @@ class AllReduceConstElim : public OptimizerCaller {
     auto pattern = PPrimitive(prim::kPrimAllReduce, x);
     // If AllReduce takes constant value as input and values across devices are all the same(ensured by parallel mode)
     if (pattern.TryCapture(node) && IsVNode(x.GetNode(node)) &&
-        (pattern.GetFuncGraph()->has_flag(parallel::kAutoParallel) ||
-         pattern.GetFuncGraph()->has_flag(parallel::kSemiAutoParallel))) {
+        parallel::IsAutoParallelCareGraph(pattern.GetFuncGraph())) {
       auto cur_func_graph = pattern.GetFuncGraph();
       // If reduce operation is sum, then multiply constant by number of devices, otherwise just return the constant
       auto prim_cnode = pattern.GetOriginalNode();

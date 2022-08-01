@@ -812,7 +812,7 @@ def test_conformer_arm_ascend():
     Expectation: compile success
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=1, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     net = ConformerOverflow(patch_size=16, channel_ratio=4, embed_dim=384, stage_point=[1, 4, 8, 12],
                             num_heads=6, mlp_ratio=4, qkv_bias=False, qk_scale=None, cls_token=True,
                             num_classes=1000, drop_rate=0.0, drop_path_rate=0.1, attn_drop_rate=0.0,
