@@ -28,15 +28,15 @@ int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t 
 #else
 int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t *secret, int secret_len,
                         const uint8_t *ivec, int ivec_size) {
-  if ((secret_len != KEY_LENGTH_16 && secret_len != KEY_LENGTH_32) || secret == NULL) {
+  if ((secret_len != KEY_LENGTH_16 && secret_len != KEY_LENGTH_32) || secret == nullptr) {
     MS_LOG(ERROR) << "secret is invalid!";
     return -1;
   }
-  if (noise == NULL || noise_len <= 0) {
+  if (noise == nullptr || noise_len <= 0) {
     MS_LOG(ERROR) << "noise is invalid!";
     return -1;
   }
-  if (ivec == NULL || ivec_size != AES_IV_SIZE) {
+  if (ivec == nullptr || ivec_size != AES_IV_SIZE) {
     MS_LOG(ERROR) << "ivec is invalid!";
     return -1;
   }

@@ -92,7 +92,7 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
     return -1;
   }
   size_t len = 0;
-  EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(evpPrivKey, NULL);
+  EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(evpPrivKey, nullptr);
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "new context failed!";
     return -1;
@@ -164,15 +164,15 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   uint8_t *pubKeyBytes;
   size_t len = 0;
   if (privKey == nullptr) {
-    return NULL;
+    return nullptr;
   }
   if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, NULL, &len)) {
-    return NULL;
+    return nullptr;
   }
   pubKeyBytes = reinterpret_cast<uint8_t *>(OPENSSL_malloc(len));
   if (pubKeyBytes == nullptr) {
     MS_LOG(ERROR) << "malloc secret memory failed!";
-    return NULL;
+    return nullptr;
   }
 
   if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, pubKeyBytes, &len)) {
@@ -181,8 +181,8 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
     return NULL;
   }
   EVP_PKEY *evp_pubKey =
-    EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, reinterpret_cast<uint8_t *>(pubKeyBytes), len);
-  if (evp_pubKey == NULL) {
+    EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, nullptr, reinterpret_cast<uint8_t *>(pubKeyBytes), len);
+  if (evp_pubKey == nullptr) {
     MS_LOG(ERROR) << "EVP_PKEY_new_raw_public_key failed!";
     OPENSSL_free(pubKeyBytes);
     return NULL;
@@ -195,7 +195,7 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
 PrivateKey *KeyAgreement::FromPrivateBytes(const uint8_t *data, size_t len) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "input data is null!";
-    return NULL;
+    return nullptr;
   }
   EVP_PKEY *evp_Key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_Key == NULL) {
@@ -209,7 +209,7 @@ PrivateKey *KeyAgreement::FromPrivateBytes(const uint8_t *data, size_t len) {
 PublicKey *KeyAgreement::FromPublicBytes(const uint8_t *data, size_t len) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "input data is null!";
-    return NULL;
+    return nullptr;
   }
   EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_pubKey == NULL) {

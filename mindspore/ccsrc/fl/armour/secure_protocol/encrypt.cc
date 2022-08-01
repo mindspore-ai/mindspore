@@ -97,7 +97,7 @@ int AESEncrypt::DecryptData(const uint8_t *encrypt_data, const int encrypt_len, 
 int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
                                 uint8_t *encrypt_data, int *encrypt_len) const {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (ctx == NULL) {
+  if (ctx == nullptr) {
     return -1;
   }
   int out_len;
@@ -159,7 +159,7 @@ int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_
 int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
                                 uint8_t *decrypt_data, int *decrypt_len) const {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (ctx == NULL) {
+  if (ctx == nullptr) {
     return -1;
   }
   int out_len;

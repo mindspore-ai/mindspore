@@ -20,8 +20,11 @@ namespace mindspore {
 namespace armour {
 void secure_zero(uint8_t *s, size_t n) {
   volatile uint8_t *p = s;
-  if (p != nullptr)
-    while (n--) *p++ = '\0';
+  if (p != nullptr) {
+    while (n--) {
+      *p++ = '\0';
+    }
+  }
 }
 
 #ifndef _WIN32
@@ -32,7 +35,7 @@ int GetPrime(BIGNUM *prim) {
   int count = 1;
   int ret = 0;
   while (count < maxCount) {
-    ret = BN_generate_prime_ex(prim, max_prime_len * byteBits, 1, NULL, NULL, NULL);
+    ret = BN_generate_prime_ex(prim, max_prime_len * byteBits, 1, nullptr, nullptr, nullptr);
     if (ret == 1) {
       break;
     }
@@ -48,7 +51,9 @@ int GetPrime(BIGNUM *prim) {
 }
 
 Share::~Share() {
-  if (this->data != nullptr) free(this->data);
+  if (this->data != nullptr) {
+    free(this->data);
+  }
 }
 
 SecretSharing::SecretSharing(BIGNUM *prim) {
@@ -95,7 +100,7 @@ bool SecretSharing::field_sub(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CT
   return true;
 }
 
-bool SecretSharing::GetShare(BIGNUM *x, BIGNUM *share, Share *s_share) {
+bool SecretSharing::GetShare(BIGNUM *x, BIGNUM *share, const Share *s_share) {
   if (x == nullptr || share == nullptr || s_share == nullptr) {
     return false;
   }
@@ -168,7 +173,9 @@ void SecretSharing::ReleaseNum(BIGNUM *bigNum) const {
 
 int SecretSharing::Combine(size_t k, const std::vector<Share *> &shares, uint8_t *secret, size_t *length) {
   int check_result = InputCheck(k, shares, secret, length);
-  if (check_result == -1) return -1;
+  if (check_result == -1) {
+    return -1;
+  }
   BN_CTX *ctx = BN_CTX_new();
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "new bn ctx failed";
@@ -187,7 +194,9 @@ int SecretSharing::Combine(size_t k, const std::vector<Share *> &shares, uint8_t
     denses[i] = BN_new();
     nums[i] = BN_new();
     ret = CheckShares(shares[i], x[i], y[i], denses[i], nums[i]);
-    if (ret == -1) break;
+    if (ret == -1) {
+      break;
+    }
   }
 
   if (ret != -1) {

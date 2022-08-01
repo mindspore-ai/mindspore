@@ -214,7 +214,7 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
   // compute the pairwise noise based on local worker's private key and remote workers' public key
   std::vector<float> GetEncryptNoise(size_t noise_len) {
     std::vector<float> total_noise(noise_len, 0);
-    int client_num = client_keys.size();
+    int client_num = SizeToInt(client_keys.size());
     for (int i = 0; i < client_num; i++) {
       EncryptPublicKeys public_key_set_i = client_keys[i];
       std::string remote_fl_id = public_key_set_i.flID;
