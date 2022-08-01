@@ -616,7 +616,7 @@ bool EmbeddingCachePrefetchActor::CountCacheMissIds(const int *batch_ids, const 
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::ParseDeviceData(size_t id, bool *need_swap_device_to_host,
+bool EmbeddingCachePrefetchActor::ParseDeviceData(int id, bool *need_swap_device_to_host,
                                                   bool *need_swap_host_to_device, int *hash_index) {
   MS_ERROR_IF_NULL(need_swap_device_to_host);
   MS_ERROR_IF_NULL(need_swap_host_to_device);
@@ -666,7 +666,7 @@ bool EmbeddingCachePrefetchActor::ParseDeviceData(size_t id, bool *need_swap_dev
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::ParseHostDataHostToDevice(size_t id) {
+bool EmbeddingCachePrefetchActor::ParseHostDataHostToDevice(int id) {
   MS_ERROR_IF_NULL(embedding_host_cache_);
   int *host_to_device_index = embedding_host_cache_->host_to_device_index.get();
   MS_ERROR_IF_NULL(host_to_device_index);
@@ -1338,7 +1338,7 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
 
 std::unique_ptr<std::vector<char>> EmbeddingCachePrefetchActor::ReceiveFromRemote(const std::string &cache_operation,
                                                                                   int32_t param_key,
-                                                                                  size_t server_rank_id) {
+                                                                                  size_t server_rank_id) const {
   // Find receiver corresponding to cache operation and parameter key.
   auto iter = rpc_operators_.find(cache_operation);
   if (iter == rpc_operators_.end()) {

@@ -242,7 +242,7 @@ class DeviceInterface<> : public DeviceContext {
   explicit DeviceInterface(const DeviceContextKey &key) : DeviceContext(key) {}
 
  protected:
-  void CheckUnset(void *ptr, const std::string &error_msg) const {
+  void CheckUnset(const void *ptr, const std::string &error_msg) const {
     if (ptr != nullptr) {
       MS_LOG(EXCEPTION) << error_msg;
     }
@@ -274,7 +274,7 @@ class DeviceInterface<T, Args...> : public DeviceInterface<Args...> {
  private:
   template <typename = std::enable_if_t<std::is_base_of_v<DeviceResManager, T> || std::is_base_of_v<GraphExecutor, T> ||
                                         std::is_base_of_v<KernelExecutor, T>>>
-  void Assert() {}
+  void Assert() const {}
 };
 }  // namespace device
 }  // namespace mindspore
