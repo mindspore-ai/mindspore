@@ -27,7 +27,22 @@ std::vector<mindspore::MSTensor> &TensorRTOp::inputs() { return this->in_tensors
 
 std::vector<mindspore::MSTensor> &TensorRTOp::outputs() { return this->out_tensors_; }
 
-ITensorHelper TensorRTOp::input(TensorRTContext *ctx, size_t i) { return ctx->MsName2Tensor(in_tensors_[i].Name()); }
+ITensorHelper TensorRTOp::input(TensorRTContext *ctx, size_t i) {
+  auto in_ms_tensor = in_tensors_[i];
+  ITensorHelper in_trt_tensor = ctx->MsName2Tensor(in_ms_tensor.Name());
+
+  if (!GetSupportInputBool() && in_ms_tensor.DataType() == DataType::kNumberTypeBool) {
+    ITensorHelper in_trt_tensor_cast = ctx->MsName2Tensor(in_ms_tensor.Name() + "_to_int32");
+    if (in_trt_tensor_cast.trt_tensor_ == nullptr) {
+      auto cast_trt_tensor =
+        TRTTensorCast(ctx, in_trt_tensor.trt_tensor_, nvinfer1::DataType::kINT32, in_ms_tensor.Name() + "_cast_int32");
+      in_trt_tensor_cast = ITensorHelper{cast_trt_tensor, in_ms_tensor.format(), true};
+      ctx->RegisterTensor(in_trt_tensor_cast, in_ms_tensor.Name() + "_to_int32");
+    }
+    return in_trt_tensor_cast;
+  }
+  return in_trt_tensor;
+}
 
 ITensorHelper TensorRTOp::output(TensorRTContext *ctx, size_t i) { return ctx->MsName2Tensor(out_tensors_[i].Name()); }
 
@@ -133,4 +148,8 @@ int TensorRTOp::SetTransposeDynamicRange() {
   }
   return RET_OK;
 }
+
+bool TensorRTOp::GetSupportInputBool() { return this->support_input_bool_; }
+
+void TensorRTOp::SetSupportInputBool(bool support_input_bool) { this->support_input_bool_ = support_input_bool; }
 }  // namespace mindspore::lite

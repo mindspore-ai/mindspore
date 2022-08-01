@@ -268,12 +268,9 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
         }
-#if TRT_VERSION_GE(7, 2)
         // avoid bool input tensor
-        if (trt_tensor->getType() == nvinfer1::DataType::kBOOL) {
-          trt_tensor = TRTTensorCast(ctx_, trt_tensor, nvinfer1::DataType::kINT32, in_tensor.Name() + "_cast_int32");
-        }
-#endif
+        cur_op->SetSupportInputBool(false);
+
         ctx_->RegisterTensorWithSameName(ITensorHelper{trt_tensor, in_tensor.format(), true}, in_tensor.Name());
         continue;
       }

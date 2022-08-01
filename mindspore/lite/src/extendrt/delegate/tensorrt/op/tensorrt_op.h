@@ -107,6 +107,10 @@ class TensorRTOp {
 
   nvinfer1::ILayer *layer() { return layer_; }
 
+  bool GetSupportInputBool();
+
+  void SetSupportInputBool(bool support_input_bool);
+
  private:
   int SetTransposeDynamicRange();
 
@@ -140,6 +144,8 @@ class TensorRTOp {
   DynamicShapeParams dynamic_shape_params_;
 
   uint32_t device_id_{0};
+
+  bool support_input_bool_{true};
 };
 
 template <class T>
