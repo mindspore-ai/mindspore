@@ -235,7 +235,7 @@ const std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::KernelRunFunc>> &
     CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeFloat32, int64_t,
                                    std::complex<float>, float),
     // complex64 values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeFloat32, int64_t,
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeFloat64, int64_t,
                                    std::complex<double>, double),
   };
   return func_list;
