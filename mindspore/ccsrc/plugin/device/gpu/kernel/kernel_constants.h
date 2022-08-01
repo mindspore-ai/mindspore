@@ -61,7 +61,7 @@ static std::map<std::string, cudnnDataType_t> kCudnnDtypeMap = {
   {"UInt8", CUDNN_DATA_UINT8}};
 // Used by mixprecision, cuda dtype select
 static std::map<std::string, cudaDataType_t> kCudaDtypeMap = {
-  {"Float64", CUDA_R_64F}, {"Float32", CUDA_R_32F}, {"Float16", CUDA_R_16F}};
+  {"Float64", CUDA_R_64F}, {"Float32", CUDA_R_32F}, {"Float16", CUDA_R_16F}, {"Complex64", CUDA_C_32F}};
 }  // namespace kernel
 }  // namespace mindspore
 
