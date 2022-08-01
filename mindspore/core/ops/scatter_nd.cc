@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <set>
 #include "ops/scatter_nd.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -43,18 +43,20 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   }
   size_t n = LongToSize(indices_shape.back());
   if (n > out_shape.size()) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim->name()
-      << "', if the rank of output tensor is 'P' (length of the 'shape'), and the last dimension of 'indices' is "
-      << "'N', the 'N' should be less than or equal to 'P', but got P = " << out_shape.size() << ", N = " << n;
+    MS_EXCEPTION(ValueError) << "For '" << prim->name()
+                             << "', if the rank of output tensor is 'P' (length of the 'shape'), "
+                                "and the last dimension of 'indices' is "
+                             << "'N', the 'N' should be less than or equal to 'P', but got P = " << out_shape.size()
+                             << ", N = " << n;
   }
   // the rank of updates is Q-1+P-N
   if (updates_shape.size() != indices_shape.size() - 1 + out_shape.size() - n) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim->name() << "', if the rank of 'indices' is 'Q', the rank of 'updates' is 'R', "
-      << "the rank of output tensor is 'P' (length of the 'shape'), and the last dimension of 'indices' is 'N', "
-      << "then 'R' should be equal to 'Q - 1 + P - N'. but got 'R' = " << updates_shape.size()
-      << ", 'Q' = " << indices_shape.size() << ", 'P' = " << out_shape.size() << ", 'N' = " << n;
+    MS_EXCEPTION(ValueError) << "For '" << prim->name()
+                             << "', if the rank of 'indices' is 'Q', the rank of 'updates' is 'R', "
+                             << "the rank of output tensor is 'P' (length of the 'shape'), and the "
+                                "last dimension of 'indices' is 'N', "
+                             << "then 'R' should be equal to 'Q - 1 + P - N'. but got 'R' = " << updates_shape.size()
+                             << ", 'Q' = " << indices_shape.size() << ", 'P' = " << out_shape.size() << ", 'N' = " << n;
   }
 
   // updates.shape = indices.shape[:-1] + shape[indices.shape[-1]:]
@@ -78,7 +80,8 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   if (!constrain) {
     std::ostringstream buffer;
     buffer << "For '" << prim->name()
-           << "', if the last dimension of 'indices' is 'N', the shape of 'updates' should be the concatenation of "
+           << "', if the last dimension of 'indices' is 'N', the shape of "
+              "'updates' should be the concatenation of "
            << "'indices.shape[:-1]' and 'shape[N:]'. but got 'indices.shape' is " << indices_shape_ptr->ToString()
            << ", 'updates.shape' is " << updates_shape_ptr->ToString() << ", 'shape' is (";
     for (auto item : out_shape) {
@@ -136,10 +139,11 @@ abstract::ShapePtr ExtrectScatterNdShape(const PrimitivePtr &prim, const Abstrac
         auto min_shape = GetValue<std::vector<int64_t>>(shape_min_value);
         auto max_shape = GetValue<std::vector<int64_t>>(shape_max_value);
         if (min_shape.size() != shape_len || max_shape.size() != shape_len) {
-          MS_LOG(EXCEPTION)
-            << "For '" << prim_name
-            << "', shape's min and max value must has lengths equal to shape itself, but got min value len: "
-            << min_shape.size() << ", max value len: " << max_shape.size() << ", shape len: " << shape_len << ".";
+          MS_LOG(EXCEPTION) << "For '" << prim_name
+                            << "', shape's min and max value must has lengths equal to shape "
+                               "itself, but got min value len: "
+                            << min_shape.size() << ", max value len: " << max_shape.size()
+                            << ", shape len: " << shape_len << ".";
         }
 
         for (size_t i = 0; i < shape_len; i++) {
@@ -168,7 +172,8 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
         return item >= 1 || (is_dyn_output && (item == abstract::Shape::SHP_ANY));
       })) {
     std::ostringstream buffer;
-    buffer << "For 'ScatterNd', the input[shape] should be a tuple with all positive item. but got (";
+    buffer << "For 'ScatterNd', the input[shape] should be a tuple with all "
+              "positive item. but got (";
     for (auto item : out_shape) {
       buffer << item << ", ";
     }
@@ -183,7 +188,7 @@ AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
+  const std::set<TypePtr> valid_indices_types = {kInt16, kInt32, kInt64};
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterNdInputNum, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), valid_indices_types, name);
   if (input_args.size() > static_cast<size_t>(kScatterNdInputNum)) {
