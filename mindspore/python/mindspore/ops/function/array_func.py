@@ -3538,15 +3538,14 @@ def population_count(input_x):
     Raises:
         TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is not int16, uint16 (Ascend).
-                   If dtype of `input_x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU).
+                   If dtype of `input_x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x_input = Tensor([0, 1, 3], mindspore.int16)
-        >>> population_count = ops.PopulationCount()
-        >>> output = population_count(x_input)
+        >>> input_x = Tensor([0, 1, 3], mindspore.int16)
+        >>> output = ops.population_count(input_x)
         >>> print(output)
         [0 1 2]
     """
