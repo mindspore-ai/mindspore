@@ -1287,6 +1287,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)
 
+    def isfinite(self):
+        r"""
+        Determines which elements are finite for each position.
+
+        Returns:
+            Tensor, has the same shape of input, and the dtype is bool.
+
+        Raises:
+            TypeError: If self Tensor is not Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+            >>> output = a.isfinite()
+            >>> print(output)
+            [False True False]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('isfinite')()(self)
+
     def inv(self):
         r"""
         Computes Reciprocal of this Tensor element-wise.

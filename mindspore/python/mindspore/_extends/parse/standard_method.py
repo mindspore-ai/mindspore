@@ -2489,3 +2489,11 @@ def erfc(x):
     Refer to :func:`mindspore.ops.erfc` for more details.
     """
     return F.erfc(x)
+
+
+def isfinite(x):
+    r"""
+    Determines which elements are finite for each position.
+    Refer to :func:`mindspore.ops.isfinite` for more details.
+    """
+    return F.isfinite(x)

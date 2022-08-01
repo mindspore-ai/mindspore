@@ -1228,5 +1228,6 @@ tensor_operator_registry.register('renorm', renorm)
 tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 tensor_operator_registry.register('arg_min_with_value', min)
 tensor_operator_registry.register('top_k', P.TopK)
+tensor_operator_registry.register('isfinite', P.IsFinite)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
