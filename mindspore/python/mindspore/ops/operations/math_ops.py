@@ -556,6 +556,8 @@ class _Reduce(PrimitiveWithInfer):
         # when axis value is none, the output shape is computed by axis shape
         elif axis_v is None:
             axis_shape_list = axis['shape']
+            if len(axis_shape_list) != 1:
+                validator.check_value_type('axis', axis, [int, tuple, list], self.name)
             validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
             axis_shape = axis_shape_list[0]
             out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(

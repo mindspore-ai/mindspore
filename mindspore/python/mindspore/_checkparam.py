@@ -631,6 +631,8 @@ class Validator:
         #         `check_value_type('x', True, [bool, int])` will check pass
         if isinstance(arg_value, bool) and bool not in tuple(valid_types):
             raise_error_msg()
+        if isinstance(arg_value, float) and float not in tuple(valid_types):
+            arg_value = round(arg_value, 6)
         if not isinstance(arg_value, tuple(valid_types)):
             raise_error_msg()
         return arg_value
