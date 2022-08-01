@@ -551,7 +551,7 @@ CNodePtr AclPassImpl::CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph,
     auto tuple_get_item_prim_ptr_c = tuple_get_item_prim_ptr->GetPrim();
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr_c);
     MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, nullptr, "item_prim is nullptr.");
-    auto get_item_value = NewValueNode(MakeValue<int>(j));
+    auto get_item_value = NewValueNode(MakeValue<int64_t>(j));
     MS_CHECK_TRUE_MSG(get_item_value != nullptr, nullptr, "item_value is nullptr.");
     AnfNodePtrList inputs{tuple_get_item_prim, custom_node, get_item_value};
     CNodePtr get_item_cnode = func_graph->NewCNode(inputs);

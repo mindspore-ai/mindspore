@@ -82,11 +82,15 @@ void RuntimeUtils::CopyOutputTensorsFromKernelGraph(std::vector<tensor::TensorPt
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_outputs = kernel_graph->outputs();
   for (auto graph_output : graph_outputs) {
-    auto graph_output_address = AnfAlgo::GetMutableOutputAddr(graph_output, 0);
+    auto real_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(graph_output, 0);
+    auto real_output = real_output_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_output);
+    MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
+    auto graph_output_address = AnfAlgo::GetMutableOutputAddr(real_output, real_output_with_index.second);
     auto data = graph_output_address->ptr_;
     auto data_size = graph_output_address->size_;
     auto type_id = graph_output_address->type_id_;
-    auto uint_shape = AnfAlgo::GetOutputDeviceShape(graph_output, 0);
+    auto uint_shape = AnfAlgo::GetOutputDeviceShape(real_output, real_output_with_index.second);
     std::vector<int64_t> shape;
     for (auto us : uint_shape) {
       auto s = static_cast<int64_t>(us);
