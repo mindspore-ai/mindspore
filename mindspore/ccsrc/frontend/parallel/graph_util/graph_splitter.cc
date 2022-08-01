@@ -724,20 +724,25 @@ FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
     (void)no_monad_pairs.insert(no_monad_pairs.cend(), monad_pairs.cbegin(), monad_pairs.cend());
     inter_process_pairs = no_monad_pairs;
 
-    std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
-    (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(),
-                        [&rpc_send_nodes, &rpc_recv_nodes](const auto &node_pair) {
-                          (void)rpc_send_nodes.emplace_back(std::get<0>(node_pair));
-                          (void)rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
-                        });
-    CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
-    CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
-
     std::vector<FusedInterProcessOpPair> fused_pairs;
-    for (size_t i = 0; i < inter_process_pairs.size(); i++) {
-      FusedInterProcessOpPair fused_inter_process_pair = std::make_tuple(
-        fused_send_node, fused_recv_node, i, std::get<2>(inter_process_pairs[i]), std::get<3>(inter_process_pairs[i]));
-      (void)fused_pairs.emplace_back(fused_inter_process_pair);
+    if (!common::GetEnv("fusion2").empty()) {
+      fused_pairs = FuseCommEdges(inter_process_pairs);
+    } else {
+      std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
+      (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(),
+                          [&rpc_send_nodes, &rpc_recv_nodes](const auto &node_pair) {
+                            (void)rpc_send_nodes.emplace_back(std::get<0>(node_pair));
+                            (void)rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
+                          });
+      CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
+      CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
+
+      for (size_t i = 0; i < inter_process_pairs.size(); i++) {
+        FusedInterProcessOpPair fused_inter_process_pair =
+          std::make_tuple(fused_send_node, fused_recv_node, i, std::get<2>(inter_process_pairs[i]),
+                          std::get<3>(inter_process_pairs[i]));
+        (void)fused_pairs.emplace_back(fused_inter_process_pair);
+      }
     }
     results[rpc_nodes_fuse_info->first] = fused_pairs;
   }
@@ -846,6 +851,41 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
   common::AnfAlgo::CopyNodeAttr(kAttrRecvSrcNodeName, rpc_recv_nodes[0], fused_recv_node);
   common::AnfAlgo::CopyNodeAttr(kAttrRecvDstNodeName, rpc_recv_nodes[0], fused_recv_node);
   return fused_recv_node;
+}
+
+std::vector<FusedInterProcessOpPair> ParameterServerMode::FuseCommEdges(
+  const std::vector<InterProcessOpPair> &inter_process_pairs) {
+  std::vector<FusedInterProcessOpPair> fused_op_pairs;
+  std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
+  std::map<size_t, size_t> indices_map;
+  for (size_t i = 0; i < inter_process_pairs.size(); i++) {
+    auto &op_pair = inter_process_pairs[i];
+    auto reused_send_node =
+      std::find_if(rpc_send_nodes.begin(), rpc_send_nodes.end(), [&op_pair](const auto &send_node_need_fuse) {
+        CNodePtr send_node = std::get<0>(op_pair);
+        auto node_name1 = common::AnfAlgo::GetInputNode(send_node, kIndex0)->fullname_with_scope();
+        auto node_name2 = common::AnfAlgo::GetInputNode(send_node_need_fuse, kIndex0)->fullname_with_scope();
+        return node_name1 == node_name2;
+      });
+    if (reused_send_node != rpc_send_nodes.end()) {
+      size_t index = std::distance(rpc_send_nodes.begin(), reused_send_node);
+      indices_map[i] = index;
+    } else {
+      (void)rpc_send_nodes.emplace_back(std::get<0>(op_pair));
+      (void)rpc_recv_nodes.emplace_back(std::get<1>(op_pair));
+      indices_map[i] = rpc_send_nodes.size() - 1;
+    }
+  }
+
+  CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
+  CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
+  for (size_t i = 0; i < inter_process_pairs.size(); i++) {
+    FusedInterProcessOpPair fused_inter_process_pair =
+      std::make_tuple(fused_send_node, fused_recv_node, indices_map[i], std::get<2>(inter_process_pairs[i]),
+                      std::get<3>(inter_process_pairs[i]));
+    (void)fused_op_pairs.emplace_back(fused_inter_process_pair);
+  }
+  return fused_op_pairs;
 }
 
 GraphSplitter::GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
