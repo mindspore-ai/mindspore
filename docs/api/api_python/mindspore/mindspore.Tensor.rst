@@ -106,7 +106,7 @@ mindspore.Tensor
         - **TypeError** - `tolerance` 不是float类型。
         - **RuntimeError** - `variable` 与 `value` 之间的类型转换不被支持。
 
-    .. py:method:: arg_min_with_value(axis=0, keep_dims=False)
+    .. py:method:: argmin_with_value(axis=0, keep_dims=False)
 
         根据指定的索引计算最小值，并返回索引和值。
 
