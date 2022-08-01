@@ -1081,6 +1081,7 @@ class InstanceNorm(PrimitiveWithInfer):
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class BNTrainingReduce(Primitive):

@@ -41,7 +41,7 @@ bool InstanceNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                       "For 'InstanceNormGradGpuKernelMod', it create para desc failed");
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNormGrad>(base_operator);
-
+  batch_rank_ = base_operator->get_batch_rank();
   epsilon_ = kernel_ptr->get_epsilon();
   beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
 
@@ -66,15 +66,22 @@ int InstanceNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_OK;
   }
 
-  batch_ = LongToSize(input_shape[kIndex0]);
-  channel_ = LongToSize(input_shape[kIndex1]);
+  batch_rank_cum_ =
+    std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, int64_t(1), std::multiplies{});
+  batch_ = LongToSize(input_shape[batch_rank_ + kIndex0]);
+  channel_ = LongToSize(input_shape[batch_rank_ + kIndex1]);
 
   CheckTensorSize({input_shape});
 
   int batch = 1;
   int channel = SizeToInt(batch_) * SizeToInt(channel_);
   int height = 1;
-  int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), size_t(1), std::multiplies{});
+  const int width =
+    std::accumulate(input_shape.begin() + batch_rank_ + kNCDims, input_shape.end(), int64_t(1), std::multiplies{});
+
+  input_offset_ = channel * width;
+  para_offset_ = channel_;
+  updated_para_offset_ = channel;
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),
@@ -129,22 +136,39 @@ bool InstanceNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   float *ws_dbeta = GetDeviceAddress<float>(workspace, kIndex2);
   void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex3);
 
-  CopyMemDevice2Device(batch_, channel_, gamma, nullptr, nullptr, nullptr, ws_gamma, nullptr, nullptr, nullptr,
-                       stream_ptr_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_ptr_),
-                                     "For 'InstanceNormGradGpuKernelMod', it launch cudaStreamSynchronized failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(handle_, stream_ptr_),
+                                      "For 'InstanceNormGradGpuKernelMod', cudnnSetStream failed.")
 
-  const float alpha_data_diff = 1;
-  const float alpha_param_diff = 1;
-  const float beta_param_diff = 0;
-  float *reserve_addr = nullptr;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnBatchNormalizationBackwardEx(
-      handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_, &alpha_param_diff, &beta_param_diff, x_desc_, x,
-      y_desc_, y, dy_desc_, dy, dz_desc_, dz, dx_desc_, dx, scale_bias_diff_desc_, ws_gamma, beta, ws_dgamma, ws_dbeta,
-      epsilon_, save_mean, save_variance, activation_desc_, workspace_addr, workspace_size_, reserve_addr, 0),
-    "For 'InstanceNormGradGpuKernelMod', it launch cudnnBatchNormalizationBackwardEx failed");
-  ComputeMean(batch_, channel_, dgamma, dbeta, ws_dgamma, ws_dbeta, stream_ptr_);
+  for (size_t i = 0; i < batch_rank_cum_; ++i) {
+    auto ith_dy = dy + input_offset_ * i;
+    auto ith_x = x + input_offset_ * i;
+    auto ith_gamma = gamma + para_offset_ * i;
+    auto ith_save_mean = save_mean + updated_para_offset_ * i;
+    auto ith_save_variance = save_variance + updated_para_offset_ * i;
+
+    auto ith_dx = dx + input_offset_ * i;
+    auto ith_dgamma = dgamma + para_offset_ * i;
+    auto ith_dbeta = dbeta + para_offset_ * i;
+
+    CopyMemDevice2Device(batch_, channel_, ith_gamma, nullptr, nullptr, nullptr, ws_gamma, nullptr, nullptr, nullptr,
+                         stream_ptr_);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream_ptr_),
+                                       "For 'InstanceNormGradGpuKernelMod', it launch cudaStreamSynchronized failed");
+
+    const float alpha_data_diff = 1;
+    const float alpha_param_diff = 1;
+    const float beta_param_diff = 0;
+    float *reserve_addr = nullptr;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnBatchNormalizationBackwardEx(handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_, &alpha_param_diff,
+                                        &beta_param_diff, x_desc_, ith_x, y_desc_, y, dy_desc_, ith_dy, dz_desc_, dz,
+                                        dx_desc_, ith_dx, scale_bias_diff_desc_, ws_gamma, beta, ws_dgamma, ws_dbeta,
+                                        epsilon_, ith_save_mean, ith_save_variance, activation_desc_, workspace_addr,
+                                        workspace_size_, reserve_addr, 0),
+      "For 'InstanceNormGradGpuKernelMod', it launch cudnnBatchNormalizationBackwardEx failed");
+    ComputeMean(batch_, channel_, ith_dgamma, ith_dbeta, ws_dgamma, ws_dbeta, stream_ptr_);
+  }
+
   return true;
 }
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &InstanceNormGradGpuKernelMod::GetFuncList() const {
