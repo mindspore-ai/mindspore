@@ -47,7 +47,7 @@ class distinct_uniform_int_distribution {
     do {
       res = distr_(*engine);
     } while (uset_.count(res) > 0);
-    uset_.insert(res);
+    (void)uset_.insert(res);
     return res;
   }
 

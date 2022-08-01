@@ -191,7 +191,7 @@ class OpKernelBin {
   ~OpKernelBin() = default;
 
   const std::string &GetName() const { return name_; }
-  const uint8_t *GetBinData() const { return (const uint8_t *)data_.data(); }
+  const uint8_t *GetBinData() const { return reinterpret_cast<const uint8_t *>(data_.data()); }
   size_t GetBinDataSize() const { return data_.size(); }
   OpKernelBin(const OpKernelBin &) = delete;
   const OpKernelBin &operator=(const OpKernelBin &) = delete;
