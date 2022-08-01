@@ -32,15 +32,6 @@ constexpr auto kNamePriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kNamePriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 constexpr auto kNamePriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 
-constexpr auto kCapacity = "capacity";
-constexpr auto kShapes = "shapes";
-constexpr auto kTypes = "types";
-constexpr auto kSchema = "schema";
-constexpr auto kSeed0 = "seed0";
-constexpr auto kSeed1 = "seed1";
-constexpr auto kHandle = "handle";
-constexpr auto kBatchSize = "batch_size";
-
 class MIND_API PriorityReplayBufferCreate : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PriorityReplayBufferCreate);
