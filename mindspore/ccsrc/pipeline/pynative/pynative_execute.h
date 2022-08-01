@@ -156,7 +156,10 @@ class TopCellInfo {
     (void)op_info_with_tensor_id_[op_info].emplace_back(tensor_id);
   }
   const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
-  TensorIdWithTensorObject &tensor_id_with_tensor_object() { return tensor_id_with_tensor_object_; }
+  const TensorIdWithTensorObject &tensor_id_with_tensor_object() const { return tensor_id_with_tensor_object_; }
+  void SetTensorIdWithTensorObject(const std::string &id, const tensor::TensorPtr &tensor) {
+    (void)tensor_id_with_tensor_object_[id].emplace_back(tensor);
+  }
   ad::KPynativeCellPtr k_pynative_cell_ptr() const { return k_pynative_cell_ptr_; }
   void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
     k_pynative_cell_ptr_ = k_pynative_cell_ptr;
@@ -503,7 +506,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_grad_flag(bool flag) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
   void set_graph_phase(const std::string &graph_phase) const;
-  void set_py_exe_path(const py::object &py_exe_path);
+  void set_py_exe_path(const py::object &py_exe_path) const;
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
   void NewGraph(const py::object &cell, const py::args &args) const;
   void SetHookChanged(const py::object &cell) const;
@@ -524,8 +527,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Abnormal existed
   void ClearRes();
   // Sync stream
-  void Sync();
-  void SetLazyBuild(bool enable);
+  void Sync() const;
+  void SetLazyBuild(bool enable) const;
   void ExecuteLazyTask() const;
   bool IsFirstCell() const;
 
