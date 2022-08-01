@@ -1440,6 +1440,35 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
   }
 }
 
+void ControlNodeScheduler::LinkDataArrowByKernelGraphInSinkMode(const KernelGraphPtr &graph,
+                                                                ControlActor *const from_actor,
+                                                                const ControlNodeParserPtr &parser) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(parser);
+  MS_LOG(DEBUG) << "Link data arrow in sink mode by kernel graph:" << graph->ToString();
+  auto to_actor = FetchActor(KernelTransformType::kSuperKernelActor, "", nullptr, graph);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(to_actor);
+  MS_EXCEPTION_IF_NULL(super_kernel_actor);
+
+  auto &input_nodes = graph->input_nodes();
+  for (size_t i = 0; i < input_nodes.size(); ++i) {
+    const auto &input_node = input_nodes[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (HasAbstractMonad(input_node) || (!parser->IsControlFlowDataArrow(graph, input_node))) {
+      continue;
+    }
+    size_t to_index = super_kernel_actor->FetchInputNodePosition(input_node);
+    const auto &front_node_with_index = GetFrontNodeByKernelGraph(input_node, graph.get());
+    MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+    size_t from_index = from_actor->FetchNodePosition(front_node_with_index);
+    SchedulerHelper::AddFormalParameterDeviceTensor(from_actor, from_index, input_node, graph);
+    SchedulerHelper::AddDataArrow(from_actor, to_actor, from_index, to_index);
+  }
+  return;
+}
+
 void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, ControlActor *const entrance_actor,
                                                       const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(graph);
@@ -1454,7 +1483,12 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
     from_actor = dynamic_cast<ControlActor *>(actor);
   }
 
-  std::set<AnfNodePtr> sink_input_node_linked;
+  if (graph->is_graph_run_mode()) {
+    // Link data arrow in graph mode.
+    LinkDataArrowByKernelGraphInSinkMode(graph, from_actor, parser);
+    return;
+  }
+
   auto &execution_order = graph->execution_order();
   for (const auto &kernel : execution_order) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -1467,19 +1501,12 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       auto input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       auto input = input_with_index.first;
       MS_EXCEPTION_IF_NULL(input);
-      if (sink_input_node_linked.count(input) > 0 || HasAbstractMonad(input) || parser == nullptr ||
-          (!parser->IsControlFlowDataArrow(graph, input))) {
+      if (HasAbstractMonad(input) || (!parser->IsControlFlowDataArrow(graph, input))) {
         continue;
       }
-      auto front_node = graph->GetFrontAnfByBackendAnf(input);
-      auto internal_node_with_index = graph->GetFrontNodeByInternalParameter(input);
-      auto tuple_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input);
-      KernelWithIndex from_node_with_index =
-        (front_node == nullptr) ? internal_node_with_index : KernelWithIndex(front_node, 0);
-      if (from_node_with_index.first == nullptr) {
-        from_node_with_index = tuple_node_with_index;
-      }
 
+      auto from_node_with_index = GetFrontNodeByKernelGraph(input, graph.get());
+      MS_EXCEPTION_IF_NULL(from_node_with_index.first);
       if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
         MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
                         << " for graph:" << graph->ToString() << " is a tuple get item";
@@ -1511,15 +1538,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       }
 
       MS_EXCEPTION_IF_NULL(from_actor);
-      auto to_index = i;
-      if (type == KernelTransformType::kSuperKernelActor) {
-        auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(to_actor);
-        MS_EXCEPTION_IF_NULL(super_kernel_actor);
-        to_index = super_kernel_actor->FetchInputNodePosition(input);
-        (void)sink_input_node_linked.insert(input);
-      }
       SchedulerHelper::AddFormalParameterDeviceTensor(from_actor, from_index, input, graph);
-      SchedulerHelper::AddDataArrow(from_actor, to_actor, from_index, to_index);
+      SchedulerHelper::AddDataArrow(from_actor, to_actor, from_index, i);
     }
   }
 }

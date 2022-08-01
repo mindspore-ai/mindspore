@@ -89,6 +89,8 @@ class ControlNodeScheduler {
   void LinkDataArrowForCustomActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, ControlActor *const entrance_actor,
                                   const ControlNodeParserPtr &parser) const;
+  void LinkDataArrowByKernelGraphInSinkMode(const KernelGraphPtr &graph, ControlActor *const from_actor,
+                                            const ControlNodeParserPtr &parser) const;
   void LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info) const;
   void LinkControlArrowForLoopCountActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) const;
