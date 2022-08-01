@@ -294,7 +294,7 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
 }
 
 PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
-  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) {
+  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const {
   opt::irpass::OptimizeIRPassLib irpass;
   BindAbsToParameters(bprop_fg, abs_list_input);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();

@@ -581,7 +581,7 @@ bool ConvertSwitchReplacement::CheckSwitchBranch(const AnfNodePtr &node) const {
   return true;
 }
 
-bool ConvertSwitchReplacement::CheckSwitchWrapNode(const AnfNodePtr &node) {
+bool ConvertSwitchReplacement::CheckSwitchWrapNode(const AnfNodePtr &node) const {
   // {{prim::kPrimSwitch, X, G1, G2}, Xs}.
   if (node->isa<CNode>()) {
     auto inp0 = node->cast<CNodePtr>()->input(0);
