@@ -14,17 +14,28 @@
 # limitations under the License.
 # ============================================================================
 
-set -e
-BASEPATH=$(cd "$(dirname $0)"; pwd)
-
+BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
+get_version() {
+    VERSION_STR=$(cat ${BASEPATH}/../../../../version.txt)
+}
+get_version
 MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
-
-if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
-  mkdir -p model
-  wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
-fi
+MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
+MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/x86_64/${MINDSPORE_FILE}"
 
 mkdir -p build
-cd build
-cmake ..
+mkdir -p lib
+mkdir -p model
+if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
+    wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+fi
+if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
+  wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+fi
+tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.so ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
+cd ${BASEPATH}/build || exit
+cmake ${BASEPATH}
 make
