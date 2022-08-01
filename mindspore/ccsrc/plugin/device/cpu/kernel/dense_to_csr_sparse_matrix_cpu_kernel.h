@@ -42,7 +42,7 @@ class DenseToCSRSparseMatrixCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename valueT, typename indiceT>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   size_t rank_{0};
   size_t batch_size_{0};
   size_t num_rows_{0};
