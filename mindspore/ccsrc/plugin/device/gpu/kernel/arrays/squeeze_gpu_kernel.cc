@@ -15,9 +15,17 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/squeeze_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                      SqueezeGpuKernelMod, Complex<float>)
+MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                      SqueezeGpuKernelMod, Complex<double>)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       SqueezeGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
