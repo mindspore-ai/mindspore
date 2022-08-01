@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNode
     MS_LOG(EXCEPTION) << "The 2th input of switch_layer expect a tuple of graphs, but got " << input->ToString() << ".";
   }
   mindspore::HashMap<AnfNodePtr, FuncGraphPtr> node_to_fg;
-  auto tuple_graphs = input->cast<CNodePtr>();
+  auto tuple_graphs = input->cast_ptr<CNode>();
   for (size_t i = 1; i < tuple_graphs->size(); ++i) {
     auto graph = tuple_graphs->input(i);
     if (!IsValueNode<FuncGraph>(graph)) {
@@ -191,7 +191,7 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
     MS_LOG(WARNING)
       << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
-    auto output_cnode = node->cast<CNodePtr>();
+    auto output_cnode = node->cast_ptr<CNode>();
     if (output_cnode->size() - 1 == 1) {
       return output_cnode->input(1);
     }
@@ -217,16 +217,16 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     return make_tuple;
   }
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    auto tuple_get_item = node->cast<CNodePtr>();
+    auto tuple_get_item = node->cast_ptr<CNode>();
     auto inp = tuple_get_item->input(1);
     if (IsPrimitiveCNode(inp, prim::kPrimHookBackward) || IsPrimitiveCNode(inp, prim::kPrimCellBackwardHook)) {
       MS_LOG(WARNING)
         << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
       constexpr size_t idx = 2;
-      auto v_node = tuple_get_item->input(idx)->cast<ValueNodePtr>();
+      auto v_node = tuple_get_item->input(idx)->cast_ptr<ValueNode>();
       MS_EXCEPTION_IF_NULL(v_node);
       auto out_idx = GetValue<int64_t>(v_node->value());
-      return inp->cast<CNodePtr>()->input(LongToSize(out_idx) + 1);
+      return inp->cast_ptr<CNode>()->input(LongToSize(out_idx) + 1);
     }
   }
   return node;
@@ -238,7 +238,7 @@ AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, con
   if (input_type == nullptr || !input_type->isa<TensorType>()) {
     return din;
   }
-  input_type = input_type->cast<TensorTypePtr>()->element();
+  input_type = input_type->cast_ptr<TensorType>()->element();
   MS_EXCEPTION_IF_NULL(input_type);
   if (input_type->type_id() == kNumberTypeComplex64 || input_type->type_id() == kNumberTypeComplex128) {
     return din;
@@ -256,7 +256,7 @@ AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, con
   if (din_type == nullptr || !din_type->isa<TensorType>()) {
     return din;
   }
-  din_type = din_type->cast<TensorTypePtr>()->element();
+  din_type = din_type->cast_ptr<TensorType>()->element();
   MS_EXCEPTION_IF_NULL(din_type);
   if (din_type->type_id() != kNumberTypeComplex64 && din_type->type_id() != kNumberTypeComplex128) {
     return din;
@@ -689,8 +689,8 @@ void DFunctor::MapValueObject() {
 
     AdjointPtr adjoint = nullptr;
     if (IsValueNode<Primitive>(node)) {  // Primitive.
-      auto prim = GetValueNode<PrimitivePtr>(node);
-      if (GetValueNode<PrimitivePtr>(node) == prim::kPrimReturn ||
+      auto prim = GetValuePtr<Primitive>(node);
+      if ((prim->Hash() == prim::kPrimReturn->hash() && prim->name() == prim::kPrimReturn->name()) ||
           (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) ||
           (prim->Hash() == prim::kPrimCellBackwardHook->Hash() &&
            prim->name() == prim::kPrimCellBackwardHook->name())) {
@@ -784,17 +784,15 @@ void DFunctor::BroadCastStopFlag() {
   while (need_cut_) {
     need_cut_ = false;
     for (auto &node : primal_graph_->nodes()) {
-      if (node->isa<CNode>()) {
-        auto cnode = node->cast<CNodePtr>();
-        if (!cnode->stop_gradient()) {
-          // Cut off the cnode only when it's not referred any more
-          if (IsPrimitiveCNode(cnode, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode, prim::kPrimUpdateState) ||
-              AllReferencesStopped(cnode)) {
-            MS_LOG(DEBUG) << "Set stop gradient flag for " << cnode->ToString() << ".";
-            cnode->set_stop_gradient(true);
-            // The stop set changed, more cut required
-            need_cut_ = true;
-          }
+      auto cnode = dyn_cast<CNode>(node);
+      if (cnode != nullptr && !cnode->stop_gradient()) {
+        // Cut off the cnode only when it's not referred any more
+        if (cnode->IsApply(prim::kPrimStopGradient) || cnode->IsApply(prim::kPrimUpdateState) ||
+            AllReferencesStopped(cnode)) {
+          MS_LOG(DEBUG) << "Set stop gradient flag for " << cnode->ToString() << ".";
+          cnode->set_stop_gradient(true);
+          // The stop set changed, more cut required
+          need_cut_ = true;
         }
       }
     }
@@ -809,7 +807,7 @@ bool DFunctor::AllReferencesStopped(const CNodePtr &node) {
   }
   for (auto &kv : users) {
     auto &user = kv.first;
-    if (!user->isa<CNode>() || !user->cast<CNodePtr>()->stop_gradient()) {
+    if (!user->isa<CNode>() || !user->cast_ptr<CNode>()->stop_gradient()) {
       return false;
     }
   }

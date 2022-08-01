@@ -77,8 +77,7 @@ static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num
 
 static bool HasVirtualDataset(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
-    auto cnode = node->cast<CNodePtr>();
-    if (IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset)) {
+    if (IsPrimitiveCNode(node, prim::kPrimVirtualDataset)) {
       return true;
     }
   }
@@ -96,7 +95,7 @@ static CNodePtr CreateTupleGetItem(const AnfNodePtr &node, size_t index, const F
   CNodePtr tuple_get_item = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   tuple_get_item->set_scope(node->scope());
-  auto input_abstract_tuple = node->abstract()->cast<abstract::AbstractTuplePtr>();
+  auto input_abstract_tuple = node->abstract()->cast_ptr<abstract::AbstractTuple>();
   MS_EXCEPTION_IF_NULL(input_abstract_tuple);
   auto tuple_get_item_abstract = input_abstract_tuple->elements()[index];
   MS_EXCEPTION_IF_NULL(tuple_get_item_abstract);
@@ -134,7 +133,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
   }
   std::set<AnfNodePtr> input_parameters;
   for (auto &anf_param : root->parameters()) {
-    auto param = anf_param->cast<ParameterPtr>();
+    auto param = anf_param->cast_ptr<Parameter>();
     if (!param->has_default()) {
       (void)input_parameters.insert(anf_param);
     }
@@ -143,7 +142,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     auto node_users_map = root->manager()->node_users();
     auto node_users = node_users_map[input_parameter];
     for (auto node_user : node_users) {
-      auto cnode = node_user.first->cast<CNodePtr>();
+      auto cnode = node_user.first->cast_ptr<CNode>();
       if (IsValueNode<Primitive>(cnode->inputs()[0]) ||
           (IsValueNode<FuncGraph>(cnode->inputs()[0]) && !root->has_flag(parallel::kTraining))) {
         (void)graph_sets.insert(cnode->func_graph());
@@ -155,7 +154,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     if (!node->isa<CNode>()) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = node->cast_ptr<CNode>();
     if ((cnode->size() < NODE_INPUT_NUM) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }

@@ -214,7 +214,7 @@ void SetValueMutable(const abstract::AbstractBasePtr &abs) {
     return;
   }
 
-  auto abs_sequence = abs->cast<abstract::AbstractSequencePtr>();
+  auto abs_sequence = abs->cast_ptr<abstract::AbstractSequence>();
   if (abs_sequence != nullptr) {
     const auto &elements = abs_sequence->elements();
     for (auto &ele : elements) {
@@ -223,7 +223,7 @@ void SetValueMutable(const abstract::AbstractBasePtr &abs) {
     return;
   }
 
-  auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+  auto abs_dict = abs->cast_ptr<abstract::AbstractDictionary>();
   if (abs_dict != nullptr) {
     const auto &elements = abs_dict->elements();
     for (auto &ele : elements) {
@@ -590,16 +590,15 @@ void GraphExecutorPy::GetWeightInfo(
   auto x = root_node->input(1);
   MS_EXCEPTION_IF_NULL(x);
   if (IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
-    weight_name = weight_node->cast<CNodePtr>()->input(1)->cast<ParameterPtr>()->name();
+    weight_name = weight_node->cast_ptr<CNode>()->input(1)->cast_ptr<Parameter>()->name();
   } else {
-    auto para = weight_node->cast<ParameterPtr>();
+    auto para = weight_node->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(para);
     weight_name = para->name();
   }
   // find the fakequant from input
   int64_t count = 0;
   const int64_t max_depth = 5;
-  CNodePtr cnode = nullptr;
   auto is_quant_cnode = [](const AnfNodePtr &node) {
     return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
            IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel) ||
@@ -610,7 +609,7 @@ void GraphExecutorPy::GetWeightInfo(
     if (count >= max_depth) {
       break;
     }
-    cnode = x->cast<CNodePtr>();
+    auto cnode = x->cast_ptr<CNode>();
     if (cnode == nullptr || cnode->size() <= 1) {
       break;
     }
@@ -624,9 +623,9 @@ void GraphExecutorPy::GetWeightInfo(
   if (!is_quant_cnode(x)) {
     return;
   }
-  cnode = x->cast<CNodePtr>();
+  auto cnode = x->cast_ptr<CNode>();
   constexpr size_t expect_input_size = 4;
-  if (cnode == nullptr || IsPrimitiveCNode(cnode, prim::kPrimLoad) || cnode->size() != expect_input_size) {
+  if (cnode == nullptr || cnode->IsApply(prim::kPrimLoad) || cnode->size() != expect_input_size) {
     return;
   }
   const size_t fakequant_index = 2;
@@ -636,18 +635,18 @@ void GraphExecutorPy::GetWeightInfo(
   }
   std::string fakequant_min_node_name;
   if (IsPrimitiveCNode(fakequant_min_node, prim::kPrimLoad)) {
-    fakequant_min_node_name = fakequant_min_node->cast<CNodePtr>()->input(1)->cast<ParameterPtr>()->name();
+    fakequant_min_node_name = fakequant_min_node->cast_ptr<CNode>()->input(1)->cast_ptr<Parameter>()->name();
   } else {
-    auto param = fakequant_min_node->cast<ParameterPtr>();
+    auto param = fakequant_min_node->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(param);
     fakequant_min_node_name = param->name();
   }
-  auto quant_op_value = cnode->input(0)->cast<ValueNodePtr>()->value();
+  const auto &quant_op_value = cnode->input(0)->cast_ptr<ValueNode>()->value();
   MS_EXCEPTION_IF_NULL(quant_op_value);
   if (!quant_op_value->isa<PrimitivePy>()) {
     return;
   }
-  auto quant_op = quant_op_value->cast<PrimitivePyPtr>();
+  auto quant_op = quant_op_value->cast_ptr<PrimitivePy>();
   (*fake_quant_table)[weight_name] = std::make_pair(quant_op->adapter(), fakequant_min_node_name);
 }
 
@@ -677,7 +676,7 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> GraphExecut
     }
     auto weight = root_node->input(weight_index);
     if (!is_quant_cnode(weight)) {
-      auto tuple_node = weight->cast<CNodePtr>();
+      auto tuple_node = weight->cast_ptr<CNode>();
       if (tuple_node != nullptr) {
         auto fake_node = tuple_node->input(1);
         if (!is_quant_cnode(fake_node)) {
@@ -688,7 +687,7 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> GraphExecut
       }
     }
     // get parameter weight's name
-    auto cnode = weight->cast<CNodePtr>();
+    auto cnode = weight->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto weight_node = cnode->input(weight_index);
     if (!weight_node->isa<Parameter>() && !IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
@@ -1207,7 +1206,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     // Maybe some default parameter
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; i++) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
-      auto param_ptr = (graph_params[i])->cast<ParameterPtr>();
+      auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
       MS_EXCEPTION_IF_NULL(param_ptr);
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
@@ -1346,7 +1345,7 @@ void GraphExecutorPy::UpdataParamNodeDefaultInput(
   auto &params = func_graph->parameters();
   for (const auto &param : params) {
     MS_EXCEPTION_IF_NULL(param);
-    auto param_cast = param->cast<ParameterPtr>();
+    auto param_cast = param->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(param_cast);
     auto iter = params_value.find(param_cast->name());
     if (iter != params_value.end()) {

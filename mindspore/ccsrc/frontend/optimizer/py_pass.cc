@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ bool IsTraversable(const AnfNodePtr &node) {
 
 AnfNodePtr BuildPrimitive(const PatternPtr &pattern) {
   // Build up AnfNode from primitive
-  auto prim_pattern = pattern->cast<PrimPtr>();
+  auto prim_pattern = pattern->cast_ptr<Prim>();
   MS_EXCEPTION_IF_NULL(prim_pattern);
   PrimitivePyPtr prim = prim_pattern->matched_primitive();
   MS_EXCEPTION_IF_NULL(prim);
@@ -67,7 +67,7 @@ AnfNodePtr BuildPrimitive(const PatternPtr &pattern) {
 
 AnfNodePtr BuildNewTensor(const PatternPtr &pattern) {
   // Build a ValueNode from TensorPtr
-  auto new_tensor_pattern = pattern->cast<NewTensorPtr>();
+  auto new_tensor_pattern = pattern->cast_ptr<NewTensor>();
   MS_EXCEPTION_IF_NULL(new_tensor_pattern);
   auto input_tensor = new_tensor_pattern->input_tensor();
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -76,7 +76,7 @@ AnfNodePtr BuildNewTensor(const PatternPtr &pattern) {
 
 AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &fg,
                                    const FuncGraphPtr &top_graph) {
-  auto call_pattern = pattern->cast<CallPtr>();
+  auto call_pattern = pattern->cast_ptr<Call>();
   MS_EXCEPTION_IF_NULL(call_pattern);
   auto prim = call_pattern->prim_value();
   if (prim != nullptr) {
@@ -88,7 +88,7 @@ AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultP
 }
 
 AnfNodePtr BuildNewParameter(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &top_graph) {
-  auto new_para_pattern = pattern->cast<NewParameterPtr>();
+  auto new_para_pattern = pattern->cast_ptr<NewParameter>();
   MS_EXCEPTION_IF_NULL(new_para_pattern);
   if (!new_para_pattern->built()) {
     static int64_t parameter_id = 0;
@@ -122,7 +122,7 @@ AnfNodePtr BuildNewParameter(const PatternPtr &pattern, const MatchResultPtr &re
 }
 
 AnfNodePtr BuildImmNode(const PatternPtr &pattern) {
-  auto imm_pattern = pattern->cast<ImmPtr>();
+  auto imm_pattern = pattern->cast_ptr<Imm>();
   MS_EXCEPTION_IF_NULL(imm_pattern);
   auto value = imm_pattern->value();
   auto scalar_value_ptr = std::make_shared<Int64Imm>(value);
@@ -134,7 +134,7 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
   auto target_node = res->get_node(pattern);
   if (target_node != nullptr) {
     // If pattern is NewParameter, check whether it shouldn't last and is not built
-    auto new_para = pattern->cast<NewParameterPtr>();
+    auto new_para = pattern->cast_ptr<NewParameter>();
     if (new_para == nullptr || new_para->should_last() || new_para->built()) {
       return target_node;
     }
@@ -218,20 +218,20 @@ void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name,
     MS_LOG(EXCEPTION) << "Failed to convert new parameter to ValuePtr.";
   }
   MS_EXCEPTION_IF_NULL(param);
-  auto param_node = param->cast<ParameterPtr>();
+  auto param_node = param->cast_ptr<Parameter>();
   MS_EXCEPTION_IF_NULL(param_node);
   param_node->set_default_param(param_value);
 }
 
 void Reset(const PatternPtr &pattern) {
   if (pattern->isa<Prim>()) {
-    auto prim_pattern = pattern->cast<PrimPtr>();
+    auto prim_pattern = pattern->cast_ptr<Prim>();
     prim_pattern->reset();
   } else if (pattern->isa<NewParameter>()) {
-    auto new_param_pattern = pattern->cast<NewParameterPtr>();
+    auto new_param_pattern = pattern->cast_ptr<NewParameter>();
     new_param_pattern->reset();
   } else if (pattern->isa<Call>()) {
-    auto call_with_pattern = pattern->cast<CallPtr>();
+    auto call_with_pattern = pattern->cast_ptr<Call>();
     for (const auto &sub_pattern : call_with_pattern->inputs()) {
       Reset(sub_pattern);
     }
@@ -257,7 +257,7 @@ bool PythonPass::Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res) 
   MS_EXCEPTION_IF_NULL(dst_pattern_);
   if (src_pattern_ == nullptr) {
     // Add NewParameter
-    auto new_para_pattern = dst_pattern_->cast<NewParameterPtr>();
+    auto new_para_pattern = dst_pattern_->cast_ptr<NewParameter>();
     if (new_para_pattern == nullptr) {
       MS_LOG(EXCEPTION) << "Expect NewParameter pattern for target if src pattern is null.";
     }

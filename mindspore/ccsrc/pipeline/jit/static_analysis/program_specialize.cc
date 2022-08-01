@@ -63,7 +63,7 @@ bool CanSpecializeValueNode(const AnfNodePtr &node) {
   }
   if (IsValueNode<FuncGraph>(node)) {
     if (node->abstract() != nullptr) {
-      auto abs_func = node->abstract()->cast<FuncGraphAbstractClosurePtr>();
+      auto abs_func = node->abstract()->cast_ptr<FuncGraphAbstractClosure>();
       // If this funcgraph had specialized in ProcessCNode of FirstPass,
       // then ignore it.
       if (abs_func != nullptr && abs_func->specialized()) {
@@ -110,12 +110,12 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
     }
 
     // Handle MakeTuple/MakeList CNode.
-    auto cnode = dyn_cast<CNode>(node);
+    auto cnode = dyn_cast_ptr<CNode>(node);
     if (cnode != nullptr) {
       if (pos + 1 >= cnode->inputs().size()) {
         continue;
       }
-      auto input_value = GetValueNode<StringImmPtr>(cnode->input(pos + 1));
+      auto input_value = GetValuePtr<StringImm>(cnode->input(pos + 1));
       if (input_value == nullptr || input_value->value() != kDeadNodeName) {
         continue;
       }
@@ -129,7 +129,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
 
       // Change the abstract.
       (*flags)[pos] = false;  // Change the use flag as 0.
-      auto sequence_abs = dyn_cast<AbstractSequence>(node->abstract());
+      auto sequence_abs = dyn_cast_ptr<AbstractSequence>(node->abstract());
       if (sequence_abs != nullptr && !sequence_abs->PurifyElements()) {
         MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
                       << ", node: " << node->DebugString(recursive_level);
@@ -138,13 +138,13 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
     }
     // Handle ValueTuple/ValueList.
     if (IsValueNode<ValueTuple>(node) || IsValueNode<ValueList>(node)) {
-      auto sequence_value = GetValueNode<ValueSequencePtr>(node);
+      auto sequence_value = GetValuePtr<ValueSequence>(node);
       MS_EXCEPTION_IF_NULL(sequence_value);
       if (pos >= sequence_value->value().size()) {
         continue;
       }
       ValuePtr element_value = sequence_value->value()[pos];
-      auto element_str_value = element_value->cast<StringImmPtr>();
+      auto element_str_value = element_value->cast_ptr<StringImm>();
       if (element_str_value == nullptr || element_str_value->value() != kDeadNodeName) {
         continue;
       }
@@ -157,7 +157,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
 
       // Change the abstract.
       (*flags)[pos] = false;  // Change the use flag as 0.
-      auto sequence_abs = dyn_cast<AbstractSequence>(node->abstract());
+      auto sequence_abs = dyn_cast_ptr<AbstractSequence>(node->abstract());
       if (sequence_abs != nullptr && !sequence_abs->PurifyElements()) {
         constexpr int recursive_level = 2;
         MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
@@ -250,7 +250,7 @@ AbstractBasePtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const Abst
     auto build_new_abs = [this, &func_atoms](const AbstractFuncAtomPtr &poss) {
       auto resolved_atom = poss;
       if (poss->isa<AsyncAbstractFuncAtom>()) {
-        const auto &async_abs_func = poss->cast<AsyncAbstractFuncAtomPtr>();
+        auto async_abs_func = poss->cast_ptr<AsyncAbstractFuncAtom>();
         const auto &resolved_func = async_abs_func->GetUnique();
         resolved_atom = resolved_func->cast<AbstractFuncAtomPtr>();
         MS_EXCEPTION_IF_NULL(resolved_atom);
@@ -306,7 +306,7 @@ void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
     if (!node->isa<CNode>()) {
       continue;
     }
-    auto &input0 = node->cast<CNodePtr>()->input(0);
+    auto &input0 = node->cast_ptr<CNode>()->input(0);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsValueNode<FuncGraph>(input0)) {
       continue;
@@ -383,7 +383,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
 
 void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto c_node = node->cast<CNodePtr>();
+  auto c_node = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_node);
   auto inputs = c_node->inputs();
   std::vector<AnfNodePtr> new_inputs;
@@ -403,7 +403,7 @@ void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const An
       return new_inp;
     });
 
-  auto c_new_node = new_node->cast<CNodePtr>();
+  auto c_new_node = new_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_new_node);
   c_new_node->set_inputs(new_inputs);
 }
@@ -534,7 +534,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
   if (new_node == old_node) {
     return;
   }
-  AbstractSequencePtr old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
+  auto old_sequence_abs = dyn_cast_ptr<AbstractSequence>(old_abs);
   if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes() == nullptr ||
       old_sequence_abs->sequence_nodes()->empty()) {
     MS_LOG(DEBUG) << "No sequence node in old abs, " << old_node->DebugString() << " --> " << new_node->DebugString();
@@ -590,7 +590,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     }
     MS_LOG(ERROR) << "New abstract, " << old_node->DebugString() << " --> " << new_node->DebugString()
                   << ", elements_use_flags: " << (*flags);
-    AbstractSequencePtr new_sequence_abs = dyn_cast<AbstractSequence>(new_abs);
+    auto new_sequence_abs = dyn_cast_ptr<AbstractSequence>(new_abs);
     if (new_sequence_abs == nullptr) {
       MS_LOG(EXCEPTION) << "New node should be sequence type as well, but got " << new_abs->ToString();
     }
@@ -608,7 +608,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
 template <typename T>
 void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecializer *const specializer) {
   const auto &old_input = cnode->input(index);
-  auto sequence_value = GetValueNode<std::shared_ptr<T>>(old_input);
+  auto sequence_value = GetValuePtr<T>(old_input);
   if (sequence_value == nullptr) {
     return;
   }
@@ -625,7 +625,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   for (size_t i = 0; i < sequence_value_size; ++i) {
     ValuePtr old_sequence_value = sequence_value->value()[i];
-    auto old_sequence_str_value = old_sequence_value->cast<StringImmPtr>();
+    auto old_sequence_str_value = old_sequence_value->cast_ptr<StringImm>();
     if (!(*flags)[i]) {
       auto zero = MakeValue(0);
       (void)elements.emplace_back(zero);
@@ -643,7 +643,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   auto new_sequence_value = std::make_shared<T>(elements);
   auto new_input = NewValueNode(new_sequence_value);
   auto new_input_abs = new_sequence_value->ToAbstract();
-  AbstractSequencePtr new_sequence_abs = dyn_cast<AbstractSequence>(new_input_abs);
+  auto new_sequence_abs = dyn_cast<AbstractSequence>(new_input_abs);
   MS_EXCEPTION_IF_NULL(new_sequence_abs);
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
@@ -704,7 +704,7 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
       (void)inputs.emplace_back(cnode->input(0));
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
-        auto old_input_value = GetValueNode<StringImmPtr>(old_input);
+        auto old_input_value = GetValuePtr<StringImm>(old_input);
         if (!(*flags)[i]) {
           auto zero_value = NewValueNode(MakeValue(0));
           zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
@@ -754,7 +754,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Fail to get abstract value with " << conf->ToString() << ", for " << new_node->DebugString();
   }
   if (new_node->isa<CNode>() && new_node->abstract()->isa<PartialAbstractClosure>()) {
-    auto partial_abstract = dyn_cast<PartialAbstractClosure>(new_node->abstract());
+    auto partial_abstract = dyn_cast_ptr<PartialAbstractClosure>(new_node->abstract());
     if (partial_abstract->node() == node) {
       partial_abstract->set_node(new_node);
     }
@@ -768,8 +768,8 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   auto attrs = conf->ObtainEvalResult()->attribute();
-  auto c_old = node->cast<CNodePtr>();
-  auto c_new = new_node->cast<CNodePtr>();
+  auto c_old = node->cast_ptr<CNode>();
+  auto c_new = new_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_new);
   auto new_inputs = c_new->inputs();
   auto old_inputs = c_old->inputs();
@@ -786,7 +786,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     bool ignore_build_value = false;
     AnfNodePtr replace_node = nullptr;
     if (specializer_->engine()->check_isolated_side_effect()) {
-      auto cnode_input = dyn_cast<CNode>(node_input);
+      auto cnode_input = dyn_cast_ptr<CNode>(node_input);
       ignore_build_value = (cnode_input != nullptr && cnode_input->has_isolated_side_effect_node());
       if (ignore_build_value) {
         MS_LOG(INFO) << "Don't build value node for CNode which contains isolated side-effect inputs, node: "
@@ -878,7 +878,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, con
                                                       const AbstractBasePtr &abs, const AbstractBasePtrList &argvals) {
   MS_EXCEPTION_IF_NULL(abs);
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr real_a = dyn_cast<AbstractFunction>(abs);
+  auto real_a = dyn_cast_ptr<AbstractFunction>(abs);
   MS_EXCEPTION_IF_NULL(real_a);
 
   AbstractFunctionPtr func_abs = real_a->GetUnique();
@@ -905,7 +905,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, con
   // Set the flag, so this MetaFuncGraph will be Re-AutoMonaded.
   MS_EXCEPTION_IF_NULL(func_abs);
   if (func_abs->isa<MetaFuncGraphAbstractClosure>()) {
-    auto specialized_fg = GetValueNode<FuncGraphPtr>(repl);
+    auto specialized_fg = GetValuePtr<FuncGraph>(repl);
     if (specialized_fg != nullptr && (argvals.size() > 1) && argvals.back() != nullptr &&
         argvals.back()->isa<AbstractUMonad>()) {
       specialized_fg->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
@@ -924,7 +924,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   MS_EXCEPTION_IF_NULL(errcode);
   *errcode = kSpecializeSuccess;
 
-  auto real_func = dyn_cast<TypedPrimitiveAbstractClosure>(func_abs);
+  auto real_func = dyn_cast_ptr<TypedPrimitiveAbstractClosure>(func_abs);
   if (real_func != nullptr) {
     return BuildValueNode(real_func->prim(), abs);
   }
@@ -942,7 +942,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   argvals = result.first;
   AbstractBasePtr unique_output = result.second;
 
-  auto prim_func = dyn_cast<PrimitiveAbstractClosure>(func_abs);
+  auto prim_func = dyn_cast_ptr<PrimitiveAbstractClosure>(func_abs);
   if (prim_func != nullptr) {
     auto type_func = std::make_shared<TypedPrimitiveAbstractClosure>(prim_func->prim(), argvals, unique_output);
     return BuildValueNode(prim_func->prim(), type_func);
@@ -993,7 +993,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &c
   AbstractBasePtrList args;
   auto backed_fnval = fnval;
   if (fnval->isa<PartialAbstractClosure>()) {
-    auto partial_closure = dyn_cast<PartialAbstractClosure>(fnval);
+    auto partial_closure = dyn_cast_ptr<PartialAbstractClosure>(fnval);
     backed_fnval = partial_closure->fn();
     args = partial_closure->args();
   }
@@ -1133,7 +1133,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // CNode(CNode(Partial, f, arg1), arg2, ...) --> CNode(f, arg1, arg2, ...)
   const size_t arg_start_index = 2;
   while (IsPrimitiveCNode(func, prim::kPrimPartial)) {
-    std::vector<AnfNodePtr> inputs = func->cast<CNodePtr>()->inputs();
+    std::vector<AnfNodePtr> inputs = func->cast_ptr<CNode>()->inputs();
     // First element is partial, second is func so arg is start from 2
     (void)args.insert(args.cbegin(), inputs.cbegin() + SizeToInt(arg_start_index), inputs.cend());
     func = inputs[1];
@@ -1222,10 +1222,10 @@ bool IsPolyFunc(const AbstractFunctionPtr &func, const AbstractBasePtrList &argv
     return true;
   }
   if (func->isa<MetaFuncGraphAbstractClosure>() && argvals.empty()) {
-    auto meta_func_graph_wrapper = dyn_cast<MetaFuncGraphAbstractClosure>(func);
+    auto meta_func_graph_wrapper = dyn_cast_ptr<MetaFuncGraphAbstractClosure>(func);
     auto meta_func_graph = meta_func_graph_wrapper->meta_func_graph();
     if (meta_func_graph != nullptr && meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>()) {
-      auto do_signature = dyn_cast<prim::DoSignatureMetaFuncGraph>(meta_func_graph);
+      auto do_signature = dyn_cast_ptr<prim::DoSignatureMetaFuncGraph>(meta_func_graph);
       if (do_signature != nullptr && do_signature->function()->isa<Primitive>()) {
         MS_LOG(DEBUG) << "High order primitive " << do_signature->function()->ToString() << " return POLY.";
         return true;
@@ -1331,7 +1331,7 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
                                                                    const AbstractFunctionPtr &abs) {
   ValuePtr value = nullptr;
   if (abs->isa<PrimitiveAbstractClosure>()) {
-    auto real_fn = dyn_cast<PrimitiveAbstractClosure>(abs);
+    auto real_fn = dyn_cast_ptr<PrimitiveAbstractClosure>(abs);
     // For primitive, check if the attribute is the same with cnode inferred attribute, if not, clone a new one
     if (attrs != nullptr) {
       value = BuildPrimtiveValueWithAttributes(real_fn->prim(), attrs);
@@ -1339,20 +1339,20 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
       value = real_fn->prim();
     }
   } else if (abs->isa<MetaFuncGraphAbstractClosure>()) {
-    auto real_fn = dyn_cast<MetaFuncGraphAbstractClosure>(abs);
+    auto real_fn = dyn_cast_ptr<MetaFuncGraphAbstractClosure>(abs);
     value = real_fn->meta_func_graph();
   } else if (abs->isa<FuncGraphAbstractClosure>()) {
-    auto real_fn = dyn_cast<FuncGraphAbstractClosure>(abs);
+    auto real_fn = dyn_cast_ptr<FuncGraphAbstractClosure>(abs);
     value = real_fn->func_graph();
   } else {
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(value);
-  if (!value->isa<FuncGraph>() || value->cast<FuncGraphPtr>()->parent() == nullptr ||
-      (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast<FuncGraphPtr>()->parent()))) {
+  if (!value->isa<FuncGraph>() || value->cast_ptr<FuncGraph>()->parent() == nullptr ||
+      (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast_ptr<FuncGraph>()->parent()))) {
     return BuildValueNode(value, ival);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimJ) && origin_node->isa<Parameter>() &&
-             !value->cast<FuncGraphPtr>()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
+             !value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
     // Only if J(Parameter=func_graph) and func_graph(aka 'value') is not K graph.
     MS_LOG(DEBUG) << "Specialize the parameter used by J CNode, cnode: " << cnode->DebugString();
     return BuildValueNode(value, ival);

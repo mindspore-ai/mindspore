@@ -1173,7 +1173,11 @@ inline S GetValueNode(const AnfNodePtr &node) {
 
 template <typename S, typename std::enable_if<std::is_base_of<Value, S>::value, S>::type * = nullptr>
 inline S *GetValuePtr(const AnfNodePtr &node) {
-  auto value = GetValuePtr(node);
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
+  if (value_node == nullptr) {
+    return nullptr;
+  }
+  const auto &value = value_node->value();
   return (value == nullptr) ? nullptr : value->cast_ptr<S>();
 }
 

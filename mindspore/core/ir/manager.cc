@@ -661,7 +661,7 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
                                              const ScopePtr &scope) {
   AnfNodePtr source_return = source->get_return();
   AnfNodePtr source_output = source->output();
-  AnfNodePtr source_prim = source_return->cast<CNodePtr>()->input(0);
+  AnfNodePtr source_prim = source_return->cast_ptr<CNode>()->input(0);
 
   int index = 0;
   (void)node_users_[source_prim].erase(make_pair(source_return, index));
@@ -1105,7 +1105,7 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
       std::find_if(meta_fg_prim_values.begin(), meta_fg_prim_values.end(), [seen_num](const auto &iter) {
         // Check g1->MetaFgPrim(fg)->g2->g cycle.
         if (IsValueNode<FuncGraph>(iter.first)) {
-          auto func_graph = GetValueNode<FuncGraphPtr>(iter.first);
+          auto func_graph = GetValuePtr<FuncGraph>(iter.first);
           return func_graph->seen_ != seen_num;
         }
         if (IsValueNode<Primitive>(iter.first)) {

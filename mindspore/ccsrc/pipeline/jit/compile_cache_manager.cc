@@ -278,7 +278,7 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
   // The value of attr "shared_name" will changed every time.
   auto cnodes = fg->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto prim = GetValuePtr<Primitive>(cnode->input(0));
     if (prim != nullptr && prim->HasAttr("shared_name")) {
       prim->set_attr("shared_name", MakeValue(queue_name));
       break;

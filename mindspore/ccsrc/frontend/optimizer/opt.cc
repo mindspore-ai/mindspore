@@ -40,27 +40,20 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
                                  const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action,
                                  bool has_priority_pattern) {
   auto fn = [prims](const AnfNodePtr &node) -> bool {
-    if (!node->isa<CNode>()) {
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode == nullptr) {
       return false;
     }
-
-    auto cnode = node->cast<CNodePtr>();
-    auto inp0 = cnode->input(0);
-    auto prim0 = GetValueNode<PrimitivePtr>(inp0);
-    if (prim0 == nullptr) {
+    auto cnode_prim = GetValuePtr<Primitive>(cnode->input(0));
+    if (cnode_prim == nullptr) {
       return false;
     }
-
-    auto hash = prim0->Hash();
-    auto const &name = prim0->name();
-    for (auto &prim : prims) {
-      if (hash == prim->Hash() && name == prim->name()) {
-        return true;
-      }
-    }
-    return false;
+    auto hash = cnode_prim->Hash();
+    const auto &name = cnode_prim->name();
+    return std::any_of(prims.begin(), prims.end(), [&hash, &name](const PrimitivePtr &prim) {
+      return (prim->Hash() == hash) && (prim->name() == name);
+    });
   };
-
   return std::make_shared<Substitution>(transform, name, fn, renorm_action, has_priority_pattern);
 }
 
@@ -93,17 +86,15 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   return result;
 }
 
-static bool isTraversable(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
+static inline bool isTraversable(const AnfNodePtr &node) {
   if (node->isa<CNode>() || node->isa<Parameter>()) {
     return true;
   }
-  if (IsValueNode<FuncGraph>(node) || IsValueNode<RefKey>(node)) {
-    return true;
-  }
-  return false;
+  // FuncGraph or RefKey value node is traversable.
+  auto value_node = dyn_cast_ptr<ValueNode>(node);
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  return (value != nullptr) && (value->isa<FuncGraph>() || value->isa<RefKey>());
 }
 
 static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,
@@ -131,34 +122,38 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
 }
 
 static void UpdateTransformingListForSubstitutions(const AnfNodePtr &node, std::deque<AnfNodePtr> *todo, bool change) {
-  if (IsValueNode<FuncGraph>(node)) {
-    (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
+  auto fg = GetValuePtr<FuncGraph>(node);
+  if (fg != nullptr) {
+    (void)todo->emplace_back(fg->output());
   }
 
   if (change) {
-    (*todo).emplace_back(node);
+    (void)todo->emplace_back(node);
   } else {
-    if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode != nullptr) {
+      const auto &inputs = cnode->inputs();
+      (void)todo->insert(todo->end(), inputs.cbegin(), inputs.cend());
     }
   }
 }
 
 static void UpdateTransformingListForIR(const AnfNodePtr &node, std::deque<AnfNodePtr> *todo, bool change,
                                         const SubstitutionPtr &substitution) {
-  if (IsValueNode<FuncGraph>(node)) {
-    (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
+  auto fg = GetValuePtr<FuncGraph>(node);
+  if (fg != nullptr) {
+    (void)todo->emplace_back(fg->output());
   }
 
   // If there is a priority pattern in substitution, don't transform the new node,
   // otherwise some nodes may match the wrong patterns.
   if (change && substitution != nullptr && !substitution->has_priority_pattern_) {
-    (*todo).emplace_back(node);
+    (void)todo->emplace_back(node);
   } else {
-    if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode != nullptr) {
+      const auto &inputs = cnode->inputs();
+      (void)todo->insert(todo->end(), inputs.cbegin(), inputs.cend());
     }
   }
 }
@@ -194,12 +189,11 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  todo.emplace_back(func_graph->output());
+  (void)todo.emplace_back(func_graph->output());
   bool changes = false;
-
   auto &all_nodes = manager->all_nodes();
   while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
+    AnfNodePtr node = std::move(todo.front());
     todo.pop_front();
 
     if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
@@ -373,13 +367,13 @@ bool SimpleRewriter::Run() {
       continue;
     }
     node->seen_ = seen;
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = node->cast_ptr<CNode>();
     if (cnode != nullptr) {
       for (auto &input : cnode->inputs()) {
         add_todo(input);
       }
     } else {
-      auto fg = GetValueNode<FuncGraphPtr>(node);
+      auto fg = GetValuePtr<FuncGraph>(node);
       if (fg != nullptr) {
         add_todo(fg->output());
       }

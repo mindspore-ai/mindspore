@@ -28,7 +28,7 @@ bool ContainSparseTensor(const abstract::AbstractBasePtr &abs) {
     return true;
   }
   if (abs->isa<abstract::AbstractTuple>()) {
-    auto vec = abs->cast<abstract::AbstractTuplePtr>()->elements();
+    auto vec = abs->cast_ptr<abstract::AbstractTuple>()->elements();
     return std::any_of(vec.begin(), vec.end(), ContainSparseTensor);
   }
   return false;

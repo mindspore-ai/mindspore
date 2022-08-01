@@ -173,14 +173,14 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
   }
-  auto type_self = GetTypeTrack();
-  auto type_other = other->GetTypeTrack();
+  const auto &type_self = GetTypeTrack();
+  const auto &type_other = other->GetTypeTrack();
   TypePtr res_type = TypeJoin(type_self, type_other);
   if (res_type == kAnyType) {
     TypeJoinLogging(type_self, type_other, shared_from_base<AbstractBase>(), other);
   }
-  auto value_self = GetValueTrack();
-  auto value_other = other->GetValueTrack();
+  const auto &value_self = GetValueTrack();
+  const auto &value_other = other->GetValueTrack();
   ValuePtr res_value = ValueJoin(value_self, value_other);
   if (res_value == value_self) {
     return shared_from_base<AbstractBase>();
@@ -193,7 +193,7 @@ AbstractBasePtr AbstractType::Clone() const {
   if (value_self == nullptr || !value_self->isa<Type>()) {
     return nullptr;
   }
-  TypePtr type_self = value_self->cast<TypePtr>();
+  auto type_self = value_self->cast_ptr<Type>();
   return std::make_shared<AbstractType>(type_self->Clone());
 }
 
@@ -201,7 +201,8 @@ bool AbstractType::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
   }
-  return tid() == other.tid() && IsEqual(dyn_cast<Type>(GetValueTrack()), dyn_cast<Type>(other.GetValueTrack()));
+  return tid() == other.tid() &&
+         IsEqual(dyn_cast_ptr<Type>(GetValueTrack()), dyn_cast_ptr<Type>(other.GetValueTrack()));
 }
 
 std::string AbstractType::ToString() const {
@@ -215,7 +216,7 @@ std::string AbstractType::ToString() const {
     buffer << type_name() << "(Value: nullptr)";
     return buffer.str();
   }
-  TypePtr type_self = value_self->cast<TypePtr>();
+  auto type_self = value_self->cast_ptr<Type>();
   buffer << type_name() << "("
          << "Value: " << type_self->ToString() << ")";
   return buffer.str();
@@ -496,7 +497,7 @@ AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &ot
   if (!enable_eliminate_unused_element || this->sequence_nodes() == nullptr) {
     return sequence_nodes;
   }
-  auto other_sequence = dyn_cast<AbstractSequence>(other);
+  auto other_sequence = dyn_cast_ptr<AbstractSequence>(other);
   if (other_sequence == nullptr) {
     return sequence_nodes;
   }
@@ -714,7 +715,7 @@ template MS_CORE_API ValuePtr AbstractSequence::ElementsBuildValue<ValueList>() 
 template <typename T>
 AbstractBasePtr AbstractSequence::ElementsJoin(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  auto other_sequeue = dyn_cast<T>(other);
+  auto other_sequeue = dyn_cast_ptr<T>(other);
   if (other_sequeue == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
@@ -761,7 +762,7 @@ bool AbstractSequence::operator==(const AbstractSequence &other) const {
 }
 
 void AbstractTuple::set_shape(const BaseShapePtr &shape) {
-  auto tuple_shape = dyn_cast<TupleShape>(shape);
+  auto tuple_shape = dyn_cast_ptr<TupleShape>(shape);
   MS_EXCEPTION_IF_NULL(tuple_shape);
   if (tuple_shape->shape().size() != elements_.size()) {
     MS_LOG(EXCEPTION) << "Size mismatch: " << tuple_shape->shape().size() << " vs " << elements_.size();
@@ -789,7 +790,7 @@ bool AbstractTuple::ContainsAllBroadenTensors() const {
   for (size_t i = 0; i < elements_.size(); ++i) {
     if (!(elements_[i]->isa<abstract::AbstractUndetermined>() && elements_[i]->IsBroaden()) &&
         !(elements_[i]->isa<abstract::AbstractTuple>() &&
-          elements_[i]->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors())) {
+          elements_[i]->cast_ptr<abstract::AbstractTuple>()->ContainsAllBroadenTensors())) {
       return false;
     }
   }
@@ -927,7 +928,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
 
   // AbstractTensor join with AbstractUndetermined
   if (other_type->type_id() == kObjectTypeUndeterminedType) {
-    auto other_undetermined_tensor = dyn_cast<AbstractUndetermined>(other);
+    auto other_undetermined_tensor = dyn_cast_ptr<AbstractUndetermined>(other);
     MS_EXCEPTION_IF_NULL(other_undetermined_tensor);
     // Check shape
     auto res_shape = ShapeJoin(shape(), other_undetermined_tensor->shape());
@@ -941,7 +942,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   }
 
   // AbstractTensor join with AbstractTensor
-  auto other_tensor = dyn_cast<AbstractTensor>(other);
+  auto other_tensor = dyn_cast_ptr<AbstractTensor>(other);
   if (other_tensor == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
@@ -964,8 +965,8 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
     return true;
   }
   // Check value. for AbstractTensor, both value should be AnyValue.
-  auto v1 = GetValueTrack();
-  auto v2 = other.GetValueTrack();
+  const auto &v1 = GetValueTrack();
+  const auto &v2 = other.GetValueTrack();
   if (v1 != v2 && (v1 == nullptr || !v1->isa<AnyValue>() || v2 == nullptr || !v2->isa<AnyValue>())) {
     return false;
   }
@@ -1142,7 +1143,7 @@ TypePtr AbstractJTagged::BuildType() const {
 
 AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  auto other_jtagged = dyn_cast<AbstractJTagged>(other);
+  auto other_jtagged = dyn_cast_ptr<AbstractJTagged>(other);
   if (other_jtagged == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
@@ -1182,8 +1183,8 @@ AbstractRefTensor::AbstractRefTensor(const AbstractTensorPtr &ref_value, const V
 
 TypePtr AbstractRefTensor::BuildType() const {
   auto type = AbstractTensor::BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  auto subtype = type->cast<TensorTypePtr>();
+  auto subtype = dyn_cast_ptr<TensorType>(type);
+  MS_EXCEPTION_IF_NULL(subtype);
   return std::make_shared<RefType>(subtype);
 }
 
@@ -1430,7 +1431,7 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
   BaseShapePtrList element_shape_list;
   for (const auto &element : elements()) {
     MS_EXCEPTION_IF_NULL(element);
-    auto abs_tuple = element->cast<AbstractTuplePtr>();
+    auto abs_tuple = element->cast_ptr<AbstractTuple>();
     if (abs_tuple == nullptr) {
       element_shape_list.push_back(element->BuildShape());
     } else {

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "ir/param_info.h"
+#include "ir/value.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
@@ -31,6 +32,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parse {
@@ -452,7 +454,7 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object namespace_obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
   auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
-  std::string attr_as_string = GetValueNode<StringImmPtr>(attr)->value();
+  const std::string &attr_as_string = GetValuePtr<StringImm>(attr)->value();
   auto new_symbol = std::make_shared<Symbol>(attr_as_string);
   MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
@@ -489,7 +491,9 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
   } else if (count_msclass == sequence_size) {
     // Resolve MsClass instances.
     for (size_t i = 0; i < sequence_size; ++i) {
-      auto attr_str = GetValue<std::string>(GetValueNode(attr));
+      auto attr_str_ptr = GetValuePtr<StringImm>(attr);
+      MS_EXCEPTION_IF_NULL(attr_str_ptr);
+      const auto &attr_str = attr_str_ptr->value();
       auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, get_attr_node);
       (void)inputs.emplace_back(res);
     }

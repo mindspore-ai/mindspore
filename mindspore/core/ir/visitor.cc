@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ void AnfIrVisitor::Visit(const CNodePtr &cnode) {
 }
 
 void AnfIrVisitor::Visit(const ValueNodePtr &vnode) {
-  if (IsValueNode<FuncGraph>(vnode)) {
-    auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
+  auto func_graph = GetValuePtr<FuncGraph>(vnode);
+  if (func_graph != nullptr) {
     Visit(func_graph->output());
   }
 }
@@ -36,36 +36,34 @@ void AnfIrVisitor::Visit(const ValueNodePtr &vnode) {
 void AnfIrVisitor::Visit(const ParameterPtr &) {}
 
 VisitFuncType AnfIrVisitor::Match(const PrimitivePtr &prim, const std::vector<PredicateFuncType> &funcs) {
-  auto fn = [prim, funcs, this](const AnfNodePtr &node) {
+  return [prim, funcs, this](const AnfNodePtr &node) {
     if (!IsPrimitiveCNode(node, prim)) {
       return;
     }
 
-    auto &inputs = node->cast<CNodePtr>()->inputs();
+    auto &inputs = node->cast_ptr<CNode>()->inputs();
     auto funcs_size = funcs.size();
     auto inputs_size = inputs.size();
 
-    // check the inputs are matched with the predicate functions
+    // Check the inputs are matched with the predicate functions.
     if (funcs_size > 0) {
-      // use the predicate function list to check the number of inputs
+      // Use the predicate function list to check the number of inputs.
       if (funcs_size != (inputs_size - 1)) {
         return;
       }
 
-      // check per input
-      for (size_t i = 0; i < funcs_size; i++) {
+      // Check inputs.
+      for (size_t i = 0; i < funcs_size; ++i) {
         if (!funcs[i](inputs[i + 1])) {
           return;
         }
       }
     }
 
-    // visit the inputs
-    for (size_t i = 1; i < inputs_size; i++) {
+    // Visit argument inputs.
+    for (size_t i = 1; i < inputs_size; ++i) {
       this->Visit(inputs[i]);
     }
   };
-
-  return fn;
 }
 }  // namespace mindspore

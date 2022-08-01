@@ -131,7 +131,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
         auto find_kw_arg_in_list = std::any_of(specialized_parameter_list->begin(), specialized_parameter_list->end(),
                                                [param_name](const AnfNodePtr &node) {
                                                  MS_EXCEPTION_IF_NULL(node);
-                                                 auto param = node->cast<ParameterPtr>();
+                                                 auto param = node->cast_ptr<Parameter>();
                                                  return param != nullptr && param->name() == param_name;
                                                });
         if (find_kw_arg_in_list) {

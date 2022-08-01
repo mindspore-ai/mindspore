@@ -92,8 +92,8 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
     if (!IsValueNode<FuncGraph>(vnode)) {
       return;
     }
-    auto fg = GetValueNode<FuncGraphPtr>(vnode);
-    AnfNodePtr ret = fg->return_node();
+    auto fg = GetValuePtr<FuncGraph>(vnode);
+    const auto &ret = fg->return_node();
     DeepFirstSearcher::Visit(ret);
   }
 

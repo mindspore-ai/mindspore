@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,13 @@
 
 namespace mindspore {
 namespace pipeline {
+static inline bool IsSameValue(Value *v1, Value *v2) {
+  if (v1->isa<tensor::Tensor>() && v2->isa<tensor::Tensor>()) {
+    return static_cast<tensor::Tensor *>(v1)->ValueEqual(*(static_cast<tensor::Tensor *>(v2)));
+  }
+  return *v1 == *v2;
+}
+
 void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, HashCache *const hash_cache,
                     HashValue *const hash_value) {
   MS_EXCEPTION_IF_NULL(manager);
@@ -35,7 +42,7 @@ void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, Has
   if (IsValueNode<FuncGraph>(node)) {
     return;
   }
-  const auto &to_check_value = GetValueNode(node);
+  auto to_check_value = GetValuePtr(node);
   MS_EXCEPTION_IF_NULL(to_check_value);
 
   // Calculate hash value.
@@ -62,20 +69,13 @@ void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, Has
     if (v == node) {
       return;
     }
-    const auto &existed_value = GetValueNode(v);
+    auto existed_value = GetValuePtr(v);
     MS_EXCEPTION_IF_NULL(existed_value);
-    auto equal = [&]() -> bool {
-      if (existed_value->isa<tensor::Tensor>() && to_check_value->isa<tensor::Tensor>()) {
-        return existed_value->cast<tensor::TensorPtr>()->ValueEqual(*(to_check_value->cast<tensor::TensorPtr>()));
-      }
-      return *existed_value == *to_check_value;
-    };
-    if (equal()) {
+    if (IsSameValue(existed_value, to_check_value)) {
       (void)manager->Replace(node, v);
       return;
     }
   }
-
   // Meet for the first time, append node to bucket.
   bucket.emplace_back(node);
 }

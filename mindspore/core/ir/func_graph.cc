@@ -592,7 +592,7 @@ std::string FuncGraph::GetVariableArgName() {
 
   const auto &param_node = GetVariableArgParameter();
   MS_EXCEPTION_IF_NULL(param_node);
-  const auto &parameter = param_node->cast<ParameterPtr>();
+  auto parameter = param_node->cast_ptr<Parameter>();
   MS_EXCEPTION_IF_NULL(parameter);
   return parameter->name();
 }
@@ -614,7 +614,7 @@ std::string FuncGraph::GetVariableKwargName() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is " << fv_param_count_
                         << ", parameters is less than 1 + fv_param_count";
     }
-    const auto &parameter = parameters_[(parameters_.size() - fv_param_count_) - 1]->cast<ParameterPtr>();
+    auto parameter = parameters_[(parameters_.size() - fv_param_count_) - 1]->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(parameter);
     return parameter->name();
   }
@@ -666,7 +666,7 @@ int FuncGraph::GetPositionalArgsCount() const {
 AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {
   for (size_t i = 0; i < parameters_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(parameters_[i]);
-    auto param_cast = parameters_[i]->cast<ParameterPtr>();
+    auto param_cast = parameters_[i]->cast_ptr<Parameter>();
     MS_EXCEPTION_IF_NULL(param_cast);
     if (param_cast->name() == name) {
       return parameters_[i];

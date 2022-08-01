@@ -225,7 +225,7 @@ AnfNodePtr GetPythonOps(const FuncGraphPtr &fg, const AnfNodePtr &origin_node, c
   } else {
     python_ops_value = prim::GetPythonOps(iter->second.first);
   }
-  auto origin_cnode = origin_node->cast<CNodePtr>();
+  auto origin_cnode = origin_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(origin_cnode);
   auto &origin_inputs = origin_cnode->inputs();
   std::vector<AnfNodePtr> new_inputs{NewValueNode(python_ops_value)};
@@ -243,7 +243,7 @@ void ReplacePythonOps(const FuncGraphPtr &fg) {
     if (!node->isa<CNode>()) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = node->cast_ptr<CNode>();
     for (size_t i = 0; i < cnode->size(); ++i) {
       auto prim = GetCNodePrimitive(cnode->input(i));
       if (prim == nullptr) {
@@ -388,7 +388,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
   if (prim->is_base()) {
     fn = GetBpropFunction(prim->name());
   } else {
-    fn = prim->cast<PrimitivePyPtr>()->GetBpropFunction();
+    fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
     if (py::isinstance<py::none>(fn)) {
       fn = GetBpropFunction(prim->name());
     }
@@ -491,8 +491,8 @@ static void AppendMonadOutput(const FuncGraphPtr &bprop_fg, const AnfNodePtr &mo
   auto output_cnode = output->cast<CNodePtr>();
   if (output_cnode != nullptr) {
     // If output_cnode has the form like (make_tuple, x, y).
-    while (IsPrimitiveCNode(output_cnode, prim::kPrimDepend)) {
-      auto real_input = output_cnode->input(kRealInputIndexInDepend);
+    while (output_cnode->IsApply(prim::kPrimDepend)) {
+      const auto &real_input = output_cnode->input(kRealInputIndexInDepend);
       MS_EXCEPTION_IF_NULL(real_input);
       output_cnode = real_input->cast<CNodePtr>();
     }
@@ -555,7 +555,7 @@ void SetDumpFlag(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
     return;
   }
   auto attr = prim->GetAttr(kAttrDump);
-  if (attr != nullptr && attr->isa<StringImm>() && attr->cast<StringImmPtr>()->value() == kValueTrue) {
+  if (attr != nullptr && attr->isa<StringImm>() && attr->cast_ptr<StringImm>()->value() == kValueTrue) {
     bprop_fg->set_flag(FUNC_GRAPH_FLAG_DUMP, true);
   }
 }
@@ -660,7 +660,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   // bprop_fg has been checked in caller
   if (IsPrimitiveCNode(bprop_fg->output(), prim::kPrimMakeTuple)) {
     // Set bprop output as (env, dx, dy, dz, ...)
-    auto cbprop = bprop_fg->output()->cast<CNodePtr>();
+    auto cbprop = bprop_fg->output()->cast_ptr<CNode>();
     auto &inputs = cbprop->inputs();
 
     std::vector<AnfNodePtr> args;
@@ -742,7 +742,7 @@ void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const Func
   const auto &current_primal_fg_params = current_primal_fg->parameters();
   // The lifted parameters are put in front: {lifted parameters, origin parameters, u/io monad}.
   for (size_t i = 0; i < current_primal_fg_params.size(); ++i) {
-    auto primal_parameter = dyn_cast<Parameter>(current_primal_fg_params[i]);
+    auto primal_parameter = dyn_cast_ptr<Parameter>(current_primal_fg_params[i]);
     MS_EXCEPTION_IF_NULL(primal_parameter);
     auto lifted = primal_parameter->template user_data<bool>(kLiftedUserDataKey);
     if (lifted == nullptr || !*lifted) {
@@ -845,7 +845,7 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
   if (cnode == users.end()) {
     MS_LOG(EXCEPTION) << "Fail to find cnode.";
   }
-  auto inputs_num = cnode->first->cast<CNodePtr>()->size() - 1;
+  auto inputs_num = cnode->first->cast_ptr<CNode>()->size() - 1;
 
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
@@ -886,7 +886,7 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
   if (cnode == users.end()) {
     MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
-  auto inputs_num = cnode->first->cast<CNodePtr>()->inputs().size() - 1;
+  auto inputs_num = cnode->first->cast_ptr<CNode>()->inputs().size() - 1;
   auto effect_info = GetPrimEffectInfo(prim);
   // Don't add U or IO monad parameters as it will be added later.
   size_t monad_params_size = 0;

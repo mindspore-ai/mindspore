@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ ABSTRACT_REPORT_NAME_DEC(KeywordArg)
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix) {
   auto ori_type = type;
   if (type->isa<TensorType>()) {
-    auto tensor = type->cast<TensorTypePtr>();
+    auto tensor = type->cast_ptr<TensorType>();
     type = tensor->element();
     MS_EXCEPTION_IF_NULL(type);
   }

@@ -120,17 +120,17 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Get the abstract value, which is tracked.
   ///
   /// \return A pointer to the Value.
-  ValuePtr GetValueTrack() const { return value_; }
+  const ValuePtr &GetValueTrack() const { return value_; }
 
   /// \brief Get the abstract type, which is tracked.
   ///
   /// \return A pointer to the Type.
-  TypePtr GetTypeTrack() const { return type_; }
+  const TypePtr &GetTypeTrack() const { return type_; }
 
   /// \brief Get the abstract shape, which is tracked.
   ///
   /// \return A pointer to the BaseShape.
-  BaseShapePtr GetShapeTrack() const { return shape_; }
+  const BaseShapePtr &GetShapeTrack() const { return shape_; }
 
   /// \brief Try to build a real value from an abstract value.
   ///

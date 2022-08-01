@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ void PyPassManager::GenNewParameter(const PatternPtr &parameter) {
   auto cur_pg = GetPassGroup(Phase::OPT);
   MS_EXCEPTION_IF_NULL(cur_pg);
   cur_pg->SetRunOnlyOnce(true);
-  auto new_para_pattern = parameter->cast<NewParameterPtr>();
+  auto new_para_pattern = parameter->cast_ptr<NewParameter>();
   MS_EXCEPTION_IF_NULL(new_para_pattern);
   auto pass_name = new_para_pattern->para_name();
   new_para_pattern->set_last(true);

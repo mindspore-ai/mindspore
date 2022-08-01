@@ -59,7 +59,7 @@ bool WithRecomputedScope(const AnfNodePtr &node) {
 
 ValuePtr GetRecomputeCNodeAttr(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   if (cnode == nullptr) {
     return nullptr;
   }
@@ -222,7 +222,7 @@ bool HasGradInputs(const AnfNodePtr &node, mindspore::HashMap<AnfNodePtr, bool> 
   if (has_grad_inputs_map->find(node) != has_grad_inputs_map->end()) {
     return has_grad_inputs_map->find(node)->second;
   }
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   if (cnode == nullptr) {
     (void)has_grad_inputs_map->emplace(node, false);
     return false;
@@ -230,7 +230,7 @@ bool HasGradInputs(const AnfNodePtr &node, mindspore::HashMap<AnfNodePtr, bool> 
   const auto &inputs = cnode->inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
     // For the pipeline split case, the forward pass may depend on the backward pass.
-    if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && i == kDependAttachNodeIndex) {
+    if (cnode->IsApply(prim::kPrimDepend) && i == kDependAttachNodeIndex) {
       continue;
     }
     if (IsBpropNode(inputs[i]) || HasGradInputs(inputs[i], has_grad_inputs_map)) {
@@ -320,7 +320,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     std::vector<AnfNodePtr> tuple_getitem_output_nodes;
     GetTupleGetItemOutputNodes(mng, node, &tuple_getitem_output_nodes);
     for (const auto &output_node : tuple_getitem_output_nodes) {
-      auto output_cnode = output_node->cast<CNodePtr>();
+      auto output_cnode = output_node->cast_ptr<CNode>();
       MS_EXCEPTION_IF_NULL(output_cnode);
       output_cnode->AddAttr(kAttrRecompute, MakeValue(true));
     }
@@ -362,7 +362,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
   for (size_t i = 0; i < origin_node->size(); ++i) {
     auto input = origin_node->input(i);
     if (i == 0 && IsPrimitive(input, prim::kPrimAllGather)) {
-      auto prim = GetValueNode<PrimitivePtr>(input);
+      auto prim = GetValuePtr<Primitive>(input);
       auto instance_name = prim->instance_name();
       bool is_from_parallel_optimizer = instance_name.find("parallel_optimizer") != std::string::npos;
       int64_t fusion_id = prim->HasAttr(kAttrFusion) ? GetValue<int64_t>(prim->GetAttr(kAttrFusion)) : 0;
@@ -426,7 +426,7 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
   for (const auto &target_node : target_nodes) {
     MS_EXCEPTION_IF_NULL(target_node);
     MS_LOG(DEBUG) << "Rebuild a new target_node " << target_node->DebugString() << " with the new recomputed input";
-    auto target_cnode = target_node->cast<CNodePtr>();
+    auto target_cnode = target_node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(target_cnode);
     std::vector<AnfNodePtr> new_target_inputs;
     for (const auto &input : target_cnode->inputs()) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ bool BaseRef::operator==(const BaseRef &other) const {
     return false;
   }
   if (m_ptr->isa<Value>()) {
-    return *(m_ptr->cast<ValuePtr>()) == *(other.m_ptr->cast<ValuePtr>());
+    return *(m_ptr->cast_ptr<Value>()) == *(other.m_ptr->cast_ptr<Value>());
   }
 
   // for noderef equal
   if (m_ptr->isa<BaseRef>()) {
-    return *std::static_pointer_cast<BaseRef>(m_ptr) == *std::static_pointer_cast<BaseRef>(other.m_ptr);
+    return *(m_ptr->cast_ptr<BaseRef>()) == *(other.m_ptr->cast_ptr<BaseRef>());
   }
 
   // for node equal

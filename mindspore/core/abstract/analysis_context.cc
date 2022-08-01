@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,8 +141,8 @@ bool AnalysisContext::operator==(const AnalysisContext &other) const {
     if (func_graph_->has_flag(GRAPH_FLAG_IS_WHILE_HEADER) &&
         args_spec_list_[i]->isa<abstract::FuncGraphAbstractClosure>() &&
         other.args_spec_list_[i]->isa<abstract::FuncGraphAbstractClosure>()) {
-      auto temp_this = args_spec_list_[i]->cast<abstract::FuncGraphAbstractClosurePtr>()->Copy();
-      auto temp_other = other.args_spec_list_[i]->cast<abstract::FuncGraphAbstractClosurePtr>()->Copy();
+      auto temp_this = args_spec_list_[i]->cast_ptr<abstract::FuncGraphAbstractClosure>()->Copy();
+      auto temp_other = other.args_spec_list_[i]->cast_ptr<abstract::FuncGraphAbstractClosure>()->Copy();
       temp_this->set_tracking_id(nullptr);
       temp_other->set_tracking_id(nullptr);
       if (!(*temp_this == *temp_other)) {

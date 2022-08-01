@@ -146,15 +146,15 @@ void ValidateValueNode(const AnfNodePtr &node) {
 }
 
 void CheckValueTuple(const AnfNodePtr &node) {
-  const auto &value_node = node->cast<ValueNodePtr>();
+  auto value_node = node->cast_ptr<ValueNode>();
   MS_EXCEPTION_IF_NULL(value_node);
-  const auto value = value_node->value();
+  const auto &value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
-  const auto value_tuple = value->cast<ValueTuplePtr>();
+  auto value_tuple = value->cast_ptr<ValueTuple>();
   MS_EXCEPTION_IF_NULL(value_tuple);
-  const auto tuple_values = value_tuple->value();
+  const auto &tuple_values = value_tuple->value();
   for (size_t i = 0; i < tuple_values.size(); ++i) {
-    const auto input_node = NewValueNode(tuple_values[i]);
+    auto input_node = NewValueNode(tuple_values[i]);
     ValidateOperation(input_node);
     ValidateValueNode(input_node);
   }
@@ -167,7 +167,7 @@ void Validate(const FuncGraphPtr &func_graph) {
   for (auto node : all_nodes) {
     TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
     while (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
-      node = node->cast<CNodePtr>()->input(1);
+      node = node->cast_ptr<CNode>()->input(1);
     }
     if (IsValueNode<ValueTuple>(node)) {
       CheckValueTuple(node);
