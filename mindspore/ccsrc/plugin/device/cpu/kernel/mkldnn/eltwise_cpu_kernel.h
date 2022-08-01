@@ -26,13 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kElu = "Elu";
-constexpr auto kReLU = "ReLU";
-constexpr auto kReLU6 = "ReLU6";
-constexpr auto kExp = "Exp";
-constexpr auto kSigmoid = "Sigmoid";
-constexpr auto kTanh = "Tanh";
-constexpr auto kSoftplus = "Softplus";
 constexpr auto kUnKnown = "UnKnown";
 class EltWiseCpuKernelMod : public MKLCpuKernelMod {
  public:

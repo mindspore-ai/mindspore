@@ -66,6 +66,7 @@ constexpr auto kRsqrt = "Rsqrt";
 constexpr auto kErf = "Erf";
 constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
+constexpr auto kReLU = "ReLU";
 
 class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
