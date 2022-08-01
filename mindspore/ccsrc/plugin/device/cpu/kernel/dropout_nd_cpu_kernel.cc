@@ -116,7 +116,7 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   auto mask = GetDeviceAddress<bool>(outputs, kIndex1);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
-  if (keep_prob_ == 0.0f) {
+  if (std::equal_to<float>()(keep_prob_, 0)) {
     auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memset_s error.";
