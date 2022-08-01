@@ -3517,7 +3517,7 @@ class Tensor(Tensor_):
             1. The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
                is undefined out of range.
             2. The data type of `input_params` cannot be
-               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+               `bool_ <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
                platform currently.
 
         Args:
