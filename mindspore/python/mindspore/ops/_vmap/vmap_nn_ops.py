@@ -1522,6 +1522,47 @@ def get_apply_centered_rmsprop_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.MaxPool)
+@vmap_rules_getters.register(P.MaxPoolWithArgmax)
+def get_max_pool_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPool` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    prim_name = prim.name
+
+    @constexpr
+    def get_original_shape(x_shape, out_shape):
+        h_new = out_shape[2]
+        w_new = out_shape[3]
+        original_shape = x_shape[:3] + (h_new,) + (w_new,)
+        return original_shape
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = x.shape
+        x_new_shape = (-1,) + x_shape[2:]
+        x = x.reshape(x_new_shape)
+        if prim_name == "MaxPool":
+            out = prim(x)
+            out_shape = out.shape
+            original_shape = get_original_shape(x_shape, out_shape)
+            out = out.reshape(original_shape)
+            return (out, 0)
+        out, indices = prim(x)
+        out_shape = out.shape
+        original_shape = get_original_shape(x_shape, out_shape)
+        out = out.reshape(original_shape)
+        indices = indices.reshape(original_shape)
+        return (out, 0), (indices, 0)
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

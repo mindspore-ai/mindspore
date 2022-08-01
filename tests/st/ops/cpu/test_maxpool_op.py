@@ -17,11 +17,13 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from mindspore import Tensor
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
+from mindspore import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -303,3 +305,29 @@ def test_maxpool3d_4():
                              [0, 132, 134, 272],
                              [0, 280, 284, 576]]]]]).astype(np.float32)
     assert (actual_grad[0].asnumpy() == expect_dx).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_max_pool2d_vmap():
+    """
+    Feature: Test maxpool op.
+    Description: Vmap test--P.MaxPool.
+    Expectation: Consistent with the assertion.
+    """
+    context.set_context(device_target="CPU")
+    def max_pool(x):
+        return P.MaxPool(kernel_size=2, strides=1, pad_mode="valid", data_format="NCHW")(x)
+
+    # once vmap
+    x1 = Tensor(np.arange(1 * 2 * 3 * 4).reshape(1, 1, 2, 3, 4), mindspore.float32)
+    vmap_max_pool = vmap(max_pool, in_axes=-1)
+    outputs = vmap_max_pool(x1)
+    assert outputs.asnumpy().shape == (4, 1, 1, 1, 2)
+
+    # twice vmap
+    x2 = Tensor(np.arange(1 * 2 * 3 * 4).reshape(1, 1, 1, 2, 3, 4), mindspore.float32)
+    vmap_max_pool = vmap(vmap(max_pool, in_axes=0), in_axes=0)
+    outputs = vmap_max_pool(x2)
+    assert outputs.asnumpy().shape == (1, 1, 1, 2, 2, 3)
