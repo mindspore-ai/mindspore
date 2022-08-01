@@ -66,10 +66,10 @@ class CostGraph {
   void DFS(const OperatorInfoPtr &current_op, std::map<OperatorInfoPtr, bool> *visited,
            const std::shared_ptr<CostGraph> &component);
 
-  CostPtrList CreateFinalCostList(const OperatorInfoPtr &u, const EdgePtr &e, const OperatorInfoPtr &v);
+  CostPtrList CreateFinalCostList(const OperatorInfoPtr &u, const EdgePtr &e, const OperatorInfoPtr &v) const;
   CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u) const;
-  CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory);
-  CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
+  CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory) const;
+  CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory) const;
   CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist,
                                                         double memory) const;
   Status SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
@@ -117,18 +117,18 @@ class CostGraph {
    */
   OperatorInfoPtr CheckStarElimination() const;
   // Applying Operator Elimination in DP algorithm
-  EdgePtr EliminationOp(const OperatorInfoPtr &op);
+  EdgePtr EliminationOp(const OperatorInfoPtr &op) const;
   // Applying Edge Elimination in DP algorithm
-  EdgePtr EliminationEdges(const std::vector<EdgePtr> &edges);
+  EdgePtr EliminationEdges(const std::vector<EdgePtr> &edges) const;
   // Applying Merge Elimination in DP algorithm
   OperatorInfoPtr EliminationMerge(const OperatorInfoPtr &op);
   void CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &op_cost_list,
                                          const CostPtrList &edge_cost_list, StrategyPtr tar_op_strategy,
-                                         const CostPtrList &tar_cost_list, CostPtrList *tar_cost_list_new);
+                                         const CostPtrList &tar_cost_list, CostPtrList *tar_cost_list_new) const;
   // Applying Contract Elimination in DP algorithm
   OperatorInfoPtr EliminationContract(const OperatorInfoPtr &op);
   void CreateContractEliminationSubCostList(StrategyPtr, const CostPtrList &, const CostPtrList &, StrategyPtr,
-                                            const CostPtrList &, CostPtrList *);
+                                            const CostPtrList &, CostPtrList *) const;
 
   // Applying Triangle Elimination in DP algorithm. return the left_node
   OperatorInfoPtr EliminationTriangle(const OperatorInfoPtr &elimi_op, const EdgePtr &edge_left_right);
@@ -140,7 +140,7 @@ class CostGraph {
                                             StrategyPtr right_op_stra, const CostPtr &right_op_cost,
                                             const CostPtrList &elimi_op_clist, const CostPtrList &left_edge_clist,
                                             const CostPtr &right_edge_cost, const CostPtrList &left_node_clist_origin,
-                                            CostPtrList *left_node_clist_new);
+                                            CostPtrList *left_node_clist_new) const;
 
   // Applying the Star Elimination in DP algorithm. Return the successive edges of this merged_op
   // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
@@ -149,7 +149,7 @@ class CostGraph {
                                      const CostPtrList &, const StrategyPtr &, const CostPtrList &, CostPtrList *);
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
-                                        CostPtrList &, CostPtrList &, CostPtrList *);
+                                        CostPtrList &, CostPtrList &, CostPtrList *) const;
   // Return <op1, op2>. we merge 'op2' into 'op1'
   std::pair<OperatorInfoPtr, OperatorInfoPtr> CheckSourceElimination() const;
   void CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, const CostPtrList &op1_old_clist,
@@ -158,7 +158,7 @@ class CostGraph {
   // We merge 'op2' into op1. The returned value are '<Edges1, Edges2>'. 'Edges1' are newly updated edges for 'op1',
   // 'Edges2' are newly updated edges for 'op2'.
   std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> EliminationSources(
-    const OperatorInfoPtr op1, const OperatorInfoPtr op2);
+    const OperatorInfoPtr op1, const OperatorInfoPtr op2) const;
   // Calculate memory cost for training phase or inference phase.
   Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
