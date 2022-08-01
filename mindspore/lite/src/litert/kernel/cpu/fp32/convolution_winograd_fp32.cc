@@ -25,6 +25,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+#define CONV_MIN_CALC_BLOCK C1NUM
 int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_data, float *matrix_g,
                                                           const float *matrix_gt, int oc_block) {
   if (oc_block == 0) {
@@ -141,6 +142,24 @@ int ConvolutionWinogradCPUKernel::Prepare() {
   return RET_OK;
 }
 
+int ConvolutionWinogradCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num,
+                                                         int64_t per_unit_store_num, int64_t unit_num) {
+  if (conv_param_->input_batch_ % conv_param_->thread_num_ == 0) {
+    use_batch_cut_flag_ = true;
+    return RET_OK;
+  } else {
+    use_batch_cut_flag_ = false;
+  }
+
+  auto output_hw = conv_param_->output_h_ * conv_param_->output_w_;
+  const int tile_num = C12NUM;
+
+  conv_param_->thread_num_ =
+    MSMIN(UP_DIV(UP_DIV(output_hw, tile_num), CONV_MIN_CALC_BLOCK), op_parameter_->thread_num_);
+  thread_count_ = conv_param_->thread_num_;
+  return RET_OK;
+}
+
 int ConvolutionWinogradCPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
@@ -151,6 +170,9 @@ int ConvolutionWinogradCPUKernel::ReSize() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv base init failed.";
     return ret;
+  }
+  if (UpdateThreadNumPass(TC_PTYPE(type_), 0, 0, 0) != RET_OK) {
+    return RET_ERROR;
   }
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
@@ -169,9 +191,17 @@ int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   CHECK_NULL_RETURN(out_tensors_.front());
   auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_data);
-  ConvWinogardFp32(ori_input_data, reinterpret_cast<float *>(packed_weight_),
-                   reinterpret_cast<const float *>(bias_data_), output_data, tmp_buffer_address_list_, task_id,
-                   conv_param_, trans_func_);
+
+  if (use_batch_cut_flag_) {
+    ConvWinogardFp32CutByBatch(ori_input_data, reinterpret_cast<float *>(packed_weight_),
+                               reinterpret_cast<const float *>(bias_data_), output_data, tmp_buffer_address_list_,
+                               task_id, conv_param_, trans_func_);
+  } else {
+    ConvWinogardFp32(ori_input_data, reinterpret_cast<float *>(packed_weight_),
+                     reinterpret_cast<const float *>(bias_data_), output_data, tmp_buffer_address_list_, task_id,
+                     conv_param_, trans_func_);
+  }
+
   return RET_OK;
 }
 
