@@ -143,7 +143,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
   void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
 
-  void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph);
+  void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph) const;
 
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
   void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
@@ -187,7 +187,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                         const VectorRef &args, VectorRef *outputs);
 
-  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
+  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *outputs) const;
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 

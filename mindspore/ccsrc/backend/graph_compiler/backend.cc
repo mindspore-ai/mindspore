@@ -945,7 +945,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 }
 }  // namespace
 
-void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph) {
+void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs,
+                                     const FuncGraphPtr &root_graph) const {
   bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
                                 distributed::recovery::RecoveryContext::GetInstance()->need_reset());
   bool is_embedding_cache_server = false;
@@ -1659,7 +1660,7 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   graph_compiler_info->input_tensors_.clear();
 }
 
-void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *outputs) const {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
