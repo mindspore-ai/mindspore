@@ -52,14 +52,12 @@ void SharderNonBlock::Schedule(const Closure &closure) {
   }
 }
 
-uint32_t SharderNonBlock::GetCPUNum() { return cpu_core_num_; }
-
 SharderNonBlock &SharderNonBlock::GetInstance() {
   static SharderNonBlock sharder_non_block;
   return sharder_non_block;
 }
 
-int64_t SharderNonBlock::CeilMultiple(int64_t x, int64_t base) {
+int64_t SharderNonBlock::CeilMultiple(int64_t x, int64_t base) const {
   if (base == 0) {
     return 0;
   }

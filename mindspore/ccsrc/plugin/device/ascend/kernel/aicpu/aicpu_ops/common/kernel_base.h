@@ -43,7 +43,7 @@ class KernelBase {
   virtual uint32_t DoCompute() = 0;
 
   template <typename T>
-  uint32_t ParseExtendParam(T *param_var, std::string param_name);
+  uint32_t ParseExtendParam(T *param_var, const std::string &param_name);
 
   uint32_t ParseNodeDef();
 
@@ -55,9 +55,9 @@ class KernelBase {
 
   uint32_t ParseExtOutputShape(FWKAdapter::ExtInfo *ext_info);
 
-  uint32_t UpdateInputShape();
+  void UpdateInputShape();
 
-  uint32_t UpdateOutputShape();
+  void UpdateOutputShape();
 
  private:
   KernelBase(const KernelBase &) = delete;

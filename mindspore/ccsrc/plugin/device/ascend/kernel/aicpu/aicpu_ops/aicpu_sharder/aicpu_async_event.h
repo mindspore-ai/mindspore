@@ -32,7 +32,7 @@ struct AsyncEventInfo {
   uint32_t event_id;
   uint32_t sub_event_id;
 
-  bool operator==(const AsyncEventInfo &info) {
+  bool operator==(const AsyncEventInfo &info) const {
     return (event_id == info.event_id) && (sub_event_id == info.sub_event_id);
   }
 };
