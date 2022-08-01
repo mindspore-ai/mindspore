@@ -512,8 +512,8 @@ enum PrimType {
   PrimType_Inner_Identity = 10002,
   PrimType_Inner_ShapeFusion = 10003,
   PrimType_Inner_GraphKernel = 10004,
-  PrimType_InnerOpMin = PrimType_Inner_ToFormat,
-  PrimType_InnerOpMax = PrimType_Inner_GraphKernel + 1
+  PrimType_InnerOpMax,
+  PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };
 
 typedef enum FormatC {
