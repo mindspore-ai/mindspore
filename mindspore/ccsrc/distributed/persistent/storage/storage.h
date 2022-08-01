@@ -24,7 +24,6 @@
 #include <utility>
 
 #include "distributed/persistent/storage/block.h"
-#include "distributed/persistent/storage/constants.h"
 
 namespace mindspore {
 namespace distributed {

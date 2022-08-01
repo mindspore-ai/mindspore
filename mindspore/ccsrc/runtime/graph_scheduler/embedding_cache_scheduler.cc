@@ -369,7 +369,6 @@ void EmbeddingCacheScheduler::Schedule() {
 
   // 2. Spawn embedding cache prefetch actor.
   auto actor_manager = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actor_manager);
   // Bind single thread to execute embedding cache prefetch actor.
   (void)actor_manager->Spawn(embedding_cache_prefetch_actor_, false);
 

@@ -33,14 +33,11 @@ constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
 constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
 constexpr char kEnvRecoveryInterval[] = "MS_RECOVERY_INTERVAL";
 
-__attribute__((unused)) static bool IsEnableRecovery() {
-  return common::GetEnv(kEnvEnableRecovery) == std::string("1");
-}
-
-__attribute__((unused)) static std::string RecoveryPath() { return common::GetEnv(kEnvRecoveryPath); }
-
 using distributed::storage::FileIOUtils;
 using distributed::storage::JsonUtils;
+
+bool IsEnableRecovery();
+std::string RecoveryPath();
 
 // Used to save disaster recovery-related state quantities and provide disaster recovery-related
 // functions, such as reinitializing collective communication, etc.
