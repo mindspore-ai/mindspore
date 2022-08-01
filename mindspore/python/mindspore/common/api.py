@@ -44,6 +44,7 @@ from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, 
     _get_parameter_broadcast, _get_pipeline_stages
 from .._checkparam import Validator
 from ._utils import is_shape_unknown
+from ..common.mutable import mutable
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()
@@ -179,6 +180,17 @@ def _get_compile_cache_dep_files():
     return compile_cache_dep_files
 
 
+def _restore_mutable_attr(args_list, compile_args):
+    """Restore the mutable attr for every arg."""
+    new_compile_args = ()
+    for idx in range(len(args_list)):
+        if hasattr(args_list[idx], "__ms_mutable__") and getattr(args_list[idx], "__ms_mutable__"):
+            new_compile_args += (mutable(compile_args[idx]),)
+        else:
+            new_compile_args += (compile_args[idx],)
+    return new_compile_args
+
+
 class _MindsporeFunctionExecutor:
     """
     Represents a function compiled by graph compiler.
@@ -266,6 +278,9 @@ class _MindsporeFunctionExecutor:
                                f"`ms_function`.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
         compile_args = self._generate_compile_args(args_list)
+        # Restore the mutable attr for every arg.
+        compile_args = _restore_mutable_attr(args_list, compile_args)
+
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
                         str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         if _pynative_executor.grad_flag():

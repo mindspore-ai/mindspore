@@ -27,6 +27,8 @@ from mindspore import ms_function
 
 def compare(a, b):
     if isinstance(a, (list, tuple)):
+        if not a and b:
+            return False
         for aa, bb in zip(a, b):
             if not compare(aa, bb):
                 return False
@@ -518,6 +520,36 @@ def test_grad_mutable_tuple_tensor_ms_function():
 
     z = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+
+    output = GradOperation()(net)(z)
+    assert isinstance(output, tuple)
+    expect = [np.array([[1.4100001, 1.5999999, 6.6],
+                        [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
+              np.array([[1.7, 1.7, 1.7],
+                        [1.9, 1.9, 1.9],
+                        [1.5, 1.5, 1.5]]).astype(np.float32)]
+    assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_mutable_list_tensor_ms_function():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to tuple tensor input.
+    Expectation: Get the correct gradients.
+    """
+
+    @ms_function
+    def net(t):
+        x = t[0]
+        y = t[1]
+        out = P.MatMul()(x, y)
+        return out
+
+    z = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
 
     output = GradOperation()(net)(z)
     assert isinstance(output, tuple)
