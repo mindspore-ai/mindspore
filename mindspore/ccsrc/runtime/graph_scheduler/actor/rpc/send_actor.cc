@@ -140,7 +140,7 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr
                       [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
     message->body.reserve(total_size);
     for (const auto &data : data_list) {
-      message->body.append(static_cast<char *>(data->addr), data->size);
+      (void)message->body.append(static_cast<char *>(data->addr), data->size);
     }
   }
   return message;
