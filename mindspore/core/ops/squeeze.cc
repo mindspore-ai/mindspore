@@ -44,18 +44,18 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
   }
 
-  auto rank = SizeToLong(in_shape.size());
   if (axis.empty()) {
-    for (int64_t i = 0; i < rank; i++) {
+    for (size_t i = 0; i < in_shape.size(); i++) {
       if (in_shape[i] != kSqueezedDim) {
-        ret_shape.push_back(in_shape[LongToSize(i)]);
+        ret_shape.push_back(in_shape[i]);
         if (!min_shape.empty() && !max_shape.empty()) {
-          ret_min_shape.push_back(min_shape[LongToSize(i)]);
-          ret_max_shape.push_back(max_shape[LongToSize(i)]);
+          ret_min_shape.push_back(min_shape[i]);
+          ret_max_shape.push_back(max_shape[i]);
         }
       }
     }
   } else {
+    auto rank = SizeToLong(in_shape.size());
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange<int64_t>("element or value of axis", item, kIncludeLeft, {-rank, rank},
                                                   op_name);
