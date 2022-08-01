@@ -188,7 +188,7 @@ def get_broadcast_grad_grad_vmap_rule(prim, axis_size):
         dx2_shape = F.shape(dx2)
 
         if x1_dim == x2_dim and dx1_dim == dx2_dim and x1_dim == dx1_dim \
-            and x1_shape == x2_shape and dx1_shape == dx2_shape:
+                and x1_shape == x2_shape and dx1_shape == dx2_shape:
             sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
             return (sopd_x1, x1_dim), (sopd_x2, x1_dim), (sopd_grad, x1_dim)
 
@@ -687,6 +687,43 @@ def get_cum_min_max_vmap_rule(prim, axis_size):
         new_axis = old_axis if old_axis < x_dim else old_axis + 1
         value, index = prim_class(new_axis)(x)
         return (value, x_dim), (index, x_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(math_ops.SparseSegmentMean)
+def get_sparse_segment_mean_vmap_rule(prim, axis_size):
+    """VmapRule for `SparseSegmentMean` operation."""
+
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = math_ops.SparseSegmentMean()
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim, indices_bdim, segment_ids_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim, segment_ids_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        indices, indices_dim = indices_bdim
+        segment_ids, segment_ids_dim = segment_ids_bdim
+
+        # segment_ids affect output shape, must be none
+        if segment_ids_dim is not None:
+            _raise_value_error("The source axis of `segment_ids` in `{}` must be None, "
+                               "but got {}.".format(prim_name, segment_ids_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
+
+        out = batch_prim(x, indices, segment_ids)
+        return out, 0
 
     return vmap_rule
 

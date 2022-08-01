@@ -1590,18 +1590,6 @@ class CumSum(PrimitiveWithInfer):
         validator.check_value_type('reverse', reverse, [bool], cls_name)
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
-    def __infer__(self, x, axis):
-        cls_name = self.name
-        x_shp = x['shape']
-        if axis['value'] is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
-        validator.check_value_type('axis', axis['value'], [int], cls_name)
-        valid_dtypes = [mstype.uint8, mstype.int8, mstype.int32, mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensor_dtype_valid('x', x['dtype'], valid_dtypes, cls_name)
-        return {'shape': x_shp,
-                'dtype': x['dtype'],
-                'value': None}
-
 
 class AddN(Primitive):
     """
@@ -6060,35 +6048,20 @@ class Trace(Primitive):
 
 class SparseSegmentMean(Primitive):
     """
-    Computes the mean along sparse segments of a tensor.
+    Computes the mean along sparse segments of a Tensor.
 
-    Inputs:
-        - **x** (Tensor) - A Tensor, and its rank must be greater equal than 1.
-        - **indices** (Tensor) - A 1-D Tensor, has same rank as `segment_ids`.
-        - **segment_ids** (Tensor) - A 1-D Tensor, must have the same type as `indices`.
-          Values should be sorted and can be repeated.
-
-    Outputs:
-        Tensor, with the same data type and shape as input 'x', except for dimension 0
-        which is the number of segments.
-
-    Raises:
-        TypeError: If the dtype of `x` is not one of the following dtype: float32, float64.
-        TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
-        TypeError: If the dtype of `indices` and `segment_ids` are not the same.
-        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
-        ValueError: If the size of 'indices' and `segment_ids` are not the same.
-        RuntimeError: If the value of `indices` are out of range[0, x.shape[0]).
-        RuntimeError: If the value of `segment_ids` are not sorted or negative.
+    Refer to :func:`mindspore.ops.sparse_segment_mean` for more detail.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.math_ops import SparseSegmentMean
         >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=mindspore.float32)
         >>> indices = Tensor([0, 1, 2], dtype=mindspore.int32)
         >>> segment_ids = Tensor([1,2,2], dtype=mindspore.int32)
-        >>> sparse_segment_mean = ops.SparseSegmentMean()
+        >>> sparse_segment_mean = SparseSegmentMean()
         >>> out = sparse_segment_mean(x, indices, segment_ids)
         >>> print(out)
         [[0. 0. 0.]

@@ -47,10 +47,10 @@ class IndexFillGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void UpdateSize(const std::vector<KernelTensorPtr> &, const std::vector<KernelTensorPtr> &);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool GetSizeInfo(const AddressPtr &, int64_t &, int64_t &, int64_t &, cudaStream_t);
   template <typename DataType, typename IndexType>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);

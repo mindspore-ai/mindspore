@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CUMSUM_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CUMSUM_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CUMSUM_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CUMSUM_GPU_KERNEL_H_
 
 #include <vector>
+#include <memory>
+#include <map>
+#include <utility>
+#include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cuh"
@@ -26,95 +30,47 @@
 namespace mindspore {
 namespace kernel {
 constexpr int kMaxDimsSize = 3;
-template <typename T>
-class CumSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CumSumGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CumSumGpuKernelMod()
-      : exclusive_(false),
-        reverse_(false),
-        is_null_input_(false),
-        axis_(0),
-        input_size_0_(0),
-        stride_(0),
-        stride2_(0) {}
-  ~CumSumGpuKernelMod() = default;
+  CumSumGpuKernelMod() = default;
+  ~CumSumGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *ws_addr = GetDeviceAddress<T>(workspace, 0);
-    CumSum(input_addr, output_addr, ws_addr, dims_[0], dims_[1], dims_[2], stride_, stride2_, exclusive_, reverse_,
-           device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
-    }
-    input_size_0_ = sizeof(T);
-    shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
-    exclusive_ = GetAttr<bool>(kernel_node, "exclusive");
-    reverse_ = GetAttr<bool>(kernel_node, "reverse");
-    int input_dim_length = SizeToInt(shape_.size());
-    if (axis_ >= input_dim_length) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than " << input_dim_length
-                        << ", but got " << axis_;
-    }
-    while (axis_ < 0) {
-      axis_ += input_dim_length;
-    }
-    input_size_0_ *= SizeOf(shape_);
-    Reshape();
-    InitSizeLists();
-    return true;
-  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_0_);
-    output_size_list_.push_back(input_size_0_);
-    workspace_size_list_.push_back(input_size_0_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void Reshape() {
-    dims_[0] = 1;
-    dims_[1] = shape_[IntToSize(axis_)];
-    dims_[2] = 1;
-    for (size_t i = 0; i < IntToSize(axis_); i++) {
-      dims_[0] *= shape_[i];
-    }
-    for (size_t i = IntToSize(axis_) + 1; i < shape_.size(); i++) {
-      dims_[2] *= shape_[i];
-    }
-    stride_ = dims_[1] * dims_[2];
-    stride2_ = dims_[2];
-    return;
-  }
-  bool exclusive_;
-  bool reverse_;
-  bool is_null_input_;
-  int axis_;
-  size_t input_size_0_;
-  size_t stride_;
-  size_t stride2_;
+  void Reshape();
+  void ResetResource() noexcept;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using CumSumLaunchFunc =
+    std::function<bool(CumSumGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, CumSumLaunchFunc>> func_list_;
+  CumSumLaunchFunc kernel_func_;
+  int axis_{0};
+  bool exclusive_{false};
+  bool reverse_{false};
+  bool is_null_input_{false};
+  size_t stride_{0};
+  size_t stride2_{0};
   size_t dims_[kMaxDimsSize] = {};
-  ShapeVector shape_;
+  std::vector<size_t> shape_{};
+  bool is_dynamic_shape_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CUMSUM_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_MATH_CUMSUM_GPU_KERNEL_H_

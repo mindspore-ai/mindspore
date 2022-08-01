@@ -19,14 +19,14 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
-from mindspore.ops.operations.array_ops import IndexFill
+import mindspore.ops as ops
 from mindspore.ops.functional import vmap
 
 
 class IndexFillNet(nn.Cell):
     def __init__(self):
         super(IndexFillNet, self).__init__()
-        self.index_fill = IndexFill()
+        self.index_fill = ops.index_fill
 
     def construct(self, x, dim, index, value):
         out = self.index_fill(x, dim, index, value)
@@ -67,7 +67,7 @@ def compare_with_numpy(x, dim, index, value):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('data_type', [np.int8, np.int16, np.int32, np.float16, np.float64])
+@pytest.mark.parametrize('data_type', [np.bool, np.int8, np.int16, np.int32, np.float16, np.float64])
 def test_index_fill_data_type(data_type):
     """
     Feature: IndexFill
@@ -95,22 +95,6 @@ def test_index_fill_dim_type(dim_type):
     data_type = np.float32
     dim = Tensor(np.array(2, dtype=dim_type))
     value = Tensor(np.array(-10, dtype=data_type))
-    x_np = np.random.randint(20, size=(5, 5, 5)).astype(data_type)
-    index_np = np.random.randint(low=0, high=5, size=4).astype(np.int32)
-    assert compare_with_numpy(x_np, dim, index_np, value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('value, data_type', [(10, np.int64), (10., np.float32)])
-def test_index_fill_scalar(value, data_type):
-    """
-    Feature: IndexFill
-    Description:  test cases for IndexFill operator with scalar input.
-    Expectation: the result match numpy.
-    """
-    dim = 0
     x_np = np.random.randint(20, size=(5, 5, 5)).astype(data_type)
     index_np = np.random.randint(low=0, high=5, size=4).astype(np.int32)
     assert compare_with_numpy(x_np, dim, index_np, value)

@@ -24,26 +24,45 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                                                const std::vector<AbstractBasePtr> &input_args) {
-  constexpr size_t number_one = 1;
   auto prim_name = prim->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual, number_one,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'indices'", SizeToLong(indices_shape.size()), kEqual, number_one,
-                                           prim_name);
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto segment_ids_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
+  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape];
+
+  int64_t batch_rank = 0;
+  if (prim->HasAttr(kBatchRank)) {
+    auto batch_rank_ptr = prim->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(batch_rank_ptr);
+  }
+
+  if (x_shape_ptr->IsDimUnknown()) {
+    constexpr int64_t unknown_shape = -2;
+    return std::make_shared<abstract::Shape>(ShapeVector{unknown_shape});
+  }
+
+  constexpr int64_t number_one = 1;
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual,
+                                           batch_rank + number_one, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'indices'", SizeToLong(indices_shape.size()), kEqual,
+                                           batch_rank + number_one, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'segment_ids'", SizeToLong(segment_ids_shape.size()), kEqual,
-                                           number_one, prim_name);
-  if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
+                                           batch_rank + number_one, prim_name);
+  if (!indices_shape_ptr->IsDynamic() && !segment_ids_shape_ptr->IsDynamic() &&
+      indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the size of 'indices' and 'segment_ids' must be the same, but got "
                              << indices_shape[kInputIndex0] << " vs " << segment_ids_shape[kInputIndex0] << ".";
   }
   ShapeVector out_shape = x_shape;
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+  if (!input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+    // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
+    // The framework ensures the `else` branch will be executed, so min/max shape are not necessary to set.
+    out_shape[batch_rank] = abstract::Shape::SHP_ANY;
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else {
     auto segment_ids = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(segment_ids);
     auto segment_ids_value = segment_ids->BuildValue();
@@ -60,23 +79,14 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     int64_t segment_num = 0;
     if (segment_ids_tensor->Dtype() == kInt32) {
       segment_num = IntToLong(*(reinterpret_cast<int *>(segment_ids_ptr) + segment_ids_size - 1) + 1);
-    } else {
+    } else if (segment_ids_tensor->Dtype() == kInt64) {
       segment_num = *(reinterpret_cast<int64_t *>(segment_ids_ptr) + segment_ids_size - 1) + 1;
     }
     if (segment_num <= 0) {
       MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input 'segment_ids' must be non-negative.";
     }
-    out_shape[0] = segment_num;
+    out_shape[batch_rank] = segment_num;
     return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    ShapeVector min_out_shape = x_shape;
-    ShapeVector max_out_shape = x_shape;
-    out_shape[0] = abstract::Shape::SHP_ANY;
-    // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
-    // The framework ensures the above branch will be executed, so min/max shape are not necessary to set
-    // correctly.
-    min_out_shape[0] = max_out_shape[0] = 1;
-    return std::make_shared<abstract::Shape>(out_shape, min_out_shape, max_out_shape);
   }
 }
 
@@ -84,7 +94,7 @@ TypePtr SparseSegmentMeanInferType(const PrimitivePtr &prim, const std::vector<A
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  const std::set<TypePtr> valid_data_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_data_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_index_types = {kInt32, kInt64};
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_data_types, prim->name());

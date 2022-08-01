@@ -702,6 +702,28 @@ def cumsum(x, axis=None, dtype=None):
     return cumsum_(x, axis)
 
 
+def cummin(x, axis):
+    """
+    Returns the cumulative minimum of elements and the index.
+    """
+    return F.cummin(x, axis)
+
+
+def cummax(x, axis):
+    """
+    Returns the cumulative maximum of elements and the index.
+    """
+    return F.cummax(x, axis)
+
+
+def index_fill(x, dim, index, value):
+    """
+    Fills the elements under the dim dimension of the input Tensor with the input value
+    by selecting the indices in the order given in index.
+    """
+    return F.index_fill(x, dim, index, value)
+
+
 def copy(x):
     """
     Returns a copy of the tensor.

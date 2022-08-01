@@ -2164,6 +2164,135 @@ class Tensor(Tensor_):
             return tensor_operator_registry.get('cumsum')()(x, axis).astype(dtype, copy=False)
         return tensor_operator_registry.get('cumsum')()(x, axis)
 
+    def cummin(self, axis):
+        r"""
+        Returns a tuple (values,indices) where 'values' is the cumulative minimum value of self Tensor
+        along the dimension `axis`, and `indices` is the index location of each minimum value.
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = min(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        Args:
+            axis (int): The dimension to do the operation over. The value of `axis` must be in the range
+                `[-x.ndim, x.ndim - 1]`.
+
+        Returns:
+            tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
+            The shape of each output tensor is the same as self Tensor.
+
+        Raises:
+            TypeError: If `axis` is not an int.
+            ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, ops
+            >>> import mindspore
+            >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+            >>> output = a.cummin(axis=0)
+            >>> print(output[0])
+            [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+            >>> print(output[1])
+            [0 1 1 1 4 4]
+        """
+        return tensor_operator_registry.get('cummin')(self, axis)
+
+    def cummax(self, axis):
+        r"""
+        Returns a tuple (values,indices) where 'values' is the cumulative maximum value of self Tensor
+        along the dimension `axis`, and `indices` is the index location of each maximum value.
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = max(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        Args:
+            axis (int): The dimension to do the operation over. The value of `axis` must be in the range
+                `[-x.ndim, x.ndim - 1]`.
+
+        Returns:
+            tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index,
+            The shape of each output tensor is the same as self Tensor.
+
+        Raises:
+            TypeError: If `axis` is not an int.
+            ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore.ops as ops
+            >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
+            >>> output = x.cummax(axis=0)
+            >>> print(output[0])
+            [[ 3.  4.  6. 10.]
+             [ 3.  6.  7. 10.]
+             [ 4.  6.  8. 10.]
+             [ 4.  6.  8. 10.]]
+            >>> print(output[1])
+            [[0 0 0 0]
+             [0 1 1 0]
+             [2 1 2 0]
+             [2 1 2 0]]
+        """
+        return tensor_operator_registry.get('cummax')(self, axis)
+
+    def index_fill(self, dim, index, value):
+        """
+        Fills the elements under the `dim` dimension of the self Tensor with the input `value`
+        by selecting the indices in the order given in `index`.
+
+        Args:
+            dim (Union[int, Tensor]): Dimension along which to fill the input Tensor. Only supports
+                an int number or a 0-dimensional Tensor, whose data type is int32 or int64.
+            index (Tensor): Indices of the input Tensor to fill in. The dtype must be int32.
+            value (Union[bool, int, float, Tensor]): Value to fill the returned Tensor. If `value` is
+                a Tensor, it must be a 0-dimensional Tensor and has the same dtype as self Tensor. Otherwise,
+                the `value` will be cast to a 0-dimensional Tensor with the same data type as self Tensor.
+
+        Outputs:
+            Tensor, has the same dtype and shape as self Tensor.
+
+        Raises:
+            TypeError: If `dim` is neither int number nor Tensor.
+            TypeError: When `dim` is a Tensor and its dtype is not int32 or int64.
+            TypeError: If `index` is not a Tensor.
+            TypeError: If dtype of `index` is not int32.
+            TypeError: If `value` is not a bool, int, float, or Tensor.
+            TypeError: If dtype of self Tensor and `value` are not the same.
+            ValueError: When `dim` is a Tensor and its rank is not equal to 0.
+            ValueError: If the rank of `index` is greater than 1D.
+            ValueError: When `value` is a Tensor and its rank is not equal to 0.
+            RuntimeError: If the value of `dim` is out the range of `[-self.ndim, self.ndim - 1]`.
+            RuntimeError: If the values of `index` are out the range of `[-self.shape[dim], self.shape[dim] - 1]`.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import mindspore.ops as ops
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
+            >>> index = Tensor([0, 2], mindspore.int32)
+            >>> value = Tensor(-2.0, mindspore.float32)
+            >>> y = x.index_fill(1, index, value)
+            >>> print(y)
+            [[-2. 2. -2.]
+             [-2. 5. -2.]
+             [-2. 8. -2.]]
+        """
+        return tensor_operator_registry.get('index_fill')(self, dim, index, value)
+
     def inplace_update(self, v, indices):
         """
         Update some rows of a tensor with values of v according to the specified indices.

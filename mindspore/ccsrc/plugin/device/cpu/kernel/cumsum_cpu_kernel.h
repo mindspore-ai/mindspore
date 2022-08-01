@@ -14,76 +14,57 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CUMSUM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CUMSUM_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUMSUM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUMSUM_CPU_KERNEL_H_
 
 #include <memory>
 #include <vector>
-
+#include <map>
+#include <utility>
+#include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class CumSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CumSumCpuKernelMod : public NativeCpuKernelMod {
  public:
   CumSumCpuKernelMod() = default;
   ~CumSumCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void Reshape();
-
   template <typename T>
-  void InitWorkspaceSize();
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
-  template <typename T>
-  void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                size_t start, size_t end) const;
-
-  template <typename T>
-  void RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                 size_t start, size_t end) const;
-
-  template <typename T>
-  void Copy(T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2, size_t start,
-            size_t end) const;
-
-  template <typename T>
-  void CumSumKernelReverse(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                           size_t stride2, size_t start, size_t end) const;
-
-  template <typename T>
-  void CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                    size_t start, size_t end) const;
-
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-
-  template <typename T>
-  void LaunchCumSum(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end) const;
-
-  ShapeVector shape_;
-  ShapeVector dst_shape;
-  size_t input_size_0_{0};
+  using CumSumLaunchFunc =
+    std::function<bool(CumSumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CumSumLaunchFunc>> func_list_;
+  CumSumLaunchFunc kernel_func_;
+  int axis_{0};
+  ShapeVector shape_{};
   size_t stride_{0};
   size_t stride2_{0};
   size_t dims_[3]{0};
-  int exclusive_{0};
-  int reverse_{0};
-  int axis_{0};
-  TypeId dtype_{kTypeUnknown};
+  bool exclusive_{false};
+  bool reverse_{false};
+  bool is_dynamic_shape_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CUMSUM_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUMSUM_CPU_KERNEL_H_

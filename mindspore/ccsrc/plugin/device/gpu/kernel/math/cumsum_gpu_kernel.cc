@@ -15,20 +15,164 @@
  */
 
 #include "plugin/device/gpu/kernel/math/cumsum_gpu_kernel.h"
+#include "mindspore/core/ops/cumsum.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      CumSumGpuKernelMod, uint8_t)
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      CumSumGpuKernelMod, int8_t)
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      CumSumGpuKernelMod, int32_t)
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      CumSumGpuKernelMod, double)
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      CumSumGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(CumSum, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      CumSumGpuKernelMod, half)
+namespace {
+constexpr size_t kCumSumStaticInputsNum = 1;
+constexpr size_t kCumSumDynamicInputsNum = 2;
+}  // namespace
+
+bool CumSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto input_num = inputs.size();
+  if (input_num == kCumSumStaticInputsNum) {
+    is_dynamic_shape_ = false;
+  } else if (input_num == kCumSumDynamicInputsNum) {
+    is_dynamic_shape_ = true;
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+    return false;
+  }
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int CumSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto shape = inputs.at(kIndex0)->GetShapeVector();
+  shape_.clear();
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_), LongToSize);
+  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+  if (is_null_input_) {
+    return true;
+  }
+  auto kernel_ptr = std::make_shared<ops::CumSum>(base_operator->GetPrim());
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  exclusive_ = kernel_ptr->get_exclusive();
+  reverse_ = kernel_ptr->get_reverse();
+  if (!is_dynamic_shape_) {
+    axis_ = static_cast<int>(kernel_ptr->get_axis());
+    Reshape();
+  }
+  workspace_size_list_.push_back(input_size_list_.at(kIndex0));
+  return KRET_OK;
+}
+
+void CumSumGpuKernelMod::Reshape() {
+  axis_ = (axis_ < 0) ? axis_ + SizeToInt(shape_.size()) : axis_;
+  dims_[kIndex0] = 1;
+  dims_[kIndex1] = shape_[IntToSize(axis_)];
+  dims_[kIndex2] = 1;
+  for (size_t i = 0; i < IntToSize(axis_); i++) {
+    dims_[kIndex0] *= shape_[i];
+  }
+  for (size_t i = IntToSize(axis_) + 1; i < shape_.size(); i++) {
+    dims_[kIndex2] *= shape_[i];
+  }
+  stride_ = dims_[kIndex1] * dims_[kIndex2];
+  stride2_ = dims_[kIndex2];
+}
+
+template <typename T>
+bool CumSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  auto ws_addr = GetDeviceAddress<T>(workspace, kIndex0);
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+  auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
+  if (any(input_addr, output_addr, ws_addr, cuda_stream)) {
+    return false;
+  }
+  if (is_dynamic_shape_) {
+    auto axis_addr = GetDeviceAddress<T>(inputs, kIndex1);
+    if (axis_addr == nullptr) {
+      return false;
+    }
+    int64_t axis_tmp;
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
+                                       "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+    axis_ = static_cast<int>(axis_tmp);
+    Reshape();
+  }
+  CumSum(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
+         exclusive_, reverse_, device_id_, cuda_stream);
+  return true;
+}
+
+std::vector<std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc>> CumSumGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &CumSumGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &CumSumGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &CumSumGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &CumSumGpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &CumSumGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &CumSumGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &CumSumGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &CumSumGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &CumSumGpuKernelMod::LaunchKernel<half>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &CumSumGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &CumSumGpuKernelMod::LaunchKernel<double>},
+  // Dynamic shape related.
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   &CumSumGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   &CumSumGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &CumSumGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &CumSumGpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   &CumSumGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   &CumSumGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   &CumSumGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   &CumSumGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   &CumSumGpuKernelMod::LaunchKernel<half>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   &CumSumGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   &CumSumGpuKernelMod::LaunchKernel<double>},
+};
+
+std::vector<KernelAttr> CumSumGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, CumSumGpuKernelMod::CumSumLaunchFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CumSum, CumSumGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

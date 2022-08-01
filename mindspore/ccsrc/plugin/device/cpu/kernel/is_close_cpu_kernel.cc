@@ -18,7 +18,6 @@
 #include <cmath>
 #include <algorithm>
 #include <memory>
-#include "abstract/utils.h"
 #include "mindspore/core/ops/is_close.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -28,7 +27,7 @@ namespace {
 constexpr size_t kIsCloseInputsNum = 2;
 constexpr size_t kIsCloseOutputsNum = 1;
 template <typename T>
-inline bool compute(T a, T b, float rtol, float atol, bool equal_nan) {
+inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
   if (a == b) {
     return true;
   }
@@ -41,6 +40,68 @@ inline bool compute(T a, T b, float rtol, float atol, bool equal_nan) {
   auto left_side = std::abs(a - b);
   auto right_side = atol + (rtol * std::abs(b));
   return std::isfinite(left_side) && left_side <= right_side;
+}
+
+void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVector &output_shape,
+                       std::vector<int64_t> *index_list) {
+  // Given unaligned input shape and output shape, this function returns the mapping
+  // from indices of output (logical) to corespondingly real input indices (physical).
+  // The return will write to index_list, whose size is equal to total elements of output.
+  constexpr int MaxDim = 10;
+  int64_t logical_shape[MaxDim];
+  int64_t physical_shape[MaxDim];
+  int64_t size = 0, output_size = 1;
+  // Align input shape to output shape by filling one into the outermost dimension.
+  ShapeVector input_shape(output_shape.size());
+  for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
+    input_shape[i] = i < j ? 1 : unaligned_input_shape[i - j];
+  }
+  // Get logical shape and physical shape of input. Moreover, we will merge the dimensions with same
+  // (logical or physical) property.
+  for (int i = SizeToInt(output_shape.size()) - 1; i >= 0;) {
+    int64_t stride = 1;
+    bool change = false, is_valid = false;
+    while (i >= 0 && input_shape[i] == output_shape[i]) {
+      stride *= output_shape[i];
+      change = is_valid = true;
+      --i;
+    }
+    if (change) {
+      output_size *= stride;
+      logical_shape[size] = physical_shape[size] = stride;
+      size++;
+    }
+    change = false;
+    stride = 1;
+    while (i >= 0 && input_shape[i] == 1) {
+      stride *= output_shape[i];
+      change = is_valid = true;
+      --i;
+    }
+    if (change) {
+      output_size *= stride;
+      logical_shape[size] = 1;
+      physical_shape[size] = stride;
+      size++;
+    }
+    if (!is_valid) {
+      MS_LOG(EXCEPTION) << "Both shape are not able to broadcast, input shape is " << unaligned_input_shape
+                        << " and output shape is " << output_shape;
+    }
+  }
+  // Get the flatten input indices according to "logical_shape" and "physical_shape".
+  int64_t offset = 1;
+  int64_t stride = 1;
+  index_list->resize(output_size);
+  (*index_list)[0] = 0;  // First element is set to 0.
+  for (int64_t i = 0; i < size; ++i) {
+    int64_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
+    for (int64_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
+      (*index_list)[offset + j] = (*index_list)[j] + increment;
+    }
+    offset *= physical_shape[i];
+    stride *= logical_shape[i];
+  }
 }
 }  // namespace
 bool IsCloseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -64,20 +125,19 @@ int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_.clear();
-  other_shape_.clear();
-  output_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   auto other_shape = inputs.at(kIndex1)->GetShapeVector();
-  (void)std::transform(other_shape.begin(), other_shape.end(), std::back_inserter(other_shape_), LongToSize);
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  is_need_broadcast_ = input_shape != other_shape;
+  if (is_need_broadcast_) {
+    GetBroadCastIndex(input_shape, output_shape, &index_list1_);
+    GetBroadCastIndex(other_shape, output_shape, &index_list2_);
+  }
   return KRET_OK;
 }
 
 template <typename T>
-bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
@@ -86,41 +146,35 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   auto output = reinterpret_cast<bool *>(outputs[kIndex0]->addr);
 
   CTask task;
-  BroadcastIterator base_iter(input_shape_, other_shape_, output_shape_);
-  if (input_shape_ == other_shape_) {
+  if (!is_need_broadcast_) {
     task = [this, &input, &other, &output](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         if constexpr (!std::is_same_v<T, float> && !std::is_same_v<T, double>) {
           auto a = static_cast<float>(input[i]);
           auto b = static_cast<float>(other[i]);
-          output[i] = compute<float>(a, b, rtol_, atol_, equal_nan_);
+          output[i] = IsClose<float>(a, b, rtol_, atol_, equal_nan_);
         } else {
-          output[i] = compute<T>(input[i], other[i], rtol_, atol_, equal_nan_);
+          output[i] = IsClose(input[i], other[i], rtol_, atol_, equal_nan_);
         }
       }
-      return common::SUCCESS;
     };
   } else {
-    task = [this, &base_iter, &input, &other, &output](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
+    task = [this, &input, &other, &output](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        auto idx1 = iter.GetInputPosA();
-        auto idx2 = iter.GetInputPosB();
+        auto idx1 = index_list1_[i];
+        auto idx2 = index_list2_[i];
         if constexpr (!std::is_same_v<T, float> && !std::is_same_v<T, double>) {
           auto a = static_cast<float>(input[idx1]);
           auto b = static_cast<float>(other[idx2]);
-          output[i] = compute<float>(a, b, rtol_, atol_, equal_nan_);
+          output[i] = IsClose<float>(a, b, rtol_, atol_, equal_nan_);
         } else {
-          output[i] = compute<T>(input[idx1], other[idx2], rtol_, atol_, equal_nan_);
+          output[i] = IsClose(input[idx1], other[idx2], rtol_, atol_, equal_nan_);
         }
-        iter.GenNextPos();
       }
-      return common::SUCCESS;
     };
   }
   size_t elem_num = outputs[kIndex0]->size / sizeof(bool);
-  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
+  ParallelLaunch(task, elem_num, 0, this, pool_);
   return true;
 }
 

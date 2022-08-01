@@ -4988,7 +4988,7 @@ class ScatterNdMax(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_max` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.array_ops import ScatterNdMax
@@ -7083,31 +7083,9 @@ class UpperBound(Primitive):
 
 class Cummax(Primitive):
     """
-   Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-   is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-   each maximum value.
+    Returns the cumulative maximum of elements and the index.
 
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    .. math::
-
-        y_i = max(x_1 , x_2 , x_3 ,... ,x_i)
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor whose dtype is int8, int32, int64, uint8, uint32, float16, float32.
-
-    Outputs:
-        - **values**  (Tensor), the shape of the output tensor is consistent with the input tensor's.
-        - **indices** (Tensor), the shape of the output tensor is consistent with the input tensor's.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out of range, `axis` should be [-len(input.shape), len(input.shape)-1].
+    Refer to :func:`mindspore.ops.cummax` for more detail.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7120,13 +7098,12 @@ class Cummax(Primitive):
         >>> cummax = ops.Cummax(axis=0)
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = cummax(x)
-        >>> print(output)
-        values:
+        >>> print(output[0])
         [[ 3.  4.  6. 10.]
          [ 3.  6.  7. 10.]
          [ 4.  6.  8. 10.]
          [ 4.  6.  8. 10.]]
-        indices:
+        >>> print(output[1])
         [[0 0 0 0]
          [0 1 1 0]
          [2 1 2 0]
@@ -7138,6 +7115,7 @@ class Cummax(Primitive):
         """Initialize Cummax"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
+        self.add_prim_attr("dim", axis)
 
 
 class RightShift(Primitive):
@@ -7279,36 +7257,35 @@ class Tril(Primitive):
 
 class IndexFill(Primitive):
     """
-    Fill self tensor with input values.
-
-    Fills the elements under the dim dimension of the self tensor with the input value
+    Fills the elements under the dim dimension of the input Tensor with the input value
     by selecting the indices in the order given in index.
 
+    Refer to :func:`mindspore.ops.index_fill` for more detail.
     Inputs:
         - **x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **dim** (Union[int, Tensor]) - Dimension along which to fill the input tensor. Only supports
-          a 0-dimensional tensor or an int number.
-        - **index** (Tensor) - Indices of the input tensor to fill in.
-        - **value** (Tensor) - Value to fill the returned tensor.
+          a 0-D tensor or an int number.
+        - **index** (Tensor) - Indices of the input tensor to fill in. Only supports a 0-D or 1-D tensor.
+        - **value** (Tensor) - Value to fill the returned tensor. Only supports a 0-D tensor.
 
     Outputs:
         Tensor, has the same type and shape as input tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If `dim` is neither int number nor tensor.
+        TypeError: If `dim` is neither a int number nor a tensor.
         TypeError: If `index` is not a Tensor.
         TypeError: If `value` is not a Tensor.
         TypeError: If dtype of `index` is not int32.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
-        >>> index_fill = ops.IndexFill()
+        >>> from mindspore.ops.operations.array_ops import IndexFill
+        >>> index_fill = IndexFill()
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> index = Tensor([0, 2], mindspore.int32)
         >>> value = Tensor(-2.0, mindspore.float32)
@@ -7321,6 +7298,7 @@ class IndexFill(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize IndexFill"""
         self.init_prim_io_names(inputs=['x', 'dim', 'index', 'value'], outputs=['y'])
 
 
