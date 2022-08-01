@@ -21,6 +21,7 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include "ir/anf.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
@@ -28,6 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
+#include "utils/log_adapter.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "base/effect_info.h"
@@ -143,18 +145,6 @@ bool IsKeepRef(const PrimitivePtr &prim) {
 FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
   if (cnode != nullptr && !cnode->inputs().empty()) {
     return GetValueNode<FuncGraphPtr>(cnode->input(0));
-  }
-  return nullptr;
-}
-
-// Gets class_type from the given cnode->inputs[0].
-ClassTypePtr GetClassType(const CNodePtr &cnode) {
-  if (cnode && !cnode->inputs().empty()) {
-    auto apply = cnode->input(0);
-    auto apply_cnode = dyn_cast<CNode>(apply);
-    if (apply_cnode && !apply_cnode->inputs().empty()) {
-      return GetValueNode<ClassTypePtr>(apply_cnode->input(0));
-    }
   }
   return nullptr;
 }
@@ -738,25 +728,126 @@ class SideEffectFinder {
       return TraceEffectInfo(called_graph->output());
     }
 
-    //
-    // For ClassType as the input[0], if it is a primitive class
-    // with 'side_effect_propagate' attribute, we trace side effect
-    // from its argument indxed by the attribute value.
-    //
-    // e.g.:
-    //     setpara = P.Partial()(P.Assign, self.para)
-    //     setpara(x)
-    //
-    auto class_type = GetClassType(cnode);
-    if (class_type != nullptr) {
-      int index = GetSideEffectPropagate(class_type);
-      if (index > 0 && index < static_cast<int>(cnode->size())) {
-        return TraceEffectInfo(cnode->input(static_cast<size_t>(index)));
+    auto func_cnode = GetFuncCNode(cnode);
+    if (func_cnode != nullptr) {
+      //
+      // For ClassType as the input[0], if it is a primitive class
+      // with 'side_effect_propagate' attribute, we trace side effect
+      // from its argument indxed by the attribute value.
+      //
+      // e.g.:
+      //     setpara = P.Partial()(P.Assign, self.para)
+      //     setpara(x)
+      //
+      auto class_type = GetValueNode<ClassTypePtr>(func_cnode->input(0));
+      if (class_type != nullptr) {
+        int index = GetSideEffectPropagate(class_type);
+        if (index > 0 && index < static_cast<int>(cnode->size())) {
+          return TraceEffectInfo(cnode->input(static_cast<size_t>(index)));
+        }
       }
+
+      // For high order cnode, trace effect info from the output of the input cnode.
+      return TraceOutputEffectInfo(func_cnode);
     }
 
-    // Otherwise, no side effect found and stop trace.
+    // Otherwise, assume no side effect and stop trace.
+    MS_LOG(INFO) << "CNode side effect unknown: " << cnode->DebugString();
     return {EffectInfo::kDetected, false, false, false};
+  }
+
+  // Trace effect info from output of the cnode.
+  EffectInfo TraceOutputEffectInfo(const CNodePtr &cnode) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::vector<ValuePtr> values;
+    GetOutputValues(cnode, &values);
+    if (values.size() == 1) {
+      return GetEffectInfo(values.front());
+    }
+    EffectInfo info{EffectInfo::kDetected, false, false, false};
+    for (auto &value : values) {
+      info.Merge(GetEffectInfo(value));
+    }
+    return info;
+  }
+
+  EffectInfo GetEffectInfo(const ValuePtr &value) {
+    // FuncGraph.
+    auto graph = dyn_cast<FuncGraph>(value);
+    if (graph != nullptr) {
+      return GetEffectInfo(graph);
+    }
+    // Primitive.
+    auto prim = dyn_cast<Primitive>(value);
+    if (prim != nullptr) {
+      return GetPrimEffectInfo(prim);
+    }
+    MS_LOG(INFO) << "Value side effect unknown: " << value->ToString();
+    return {EffectInfo::kDetected, false, false, false};
+  }
+
+  void GetOutputValues(const CNodePtr &cnode, std::vector<ValuePtr> *values) {
+    // CNode is a func graph call.
+    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+    if (graph != nullptr) {
+      GetOutputValues(graph, values);
+      return;
+    }
+    // CNode is applying another cnode.
+    auto func_cnode = dyn_cast<CNode>(cnode->input(0));
+    if (func_cnode != nullptr) {
+      GetOutputValues(func_cnode, values);
+      return;
+    }
+    // Primitive cnode.
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
+      // Switch.
+      auto branches = GetSwitchBranches(cnode);
+      GetOutputValues(branches, values);
+      return;
+    }
+    if (IsPrimitiveEquals(prim, prim::kPrimSwitchLayer)) {
+      // Switch layer.
+      auto branches = GetSwitchLayerBranches(cnode);
+      GetOutputValues(branches, values);
+      return;
+    }
+    if (IsPrimitiveEquals(prim, prim::kPrimPartial)) {
+      // Partial.
+      auto fg = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (fg != nullptr) {
+        GetOutputValues(fg, values);
+        return;
+      }
+    }
+    // Other cases not supported yet.
+    MS_LOG(INFO) << "Output unknown: " << cnode->DebugString();
+  }
+
+  void GetOutputValues(const FuncGraphPtr &graph, std::vector<ValuePtr> *values) {
+    auto output = graph->output();
+    // Output is a value node.
+    auto value = GetValueNode(output);
+    if (value != nullptr) {
+      (void)values->emplace_back(value);
+      return;
+    }
+
+    // Output is a cnode.
+    auto cnode = dyn_cast<CNode>(output);
+    if (cnode != nullptr) {
+      GetOutputValues(cnode, values);
+      return;
+    }
+
+    MS_LOG(INFO) << "Unexpected output: " << output->DebugString();
+  }
+
+  void GetOutputValues(const std::vector<FuncGraphPtr> &graphs, std::vector<ValuePtr> *values) {
+    for (auto &graph : graphs) {
+      GetOutputValues(graph, values);
+    }
   }
 
   // Trace an AnfNode for effect info.
@@ -781,12 +872,9 @@ class SideEffectFinder {
       }
 
       // Trace func graph.
-      auto value_node = node->cast<ValueNodePtr>();
-      if (value_node != nullptr && value_node->value()) {
-        auto graph = value_node->value()->cast<FuncGraphPtr>();
-        if (graph != nullptr) {
-          return GetEffectInfo(graph);
-        }
+      auto graph = GetValueNode<FuncGraphPtr>(node);
+      if (graph != nullptr) {
+        return GetEffectInfo(graph);
       }
     }
     // Something is wrong if we reached here.
@@ -1319,8 +1407,7 @@ class AutoMonadConverter {
 
   void HandleLoad(const CNodePtr &cnode, bool update_state) {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto value = GetValueNode(cnode->input(0));
-    if (value != nullptr && value->isa<Primitive>()) {
+    if (IsValueNode<Primitive>(cnode->input(0))) {
       // For primitive calls that use Ref as input, insert Loads before them.
       InsertLoads(cnode, update_state);
     } else {

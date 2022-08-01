@@ -637,14 +637,10 @@ bool FuncGraphManager::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
 bool FuncGraphManager::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node) {
   MS_EXCEPTION_IF_NULL(old_node);
   MS_EXCEPTION_IF_NULL(new_node);
-  auto func_graph = old_node->func_graph();
   auto tr = Transact();
   bool success = tr.Replace(old_node, new_node, mask_node);
   if (success) {
     tr.Commit();
-    if (func_graph != nullptr) {
-      func_graph->ReplaceInOrder(old_node, new_node);
-    }
   }
   return success;
 }
