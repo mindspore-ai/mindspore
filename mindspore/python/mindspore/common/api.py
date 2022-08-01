@@ -37,7 +37,8 @@ from .tensor import COOTensor as PythonCOOTensor
 from .tensor import RowTensor as PythonRowTensor
 from .initializer import initializer
 from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, PynativeExecutor_
-from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
+    _ms_memory_recycle
 from ..parallel._tensor import _load_tensor_by_layout
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
