@@ -26,6 +26,7 @@ from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.function.math_func import matrix_exp
 from mindspore.ops.function.math_func import sinc
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
                                                AdjustSaturation
@@ -42,6 +43,7 @@ from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import LuUnpack
+from mindspore.ops.operations.math_ops import MatrixExp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import NextAfter
@@ -1250,6 +1252,16 @@ class MatrixDiagPartV3Net(nn.Cell):
         return self.matrix_diag_dart_v3(x, self.k, self.padding_value)
 
 
+class MatrixExpFunc(nn.Cell):
+    def __init__(self):
+        super(MatrixExpFunc, self).__init__()
+        self.matrix_exp = matrix_exp
+
+    def construct(self, x):
+        y = self.matrix_exp(x)
+        return y
+
+
 class MatrixSetDiagV3Net(nn.Cell):
     def __init__(self, k, align='LEFT_RIGHT'):
         super(MatrixSetDiagV3Net, self).__init__()
@@ -2282,6 +2294,14 @@ test_case_math_ops = [
                         Tensor(np.random.rand(4).astype(np.int32))],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('MatrixExp_1', {
+        'block': MatrixExp(),
+        'desc_inputs': [Tensor([[1, 2], [3, 4]], mstype.float32)],
+        'desc_bprop': [Tensor([[1, 2], [3, 4]], mstype.float32)]}),
+    ('MatrixExp_2', {
+        'block': MatrixExpFunc(),
+        'desc_inputs': [Tensor([[1, 2], [3, 4]], mstype.float32)],
+        'desc_bprop': [Tensor([[1, 2], [3, 4]], mstype.float32)]}),
     ('MatrixInverse', {
         'block': P.MatrixInverse(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
