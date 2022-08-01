@@ -96,7 +96,7 @@ void CheckIdsValue(const PrimitivePtr &primitive, std::vector<int64_t> rank_ids)
                                << "', 'send_rank_ids' or 'recv_rank_ids' can not be repeated, but got id :" << id
                                << " repeated.";
     }
-    ids_count.insert(id);
+    (void)ids_count.insert(id);
   }
 }
 
