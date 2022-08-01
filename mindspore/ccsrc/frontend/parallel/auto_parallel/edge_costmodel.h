@@ -49,9 +49,8 @@ class Edge {
         next_op_(next_op),
         prev_op_output_index_(output_index_),
         next_op_input_index_(input_index_),
-        is_combined_(is_com) {
-    is_identity_edge = false;
-  }
+        is_combined_(is_com),
+        is_identity_edge(false) {}
 
   Edge(const std::string &edge_name, const std::shared_ptr<OperatorInfo> &prev_op,
        const std::shared_ptr<OperatorInfo> &next_op, const size_t &output_index_, const size_t &input_index_,
@@ -70,13 +69,12 @@ class Edge {
       : edge_name_(edge_name),
         prev_op_(prev_op),
         next_op_(next_op),
+        prev_op_output_index_(0),
+        next_op_input_index_(0),
         pre_op_output_indexs_(output_indexs_),
         next_op_input_indexs_(input_indexs_),
-        is_combined_(is_com) {
-    prev_op_output_index_ = 0;
-    next_op_input_index_ = 0;
-    is_identity_edge = false;
-  }
+        is_combined_(is_com),
+        is_identity_edge(false) {}
 
   ~Edge() = default;
   std::shared_ptr<OperatorInfo> prev_operator() const { return prev_op_; }
@@ -127,14 +125,14 @@ class Edge {
 
   CostPtrList CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr,
                                             const std::vector<std::shared_ptr<Edge>> &edges,
-                                            const StrategyPtr &input_st_ptr);
+                                            const StrategyPtr &input_st_ptr) const;
   // In the Edge Elimination operation in DP algorithm, 'edges' is replaced by a new edge. This method is used to
   // set cost for this new edge
   void EdgeEliminationSetNewCost(std::shared_ptr<OperatorInfo> u, const std::vector<std::shared_ptr<Edge>> &edges,
                                  std::shared_ptr<OperatorInfo> v);
   void CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &left_cost_list,
                                       const CostPtrList &middle_cost_list, const CostPtrList &right_cost_list,
-                                      CostPtrList *ret_cost_list);
+                                      CostPtrList *ret_cost_list) const;
 
   CostPtrList CreateOpEliminationCostList(const std::shared_ptr<Edge> &e1, const StrategyPtr &output_st_ptr,
                                           const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &e2,

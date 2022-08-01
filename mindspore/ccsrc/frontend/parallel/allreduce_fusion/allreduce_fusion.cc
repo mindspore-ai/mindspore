@@ -39,7 +39,7 @@ void SetMirrorFusion(const CNodePtr &mirror_cnode, int64_t fusion, const std::st
   (void)node_prim->AddAttr(PARAMETER, MakeValue(std::make_shared<StringImm>(parameter_name)));
 }
 
-Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) {
+Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) const {
   auto filter = [primp](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, primp); };
   auto todo = DeepScopedGraphSearchWithFilter(ret, AlwaysInclude, filter);
   auto temp = threshold;
@@ -49,24 +49,34 @@ Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, co
   std::string name;
   for (auto &node : todo) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->input(1)->Shape() == nullptr) continue;
+    if (cnode->input(1)->Shape() == nullptr) {
+      continue;
+    }
     auto input_shapes = GetNodeShape(cnode->input(1));
     int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
     FuncGraphPtr func_graph = cnode->func_graph();
     if (IsPrimitiveEquals(primp, prim::kPrimMirror)) {
       name = ALL_REDUCE;
       std::pair<AnfNodePtr, bool> param_node_pair = FindParameter(cnode->input(1), func_graph);
-      if (!param_node_pair.first) continue;
+      if (!param_node_pair.first) {
+        continue;
+      }
       parameter_name = ParameterName(param_node_pair.first);
     }
 
     if (IsPrimitiveEquals(primp, prim::kPrimMicroStepAllGather) || IsPrimitiveEquals(primp, prim::kPrimAllGather)) {
       name = ALL_GATHER;
-      if (!cnode->input(0) || !cnode->input(1)) continue;
-      PrimitivePtr primp = GetValueNode<PrimitivePtr>(cnode->input(0));
-      if (!primp->HasAttr(RECOMPUTE) || GetValue<bool>(primp->GetAttr(RECOMPUTE))) continue;
+      if (!cnode->input(0) || !cnode->input(1)) {
+        continue;
+      }
+      PrimitivePtr primp1 = GetValueNode<PrimitivePtr>(cnode->input(0));
+      if (!primp1->HasAttr(RECOMPUTE) || GetValue<bool>(primp1->GetAttr(RECOMPUTE))) {
+        continue;
+      }
       std::pair<AnfNodePtr, bool> param_node_pair = FindParameterWithAllgather(cnode->input(1), func_graph, name);
-      if (!param_node_pair.first) continue;
+      if (!param_node_pair.first) {
+        continue;
+      }
       parameter_name = ParameterName(param_node_pair.first);
     }
 
@@ -83,7 +93,8 @@ Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, co
   return SUCCESS;
 }
 
-Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) {
+Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold,
+                                                   const PrimitivePtr &primp) const {
   auto filter = [primp](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, primp); };
   auto todo = DeepScopedGraphSearchWithFilter(ret, AlwaysInclude, filter);
   auto temp = threshold;
@@ -91,11 +102,15 @@ Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t 
   bool init = true;
   for (auto &node : todo) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->input(1) == nullptr) continue;
+    if (cnode->input(1) == nullptr) {
+      continue;
+    }
     FuncGraphPtr func_graph = cnode->func_graph();
     std::pair<AnfNodePtr, bool> param_node_pair =
       FindParameterWithAllgather(cnode->input(1), func_graph, REDUCE_SCATTER);
-    if (!param_node_pair.first) continue;
+    if (!param_node_pair.first) {
+      continue;
+    }
     auto parameter_name = ParameterName(param_node_pair.first);
     auto input_shapes = GetNodeShape(param_node_pair.first);
     int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
