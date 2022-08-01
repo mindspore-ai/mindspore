@@ -78,6 +78,7 @@ from .fill_v2 import _fill_v2_aicpu
 from .flatten import _flatten_aicpu
 from .sin import _sin_aicpu
 from .cos import _cos_aicpu
+from .sinc import _sinc_aicpu
 from .sinh import _sinh_aicpu
 from .cosh import _cosh_aicpu
 from .sign import _sign_aicpu

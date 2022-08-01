@@ -26,6 +26,7 @@ from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.function.math_func import sinc
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
                                                AdjustSaturation
 from mindspore.ops.operations.image_ops import ExtractGlimpse
@@ -35,6 +36,7 @@ from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, BesselK1, BesselK0e, \
                                               BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.math_ops import Sinc
 from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
@@ -345,6 +347,16 @@ class CumSumNet(nn.Cell):
 
     def construct(self, input_):
         return self.cumsum(input_, self.axis)
+
+
+class SincFunc(nn.Cell):
+    def __init__(self):
+        super(SincFunc, self).__init__()
+        self.sinc = sinc
+
+    def construct(self, x):
+        y = self.sinc(x)
+        return y
 
 
 class SummaryNet(nn.Cell):
@@ -1524,6 +1536,14 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('Sin', {
         'block': P.Sin(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('Sinc_1', {
+        'block': Sinc(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('Sinc_2', {
+        'block': SincFunc(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
     ('Asin', {

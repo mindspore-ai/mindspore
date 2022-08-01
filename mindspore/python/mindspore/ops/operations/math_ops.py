@@ -3500,6 +3500,44 @@ class Asinh(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
+class Sinc(Primitive):
+    r"""
+    Computes the normalized sinc of input.
+
+    Refer to :func:`mindspore.ops.sinc` for more detail.
+
+    .. math::
+
+        y_i = \begin{cases}1 & \text{ if } x_i= 0\\ \frac{sin(\pi x_i)}{x_i} &
+        \text{ otherwise } \end{cases}
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as the `x`. The dtype of output is float32 when dtype of `x` is in
+        [uint8, uint8, uint16, int16, uint32, int32, uint64, int64, bool]. Otherwise output has the
+        same dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> sinc = ops.Sinc()
+        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = sinc(x)
+        >>> print(output)
+        [0.47735003 0.8759357  0.7224278  0.47735003]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Sinc"""
+
+
 class Sinh(Primitive):
     r"""
     Computes hyperbolic sine of the input element-wise.

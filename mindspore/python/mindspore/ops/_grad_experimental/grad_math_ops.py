@@ -25,6 +25,7 @@ from .. import operations as P
 from ..operations.math_ops import Trace, Bernoulli, Renorm
 from ..operations.math_ops import Real, Imag, Complex, Angle
 from ..operations.math_ops import ComplexAbs
+from ..operations.math_ops import Sinc
 from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
@@ -133,6 +134,26 @@ def get_bprop_lu_unpack(self):
         dl, du = input_grad(dout[1], dout[2], lu_data)
         lu_data_grad = dl + du
         return (lu_data_grad, zeros_like(lu_pivots))
+
+    return bprop
+
+
+@bprop_getters.register(Sinc)
+def get_bprop_sinc(self):
+    """Grad definition for `Sinc` operation."""
+    sin = P.Sin()
+    cos = P.Cos()
+    cast = P.Cast()
+    conj = P.Conj()
+
+    def bprop(x, out, dout):
+        kpi = cast(np.pi, x.dtype)
+        product = kpi * x
+        reciprocal = (product * cos(product) - sin(product)) / (product * x)
+        if reciprocal.dtype in [mstype.complex64, mstype.complex128]:
+            reciprocal = conj(reciprocal)
+        dx = reciprocal * dout
+        return (dx,)
 
     return bprop
 
