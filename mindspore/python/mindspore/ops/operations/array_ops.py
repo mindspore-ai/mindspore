@@ -3684,6 +3684,10 @@ class StridedSlice(PrimitiveWithInfer):
             slice_min = slice_input["min_value"]
             slice_max = slice_input["max_value"]
             has_special_value = True
+        elif "shape_value" in slice_input:
+            slice_min = slice_input["shape_value"]
+            slice_max = slice_min
+            has_special_value = True
         else:
             slice_min = slice_value
             slice_max = slice_value
