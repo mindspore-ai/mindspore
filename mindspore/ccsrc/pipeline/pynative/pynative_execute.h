@@ -156,7 +156,10 @@ class TopCellInfo {
     (void)op_info_with_tensor_id_[op_info].emplace_back(tensor_id);
   }
   const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
-  TensorIdWithTensorObject &tensor_id_with_tensor_object() { return tensor_id_with_tensor_object_; }
+  const TensorIdWithTensorObject &tensor_id_with_tensor_object() const { return tensor_id_with_tensor_object_; }
+  void SetTensorIdWithTensorObject(const std::string &tensor_id, const tensor::TensorPtr &out_tensor) {
+    (void)tensor_id_with_tensor_object_[tensor_id].emplace_back(out_tensor);
+  }
   ad::KPynativeCellPtr k_pynative_cell_ptr() const { return k_pynative_cell_ptr_; }
   void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
     k_pynative_cell_ptr_ = k_pynative_cell_ptr;
@@ -248,7 +251,7 @@ class GradExecutor {
     };
 
   FuncGraphPtr curr_g() const;
-  TopCellInfoPtr top_cell() const;
+  const TopCellInfoPtr &top_cell() const;
   void CheckNeedCompileGraph();
   void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
   size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
@@ -343,7 +346,7 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
-  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position);
+  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position) const;
   void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const;
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
