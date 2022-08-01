@@ -591,7 +591,7 @@ void GPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
   for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
       cur_kernel_input_info_.input_id = i;
-      cur_kernel_input_info_.shape = kernel->input(i)->Shape()->DumpText();
+      cur_kernel_input_info_.shape = kernel->input(i)->Shape()->ToString();
       cur_kernel_info_.cur_kernel_all_inputs_info.push_back(cur_kernel_input_info_);
     }
   }
@@ -612,7 +612,7 @@ void GPUProfiler::ClearInst() {
   sync_enable_flag_ = true;
   init_flag_ = false;
   enable_flag_ = false;
-  has_find = false;
+  has_find_ = false;
   cupti_callback_events_count_ = 0l;
   cupti_callback_events_drop_count_ = 0l;
   cupti_activity_events_count_ = 0l;

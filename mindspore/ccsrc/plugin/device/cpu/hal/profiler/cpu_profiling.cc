@@ -190,7 +190,7 @@ void CPUProfiler::ClearInst() {
   all_kernel_info_.clear();
   init_flag_ = false;
   enable_flag_ = false;
-  has_find = false;
+  has_find_ = false;
 }
 
 void CPUProfiler::RecordGpuOneStepStartEndInfo() {

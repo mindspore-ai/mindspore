@@ -414,7 +414,10 @@ class GpuFrameWorkParser:
         dev_id (str): The device ID.
     """
 
-    def __init__(self, output_path, dev_id, op_names):
+    _STEPS_TID = 100000
+    _GPU_OP_TID = 100002
+
+    def __init__(self, output_path, dev_id, op_names=None):
         """The parser for parsing framework files."""
         self._dev_id = dev_id
         self._output_path = output_path
@@ -428,6 +431,9 @@ class GpuFrameWorkParser:
         self.cpu_detail_info_dir = []
         self.gpu_detail_info_dir = []
         self.op_execute_times = {}
+        self.op_step_shape_info = defaultdict(list)
+        self.one_step_op_time = dict()
+        self.one_step_kernel_time = dict()
 
     def parse(self):
         """Parse op performance data."""
@@ -453,9 +459,12 @@ class GpuFrameWorkParser:
                 framework_info = f_obj.readlines()
             for line_info in framework_info:
                 line_info = line_info.strip(' ').strip('\n').split(';')
-                input_shape = ':'.join(line_info[2:]).split(':')[1::2]
+                input_shape = line_info[2:]
                 # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
                 item = [line_info[0], line_info[1], input_shape, op_side]
+                if not self.op_step_shape_info.get(line_info[1]):
+                    self.op_step_shape_info[line_info[1]].append(op_side)
+                self.op_step_shape_info[line_info[1]].append(input_shape)
                 if item not in self.framework_list:
                     self.framework_list.append(item)
 
@@ -527,7 +536,7 @@ class GpuFrameWorkParser:
                 continue
             if op_name in line_info and line_info[3] == op_detail[3]:
                 op_side = line_info[3]
-                op_shape = '{}:{}'.format(op_side, ','.join(line_info[2]))
+                op_shape = '[{}]{}'.format(op_side, ','.join(line_info[2]))
                 op_occurrences = int(op_detail[0])
                 op_total_time = float(op_detail[1])
                 op_avg_time = float(op_detail[2])
@@ -544,7 +553,7 @@ class GpuFrameWorkParser:
         for input_shape in op_shape_dict:
             # 0: op_occurrences, 1: op_total_time, 2: op_avg_time, 3: op_side
             operation_info['op_side'] = op_shape_dict.get(input_shape)[3]
-            operation_info['input_shape'] = input_shape.split(':')[-1]
+            operation_info['input_shape'] = input_shape.strip('[').split(']')[-1]
             operation_info['op_occurrences'] = op_shape_dict.get(input_shape)[0]
             if operation_info.get('op_side') == 'cpu':
                 operation_info['op_total_time(us)'] = round(op_shape_dict.get(input_shape)[1] * factor, 4)
@@ -589,6 +598,102 @@ class GpuFrameWorkParser:
                 self.framework_info_dir.append(file_name)
             if file_name.startswith('cpu_op_detail') and file_name.endswith(f'{self._dev_id}.csv'):
                 self.cpu_detail_info_dir.append(file_name)
+
+    def analyse_dynamic_shape_data(self, timeline_meta):
+        """Analyse gpu operators's information and cudakernel's information."""
+        kernel_info = defaultdict(list)
+        operator_info = defaultdict(list)
+        kernel_type_step_time = dict()
+        op_type_step_time = dict()
+        step, first_update = 1, 0
+        self.get_device_target_filename()
+        self.get_framework_summary()
+        for op_info in timeline_meta:
+            args = op_info.get("args", {})
+            if op_info.get("tid") == self._STEPS_TID and op_info.get('dur'):
+                step = int(op_info.get("name"))
+                if first_update:
+                    self.one_step_op_time = dict()
+                    self.one_step_kernel_time = dict()
+                first_update = 1
+            elif args and args.get("type") == "cuLaunchKernel":
+                item = self._organize_result(step, op_info, args)
+                kernel_info[step].append(item)
+                self._get_one_step_info(item, "kernel")
+            elif (op_info.get("tid") == self._GPU_OP_TID and not op_info.get("cat")) or \
+                    str(op_info.get("tid")).startswith('HostCpu'):
+                item = self._organize_result(step, op_info, args)
+                operator_info[step].append(item)
+                self._get_one_step_info(item, "operator")
+            op_type_step_time[step] = self.one_step_op_time
+            kernel_type_step_time[step] = self.one_step_kernel_time
+        self.write_dynamic_shape_data(operator_info, kernel_info, op_type_step_time, kernel_type_step_time)
+
+    def write_dynamic_shape_data(self, operator_info, kernel_info, op_type_step_time, kernel_type_step_time):
+        """Organize the result."""
+        output_dynamic_shape_file_name = f"dynamic_shape_info_{self._dev_id}.json"
+        result = {
+            "operator": operator_info,
+            "kernel": kernel_info,
+            "operator_type": op_type_step_time,
+            "kernel_type": kernel_type_step_time,
+        }
+        output_dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
+        with os.fdopen(os.open(output_dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as fp:
+            json.dump(result, fp)
+
+    def _organize_result(self, step, op_info, args):
+        """Organize the results."""
+        if args.get("type", "") == "cuLaunchKernel":
+            item = {
+                "step": step,
+                "op_type": args.get("type"),
+                "op_name": op_info.get('name'),
+                "op_full_name": args.get('op_full_name'),
+                "dur": op_info.get('dur'),
+                "block_dim": args.get('block_dim'),
+                "grid_dim": args.get('grid_dim')
+            }
+        else:
+            item = {
+                "step": step,
+                "op_side": self.op_step_shape_info.get(op_info.get('name'))[0],
+                "op_type": op_info.get('name').split('-')[0],
+                "op_name": op_info.get('name'),
+                "dur": op_info.get('dur'),
+                "shape_info": self.op_step_shape_info.get(op_info.get('name'))[step],
+            }
+        return item
+
+    def _get_one_step_info(self, item, op_type):
+        """Get operator type information in step."""
+        duration = item.get("dur")
+        if op_type == "operator":
+            sort_type = item.get("op_type")
+            if not self.one_step_op_time.get(sort_type):
+                # duration, times, avg_time
+                self.one_step_op_time[sort_type] = [duration, 1, duration]
+            else:
+                self.one_step_op_time[sort_type][0] += duration
+                self.one_step_op_time[sort_type][1] += 1
+                self.one_step_op_time[sort_type] = [self.one_step_op_time[sort_type][0],
+                                                    self.one_step_op_time[sort_type][1],
+                                                    round(self.one_step_op_time[sort_type][0] /
+                                                          self.one_step_op_time[sort_type][1], 4)]
+        else:
+            sort_type = item.get("op_name")
+            op_full_name = item.get("op_full_name")
+            if not self.one_step_kernel_time.get(sort_type):
+                # duration, times, avg_time
+                self.one_step_kernel_time[sort_type] = [duration, 1, duration, op_full_name]
+            else:
+                self.one_step_kernel_time[sort_type][0] += duration
+                self.one_step_kernel_time[sort_type][1] += 1
+                self.one_step_kernel_time[sort_type] = [self.one_step_kernel_time[sort_type][0],
+                                                        self.one_step_kernel_time[sort_type][1],
+                                                        round(self.one_step_kernel_time[sort_type][0] /
+                                                              self.one_step_kernel_time[sort_type][1], 4),
+                                                        op_full_name]
 
 
 class DynamicFrameWorkParser:
