@@ -119,7 +119,7 @@ class AscendStreamAssign {
   void InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr) const;
-  void InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr,
                               const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index) const;
@@ -145,9 +145,10 @@ class AscendStreamAssign {
   void GetNeedActiveStreams(const NotNull<KernelGraphPtr> &graph_ptr);
   void ReorderIndependentOrders(const NotNull<KernelGraphPtr> &graph_ptr);
 
-  void CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr, vector<CNodePtr> *last_grad_and_status);
+  void CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr, vector<CNodePtr> *last_grad_and_status) const;
   CNodePtr GetCNodesNeededMoved(vector<CNodePtr> *moved_backward_cnodes, vector<CNodePtr> *moved_forward_cnodes,
-                                const vector<CNodePtr> &last_grad_and_status, const NotNull<KernelGraphPtr> &graph_ptr);
+                                const vector<CNodePtr> &last_grad_and_status,
+                                const NotNull<KernelGraphPtr> &graph_ptr) const;
   CNodePtr GetTargetOutputNode(const vector<CNodePtr> &moved_backward_cnodes, const CNodePtr first_node,
                                const NotNull<KernelGraphPtr> &graph_ptr) const;
   bool FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) const;
@@ -225,7 +226,7 @@ class AscendStreamAssign {
   void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph);
   void GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
-                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv) const;
   void UpdateEventsToExecutionOrder(const NotNull<KernelGraphPtr> &kernel_graph,
                                     const HashMap<AnfNodePtr, vector<CNodePtr>> &send_after_node,
                                     const HashMap<AnfNodePtr, vector<CNodePtr>> &recv_before_node) const;

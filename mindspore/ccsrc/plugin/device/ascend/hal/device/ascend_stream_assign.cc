@@ -409,9 +409,9 @@ void AscendStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_grap
   }
 }
 
-void AscendStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
-                                                mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                                mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
+void AscendStreamAssign::GenEventsForParallelOp(
+  const NotNull<KernelGraphPtr> &kernel_graph, mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
+  mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const {
   MS_LOG(DEBUG) << "Start GenEventsForParallelOp...";
   auto exec_kernels = kernel_graph->execution_order();
   mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> kernel_io_exec_info_map;
@@ -611,7 +611,7 @@ void AscendStreamAssign::ReorderIndependentOrders(const NotNull<KernelGraphPtr> 
 }
 
 void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
-                                       vector<CNodePtr> *last_grad_and_status) {
+                                       vector<CNodePtr> *last_grad_and_status) const {
   MS_EXCEPTION_IF_NULL(last_grad_and_status);
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> hcom_nodes;
@@ -676,7 +676,7 @@ void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
 CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backward_cnodes,
                                                   vector<CNodePtr> *moved_forward_cnodes,
                                                   const vector<CNodePtr> &last_grad_and_status,
-                                                  const NotNull<KernelGraphPtr> &graph_ptr) {
+                                                  const NotNull<KernelGraphPtr> &graph_ptr) const {
   MS_EXCEPTION_IF_NULL(moved_backward_cnodes);
   MS_EXCEPTION_IF_NULL(moved_forward_cnodes);
   auto cnode_ptr_list = graph_ptr->execution_order();
@@ -1681,7 +1681,7 @@ void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPt
 }
 
 // after memory reuse is correct, use this function
-void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr) const {
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes;

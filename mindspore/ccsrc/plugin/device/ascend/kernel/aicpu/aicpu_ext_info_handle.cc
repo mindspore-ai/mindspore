@@ -35,7 +35,7 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   }
 
   ext_info_len_ = ext_info.size();
-  if (ext_info_len_ <= 0) {
+  if (ext_info_len_ == 0) {
     MS_LOG(ERROR) << "The ext_info_len_ should be > 0";
     return false;
   }
