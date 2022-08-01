@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1142,6 +1142,8 @@ class OnnxExporter {
                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimExpandDims(const FuncGraphPtr &func_graph, const CNodePtr &node,
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimPad(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                     std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimBatchMatMul(const FuncGraphPtr &func_graph, const CNodePtr &node,
                              std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimGeLU(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1868,6 +1870,40 @@ void OnnxExporter::ExportPrimExpandDims(const FuncGraphPtr &, const CNodePtr &no
   node_proto->add_output(node_name);
   node_proto->add_input(input_x);
   node_proto->add_input(name_shape);
+}
+
+// MindSpore Pad -> ONNX Pad
+void OnnxExporter::ExportPrimPad(const FuncGraphPtr &, const CNodePtr &node,
+                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
+  auto x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+
+  auto paddings = GetOpAttributePtr<ValueTuple>(node, "paddings");
+  std::vector<std::vector<int64_t>> paddings_values = GetValue<std::vector<std::vector<int64_t>>>(paddings);
+  std::vector<int64_t> pads_sequence;
+  for (size_t i = 0; i < paddings_values.size(); ++i) {
+    pads_sequence.push_back(paddings_values[i][0]);
+  }
+  for (size_t j = 0; j < paddings_values.size(); ++j) {
+    pads_sequence.push_back(paddings_values[j][1]);
+  }
+  auto pads_ptr = MakeValue<std::vector<int64_t>>(pads_sequence);
+  auto pads = NewValueNode(pads_ptr)->cast<AnfNodePtr>();
+
+  auto pads_name = RegisterNodeWithUniqueName(pads, node_map_ptr);
+  onnx::NodeProto *pads_node = graph_proto->add_node();
+  pads_node->add_output(pads_name);
+  pads_node->set_op_type("Constant");
+  onnx::AttributeProto *pads_attr_proto = pads_node->add_attribute();
+  pads_attr_proto->set_name("value");
+  pads_attr_proto->set_type(onnx::AttributeProto_AttributeType_TENSOR);
+  ConvertTupleToTensor(pads_ptr, pads_attr_proto->mutable_t());
+
+  auto ms_pad_node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *onnx_pad_node = graph_proto->add_node();
+  onnx_pad_node->set_op_type("Pad");
+  onnx_pad_node->add_output(ms_pad_node_name);
+  onnx_pad_node->add_input(x_name);
+  onnx_pad_node->add_input(pads_name);
 }
 
 // MindSpore BatchMatMul -> ONNX Transpose + MatMul
@@ -3115,6 +3151,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimGreaterEqual, &OnnxExporter::ExportPrimGreaterEqual},
     {prim::kPrimSqueeze, &OnnxExporter::ExportPrimSqueeze},
     {prim::kPrimExpandDims, &OnnxExporter::ExportPrimExpandDims},
+    {prim::kPrimPad, &OnnxExporter::ExportPrimPad},
     {prim::kPrimBatchMatMul, &OnnxExporter::ExportPrimBatchMatMul},
     {prim::kPrimGeLU, &OnnxExporter::ExportPrimGeLU},
     {prim::kPrimLstm, &OnnxExporter::ExportPrimLSTM},
