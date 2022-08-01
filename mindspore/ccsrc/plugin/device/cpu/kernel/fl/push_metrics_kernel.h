@@ -59,15 +59,16 @@ class PushMetricsKernelMod : public DeprecatedNativeCpuKernelMod {
     kernel_func_ = func_list_[index].second;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
+  void InitKernel(const CNodePtr &) { return; }
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void InitSizeLists() { return; }
-  std::vector<KernelAttr> GetOpSupport() override;
+  void InitSizeLists() const { return; }
 
  private:
   template <typename T>
-  bool BuildPushMetricsReq(const std::shared_ptr<fl::FBBuilder> &fbb, T loss, T accuracy) {
+  bool BuildPushMetricsReq(const std::shared_ptr<fl::FBBuilder> &fbb, T loss, T accuracy) const {
     MS_EXCEPTION_IF_NULL(fbb);
     schema::RequestPushMetricsBuilder req_push_metrics_builder(*(fbb.get()));
     req_push_metrics_builder.add_loss(loss);

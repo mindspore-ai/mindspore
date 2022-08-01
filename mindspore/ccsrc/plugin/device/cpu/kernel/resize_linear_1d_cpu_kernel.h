@@ -49,7 +49,6 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:

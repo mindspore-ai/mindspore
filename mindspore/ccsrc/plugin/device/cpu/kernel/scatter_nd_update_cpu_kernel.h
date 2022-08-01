@@ -62,10 +62,6 @@ class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 
 class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
- protected:
-  void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> &outputs) override;
-
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -92,13 +88,13 @@ class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
                                                      .AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
-};
 
-class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  protected:
   void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &outputs) override;
+};
 
+class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -136,6 +132,10 @@ class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
                                                      .AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
+
+ protected:
+  void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
+                              const std::vector<kernel::AddressPtr> &outputs) override;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -41,7 +41,6 @@ class FillV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

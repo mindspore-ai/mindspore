@@ -37,15 +37,15 @@ class ROIAlignCpuKernelFunc : public DeprecatedCpuKernelFunc {
                const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void CheckParam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
 
   void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high,
-                            int *y_high, T *w1, T *w2, T *w3, T *w4);
+                            int *y_high, T *w1, T *w2, T *w3, T *w4) const;
 
   void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale, const int sample_num,
                int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
                const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
-               int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w);
+               int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) const;
 
   int pooled_height_{0};
   int pooled_width_{0};
@@ -158,7 +158,7 @@ bool ROIAlignCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &in
 
 template <typename T>
 void ROIAlignCpuKernelFunc<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                          const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputSize << ", but got "
                       << inputs.size() << " input(s).";
@@ -172,7 +172,7 @@ void ROIAlignCpuKernelFunc<T>::CheckParam(const std::vector<kernel::AddressPtr> 
 
 template <typename T>
 void ROIAlignCpuKernelFunc<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
-                                                    int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
+                                                    int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) const {
   constexpr float eps = 0.00007;
   const T ZERO = T(0.0);
   const T ONE = T(1.0);
@@ -222,7 +222,7 @@ void ROIAlignCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, int r
                                        const int sample_num, int roi_end_mode, const int channels, const int height,
                                        const int width, const int pooled_height, const int pooled_width, int *offset,
                                        int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                       T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+                                       T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) const {
   constexpr int START_W = 0;
   constexpr int START_H = 1;
   constexpr int END_W = 2;

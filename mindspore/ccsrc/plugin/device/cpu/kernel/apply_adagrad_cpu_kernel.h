@@ -35,7 +35,6 @@ class ApplyAdagradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

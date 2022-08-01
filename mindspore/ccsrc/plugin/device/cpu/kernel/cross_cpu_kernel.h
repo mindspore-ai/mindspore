@@ -36,7 +36,6 @@ class CrossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

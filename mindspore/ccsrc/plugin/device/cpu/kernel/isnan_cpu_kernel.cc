@@ -53,7 +53,7 @@ bool IsNanCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+                                            const std::vector<kernel::AddressPtr> &outputs) const {
   const auto *input = reinterpret_cast<float16 *>(inputs[0]->addr);
   auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
@@ -67,7 +67,7 @@ void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &input
 
 template <typename T>
 void IsNanCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                          const std::vector<kernel::AddressPtr> &outputs) const {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
@@ -79,7 +79,7 @@ void IsNanCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
 }
 
 void IsNanCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                          const std::vector<kernel::AddressPtr> &outputs) const {
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
   auto type_iter = dtype_map_.find(input_dtype_);
   size_t elem_num = inputs[0]->size / (type_iter->second);

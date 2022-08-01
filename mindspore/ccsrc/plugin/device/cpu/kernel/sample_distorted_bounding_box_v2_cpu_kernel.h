@@ -202,7 +202,6 @@ class SampleDistortedBoundingBoxV2CPUKernelMod : public DeprecatedNativeCpuKerne
   bool Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
               const std::vector<kernel::AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

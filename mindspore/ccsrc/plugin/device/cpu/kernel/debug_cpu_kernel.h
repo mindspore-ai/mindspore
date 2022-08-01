@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <memory>
-#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -36,7 +35,6 @@ class DebugCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel

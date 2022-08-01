@@ -85,7 +85,6 @@ class RpcRecvKernelMod : public RpcKernelMod {
 
   void set_real_data_offset(const std::vector<size_t> &real_data_offset) { real_data_offset_ = real_data_offset; }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

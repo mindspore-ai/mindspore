@@ -40,7 +40,7 @@ class TopKCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                    const std::vector<AddressPtr> &outputs);
+                    const std::vector<AddressPtr> &outputs) const;
   size_t outer_size_{1};
   size_t inner_size_{1};
   bool sorted_{false};

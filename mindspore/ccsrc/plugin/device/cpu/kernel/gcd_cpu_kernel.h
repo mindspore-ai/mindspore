@@ -44,7 +44,6 @@ class GcdCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

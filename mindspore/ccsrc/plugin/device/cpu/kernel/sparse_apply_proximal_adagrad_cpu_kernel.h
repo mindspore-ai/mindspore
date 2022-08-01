@@ -43,6 +43,7 @@ class SparseApplyProximalAdagradCpuKernelMod : public SparseOptimizerCpuKernelMo
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  protected:

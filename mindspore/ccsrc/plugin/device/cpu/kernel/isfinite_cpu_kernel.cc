@@ -68,7 +68,7 @@ void IsFiniteCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &in
 
 template <typename T>
 void IsFiniteCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+                                             const std::vector<kernel::AddressPtr> &outputs) const {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
@@ -80,7 +80,7 @@ void IsFiniteCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inpu
 }
 
 void IsFiniteCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+                                             const std::vector<kernel::AddressPtr> &outputs) const {
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
   auto type_iter = dtype_map_.find(input_dtype_);
   size_t elem_num = inputs[0]->size / (type_iter->second);

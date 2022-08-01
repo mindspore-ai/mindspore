@@ -38,12 +38,11 @@ class SparseToDenseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename I, typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   using SparseToDenseFunc =
     std::function<bool(SparseToDenseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,

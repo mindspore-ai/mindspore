@@ -144,11 +144,12 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
     init_func_(this, kernel_node);
   }
 
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
+  void InitKernel(const CNodePtr &) override { return; }
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void InitSizeLists() { return; }
-  std::vector<KernelAttr> GetOpSupport() override;
+  void InitSizeLists() const { return; }
 
  private:
   template <typename T>

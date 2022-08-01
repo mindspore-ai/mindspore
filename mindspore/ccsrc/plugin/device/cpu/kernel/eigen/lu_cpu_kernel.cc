@@ -50,7 +50,7 @@ void LUCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size_t *ro
   }
 }
 
-void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) const {
   constexpr size_t pivot_min_dim = 1;
   if (shape.size() < pivot_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "pivots shape is " << shape.size() << " which is invalid.";
@@ -99,14 +99,14 @@ void LUCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-T LUCpuKernelMod::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
+T LUCpuKernelMod::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) const {
   const T *pered_lu_value = lu_value + per_value[i] * SizeToInt(lu_col_) + SizeToInt(j);
   return *pered_lu_value;
 }
 
 template <typename T>
 bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k,
-                                            size_t rows) {
+                                            size_t rows) const {
   T max_major_value = static_cast<T>(kZeroThreshold);
   size_t max_major_index = 0;
   for (size_t i = k; i < rows; ++i) {
@@ -132,7 +132,7 @@ void LUCpuKernelMod::DoSafeMemCopy(void *dest, size_t dest_max, const void *src,
 
 template <typename T>
 void LUCpuKernelMod::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
-                                        const T &value) {
+                                        const T &value) const {
   T *per_lu_value = lu_value + per_value[i] * SizeToInt(lu_col_) + SizeToInt(j);
   *per_lu_value = value;
 }

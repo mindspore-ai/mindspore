@@ -53,7 +53,6 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod, public MatchKerne
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:

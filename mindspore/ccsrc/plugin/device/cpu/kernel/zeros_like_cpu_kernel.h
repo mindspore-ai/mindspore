@@ -38,7 +38,6 @@ class ZerosLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

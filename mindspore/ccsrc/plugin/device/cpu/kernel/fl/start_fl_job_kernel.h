@@ -95,12 +95,13 @@ class StartFLJobKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) { return; }
 
- protected:
-  void InitSizeLists() { return; }
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+    const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
+
+ protected:
+  void InitSizeLists() { return; }
 
  private:
   bool BuildStartFLJobReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
@@ -120,12 +121,12 @@ class StartFLJobKernelMod : public DeprecatedNativeCpuKernelMod {
     return true;
   }
 
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  uint32_t rank_id_{0};
+  uint32_t server_num_{0};
+  uint32_t target_server_rank_{0};
   std::string fl_name_;
   std::string fl_id_;
-  int data_size_;
+  int data_size_{0};
   std::shared_ptr<fl::FBBuilder> fbb_;
 };
 }  // namespace kernel

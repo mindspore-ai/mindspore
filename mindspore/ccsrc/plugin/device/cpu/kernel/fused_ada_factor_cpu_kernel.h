@@ -38,7 +38,6 @@ class FusedAdaFactorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -50,10 +49,11 @@ class FusedAdaFactorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                     const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  float CalcRMS(T *input, size_t elem_num);
+  float CalcRMS(T *input, size_t elem_num) const;
 
   template <typename T>
-  void FactorUpdate(float *update, const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces);
+  void FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
+                    const std::vector<AddressPtr> &workspaces) const;
 
   bool enable_scale_parameter_{false};
   bool enable_first_moment_{false};

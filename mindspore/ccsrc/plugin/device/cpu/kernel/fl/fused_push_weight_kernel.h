@@ -121,11 +121,12 @@ class FusedPushWeightKernelMod : public DeprecatedNativeCpuKernelMod {
     init_func_(this, kernel_node);
   }
 
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
+  void InitKernel(const CNodePtr &) override { return; }
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
   void InitSizeLists() { return; }
-  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   bool BuildPushWeightReq(std::shared_ptr<fl::FBBuilder> fbb, const std::vector<AddressPtr> &weights) {

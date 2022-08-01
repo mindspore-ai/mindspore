@@ -47,7 +47,6 @@ class ReluGradV2CpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

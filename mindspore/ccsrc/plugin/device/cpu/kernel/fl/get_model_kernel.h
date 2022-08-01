@@ -134,13 +134,13 @@ class GetModelKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) { return; }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    const std::vector<KernelAttr> support_list = {
       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
+ protected:
   void InitSizeLists() { return; }
 
  private:
@@ -161,11 +161,11 @@ class GetModelKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
   std::shared_ptr<fl::FBBuilder> fbb_;
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  uint32_t rank_id_{0};
+  uint32_t server_num_{0};
+  uint32_t target_server_rank_{0};
   std::string fl_name_;
-  uint64_t iteration_;
+  uint64_t iteration_{0};
   std::map<std::string, size_t> weight_name_to_input_idx_;
 };
 }  // namespace kernel

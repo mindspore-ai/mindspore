@@ -28,7 +28,7 @@ constexpr size_t kTopKOutputsNum = 2;
 
 template <typename T>
 void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                    const std::vector<AddressPtr> &outputs) {
+                                    const std::vector<AddressPtr> &outputs) const {
   if (inputs.size() != 2 || outputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator must have 2 inputs and 2 outputs, but got "
                       << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
