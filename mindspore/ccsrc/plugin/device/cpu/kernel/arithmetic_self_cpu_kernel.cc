@@ -514,18 +514,23 @@ void Softsign(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
     MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";
-  } else if constexpr (std::is_same_v<T, float>) {
-    auto task = [&in, &out](size_t start, size_t end) { (void)SoftsignFp32Opt(in + start, end - start, out + start); };
-    constexpr float min_batch_size = 5000;
-    ParallelLaunch(task, size, min_batch_size);
   } else {
-    auto task = [&in, &out](size_t start, size_t end) {
-      for (size_t i = start; i < end; i++) {
-        out[i] = in[i] / (static_cast<T>(1.0) + abs(in[i]));
-      }
-    };
-    constexpr float min_batch_size = 1024;
-    ParallelLaunch(task, size, min_batch_size);
+    if constexpr (std::is_same_v<T, float>) {
+      auto task = [&in, &out](size_t start, size_t end) {
+        auto length = SizeToInt(end - start);
+        (void)SoftsignFp32Opt(in + start, length, out + start);
+      };
+      constexpr float min_batch_size = 5000;
+      ParallelLaunch(task, size, min_batch_size);
+    } else {
+      auto task = [&in, &out](size_t start, size_t end) {
+        for (size_t i = start; i < end; i++) {
+          out[i] = in[i] / (static_cast<T>(1.0) + std::abs(in[i]));
+        }
+      };
+      constexpr float min_batch_size = 1024;
+      ParallelLaunch(task, size, min_batch_size);
+    }
   }
 }
 

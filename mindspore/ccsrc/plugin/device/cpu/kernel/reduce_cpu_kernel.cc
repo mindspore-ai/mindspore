@@ -179,7 +179,7 @@ void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator 
 
 template <typename T>
 int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::vector<KernelTensorPtr> &,
                                    const std::map<uint32_t, tensor::TensorPtr> &) {
   input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
   int64_t dimension = SizeToLong(input_shape_.size());
@@ -254,8 +254,8 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
+void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+                                      const std::vector<KernelTensorPtr> &) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   ChooseFunc(kernel_name_);
@@ -284,7 +284,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
     }
   } else {
     // Calculate transpose axes and stride
-    int dimension = input_shape_.size();
+    int dimension = SizeToInt(input_shape_.size());
     size_t stride = 1;
     std::vector<size_t> axes(input_shape_.size());
     size_t j = 0;
