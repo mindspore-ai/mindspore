@@ -1232,6 +1232,21 @@ class _UsersDatasetTemplate:
     Template for guiding user to create corresponding dataset(should inherit InMemoryGraphDataset when implemented).
     """
 
+    class _ReInitTemplate:
+        """
+        Internal class _ReInitTemplate.
+        """
+        def __init__(self):
+            pass
+
+    def __new__(cls):
+        # Before we overwrite '__init__' to user-defined '__init__',
+        # we need make sure the '__init__' should be the basic version(_ReInitTemplate.__init__).
+        basic_init_class = _UsersDatasetTemplate._ReInitTemplate()
+        cls = object.__new__(cls)  # pylint: disable=W0642
+        setattr(cls.__class__, "__init__", getattr(basic_init_class.__class__, "__init__"))
+        return cls
+
     def __init__(self):
         pass
 
@@ -1257,7 +1272,8 @@ class InMemoryGraphDataset(GeneratorDataset):
 
     You can access graph in created dataset using `graphs = my_dataset.graphs` and also you can iterate dataset
     and get data using `my_dataset.create_tuple_iterator()` (in this way you need to implement methods like
-    `__getitem__` and `__len__`), referring to the following example for detail.
+    `__getitem__` and `__len__`), referring to the following example for detail. Note: we have overwritten the
+    `__new__` method to reinitialize `__init__` internally, which means the user-defined `__new__` method won't work.
 
     Args:
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
@@ -1320,6 +1336,9 @@ class InMemoryGraphDataset(GeneratorDataset):
         for k, v in self.__dict__.items():
             setattr(source, k, v)
         for k, v in self.__class__.__dict__.items():
+            if k == "__new__":
+                # The user-defined '__new__' is skipped.
+                continue
             setattr(source.__class__, k, getattr(self.__class__, k))
         super().__init__(source, column_names=column_names, num_samples=num_samples,
                          num_parallel_workers=num_parallel_workers, shuffle=shuffle, num_shards=num_shards,
