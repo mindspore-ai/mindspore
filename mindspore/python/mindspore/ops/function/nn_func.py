@@ -1625,13 +1625,13 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     far away from the border, it will keep being reflected until becoming in bound.
 
     Args:
-        input_x (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})`(4-D case) or :math:`(N, C, D_{in},
-            H_{in}, W_{in})`(5-D case) and dtype of float32 or float64.
-        grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)`(4-D case) or :math:`(N, D_{out},
-            H_{out}, W_{out}, 3)`(5-D case) and same dtype as `input_x`.
+        input_x (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
+            H_{in}, W_{in})` (5-D case) and dtype of float32 or float64.
+        grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
+            H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input_x`.
         interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
             "bilinear", "nearest" or "bicubic". Default: "bilinear". Note: `bicubic` supports only 4-D input. When
-            `interpolation_mode`="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
+            `interpolation_mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: "zeros".
@@ -1641,8 +1641,8 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
             `False`.
 
     Outputs:
-        Tensor, dtype is the same as `input_x` and whose shape is: math:`(N, C, H_{out}, W_{out})`(4-D) and
-            :math:`(N, C, D_{out}, H_{out}, W_{out})`(5-D).
+        Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})`(4-D) and
+        :math:`(N, C, D_{out}, H_{out}, W_{out})`(5-D).
 
     Raises:
         TypeError: If `input_x` or `grid` is not a Tensor.

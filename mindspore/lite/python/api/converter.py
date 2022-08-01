@@ -61,9 +61,9 @@ class Converter:
             Set the individual parameters of the configFile together with config_info.
             e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: "".
             For the configuration parameters related to post training quantization, please refer to
-            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            `quantization <https://www.mindspore.cn/lite/docs/en/r1.8/use/post_training_quantization.html>`_.
             For the configuration parameters related to extension, please refer to
-            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+            `extension  <https://www.mindspore.cn/lite/docs/en/r1.8/use/nnie.html#extension-configuration>`_.
 
             - "common_quant_param": Common quantization parameter. One of configuration for quantization.
             - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
@@ -76,9 +76,9 @@ class Converter:
             Set the individual parameters of the configFile together with section.
             e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
             For the configuration parameters related to post training quantization, please refer to
-            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            `quantization <https://www.mindspore.cn/lite/docs/en/r1.8/use/post_training_quantization.html>`_.
             For the configuration parameters related to extension, please refer to
-            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+            `extension  <https://www.mindspore.cn/lite/docs/en/r1.8/use/nnie.html#extension-configuration>`_.
         weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
             only effective for const tensor in Float32 data type. Default: False.
         input_shape (dict{str, list[int]}, optional): Set the dimension of the model input,

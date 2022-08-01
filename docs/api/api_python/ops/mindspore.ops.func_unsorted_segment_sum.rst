@@ -1,7 +1,7 @@
-mindspore.ops.unsorted_segment_prod
-===================================
+mindspore.ops.unsorted_segment_sum
+==================================
 
-.. py:function:: mindspore.ops.unsorted_segment_prod(x, segment_ids, num_segments)
+.. py:function:: mindspore.ops.unsorted_segment_sum(x, segment_ids, num_segments)
 
     计算输出Tensor :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]` ，其中 :math:`j,...` 是代表元素索引的Tuple。 `segment_ids` 确定输入Tensor元素的分段。 `segment_ids` 不需要排序，也不需要覆盖 `num_segments` 范围内的所有值。
 

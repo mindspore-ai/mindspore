@@ -78,7 +78,7 @@ mindspore.Tensor
         - **ValueError** - 如果 `kernel_size`，`dilation`，`stride` 值小于等于0或者个数大于2。
         - **ValueError** - 如果 `padding_value` 值小于0或者个数大于2。
 
-    .. py:methond:: approximate_equal(y, tolerance=1e-5)
+    .. py:method:: approximate_equal(y, tolerance=1e-5)
 
         逐元素计算abs(x-y)，如果小于tolerance则为True，否则为False。
         
@@ -591,7 +591,7 @@ mindspore.Tensor
 
         .. note::
             1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
-            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
+            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 类型。
 
         **参数：**
 
@@ -1841,8 +1841,8 @@ mindspore.Tensor
     .. py:method:: xlogy(y)
 
         计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
-        `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或
-        `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+        `number <https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或
+        `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
         后面为了使表达清晰，使用 `x` 代替原Tensor。
 
         .. math::

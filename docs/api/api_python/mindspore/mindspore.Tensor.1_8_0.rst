@@ -519,7 +519,7 @@ mindspore.Tensor
 
         .. note::
             1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
-            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
+            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 类型。
 
         **参数：**
 

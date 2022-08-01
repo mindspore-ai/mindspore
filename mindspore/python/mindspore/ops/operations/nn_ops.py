@@ -546,7 +546,7 @@ class ReLU(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
@@ -587,7 +587,7 @@ class ReLUV3(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
