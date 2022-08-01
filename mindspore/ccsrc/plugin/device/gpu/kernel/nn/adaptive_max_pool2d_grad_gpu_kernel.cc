@@ -62,8 +62,9 @@ bool AdaptiveMaxPool2DGradGpuKernelMod::Launch(const std::vector<AddressPtr> &in
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(output_ptrs[0], 0, outputs[0]->size),
-                                     "failed to set cuda memory with zeros.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemsetAsync(output_ptrs[0], 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "failed to set cuda memory with zeros.");
 
   if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
     return false;
@@ -85,11 +86,6 @@ bool AdaptiveMaxPool2DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  int ret = Resize(kernel_ptr, inputs, outputs);
-  if (ret == KRET_RESIZE_FAILED) {
-    return false;
-  }
-
   return true;
 }
 
@@ -97,6 +93,11 @@ int AdaptiveMaxPool2DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs,
                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
