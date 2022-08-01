@@ -159,10 +159,11 @@ class DeviceShapeTransfer {
   DeviceShapeTransfer() = default;
   ~DeviceShapeTransfer() = default;
   ShapeVector GetDeviceShapeByFormat(const ShapeVector &shape, const std::string &format, const AnfNodePtr &node,
-                                     size_t index, const TypeId &type, bool is_output = true);
+                                     size_t index, const TypeId &type, bool is_output = true) const;
 
   ShapeVector GetDeviceShapeByFormat(const ShapeVector &shape, const std::string &format, const TypeId &type,
-                                     int64_t groups = 1, const ShapeVector &input_hidden_size = {kAlign16, kAlign16});
+                                     int64_t groups = 1,
+                                     const ShapeVector &input_hidden_size = {kAlign16, kAlign16}) const;
 
  private:
   ShapeVector GetAttrInputAndHiddenSize(const AnfNodePtr &node) const;

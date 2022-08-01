@@ -25,8 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include "ir/dtype/type_id.h"
-
 namespace mindspore::opt {
 enum kPassType {
   kMindIRPass = 0,
