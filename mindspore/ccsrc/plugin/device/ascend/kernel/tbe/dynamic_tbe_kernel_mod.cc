@@ -38,6 +38,7 @@
 #include "include/common/utils/utils.h"
 #include "register/op_tiling.h"
 #include "nlohmann/json.hpp"
+#include "runtime/device/memory_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -238,9 +239,14 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
       MS_EXCEPTION_IF_NULL(kernel_mod);
       device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node.lock(), &kernel_launch_info);
       auto atomic_inputs = kernel_launch_info.inputs_;
-      std::vector<AddressPtr> atomic_outputs;
-      std::vector<AddressPtr> atomic_workspace;
-      kernel_mod->Launch(atomic_inputs, atomic_workspace, atomic_outputs, stream_ptr);
+      // Temporary scheme to avoid SyncStream error in dynamic-shaped  WeNet network
+      for (auto input : atomic_inputs) {
+        auto align_size = device::MemoryManager::GetCommonAlignSize(input->size);
+        auto ret = aclrtMemsetAsync(input->addr, align_size, 0, align_size, stream_ptr);
+        if (ret != RT_ERROR_NONE) {
+          MS_LOG(EXCEPTION) << "AclrtMemset failed for " << cnode->fullname_with_scope();
+        }
+      }
     }
   }
 
