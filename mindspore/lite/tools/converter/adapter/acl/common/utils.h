@@ -32,7 +32,7 @@ using BaseOperatorPtr = std::shared_ptr<mindspore::ops::BaseOperator>;
 namespace acl {
 STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
 
-TypeId GetTypeFromNode(const AnfNodePtr &node);
+TypeId GetTypeFromNode(const AnfNodePtr &node, const size_t tuple_idx = 0);
 
 std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
 

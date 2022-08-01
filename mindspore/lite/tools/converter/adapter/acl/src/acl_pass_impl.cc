@@ -34,6 +34,7 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -390,6 +391,7 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     MS_LOG(INFO) << "Name of graph output value node is : " << node->fullname_with_scope();
     graph_output_dims_.emplace_back(std::vector<int64_t>());
     graph_outputs_.emplace_back(node);
+    tuple_idx_.emplace_back(0);
     return lite::RET_OK;
   }
   AnfNodePtr cur_node = node;
@@ -427,8 +429,10 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     MS_LOG(INFO) << "Name of graph output node is " << cnode->fullname_with_scope();
     std::vector<int64_t> dims;
     STATUS ret;
+    size_t idx = 0;
     if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
       ret = lite::acl::GetShapeVectorFromCNode(pre_node, &dims);
+      idx = mindspore::opt::GetTupleGetItemOutIndex(pre_node);
     } else {
       ret = lite::acl::GetShapeVectorFromCNode(cnode, &dims);
     }
@@ -438,6 +442,7 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     }
     graph_output_dims_.emplace_back(dims);
     graph_outputs_.emplace_back(cnode);
+    tuple_idx_.emplace_back(idx);
   }
   return lite::RET_OK;
 }
@@ -493,7 +498,7 @@ STATUS AclPassImpl::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNode
   }
   std::vector<TypeId> types;
   for (size_t i = 0; i < graph_outputs_.size(); i++) {
-    type = lite::acl::GetTypeFromNode(graph_outputs_[i]);
+    type = lite::acl::GetTypeFromNode(graph_outputs_[i], tuple_idx_[i]);
     types.emplace_back(type);
   }
   if (SetMultiOutputs(custom_node, types) != lite::RET_OK) {
