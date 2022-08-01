@@ -61,7 +61,6 @@ class _JvpFirstGradSingleValue(Cell):
         return self.first_grad_single_value_op(fn)(*first_grad_single_value_input, u)
 
 
-
 class Jvp(Cell):
     """
     Compute the jacobian-vector-product of the given fn. Jvp is equivalent to forward mode autodiff.
@@ -99,6 +98,7 @@ class Jvp(Cell):
         [[ 4. 13.]
          [28. 49.]]
     """
+
     def __init__(self, fn):
         super(Jvp, self).__init__()
         self.fn = fn
@@ -140,6 +140,7 @@ class _JvpInner(Cell):
     Compute the jacobian-vector-product of the given network. Jvp is equivalent to forward mode autodiff.
     This class implements the inner process of function jvp.
     """
+
     def __init__(self):
         super(_JvpInner, self).__init__()
         self.oneslike = P.OnesLike()
@@ -153,12 +154,10 @@ class _JvpInner(Cell):
         self.make_tuple = Primitive('MakeTuple')
         self.tuple_len = Primitive("tuple_len")
 
-    def construct(self, *args):
-        fn = args[0]
-        v = args[1]
-        jvp_input = args[2:]
-        output = fn(*jvp_input)
-
+    def compute_jvp(self, fn, v, jvp_input, output):
+        """
+        Compute the jacobian-vector-product of the given fn, vector, inputs and outputs.
+        """
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
             for i in range(self.tuple_len(output)):
@@ -172,7 +171,30 @@ class _JvpInner(Cell):
         else:
             second_gradient_net = self.second_grad_op(self.first_grad)
             gradient_output = second_gradient_net(u, fn, jvp_input, v)
+        return gradient_output
+
+    def construct(self, *args):
+        fn = args[0]
+        v = args[1]
+        jvp_input = args[2:]
+        output = fn(*jvp_input)
+
+        gradient_output = self.compute_jvp(fn, v, jvp_input, output)
         return output, gradient_output
+
+
+class _LinearizeInner(_JvpInner):
+    """
+    Compute the jacobian-vector-product of the given network. This Class is mainly useful
+    if you want to apply jvp multiple times under the same input and fn.
+    """
+    def construct(self, *args):
+        fn = args[0]
+        v = args[1]
+        output = args[2]
+        jvp_input = args[3]
+        gradient_output = self.compute_jvp(fn, v, jvp_input, output)
+        return gradient_output
 
 
 class Vjp(Cell):
