@@ -185,7 +185,7 @@ uint8_t *AscendMemAdapter::MallocOverflowMem(const CNodePtr &kernel) {
   } else {
     auto overflow_memory_ptr = MallocStaticDevMem(kOverflowAddrSize, "overflow memory ptr");
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    overflow_memory_info_map_.insert({funcGraph->ToString(), overflow_memory_ptr});
+    (void)overflow_memory_info_map_.emplace(funcGraph->ToString(), overflow_memory_ptr);
     return overflow_memory_ptr;
   }
 }
