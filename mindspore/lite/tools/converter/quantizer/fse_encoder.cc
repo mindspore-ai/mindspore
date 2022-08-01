@@ -95,14 +95,14 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
   FSEQuant fse_quant;
-  int ret;
+  int ret = RET_ERROR;
   if (tensor_info->data_type() == kNumberTypeInt16) {
     ret = SqueezeQuant<int16_t>(weight, q_param, &fse_quant);
   } else if (tensor_info->data_type() == kNumberTypeInt8) {
     ret = SqueezeQuant<int8_t>(weight, q_param, &fse_quant);
   } else {
-    MS_LOG(ERROR) << " type_id:" << tensor_info->data_type() << " is dont support.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << " type_id:" << tensor_info->data_type() << " don't support.";
+    return ret;
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Squeeze quant data failed.";

@@ -89,5 +89,18 @@ bool QuantParamHolder::CheckInit(size_t index, bool is_input) {
     param.begin(), param.end(), [](const schema::QuantParamT &quant_param) { return !quant_param.inited; });
   return is_quant_params_inited;
 }
+
+void QuantParamHolder::SetQuantClusters(size_t index, const std::vector<float> &quant_cluster) {
+  quant_clusters.insert({index, quant_cluster});
+}
+
+std::vector<float> QuantParamHolder::GetQuantClusters(size_t index) {
+  auto iter = quant_clusters.find(index);
+  if (iter == quant_clusters.end()) {
+    return {};
+  } else {
+    return iter->second;
+  }
+}
 }  // namespace lite
 }  // namespace mindspore
