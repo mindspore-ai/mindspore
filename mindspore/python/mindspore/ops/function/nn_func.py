@@ -318,7 +318,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
         >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
         >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
-        >>> output = ops.bce_with_logits_loss(logits, label, weight, pos_weight, reduction)
+        >>> output = ops.binary_cross_entropy_with_logits(logits, label, weight, pos_weight)
         >>> print(output)
         0.3463612
     """
