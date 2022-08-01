@@ -18,8 +18,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <map>
-#include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

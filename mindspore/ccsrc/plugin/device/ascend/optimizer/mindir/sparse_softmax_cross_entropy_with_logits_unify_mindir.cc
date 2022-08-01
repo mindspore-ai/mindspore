@@ -235,8 +235,8 @@ void UpdateAbstract(const CNodePtr &real_div_node, const CNodePtr &expand_dims_n
     auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape.emplace_back(1);
-      max_shape.emplace_back(1);
+      (void)min_shape.emplace_back(1);
+      (void)max_shape.emplace_back(1);
     }
 
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
