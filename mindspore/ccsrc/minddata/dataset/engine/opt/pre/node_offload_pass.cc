@@ -91,14 +91,14 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
         offload_successful = true;
       } else {
         // Some operation(s) cannot be offloaded.
-        MS_LOG(WARNING)
+        MS_LOG(INFO)
           << "In Map Node, offload is set to True, but offload is not supported by the following operation(s): "
           << invalid_ops;
 
         // See if the operations can be split into two Map Nodes
         if (last_invalid_op_pos != static_cast<int>(temp_operations.size())) {
-          MS_LOG(WARNING) << "Map operation will be split after " << invalid_ops.back()
-                          << ", with the second map operation being offloaded.";
+          MS_LOG(INFO) << "Map operation will be split after " << invalid_ops.back()
+                       << ", with the second map operation being offloaded.";
           std::vector<std::shared_ptr<TensorOperation>> non_offload_ops(
             temp_operations.begin(), (temp_operations.begin() + last_invalid_op_pos));
           std::vector<std::shared_ptr<TensorOperation>> offload_ops((temp_operations.begin() + last_invalid_op_pos),

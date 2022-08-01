@@ -39,6 +39,7 @@ Examples:
     >>> # then the output will be:
     >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
 """
+import json
 import os
 import re
 import platform
@@ -397,6 +398,12 @@ class PythonTokenizer:
         except Exception as e:
             raise RuntimeError("Error occurred in Pyfunc [" + str(self.pyfunc.__name__) + "], error message: " + str(e))
         return tokens
+
+    def to_json(self):
+        json_obj = {}
+        json_obj["tensor_op_name"] = self.pyfunc.__name__
+        json_obj["python_module"] = self.__class__.__module__
+        return json.dumps(json_obj)
 
 
 class SentencePieceTokenizer(TextTensorOperation):
