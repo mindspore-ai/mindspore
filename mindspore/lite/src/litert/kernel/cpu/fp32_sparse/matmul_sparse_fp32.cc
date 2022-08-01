@@ -33,6 +33,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
+constexpr size_t kFirstDimIdx = 0;
+constexpr size_t kSecondDimIdx = 1;
+constexpr size_t kThirdDimIdx = 2;
+
 void MatmulSparseCPUKernel::InitParameter() {
   params_->a_const_ = true;
   params_->b_const_ = false;
@@ -77,15 +81,15 @@ void MatmulSparseCPUKernel::InitParameter() {
   constexpr int perm_1 = 2;
   auto area = params_->row_ * params_->deep_;
   trans_param_.num_axes_ = kNumIntThree;
-  trans_param_.perm_[0] = 0;
-  trans_param_.perm_[1] = perm_1;
-  trans_param_.perm_[2] = 1;
-  trans_param_.strides_[2] = 1;
-  trans_param_.strides_[1] = params_->deep_;
-  trans_param_.strides_[0] = area;
-  trans_param_.out_strides_[2] = 1;
-  trans_param_.out_strides_[1] = params_->row_;
-  trans_param_.out_strides_[0] = area;
+  trans_param_.perm_[kFirstDimIdx] = 0;
+  trans_param_.perm_[kSecondDimIdx] = perm_1;
+  trans_param_.perm_[kThirdDimIdx] = 1;
+  trans_param_.strides_[kThirdDimIdx] = 1;
+  trans_param_.strides_[kSecondDimIdx] = params_->deep_;
+  trans_param_.strides_[kFirstDimIdx] = area;
+  trans_param_.out_strides_[kThirdDimIdx] = 1;
+  trans_param_.out_strides_[kSecondDimIdx] = params_->row_;
+  trans_param_.out_strides_[kFirstDimIdx] = area;
 }
 
 namespace {
