@@ -91,72 +91,24 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   return RET_OK;
 }
 
-int ConvertTensor2Quant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants) {
-  CHECK_NULL_RETURN(weight);
-  CHECK_NULL_RETURN(quants);
+int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param) {
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
-
-  auto data_c = static_cast<int16_t *>(tensor_info->data_c());
-  auto data_size = tensor_info->DataSize();
-
-  auto min_max = GetMinMaxValue(static_cast<int16_t *>(tensor_info->data_c()), data_size);
-  int qmin = min_max.first;
-  int qmax = min_max.second;
-  int uncompressed_frequency_count = qmax - qmin + 1;
-
-  std::vector<int> uncompressed_frequency(uncompressed_frequency_count);
-  for (int i = 0; i < uncompressed_frequency_count; i++) {
-    uncompressed_frequency[i] = 0;
-  }
-  for (size_t i = 0; i < data_size; i++) {
-    auto data = static_cast<int16_t>(data_c[i]);
-    int q = data - qmin;
-    uncompressed_frequency[q] += 1;
-  }
-
-  std::vector<uint16_t> uncompressed_freqs_to_compressed_sym(uncompressed_frequency_count);
-  int sym = 0;
-  for (int i = 0; i < uncompressed_frequency_count; i++) {
-    if (uncompressed_frequency[i] != 0) {
-      if (sym >= MAX_SYMS) {
-        return RET_ERROR;  // too many symbols!
-      }
-      uncompressed_freqs_to_compressed_sym[i] = sym;
-      quants->frequency[sym] = uncompressed_frequency[i];
-      // real = varCorr * (q - zp) * scale + meanCorr
-      quants->centroids[sym] =
-        q_param.front().varCorr * static_cast<float>(i + qmin - q_param.front().zeroPoint) * (q_param.front().scale) +
-        q_param.front().meanCorr;
-      sym++;
-    }
-  }
-  MS_LOG(INFO) << "uncompressed frequency count:" << uncompressed_frequency_count << " sym:" << sym;
-  quants->size = sym;
-  quants->symbol_table_count = data_size;
-  quants->symbol_table = static_cast<uint16_t *>(malloc(quants->symbol_table_count * sizeof(uint16_t)));
-  if (quants->symbol_table == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed.";
+  FSEQuant fse_quant;
+  int ret;
+  if (tensor_info->data_type() == kNumberTypeInt16) {
+    ret = SqueezeQuant<int16_t>(weight, q_param, &fse_quant);
+  } else if (tensor_info->data_type() == kNumberTypeInt8) {
+    ret = SqueezeQuant<int8_t>(weight, q_param, &fse_quant);
+  } else {
+    MS_LOG(ERROR) << " type_id:" << tensor_info->data_type() << " is dont support.";
     return RET_ERROR;
   }
-  for (int i = 0; i < quants->symbol_table_count; i++) {
-    auto data = static_cast<int16_t>(data_c[i]);
-    int q = data - qmin;
-    sym = uncompressed_freqs_to_compressed_sym[q];
-    quants->symbol_table[i] = sym;
-  }
-  return RET_OK;
-}
-
-int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param) {
-  MS_ASSERT(tensor_input);
-  int table_log = 0;
-  FSEQuant fse_quant;
-  auto ret = ConvertTensor2Quant(weight, q_param, &fse_quant);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Convert tensor 2 quant failed.";
+    MS_LOG(ERROR) << "Squeeze quant data failed.";
     return ret;
   }
+  int table_log = 0;
   ret = NormalizeFrequency(&fse_quant, &table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Normalize frequency failed.";
@@ -410,7 +362,7 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
   size_t out_size = 0;
   auto ret = SerializingToBuffer(bs, fse_quant, table_log, max_size, out8, &out_size);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << weight->name() << " Store data to new_tensor failed. You can try to use 8bit fixed quantization.";
+    MS_LOG(ERROR) << weight->name() << " Store data to new_tensor failed.";
     free(out8);
     return ret;
   }
@@ -426,6 +378,9 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
   free(out8);
   weight->set_default_param(new_tensor);
   weight->set_abstract(new_tensor->ToAbstract());
+  auto ratio = 1.0 * tensor_info->Size() / new_tensor->Size();
+  MS_LOG(INFO) << weight->fullname_with_scope() << " origin:" << tensor_info->Size()
+               << " new_tensor:" << new_tensor->Size() << " ratio:" << ratio;
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

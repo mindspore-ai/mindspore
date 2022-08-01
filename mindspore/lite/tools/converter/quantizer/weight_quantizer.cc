@@ -153,8 +153,9 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
-    if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
-      MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
+    if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
+        tensor_info->compression_type() != kNoCompression) {
+      MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
       continue;
     }
     auto quant_strategy = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
