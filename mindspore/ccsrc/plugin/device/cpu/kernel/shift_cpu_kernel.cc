@@ -97,7 +97,10 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   // if periods_ is 0, do nothing
   if (periods_ == 0) {
     // directly copy input to output
-    (void)memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
+    auto ret = memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed";
+    }
     return true;
   }
 
@@ -120,7 +123,10 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     // treat it as a simple 1D array
     size_t copy_size = copy_size_ * sizeof(T);
     size_t dst_max_size = outputs[0]->size - copy_dst_begin_;
-    (void)memcpy_s(output + copy_dst_begin_, dst_max_size, input + copy_src_begin_, copy_size);
+    auto ret = memcpy_s(output + copy_dst_begin_, dst_max_size, input + copy_src_begin_, copy_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed";
+    }
     (void)std::fill_n(output + fill_begin_, fill_size_, fill_value);
     return true;
   }

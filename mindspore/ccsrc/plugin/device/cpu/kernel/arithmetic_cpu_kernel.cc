@@ -58,7 +58,7 @@ template <typename T>
 void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
   size_t idx_1 = 0;
   size_t idx_2 = 0;
-  auto zero = (T)0;
+  auto zero = static_cast<T>(0);
   for (size_t i = 0; i < size; ++i) {
     auto dividend = input1[idx_1];
     auto divisor = input2[idx_2];
