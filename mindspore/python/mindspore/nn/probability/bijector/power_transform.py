@@ -37,19 +37,6 @@ class PowerTransform(Bijector):
         power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
-    Inputs and Outputs of APIs:
-        The accessible APIs of the PowerTransform bijector are defined in the base class, including:
-
-        - **forward**
-        - **inverse**
-        - **forward_log_jacobian**
-        - **inverse_log_jacobian**
-
-        It should be notice that the inputs to APIs of the PowerTransform bijector should be always a tensor,
-        with a shape that can be broadcasted to that of `power`.
-        For more details of all APIs, including the inputs and outputs of the PowerTransform bijector,
-        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 

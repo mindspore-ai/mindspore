@@ -3,7 +3,8 @@ mindspore.boost
 
 Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
-注：此特性为测试版本，我们仍在改进其功能。
+.. note::
+    此特性为测试版本，我们仍在改进其功能。
 
 .. py:class:: mindspore.boost.AutoBoost(level="O0", boost_config_dict="")
 
