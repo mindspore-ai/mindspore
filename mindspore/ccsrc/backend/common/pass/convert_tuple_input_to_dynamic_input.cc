@@ -61,6 +61,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
       common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimResizeNearestNeighborGrad)) {
     return nullptr;
   }
+  bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimBpropCut);
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
@@ -68,7 +69,8 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
-    if (common::AnfAlgo::IsTupleOutput(input_node)) {
+    bool skip = (is_bprop_cut && input_node->abstract()->isa<abstract::AbstractSparseTensor>());
+    if (common::AnfAlgo::IsTupleOutput(input_node) && !skip) {
       (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
     } else {
       dyn_input_sizes.push_back(-1);

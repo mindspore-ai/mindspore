@@ -63,6 +63,12 @@ void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_ar
     if (py::isinstance<tensor::Tensor>(input_args[i])) {
       (*convert_args)[i] =
         python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i]);
+    } else if (py::isinstance<tensor::CSRTensor>(input_args[i])) {
+      (*convert_args)[i] = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
+                                                    parse::PYTHON_MOD_CONVERT_TO_MS_CSRTENSOR, input_args[i]);
+    } else if (py::isinstance<tensor::COOTensor>(input_args[i])) {
+      (*convert_args)[i] = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
+                                                    parse::PYTHON_MOD_CONVERT_TO_MS_COOTENSOR, input_args[i]);
     } else if (py::isinstance<py::tuple>(input_args[i])) {
       auto tuple_inp_arg = py::cast<py::tuple>(input_args[i]);
       py::tuple convert_tuple_arg(tuple_inp_arg.size());

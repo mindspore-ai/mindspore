@@ -31,7 +31,7 @@ import numpy
 import asttokens
 import astunparse
 
-from mindspore import Tensor
+from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
@@ -495,6 +495,16 @@ def get_ms_class_name(cls):
 def convert_to_ms_tensor(data):
     """Convert C++ tensor to mindspore tensor."""
     return Tensor(data)
+
+
+def convert_to_ms_csrtensor(data):
+    """Convert C++ csrtensor to mindspore csrtensor."""
+    return CSRTensor(csr_tensor=data)
+
+
+def convert_to_ms_cootensor(data):
+    """Convert C++ cootensor to mindspore cootensor."""
+    return COOTensor(coo_tensor=data)
 
 
 def get_object_description(obj, fname, fline):

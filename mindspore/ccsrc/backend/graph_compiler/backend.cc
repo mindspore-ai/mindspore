@@ -762,8 +762,12 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
     MS_EXCEPTION_IF_NULL(real_input);
     ValuePtr value = nullptr;
     if (!real_input->isa<ValueNode>()) {
-      value = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index, graph_inputs,
-                                                            input_tensor_info, back_index);
+      if (real_input->abstract() != nullptr && real_input->abstract()->isa<abstract::AbstractSparseTensor>()) {
+        value = TensorListToSparseTensor(real_input->abstract(), graph_inputs);
+      } else {
+        value = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
+                                                              graph_inputs, input_tensor_info, back_index);
+      }
       MS_EXCEPTION_IF_NULL(value);
       ++back_index;
     } else {
@@ -794,9 +798,9 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   }
 }
 
-void ConvertPyObjectToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *tensors) {
+void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
   MS_EXCEPTION_IF_NULL(tensors);
-  tensor::TensorPtr tensor_ptr = nullptr;
+  ValuePtr tensor_ptr = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
     tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
@@ -816,6 +820,10 @@ void ConvertPyObjectToTensor(const py::object &input_object, std::vector<tensor:
       ConvertPyObjectToTensor(tuple_inputs[i], tensors);
     }
     return;
+  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
+  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
   } else {
     MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
   }
@@ -860,10 +868,10 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, co
     if (utils::isa<PyObjectRef>(out)) {
       PyObjectRef py_ref = utils::cast<PyObjectRef>(out);
       auto out_py_tuple = py_ref.object_;
-      std::vector<tensor::TensorPtr> output_tensors;
+      std::vector<ValuePtr> output_tensors;
       ConvertPyObjectToTensor(out_py_tuple, &output_tensors);
       (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(op_outputs->elements_),
-                           [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+                           [](ValuePtr &tensor) { return std::move(tensor); });
     }
   }
 }
