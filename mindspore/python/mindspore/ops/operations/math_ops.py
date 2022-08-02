@@ -5623,23 +5623,7 @@ class Trunc(Primitive):
     """
     Returns a new tensor with the truncated integer values of the elements of input.
 
-    Inputs:
-        - **input_x** (Tensor) - Input_x is a tensor.
-
-    Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> trunc = ops.Trunc()
-        >>> output = trunc(Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32))
-        >>> print(output)
-        [ 3. 0. 0. -3.]
+    Refer to :func:`mindspore.ops.trunc` for more detail.
     """
 
     @prim_attr_register

@@ -84,19 +84,20 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
   }
 
   if (inputs_x_shape.size() != kInputsRank) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size()
+                             << ".";
   }
 
   if (sequence_length_shape.size() != kSeqLenRank) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
   }
 
   if (inputs_x_shape[1] != sequence_length_shape[0]) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', inputs batch_size must be the same with sequence_length batch_size, "
-                      << "but now inputs batch_size: " << inputs_x_shape[1]
-                      << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', inputs batch_size must be the same with sequence_length batch_size, "
+                             << "but now inputs batch_size: " << inputs_x_shape[1]
+                             << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
   }
 
   return std::make_shared<abstract::AbstractTuple>(ret);

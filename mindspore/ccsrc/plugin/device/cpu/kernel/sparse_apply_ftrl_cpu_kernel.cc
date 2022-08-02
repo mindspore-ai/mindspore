@@ -463,5 +463,6 @@ bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseFtrl, FusedSparseFtrlCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseApplyFtrl, SparseApplyFtrlCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

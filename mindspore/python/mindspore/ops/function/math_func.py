@@ -2221,7 +2221,7 @@ def trunc(x):
     Returns a new tensor with the truncated integer values of the elements of input.
 
     Args:
-        - **x** (Tensor) - Input_x is a tensor.
+        - **input_x** (Tensor) - Input_x is a tensor.
 
     Returns:
         Tensor, the same shape and data type as the input.
@@ -2233,9 +2233,8 @@ def trunc(x):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
-        >>> trunc = ops.Trunc()
-        >>> output = trunc(x)
+        >>> input_x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
+        >>> output = ops.trunc(input_x)
         >>> print(output)
         [ 3. 0. 0. -3.]
     """
