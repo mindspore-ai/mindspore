@@ -171,7 +171,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::vector<KernelGraphPtr> GetStepGraphPtrList() const { return graph_ptr_step_vec_; }
 
-  void InsertExecutedGraph(const KernelGraphPtr &graph_ptr) { executed_graph_ptr_set_.insert(graph_ptr); }
+  void InsertExecutedGraph(const KernelGraphPtr &graph_ptr) { (void)executed_graph_ptr_set_.insert(graph_ptr); }
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
