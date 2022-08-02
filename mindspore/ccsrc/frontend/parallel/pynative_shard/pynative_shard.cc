@@ -109,7 +109,8 @@ static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, 
   for (size_t i = 0; i < strategies.size(); ++i) {
     auto strategy = strategies[i];
     int64_t required_num = 1;
-    std::for_each(strategy.begin(), strategy.end(), [&](int64_t const &data) { required_num *= data; });
+    (void)std::for_each(strategy.begin(), strategy.end(),
+                        [&required_num](const int64_t data) { required_num *= data; });
     if (required_num > device_num) {
       MS_LOG(ERROR) << "required device number: " << required_num
                     << " is larger than available device number: " << device_num << " at index: " << i;
@@ -178,7 +179,7 @@ static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const std::
     }
     auto iter = std::find(parameters.begin(), parameters.end(), current_input);
     if (iter != parameters.end()) {
-      elements.push_back(input_strategy[iter - parameters.begin()]);
+      elements.push_back(input_strategy[LongToSize(iter - parameters.begin())]);
     } else {
       auto shape = current_input->Shape()->cast<abstract::ShapePtr>();
       auto dimension = shape->shape().size();
@@ -235,7 +236,7 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
     for (auto &param_pair : param_sub_set) {
       CNodePtr param_cnode = param_pair.first->cast<CNodePtr>();
-      concerned_nodes.insert(param_cnode);
+      (void)concerned_nodes.insert(param_cnode);
     }
   }
   for (auto &cnode : concerned_nodes) {

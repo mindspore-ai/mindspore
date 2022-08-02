@@ -17,14 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PYNATIVE_SHARD_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PYNATIVE_SHARD_H_
 
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "pipeline/jit/resource.h"
 #include "frontend/parallel/step_parallel.h"
 
