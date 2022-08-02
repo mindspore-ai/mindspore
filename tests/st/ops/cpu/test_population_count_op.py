@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -32,25 +33,25 @@ class Net(nn.Cell):
         return self.population_count(x0)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test16_net():
     x = Tensor(np.array([13, 65]), mstype.int16)
-    print("x:\n", x)
     pc = Net()
     output = pc(x)
-    print("x:\n", output)
-    expect_x_result = [4, 7]
-    print("expected_x:\n", expect_x_result)
-
+    expect_x_result = [3, 2]
 
     assert (output.asnumpy() == expect_x_result).all()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test8_net():
     x = Tensor(np.array([13, 65]), mstype.int8)
     pc = Net()
     output = pc(x)
-    print("x:\n", output)
-    expect_x_result = [4, 7]
-    print("expected_x:\n", expect_x_result)
+    expect_x_result = [3, 2]
 
     assert (output.asnumpy() == expect_x_result).all()
