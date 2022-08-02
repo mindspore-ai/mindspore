@@ -374,6 +374,50 @@ mindspore.Tensor
 
         Tensor，数据类型和shape与 `x` 相同。
 
+    .. py:method:: cummax(axis)
+
+        返回一个元组（最值、索引），其中最值是输入张量 `x` 沿维度 `axis` 的累积最大值，索引是每个最大值的索引位置。
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = max(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        **参数：**
+
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+
+        **返回：**
+
+        一个包含两个Tensor的元组，分别表示累积最大值和对应索引。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是int。
+        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+
+    .. py:method:: cummin(axis)
+
+        返回一个元组（最值、索引），其中最值是输入张量 `x` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = min(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        **参数：**
+
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+
+        **返回：**
+
+        一个包含两个Tensor的元组，分别表示累积最小值和对应索引。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是int。
+        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+
     .. py:method:: cumsum(axis=None, dtype=None)
 
         返回指定轴方向上元素的累加值。
@@ -655,6 +699,34 @@ mindspore.Tensor
         :property:
 
         Tensor是否已经初始化。
+
+    .. py:method:: index_fill(dim, index, value)
+
+        按 `index` 中给定的顺序选择索引，将输入 `value` 值填充到当前Tensor的所有 `dim` 维元素。
+
+        **参数：**
+
+        - **dim** (Union[int, Tensor]) - 填充输入Tensor的维度，要求是一个int或者数据类型为int32或int64的0维Tensor。
+        - **index** (Tensor) - 填充输入Tensor的索引，数据类型为int32。
+        - **value** (Union[bool, int, float, Tensor]) - 填充输入Tensor的值。如果 `value` 是Tensor，那么 `value` 要求是数据类型与当前Tensor相同的0维Tensor。否则，该值会自动转化为一个数据类型与当前Tensor相同的0维Tensor。
+
+        **返回：**
+
+        填充后的Tensor。shape和数据类型与当前Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `dim` 的类型不是int或者Tensor。
+        - **TypeError** - 当 `dim` 是Tensor时， `dim` 的数据类型不是int32或者int64。
+        - **TypeError** - `index` 的类型不是Tensor。
+        - **TypeError** - `index` 的数据类型不是int32。
+        - **TypeError** - `value` 的类型不是bool、int、float或者Tensor。
+        - **TypeError** - 当 `value` 是Tensor时， `value` 的数据类型和当前Tensor的数据类型不相同。
+        - **ValueError** - 当 `dim` 是Tensor时， `dim` 的维度不等于0。
+        - **ValueError** - `index` 的维度大于1。
+        - **ValueError** - 当 `value` 是Tensor时， `value` 的维度不等于0。
+        - **RuntimeError** - `dim` 值超出范围[-self.ndim, self.ndim - 1]。
+        - **RuntimeError** - `index` 存在值超出范围[-self.shape[dim], self.shape[dim]-1]。
 
     .. py:method:: init_data(slice_index=None, shape=None, opt_shard_group=None)
 
