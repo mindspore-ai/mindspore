@@ -183,8 +183,8 @@ void EltWiseGradCpuTypeFunc<T>::AsinGrad(const T *input1, const T *input2, T *ou
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
-    if (divisor == 0) {
-      if (dividend == 0) {
+    if (divisor == static_cast<T>(0)) {
+      if (dividend == static_cast<T>(0)) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
@@ -204,8 +204,8 @@ void EltWiseGradCpuTypeFunc<T>::ACosGrad(const T *input1, const T *input2, T *ou
   for (size_t i = start; i < end; i++) {
     T dividend = -input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
-    if (divisor == 0) {
-      if (dividend == 0) {
+    if (divisor == static_cast<T>(0)) {
+      if (dividend == static_cast<T>(0)) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
@@ -225,8 +225,8 @@ void EltWiseGradCpuTypeFunc<T>::AtanGrad(const T *input1, const T *input2, T *ou
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = 1 + input1[i] * input1[i];
-    if (divisor == 0) {
-      if (dividend == 0) {
+    if (divisor == static_cast<T>(0)) {
+      if (dividend == static_cast<T>(0)) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
@@ -246,8 +246,8 @@ void EltWiseGradCpuTypeFunc<T>::AsinhGrad(const T *input1, const T *input2, T *o
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = cosh(input1[i]);
-    if (divisor == 0) {
-      if (dividend == 0) {
+    if (divisor == static_cast<T>(0)) {
+      if (dividend == static_cast<T>(0)) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
@@ -295,8 +295,8 @@ void EltWiseGradCpuTypeFunc<T>::AcoshGrad(const T *input1, const T *input2, T *o
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sinh(input1[i]);
-    if (divisor == 0) {
-      if (dividend == 0) {
+    if (divisor == static_cast<T>(0)) {
+      if (dividend == static_cast<T>(0)) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
