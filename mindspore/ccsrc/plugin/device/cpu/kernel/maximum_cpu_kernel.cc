@@ -77,10 +77,6 @@ int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     InitInputTensorAndScalar(max_input_shape_size);
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
     InitInputTensors(input_x_dtype, input_y_dtype);
-  } else {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', inputs must be two tensors or one tensor and one scalar, but got "
-                    << input_x_dtype << " and " << input_y_dtype;
-    return KRET_RESIZE_FAILED;
   }
   return 0;
 }
