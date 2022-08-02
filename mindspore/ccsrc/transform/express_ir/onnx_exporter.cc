@@ -3040,7 +3040,7 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodeP
   size_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
   int64_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
-  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<size_t>());
+  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1UL, std::multiplies<size_t>());
   MS_EXCEPTION_IF_CHECK_FAIL(value_size == flat_end_index - flat_begin_index, "Cannot copy 'value' to target slice");
 
   auto flat_x_name = node_name + "_flat_x";
