@@ -141,6 +141,8 @@ def test_matrix_determinant_dy_shape():
     input_shape = (4, 4)
     data_type = np.float32
     ms_data_type = ms_type.float32
+    if data_type in (np.float32, np.complex64):
+        loss = 1e-3
     input_x_np = np.random.random(input_shape).astype(data_type)
     benchmark_output = matrix_determinant_scipy_benchmark(input_x_np)
 
@@ -169,6 +171,8 @@ def test_log_matrix_determinant_dy_shape():
     input_shape = (4, 4)
     data_type = np.float32
     ms_data_type = ms_type.float32
+    if data_type in (np.float32, np.complex64):
+        loss = 1e-3
     input_x_np = np.random.random(input_shape).astype(data_type)
     benchmark_output = log_matrix_determinant_np_benchmark(input_x_np)
 
@@ -195,6 +199,8 @@ def test_matrix_determinant_vmap():
     context.set_context(mode=context.GRAPH_MODE)
     loss = 1e-6
     data_type = np.float32
+    if data_type in (np.float32, np.complex64):
+        loss = 1e-3
     # Case : in_axes input_x batch remains 0
     input_x = Tensor(np.array([[[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]],
                                [[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]]).astype(data_type))
@@ -219,6 +225,8 @@ def test_log_matrix_determinant_vmap():
     context.set_context(mode=context.GRAPH_MODE)
     loss = 1e-6
     data_type = np.float32
+    if data_type in (np.float32, np.complex64):
+        loss = 1e-3
     # Case : in_axes input_x batch remains 0
     input_x = Tensor(np.array([[[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]],
                                [[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]]).astype(data_type))
