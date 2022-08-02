@@ -34,7 +34,7 @@ class MIND_API Imag : public BaseOperator {
   /// \brief Constructor.
   Imag() : BaseOperator(kNameImag) { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Imag for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

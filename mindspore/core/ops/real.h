@@ -34,7 +34,7 @@ class MIND_API Real : public BaseOperator {
   /// \brief Constructor.
   Real() : BaseOperator(kNameReal) { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Real for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
