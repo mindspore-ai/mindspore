@@ -43,6 +43,7 @@
 #include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
+#include "frontend/optimizer/micro_interleaved_order_control.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
@@ -696,6 +697,12 @@ bool SliceRecomputeActivationPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::MicroInterleavedOrderControl(resource->func_graph());
+  return true;
+}
+
 bool CommOpAddAttrs(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   opt::CommOpAttrs(resource->func_graph());
@@ -928,6 +935,7 @@ std::vector<PassItem> kVmPasses = {
   {"cse_after_recomputation", OptAfterRecomputeGroup},
   {"environ_conv", EnvironConversionPass},
   {"slice_recompute_activation", SliceRecomputeActivationPass},
+  {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
   {"comm_op_add_attrs", CommOpAddAttrs},
   {"add_comm_op_reuse_tag", AddCommOpReusePass},
 };

@@ -183,6 +183,9 @@ class COMMON_EXPORT ParallelContext {
   void set_sharding_propagation(const bool stra_pto);
   bool sharding_propagation() const { return sharding_propagation_; }
 
+  void set_enable_micro_interleaved(const bool);
+  bool enable_micro_interleaved() const { return enable_micro_interleaved_; }
+
  private:
   ParallelContext();
   bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const;
@@ -227,6 +230,7 @@ class COMMON_EXPORT ParallelContext {
   bool dataset_repeat_dim_right_ = false;
   bool hccl_test_available_ = false;
   bool sharding_propagation_;
+  bool enable_micro_interleaved_ = false;
   std::string fusion_mode_;
 };
 }  // namespace mindspore::parallel

@@ -326,5 +326,9 @@ bool ParallelContext::IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) co
 
 void ParallelContext::set_enable_all2all(const bool enable) { enable_all2all_ = enable; }
 
+void ParallelContext::set_enable_micro_interleaved(const bool enable_micro_interleaved) {
+  enable_micro_interleaved_ = enable_micro_interleaved;
+}
+
 void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 }  // namespace mindspore::parallel
