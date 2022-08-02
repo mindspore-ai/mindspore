@@ -88,14 +88,13 @@ Flags::Flags() {
 }
 
 int Flags::InitInputOutputDataType() {
-  if (this->inputDataTypeStr == "FLOAT") {
-    this->inputDataType = DataType::kNumberTypeFloat32;
-  } else if (this->inputDataTypeStr == "INT8") {
-    this->inputDataType = DataType::kNumberTypeInt8;
-  } else if (this->inputDataTypeStr == "UINT8") {
-    this->inputDataType = DataType::kNumberTypeUInt8;
-  } else if (this->inputDataTypeStr == "DEFAULT") {
-    this->inputDataType = DataType::kTypeUnknown;
+  // value check not here, it is in converter c++ API's CheckValueParam method.
+  std::map<std::string, DataType> StrToEnumDataTypeMap = {{"FLOAT", DataType::kNumberTypeFloat32},
+                                                          {"INT8", DataType::kNumberTypeInt8},
+                                                          {"UINT8", DataType::kNumberTypeUInt8},
+                                                          {"DEFAULT", DataType::kTypeUnknown}};
+  if (StrToEnumDataTypeMap.find(this->inputDataTypeStr) != StrToEnumDataTypeMap.end()) {
+    this->inputDataType = StrToEnumDataTypeMap.at(this->inputDataTypeStr);
   } else {
     std::cerr
       << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT, got: "
@@ -103,45 +102,30 @@ int Flags::InitInputOutputDataType() {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->outputDataTypeStr == "FLOAT") {
-    this->outputDataType = DataType::kNumberTypeFloat32;
-  } else if (this->outputDataTypeStr == "INT8") {
-    this->outputDataType = DataType::kNumberTypeInt8;
-  } else if (this->outputDataTypeStr == "UINT8") {
-    this->outputDataType = DataType::kNumberTypeUInt8;
-  } else if (this->outputDataTypeStr == "DEFAULT") {
-    this->outputDataType = DataType::kTypeUnknown;
+  if (StrToEnumDataTypeMap.find(this->outputDataTypeStr) != StrToEnumDataTypeMap.end()) {
+    this->outputDataType = StrToEnumDataTypeMap.at(this->outputDataTypeStr);
   } else {
     std::cerr
       << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT, got: "
       << this->outputDataTypeStr << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
+
   return RET_OK;
 }
 
 int Flags::InitFmk() {
-  if (this->fmkIn == "CAFFE") {
-    this->fmk = kFmkTypeCaffe;
-  } else if (this->fmkIn == "MINDIR") {
-    this->fmk = kFmkTypeMs;
-  } else if (this->fmkIn == "TFLITE") {
-    this->fmk = kFmkTypeTflite;
-  } else if (this->fmkIn == "ONNX") {
-    this->fmk = kFmkTypeOnnx;
-  } else if (this->fmkIn == "TF") {
-    this->fmk = kFmkTypeTf;
-  } else if (this->fmkIn == "PYTORCH") {
-    this->fmk = kFmkTypePytorch;
+  // value check not here, it is in converter c++ API's CheckValueParam method.
+  std::map<std::string, FmkType> StrToEnumFmkTypeMap = {{"CAFFE", kFmkTypeCaffe},   {"MINDIR", kFmkTypeMs},
+                                                        {"TFLITE", kFmkTypeTflite}, {"ONNX", kFmkTypeOnnx},
+                                                        {"TF", kFmkTypeTf},         {"PYTORCH", kFmkTypePytorch}};
+  if (StrToEnumFmkTypeMap.find(this->fmkIn) != StrToEnumFmkTypeMap.end()) {
+    this->fmk = StrToEnumFmkTypeMap.at(this->fmkIn);
   } else {
     std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->fmk != kFmkTypeCaffe && !weightFile.empty()) {
-    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
   return RET_OK;
 }
 
@@ -155,20 +139,6 @@ int Flags::InitTrainModel() {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->trainModel) {
-    if (this->fmk != kFmkTypeMs) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format" << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if ((this->inputDataType != DataType::kNumberTypeFloat32) && (this->inputDataType != DataType::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 input tensors" << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if ((this->outputDataType != DataType::kNumberTypeFloat32) && (this->outputDataType != DataType::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors" << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
   return RET_OK;
 }
 
@@ -209,19 +179,14 @@ int Flags::InitInTensorShape() const {
       return lite::RET_ERROR;
     }
     for (const auto &dim : dims) {
-      auto dim_value = -1;
+      int64_t dim_value;
       try {
         dim_value = std::stoi(dim);
       } catch (const std::exception &e) {
         MS_LOG(ERROR) << "Get dim failed: " << e.what();
         return lite::RET_ERROR;
       }
-      if (dim_value < 0) {
-        MS_LOG(ERROR) << "Unsupported dim < 0.";
-        return lite::RET_ERROR;
-      } else {
-        shape.push_back(dim_value);
-      }
+      shape.push_back(dim_value);
     }
     graph_input_shape_map[name] = shape;
   }
@@ -229,10 +194,10 @@ int Flags::InitInTensorShape() const {
 }
 
 int Flags::InitGraphInputFormat() {
-  if (this->graphInputFormatStr == "NHWC") {
-    graphInputFormat = mindspore::NHWC;
-  } else if (this->graphInputFormatStr == "NCHW") {
-    graphInputFormat = mindspore::NCHW;
+  // value check not here, it is in converter c++ API's CheckValueParam method.
+  std::map<std::string, Format> StrToEnumFormatMap = {{"NHWC", NHWC}, {"NCHW", NCHW}};
+  if (StrToEnumFormatMap.find(this->graphInputFormatStr) != StrToEnumFormatMap.end()) {
+    graphInputFormat = StrToEnumFormatMap.at(this->graphInputFormatStr);
   } else if (!this->graphInputFormatStr.empty()) {
     MS_LOG(ERROR) << "graph input format is invalid.";
     return RET_INPUT_PARAM_INVALID;
@@ -277,12 +242,12 @@ int Flags::InitNoFusion() {
 }
 
 int Flags::InitExportMindIR() {
-  if (this->exportMindIR == "MINDIR") {
-    this->export_mindir = kMindIR;
-  } else if (this->exportMindIR == "MINDIR_LITE") {
-    this->export_mindir = kMindIR_Lite;
+  // value check not here, it is in converter c++ API's CheckValueParam method.
+  std::map<std::string, ModelType> StrToEnumModelTypeMap = {{"MINDIR", kMindIR}, {"MINDIR_LITE", kMindIR_Lite}};
+  if (StrToEnumModelTypeMap.find(this->exportMindIR) != StrToEnumModelTypeMap.end()) {
+    this->export_mindir = StrToEnumModelTypeMap.at(this->exportMindIR);
   } else {
-    std::cerr << "INPUT ILLEGAL: exportMindIR must be true|false " << std::endl;
+    std::cerr << "INPUT ILLEGAL: exportMindIR must be MINDIR|MINDIR_LITE " << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -296,12 +261,6 @@ int Flags::InitEncrypt() {
   } else {
     std::cerr << "INPUT ILLEGAL: encryption must be true|false " << std::endl;
     return RET_INPUT_PARAM_INVALID;
-  }
-  if (this->encryption) {
-    if (encKeyStr.empty()) {
-      MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false.";
-      return RET_INPUT_PARAM_INVALID;
-    }
   }
   return RET_OK;
 }
@@ -322,24 +281,6 @@ int Flags::PreInit(int argc, const char **argv) {
   if (this->help) {
     std::cout << this->Usage() << std::endl;
     return lite::RET_SUCCESS_EXIT;
-  }
-  if (this->modelFile.empty()) {
-    std::cerr << "INPUT MISSING: model file path is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (this->outputFile.empty()) {
-    std::cerr << "INPUT MISSING: output file path is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-#ifdef _WIN32
-  replace(this->outputFile.begin(), this->outputFile.end(), '/', '\\');
-#endif
-
-  if (this->outputFile.rfind('/') == this->outputFile.length() - 1 ||
-      this->outputFile.rfind('\\') == this->outputFile.length() - 1) {
-    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmkIn.empty()) {

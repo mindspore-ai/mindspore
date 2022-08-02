@@ -22,7 +22,7 @@ from enum import Enum
 from ._checkparam import check_isinstance, check_input_shape, check_config_info
 from .lib import _c_lite_wrapper
 from .tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, format_cxx_py_map
-from .model import ModelType
+from .model import ModelType, model_type_py_cxx_map, model_type_cxx_py_map
 
 __all__ = ['FmkType', 'Converter']
 
@@ -36,7 +36,6 @@ class FmkType(Enum):
     ONNX = 2
     MINDIR = 3
     TFLITE = 4
-    PYTORCH = 5
 
 
 class Converter:
@@ -48,10 +47,9 @@ class Converter:
 
     Args:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
-            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
+            FmkType.MINDIR | FmkType.TFLITE.
         model_file (str): Path of the input model. e.g. "/home/user/model.prototxt". Options:
-            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" |
-            PYTORCH "\*.pt" or "\*.pth".
+            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite".
         output_file (str): Path of the output model. The suffix .ms can be automatically generated.
             e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
         weight_file (str, optional): Input model weight file. Required only when fmk_type is FmkType.CAFFE.
@@ -175,7 +173,6 @@ class Converter:
             FmkType.ONNX: _c_lite_wrapper.FmkType.kFmkTypeOnnx,
             FmkType.MINDIR: _c_lite_wrapper.FmkType.kFmkTypeMs,
             FmkType.TFLITE: _c_lite_wrapper.FmkType.kFmkTypeTflite,
-            FmkType.PYTORCH: _c_lite_wrapper.FmkType.kFmkTypePytorch,
         }
         self._converter = _c_lite_wrapper.ConverterBind(fmk_type_py_cxx_map.get(fmk_type), model_file, output_file,
                                                         weight_file)
@@ -192,11 +189,10 @@ class Converter:
         if output_data_type != DataType.FLOAT32:
             self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
         if export_mindir != ModelType.MINDIR_LITE:
-            self._converter.set_export_mindir(export_mindir)
+            self._converter.set_export_mindir(model_type_py_cxx_map.get(export_mindir))
         if decrypt_key != "":
             self._converter.set_decrypt_key(decrypt_key)
-        if decrypt_mode != "AES-GCM":
-            self._converter.set_decrypt_mode(decrypt_mode)
+        self._converter.set_decrypt_mode(decrypt_mode)
         if enable_encryption:
             self._converter.set_enable_encryption(enable_encryption)
         if encrypt_key != "":
@@ -216,7 +212,7 @@ class Converter:
               f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())},\n" \
               f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())},\n" \
               f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())},\n" \
-              f"export_mindir: {self._converter.get_export_mindir()},\n" \
+              f"export_mindir: {model_type_cxx_py_map.get(self._converter.get_export_mindir())},\n" \
               f"decrypt_key: {self._converter.get_decrypt_key()},\n" \
               f"decrypt_mode: {self._converter.get_decrypt_mode()},\n" \
               f"enable_encryption: {self._converter.get_enable_encryption()},\n" \
@@ -228,7 +224,7 @@ class Converter:
 
     def set_config_info(self, section, config_info):
         """
-        Set config info for converter.
+        Set config info for converter.It is used together with get_config_info method for online converter.
 
         Args:
             section (str): The category of the configuration parameter.
@@ -263,7 +259,7 @@ class Converter:
             >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
             >>> section = "common_quant_param"
             >>> config_info = {"quant_type":"WEIGHT_QUANT"}
-            >>> converter.set_config_file(section, config_info)
+            >>> converter.set_config_info(section, config_info)
         """
         check_isinstance("section", section, str)
         check_config_info("config_info", config_info, enable_none=True)
@@ -272,7 +268,8 @@ class Converter:
 
     def get_config_info(self):
         """
-        Get config info of converter.
+        Get config info of converter.It is used together with set_config_info method for online converter.
+        Please use set_config_info method before get_config_info.
 
         Returns:
             dict{str, dict{str, str}, the config info which has been set in converter.
@@ -280,8 +277,11 @@ class Converter:
         Examples:
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
-            >>> config_info = converter.get_config_info()
-            >>> print(config_info)
+            >>> section = "common_quant_param"
+            >>> config_info_in = {"quant_type":"WEIGHT_QUANT"}
+            >>> converter.set_config_info(section, config_info_in)
+            >>> config_info_out = converter.get_config_info()
+            >>> print(config_info_out)
             {'common_quant_param': {'quant_type': 'WEIGHT_QUANT'}}
         """
         return self._converter.get_config_info()
