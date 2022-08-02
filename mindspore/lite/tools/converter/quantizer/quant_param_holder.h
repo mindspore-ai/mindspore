@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "ir/anf.h"
 #include "schema/inner/model_generated.h"
 
@@ -50,7 +51,7 @@ class QuantParamHolder : public Value {
 
   MS_DECLARE_PARENT(QuantParamHolder, Value);
 
-  bool operator==(const Value &rhs) const override {  // unused
+  bool operator==(const Value &rhs) const override {
     if (rhs.isa<QuantParamHolder>()) {
       auto other_holder = dynamic_cast<const QuantParamHolder &>(rhs);
       auto input_quant_params_rhs = other_holder.get_input_quant_params();
@@ -113,11 +114,16 @@ class QuantParamHolder : public Value {
 
   bool CheckInit(size_t index, bool is_input);
 
+  void SetQuantClusters(size_t index, const std::vector<float> &quant_cluster);
+
+  std::vector<float> GetQuantClusters(size_t index);
+
  private:
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
   QuantParamsVector input_quant_params_;
   QuantParamsVector output_quant_params_;
   bool enable_huffman_code_ = false;
+  std::map<size_t, std::vector<float>> quant_clusters;
 };
 using QuantParamHolderPtr = std::shared_ptr<QuantParamHolder>;
 }  // namespace lite

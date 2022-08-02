@@ -59,8 +59,6 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
 QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode);
 
-std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
-
 int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &weight, void *quant_datas, int new_size,
                             TypeId new_data_type);
 

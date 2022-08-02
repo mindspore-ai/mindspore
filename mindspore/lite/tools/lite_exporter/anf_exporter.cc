@@ -160,6 +160,9 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > activate_index, RET_ERROR, "allTensors size is wrong.");
     auto tensor_input = meta_graph->allTensors[activate_index].get();
     CHECK_NULL_RETURN(tensor_input);
+
+    tensor_input->quantClusters = quant_param_holder->GetQuantClusters(i);
+
     if (!quant::TensorQuantParamsInited(*tensor_input)) {
       tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {

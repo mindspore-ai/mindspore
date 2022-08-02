@@ -24,6 +24,7 @@
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/fse_encoder.h"
 #include "tools/converter/quantizer/tensor_compressor.h"
+#include "tools/converter/quantizer/cluster_quantization.h"
 
 namespace mindspore::lite::quant {
 static const float kScaleFactor = (0.01 * 0.01 * 0.01 * 24.0);
@@ -56,18 +57,8 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
       MS_LOG(INFO) << cnode->fullname_with_scope() << " of type: " << primitive->name() << " dont need weight quant.";
       continue;
     }
-    WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
-    if (CheckNodeInSet(cnode, per_layer_types)) {
-      weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
-    }
-    bool symmetric = false;
-    int q_min = quant_min_;
-    int q_max = quant_max_;
-    if (CheckNodeInSet(cnode, symmetric_types)) {
-      symmetric = true;
-      q_min = symmetric_quant_min_;
-      q_max = symmetric_quant_max_;
-    }
+
+    // Init weight quant index.
     std::vector<int> weight_indices;
     if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam)) {
       weight_indices = {2, 3};
@@ -80,12 +71,47 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
         weight_indices.push_back(i);
       }
     }
-    auto status =
-      DoCNodeWeightQuant(func_graph, cnode, weight_indices, weight_quant_type, q_min, q_max, symmetric, compression);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " do weight quantize error";
-      return RET_ERROR;
+
+    if (linear_quant) {
+      auto ret = LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, compression);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute linear weight quantize error.";
+        return RET_ERROR;
+      }
+    } else {
+      ClusterQuantization cluster;
+      auto ret = cluster.KMeansQuantization(cnode, weight_indices);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute k-means weight quantize error.";
+        return RET_ERROR;
+      }
     }
+  }
+  return RET_OK;
+}
+
+int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                 const std::set<PrimitivePtr> &per_layer_types,
+                                 const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
+                                 bool compression) {
+  WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+  if (CheckNodeInSet(cnode, per_layer_types)) {
+    weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
+  }
+  bool symmetric = false;
+  int q_min = quant_min_;
+  int q_max = quant_max_;
+  if (CheckNodeInSet(cnode, symmetric_types)) {
+    symmetric = true;
+    q_min = symmetric_quant_min_;
+    q_max = symmetric_quant_max_;
+  }
+
+  auto status =
+    DoCNodeWeightQuant(func_graph, cnode, weight_indices, weight_quant_type, q_min, q_max, symmetric, compression);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " do weight quantize error";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -231,7 +257,8 @@ int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
     return RET_OK;
   }
 
-  for (size_t i = 1; i < cnode->size(); i++) {
+  // Support Share Weight Quant.
+  for (size_t i = kPrimOffset; i < cnode->size(); i++) {
     auto inputNode = cnode->input(i);
     if (inputNode->isa<Parameter>()) {
       ParameterPtr param_node;
