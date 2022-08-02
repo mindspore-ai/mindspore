@@ -35,7 +35,7 @@ from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from ..cell import Cell
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
-           'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm2d']
+           'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']
 
 SYNC_BN_GROUP_NAME = ""
 

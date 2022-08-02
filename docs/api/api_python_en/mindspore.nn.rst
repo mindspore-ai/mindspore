@@ -169,7 +169,9 @@ Normalization Layer
     mindspore.nn.BatchNorm3d
     mindspore.nn.GlobalBatchNorm
     mindspore.nn.GroupNorm
+    mindspore.nn.InstanceNorm1d
     mindspore.nn.InstanceNorm2d
+    mindspore.nn.InstanceNorm3d
     mindspore.nn.LayerNorm
     mindspore.nn.SyncBatchNorm
 

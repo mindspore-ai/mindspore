@@ -33,6 +33,63 @@ class MatrixDiagPartV3Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+def test_matrix_diag_part_v3_function():
+    """
+    Feature: matrix_diag_part functional api.
+    Description: Compatible with np.diag.
+    Expectation: The result matches numpy.
+    """
+    context.set_context(device_target="GPU")
+    align = 'RIGHT_LEFT'
+    input_x = Tensor(np.array([[[1, 2, 3, 4],
+                                [5, 6, 7, 8],
+                                [9, 8, 7, 6]],
+                               [[5, 4, 3, 2],
+                                [1, 2, 3, 4],
+                                [5, 6, 7, 8]]]), mstype.float32)
+    k = Tensor(np.array([1, 3]), mstype.int32)
+    padding_value = Tensor(np.array(9), mstype.float32)
+
+    result = ops.matrix_diag_part(input_x, k, padding_value, align=align).asnumpy()
+
+    expect = np.array([[[9, 9, 4],
+                        [9, 3, 8],
+                        [2, 7, 6]],
+                       [[9, 9, 2],
+                        [9, 3, 4],
+                        [4, 3, 8]]], np.float32)
+
+    np.testing.assert_allclose(result, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_matrix_diag_part_v3_function_int_k():
+    """
+    Feature: matrix_diag_part functional api.
+    Description: Compatible with np.diag.
+    Expectation: The result matches numpy.
+    """
+    context.set_context(device_target="GPU")
+    align = 'RIGHT_LEFT'
+    input_x = Tensor(np.array([[[1, 2, 3, 4],
+                                [5, 6, 7, 8],
+                                [9, 8, 7, 6]],
+                               [[5, 4, 3, 2],
+                                [1, 2, 3, 4],
+                                [5, 6, 7, 8]]]), mstype.float32)
+    k = Tensor(1, mstype.int32)
+    padding_value = Tensor(0, mstype.float32)
+    result = ops.matrix_diag_part(input_x, k, padding_value, align=align).asnumpy()
+    expect = np.array([[2, 7, 6],
+                       [4, 3, 8]], np.float32)
+    np.testing.assert_allclose(result, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_matrix_diag_part_v3_pynative():
     """
     Feature: MatrixDiagPartV3 operator.

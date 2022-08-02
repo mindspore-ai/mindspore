@@ -4129,6 +4129,7 @@ __all__ = [
     'nonzero',
     'matrix_diag',
     'matrix_set_diag',
+    'matrix_diag_part',
     'diag',
     'meshgrid',
     'adaptive_max_pool2d',

@@ -362,6 +362,7 @@ Array Functions
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
+    mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
     mindspore.ops.narrow
