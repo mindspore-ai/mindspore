@@ -72,8 +72,8 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (shape.size() >= kLastColIndex) {
     need_factor_ = true;
-    last_row_dim_size_ = shape[shape.size() - kLastRowIndex];
-    last_col_dim_size_ = shape[shape.size() - kLastColIndex];
+    last_row_dim_size_ = LongToSize(shape[shape.size() - kLastRowIndex]);
+    last_col_dim_size_ = LongToSize(shape[shape.size() - kLastColIndex]);
     if (last_row_dim_size_ < 1 || last_col_dim_size_ < 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'param' can not be zero.";
     }
