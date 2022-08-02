@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y0_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y0_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_Y0_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_Y0_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -39,11 +39,6 @@ class BesselY0CpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double polevl(double x, const double coef[], int N);
-  static double p1evl(double x, const double coef[], int N);
-  static double y0(double x);
-  template <typename T>
-  static void BesselY0Func(const T *input, T *output, size_t start, size_t end);
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -61,4 +56,4 @@ class BesselY0CpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y0_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_Y0_CPU_KERNEL_H_
