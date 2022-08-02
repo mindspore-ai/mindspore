@@ -22,22 +22,22 @@ namespace armour {
 #ifdef _WIN32
 PrivateKey *KeyAgreement::GeneratePrivKey() {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
-  return NULL;
+  return nullptr;
 }
 
 PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
-  return NULL;
+  return nullptr;
 }
 
 PrivateKey *KeyAgreement::FromPrivateBytes(uint8_t *data, int len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
-  return NULL;
+  return nullptr;
 }
 
 PublicKey *KeyAgreement::FromPublicBytes(uint8_t *data, int len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
-  return NULL;
+  return nullptr;
 }
 
 int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len, const uint8_t *salt,
@@ -107,7 +107,7 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
     EVP_PKEY_CTX_free(ctx);
     return -1;
   }
-  if (EVP_PKEY_derive(ctx, NULL, &len) <= 0) {
+  if (EVP_PKEY_derive(ctx, nullptr, &len) <= 0) {
     MS_LOG(ERROR) << "get derive key size failed!";
     EVP_PKEY_CTX_free(ctx);
     return -1;
@@ -142,18 +142,18 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
 
 // using x25519 curve
 PrivateKey *KeyAgreement::GeneratePrivKey() {
-  EVP_PKEY *evpKey = NULL;
-  EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
+  EVP_PKEY *evpKey = nullptr;
+  EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, nullptr);
   if (pctx == nullptr) {
-    return NULL;
+    return nullptr;
   }
   if (EVP_PKEY_keygen_init(pctx) <= 0) {
     EVP_PKEY_CTX_free(pctx);
-    return NULL;
+    return nullptr;
   }
   if (EVP_PKEY_keygen(pctx, &evpKey) <= 0) {
     EVP_PKEY_CTX_free(pctx);
-    return NULL;
+    return nullptr;
   }
   EVP_PKEY_CTX_free(pctx);
   PrivateKey *privKey = new PrivateKey(evpKey);
@@ -166,7 +166,7 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   if (privKey == nullptr) {
     return nullptr;
   }
-  if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, NULL, &len)) {
+  if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, nullptr, &len)) {
     return nullptr;
   }
   pubKeyBytes = reinterpret_cast<uint8_t *>(OPENSSL_malloc(len));
@@ -178,14 +178,14 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   if (!EVP_PKEY_get_raw_public_key(privKey->evpPrivKey, pubKeyBytes, &len)) {
     MS_LOG(ERROR) << "EVP_PKEY_get_raw_public_key failed!";
     OPENSSL_free(pubKeyBytes);
-    return NULL;
+    return nullptr;
   }
   EVP_PKEY *evp_pubKey =
     EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, nullptr, reinterpret_cast<uint8_t *>(pubKeyBytes), len);
   if (evp_pubKey == nullptr) {
     MS_LOG(ERROR) << "EVP_PKEY_new_raw_public_key failed!";
     OPENSSL_free(pubKeyBytes);
-    return NULL;
+    return nullptr;
   }
   OPENSSL_free(pubKeyBytes);
   PublicKey *pubKey = new PublicKey(evp_pubKey);
@@ -197,10 +197,10 @@ PrivateKey *KeyAgreement::FromPrivateBytes(const uint8_t *data, size_t len) {
     MS_LOG(ERROR) << "input data is null!";
     return nullptr;
   }
-  EVP_PKEY *evp_Key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, data, len);
-  if (evp_Key == NULL) {
+  EVP_PKEY *evp_Key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, nullptr, data, len);
+  if (evp_Key == nullptr) {
     MS_LOG(ERROR) << "create evp_Key from raw bytes failed!";
-    return NULL;
+    return nullptr;
   }
   PrivateKey *privKey = new PrivateKey(evp_Key);
   return privKey;
@@ -211,10 +211,10 @@ PublicKey *KeyAgreement::FromPublicBytes(const uint8_t *data, size_t len) {
     MS_LOG(ERROR) << "input data is null!";
     return nullptr;
   }
-  EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, data, len);
-  if (evp_pubKey == NULL) {
+  EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, nullptr, data, len);
+  if (evp_pubKey == nullptr) {
     MS_LOG(ERROR) << "create evp_pubKey from raw bytes fail";
-    return NULL;
+    return nullptr;
   }
   PublicKey *pubKey = new PublicKey(evp_pubKey);
   return pubKey;

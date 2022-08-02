@@ -21,7 +21,7 @@ namespace armour {
 void secure_zero(uint8_t *s, size_t n) {
   volatile uint8_t *p = s;
   if (p != nullptr) {
-    while (n--) {
+    while (SizeToInt(n--)) {
       *p++ = '\0';
     }
   }
@@ -220,7 +220,9 @@ int SecretSharing::Combine(size_t k, const std::vector<Share *> &shares, uint8_t
       for (size_t m = 0; m < k; m++) {
         if (m != j) {
           ret = LagrangeCal(nums[j], x[m], x[j], denses[j], tmp, ctx);
-          if (ret == -1) break;
+          if (ret == -1) {
+            break;
+          }
         }
       }
 

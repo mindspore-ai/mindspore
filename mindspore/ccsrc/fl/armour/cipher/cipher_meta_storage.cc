@@ -34,7 +34,7 @@ void CipherMetaStorage::GetClientSharesFromServer(
     std::vector<clientshare_str> encrpted_shares_new;
     size_t client_share_num = IntToSize(shares_pb.clientsharestrs_size());
     for (size_t index_shares = 0; index_shares < client_share_num; ++index_shares) {
-      const fl::ClientShareStr &client_share_str_pb = shares_pb.clientsharestrs(index_shares);
+      const fl::ClientShareStr &client_share_str_pb = shares_pb.clientsharestrs(SizeToInt(index_shares));
       clientshare_str new_clientshare;
       new_clientshare.fl_id = client_share_str_pb.fl_id();
       new_clientshare.index = client_share_str_pb.index();
@@ -358,7 +358,9 @@ bool CipherMetaStorage::UpdateClientShareToServer(
     std::string fl_id_new = (*shares)[SizeToInt(index)]->fl_id()->str();
     int index_new = (*shares)[SizeToInt(index)]->index();
     auto share = (*shares)[SizeToInt(index)]->share();
-    if (share == nullptr) return false;
+    if (share == nullptr) {
+      return false;
+    }
     client_share_str_new_p->set_share(reinterpret_cast<const char *>(share->data()), share->size());
     client_share_str_new_p->set_fl_id(fl_id_new);
     client_share_str_new_p->set_index(index_new);
