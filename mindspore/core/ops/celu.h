@@ -35,7 +35,7 @@ class MIND_API CeLU : public BaseOperator {
   /// \brief Constructor.
   CeLU() : BaseOperator(kNameCeLU) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CeLU for the inputs.
-  void Init() {}
+  void Init() const {}
 
   /// \brief Set alpha. Defaults to 1.0.
   void set_alpha(const float alpha);

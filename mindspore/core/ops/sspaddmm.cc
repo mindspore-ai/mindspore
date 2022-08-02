@@ -55,7 +55,7 @@ enum DimNum : size_t {
   dim2Num,
 };
 
-int64_t GetInt64AlphaDataOther(void *values, TypeId tid, TypePtr expect_dtype, float real) {
+int64_t GetInt64AlphaDataOther(void *values, TypeId tid, const TypePtr expect_dtype, float real) {
   int64_t compute_val = 0;
   bool flag1 = expect_dtype->type_id() == kNumberTypeUInt8 ? true : false;
   bool flag2 = false;
@@ -90,7 +90,7 @@ int64_t GetInt64AlphaDataOther(void *values, TypeId tid, TypePtr expect_dtype, f
   return compute_val;
 }
 
-int64_t GetInt64AlphaData(void *values, TypeId tid, TypePtr expect_dtype, float real) {
+int64_t GetInt64AlphaData(void *values, TypeId tid, const TypePtr expect_dtype, float real) {
   int64_t compute_val = 0;
   switch (tid) {
     case kNumberTypeUInt8:
@@ -218,7 +218,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
 }
 
 template <typename T>
-void IndicesBoundCheck(T *indices_val, size_t indices_num, T *shape_val, std::string name) {
+void IndicesBoundCheck(T *indices_val, size_t indices_num, T *shape_val, const std::string &name) {
   if (shape_val[0] <= 0 || shape_val[1] <= 0) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, " << name << "_shape should be positive, "
                              << "while got shape [" << shape_val[0] << ", " << shape_val[1] << "].";
@@ -289,7 +289,7 @@ void CheckIndices(const std::vector<AbstractBasePtr> &input_args) {
   }
 }
 
-bool GetDtypeMinAndMaxAndCheckOverFlow(TypePtr tid, int64_t compute_val) {
+bool GetDtypeMinAndMaxAndCheckOverFlow(const TypePtr tid, int64_t compute_val) {
   int64_t min = 0;
   int64_t max = 0;
   switch (tid->type_id()) {
@@ -321,7 +321,7 @@ bool GetDtypeMinAndMaxAndCheckOverFlow(TypePtr tid, int64_t compute_val) {
   }
 }
 
-void PrintAlphaValueError(TypeId aid, TypePtr expect_dtype, int64_t compute_val, float real, int64_t imag) {
+void PrintAlphaValueError(TypeId aid, const TypePtr expect_dtype, int64_t compute_val, float real, int64_t imag) {
   if (aid == kNumberTypeComplex64 || aid == kNumberTypeComplex128) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", alpha cannot be converted to expect dtype " << expect_dtype->ToString()

@@ -32,7 +32,8 @@ namespace {
 constexpr auto op_name = "RangeV2";
 
 template <typename T>
-int64_t RangeV2CalculateShape(tensor::TensorPtr start_ptr, tensor::TensorPtr limit_ptr, tensor::TensorPtr delta_ptr) {
+int64_t RangeV2CalculateShape(const tensor::TensorPtr start_ptr, const tensor::TensorPtr limit_ptr,
+                              const tensor::TensorPtr delta_ptr) {
   // DataSize == 1
   if (start_ptr->DataSize() != 1) {
     MS_EXCEPTION(TypeError) << "For RangeV2, start must a scalar but element number more than 1.";

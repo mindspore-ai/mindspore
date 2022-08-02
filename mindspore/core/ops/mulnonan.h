@@ -31,7 +31,7 @@ class MIND_API MulNoNan : public BaseOperator {
   MIND_API_BASE_MEMBER(MulNoNan);
   MulNoNan() : BaseOperator(kNameMulNoNan) { InitIOName({"x", "y"}, {"output"}); }
   explicit MulNoNan(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);

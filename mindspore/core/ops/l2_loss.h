@@ -29,7 +29,7 @@ class MIND_API L2Loss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(L2Loss);
   L2Loss() : BaseOperator(kNameL2Loss) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);

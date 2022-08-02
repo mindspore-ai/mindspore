@@ -35,7 +35,7 @@ class MIND_API Asinh : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Asinh);
   Asinh() : BaseOperator(kNameAsinh) { InitIOName({"x"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 
 abstract::AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

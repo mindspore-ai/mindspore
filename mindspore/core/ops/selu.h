@@ -30,7 +30,7 @@ class MIND_API SeLU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SeLU);
   SeLU() : BaseOperator(kNameSeLU) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

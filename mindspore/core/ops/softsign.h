@@ -29,7 +29,7 @@ class MIND_API Softsign : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Softsign);
   Softsign() : BaseOperator(kNameSoftsign) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
