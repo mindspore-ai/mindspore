@@ -553,7 +553,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         args = {"m": m_dtype, "v": v_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         validator.check_scalar_or_tensor_types_same({"var": var_dtype}, [mstype.float16, mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"grad": grad_dtype}, [mstype.float16], self.name)
+        validator.check_scalar_or_tensor_types_same({"grad": grad_dtype}, [mstype.float16, mstype.float32], self.name)
 
         args = {"lr": lr_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype,
                 "decay": decay_dtype}
