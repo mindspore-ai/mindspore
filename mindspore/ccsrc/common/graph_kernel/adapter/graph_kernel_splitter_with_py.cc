@@ -68,7 +68,7 @@ class CostModelSplitSchemer : public SplitSchemer {
 
     // call costmodel split function.
     auto json_desc_str = json_desc.dump();
-    auto flags_str = CollectSplitFlags();
+    auto flags_str = GraphKernelFlags::GetInstance().DumpAllFlags();
     MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json: " << json_desc_str
                   << ". flag: " << flags_str;
     auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
@@ -219,17 +219,6 @@ class CostModelSplitSchemer : public SplitSchemer {
         MS_LOG(WARNING) << cnode->fullname_with_scope() << " is ungrouped.";
       }
     }
-  }
-
-  virtual std::string CollectSplitFlags() {
-    const auto &flags = GraphKernelFlags::GetInstance();
-    nlohmann::json flag_json;
-    flag_json["dump_as_text"] = flags.dump_as_text;
-    flag_json["enable_stitch_fusion"] = flags.enable_stitch_fusion;
-    flag_json["enable_recompute_fusion"] = flags.enable_recompute_fusion;
-    flag_json["enable_horizontal_fusion"] = flags.enable_horizontal_fusion;
-    flag_json["reduce_fuse_depth"] = flags.reduce_fuse_depth;
-    return flag_json.dump();
   }
 
   std::shared_ptr<FuncGraph> func_graph_;
