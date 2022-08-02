@@ -3939,11 +3939,11 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore
             >>> import numpy as np
+            >>> import mindspore.common.dtype as mstype
             >>> from mindspore import Tensor
-            >>> x = Tensor(np.random.random((10, 5)).astype(np.float32))
-            >>> output = x.random_categorical(x, 8)
+            >>> x = Tensor(np.random.random((10, 5)).astype(np.float32), mstype.float32)
+            >>> output = x.random_categorical(8)
             >>> result = output.shape
             >>> print(result)
             (10, 8)
