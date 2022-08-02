@@ -32,19 +32,15 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
     conv_coder_ =
       CPUConvolutionFP32CoderSelect(input_tensors_, output_tensors_, node_, node_index(), target_, schema_version_);
     MS_CHECK_PTR(conv_coder_);
-    const void *primitive = node_->primitive_;
-    MS_CHECK_PTR(primitive);
-    int primitive_type = GetPrimitiveType(node_->primitive_, schema_version_);
-    ParameterGen parameter_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
-      GetPrimitiveType(node_->primitive_, schema_version_), schema_version_);
-    MS_CHECK_PTR(parameter_gen);
-    OpParameter *op_parameter = parameter_gen(node_->primitive_);
-    MS_CHECK_PTR(op_parameter);
-    op_parameter->thread_num_ = thread_num_;
-    conv_coder_->set_type(primitive_type);
+    ConvParameter *op_parameter = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+    if (op_parameter == nullptr) {
+      MS_LOG(ERROR) << "malloc ConvParameter failed.";
+      return RET_ERROR;
+    }
+    memcpy_s(op_parameter, sizeof(ConvParameter), parameter_, sizeof(ConvParameter));
+    conv_coder_->set_type(GetPrimitiveType(node_->primitive_, schema_version_));
     conv_coder_->set_thread_num(thread_num_);
-    memcpy(op_parameter, parameter_, sizeof(ConvParameter));
-    conv_coder_->set_parameter(op_parameter);
+    conv_coder_->set_parameter(reinterpret_cast<OpParameter *>(op_parameter));
   }
   return conv_coder_->Prepare(context);
 }
