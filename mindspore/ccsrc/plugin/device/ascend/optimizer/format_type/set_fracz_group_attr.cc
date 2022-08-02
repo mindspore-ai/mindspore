@@ -79,6 +79,7 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
     if (node_name == kDependName && index != 0) {
       return true;
     }
+    bool has_group_attr = false;
     if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
       auto input_num = common::AnfAlgo::GetInputTensorNum(node);
       if (index >= input_num) {
@@ -91,24 +92,20 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
         if (input_num > fz_group_idx.size()) {
           (void)fz_group_idx.insert(fz_group_idx.cbegin(), input_num - fz_group_idx.size(), 1);
         }
-        if (fz_group_idx[index] == 1) {
-          fz_group_idx[index] = groups;
-          common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
-          return false;
+        if (fz_group_idx[index] != 1) {
+          has_group_attr = true;
         }
-      } else {
-        fz_group_idx[index] = groups;
-        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
       }
+      fz_group_idx[index] = groups;
+      common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
+      return has_group_attr;
     }
-    if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
-      return true;
-    }
+    has_group_attr = common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode);
     common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), cnode);
     if (node_name == kTransDataOpName) {
       common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), cnode);
     }
-    return false;
+    return has_group_attr;
   }
   return true;
 }
@@ -243,7 +240,8 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   // clear cnode fracz_group first, since the fracz_group info may be out-of-date in later graph of multi-graph scene
   for (auto &node : node_list) {
-    if (node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, node->cast<CNodePtr>())) {
+    if (node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, node->cast<CNodePtr>()) &&
+        common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
       common::AnfAlgo::EraseNodeAttr(kAttrFracZGroup, node);
     }
   }

@@ -254,7 +254,7 @@ abstract::ShapePtr GetPadShape(const ShapeVector &padding_shape, const ShapeVect
 AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                            const AnfNodePtr &node, const KernelSelectPtr &kernel_select,
                                            const std::string &input_format, const std::string &dst_format,
-                                           const std::string &reshape_type, const TypeId &type_id) {
+                                           const std::string &reshape_type, const TypeId &type_id, int64_t groups) {
   if (input_format == dst_format) {
     MS_LOG(INFO) << "Input format[" << input_format << "] is equal to dst format, no need to insert transdata.";
     return input_node;
@@ -326,10 +326,10 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
     common::AnfAlgo::CopyNodeAttr(kAttrHiddenSize, node, trans_data);
     common::AnfAlgo::CopyNodeAttr(kAttrInputSize, node, trans_data);
   }
-  if (spec_format == kOpFormat_FRAC_Z && orig_node->isa<CNode>() &&
-      common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, orig_node->cast<CNodePtr>())) {
-    common::AnfAlgo::CopyNodeAttr(kAttrGroups, orig_node, trans_data);
-    common::AnfAlgo::CopyNodeAttr(kAttrFracZGroup, orig_node, trans_data);
+  if (spec_format == kOpFormat_FRAC_Z && groups != 1 &&
+      !common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, trans_data->cast<CNodePtr>())) {
+    common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), trans_data);
+    common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), trans_data);
   }
   // refresh the transdata's format to ori format & dst format
   RefreshKernelBuildInfo(input_format, dst_format, trans_data, reshape_type, type_id);
@@ -411,6 +411,12 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   }
   if (op_name == prim::kPrimTranspose->name()) {
     common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), trans_node);
+  } else if (op_name == prim::kPrimTransData->name()) {
+    if (orig_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, orig_node->cast<CNodePtr>())) {
+      auto fracz_group = common::AnfAlgo::GetNodeAttr<int64_t>(orig_node, kAttrFracZGroup);
+      common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fracz_group), trans_node);
+      common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fracz_group), trans_node);
+    }
   }
   if (is_dynamic_shape) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), trans_node);
