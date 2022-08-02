@@ -27,8 +27,8 @@
 #include "ir/tensor.h"
 #endif
 
-constexpr size_t FLOAT32_SIZE = 4;
-constexpr size_t FLOAT64_SIZE = 8;
+constexpr size_t kFloat32Size = 4;
+constexpr size_t kFloat64Size = 8;
 
 namespace mindspore {
 typedef enum DbgDataType : unsigned int {
@@ -280,11 +280,11 @@ class TensorData {
         break;
       case TypeId::kNumberTypeFloat32:
         this->data_type_ = DbgDataType::DT_FLOAT32;
-        this->data_type_size_ = FLOAT32_SIZE;
+        this->data_type_size_ = kFloat32Size;
         break;
       case TypeId::kNumberTypeFloat64:
         this->data_type_ = DbgDataType::DT_FLOAT64;
-        this->data_type_size_ = FLOAT64_SIZE;
+        this->data_type_size_ = kFloat64Size;
         break;
       case TypeId::kNumberTypeInt:
         this->data_type_ = DbgDataType::DT_BASE_INT;
@@ -346,11 +346,11 @@ class TensorData {
       return true;
     } else if (type_name == "f4") {
       this->data_type_ = DbgDataType::DT_FLOAT32;
-      this->data_type_size_ = FLOAT32_SIZE;
+      this->data_type_size_ = kFloat32Size;
       return true;
     } else if (type_name == "f8") {
       this->data_type_ = DbgDataType::DT_FLOAT64;
-      this->data_type_size_ = FLOAT64_SIZE;
+      this->data_type_size_ = kFloat64Size;
       return true;
     } else {
       return false;
@@ -396,10 +396,10 @@ class TensorData {
       this->data_type_size_ = sizeof(float16);
     } else if (type_name_lower == "float32") {
       this->data_type_ = DbgDataType::DT_FLOAT32;
-      this->data_type_size_ = sizeof(double);
+      this->data_type_size_ = kFloat32Size;
     } else if (type_name_lower == "float64") {
       this->data_type_ = DbgDataType::DT_FLOAT64;
-      this->data_type_size_ = sizeof(long double);
+      this->data_type_size_ = kFloat64Size;
     } else if (type_name_lower == "") {
       this->data_type_ = DbgDataType::DT_UNDEFINED;
       this->data_type_size_ = 0;
