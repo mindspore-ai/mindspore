@@ -1719,8 +1719,8 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
         ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
-        >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.ctc_greedy_decode(inputs,
-                                                                                                    sequence_length)
+        >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.ctc_greedy_decoder(inputs,
+                                                                                                     sequence_length)
         >>> print(decoded_indices)
         [[0 0]
          [0 1]
