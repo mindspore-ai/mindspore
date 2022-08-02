@@ -300,8 +300,15 @@ std::vector<AnfNodePtr> PipelineTransformer::GetLoadNodeByParam(const AnfNodePtr
   auto node_users = manager_->node_users()[param];
   for (auto &param_user : node_users) {
     if (IsPrimitiveCNode(param_user.first, prim::kPrimLoad)) {
+      auto graph = param_user.first->func_graph();
+      if (graph == root_) {
+        continue;
+      }
       (void)load_vec.emplace_back(param_user.first);
     }
+  }
+  if (load_vec.empty()) {
+    load_vec.emplace_back(param);
   }
   return load_vec;
 }
@@ -538,7 +545,7 @@ void PipelineTransformer::ParameterColoring() {
     }
     MS_EXCEPTION_IF_NULL(param_info);
     auto requires_grad = param_info->requires_grad();
-    if (*parameter_stage.begin() == stage_ && !virtual_param_ && requires_grad) {
+    if (!parameter_stage.empty() && *parameter_stage.begin() == stage_ && !virtual_param_ && requires_grad) {
       virtual_param_ = parameter;
     }
     parameter_color_map_[parameter] = parameter_stage;
