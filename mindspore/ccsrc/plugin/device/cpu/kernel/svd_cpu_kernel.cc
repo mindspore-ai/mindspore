@@ -26,8 +26,12 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using float_complex = std::complex<float>;
+using double_complex = std::complex<double>;
 const size_t kSvdInputsNum = 1;
 const size_t kSvdOutputsNum = 3;
+}  // namespace
 
 bool SvdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                            const std::vector<KernelTensorPtr> &outputs) {
@@ -154,6 +158,18 @@ std::vector<std::pair<KernelAttr, SvdCpuKernelMod::SvdFunc>> SvdCpuKernelMod::fu
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),
-   &SvdCpuKernelMod::LaunchKernel<double>}};
+   &SvdCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &SvdCpuKernelMod::LaunchKernel<float_complex>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &SvdCpuKernelMod::LaunchKernel<double_complex>}};
 }  // namespace kernel
 }  // namespace mindspore
