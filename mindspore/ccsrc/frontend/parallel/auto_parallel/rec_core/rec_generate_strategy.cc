@@ -218,7 +218,7 @@ Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
     return (output_shape[LongToSize(a + 1)] > output_shape[LongToSize(b + 1)]);
   });
   std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
-  index.insert(index.cbegin(), 0);
+  (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
   size_t num_device = g_device_manager->DeviceNum();
@@ -282,7 +282,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
   std::sort(index.begin(), index.end(),
             [&output_shape](const size_t &a, const size_t &b) { return (output_shape[a + 1] > output_shape[b + 1]); });
   std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
-  index.insert(index.cbegin(), 0);
+  (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
   size_t num_device = g_device_manager->DeviceNum();
@@ -845,6 +845,9 @@ Dimensions PrepareExpandDimsOutputStrategy(const std::vector<std::shared_ptr<Ope
     } else if (UlongToLong(i) != axis_input && !already_expand) {
       s.push_back(strategy->GetInputDim()[0][i]);
     } else {
+      if (i < 1) {
+        MS_LOG(EXCEPTION) << "The index i -1 is less than 0. Please check the situation.";
+      }
       s.push_back(strategy->GetInputDim()[0][i - 1]);
     }
   }
@@ -955,7 +958,7 @@ Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<Ope
     if (ops[incoming_op_index]->inputs_tensor_info()[0].shape()[LongToSize(axis)] != 1) {
       MS_LOG(EXCEPTION) << "Failure: Removed dimension's shape is not 1." << std::endl;
     }
-    stra_dim_list.erase(it);
+    (void)stra_dim_list.erase(it);
   }
 
   for (size_t i = 0; i < stra_dim_list.size(); i++) {
@@ -1020,7 +1023,7 @@ Dimensions ModifyStrategyIfReduceIncoming(const std::vector<std::shared_ptr<Oper
     if (it == axis_list.end()) {
       MS_LOG(EXCEPTION) << "Failure: Can not find dimension indexes in Axis." << std::endl;
     }
-    axis_list.erase(it);
+    (void)axis_list.erase(it);
   }
 
   for (size_t i = 0; i < axis_list.size(); i++) {
@@ -1076,7 +1079,7 @@ Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<Operato
     if (it == axis_list.end()) {
       MS_LOG(EXCEPTION) << "Failure: Can not find dimension indexes in Axis." << std::endl;
     }
-    axis_list.erase(it);
+    (void)axis_list.erase(it);
   }
 
   for (size_t i = 0; i < axis_list.size(); i++) {

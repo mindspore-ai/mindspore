@@ -241,8 +241,9 @@ Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
 }
 
 Status GatherInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
-  auto param_strategy = strategy->GetInputDim().at(0);
-  auto index_strategy = strategy->GetInputDim().at(1);
+  auto input_dim = strategy->GetInputDim();
+  auto param_strategy = input_dim.at(0);
+  auto index_strategy = input_dim.at(1);
   // param_strategy(axis) != 1, index can't be split
   auto product_i = std::accumulate(index_strategy.begin(), index_strategy.end(), 1, std::multiplies<int64_t>());
   if ((param_strategy.at(LongToSize(axis_)) != 1) && (product_i != 1)) {
@@ -302,7 +303,8 @@ bool GatherInfo::ShardBatchAndAxis(const Strategys &strategy) const {
 }
 
 void GatherInfo::SetAttribute(const StrategyPtr &strategy) {
-  auto param_strategy = strategy->GetInputDim().at(0);
+  auto input_dim = strategy->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   // axis=0, index_shape(0)%param_strategy(0) must be 0
   Shape index_shape = inputs_shape_.at(1);
   if ((axis_ == 0) && (index_shape.at(0) % param_strategy.at(0) != 0) && !dynamic_shape_indices_) {
@@ -335,7 +337,8 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // param slice shape need 32Byte aligned
   auto param_shape = inputs_shape_.at(0);
-  auto param_strategy = strategy->GetInputDim().at(0);
+  auto input_dim = strategy->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   auto slice_shape = param_shape.at(param_shape.size() - 1) / param_strategy.at(param_strategy.size() - 1);
   if ((target_ != CPU) && (slice_shape % 8 != 0) && (slice_shape != 1)) {
     ReportError(name_ + ": Last dim of param slice shape need 32Byte aligned.");
@@ -480,8 +483,9 @@ Status GatherInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
   out_dev_matrix_shape_.clear();
   // infer input dev_matrix_shape
-  auto param_strategy = strategy_->GetInputDim().at(0);
-  auto index_strategy = strategy_->GetInputDim().at(1);
+  auto param_stra = strategy_->GetInputDim();
+  auto param_strategy = param_stra.at(0);
+  auto index_strategy = param_stra.at(1);
 
   if (manual_split_) {
     dev_matrix_shape_ = param_strategy;
@@ -545,7 +549,8 @@ void GatherInfo::InferInputsTensorMap() {
   size_t total_size = param_size + index_size;
   Shape tensor_map_index;
   Shape tensor_map_params;
-  auto param_strategy = strategy_->GetInputDim().at(0);
+  auto input_dim = strategy_->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   if (param_strategy.at(LongToSize(axis_)) != 1) {
     (void)tensor_map_index.insert(tensor_map_index.begin(), index_size, MAP_NONE);
     for (size_t i = 0; i < param_size; ++i) {
@@ -600,7 +605,8 @@ void GatherInfo::InferOutputsTensorMap() {
   size_t index_size = inputs_shape_.at(1).size();
   size_t total_size = param_size + index_size;
   Shape tensor_map_out;
-  auto param_strategy = strategy_->GetInputDim().at(0);
+  auto input_dim = strategy_->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   if (param_strategy.at(LongToSize(axis_)) == 1) {
     // param_strategy(axis) is 1
     for (size_t i = 0; i < param_size; ++i) {
@@ -835,7 +841,8 @@ Status GatherInfo::InferForwardCommunication() {
   }
 
   forward_op_.clear();
-  auto param_strategy = strategy_->GetInputDim().at(0);
+  auto input_dim = strategy_->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   // don't split axis or target is not CPU, no need forward communication
   if (target_ != CPU || param_strategy.at(LongToSize(axis_)) == 1) {
     return SUCCESS;
@@ -934,8 +941,8 @@ ReplaceGraphPtr GatherInfo::replace_graph(const CNodePtr &cnode) {
     }
     return replace_graph_;
   }
-
-  auto param_strategy = strategy_->GetInputDim().at(0);
+  auto input_dim = strategy_->GetInputDim();
+  auto param_strategy = input_dim.at(0);
   // target_ == CPU, no need to replace graph
   if (target_ == CPU) {
     return nullptr;
