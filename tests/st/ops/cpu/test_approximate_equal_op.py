@@ -85,6 +85,9 @@ def test_approxmiate_equal_docs():
     assert(output.asnumpy() == expect).all()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_different_shape():
     r"""
     Feature: test ops ApproximateEqual.
@@ -99,6 +102,9 @@ def test_approxmiate_equal_different_shape():
         approx_equal.change_xy(Tensor(x1), Tensor(x2))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_tol_not_float():
     r"""
     Feature: test ops ApproximateEqual.
@@ -113,6 +119,9 @@ def test_approxmiate_equal_tol_not_float():
         approx_equal.change_xy(Tensor(x1), Tensor(x2))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_max_rank():
     r"""
     Feature: test ops ApproximateEqual.
@@ -129,6 +138,9 @@ def test_approxmiate_equal_max_rank():
         approx_equal.change_xy(Tensor(x1), Tensor(x2))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_diff_dtype():
     r"""
     Feature: test ops ApproximateEqual.
@@ -145,6 +157,9 @@ def test_approxmiate_equal_diff_dtype():
     assert(output.asnumpy() == expect).all()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_tensor_api():
     r"""
     Feature: test ops ApproximateEqual on tensor API.
@@ -168,6 +183,9 @@ def test_approxmiate_equal_tensor_api():
     assert(output.asnumpy() == expect).all()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_approxmiate_equal_functional_api():
     r"""
     Feature: test ops ApproximateEqual on functional API.
