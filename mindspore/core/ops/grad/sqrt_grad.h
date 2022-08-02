@@ -25,7 +25,7 @@ constexpr auto kNameSqrtGrad = "SqrtGrad";
 class MIND_API SqrtGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SqrtGrad);
-  SqrtGrad() : BaseOperator(kNameSqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
+  SqrtGrad() : BaseOperator(kNameSqrtGrad) { InitIOName({"y", "dy"}, {"z"}); }
   void Init() const {}
 };
 }  // namespace ops

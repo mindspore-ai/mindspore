@@ -124,6 +124,7 @@ class SqrtGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SqrtGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class BatchNormGrad(Primitive):
