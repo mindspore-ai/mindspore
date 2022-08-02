@@ -31,8 +31,8 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   auto op_name = primitive->name();
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto input_shape_ptr = input_args[0]->BuildShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
   auto min_shape = input_shape_map[kMinShape];
@@ -45,8 +45,14 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
     batch_rank = GetValue<int64_t>(value_ptr);
   }
   const int64_t input_dim = 2;
-  (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kGreaterEqual,
-                                           input_dim, op_name);
+  if (batch_rank > 0) {
+    // support vmap feature
+    (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kGreaterThan,
+                                             input_dim, op_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kEqual, input_dim,
+                                             op_name);
+  }
 
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
@@ -71,8 +77,8 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
 TuplePtr UCSInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto input_type = input_args[0]->BuildType();
   std::set<TypePtr> check_list = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_type, check_list, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, kFloat32, kFloat32});

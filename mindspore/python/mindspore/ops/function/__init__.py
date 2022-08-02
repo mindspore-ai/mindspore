@@ -280,6 +280,7 @@ from .random_func import (
     standard_normal,
     uniform,
     random_gamma,
+    uniform_candidate_sampler,
 )
 
 __all__ = []
