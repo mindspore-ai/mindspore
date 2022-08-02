@@ -78,4 +78,3 @@ def get_expander_op_list():
     """get supported expander op list"""
     op_list = [name for name in dir(expanders) if name[0].isupper()]
     return ' '.join(op_list)
-    

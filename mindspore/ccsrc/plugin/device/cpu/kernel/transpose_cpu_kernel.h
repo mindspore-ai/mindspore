@@ -37,7 +37,7 @@ class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    static const std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
       KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
       KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
@@ -64,11 +64,11 @@ class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   int DoTranspose(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param);
   template <typename T>
-  void TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+  void TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *, const int *perm,
+                     const int *output_shape) const;
   template <typename T>
   void TransposeDim3(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+                     const int *output_shape) const;
   template <typename T>
   void TransposeDim4(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
                      const int *output_shape);
