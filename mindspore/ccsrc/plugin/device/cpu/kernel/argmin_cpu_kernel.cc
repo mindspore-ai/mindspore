@@ -29,7 +29,7 @@ constexpr char kKernelName[] = "Argmin";
 int64_t get_element_num(const std::vector<int64_t> &shape) {
   int64_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
-    size *= UlongToLong(shape[i]);
+    size *= shape[i];
   }
   return size;
 }

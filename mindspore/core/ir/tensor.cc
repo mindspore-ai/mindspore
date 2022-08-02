@@ -1081,7 +1081,6 @@ TensorPtr COOTensor::GetTensorAt(size_t index) const {
     return std::make_shared<tensor::Tensor>(shape_[index - kShapeIdx], TypeIdToType(kNumberTypeInt64));
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for COOTensor: " << ToString();
-  return nullptr;
 }
 
 std::string COOTensor::ToString() const {
