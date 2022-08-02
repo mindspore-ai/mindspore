@@ -126,7 +126,7 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
 
   if (work_mode == "GCM") {
     if (is_encrypt) {
-      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), nullptr, nullptr, nullptr);
       if (ret != 1) {
         MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
         EVP_CIPHER_CTX_free(ctx);
@@ -137,31 +137,31 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
         EVP_CIPHER_CTX_free(ctx);
         return 1;
       }
-      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
       if (ret != 1) {
         MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
         EVP_CIPHER_CTX_free(ctx);
         return 1;
       }
     } else {
-      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), nullptr, nullptr, nullptr);
       if (ret != 1) {
         MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
         EVP_CIPHER_CTX_free(ctx);
         return 1;
       }
-      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
+      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, nullptr) != 1) {
         MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
         EVP_CIPHER_CTX_free(ctx);
         return 1;
       }
-      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
     }
   } else if (work_mode == "CBC") {
     if (is_encrypt) {
-      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
     } else {
-      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), nullptr, key, iv);
     }
   }
 
