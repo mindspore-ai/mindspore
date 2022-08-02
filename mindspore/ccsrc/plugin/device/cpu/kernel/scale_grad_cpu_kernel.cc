@@ -37,7 +37,7 @@ size_t GetBaseTypeSize(TypeId type_id) {
 size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
   size_t input_size = GetBaseTypeSize(type_id);
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= SizeToLong(input_shape[i]);
+    input_size *= LongToSize(input_shape[i]);
   }
   return input_size;
 }

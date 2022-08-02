@@ -29,7 +29,7 @@ AbstractBasePtr ScaleGradInfer(const abstract::AnalysisEnginePtr &, const Primit
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, kInputNum, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
-    item->Broaden();
+    (void)item->Broaden();
   }
 
   auto infer_shape = input_args[0]->BuildShape();
