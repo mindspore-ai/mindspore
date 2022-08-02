@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_
 #include <vector>
 #include <unordered_map>
 #include <memory>
@@ -23,12 +23,12 @@
 #include <queue>
 #include <map>
 #include <set>
-#include "src/litert/dynamic_mem_allocator.h"
+#include "src/extendrt/dynamic_mem_allocator.h"
 #include "include/api/status.h"
 #include "include/api/context.h"
 #include "include/api/model_parallel_runner.h"
-#include "src/litert/cxx_api/model_pool/model_worker.h"
-#include "src/litert/cxx_api/model_pool/predict_task_queue.h"
+#include "src/extendrt/cxx_api/model_pool/model_worker.h"
+#include "src/extendrt/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 using ModelPoolConfig = std::vector<std::shared_ptr<WorkerConfig>>;
 
@@ -160,4 +160,4 @@ class ModelPool {
   std::vector<std::vector<int>> numa_logical_cores_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_

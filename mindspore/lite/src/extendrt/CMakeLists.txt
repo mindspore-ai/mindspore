@@ -31,6 +31,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             ${MSLITE_KERNEL_PLUGIN}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc

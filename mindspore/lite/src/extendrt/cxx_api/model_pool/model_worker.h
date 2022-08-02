@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_WORKER_H_
 #include <queue>
 #include <string>
 #include <mutex>
@@ -25,7 +25,7 @@
 #include <memory>
 #include <map>
 #include "include/api/model.h"
-#include "src/litert/cxx_api/model_pool/predict_task_queue.h"
+#include "src/extendrt/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 class PredictTaskQueue;
 enum Strategy { BASE = 0, ADVANCED = 1 };
@@ -88,4 +88,4 @@ class ModelWorker {
   std::atomic_bool available_ = true;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_WORKER_H_

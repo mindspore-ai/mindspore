@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_ALLOCATOR_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_ALLOCATOR_H_
 
 #include <mutex>
 #include <map>
 #include <memory>
 #include <unordered_map>
 #include "include/api/allocator.h"
-#include "src/litert/dynamic_mem_manager.h"
+#include "src/extendrt/dynamic_mem_manager.h"
 
 namespace mindspore {
 class DynamicMemAllocator : public Allocator {
@@ -42,4 +42,4 @@ class DynamicMemAllocator : public Allocator {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_ALLOCATOR_H_

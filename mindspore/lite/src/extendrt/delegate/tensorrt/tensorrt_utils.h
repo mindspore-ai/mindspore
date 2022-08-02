@@ -160,7 +160,7 @@ nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
       dims.d[i] = static_cast<int>(shape[i]);
     }
   } else {
-    MS_LOG(WARNING) << "ms shape is invalid or empty.";
+    MS_LOG(WARNING) << "ms shape is invalid!shape size: " << shape.size();
   }
   return dims;
 }

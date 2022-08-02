@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/litert/cxx_api/model_pool/model_worker.h"
+#include "src/extendrt/cxx_api/model_pool/model_worker.h"
 #include "src/common/log_adapter.h"
-#include "src/litert/numa_adapter.h"
+#include "src/extendrt/numa_adapter.h"
 #include "src/common/common.h"
 #include "nnacl/op_base.h"
 namespace mindspore {

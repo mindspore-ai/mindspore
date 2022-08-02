@@ -176,6 +176,8 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
     TensorRTOp *tensorrt_op =
       plugin_factory.GetCreator(node_type)(primitive, in_tensors, out_tensors, name, kernel->quant_type());
     if (tensorrt_op == nullptr) {
+      MS_LOG(WARNING) << "Unsupported op type for TensorRT. kernel->name:" << kernel->name()
+                      << " type:" << schema::EnumNamePrimitiveType(primitive->value_type());
       return nullptr;
     }
     if (!support_resize_) {

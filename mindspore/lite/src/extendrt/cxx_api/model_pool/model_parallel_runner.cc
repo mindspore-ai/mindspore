@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "include/api/model_parallel_runner.h"
-#include "src/litert/cxx_api/model_pool/model_pool.h"
-#include "src/litert/cxx_api/model_pool/runner_config.h"
+#include "src/extendrt/cxx_api/model_pool/model_pool.h"
+#include "src/extendrt/cxx_api/model_pool/runner_config.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/cpu_info.h"
 namespace mindspore {

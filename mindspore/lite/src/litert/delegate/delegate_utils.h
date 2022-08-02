@@ -204,7 +204,7 @@ int GetGraphInOutOps(const std::vector<mindspore::MSTensor> &inputs, const std::
     }
   }
   if (in_ops->empty()) {
-    MS_LOG(ERROR) << "Can't find the input ops for npu sub graph.";
+    MS_LOG(ERROR) << "Can't find the input ops for delegate sub graph.";
     return RET_ERROR;
   }
 
@@ -217,7 +217,7 @@ int GetGraphInOutOps(const std::vector<mindspore::MSTensor> &inputs, const std::
     }
   }
   if (out_ops->empty()) {
-    MS_LOG(ERROR) << "Can't find the output ops for npu sub graph.";
+    MS_LOG(ERROR) << "Can't find the output ops for delegate sub graph.";
     return RET_ERROR;
   }
   return RET_OK;

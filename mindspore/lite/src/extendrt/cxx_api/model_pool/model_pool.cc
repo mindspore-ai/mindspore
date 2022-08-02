@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/litert/cxx_api/model_pool/model_pool.h"
+#include "src/extendrt/cxx_api/model_pool/model_pool.h"
 #include <unistd.h>
 #include <future>
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_adapter.h"
 #include "include/lite_types.h"
 #include "src/litert/inner_allocator.h"
 #include "src/common/file_utils.h"
 #include "src/litert/pack_weight_manager.h"
-#include "src/litert/numa_adapter.h"
+#include "src/extendrt/numa_adapter.h"
 #include "src/common/common.h"
 namespace mindspore {
 namespace {
