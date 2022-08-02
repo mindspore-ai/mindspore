@@ -28,7 +28,7 @@ namespace mindspore {
 typedef struct ParallelTask : public Task {
   ParallelTask() : Task(nullptr, nullptr) {}
   std::atomic_int started{0};
-  int task_num;
+  volatile int task_num = 0;
   std::atomic_bool valid = false;
   std::atomic_bool occupied = false;
 } ParallelTask;
