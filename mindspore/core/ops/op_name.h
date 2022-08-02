@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_OP_NAME_H
 #define MINDSPORE_CORE_OPS_OP_NAME_H
+#include <stddef.h>
 
 namespace mindspore::ops {
 constexpr auto kAlpha = "alpha";

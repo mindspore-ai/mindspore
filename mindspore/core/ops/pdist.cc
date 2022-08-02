@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ abstract::ShapePtr PdistInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_size = x_shape.size();
   const int64_t input_dim = 2;
-  CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kGreaterEqual, input_dim, "Pdist");
+  (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kGreaterEqual, input_dim, "Pdist");
   int64_t dim_R = x_shape[x_size - 2];
   const float out_shape_used = 0.5;
   dim_R = dim_R * (dim_R - 1) * out_shape_used;

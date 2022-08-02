@@ -30,7 +30,7 @@ abstract::TupleShapePtr CumminInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto x_rank = x_shape.size();
+  auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t min_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterThan, min_dim, prim_name);
   int64_t axis = GetValue<int64_t>(primitive->GetAttr("axis"));

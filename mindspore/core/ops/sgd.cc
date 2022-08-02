@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ void SGD::Init(const float dampening, const float weight_decay, const bool neste
 
 void SGD::set_dampening(const float dampening) {
   if (get_nesterov()) {
-    CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
+    (void)CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
   }
   (void)AddAttr(kDampening, api::MakeValue(dampening));
 }

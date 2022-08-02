@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInteger("Cross infer", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("Cross infer", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
