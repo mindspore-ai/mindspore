@@ -167,6 +167,19 @@
 - TimeMonitor printing content changes, and the printed content is added to "train" or "eval" to distinguish between training and inference phases.
 - `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
 
+#### Import Optimization
+
+APIs in `mindspore.context`, `mindspore.parallel`, `mindspore.profiler` and `mindspore.train` can be directly used in `mindspore`. The original usage can still be supported.
+
+For examples:
+
+-`mindspore.context.set_context` can be simplified to `mindspore.set_context`.
+-`mindspore.parallel.set_algo_parameters` can be simplified to `mindspore.set_algo_parameters`.
+-`mindspore.profiler.Profiler` can be simplified to `mindspore.Profiler`.
+-`mindspore.train.callback.Callback` can be simplified to `mindspore.Callback`.
+
+The API pages are aggregated to <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html>.
+
 ## MindSpore Lite
 
 ### Major Features and Improvements
