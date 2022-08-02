@@ -122,15 +122,9 @@ Status OperatorInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   return SUCCESS;
 }
 
-Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape) {
-  if (strategy == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null.";
-    return FAILED;
-  }
-
-  size_t strategy_size = strategy->GetInputNumber();
+Status OperatorInfo::CheckStrategyBase(const Shapes &stra, const Shapes &inputs_shape) {
+  size_t strategy_size = stra.size();
   size_t inputs_shape_size = inputs_shape.size();
-  Strategies stra = strategy->GetInputDim();
   if (strategy_size != inputs_shape_size) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy size: " << strategy_size
                   << " is not equal to inputs size: " << inputs_shape_size;
@@ -167,7 +161,7 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
         if ((g_device_manager->DeviceNum() & (g_device_manager->DeviceNum() - 1)) != 0) {
           MS_LOG(INFO) << name_
                        << ": The device num is not the power of 2, thus do not check the strategy as power of 2";
-          return SUCCESS;
+          continue;
         }
         MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
                       << ", the value of strategy must be the power of 2, but get " << strategy_value;
@@ -177,6 +171,16 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
   }
 
   return SUCCESS;
+}
+
+Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape) {
+  if (strategy == nullptr) {
+    MS_LOG(ERROR) << name_ << ": The strategy is null.";
+    return FAILED;
+  }
+
+  Strategies stra = strategy->GetInputDim();
+  return CheckStrategyBase(stra, inputs_shape);
 }
 
 void OperatorInfo::ResetQueueMember() {
@@ -2109,17 +2113,142 @@ float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
 
 Shapes OperatorInfo::GenerateParamStrategy(const Shapes &default_strategy) {
   if (InferAttrs() != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << ": infer attrs failed";
+    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
 
   Shapes ret = InferParamStrategy(default_strategy);
-  MS_LOG(INFO) << name_ << ": the default strategy is " << default_strategy << ", the ret strategy is " << ret;
+  MS_LOG(INFO) << name_ << ": The default strategy is " << default_strategy << ", the ret strategy is " << ret;
   return ret;
 }
 
 Shapes OperatorInfo::InferParamStrategy(const Shapes &default_strategy) {
-  MS_LOG(WARNING) << name_ << ": it is not supported to infer param strategy, return the default strategy";
+  MS_LOG(WARNING) << name_ << ": It is not supported to infer param strategy, return the default strategy";
   return default_strategy;
+}
+
+bool HasEmptyStrategy(const Shapes &in_strategy) {
+  for (auto &ele : in_strategy) {
+    if (ele.empty()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// in_strategy: ((A, B, C, D), ()), return: ((A, B, C, D), (A, B, C, D))
+// in_strategy: ((), (A, B, C, D)), return: ((A, B, C, D), (A, B, C, D))
+Shapes OperatorInfo::InferStrategySameMode(const Shapes &in_strategy) {
+  Shape value;
+  for (auto &ele : in_strategy) {
+    if (!ele.empty()) {
+      value = ele;
+      break;
+    }
+  }
+
+  return Shapes(in_strategy.size(), value);
+}
+
+// in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (e, f, g)), return: ((A, B, C, D), (1, 1, 1))
+// in_strategy: ((), (E, F, G)), inputs shape: ((a, b, c, d), (e, f, g)), return: ((1, 1, 1, 1), (E, F, G))
+Shapes OperatorInfo::InferStrategyIndependentMode(const Shapes &in_strategy) {
+  if (in_strategy.size() != inputs_shape_.size()) {
+    MS_LOG(EXCEPTION)
+      << name_ << ": The size of strategies must be equal to the size of inputs shape, but the size of strategies is "
+      << in_strategy.size() << ", and the size of inputs shape is " << inputs_shape_.size();
+  }
+
+  Shapes ret;
+  for (size_t i = 0; i < in_strategy.size(); ++i) {
+    if (in_strategy[i].empty()) {
+      (void)ret.emplace_back(Shape(inputs_shape_[i].size(), 1));
+      continue;
+    }
+    (void)ret.emplace_back(in_strategy[i]);
+  }
+  return ret;
+}
+
+// in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (a, b, c, d)), return: ((A, B, C, D), (A, B, C, D))
+// in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (b, c, d)), return: ((A, B, C, D), (B, C, D))
+// in_strategy: ((), (B, C, D)), inputs shape: ((a, b, c, d), (b, c, d)), return: ((1, B, C, D), (B, C, D))
+// in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (1, c, d)), return: ((A, B, C, D), (1, C, D))
+Shapes OperatorInfo::InferStrategyBroadCastMode(const Shapes &in_strategy) {
+  Shapes ret = InferStrategySameMode(in_strategy);
+  if (ret.size() != inputs_shape_.size()) {
+    MS_LOG(EXCEPTION)
+      << name_ << ": The size of strategies must be equal to the size of inputs shape, but the size of strategies is "
+      << ret.size() << ", and the size of inputs shape is " << inputs_shape_.size();
+  }
+
+  // handle the broadcast
+  // alignment length
+  for (size_t i = 0; i < ret.size(); ++i) {
+    size_t strategy_size = ret[i].size();
+    size_t shape_size = inputs_shape_[i].size();
+    size_t diff_len = strategy_size > shape_size ? strategy_size - shape_size : shape_size - strategy_size;
+    if (strategy_size > shape_size) {
+      // strategy is (A, B, C, D), and shape is (c, d)  -> updated strategy is (C, D)
+      (void)ret[i].erase(ret[i].begin(), ret[i].begin() + static_cast<different_type>(diff_len));
+    } else if (strategy_size < shape_size) {
+      // strategy is (C, D), and shape is (a, b, c, d)  -> updated strategy is (1, 1, C, D)
+      (void)ret[i].insert(ret[i].begin(), diff_len, 1);
+    }
+  }
+
+  // handle the 1 shape value
+  for (size_t i = 0; i < ret.size(); ++i) {
+    // strategy is (A, B, C, D), and shape is (1, b, c, d)  -> updated strategy is (1, B, C, D)
+    for (size_t j = 0; j < ret[i].size(); ++j) {
+      if (inputs_shape_[i][j] == 1) {
+        ret[i][j] = 1;
+      }
+    }
+  }
+  return ret;
+}
+
+Shapes OperatorInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
+  MS_LOG(EXCEPTION) << name_ << ": The in strategy is " << in_strategy << ", need to override this function ";
+}
+
+Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
+  if (in_strategy.size() < 2) {
+    MS_LOG(EXCEPTION) << name_ << ": The size of in strategy is " << in_strategy.size()
+                      << ", it can not use this function";
+  }
+
+  if (!HasEmptyStrategy(in_strategy)) {
+    return in_strategy;
+  }
+
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
+  }
+
+  Shapes ret;
+  switch (infer_strategy_mode_) {
+    case SAME_MODE:
+      ret = InferStrategySameMode(in_strategy);
+      break;
+    case BROADCAST_MODE:
+      ret = InferStrategyBroadCastMode(in_strategy);
+      break;
+    case INDEPENDENT_MODE:
+      ret = InferStrategyIndependentMode(in_strategy);
+      break;
+    case INDIVIDUAL_MODE:
+      ret = InferStrategyIndividualMode(in_strategy);
+      break;
+    case INVALID_MODE:
+    default:
+      MS_LOG(EXCEPTION) << name_ << ": The invalid mode for infer strategy";
+  }
+
+  if (name_.find(ONEHOT_INFO) == std::string::npos && CheckStrategyBase(ret, inputs_shape_) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": The origin strategy is " << in_strategy << ", and the return strategy is " << ret;
+  }
+  return ret;
 }
 
 std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequence) {

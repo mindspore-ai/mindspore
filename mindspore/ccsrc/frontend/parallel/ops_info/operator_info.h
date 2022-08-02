@@ -52,6 +52,14 @@ using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodeP
 
 #define FILTER_LOG(x) x ? void(0) : MS_LOG(ERROR)
 
+enum InferStrategyMode {
+  SAME_MODE = 0,
+  BROADCAST_MODE = 1,
+  INDEPENDENT_MODE = 2,
+  INDIVIDUAL_MODE = 3,
+  INVALID_MODE = 4,
+};
+
 class Edge;
 
 class OperatorInfo {
@@ -96,6 +104,7 @@ class OperatorInfo {
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
   Shapes GenerateParamStrategy(const Shapes &default_strategy);
+  Shapes GenerateFullStrategy(const Shapes &in_strategy);
 
   virtual std::shared_ptr<Strategies> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
@@ -217,6 +226,7 @@ class OperatorInfo {
   // needed by rec_parser
   std::string type_;
   bool is_last_node_ = false;
+  InferStrategyMode infer_strategy_mode_ = INVALID_MODE;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferForwardCommunication() = 0;
@@ -227,6 +237,11 @@ class OperatorInfo {
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Shapes InferParamStrategy(const Shapes &default_strategy);
+  virtual Shapes InferStrategyIndividualMode(const Shapes &in_strategy);
+  Shapes InferStrategySameMode(const Shapes &in_strategy);
+  Shapes InferStrategyBroadCastMode(const Shapes &in_strategy);
+  Shapes InferStrategyIndependentMode(const Shapes &in_strategy);
+  Status CheckStrategyBase(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();

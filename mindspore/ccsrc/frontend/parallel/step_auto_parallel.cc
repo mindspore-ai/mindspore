@@ -275,13 +275,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
                                       StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
-  auto attrs = prim->attrs();
-  std::vector<Shapes> shape_list = ExtractShape(cnode);
-  if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Failure: node " << cnode->UniqueId() << " failed to extract shape";
-  }
   // Create an OperatorInfo instance
-  OperatorInfoPtr operator_info = NewOperatorInstance(prim, attrs, shape_list);
+  OperatorInfoPtr operator_info = CreateOperatorInfo(cnode);
   MS_EXCEPTION_IF_NULL(operator_info);
   // Set the parameter information for this OperatorInfo (whether the inputs are parameters or not)
   std::vector<bool> parameter_info = ExtractInputParameterByNode(cnode);
@@ -304,20 +299,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     MS_LOG(ERROR) << "Setting the types of outputs failed for operator: " << operator_info->name();
     return nullptr;
   }
-  // When the 'inputs' contains numerical values for some operators, these values should be extracted from
-  // ANF graph
-  auto &inputs = cnode->inputs();
-  std::vector<ValuePtr> input_value;
-  for (size_t index = 1; index < inputs.size(); ++index) {
-    if (inputs[index]->isa<ValueNode>()) {
-      input_value.push_back(GetValueNode(inputs[index]));
-    } else {
-      (void)input_value.emplace_back(nullptr);
-    }
-  }
-  operator_info->set_input_value(input_value);
-  operator_info->set_outputs_dtype(cnode->Type());
-  operator_info->set_cnode(cnode);
+
   operator_info->set_auto_parallel(true);
 
   AddOperatorToIgnoreCandidates(prim, operator_info);
@@ -332,6 +314,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // If no strategy has been configured for this operator, then candidate strategies are generated for
   // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
   // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
+  auto attrs = prim->attrs();
   if ((StrategyFound(attrs) && prim->name() != CAST) || load_strategy_from_ckpt) {
     SetStrategyToOperator(operator_info, prim, attrs, is_last_nodes, stra_map, strategy_key_name);
     return operator_info;

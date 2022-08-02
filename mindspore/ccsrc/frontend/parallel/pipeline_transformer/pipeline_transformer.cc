@@ -355,29 +355,15 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode, int tup
   if (IsPrimitiveCNode(temp_node, prim::kPrimVirtualDataset)) {
     SetVirtualDatasetStrategy(temp_node);
   }
-  auto shape_list = ExtractShape(temp_node);
-  if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Node: " << temp_node->DebugString() << " failed to extract shape.";
-  }
+
   auto prim = GetValueNode<PrimitivePtr>(temp_node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == RESHAPE) {
     MS_LOG(EXCEPTION) << "Reshape op can't be a border. node:" << temp_node->DebugString();
   }
   auto attrs = prim->attrs();
-  auto op_info = OperatorInstance(prim, attrs, shape_list);
-  auto &inputs = temp_node->inputs();
-  std::vector<ValuePtr> input_value;
-  for (size_t index = 1; index < inputs.size(); ++index) {
-    if (inputs[index]->isa<ValueNode>()) {
-      input_value.push_back(GetValueNode(inputs[index]));
-    } else {
-      (void)input_value.emplace_back(nullptr);
-    }
-  }
-  op_info->set_input_value(input_value);
-  op_info->set_outputs_dtype(temp_node->Type());
-  op_info->set_cnode(temp_node);
+  auto op_info = CreateOperatorInfo(temp_node);
+
   StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
   if (!StrategyFound(attrs)) {
     in_strategy = GenerateBatchParallelStrategy(op_info, prim);

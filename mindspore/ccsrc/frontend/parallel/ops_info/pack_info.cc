@@ -55,6 +55,7 @@ Status StackInfo::GetAttrs() {
     axis = axis + dim;
   }
   axis_ = LongToSize(axis);
+  infer_strategy_mode_ = SAME_MODE;
   return SUCCESS;
 }
 

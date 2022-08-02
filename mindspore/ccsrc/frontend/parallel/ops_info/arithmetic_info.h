@@ -41,7 +41,10 @@ class ArithmeticBase : public OperatorInfo {
 
  protected:
   Shapes InferParamStrategy(const Shapes &default_strategy) override;
-  Status GetAttrs() override { return SUCCESS; }
+  Status GetAttrs() override {
+    infer_strategy_mode_ = BROADCAST_MODE;
+    return SUCCESS;
+  }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
