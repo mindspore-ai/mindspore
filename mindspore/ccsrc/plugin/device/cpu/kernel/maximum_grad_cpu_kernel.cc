@@ -116,7 +116,7 @@ void GetShape(std::vector<size_t> *shape, const ShapeVector &shape_, const Shape
   int k = dout_shape.size() - 1;
   int i = shape_.size() - 1;
   for (; i >= 0; i--, k--) {
-    (*shape)[k] = LongToSize(shape_[IntToSize(i)]);
+    (*shape)[IntToSize(k)] = LongToSize(shape_[IntToSize(i)]);
   }
 }
 

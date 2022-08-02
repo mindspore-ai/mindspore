@@ -260,9 +260,9 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
     *grad_x = (*grad_x) * grad_clip;
   } else if (padding_mode == "reflection") {
     if (align_corners) {
-      coord = reflect_coordinates_set_grad(coord, 0, (size - 1) << 1, &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, 0, (size - 1) * static_cast<int64_t>(kTwo), &grad_refl);
     } else {
-      coord = reflect_coordinates_set_grad(coord, -1, (size << 1) - 1, &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, -1, (size * static_cast<int64_t>(kTwo)) - 1, &grad_refl);
     }
     coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_refl * grad_clip;
