@@ -256,6 +256,7 @@ from .math_func import (
     frac,
     kron,
     rot90,
+    remainder
 )
 from .nn_func import (
     adaptive_avg_pool2d,

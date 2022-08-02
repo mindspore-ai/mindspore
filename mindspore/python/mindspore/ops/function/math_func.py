@@ -5267,6 +5267,55 @@ def any(x, axis=(), keep_dims=False):
     return _get_cache_prim(P.ReduceAny)(keep_dims)(x, axis)
 
 
+def remainder(x, y):
+    r"""
+    Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
+    both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
+    and one scalar, the scalar could only be a constant.
+
+    .. math::
+
+        out_{i} = input_{i} \text{ % } other_{i}
+
+    .. warning::
+        - The input data does not support 0.
+        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+
+    Args:
+        x (Union[Tensor, numbers.Number, bool]): The first input is a number, a bool
+            or a tensor whose data type is number.
+        y (Union[Tensor, numbers.Number, bool]): When the first input is a tensor, The second input
+            could be a number, a bool or a tensor whose data type is number.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.
+        ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]).astype(np.float16))
+        >>> y = Tensor(np.array([3.0, 2.0, 3.0]).astype(np.float16))
+        >>> output = ops.remainder(x, y)
+        >>> print(output)
+        [2.  1.  0.]
+    """
+
+    out = x - tensor_floordiv(x, y) * y
+    return out
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -5402,5 +5451,6 @@ __all__ = [
     'frac',
     'kron',
     'rot90',
+    'remainder'
 ]
 __all__.sort()

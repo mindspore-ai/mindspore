@@ -569,6 +569,15 @@ class Rot90Func(nn.Cell):
         return self.rot90(x, self.k, self.dims)
 
 
+class RemainderNet(nn.Cell):
+    def __init__(self):
+        super(RemainderNet, self).__init__()
+        self.remainder = ops.remainder
+
+    def construct(self, x, y):
+        return self.remainder(x, y)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -707,6 +716,10 @@ test_case_math_ops = [
     ('Rot90', {
         'block': Rot90Func(),
         'desc_inputs': [Tensor(np.array([[0, 1], [2, 3]]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('Remainder', {
+        'block': RemainderNet(),
+        'desc_inputs': [Tensor(np.array([-1.0, 5.0, 6.0]), ms.float32), Tensor(np.array([3.0, 2.0, 3.0]), ms.float32)],
         'skip': ['backward']}),
 ]
 
@@ -858,6 +871,16 @@ raise_set = [
                                          [-0.45, -0.17, 62.0]]).astype(np.float32)),
                         Tensor(np.array([1.55, 1.94, 0.0]).astype(np.float32))
                         ],
+        'skip': ['backward']}),
+    ('Remainder_Error_1', {
+        'block': (RemainderNet(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.array([-4.0, 5.0, 6.0]), ms.float32),
+                        [3.0, 2.0, 3.0]],
+        'skip': ['backward']}),
+    ('Remainder_Error_2', {
+        'block': (RemainderNet(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.array([-4.0, 5.0, 6.0]), ms.float32),
+                        Tensor(np.array([3.0, 2.0]), ms.float32)],
         'skip': ['backward']}),
 ]
 
