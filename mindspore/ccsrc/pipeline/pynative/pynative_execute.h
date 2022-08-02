@@ -251,7 +251,7 @@ class GradExecutor {
     };
 
   FuncGraphPtr curr_g() const;
-  TopCellInfoPtr top_cell() const;
+  const TopCellInfoPtr &top_cell() const;
   void CheckNeedCompileGraph();
   void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
   size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
@@ -346,7 +346,7 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
-  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, const bool get_by_position);
+  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const;
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }

@@ -2776,7 +2776,7 @@ ForwardExecutorPtr GradExecutor::forward() const {
   return forward_executor;
 }
 
-TopCellInfoPtr GradExecutor::top_cell() const {
+const TopCellInfoPtr &GradExecutor::top_cell() const {
   MS_EXCEPTION_IF_NULL(top_cell_);
   return top_cell_;
 }
@@ -3659,7 +3659,7 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
-std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position, const bool get_by_position) {
+std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const {
   std::vector<size_t> pos_args;
   if (!get_by_position) {
     return pos_args;
@@ -3881,7 +3881,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     if (find_top_cell != nullptr) {
       MS_LOG(DEBUG) << "Find already run top cell";
       forward_run = find_top_cell->forward_already_run();
-      auto curr_top_cell = top_cell();
+      const auto &curr_top_cell = top_cell();
       set_top_cell(find_top_cell);
       bool input_args_changed =
         !find_top_cell->input_args_id().empty() && find_top_cell->input_args_id() != input_args_id;
@@ -3900,7 +3900,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
 }
 
 void GradExecutor::CheckNeedCompileGraph() {
-  auto new_top_cell = top_cell();
+  const auto &new_top_cell = top_cell();
   const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
   // Update top cell by current cell op info
   if (already_run_top_cell_.find(already_top_cell_id) == already_run_top_cell_.end()) {
