@@ -518,11 +518,12 @@ def csr_softmax(logits, dtype):
         dtype (dtype): Data type.
 
     Returns:
-        CSRTensor. a csr_tensor containing:
-        indptr: indicates the start and end point for `values` in each row.
-        indices: the column positions of all non-zero values of the input.
-        values: the non-zero values of the dense tensor.
-        shape: the shape of the csr_tensor.
+        CSRTensor, a csr_tensor containing
+
+        - **indptr** -  indicates the start and end point for `values` in each row.
+        - **indices** - the column positions of all non-zero values of the input.
+        - **values** - the non-zero values of the dense tensor.
+        - **shape** - the shape of the csr_tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -531,19 +532,18 @@ def csr_softmax(logits, dtype):
         >>> import mindspore as ms
         >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, CSRTensor
-        >>> from mindspore.ops.functional import sparse_matrix_softmax
+        >>> from mindspore.ops.function import csr_softmax
         >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
         >>> logits_indices = Tensor([0, 2, 3, 4, 3, 4], dtype=mstype.int32)
         >>> logits_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
         >>> shape = (2, 6)
         >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
-        >>> out = logits.sparse_matrix_softmax(dtype)
+        >>> out = csr_softmax(logits, dtype=mstype.float32)
         >>> print(out)
-        CSRTensor(shape=[2,6], dtype=Float32,
-                  indptr=Tensor(shape=[3], dtype=Int64, value = [0, 4, 6]),
-                  indices=Tensor(shape=[2], dtype=Int64, value = [0, 2, 3, 4, 3, 4]),
-                  values=Tensor(shape=[2], dtype=Float32,
-                  value = [3.2058e-02, 8.7144e-02, 2.3688e-01, 6.4391e-01, 2.6894e-01, 7.310e-01]))
+        CSRTensor(shape=[2, 6], dtype=Float32, indptr=Tensor(shape=[3], dtype=Int32, value=[0 4 6]),
+                       indices=Tensor(shape=[6], dtype=Int32, value=[0 2 3 4 3 4]),
+                       values=Tensor(shape=[6], dtype=Float32, value=[ 3.20586003e-02  8.71443152e-02  2.36882806e-01
+                       6.43914223e-01  2.68941432e-01  7.31058598e-01]))
     """
     if not isinstance(logits, CSRTensor):
         raise_type_error("For functional operator sparse_matrix_softmax, logits must be type of CSRTensor.")
