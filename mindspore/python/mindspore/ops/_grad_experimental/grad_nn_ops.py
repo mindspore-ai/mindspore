@@ -48,6 +48,8 @@ from ..operations.nn_ops import ReLUV3
 from ..operations._grad_ops import ReluGrad
 from ..operations.image_ops import ResizeLinear1D
 from ..operations.nn_ops import MaxPool3DWithArgmax
+from ..operations.nn_ops import FractionalMaxPoolWithFixedKsize
+from ..operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -375,5 +377,17 @@ def get_bprop_maxpool3dwithargmax(self):
     def bprop(x, out, dout):
         dx = maxpool3dwithargmax_grad(x, dout[0], out[1])
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(FractionalMaxPoolWithFixedKsize)
+def get_bprop_fractional_max_pool_with_fixed_ksize(self):
+    """Grad definition for 'FractionalMaxPoolWithFixedKsize' operation."""
+    input_grad = FractionalMaxPoolGradWithFixedKsize(data_format=self.data_format)
+
+    def bprop(x, random_samples, out, dout):
+        dx = input_grad(x, dout[0], out[1])
+        return (dx, zeros_like(random_samples))
 
     return bprop

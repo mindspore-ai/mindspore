@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """aicpu ops"""
+from .fractional_max_pool_with_fixed_ksize import _fractional_max_pool_with_fixed_ksize_aicpu
+from .fractional_max_pool_grad_with_fixed_ksize import _fractional_max_pool_grad_with_fixed_ksize_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu
 from .nextafter import _nextafter_aicpu
 from .fill_diagonal import _fill_diagonal_aicpu

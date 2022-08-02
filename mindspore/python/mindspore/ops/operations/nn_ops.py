@@ -10620,3 +10620,88 @@ class SparseApplyProximalGradientDescent(Primitive):
         self.init_prim_io_names(inputs=['var', 'alpha', 'l1', 'l2', 'grad', 'indices'],
                                 outputs=['var'])
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
+class FractionalMaxPoolWithFixedKsize(Primitive):
+    r"""
+    Fractional max pooling operation.
+
+    Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
+    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
+    the target output size. For any input size, the size of the specified output is H x W. The number
+    of output features is equal to the number of input planes.
+
+    Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel window used to take the maximum value.
+            The target ksize is H x W. ksize can be a tuple, or a single K for K x K.
+            specifying the window size (H, W) of the input tensor.
+        output_shape (Union[int, tuple[int]]): The target output size is H x W.
+            output_shape can be a tuple, or a single H for H x H.
+            specifying the size (H, W) of the output tensor.
+        data_format (str): The optional value for data format, is 'NCHW'.
+            Default: "NCHW".
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+          with float16, float32, float64, int32, int64 data type.
+        - **random_samples** (Tensor) - Tensor of shape :math:`(N, C, 2)`.
+          with float16, float32, float64 data type.
+
+    Outputs:
+        - **y** (Tensor) - Has the same type as the `input_x`.
+          Has the shape :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`.
+        - **argmax** (Tensor) -A tensor whose data type must be int64. Has the same shape as the `y`.
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
+        TypeError: If data type of `random_samples` is not one of the following: float16, float32, float64.
+        ValueError: If `ksize` is not a number and `ksize` is not a tuple of length 2.
+        ValueError: If `output_shape` is not a number and `output_shape` is not a tuple of length 2.
+        ValueError: If the sum of `ksize`,`output_shape` and -1 is larger than the corresponding dimension of `input_x`.
+        ValueError: If the dimension of `random_samples` is not 3.
+        ValueError: If the first dimension size of `input_x` and `random_samples` is not equal.
+        ValueError: If the second dimension size of `input_x` and `random_samples` is not equal.
+        ValueError: If the third dimension size of `random_samples` is not 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> # the ksize is an int number and the output_shape is a tuple.
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import nn_ops
+        >>> ksize = 2
+        >>> output_shape = (2,2)
+        >>> data_format = "NCHW"
+        >>> input_x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
+        ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
+        ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
+        ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
+        ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
+        >>> random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
+        >>> net = nn_ops.FractionalMaxPoolWithFixedKsize(ksize, output_shape, data_format)
+        >>> y, argmax = net(input_x, random_samples)
+        >>> print(y)
+        [[[[0.9545 0.8764]
+           [0.9673 0.9852]]]]
+        >>> print(argmax)
+        [[[[ 1  9]
+           [16 24]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, output_shape, data_format="NCHW"):
+        """Initialize FractionalMaxPoolWithFixedKsize."""
+        validator.check_value_type('ksize', ksize, [int, tuple], self.name)
+        self.ksize = _check_positive_int_or_tuple(
+            "ksize", ksize, self.name, allow_four=False, ret_four=False)
+        self.add_prim_attr("ksize", self.ksize)
+        validator.check_value_type('output_shape', output_shape, [int, tuple], self.name)
+        self.output_shape = _check_positive_int_or_tuple(
+            "output_shape", output_shape, self.name, allow_four=False, ret_four=False)
+        self.add_prim_attr("output_shape", self.output_shape)
+        self.data_format = validator.check_string(data_format, ['NCHW'], 'data_format', self.name)
+        self.init_prim_io_names(inputs=['input_x', 'random_samples'], outputs=['y', 'argmax'])
