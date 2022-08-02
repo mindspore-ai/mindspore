@@ -41,17 +41,6 @@ class Uniform(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Uniform'.
 
-    Inputs and Outputs of APIs:
-        The accessible APIs of the Uniform distribution are defined in the base class, including:
-
-        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
-        - `mean`, `sd`, `var`, and `entropy`
-        - `kl_loss` and `cross_entropy`
-        - `sample`
-
-        For more details of all APIs, including the inputs and outputs of all APIs of the Uniform distribution ,
-        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 
