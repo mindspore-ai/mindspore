@@ -74,7 +74,8 @@ def _check_parallel_envs():
         pass
     rank_table_file_str = os.getenv("MINDSPORE_HCCL_CONFIG_PATH")
     rank_table_file_str_old = os.getenv("RANK_TABLE_FILE")
-    if not rank_table_file_str and not rank_table_file_str_old:
+    help_cluster = os.getenv("HELP_CLUSTER")
+    if not rank_table_file_str and not rank_table_file_str_old and not help_cluster:
         raise RuntimeError("Get hccl rank_table_file failed, "
                            "please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE.")
 
