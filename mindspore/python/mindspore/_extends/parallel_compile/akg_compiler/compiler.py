@@ -13,31 +13,39 @@
 # limitations under the License.
 # ============================================================================
 """Providing akg compile with json"""
+import os
 import sys
 
 
-def run_compiler(op_json, attrs=None):
+def run_compiler(op_json, compile_backend="AKG", attrs=None, kernel_meta_parent_dir="./"):
     """
-    Run AKG compiler to compile op with subprocess, if this process of
-    compilation failed, an exception will be raised
+    Compile `op_json` with the selected `compile_backend`.
 
     Args:
-        op_json (str): json string of the op
+        op_json (str): json string of the op.
+        compile_backend (str): compilation backend, can be "AKG" or "TBE".
+        attrs (Union[str, dict]): compilation attributes. Used in "AKG" compile_backend.
+        kernel_meta_parent_dir (str): kernel_meta parent dir.
 
     Returns:
         None
     """
-    from get_file_path import get_akg_path
-    sys.path.insert(0, get_akg_path())
-    p = __import__("akg", globals(), locals(), ['ms'], 0)
-    func = getattr(p.ms, "compilewithjson")
-    res = func(op_json, attrs)
-    if not res:
-        raise ValueError("Compile error")
+    if compile_backend == "TBE":
+        from build_tbe_kernel import build_tbe_kernel
+        build_tbe_kernel(op_json, kernel_meta_parent_dir)
+    else:
+        os.environ["MS_COMPILER_CACHE_PATH"] = kernel_meta_parent_dir
+        from get_file_path import get_akg_path
+        sys.path.insert(0, get_akg_path())
+        p = __import__("akg", globals(), locals(), ['ms'], 0)
+        func = getattr(p.ms, "compilewithjson")
+        res = func(op_json, attrs)
+        if not res:
+            raise ValueError("Compile error")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
-        run_compiler(sys.argv[1], sys.argv[2])
+        run_compiler(sys.argv[1], *sys.argv[2:])
     else:
         run_compiler(sys.argv[1])

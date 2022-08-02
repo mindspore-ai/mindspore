@@ -20,15 +20,8 @@ import sys
 from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
-
-
-def _get_log_level(attrs):
-    attrs_dict = {}
-    if isinstance(attrs, str):
-        attrs_dict = json.loads(attrs)
-    elif isinstance(attrs, dict):
-        attrs_dict = attrs
-    return attrs_dict.get("log_level")
+from mindspore._extends.parallel_compile.akg_compiler.util import get_ascend_compile_dirs, create_compile_dirs, \
+    get_log_level, update_attr, load_composite_graph, select_best, print_compile_log, check_tbe_support
 
 
 def _compile_akg_task_default(json_strs, attrs):
@@ -49,33 +42,57 @@ def _compile_akg_task_default(json_strs, attrs):
             raise ValueError("Compile error, args: {}! build attrs: {}".format(json_str, attrs))
 
 
+def _compile_subprocess(compiler, kernel_meta_parent_dir, json_str, compile_backend, attrs, compile_log, log_level):
+    compile_result = subprocess.run([sys.executable, compiler, json_str, compile_backend, attrs,
+                                     kernel_meta_parent_dir], text=True, check=False, capture_output=True)
+    log = [compile_result.stdout.strip(), compile_result.stderr.strip()]
+    if compile_result.returncode:
+        # If compile failed, use the passed in log level
+        compile_log[compile_backend] = {log_level: log}
+    else:
+        # If compile success, use log level INFO
+        compile_log[compile_backend] = {"INFO": log}
+
+
 def _compile_akg_task_ascend(json_strs, attrs):
     """
     compile func called in single process
 
     Parameters:
         json_strs: list. List contains multiple kernel infos, suitable for json compile api.
+        attrs: str. Compile attrs.
     """
-    if attrs is None:
-        attrs = "{}"
-    log_level = _get_log_level(attrs)
-    akg_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
+    if not json_strs:
+        return
+    log_level = get_log_level(attrs)
+    compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
+    compile_dirs = get_ascend_compile_dirs()
+    kernel_meta_dir = compile_dirs.get("kernel_meta_dir")
+    akg_compile_dir = compile_dirs.get("akg_compile_dir")
+    tbe_compile_dir = compile_dirs.get("tbe_compile_dir")
+    composite_graph_dir = compile_dirs.get("composite_graph_dir")
+    attrs = update_attr(attrs, {"dump_composite_graph": composite_graph_dir})
     for json_str in json_strs:
-        compile_result = subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=False,
-                                        capture_output=True)
-        if compile_result.returncode:
-            stdout_log = compile_result.stdout.strip()
-            stderr_log = compile_result.stderr.strip()
+        json_desc = json.loads(json_str)
+        op_name = json_desc["op"]
+        compile_log = {}
+
+        # Compile json str with AKG
+        _compile_subprocess(compiler, akg_compile_dir, json_str, "AKG", attrs, compile_log, log_level)
+
+        # Load composite optimized json str and compile it with TBE
+        tbe_support = check_tbe_support(json_desc)
+        if tbe_support:
+            composite_graph = load_composite_graph(composite_graph_dir, op_name, default=json_str)
+            _compile_subprocess(compiler, tbe_compile_dir, composite_graph, "TBE", attrs, compile_log, log_level)
+
+        print_compile_log(compile_log)
+        # Select best compile result
+        res = select_best([os.path.join(akg_compile_dir, "kernel_meta"), os.path.join(tbe_compile_dir, "kernel_meta")],
+                          kernel_meta_dir, op_name)
+        if not res:
             if log_level == "ERROR":
-                if stdout_log:
-                    logger.error(stdout_log)
-                if stderr_log:
-                    logger.error(compile_result.stderr)
                 raise ValueError("Compile error, json str: {}! build attrs: {}".format(json_str, attrs))
-            if stdout_log:
-                logger.info(stdout_log)
-            if stderr_log:
-                logger.info(compile_result.stderr)
             logger.info("Will try to split, json str: {}! build attrs: {}".format(json_str, attrs))
 
 
@@ -124,6 +141,7 @@ class AkgProcess:
                              "not be zero.")
         args = list((arg, attrs) for arg in self.args)
         if self.platform == "ASCEND":
+            create_compile_dirs(get_ascend_compile_dirs())
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
