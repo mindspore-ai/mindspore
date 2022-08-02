@@ -146,7 +146,7 @@ class AscendSession : public SessionBasic {
   void GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
                              const std::vector<tensor::TensorPtr> &graph_inputs,
                              const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                             InputTensorInfo *input_tensor_info);
+                             InputTensorInfo *input_tensor_info) const;
   void PrepareForOutputTensor(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                               std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
                               VectorRef *const outputs) const;

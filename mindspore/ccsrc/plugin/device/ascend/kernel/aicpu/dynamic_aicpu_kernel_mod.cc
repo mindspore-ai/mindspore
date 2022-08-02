@@ -44,7 +44,7 @@ DynamicAicpuOpKernelMod::DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr)
     }
   }
 }
-DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
+DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() noexcept {
   // free dev ptr
   if (ext_info_addr_dev_ != nullptr) {
     auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();

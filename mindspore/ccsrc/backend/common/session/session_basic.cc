@@ -653,7 +653,7 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
   }
 }
 
-AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) {
+AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   auto new_parameter = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
@@ -1366,7 +1366,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
 
 OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
                                            const InputTensorInfo &tensor_info,
-                                           GraphOutputInfo *const graph_output_info) const {
+                                           GraphOutputInfo *graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   const auto &abstract = cnode->abstract();
@@ -1478,7 +1478,7 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
 }
 
 void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                                              std::map<std::string, size_t> *forward_op_output_tensor_id) {
+                                              std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   // Cpu can not clear device address, because it's device address and host address is the same
@@ -1756,7 +1756,7 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
                                                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                                         const std::map<AnfNodePtr, size_t> &parameter_index,
                                                         const std::vector<tensor::TensorPtr> &graph_inputs,
-                                                        InputTensorInfo *const input_tensor_info, size_t input_index) {
+                                                        InputTensorInfo *input_tensor_info, size_t input_index) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   if (input_index >= cnode->inputs().size() - 1) {
@@ -1872,7 +1872,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   return graph;
 }
 
-void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) {
+void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
@@ -2577,7 +2577,7 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
 }
 
 void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                                VectorRef *const outputs) {
+                                VectorRef *outputs) {
   MS_LOG(INFO) << "Status record: start run graph. graph id: " << graph_id;
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -3097,7 +3097,7 @@ void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) co
   }
 }
 
-void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
+void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // PS embeddingLookup cache check.
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
@@ -3135,7 +3135,7 @@ void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
 }
 
 void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
-                                       const std::vector<tensor::TensorPtr> &inputs_const) {
+                                       const std::vector<tensor::TensorPtr> &inputs_const) const {
   if (!ps::PSContext::instance()->is_worker()) {
     return;
   }

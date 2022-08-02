@@ -451,7 +451,7 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   return cnode;
 }
 
-void KernelGraph::PostNewCNode(const CNodePtr &cnode) {
+void KernelGraph::PostNewCNode(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
   if (common::AnfAlgo::IsGraphKernel(cnode)) {
