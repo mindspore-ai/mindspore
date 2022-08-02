@@ -34,19 +34,12 @@ class DeformableOffsetsGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   DeformableOffsetsGradGpuKernelMod() = default;
   ~DeformableOffsetsGradGpuKernelMod() override = default;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
-    return kernel_func_(this, inputs, outputs);
-  }
-
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
