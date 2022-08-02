@@ -31,11 +31,24 @@ namespace {
 constexpr int64_t kUniqueConsecutiveInputNum = 1;
 // For aicpu, if axis is 1000, that represents None.
 constexpr int64_t kAxisIsNone = 1000;
+
+bool CheckNullInput(const std::vector<int64_t> &shape) {
+  if (shape.size() != 0) {
+    if (std::any_of(shape.begin(), shape.end(), [](int64_t i) { return i == 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape_vec = input_shape_map[kShape];
+  if (CheckNullInput(input_shape_vec)) {
+    MS_LOG(EXCEPTION) << "For " << op_name << ", the shape of input cannot contain zero.";
+  }
 
   auto axis_ptr = primitive->GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(axis_ptr);
