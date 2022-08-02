@@ -16,15 +16,10 @@
 
 #include "plugin/device/cpu/kernel/uniform_candidate_sampler_cpu_kernel.h"
 #include <algorithm>
-#include <cmath>
 #include <functional>
-#include <limits>
 #include <memory>
 #include <random>
-#include <string>
 #include <sstream>
-#include <unordered_set>
-#include <vector>
 #include "abstract/utils.h"
 #include "mindspore/core/ops/uniform_candidate_sampler.h"
 #include "mindspore/core/ops/core_ops.h"
@@ -64,7 +59,15 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
     return 0;
   }
   // pick between [0, range_max_-1]
-  T range = LongToSize(range_max_);
+  T range{0};
+  if constexpr (sizeof(T) == sizeof(int64_t)) {
+    range = range_max_;
+  } else if constexpr (sizeof(T) == sizeof(int32_t)) {
+    range = static_cast<T>(range_max_);  // range_max_ less than the max value of ‘int32_t’ number
+  } else {
+    MS_LOG(EXCEPTION) << "Unknown type for sampling.";
+  }
+
   std::uniform_int_distribution<T> distribution(0, range - 1);
   if (!unique_) {
     auto task = [this, &sampled_candidates_, &distribution](size_t start, size_t end) {
@@ -74,11 +77,6 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
     };
     ParallelLaunchAutoSearch(task, LongToSize(num_sampled_), this, &parallel_search_info_, pool_);
     counter = num_sampled_;
-    std::ostringstream oss;
-    for (int64_t i = 0; i < num_sampled_; i++) {
-      oss << sampled_candidates_[i] << ", ";
-    }
-    MS_LOG(DEBUG) << "For UniformCandidateSampler, sampled_candidates: " << oss.str();
     return counter;
   }
 
@@ -94,11 +92,7 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
       picked++;
     }
   }
-  std::ostringstream oss;
-  for (int64_t i = 0; i < num_sampled_; i++) {
-    oss << sampled_candidates_[i] << ", ";
-  }
-  MS_LOG(DEBUG) << "For UniformCandidateSampler, sampled_candidates: " << oss.str();
+
   return counter;
 }
 
@@ -270,12 +264,6 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
     return true;
   }
   (void)workspaces;
-  if (init_seed_ == 0 && cur_seed_ == 0) {
-    cur_seed_ = LongToSize(time(nullptr));
-    generator_.seed(cur_seed_);
-  } else if (init_seed_ != 0) {
-    generator_.seed(init_seed_);
-  }
   MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : init_seed_ = " << init_seed_
                 << "cur_seed_ = " << cur_seed_;
   T *sampled_candidates = GetDeviceAddress<T>(outputs, kIndex0);
@@ -285,8 +273,9 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
 
   for (int64_t j = 0; j < batch_size_; ++j) {
     if (remove_accidental_hits_) {
+      set_input_.clear();  // reset for each batch
       for (size_t i = 0; i < input_size_; i++) {
-        set_input_.insert(input[i]);
+        (void)set_input_.insert(input[i]);
       }
       if (num_sampled_ + SizeToLong(set_input_.size()) > range_max_) {
         MS_LOG(WARNING) << "For 'UniformCandidateSampler', the parameter 'range_max' can not be less than the sum of "
