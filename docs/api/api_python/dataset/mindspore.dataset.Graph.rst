@@ -157,7 +157,7 @@ mindspore.dataset.Graph
         获取图中的所有节点。
 
         参数：
-            - **node_type** (str) - 指定节点的类型。Graph初始化未指定 `edge_type` 时，默认值为'0'。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.8/advanced/dataset/augment_graph_data.html>`_ 。
+            - **node_type** (str) - 指定节点的类型。Graph初始化未指定 `node_type` 时，默认值为'0'。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.8/advanced/dataset/augment_graph_data.html>`_ 。
 
         返回：
             numpy.ndarray，包含节点的数组。
@@ -258,7 +258,7 @@ mindspore.dataset.Graph
         参数：
             - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
             - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
-            - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型。
+            - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型，列表或数组中每个元素都应该是字符串类型。
             - **strategy** (SamplingStrategy, 可选) - 采样策略，默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
               - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。

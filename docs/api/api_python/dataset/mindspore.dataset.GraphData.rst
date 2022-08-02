@@ -261,7 +261,7 @@ mindspore.dataset.GraphData
 
         - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
         - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
-        - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型。
+        - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型，列表或数组中每个元素都应该是int类型。
         - **strategy** (SamplingStrategy, 可选) - 采样策略，默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
           - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
