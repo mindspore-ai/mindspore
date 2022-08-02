@@ -335,6 +335,15 @@ from .random_func import (
     uniform_candidate_sampler,
     poisson,
 )
+from .grad import (
+    grad_func,
+    grad,
+    jet,
+    derivative,
+    jvp,
+    vjp,
+    linearize
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -344,4 +353,5 @@ __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
+__all__.extend(grad_func.__all__)
 __all__.sort()
