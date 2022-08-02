@@ -2005,7 +2005,7 @@ void OnnxExporter::ExportPrimConcat(const FuncGraphPtr &, const CNodePtr &node,
     input_names.push_back(input_data);
   }
 
-  AddConcatOp(input_names, node_name, GetOpAttribute<int64_t>(node, "axis"), graph_proto);
+  AddConcatOp(input_names, node_name, static_cast<int>(GetOpAttribute<int64_t>(node, "axis")), graph_proto);
 }
 
 void OnnxExporter::ExportPrimCast(const FuncGraphPtr &, const CNodePtr &node,
@@ -2258,7 +2258,7 @@ void OnnxExporter::ExportPrimTupleGetItem(const FuncGraphPtr &, const CNodePtr &
   auto index = GetInt64Value(node->input(kTwoNum));
 
   auto input_node_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
-  auto input_name = MakeOutputName(input_node_name, index);
+  auto input_name = MakeOutputName(input_node_name, static_cast<int>(index));
 
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
 
@@ -2499,7 +2499,7 @@ void OnnxExporter::ExportPrimSplit(const FuncGraphPtr &, const CNodePtr &node,
   split_proto->set_op_type("Split");
   split_proto->add_input(input_name);
   for (int64_t i = 0; i < output_num; ++i) {
-    split_proto->add_output(MakeOutputName(node_name, i));
+    split_proto->add_output(MakeOutputName(node_name, static_cast<int>(i)));
   }
 
   onnx::AttributeProto *axis_attr_proto = split_proto->add_attribute();
@@ -3188,7 +3188,7 @@ void OnnxExporter::ExportWhileLoop(const CNodePtr &start_node, std::map<AnfNodeP
   for (const auto &[loop_i, control_i] : loop_parts.used_loop_to_control_param_indices) {
     auto name = GetNodeInputName(start_node->input(control_i + 1), node_map_ptr, graph_proto);
     loop_proto->add_input(name);
-    loop_proto->add_output(MakeOutputName(node_name + "_loop", loop_i));
+    loop_proto->add_output(MakeOutputName(node_name + "_loop", static_cast<int>(loop_i)));
   }
 
   onnx::AttributeProto *subgraph_attr = loop_proto->add_attribute();
@@ -3236,7 +3236,7 @@ void OnnxExporter::ExportWhileLoop(const CNodePtr &start_node, std::map<AnfNodeP
   const auto &after_loop_params = loop_parts.after_loop_subgraph->parameters();
   for (const auto &[after_i, output_i] : loop_parts.after_param_to_output_indices) {
     MS_EXCEPTION_IF_CHECK_FAIL(static_cast<int>(output_i) < loop_proto->output_size(), "Output index out of bounds");
-    renamed_node_map_[after_loop_params.at(after_i)] = loop_proto->output(output_i);
+    renamed_node_map_[after_loop_params.at(after_i)] = loop_proto->output(static_cast<int>(output_i));
   }
   ExportFuncGraph(loop_parts.after_loop_subgraph, node_map_ptr, graph_proto, false);
 
@@ -3245,7 +3245,7 @@ void OnnxExporter::ExportWhileLoop(const CNodePtr &start_node, std::map<AnfNodeP
     auto tuple_retval = dyn_cast<CNode>(after_loop_retval);
     for (size_t i = 1; i < tuple_retval->inputs().size(); ++i) {
       auto output_name = GetNodeInputName(tuple_retval->input(i), node_map_ptr, graph_proto);
-      AddOp("Identity", {output_name}, {MakeOutputName(node_name, i - 1)}, graph_proto);
+      AddOp("Identity", {output_name}, {MakeOutputName(node_name, static_cast<int>(i) - 1)}, graph_proto);
     }
   } else {
     auto output_name = GetNodeInputName(after_loop_retval, node_map_ptr, graph_proto);
@@ -3557,7 +3557,7 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_a
     auto tuple = dyn_cast<Tuple>(arg->Type());
 
     for (size_t i = 0; i < tuple->size(); ++i) {
-      auto output_name = MakeOutputName(arg_name, i);
+      auto output_name = MakeOutputName(arg_name, static_cast<int>(i));
       onnx::ValueInfoProto *output_proto = graph_proto->add_output();
       output_proto->set_name(output_name);
       SetValueInfoType(arg, output_proto, i);
