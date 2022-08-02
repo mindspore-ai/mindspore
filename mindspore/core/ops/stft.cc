@@ -15,13 +15,11 @@
  */
 
 #include "ops/stft.h"
-#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -35,18 +33,18 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-                                                    {k1DSignalInput, k2DSignalInput}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                              {k1DSignalInput, k2DSignalInput}, op_name);
   int64_t len = x_shape.back();
 
   int64_t n_fft = GetValue<int64_t>(primitive->GetAttr(kNFft));
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("n_fft", n_fft, kIncludeRight, {0, len}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("n_fft", n_fft, kIncludeRight, {0, len}, op_name);
 
   int64_t hop_length = GetValue<int64_t>(primitive->GetAttr(kHopLength));
   (void)CheckAndConvertUtils::CheckInteger("hop_length", hop_length, kGreaterThan, 0, op_name);
 
   int64_t win_length = GetValue<int64_t>(primitive->GetAttr(kWinLength));
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("win_length", win_length, kIncludeRight, {0, n_fft}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("win_length", win_length, kIncludeRight, {0, n_fft}, op_name);
 
   auto window_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual, k1DWindowDims,
@@ -55,7 +53,7 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
 
   std::vector<int64_t> out_shape = {};
   if (x_shape.size() == k2DInputDims) {
-    out_shape.emplace_back(x_shape[0]);
+    (void)out_shape.emplace_back(x_shape[0]);
   }
   int64_t n_frames = 1 + (len - n_fft) / hop_length;
   int64_t fft_length = n_fft;
@@ -65,13 +63,13 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
     constexpr int64_t k2FolderNum = 2;
     fft_length = n_fft / k2FolderNum + 1;
   }
-  out_shape.emplace_back(fft_length);
-  out_shape.emplace_back(n_frames);
+  (void)out_shape.emplace_back(fft_length);
+  (void)out_shape.emplace_back(n_frames);
   bool ret_complex = GetValue<bool>(primitive->GetAttr(kReturnComplex));
   if (!ret_complex) {
     // Split complex into real and image.
     constexpr int64_t k2DRealOutput = 2;
-    out_shape.emplace_back(k2DRealOutput);
+    (void)out_shape.emplace_back(k2DRealOutput);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -86,8 +84,8 @@ TypePtr STFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-                                                    {k1DSignalInput, k2DSignalInput}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                              {k1DSignalInput, k2DSignalInput}, op_name);
 
   auto window_dtype = input_args[1]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("window", window_dtype, valid_types, op_name);
