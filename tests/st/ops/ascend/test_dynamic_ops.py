@@ -155,21 +155,24 @@ class ShapeTensorNet(nn.Cell):
     def __init__(self):
         super(ShapeTensorNet, self).__init__()
         self.reshape = ops.Reshape()
-        self.shape = ops.TensorShape()
+        self.tensor_shape = ops.TensorShape()
+        self.shape = ops.Shape()
         self.strided_slice = ops.StridedSlice()
-        self.add = ops.Add()
         self.mul = ops.Mul()
-        self.concat = ops.Concat()
         self.broadcast_to = inner.DynamicBroadcastTo()
-
+        self.tensor_scatter_update = ops.TensorScatterUpdate()
     def construct(self, x, y):
-        res = self.shape(x)
+        res = self.tensor_shape(x)
         res = self.strided_slice(res, (1,), (4,), (1,))
         res = self.mul(res, 4)
         y = self.reshape(x, res)
-        res = self.concat((Tensor(np.array([2]).astype(np.int64)), res))
-        z = self.broadcast_to(y, res)
-        return z
+        y_shape = self.shape(y)
+        indice = Tensor(np.array([[0], [1]]).astype(np.int32))
+        update = Tensor(np.array([32, 32]).astype(np.int64))
+        res = self.tensor_scatter_update(res, indice, update)
+        z = self.reshape(y, res)
+        res_shape = self.shape(z)
+        return (y_shape, res_shape)
 
 
 class SoftmaxNet(nn.Cell):
@@ -372,7 +375,7 @@ def test_dynamic_add2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_tensor_shape_value():
+def test_tensor_shape_value_infer():
     """
     Feature: Test shape tensor infer mechanism.
     Description: Shape value of tensor should be inferred precisely.
@@ -389,7 +392,7 @@ def test_tensor_shape_value():
     input_1 = Tensor(shape=[64, 16, 4, None], dtype=ms.float32)
     net.set_inputs(input_0, input_1)
     res = dynamic_shape_sink_process(net, dataset, True, 3)
-    assert res.shape == (2, 64, 16, 180)
+    assert res == ((64, 16, -1), (32, 32, -1))
 
 
 @pytest.mark.level0

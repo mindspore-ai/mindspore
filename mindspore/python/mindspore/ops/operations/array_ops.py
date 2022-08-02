@@ -436,7 +436,8 @@ class Cast(PrimitiveWithInfer):
             out['min_value'] = min_value
             out['max_value'] = max_value
         if 'shape_value' in x:
-            out['shape_value'] = x['shape_value']
+            np_dst_type = mstype.dtype_to_nptype(dst_type)
+            out['shape_value'] = tuple(np.array(x['shape_value']).astype(np_dst_type))
         return out
 
 
@@ -2853,10 +2854,15 @@ class Stack(PrimitiveWithInfer):
                    'dtype': x_type[0],
                    'value': infered_value}
 
+        def unpack(x):
+            if isinstance(x, (tuple, list)) and len(x) == 1:
+                return unpack(x[0])
+            return x
+
         if 'shape_value' in value and value['shape_value'] is not None:
             input_shape_value = []
             for item in value['shape_value']:
-                item = item[0]
+                item = unpack(item)
                 item = np.array(item)
                 input_shape_value.append(item)
             infered_shape_value = np.stack(input_shape_value, axis=self.axis)
@@ -3398,6 +3404,7 @@ class StridedSlice(PrimitiveWithInfer):
                     'value': value,
                     'max_value': max_value_slice,
                     'min_value': min_value_slice}
+
         if "shape_value" in x:
             validator.check_value_type("shape_value", x["shape_value"], [tuple], self.name)
             shape_value_slice = self._compute_dynamic_slicing_value(x["shape_value"], begin_v, end_v, strides_v)
@@ -6486,10 +6493,13 @@ class TensorScatterUpdate(_TensorScatterOp):
             input_x_value = input_x_value.asnumpy()
         if indices_value is None or updates_value is None:
             return None
-        indices = indices_value.asnumpy()
+        if isinstance(indices_value, (Tensor, Tensor_)):
+            indices_value = indices_value.asnumpy()
+        if isinstance(updates_value, (Tensor, Tensor_)):
+            updates_value = updates_value.asnumpy()
         input_x = np.array(input_x_value)
         updates = np.array(updates_value)
-        for i, indice in enumerate(indices):
+        for i, indice in enumerate(indices_value):
             input_x[indice] = updates[i]
         output = tuple(input_x.tolist())
         return output
@@ -6505,6 +6515,9 @@ class TensorScatterUpdate(_TensorScatterOp):
         args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return input_x_dtype
+
+    def _infer_shape_value(self, input_x_value, indices_value, updates_value):
+        return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
 
 class TensorScatterMax(_TensorScatterOp):
