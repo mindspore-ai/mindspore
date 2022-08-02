@@ -78,7 +78,7 @@ void CropAndResizeGradBoxesCpuKernelMod::InitKernel(const CNodePtr &kernel_node)
 void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::AddressPtr> &outputs) {
   auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
   const int nums_boxes = grads_shape_[0];
-  int num = nums_boxes * kCoordinateLen;
+  int num = nums_boxes * SizeToInt(kCoordinateLen);
   float zero_num = static_cast<float>(0);
   for (int i = 0; i < num; i++) {
     *(outputDatas + i) = zero_num;
@@ -95,15 +95,15 @@ bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::
   auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->addr);
   auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndex]->addr);
   auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
-  const int image_batch = image_shape_[kBatch];
-  const int image_height = image_shape_[kHeight];
-  const int image_width = image_shape_[kWidth];
-  const int depth = image_shape_[kDepth];
-  const int nums_boxes = grads_shape_[kNumBoxes];
-  const int crop_height = grads_shape_[kHeight];
-  const int crop_width = grads_shape_[kWidth];
-  const int crop_depth = grads_shape_[kDepth];
-  const int boxesCoordinateNum = boxes_shape_[1];
+  const int image_batch = LongToInt(image_shape_[kBatch]);
+  const int image_height = LongToInt(image_shape_[kHeight]);
+  const int image_width = LongToInt(image_shape_[kWidth]);
+  const int depth = LongToInt(image_shape_[kDepth]);
+  const int nums_boxes = LongToInt(grads_shape_[kNumBoxes]);
+  const int crop_height = LongToInt(grads_shape_[kHeight]);
+  const int crop_width = LongToInt(grads_shape_[kWidth]);
+  const int crop_depth = LongToInt(grads_shape_[kDepth]);
+  const int boxesCoordinateNum = LongToInt(boxes_shape_[1]);
   const int num_image2 = image_height * image_width * depth;
   const int num_image3 = image_width * depth;
   const int num_crop2 = crop_height * crop_width * crop_depth;
@@ -161,19 +161,21 @@ bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::
           image_xgrad_value *= top_grad;
           // dy1,dy2
           if (crop_height > 1) {
-            *(outputDatas + b * kCoordinateLen + 0) += image_ygrad_value * (image_height - 1 - y * height_ratio);
-            *(outputDatas + b * kCoordinateLen + kCoordY2) += image_ygrad_value * (y * height_ratio);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + 0) +=
+              image_ygrad_value * (image_height - 1 - y * height_ratio);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordY2) += image_ygrad_value * (y * height_ratio);
           } else {
-            *(outputDatas + b * kCoordinateLen + kCoordY1) += image_ygrad_value * kNum * (image_height - 1);
-            *(outputDatas + b * kCoordinateLen + kCoordY2) += image_ygrad_value * kNum * (image_height - 1);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordY1) += image_ygrad_value * kNum * (image_height - 1);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordY2) += image_ygrad_value * kNum * (image_height - 1);
           }
           // dx1,dx2
           if (crop_width > 1) {
-            *(outputDatas + b * kCoordinateLen + kCoordX1) += image_xgrad_value * (image_width - 1 - x * width_ratio);
-            *(outputDatas + b * kCoordinateLen + kCoordX2) += image_xgrad_value * (x * width_ratio);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordX1) +=
+              image_xgrad_value * (image_width - 1 - x * width_ratio);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordX2) += image_xgrad_value * (x * width_ratio);
           } else {
-            *(outputDatas + b * kCoordinateLen + kCoordX1) += image_xgrad_value * kNum * (image_width - 1);
-            *(outputDatas + b * kCoordinateLen + kCoordX2) += image_xgrad_value * kNum * (image_width - 1);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordX1) += image_xgrad_value * kNum * (image_width - 1);
+            *(outputDatas + IntToSize(b) * kCoordinateLen + kCoordX2) += image_xgrad_value * kNum * (image_width - 1);
           }
         }
       }
