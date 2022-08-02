@@ -1438,7 +1438,9 @@ class MatMul(PrimitiveWithCheck):
 
     def check_dtype(self, x1, x2):
         args = {"x1": x1, "x2": x2}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type + mstype.int_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args,
+                                                      mstype.float_type + mstype.int_type + (mstype.complex64,),
+                                                      self.name)
 
 
 class BatchMatMul(MatMul):
