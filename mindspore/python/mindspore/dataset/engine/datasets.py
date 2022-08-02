@@ -2746,14 +2746,6 @@ class _PythonCallable:
         if result is None:
             # Invoke original Python callable in master process in case the pool is gone.
             result = self.py_callable(*args)
-        if isinstance(result, tuple):
-            result_tmp = []
-            for r in result:
-                r = np.array(r) if not isinstance(r, np.ndarray) else r
-                result_tmp.append(r)
-            result = tuple(result_tmp)
-        else:
-            result = np.array(result) if not isinstance(result, np.ndarray) else result
         return result
 
     def to_json(self):
@@ -2827,7 +2819,6 @@ def _worker_loop(operations, pipe):
         We need to ignore sigint signal here so subprocesses can exit normally and clear.
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-
 
     while not _main_process_already_exit():
         _ignore_sigint()
