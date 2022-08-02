@@ -57,9 +57,9 @@ std::vector<float> ClusterQuantization::InitClusterCentroid(const float *data, s
   return clusters;
 }
 
-void ClusterQuantization::KMeansClustering(const float *data, size_t elem_count, const std::vector<float> &clusters,
-                                           std::vector<int8_t> *clusters_index,
-                                           std::vector<std::vector<float>> *clusters_data) {
+void ClusterQuantization::SelectClusterCentroid(const float *data, size_t elem_count,
+                                                const std::vector<float> &clusters, std::vector<int8_t> *clusters_index,
+                                                std::vector<std::vector<float>> *clusters_data) {
   for (size_t i = 0; i < elem_count; i++) {
     size_t index = 0;
     double euclidean_distance = std::pow(data[i] - clusters.at(0), kPowExponent);
@@ -101,8 +101,8 @@ int ClusterQuantization::KMeans(const float *data, size_t elem_count, size_t k, 
     std::vector<int8_t> cur_clusters_index(elem_count);
     std::vector<std::vector<float>> clusters_data(centroid.size());
 
-    // clustering
-    KMeansClustering(data, elem_count, centroid, &cur_clusters_index, &clusters_data);
+    // Calculate the distance and select the cluster centroid.
+    SelectClusterCentroid(data, elem_count, centroid, &cur_clusters_index, &clusters_data);
     // Update cluster centroid.
     UpdateClusterCentroid(clusters_data, &centroid);
 
@@ -146,7 +146,7 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
     auto data = static_cast<float *>(tensor_info->data().data());
     std::vector<float> cluster_centroid;
     std::vector<int8_t> clusters;
-    auto ret = KMeans(data, tensor_info->DataSize(), 256, 64, 0.001, &clusters, &cluster_centroid);
+    auto ret = KMeans(data, tensor_info->DataSize(), k_, max_epochs_, tol_error_, &clusters, &cluster_centroid);
     if (ret == RET_NO_CHANGE) {
       continue;
     } else if (ret != RET_OK) {
