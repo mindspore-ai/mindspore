@@ -141,8 +141,9 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
-  void AssignParamKey(const KernelGraphPtr &kernel_graph);
-  void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
+  void AssignParamKey(const KernelGraphPtr &kernel_graph) const;
+  void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
+                           const std::vector<tensor::TensorPtr> &inputs_const) const;
   bool IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) const;
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                 std::string *error_msg) const {
@@ -201,7 +202,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) const;
   void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) const;
   void GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                                  std::map<std::string, size_t> *forward_op_output_tensor_id);
+                                  std::map<std::string, size_t> *forward_op_output_tensor_id) const;
   static void ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
                                      std::map<std::string, size_t> *forward_op_output_tensor_id);
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
@@ -253,7 +254,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
 
   virtual void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { MS_EXCEPTION_IF_NULL(kernel_graph); }
 
-  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs);
+  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   virtual KernelGraphPtr BuildOpImpl(const OpRunInfo & /* op_run_info */, const GraphInfo & /* graph_info */,
                                      const std::vector<tensor::TensorPtr> & /* input_tensors */,
                                      const std::vector<int64_t> & /* tensors_mask */) {
@@ -310,7 +311,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   // Generate graph info for a single op graph
   void GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, GraphInfo *graph_info) const;
   OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info,
-                               GraphOutputInfo *const graph_output_info) const;
+                               GraphOutputInfo *graph_output_info) const;
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const;
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -319,21 +320,21 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                          const std::map<KernelWithIndex, tensor::TensorPtr> &op_output) const;
   void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                          const std::map<AnfNodePtr, size_t> &parameter_index,
-                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info) const;
   tensor::TensorPtr GetOpInputTensorByIndex(const CNodePtr &cnode,
                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
                                             const std::vector<tensor::TensorPtr> &graph_inputs,
-                                            InputTensorInfo *const input_tensor_info, size_t input_index);
+                                            InputTensorInfo *input_tensor_info, size_t input_index) const;
 
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
-  AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
+  AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
-  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
+  void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const;
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const;
   virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t /* bucket_id */, uint32_t /* bucket_size */) {
