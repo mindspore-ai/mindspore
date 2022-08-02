@@ -351,7 +351,7 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
       MS_LOG(ERROR) << "current_sequence_node is null.";
       return;
     }
-    MS_LOG(ERROR) << "sequence_nodes[" << i << "]: " << current_sequence_node << "/"
+    MS_LOG(DEBUG) << "sequence_nodes[" << i << "]: " << current_sequence_node << "/"
                   << current_sequence_node->DebugString()
                   << ", flags: " << GetSequenceNodeElementsUseFlags(current_sequence_node);
   }
