@@ -62,15 +62,6 @@ bool SparseMatrixAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  auto indptr_shape = inputs.at(kAIndptrIdx)->GetShapeVector();
-  if (indptr_shape[0] < 0) {
-    return true;
-  }
-  row_ = LongToSize(indptr_shape[0] - 1);
-  for (size_t i = 0; i < kOutputNum; i++) {
-    auto dtype = inputs[i]->GetDtype();
-    (void)types_.emplace_back(dtype);
-  }
   is_need_retrieve_output_shape_ = true;
   return true;
 }
@@ -84,6 +75,15 @@ int SparseMatrixAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
       return KRET_RESIZE_FAILED;
+    }
+    auto indptr_shape = inputs.at(kAIndptrIdx)->GetShapeVector();
+    if (indptr_shape[0] < 0) {
+      return ret;
+    }
+    row_ = LongToSize(indptr_shape[0] - 1);
+    for (size_t i = 0; i < kOutputNum; i++) {
+      auto dtype = inputs[i]->GetDtype();
+      (void)types_.emplace_back(dtype);
     }
     output_size_list_.clear();
     (void)output_size_list_.emplace_back(input_size_list_[kADenseShapeIdx]);  // dense shape
@@ -127,7 +127,10 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   auto c_dense_shape = reinterpret_cast<T *>(outputs[kOutDenseShape]->addr);
   auto c_batch = reinterpret_cast<T *>(outputs[kOutBatch]->addr);
   // Consider the dense shape of input and output are the same.
-  (void)memcpy(c_dense_shape, a_dense_shape, outputs[kOutDenseShape]->size);
+  auto ret = memcpy_s(c_dense_shape, outputs[kOutDenseShape]->size, a_dense_shape, inputs[kADenseShapeIdx]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+  }
   auto batch_size = static_cast<size_t>(a_batch_size > 1 ? (a_batch_size - 1) : 1);
   c_batch[0] = 0;
   // Do the compute: C = alpha * A + beta * B.
@@ -181,7 +184,7 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     };
     ParallelLaunchAutoSearch(task, row_, this, &parallel_search_info_);
     if (s < batch_size - 1) {
-      c_batch[s + 1] = tmp_batch + c_batch[s];
+      c_batch[s + 1] = static_cast<T>(tmp_batch) + c_batch[s];
     }
     tmp_batch = 0;
   }
