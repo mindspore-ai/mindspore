@@ -827,8 +827,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         resize_bilinear_inner = _get_cache_prim(IMG.ResizeBilinearV2)(align_corners, half_pixel_centers)
         return resize_bilinear_inner(x, output_size)
 
-    raise TypeError(
-        "Input Error: For interpolate,  {} mode is not support now".format(mode))
+    raise ValueError("Input Error: For interpolate,  {} mode is not support now".format(mode))
 
 
 def softsign(x):
