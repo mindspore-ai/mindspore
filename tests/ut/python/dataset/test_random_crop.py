@@ -546,7 +546,7 @@ def test_random_crop_09():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    error_msg = "number of channels for input tensor can only be 1 or 3"
+    error_msg = "Expecting tensor in channel of (1, 3)"
     assert error_msg in str(error_info.value)
 
 

@@ -26,6 +26,16 @@
 
 namespace mindspore {
 namespace dataset {
+Status ConvertNumpyToTensor(const py::object &py_obj, TensorRow *output) {
+  std::shared_ptr<Tensor> out;
+  // Python object like bool, int, float, list or tuple can also be converted
+  // to a NumPy array by the following cast, but the data type will be unknown
+  // if it is not a valid NumPy object
+  RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py_obj.cast<py::array>(), &out));
+  output->push_back(out);
+  return Status::OK();
+}
+
 Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   Status ret = Status(StatusCode::kSuccess, "PyFunc Call Succeed");
@@ -57,7 +67,7 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
       } else {
         if (py::isinstance<py::tuple>(ret_py_obj)) {
           // In case of a n-m mapping, the return value will be a tuple of numpy arrays
-          py::tuple ret_py_tuple = ret_py_obj.cast<py::tuple>();
+          auto ret_py_tuple = ret_py_obj.cast<py::tuple>();
           // Iterate over two containers simultaneously for memory copy
           for (size_t i = 0; i < ret_py_tuple.size(); i++) {
             py::object ret_py_ele = ret_py_tuple[i];
@@ -67,16 +77,11 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
                               "True, PyFunc may execute time out.";
               goto TimeoutError;
             }
-
-            std::shared_ptr<Tensor> out;
-            RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &out));
-            output->push_back(out);
+            RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_ele, output));
           }
         } else {
           // In case of a n-1 mapping, the return value will be a numpy array
-          std::shared_ptr<Tensor> out;
-          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_obj.cast<py::array>(), &out));
-          output->push_back(out);
+          RETURN_IF_NOT_OK(ConvertNumpyToTensor(ret_py_obj, output));
         }
       }
     } catch (const py::error_already_set &e) {
