@@ -64,7 +64,7 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   void CheckInputsAndOutputs(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
 
   template <typename T>
-  int64_t Sampling(T *sampled_candidates, const size_t length);
+  int64_t Sampling(T *sampled_candidates, unsigned int seed, const size_t length);
 
   template <typename S>
   void ExpectedCount(const int64_t counter, S *true_expected_count, S *sampled_expected_count);
@@ -85,10 +85,8 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
 
   bool remove_accidental_hits_;
   bool is_null_input_;
-  std::default_random_engine generator_;
 
-  size_t init_seed_{0};
-  size_t cur_seed_{0};
+  unsigned int init_seed_{0};
   std::unordered_set<int64_t> set_input_;
 };
 }  // namespace kernel

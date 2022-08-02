@@ -52,8 +52,7 @@ const size_t kInputRank = 2;
 
 // uniform distribution sampling
 template <typename T>
-int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, const size_t length) {
-  int64_t counter = 0;
+int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, unsigned int seed, const size_t length) {
   size_t target_length = LongToSize(num_sampled_) * sizeof(T);
   if (length != target_length) {
     return 0;
@@ -63,27 +62,25 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
   if constexpr (sizeof(T) == sizeof(int64_t)) {
     range = range_max_;
   } else if constexpr (sizeof(T) == sizeof(int32_t)) {
-    range = static_cast<T>(range_max_);  // range_max_ less than the max value of ‘int32_t’ number
+    range = LongToInt(range_max_);  // range_max_ less than the max value of ‘int32_t’ number
   } else {
     MS_LOG(EXCEPTION) << "Unknown type for sampling.";
   }
 
+  std::mt19937 random_generator(seed);
   std::uniform_int_distribution<T> distribution(0, range - 1);
   if (!unique_) {
-    auto task = [this, &sampled_candidates_, &distribution](size_t start, size_t end) {
-      for (size_t i = start; i < end; i++) {
-        sampled_candidates_[i] = distribution(generator_);
-      }
-    };
-    ParallelLaunchAutoSearch(task, LongToSize(num_sampled_), this, &parallel_search_info_, pool_);
-    counter = num_sampled_;
-    return counter;
+    for (int64_t i = 0; i < num_sampled_; i++) {
+      sampled_candidates_[i] = distribution(random_generator);
+    }
+    return num_sampled_;
   }
 
   int64_t picked = 0;
+  int64_t counter = 0;
   std::unordered_set<T> set_container;
   while (picked < num_sampled_) {
-    T sample = distribution(generator_);
+    T sample = distribution(random_generator);
     counter++;
     if ((set_container.find(sample) == set_container.end()) &&
         ((!remove_accidental_hits_) || set_input_.find(sample) == set_input_.end())) {
@@ -176,7 +173,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   if (batch_size_ == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
-  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1));
+  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>()));
   input_size_ = input_size_ / LongToSize(batch_size_);
 
   (void)output_sizes_.emplace_back(num_sampled_);
@@ -211,14 +208,9 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   if (seed_ < 0) {
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'seed' can not be less than 0, but got: "
                              << seed_;
-  } else if (seed_ == 0) {
-    cur_seed_ = LongToSize(time(nullptr));
-    generator_.seed(cur_seed_);
-  } else {
-    init_seed_ = LongToSize(seed_);
-    generator_.seed(init_seed_);
   }
 
+  init_seed_ = LongToUint(seed_);
   // check the attribute, inputs and outputs
   CheckAttribute();
   CheckInputsAndOutputs(inputs, outputs);
@@ -264,14 +256,22 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
     return true;
   }
   (void)workspaces;
-  MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : init_seed_ = " << init_seed_
-                << "cur_seed_ = " << cur_seed_;
+
   T *sampled_candidates = GetDeviceAddress<T>(outputs, kIndex0);
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
 
   for (int64_t j = 0; j < batch_size_; ++j) {
+    unsigned int RNG_seed = 0;
+    std::random_device rd;
+    if (init_seed_ != 0) {
+      RNG_seed = init_seed_;
+    } else {
+      RNG_seed = rd();
+    }
+    MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : RNG_seed = " << RNG_seed;
+
     if (remove_accidental_hits_) {
       set_input_.clear();  // reset for each batch
       for (size_t i = 0; i < input_size_; i++) {
@@ -285,7 +285,7 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
       }
     }
     size_t sampled_candidate_size = LongToSize(num_sampled_) * sizeof(T);
-    int64_t counter = Sampling<T>(sampled_candidates, sampled_candidate_size);
+    int64_t counter = Sampling<T>(sampled_candidates, RNG_seed, sampled_candidate_size);
     // calculate expected count.
     ExpectedCount<S>(counter, true_expected_count, sampled_expected_count);
 
