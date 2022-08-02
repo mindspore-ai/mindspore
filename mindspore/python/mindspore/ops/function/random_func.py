@@ -152,12 +152,13 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
 
     Examples:
         >>> from mindspore.ops import functional as F
+        >>> from mindspore import Tensor
+        >>> import mindspore.common.dtype as mstype
         >>> import numpy as np
-        >>> logits = np.random.random((10, 5)).astype(np.float32)
+        >>> logits = Tensor(np.random.random((10, 5)).astype(np.float32), mstype.float32)
         >>> net = F.random_categorical(logits, 8)
-        >>> output = net(Tensor(logits))
-        >>> result = output.shape
-        >>> print(result)F
+        >>> result = net.shape
+        >>> print(result)
         (10, 8)
     """
     random_categorical_ = P.RandomCategorical(dtype)
