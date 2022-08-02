@@ -272,7 +272,6 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
-  MS_EXCEPTION_IF_NULL(bin_map);
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
