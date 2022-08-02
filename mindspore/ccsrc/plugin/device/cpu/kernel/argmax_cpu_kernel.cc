@@ -78,7 +78,7 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 }
 
 bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
+                              const std::vector<KernelTensorPtr> &) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMax>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ArgMax ops failed!";
