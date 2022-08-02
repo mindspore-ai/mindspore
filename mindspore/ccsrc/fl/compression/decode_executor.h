@@ -20,9 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <functional>
 #include <algorithm>
 #include <regex>
@@ -58,7 +55,7 @@ class DecodeExecutor {
   bool DeQuantSparseDiff(std::map<std::string, std::vector<float>> *weight_map,
                          const std::vector<CompressFeatureMap> &compress_feature_maps, size_t num_bits,
                          float upload_sparse_rate, int seed, const std::vector<std::string> &name_vec,
-                         size_t data_size);
+                         size_t data_size) const;
 
   // decode
   bool Decode(std::map<std::string, std::vector<float>> *weight_map,
