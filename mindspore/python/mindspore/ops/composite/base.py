@@ -22,7 +22,7 @@ import mindspore as ms
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
-    SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_
+    SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
@@ -892,6 +892,25 @@ class _ListInsert(ListInsert_):
 
 
 _insert = _ListInsert("insert")
+
+
+class _ListPop(ListPop_):
+    """
+    A metafuncgraph class that pop one element from list.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _ListPop."""
+        ListPop_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_pop = _ListPop("pop")
 
 
 class _Tail(Tail_):

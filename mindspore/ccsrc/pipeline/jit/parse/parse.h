@@ -326,6 +326,8 @@ class Parser {
   }
   // Return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
+  // Check if the node is pop operation.
+  bool IsPopOperation(const AnfNodePtr &node);
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -334,6 +336,7 @@ class Parser {
   FuncGraphPtr func_graph_;
   // Error code setwhen parsing ast tree
   ParseStatusCode errcode_;
+  py::object list_pop_target_obj_;
 
   // Hold all reference for FunctionBlock in this round of parsing,
   // so in FunctionBlock class we can use FunctionBlock* in member

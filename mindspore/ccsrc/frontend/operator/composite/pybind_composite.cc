@@ -17,8 +17,7 @@
  */
 #include "frontend/operator/composite/composite.h"
 #include "include/common/pybind_api/api_register.h"
-#include "frontend/operator/composite/list_append_operation.h"
-#include "frontend/operator/composite/list_insert_operation.h"
+#include "frontend/operator/composite/list_operation.h"
 #include "frontend/operator/composite/map.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/vmap.h"
@@ -83,6 +82,10 @@ REGISTER_PYBIND_WITH_PARENT_NAME(
 
     // Reg ListInsert
     (void)py::class_<ListInsert, MetaFuncGraph, std::shared_ptr<ListInsert>>(*m, "ListInsert_")
+      .def(py::init<const std::string &>());
+
+    // Reg ListPop
+    (void)py::class_<ListPop, MetaFuncGraph, std::shared_ptr<ListPop>>(*m, "ListPop_")
       .def(py::init<const std::string &>());
 
     // Reg MapPy

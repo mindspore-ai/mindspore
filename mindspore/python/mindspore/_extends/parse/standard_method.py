@@ -25,7 +25,7 @@ from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
-from ...ops.composite.base import _append, _insert
+from ...ops.composite.base import _append, _insert, _pop
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations._inner_ops import Format
@@ -2423,12 +2423,19 @@ def list_hasnext(xs):
 
 
 def list_append(self_, list_item):
+    """Append into list"""
     return _append(self_, list_item)
 
 
 def list_insert(self_, index, obj):
     """Insert into list"""
     return _insert(self_, index, obj)
+
+
+def list_pop(self_, index=-1):
+    """Pop from list"""
+    self_, pop_val = _pop(self_, index)
+    return self_, pop_val
 
 
 def dict_get(self_, key_index, default_value=None):

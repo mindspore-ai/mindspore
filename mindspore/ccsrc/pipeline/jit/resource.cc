@@ -133,10 +133,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"__setitem__", prim::kPrimListSetItem},    // P.list_setitem,
        {"__ms_iter__", prim::kPrimIdentity},       // P.identity
        {"__ms_next__", std::string("list_next")},  // C.list_next
-       {"append", std::string("list_append")},     // C.list_next
+       {"append", std::string("list_append")},     // C.list_append
        {"__bool__", std::string("list_bool")},     // C.list_bool
        {"__ms_hasnext__", std::string("list_hasnext")},
-       {"insert", std::string("list_insert")},
+       {"insert", std::string("list_insert")},  // C.list_insert
+       {"pop", std::string("list_pop")}         // C.list_pop
      }},
     {kObjectTypeDictionary,
      {
