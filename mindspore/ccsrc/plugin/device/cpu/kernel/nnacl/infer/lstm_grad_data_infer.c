@@ -35,7 +35,7 @@ int LstmGradDataInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
 
-  for (int i = 0; i < outputs_size; i++) {
+  for (size_t i = 0; i < outputs_size; i++) {
     SetDataTypeFormat(outputs[i], Y);
   }
 

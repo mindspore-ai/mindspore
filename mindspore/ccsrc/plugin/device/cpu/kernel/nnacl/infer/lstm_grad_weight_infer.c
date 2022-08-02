@@ -31,7 +31,7 @@ int LstmGradWeightInferShape(const TensorC *const *inputs, size_t inputs_size, T
   const TensorC *Y = inputs[THIRD_INPUT];
 
   TensorC *output = outputs[FIRST_INPUT];
-  for (int i = 0; i < outputs_size; i++) {
+  for (size_t i = 0; i < outputs_size; i++) {
     SetDataTypeFormat(outputs[i], input);
   }
 
