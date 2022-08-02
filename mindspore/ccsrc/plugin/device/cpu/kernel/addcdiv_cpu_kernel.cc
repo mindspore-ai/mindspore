@@ -81,7 +81,6 @@ bool AddcdivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                       << "', the type of 'x' should be float16, float32, float64, int64, but got "
                       << TypeIdLabel(dtype_);
   }
-  return true;
 }
 
 template <typename T>

@@ -30,10 +30,11 @@ void BlackmanWindowCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   periodic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "periodic");
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input_shape.size() > 0) {
+  // To avoid using the same name as the global variable 'input_shape', we used 'local_input_shape' instead
+  auto local_input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  if (local_input_shape.size() > 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dim of window_length should be 0, but got "
-                             << input_shape.size();
+                             << local_input_shape.size();
   }
   node_wpt_ = kernel_node;
   cnode_ptr_ = kernel_node;
@@ -65,7 +66,7 @@ bool BlackmanWindowCpuKernelMod::BlackmanWindowKernelFunc(const std::vector<kern
 
   auto window_length = static_cast<int64_t>(*input);
   double pre_window_length = static_cast<double>(window_length);
-  const size_t OUTPUTISONE = 1.0;
+  const size_t OUTPUTISONE = 1;
 
   ShapeVector out_shape = {window_length};
   std::vector<TypeId> dtypes = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};

@@ -167,7 +167,6 @@ bool AddcmulCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                          "but got "
                       << TypeIdLabel(dtype_);
   }
-  return true;
 }
 
 std::vector<KernelAttr> AddcmulCpuKernelMod::GetOpSupport() {

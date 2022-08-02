@@ -286,7 +286,7 @@ void AdjustHueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
+                                   const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   switch (dtype_) {
     case kNumberTypeFloat16:
@@ -298,7 +298,6 @@ bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     default:
       MS_LOG(EXCEPTION) << "For AdjustHue, the type of 'image' should be float16, float32, but got "
                         << TypeIdLabel(dtype_) << ".";
-      return false;
   }
   return true;
 }

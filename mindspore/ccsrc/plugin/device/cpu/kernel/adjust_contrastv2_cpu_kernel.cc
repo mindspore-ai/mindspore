@@ -95,7 +95,7 @@ void AdjustContrastv2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AdjustContrastv2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
+                                          const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (input_type_ == kNumberTypeFloat32) {
     return LaunchAdjustContrastv2Kernel<float>(inputs, outputs);

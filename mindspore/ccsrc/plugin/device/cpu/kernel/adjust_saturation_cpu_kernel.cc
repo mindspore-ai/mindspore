@@ -159,7 +159,7 @@ void AdjustSaturationCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
+                                          const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (input_type_ == kNumberTypeFloat32) {
     return detail::LaunchAdjustSaturationKernel<float>(inputs, outputs);
@@ -167,9 +167,7 @@ bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
     return detail::LaunchAdjustSaturationKernel<Eigen::half>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported input data type " << TypeIdLabel(input_type_);
-    return false;
   }
-  return true;
 }
 std::vector<KernelAttr> AdjustSaturationCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
