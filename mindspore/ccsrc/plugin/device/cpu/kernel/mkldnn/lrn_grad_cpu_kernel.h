@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
-#include <utility>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

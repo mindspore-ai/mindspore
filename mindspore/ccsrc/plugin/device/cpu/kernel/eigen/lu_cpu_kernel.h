@@ -43,6 +43,7 @@ class LUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows) const;
   template <typename T>
   void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value) const;
+  void DoSafeMemCopy(void *dest, size_t dest_max, const void *src, size_t count);
   template <typename T>
   void InitIOSize(const CNodePtr &kernel_node);
   template <typename T>

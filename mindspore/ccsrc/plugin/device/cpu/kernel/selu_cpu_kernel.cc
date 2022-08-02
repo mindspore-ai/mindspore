@@ -63,8 +63,8 @@ bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     for (size_t i = start; i < end; i++) {
       T input_value = input[i];
       output[i] = input_value >= template_zero
-                    ? scale * input_value
-                    : scale_dot_alpha * static_cast<T>(std::expm1(static_cast<float>(input_value)));
+                    ? (scale * input_value)
+                    : (scale_dot_alpha * static_cast<T>(std::expm1(static_cast<float>(input_value))));
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_, pool_);

@@ -34,15 +34,19 @@ abstract::TupleShapePtr LogMatrixDeterminantInferShape(const PrimitivePtr &primi
   constexpr int64_t number1 = 1;
   constexpr int64_t number2 = 2;
   constexpr int64_t dy_shape_placeholder = -1;
-  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
   std::vector<int64_t> shape(x_shape.begin(), (x_shape.end() - number2));
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
-  if (x_shape[x_rank - number1] == dy_shape_placeholder || x_shape[x_rank - number2] == dy_shape_placeholder) {
+  if (x_shape[LongToSize(x_rank - number1)] == dy_shape_placeholder ||
+      x_shape[LongToSize(x_rank - number2)] == dy_shape_placeholder) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
   }
-  CheckAndConvertUtils::Check("row size", x_shape[x_rank - number1], kEqual, x_shape[x_rank - number2], prim_name);
-  CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - number1], kGreaterEqual, number2, prim_name);
-  CheckAndConvertUtils::CheckInteger("column size", x_shape[x_rank - number2], kGreaterEqual, number2, prim_name);
+  CheckAndConvertUtils::Check("row size", x_shape[LongToSize(x_rank - number1)], kEqual,
+                              x_shape[LongToSize(x_rank - number2)], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[LongToSize(x_rank - number1)], kGreaterEqual, number2,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("column size", x_shape[LongToSize(x_rank - number2)], kGreaterEqual, number2,
+                                           prim_name);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 
