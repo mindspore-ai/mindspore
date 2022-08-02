@@ -220,7 +220,7 @@ def strides_(x):
     return strides
 
 
-def astype(x, dtype, copy_tensor=True):
+def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
     """
     Return a copy of the tensor, casted to a specified type.
 
@@ -228,7 +228,7 @@ def astype(x, dtype, copy_tensor=True):
         dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
             of :class:`mindspore.dtype.float32` or `float32`.
             Default: :class:`mindspore.dtype.float32`.
-        copy_tensor (bool, optional): By default, astype always returns a newly allocated
+        copy (bool, optional): By default, astype always returns a newly allocated
             tensor. If this is set to false, the input tensor is returned instead
             of a copy if possible. Default: True.
 
@@ -250,7 +250,7 @@ def astype(x, dtype, copy_tensor=True):
         Int32
     """
     dtype = check_astype_dtype_const(dtype)
-    if not copy_tensor and dtype == x.dtype:
+    if not copy and dtype == x.dtype:
         return x
     return F.cast(x, dtype)
 
