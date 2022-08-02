@@ -41,7 +41,6 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
-#include "graph/tensor.h"
 #include "graph/utils/op_desc_utils.h"
 #include "graph/utils/tensor_utils.h"
 #include "ops/hcom_ops.h"

@@ -1141,7 +1141,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
   for (size_t i = 0; i < body_params.size(); i++) {
     auto p = body_params[i];
     int64_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
-    body_cond_map_[i] = idx;
+    body_cond_map_[i] = static_cast<size_t>(idx);
     MS_LOG(DEBUG) << "body_cond_map_'s key: " << i << " value: " << idx;
   }
 
@@ -1158,7 +1158,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
   for (size_t i = 0; i < after_params.size(); i++) {
     auto p = after_params[i];
     int64_t idx = find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
-    after_cond_map_[i] = idx;
+    after_cond_map_[i] = static_cast<size_t>(idx);
     MS_LOG(DEBUG) << "after_cond_map_'s key: " << i << " value: " << idx;
   }
   return;
