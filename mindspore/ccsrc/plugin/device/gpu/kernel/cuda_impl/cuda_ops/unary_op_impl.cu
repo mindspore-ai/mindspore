@@ -396,6 +396,13 @@ __global__ void AcoshKernel(const double *input, double *output, const size_t co
   return;
 }
 template <typename T>
+__global__ void AtanhKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = atanh(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void AtanhKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float x = static_cast<float>(input[i]);
@@ -1574,6 +1581,8 @@ template CUDA_LIB_EXPORT void Tan<Complex<float>>(const Complex<float> *input, C
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
 
 // complex128
 template CUDA_LIB_EXPORT void Real<double>(const Complex<double> *input, double *output, const size_t count,
@@ -1586,6 +1595,8 @@ template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atanh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 
 // bool
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
