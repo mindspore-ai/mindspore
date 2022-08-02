@@ -21,7 +21,6 @@
 #include <map>
 #include <limits>
 #include <string>
-#include "mindspore/core/ir/dtype/type_id.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
