@@ -4060,6 +4060,8 @@ class Tensor(Tensor_):
 
     def svd(self, full_matrices=False, compute_uv=True):
         """
+        Computes the singular value decompositions of one or more matrices.
+
         Refer to :func:`mindspore.ops.svd` for more detail.
 
         Args:
