@@ -18,7 +18,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <stack>
 #include <map>
 #include <tuple>
 #include <set>
