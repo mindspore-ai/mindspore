@@ -300,12 +300,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
             res += (stop_gradient(item),)
         return outputs[0], res
 
-    if has_aux:
-        fn_ = aux_fn
-    else:
-        fn_ = fn
-
-    def inner_fn(*args):
+    def inner_grad_fn(*args):
         if grad_position is None:
             return _grad_weight(fn, weights)(*args)
         grad_position_ = _convert_grad_position_type(grad_position)
@@ -313,18 +308,18 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
             return _grad_position(fn, None, grad_position_)(*args)
         return _grad_weight_position(fn, weights, grad_position_)(*args)
 
-    def inner_fn_aux(*args):
-        _, aux_value = fn_(*args)
+    def inner_aux_grad_fn(*args):
+        _, aux_value = aux_fn(*args)
         if grad_position is None:
-            return _grad_weight(fn_, weights)(*args), aux_value
+            return _grad_weight(aux_fn, weights)(*args), aux_value
         grad_position_ = _convert_grad_position_type(grad_position)
         if weights is None:
-            return _grad_position(fn_, None, grad_position_)(*args), aux_value
-        return _grad_weight_position(fn_, weights, grad_position_)(*args), aux_value
+            return _grad_position(aux_fn, None, grad_position_)(*args), aux_value
+        return _grad_weight_position(aux_fn, weights, grad_position_)(*args), aux_value
 
     if has_aux:
-        return inner_fn_aux
-    return inner_fn
+        return inner_aux_grad_fn
+    return inner_grad_fn
 
 
 def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
@@ -446,21 +441,27 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
             res += (stop_gradient(item),)
         return res
 
-    if has_aux:
-        fn_ = aux_fn
-    else:
-        fn_ = fn
-
-    def inner_fn(*args):
-        res = fn_(*args)
+    def inner_grad_fn(*args):
+        res = fn(*args)
         if grad_position is None:
-            return res, _grad_weight(fn_, weights)(*args)
+            return res, _grad_weight(fn, weights)(*args)
         grad_position_ = _convert_grad_position_type(grad_position)
         if weights is None:
-            return res, _grad_position(fn_, None, grad_position_)(*args)
-        return res, _grad_weight_position(fn_, weights, grad_position_)(*args)
+            return res, _grad_position(fn, None, grad_position_)(*args)
+        return res, _grad_weight_position(fn, weights, grad_position_)(*args)
 
-    return inner_fn
+    def inner_aux_grad_fn(*args):
+        res = aux_fn(*args)
+        if grad_position is None:
+            return res, _grad_weight(aux_fn, weights)(*args)
+        grad_position_ = _convert_grad_position_type(grad_position)
+        if weights is None:
+            return res, _grad_position(aux_fn, None, grad_position_)(*args)
+        return res, _grad_weight_position(aux_fn, weights, grad_position_)(*args)
+
+    if has_aux:
+        return inner_aux_grad_fn
+    return inner_grad_fn
 
 
 def _trans_jet_inputs(primals_item, series_item):
