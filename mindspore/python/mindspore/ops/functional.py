@@ -468,5 +468,6 @@ tensor_operator_registry.register('coalesce', coalesce)
 tensor_operator_registry.register('argmin_with_value', min)
 tensor_operator_registry.register('coo_add', sparse_add)
 tensor_operator_registry.register('top_k', P.TopK)
+tensor_operator_registry.register('isfinite', P.IsFinite)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
