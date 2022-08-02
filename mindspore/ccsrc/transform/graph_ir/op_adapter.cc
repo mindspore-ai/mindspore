@@ -21,7 +21,7 @@ namespace mindspore {
 namespace transform {
 static uint32_t CustomInferFunc(const Operator &) { return 0; }
 
-bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) {
+bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
   MS_EXCEPTION_IF_NULL(op);
   auto it = cus_input_map_->find(op->GetOpType());
   if (it == cus_input_map_->end()) {
@@ -30,7 +30,7 @@ bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) {
   return true;
 }
 
-Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
+Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from input index to input name.
@@ -55,7 +55,7 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   return SUCCESS;
 }
 
-Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
+Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from output index to output name.
@@ -146,7 +146,7 @@ Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, const std::shared
   return SUCCESS;
 }
 
-Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) {
+Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) const {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(input);
   auto it = cus_input_map_->find(op->GetOpType());
@@ -183,7 +183,7 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index, const OperatorPtr 
   }
 }
 
-Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) {
+Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) const {
   MS_EXCEPTION_IF_NULL(op);
   auto it = cus_input_map_->find(op->GetOpType());
   if (it == cus_input_map_->end()) {
@@ -272,7 +272,7 @@ OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {
   return getNormalOutput(op, index);
 }
 
-OutHandler OpAdapterImpl::getCustomOutput(const OperatorPtr &op, int index) {
+OutHandler OpAdapterImpl::getCustomOutput(const OperatorPtr &op, int index) const {
   MS_EXCEPTION_IF_NULL(op);
   auto it = cus_output_map_->find(op->GetOpType());
   if (it == cus_output_map_->end()) {
@@ -336,7 +336,7 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
   return SUCCESS;
 }
 
-size_t OpAdapterImpl::GetCustomOpOutputSize(const CusOperatorPtr &cus_op) {
+size_t OpAdapterImpl::GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const {
   MS_EXCEPTION_IF_NULL(cus_op);
   if (cus_output_map_->find(cus_op->GetOpType()) == cus_output_map_->end()) {
     MS_LOG(ERROR) << "This op does not create custom output map";
@@ -347,7 +347,7 @@ size_t OpAdapterImpl::GetCustomOpOutputSize(const CusOperatorPtr &cus_op) {
 }
 
 std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
-                                                              const std::string &format) {
+                                                              const std::string &format) const {
   if (type == nullptr) {
     MS_LOG(ERROR) << "Type ptr is nullptr";
     return nullptr;
@@ -410,7 +410,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   return SUCCESS;
 }
 
-std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &node, const std::string &format) {
+std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &node, const std::string &format) const {
   MS_EXCEPTION_IF_NULL(node);
   TypeId me_type = node->Type()->type_id();
   if (kObjectTypeTensorType == me_type) {
@@ -539,7 +539,7 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const std::string &attr_key, c
   return static_cast<int>(NOT_FOUND);
 }
 
-int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) {
+int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
   enum ValueType {
     SINGLE_VALUE = 0,
     SEQUEUE_VALUE,

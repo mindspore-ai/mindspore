@@ -59,9 +59,9 @@ class DfGraphManager {
   std::mutex lock_;
   std::map<std::string, DfGraphWrapperPtr> graphs_;
   std::set<string> saved_graphs_;
-  int graph_id_;
+  int graph_id_ = 0;
   std::map<uint32_t, AnfGraphPtr> anf_graphs_;
-  std::shared_ptr<transform::GraphRunner> graph_runner_ptr_;
+  std::shared_ptr<transform::GraphRunner> graph_runner_ptr_ = nullptr;
   std::shared_ptr<::ge::Session> sess_ptr_;
 };
 }  // namespace transform
