@@ -167,6 +167,19 @@
 - TimeMonitor打印内容变更，打印内容加入"train"或"eval"用于区分训练和推理阶段。
 - load_checkpoint 接口的`filter_prefix`：不再支持空字符串("")，匹配规则由强匹配修改为模糊匹配。
 
+#### import优化
+
+mindspore.context、mindspore.parallel、mindspore.profiler、mindspore.train模块的接口可直接在mindspore模块使用。原有用法仍可以继续支持。
+
+例如：
+
+-`mindspore.context.set_context`可简化为`mindspore.set_context`。
+-`mindspore.parallel.set_algo_parameters`可简化为`mindspore.set_algo_parameters`。
+-`mindspore.profiler.Profiler`可简化为`mindspore.Profiler`。
+-`mindspore.train.callback.Callback`可简化为`mindspore.Callback`。
+
+API页面统一汇总至：<https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore.html>。
+
 ## MindSpore Lite
 
 ### 主要特性和增强
