@@ -71,7 +71,7 @@ class RMSPropCpuKernelMod : public NativeCpuKernelMod {
   float epsilon_{1e-12};
   int64_t batch_size_{1};
   int64_t batch_rank_{0};
-  int64_t input_elements_;
+  int64_t input_elements_{0};
   TypeId dtype_{kTypeUnknown};
   std::string kernel_type_{"Unknown"};
 };
