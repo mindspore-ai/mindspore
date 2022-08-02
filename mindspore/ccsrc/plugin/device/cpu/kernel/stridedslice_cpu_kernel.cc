@@ -84,10 +84,10 @@ bool StridedSliceCpuKernelMod::MatchParallelPattern() {
 
 void StridedSliceCpuKernelMod::InitParallelParam() {
   auto idx = IntToSize(split_axis_);
-  outer_ = LongToInt(
-    std::accumulate(input_shape_.begin(), input_shape_.begin() + idx, int64_t(1), std::multiplies<int64_t>()));
-  inner_ = LongToInt(
-    std::accumulate(input_shape_.begin() + idx + 1, input_shape_.end(), int64_t(1), std::multiplies<int64_t>()));
+  outer_ = LongToInt(std::accumulate(input_shape_.begin(), input_shape_.begin() + IntToLong(split_axis_), int64_t(1),
+                                     std::multiplies<int64_t>()));
+  inner_ = LongToInt(std::accumulate(input_shape_.begin() + IntToLong(split_axis_) + 1, input_shape_.end(), int64_t(1),
+                                     std::multiplies<int64_t>()));
 
   int max_thread_num = SizeToInt(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
   int thread_num = 1;
