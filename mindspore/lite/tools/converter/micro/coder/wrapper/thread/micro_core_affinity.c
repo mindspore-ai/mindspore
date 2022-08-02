@@ -201,7 +201,12 @@ int FreeScheduleThreads(const int *bind_id, ThreadPool *g_pool) {
     CPU_SET(bind_id[i], &mask);
   }
   for (int i = 0; i < thread_num; i++) {
-    int ret = SetAffinity(g_pool->thread_id[i], &mask);
+    int ret;
+    if (i == 0) {
+      ret = SetAffinity(pthread_self(), &mask);
+    } else {
+      ret = SetAffinity(g_pool->thread_id[i - 1], &mask);
+    }
     if (ret != RET_TP_OK) {
       return ret;
     }
@@ -210,25 +215,6 @@ int FreeScheduleThreads(const int *bind_id, ThreadPool *g_pool) {
   return RET_TP_OK;
 }
 
-#if defined(BIND_CORE)
-static int Unisolate(int cpu_id) {
-  char path[C64NUM];
-  int ret = snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/isolate", cpu_id);
-  if (ret >= sizeof(path)) {
-    LOG_ERROR("snprintf exceeded size");
-    return RET_TP_ERROR;
-  }
-  FILE *fh = fopen(path, "w");
-  if (fh == NULL) {
-    LOG_ERROR("cannot open file %s", path);
-    return RET_TP_ERROR;
-  }
-  fprintf(fh, "%s", "0");
-  fclose(fh);
-  return RET_TP_OK;
-}
-#endif  // BIND_CORE
-
 int BindThreadsToCore(const int *bind_id, ThreadPool *g_pool) {
 #if defined(BIND_CORE)
   int thread_num = g_pool->max_thread_num;
@@ -236,11 +222,12 @@ int BindThreadsToCore(const int *bind_id, ThreadPool *g_pool) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(bind_id[i], &mask);
-    int ret = Unisolate(bind_id[i]);
-    if (ret != RET_TP_OK) {
-      LOG_ERROR("cannot remove isolation from cpu %d", bind_id[i]);
+    int ret;
+    if (i == 0) {
+      ret = SetAffinity(pthread_self(), &mask);
+    } else {
+      ret = SetAffinity(g_pool->thread_id[i], &mask);
     }
-    ret = SetAffinity(g_pool->thread_id[i], &mask);
     if (ret != RET_TP_OK) {
       LOG_ERROR("error binding task %zu to core %d\n", i, bind_id[i]);
       return ret;
