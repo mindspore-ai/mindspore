@@ -255,7 +255,7 @@ from .math_func import (
     approximate_equal,
     frac,
     kron,
-    rot90
+    rot90,
 )
 from .nn_func import (
     adaptive_avg_pool2d,

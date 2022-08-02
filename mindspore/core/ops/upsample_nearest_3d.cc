@@ -32,7 +32,7 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim5),
                                            prim_name);
 
@@ -68,6 +68,9 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
                              << " But get both.";
   }
 
+  if (x_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(y_shape);
+  }
   for (size_t i = 0; i < y_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger("output shape", y_shape[i], kGreaterThan, 0, prim_name);
   }

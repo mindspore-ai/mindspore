@@ -5722,23 +5722,7 @@ class Trunc(Primitive):
     """
     Returns a new tensor with the truncated integer values of the elements of input.
 
-    Inputs:
-        - **input_x** (Tensor) - Input_x is a tensor.
-
-    Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
-    Examples:
-        >>> trunc = ops.Trunc()
-        >>> output = trunc(Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32))
-        >>> print(output)
-        [ 3. 0. 0. -3.]
+    Refer to :func:`mindspore.ops.trunc` for more detail.
     """
 
     @prim_attr_register
@@ -6685,17 +6669,19 @@ class FFTWithSize(Primitive):
         IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
 
     Args:
-        signal_ndim(int): The number of dimensions in each signal, this controls how many dimensions of the fourier
-                          transform are realized, can only be 1, 2 or 3.
-        inverse(bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or IRFFT.
-        real(bool): Whether it is the real transformation, used to select FFT/IFFT or RFFT/IRFFT.
-        norm(str): The default normalization ("backward") has the direct (forward) transforms unscaled
+        signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions of the fourier
+            transform are realized, can only be 1, 2 or 3.
+        inverse (bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or IRFFT.
+            inverse=False means FFT or RFFT, inverse=True means IFFT or IRFFT.
+        real (bool): Whether it is the real transformation, used to select FFT/IFFT or RFFT/IRFFT.
+            real=False means FFT or IFFT, real=True means RFFT or IRFFT.
+        norm (str): The default normalization ("backward") has the direct (forward) transforms unscaled
             and the inverse (backward) transforms scaled by 1/n.
             "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
             "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
             n is the input x's element numbers.
-        onesided(bool): Controls whether the input is halved to avoid redundancy. Default: True.
-        signal_sizes(list): Size of the original signal (the signal before rfft, no batch dimension),
+        onesided (bool): Controls whether the input is halved to avoid redundancy. Default: True.
+        signal_sizes (list): Size of the original signal (the signal before rfft, no batch dimension),
             only in irfft mode and set onesided=true requires the parameter. Default: [].
 
     Inputs:

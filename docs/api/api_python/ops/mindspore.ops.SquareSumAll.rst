@@ -11,7 +11,7 @@
         \end{matrix}\right.
     
     .. note::
-        SquareSumAll只支持float32和float64类型的输入值。
+        SquareSumAll只支持float16和float32类型的输入值。
 
     输入：
         - **x** (Tensor) - SquareSumAll的输入，其数据类型为数值型，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

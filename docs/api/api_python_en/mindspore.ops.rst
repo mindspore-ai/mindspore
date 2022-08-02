@@ -186,12 +186,8 @@ Sampling Operator
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
-    mindspore.ops.GridSampler2D
-    mindspore.ops.GridSampler3D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
-    mindspore.ops.UpsampleNearest3D
-    mindspore.ops.UpsampleTrilinear3D
     
 Image Processing
 ^^^^^^^^^^^^^^^^
