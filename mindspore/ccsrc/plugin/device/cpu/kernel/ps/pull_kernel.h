@@ -69,7 +69,9 @@ class PullKernelMod : public DeprecatedNativeCpuKernelMod {
     return;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  void InitKernel(const CNodePtr &) override { return; }
 
  protected:
   void InitSizeLists() {
@@ -77,8 +79,6 @@ class PullKernelMod : public DeprecatedNativeCpuKernelMod {
     input_size_list_.push_back(var_size_);
     output_size_list_.push_back(0);
   }
-
-  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t key_;

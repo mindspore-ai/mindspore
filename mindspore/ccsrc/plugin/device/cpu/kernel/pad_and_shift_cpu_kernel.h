@@ -38,16 +38,16 @@ class PadAndShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeInt32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeInt64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeInt32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
 

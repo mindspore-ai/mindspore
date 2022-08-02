@@ -31,7 +31,7 @@ class RpcRecvKernelMod : public RpcKernelMod {
   RpcRecvKernelMod() : recv_monad_(false) {}
   ~RpcRecvKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override {
     if (recv_monad_) {
       MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";

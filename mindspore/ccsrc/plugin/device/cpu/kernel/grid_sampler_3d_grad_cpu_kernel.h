@@ -37,18 +37,18 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddOutputAttr(kNumberTypeFloat32)
+                                                           .AddOutputAttr(kNumberTypeFloat32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddOutputAttr(kNumberTypeFloat64)
+                                                           .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
   }
 
@@ -65,7 +65,7 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> dgrid_stride_;
   std::string interpolation_mode;
   std::string padding_mode;
-  bool align_corners;
+  bool align_corners_;
   size_t dx_size_;
   size_t grid_size_;
   TypeId dtype_{kTypeUnknown};

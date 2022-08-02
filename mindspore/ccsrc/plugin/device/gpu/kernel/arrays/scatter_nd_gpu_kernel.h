@@ -40,12 +40,13 @@ class ScatterNdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
-
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T, typename S>
