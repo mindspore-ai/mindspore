@@ -80,7 +80,7 @@ add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
 add_subdirectory(parser/tf)
-if(ENABLE_CONVERT_PYTORCH_MODEL AND NOT WIN32)
+if(ENABLE_CONVERT_PYTORCH_MODEL)
     add_subdirectory(parser/pytorch)
 endif()
 

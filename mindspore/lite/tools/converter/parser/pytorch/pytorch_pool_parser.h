@@ -25,8 +25,16 @@ namespace mindspore {
 namespace lite {
 class PytorchAvgPoolParser : public PytorchNodeParser {
  public:
-  PytorchPoolParser() : PytorchNodeParser("Pool") {}
-  ~PytorchPoolParser() override = default;
+  PytorchAvgPoolParser() : PytorchNodeParser("AvgPool") {}
+  ~PytorchAvgPoolParser() override = default;
+
+  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
+};
+
+class PytorchMaxPoolParser : public PytorchNodeParser {
+ public:
+  PytorchMaxPoolParser() : PytorchNodeParser("MaxPool") {}
+  ~PytorchMaxPoolParser() override = default;
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };

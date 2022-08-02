@@ -28,7 +28,7 @@ int UpdateSplitSize(const TensorC *const *inputs, size_t inputs_size, SplitParam
       split_count *= inputs[SECOND_INPUT]->shape_[i];
     }
     param->split_count_ = split_count;
-    for (size_t i = 0; i < split_count; i++) {
+    for (int i = 0; i < split_count; i++) {
       param->split_sizes_[i] = ((int *)(inputs[SECOND_INPUT]->data_))[i];
     }
   }
