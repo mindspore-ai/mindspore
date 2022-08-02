@@ -1153,7 +1153,6 @@ TensorPtr COOTensor::GetTensorAt(size_t index) const {
     return std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), scalar->type());
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for COOTensor: " << ToString();
-  return nullptr;
 }
 
 std::string COOTensor::ToString() const {
