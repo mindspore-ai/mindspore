@@ -80,5 +80,23 @@ ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBaseP
 // Infer shape value of compute-shape op that could change the dim value, e.g. Mul, Add, Sub
 // Do not support op with multiple outputs for now
 ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args);
+
+void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp);
+
+void CheckSparseShape(const size_t shape_size, const size_t expected_dim, const std::string &arg_name);
+
+void CheckSparseIndicesDtype(const TypePtr data_type, const std::string &arg_name);
+
+void CheckSparseIndicesDtypeInt32(const TypePtr data_type, const std::string &arg_name);
+
+ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape);
+
+template <typename T>
+std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list);
+
+constexpr auto kCSRAvgRows = "csr_avg_rows";
+constexpr auto kIsCSR = "is_csr";
+constexpr auto kCSRDenseShape = "dense_shape";
+constexpr auto kCSRAxis = "axis";
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

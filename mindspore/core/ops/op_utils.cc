@@ -466,5 +466,99 @@ ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBaseP
 ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
   return EvalShapeTensorValue(prim, args, true);
 }
+
+void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
+  constexpr auto kCSRMulBatchPos = 2;
+  int dlen = SizeToInt(sparse_shp.size()) - SizeToInt(dense_shp.size());
+  if (dlen < 0) {
+    MS_EXCEPTION(ValueError) << "Currently, only support dense tensor broadcast to sparse tensor, "
+                             << "but sparse tensor has " << sparse_shp.size() << " dimensions, "
+                             << "and dense tensor has " << dense_shp.size() << " dimensions. ";
+  }
+  for (int i = 0; i < dlen; i++) {
+    (void)dense_shp.insert(dense_shp.begin(), 1);
+  }
+  if (sparse_shp.size() != dense_shp.size()) {
+    MS_LOG(EXCEPTION) << "Failure: sparse_shp.size() != dense_shp.size().";
+  }
+  if (sparse_shp.size() < 1) {
+    MS_LOG(EXCEPTION) << "Failure: dense tensor and sparse tensor shapes cannot be zero.";
+  }
+  for (size_t i = 0; i < sparse_shp.size(); i++) {
+    auto s = sparse_shp[i];
+    auto d = dense_shp[i];
+    if (i < kCSRMulBatchPos) {
+      if (d != s && d != 1) {
+        MS_EXCEPTION(ValueError) << "Dense shape cannot broadcast to sparse shape.";
+      }
+    } else {
+      if (d != s) {
+        MS_EXCEPTION(ValueError) << "Currently, sparse shape and dense shape must equal in feature dimensions.";
+      }
+    }
+  }
+}
+
+void CheckSparseShape(const size_t shape_size, const size_t expected_dim, const std::string &arg_name) {
+  if (shape_size != expected_dim) {
+    MS_EXCEPTION(ValueError) << arg_name << " must be a " << expected_dim << "-dimensional tensor, but got a "
+                             << shape_size << "-dimensional tensor.";
+  }
+}
+
+void CheckSparseIndicesDtype(const TypePtr data_type, const std::string &arg_name) {
+  if (!(data_type->equal(kInt16) || data_type->equal(kInt32) || data_type->equal(kInt64))) {
+    MS_EXCEPTION(TypeError) << "The dtype of " << arg_name << " must be Int16 or Int32 or Int64, but got "
+                            << data_type->ToString() << ".";
+  }
+}
+
+void CheckSparseIndicesDtypeInt32(const TypePtr data_type, const std::string &arg_name) {
+  if (!data_type->equal(kInt32)) {
+    MS_EXCEPTION(TypeError) << "The dtype of " << arg_name << " only support Int32 for now, but got "
+                            << data_type->ToString() << ".";
+  }
+}
+
+ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape) {
+  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  ShapeVector shape_vec;
+  (void)std::transform(std::begin(shape_value->value()), std::end(shape_value->value()), std::back_inserter(shape_vec),
+                       [](const ValuePtr &e) -> int64_t {
+                         auto elem = GetValue<int64_t>(e);
+                         return elem;
+                       });
+  return shape_vec;
+}
+
+template <typename T>
+std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  constexpr size_t kSizeExpect = 1;
+  if (args_spec_list.size() != kSizeExpect) {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the number of input should be " << kSizeExpect
+                      << ", but got " << args_spec_list.size() << ".";
+  }
+  constexpr size_t kIndex = 0;
+  auto abs = args_spec_list[kIndex];
+  MS_EXCEPTION_IF_NULL(abs);
+  // To avoid AbstractSparseTensors being generalized to AbstractTuple.
+  if (dyn_cast<T>(abs) == nullptr) {
+    auto abs_tuple = dyn_cast<abstract::AbstractTuple>(abs);
+    if (abs_tuple != nullptr) {
+      return std::make_shared<T>(abs_tuple->elements());
+    }
+  } else if (dyn_cast<T>(abs) != nullptr) {
+    return dyn_cast<T>(abs);
+  }
+  MS_EXCEPTION(TypeError) << "For \'" << primitive->name() << "\', input[" << kIndex
+                          << "] should be AbstractSparseTensor or AbstractTuple, but got "
+                          << abs->BuildType()->ToString() << ".";
+}
+template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const PrimitivePtr &primitive,
+                                                                      const AbstractBasePtrList &args_spec_list);
+template std::shared_ptr<abstract::AbstractCOOTensor> InferSparseAttr(const PrimitivePtr &primitive,
+                                                                      const AbstractBasePtrList &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore

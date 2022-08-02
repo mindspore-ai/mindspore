@@ -318,31 +318,12 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDebug, R{InferImplDebug, nullptr, true}},
     // Dynamic shape testing
     {prim::kPrimGpuConvertToDynamicShape, R{InferImplGpuConvertToDynamicShape, nullptr, true}},
-    // COOTensor
-    {prim::kPrimMakeCOOTensor, R{InferImplMakeCOOTensor, nullptr, true}},
-    {prim::kPrimCOOTensorGetValues, R{InferImplCOOTensorGetValues, nullptr, true}},
-    {prim::kPrimCOOTensorGetIndices, R{InferImplCOOTensorGetIndices, nullptr, true}},
-    {prim::kPrimCOOTensorGetDenseShape, R{InferImplCOOTensorGetDenseShape, nullptr, true}},
     // RowTensor
     {prim::kPrimMakeRowTensor, R{InferImplMakeRowTensor, nullptr, true}},
     {prim::kPrimRowTensorGetValues, R{InferImplRowTensorGetValues, nullptr, true}},
     {prim::kPrimRowTensorGetIndices, R{InferImplRowTensorGetIndices, nullptr, true}},
     {prim::kPrimRowTensorGetDenseShape, R{InferImplRowTensorGetDenseShape, nullptr, true}},
     {prim::kPrimRowTensorAdd, R{InferImplRowTensorAdd, nullptr, false}},
-    // CSRTensor
-    {prim::kPrimMakeCSRTensor, R{InferImplMakeCSRTensor, nullptr, true}},
-    {prim::kPrimCSRTensorGetValues, R{InferImplCSRTensorGetValues, nullptr, true}},
-    {prim::kPrimCSRTensorGetIndptr, R{InferImplCSRTensorGetIndptr, nullptr, true}},
-    {prim::kPrimCSRTensorGetIndices, R{InferImplCSRTensorGetIndices, nullptr, true}},
-    {prim::kPrimCSRTensorGetDenseShape, R{InferImplCSRTensorGetDenseShape, nullptr, true}},
-    {prim::kPrimCSRMul, R{InferImplCSRElementWise, nullptr, true}},
-    {prim::kPrimCSRDiv, R{InferImplCSRElementWise, nullptr, true}},
-    {prim::kPrimCSRMV, R{InferImplCSRMV, nullptr, true}},
-    {prim::kPrimCSRMM, R{InferImplCSRMM, nullptr, true}},
-    {prim::kPrimCSRReduceSum, R{InferImplCSRReduceSum, nullptr, true}},
-    {prim::kPrimCSRGather, R{InferImplCSRGather, nullptr, true}},
-    {prim::kPrimCSR2COO, R{InferImplCSR2COO, nullptr, true}},
-    {prim::kPrimCOO2CSR, R{InferImplCOO2CSR, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},
