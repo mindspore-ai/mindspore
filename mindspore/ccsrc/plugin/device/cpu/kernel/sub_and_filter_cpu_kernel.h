@@ -36,18 +36,18 @@ class SubAndFilterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeInt32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeInt64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeInt32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddOutputAttr(kNumberTypeInt64)
+                                                           .AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
 

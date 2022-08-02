@@ -25,6 +25,7 @@
 #include "kernel/oplib/oplib.h"
 #include "utils/profile.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -155,34 +156,7 @@ std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr
 }
 
 void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
-  auto kernel_attrs = GetOpSupport();
-  if (kernel_attrs.empty()) {
-    return;
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
-  if (kernel_attrs[0].GetSkipCheck()) {
-    // If kernel skips attr check, we need to synchronize the ref map in case it's discarded.
-    SyncOutInRef(kernel_attrs[0], &kernel_attr);
-    kernel_attrs[0] = kernel_attr;
-    is_match = true;
-    index = 0;
-  }
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
-                      << " does not support this kernel data type: " << kernel_attr;
-  }
-
-  MS_EXCEPTION_IF_NULL(apply_kernel);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(kernel_build_Info);
-  const auto &matched_kernel_attr = kernel_attrs[index];
-  if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
-    kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
-  }
+  kernel::SetCpuRefMapToKernelInfo(apply_kernel, GetOpSupport());
 }
 
 void CPUKernelUtils::ExpandDimsTo4(ShapeVector *shape) {

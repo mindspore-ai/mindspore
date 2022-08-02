@@ -34,7 +34,7 @@ class TensorArrayReadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    static const std::vector<KernelAttr> support_list = {
       // index int64
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),

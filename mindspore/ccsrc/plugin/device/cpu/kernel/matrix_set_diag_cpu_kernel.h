@@ -36,26 +36,26 @@ class MatrixSetDiagCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeInt32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeFloat16),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeFloat64)
-                                                     .AddInputAttr(kNumberTypeInt32)
-                                                     .AddOutputAttr(kNumberTypeFloat64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeInt32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeFloat16),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeFloat32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
   }
 
