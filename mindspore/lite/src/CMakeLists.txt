@@ -65,6 +65,7 @@ file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/graph/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/tensor/*.cc
         )
+
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(CXX_API_SRCS
             ${CXX_API_SRCS}
@@ -198,6 +199,12 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
             ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
             )
+endif()
+if(MSLITE_ENABLE_CAPTURE_SIGNALS)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/signal_handler.cc
+        )
 endif()
 
 if(MSLITE_ENABLE_BFC_MEMORY)
