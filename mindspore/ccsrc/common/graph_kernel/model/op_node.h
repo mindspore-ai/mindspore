@@ -195,7 +195,24 @@ class ShapeOp : public OpaqueOp {
     return {{SizeToLong(inputs[0]->shape.size())}};
   }
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeInt32}; }
+  DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
+
+class ConstantOfShapeOp : public OpaqueOp {
+ public:
+  explicit ConstantOfShapeOp(const std::string &op) : OpaqueOp(op) {}
+  ~ConstantOfShapeOp() = default;
+
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &attrs) override {
+    return {static_cast<TypeId>(GetValue<int64_t>(attrs.find("data_type")->second))};
+  }
+  DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
+};
+
 class PadAkgOp : public OpaqueOp {
  public:
   explicit PadAkgOp(const std::string &op) : OpaqueOp(op) {}
@@ -236,6 +253,7 @@ class GatherOp : public OpaqueOp {
  protected:
   template <typename TM>
   tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
+  DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
 class ConcatOp : public OpaqueOp {
@@ -248,6 +266,7 @@ class ConcatOp : public OpaqueOp {
   void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
   template <typename TM>
   tensor::TensorPtr CalcConcat(const NodePtrList &inputs, const DAttrs &attrs);
+  DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
 class CImagRealOp : public ElemwiseOp {

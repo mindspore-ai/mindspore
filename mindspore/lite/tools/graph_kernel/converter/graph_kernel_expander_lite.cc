@@ -97,7 +97,7 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
 
 AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
   std::unordered_set<std::string> akg_exclude_nodes = {prim::kPrimGather->name(), prim::kPrimShape->name(),
-                                                       prim::kPrimConcat->name()};
+                                                       prim::kPrimConcat->name(), prim::kPrimConstantOfShape->name()};
   auto cnode = QuickCloneCNode(node);
   auto ret = decorated_->Run(cnode);
   if (ret == nullptr) {
@@ -170,14 +170,15 @@ AnfNodePtr PoolLayoutDeco::Run(const AnfNodePtr &node) {
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
-    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
-    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},    {kCPUDevice, OpLevel_0, prim::kPrimSquare},
-    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion}, {kCPUDevice, OpLevel_0, prim::kPrimActivation},
-    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},    {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
-    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},    {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
-    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},    {kCPUDevice, OpLevel_1, prim::kPrimReshape},
-    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},    {kCPUDevice, OpLevel_1, prim::kPrimGather},
-    {kCPUDevice, OpLevel_1, prim::kPrimShape},        {kCPUDevice, OpLevel_1, prim::kPrimConcat}};
+    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},      {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},      {kCPUDevice, OpLevel_0, prim::kPrimSquare},
+    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},   {kCPUDevice, OpLevel_0, prim::kPrimActivation},
+    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},      {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
+    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},      {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
+    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},      {kCPUDevice, OpLevel_1, prim::kPrimReshape},
+    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},      {kCPUDevice, OpLevel_1, prim::kPrimGather},
+    {kCPUDevice, OpLevel_1, prim::kPrimShape},          {kCPUDevice, OpLevel_1, prim::kPrimConcat},
+    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}};
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                               flags.enable_expand_ops, flags.disable_expand_ops);
@@ -207,11 +208,14 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimUnsqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
+    {prim::kPrimShape->name(), {FixFormatDeco::Creator}},
     {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::GetCreator({0}), FixFormatDeco::Creator}},
     {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
     {prim::kPrimGather->name(),
-     {ParaToTensorDeco::GetCreator({1}), ParaToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2})}},
-    {prim::kPrimConcat->name(), {ParaToTensorDeco::GetCreator({1}, true)}},
+     {ParaToTensorDeco::GetCreator({1}), ParaToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2}),
+      FixFormatDeco::Creator}},
+    {prim::kPrimConcat->name(), {ParaToTensorDeco::GetCreator({}, true), FixFormatDeco::Creator}},
     {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
     {prim::kPrimMatMulFusion->name(), {ParaToTensorDeco::GetCreator({1}), MatmulPackB::Creator}},
     {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},

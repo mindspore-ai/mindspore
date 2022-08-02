@@ -512,6 +512,56 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
   return kOpFormat_DEFAULT;
 }
 
+NodePtr ConstantOfShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
+  }
+  const auto &value = GetValue<std::vector<float>>(attrs.find("value")->second);
+  std::vector<float> res;
+  size_t elem_num = LongToSize(std::accumulate(this->shape.begin(), this->shape.end(), 1, std::multiplies<int64_t>()));
+  if (value.size() == 1) {
+    res = std::vector<float>(elem_num, value[0]);
+  } else if (value.size() == elem_num) {
+    res = value;
+  } else {
+    return nullptr;
+  }
+  auto tensor = std::make_shared<tensor::Tensor>(this->type, this->shape, &res[0], kNumberTypeFloat32);
+  return std::make_shared<ConstTensorNode>(tensor);
+}
+
+std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
+  const auto &value = attrs.find("shape")->second;
+  std::vector<int64_t> res;
+  if (value->isa<ValueSequence>()) {
+    auto valueseq = value->cast<ValueSequencePtr>();
+    if (valueseq->type()->type_id() == TypeId::kNumberTypeInt32) {
+      auto shp = GetValue<std::vector<int32_t>>(value);
+      (void)std::transform(shp.begin(), shp.end(), std::back_inserter(res), IntToLong);
+      return {res};
+    } else if (valueseq->type()->type_id() == TypeId::kNumberTypeInt64) {
+      res = GetValue<std::vector<int64_t>>(value);
+      return {res};
+    }
+  } else if (value->isa<tensor::Tensor>()) {
+    auto tvalue = value->cast<tensor::TensorPtr>();
+    if (tvalue->data_type_c() == TypeId::kNumberTypeInt32) {
+      int *data = static_cast<int *>(tvalue->data_c());
+      for (size_t elem = 0; elem < tvalue->DataSize(); elem++) {
+        res.push_back(IntToLong(*(data + elem)));
+      }
+      return {res};
+    } else if (tvalue->data_type_c() == TypeId::kNumberTypeInt64) {
+      int64_t *data = static_cast<int64_t *>(tvalue->data_c());
+      res = std::vector<int64_t>(data, data + tvalue->DataSize());
+      return {res};
+    }
+  }
+  return {};
+}
+
 NodePtr ShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   auto tensor = std::make_shared<tensor::Tensor>(this->type, this->shape, inputs[0]->shape.data(), kNumberTypeInt64);
   return std::make_shared<ConstTensorNode>(tensor);

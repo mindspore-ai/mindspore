@@ -29,7 +29,7 @@ class MIND_API ConstantOfShape : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ConstantOfShape);
   /// \brief Constructor.
-  ConstantOfShape() : BaseOperator(kNameConstantOfShape) {}
+  ConstantOfShape() : BaseOperator(kNameConstantOfShape) { InitIOName({"shape"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
