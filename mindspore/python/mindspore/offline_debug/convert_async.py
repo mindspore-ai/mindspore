@@ -124,7 +124,7 @@ def parse_args(file_list, output_path):
     args_dict['output'] = None
     args_dict['shape'] = None
     args_dict['custom_script_path'] = None
-    args_parser = namedtuple("args_parser", args_dict.keys())
+    args_parser = namedtuple("args_parser", list(args_dict.keys()))
     return args_parser(**args_dict)
 
 
