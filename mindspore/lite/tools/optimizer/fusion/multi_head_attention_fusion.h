@@ -29,9 +29,7 @@ namespace opt {
 class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  public:
   explicit MultiHeadAttentionFusion(const std::string &name = "MultiHeadAttentionFusion", bool multigraph = true)
-      : MultiplePatternProcessPass(name, multigraph) {
-    std::cout << "calling constructor" << std::endl;
-  }
+      : MultiplePatternProcessPass(name, multigraph) {}
 
   ~MultiHeadAttentionFusion() override = default;
 

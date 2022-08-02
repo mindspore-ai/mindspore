@@ -26,6 +26,17 @@
 #include "tools/converter/quantizer/tensor_compressor.h"
 
 namespace mindspore::lite::quant {
+static const float kScaleFactor = (0.01 * 0.01 * 0.01 * 24.0);
+float WeightQuantizer::GetMinScale() const {
+  size_t max_tensor_size = 1;
+  for (auto tensor : weight_quantized_tensors_) {
+    if (tensor->DataSize() > max_tensor_size) {
+      max_tensor_size = tensor->DataSize();
+    }
+  }
+  return (max_tensor_size > 0) ? std::sqrt(kScaleFactor / max_tensor_size) : kScaleFactor;
+}
+
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
                                  const std::set<PrimitivePtr> &per_layer_types,
@@ -112,7 +123,7 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
   CHECK_NULL_RETURN(primitive);
   auto status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                     WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
-                                    preferred_dim, symmetric);
+                                    preferred_dim, symmetric, is_auto_tune_);
   if (status == RET_OK) {
     FSEEncoder fse_encoder;
     auto quant_param_holder = GetCNodeQuantHolder(primitive);

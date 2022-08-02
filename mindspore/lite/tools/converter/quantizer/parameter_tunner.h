@@ -30,11 +30,10 @@
 #include "base/base.h"
 
 namespace mindspore::lite::quant {
-struct InferenceParam {
-  size_t rounds;
-  float start_scale;
-  float step;
-  int thread_num;
+struct SearchParams {
+  int range_start;
+  int range_end;
+  int step;
 };
 
 class ParameterOptimizer {
@@ -54,11 +53,13 @@ class ParameterOptimizer {
 
   int WeightQuantModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                                 std::shared_ptr<mindspore::Model> origin_model, size_t origin_model_size,
-                                const InferenceParam &infer_param, double *init_scale,
-                                std::vector<float> *candidate_scales, bool is_run_all);
+                                SearchParams *s_param, int *ret_scale, float *best_compress_ratio,
+                                bool *found_valid_scale);
 
   int OriginModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                            const std::shared_ptr<mindspore::Model> &origin_model, size_t *origin_model_size);
+
+  int CopyDataAndRun(std::shared_ptr<mindspore::Model> origin_model, std::shared_ptr<mindspore::Model> quant_model);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H_

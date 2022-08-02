@@ -43,6 +43,7 @@ constexpr int kPrimIndex = 0;
 constexpr int kPrimOffset = 1;
 constexpr int kU8ZeroPointOffset = 128;
 constexpr int kQuantRange = 127;
+constexpr int kMinIterations = 40;
 
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,
@@ -77,6 +78,8 @@ struct CommonQuantParam {
 struct MixedBitWeightQuantParam {
   double init_scale = 0.02;
   bool auto_tune = false;
+  bool use_cv_data = false;
+  int max_iterations = kMinIterations;
 };
 
 struct FullQuantParam {
