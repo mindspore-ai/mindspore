@@ -1167,10 +1167,11 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
       InsertNode(op, load_node, 1, load_node->input(1), func_graph, mirror_op_name, param_name, root);
       auto comm_op = load_node->input(1)->cast<CNodePtr>();
       // add fusion flag
-      AddCommOpFusionType(comm_op, param_node_pair.first);
+      auto fusion_id = AddCommOpFusionType(comm_op, param_node_pair.first);
       MS_LOG(INFO) << "Find parameter " << param_name << " for node " << GetPrimName(node->cast<CNodePtr>())
                    << " and insert mirror before Load";
       AddCommOpParamFlag(comm_op);
+      AddNodeFusionInfo(node, comm_op, "all_reduce", fusion_id);
       continue;
     }
     InsertNode(op, node, index, pre_node, func_graph, mirror_op_name, param_name, root);
@@ -1179,8 +1180,9 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
     auto comm_op = node->input(index)->cast<CNodePtr>();
     // add fusion flag
     // pipeline mirror would not be set, which should be supported later
-    AddCommOpFusionType(comm_op, param_node_pair.first);
+    auto fusion_id = AddCommOpFusionType(comm_op, param_node_pair.first);
     AddCommOpParamFlag(comm_op);
+    AddNodeFusionInfo(node, comm_op, "all_reduce", fusion_id);
   }
 }
 
@@ -1425,7 +1427,8 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     MS_LOG(INFO) << "Parallel optimizer is applied before " << GetPrimName(cnode) << " for " << param_name;
   }
   // add fusion flag
-  AddCommOpFusionType(allgather, node);
+  auto fusion_id = AddCommOpFusionType(allgather, node);
+  AddNodeFusionInfo(cnode, allgather, "reduce_scatter", fusion_id);
   // add gradients mean
   AddCommOpMeanFlag(allgather);
   if (op_name == MICRO_STEP_ALL_GATHER) {

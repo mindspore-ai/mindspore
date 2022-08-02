@@ -342,7 +342,7 @@ Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
 Operator CreateMiniStepAllGatherOp(const std::string &group);
-void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
+int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror);
 void AddCommOpAddAccuFlag(const CNodePtr &comm_node, bool add_accu);
 Operator CreateMicroStepAllGatherOp(const std::string &group);

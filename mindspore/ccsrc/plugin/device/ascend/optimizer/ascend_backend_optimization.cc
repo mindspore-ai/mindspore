@@ -168,6 +168,7 @@
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
+#include "backend/common/pass/optimize_gradients_allreduce_overlap.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/config_manager.h"
@@ -519,6 +520,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SendFusion>());
   other_pm->AddPass(std::make_shared<RecvFusion>());
+  other_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
