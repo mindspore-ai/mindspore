@@ -15,15 +15,11 @@
  */
 
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
-#include <Python.h>
-#include <vector>
 #include <memory>
 #include <string>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
-#include "utils/ms_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
