@@ -85,6 +85,8 @@ class TensorRTSubGraph : public kernel::Kernel {
   void SetSerializePath(const std::string &path) { serialize_file_path_ = std::move(path); }
 
  private:
+  int GetInputIndexByName(const std::string &name);
+
   int BuildEngine();
 
   int SetDeviceConfig(cudaStream_t stream);
