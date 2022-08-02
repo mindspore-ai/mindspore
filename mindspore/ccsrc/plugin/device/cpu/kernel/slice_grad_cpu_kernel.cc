@@ -106,13 +106,11 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
     }
   }
   for (size_t i = 0; i < expand_dims; ++i) {
-    if (SignOfStride(i)) {
-      int ax = (end_[i] - begin_[i]) * SignOfStride(i);
-      if (ax < 0) {
-        ax = 0;
-      }
-      input_shape_.push_back(ax);
+    int ax = (end_[i] - begin_[i]) * SignOfStride(i);
+    if (ax < 0) {
+      ax = 0;
     }
+    input_shape_.push_back(ax);
   }
 }
 
@@ -323,7 +321,7 @@ bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &i
 
 bool SliceGradCpuKernelMod::CanCopyMemoryOnAxis(size_t dim, size_t max_dim) const {
   for (size_t i = dim + 1; i < max_dim; ++i) {
-    if (begin_[i] != 0 || end_[i] != SizeToInt(output_shape_[i]) || strides_[i] != 1) {
+    if (begin_[i] != 0 || end_[i] != LongToInt(output_shape_[i]) || strides_[i] != 1) {
       return false;
     }
   }
@@ -368,29 +366,29 @@ void SliceGradCpuKernelMod::FormatArgs(bool stride) {
                           << i;
       }
       if (end_[i] == 0 && begin_[i] < 0) {
-        end_[i] = end_[i] + SizeToInt(output_shape_[i]);
+        end_[i] = end_[i] + LongToInt(output_shape_[i]);
       }
       if (end_[i] < 0) {
-        end_[i] = end_[i] + SizeToInt(output_shape_[i]) < 0 ? 0 : end_[i] + SizeToInt(output_shape_[i]);
+        end_[i] = end_[i] + LongToInt(output_shape_[i]) < 0 ? 0 : end_[i] + LongToInt(output_shape_[i]);
       }
-      if (end_[i] > SizeToInt(output_shape_[i])) {
-        end_[i] = SizeToInt(output_shape_[i]);
+      if (end_[i] > LongToInt(output_shape_[i])) {
+        end_[i] = LongToInt(output_shape_[i]);
       }
     }
   }
   for (size_t i = 0; i < begin_.size(); i++) {
     if (begin_[i] < 0) {
-      auto k = begin_[i] + SizeToInt(output_shape_[i]);
+      auto k = begin_[i] + LongToInt(output_shape_[i]);
       begin_[i] = k < 0 ? 0 : k;
     }
-    if (begin_[i] > SizeToInt(output_shape_[i])) {
-      begin_[i] = SizeToInt(output_shape_[i]);
+    if (begin_[i] > LongToInt(output_shape_[i])) {
+      begin_[i] = LongToInt(output_shape_[i]);
     }
   }
   if (!stride) {
     for (size_t i = 0; i < size_.size(); ++i) {
       while (size_[i] < 0) {
-        size_[i] = size_[i] + SizeToInt(output_shape_[i]);
+        size_[i] = size_[i] + LongToInt(output_shape_[i]);
       }
       (void)strides_.emplace_back(1);
       (void)end_.emplace_back(begin_[i] + size_[i]);
