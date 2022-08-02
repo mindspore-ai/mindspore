@@ -287,10 +287,10 @@ def addcdiv(input_data, x1, x2, value):
         y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
     Args:
-        input_data (Tensor) - The tensor to be added.
-        x1 (Tensor) - The numerator tensor.
-        x2 (Tensor) - The denominator tensor.
-        value (Tensor) - The multiplier for tensor x1/x2.
+        input_data (Tensor): The tensor to be added.
+        x1 (Tensor): The numerator tensor.
+        x2 (Tensor): The denominator tensor.
+        value (Tensor): The multiplier for tensor x1/x2.
 
     Returns:
         Tensor, has the same shape and dtype as x1/x2.
@@ -325,10 +325,10 @@ def addcmul(input_data, x1, x2, value):
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
 
     Args:
-        input_data (Tensor) - The tensor to be added.
-        x1 (Tensor) - The tensor to be multiplied.
-        x2 (Tensor) - The tensor to be multiplied.
-        value (Tensor) - The multiplier for tensor x1*x2.
+        input_data (Tensor): The tensor to be added.
+        x1 (Tensor): The tensor to be multiplied.
+        x2 (Tensor): The tensor to be multiplied.
+        value (Tensor): The multiplier for tensor x1*x2.
 
     Returns:
         Tensor, has the same shape and dtype as x1*x2.
@@ -918,9 +918,9 @@ def inplace_update(x, v, indices):
         indices (Union[int, tuple], Tensor): Indices into the left-most dimension of `x`, and determines which rows of x
             to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x). If the type
             is Tensor, it supports dynamic shape. Otherwise, it only supports static shape.
-        x (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+        x (Tensor): A tensor which to be inplace updated. It can be one of the following data types:
             float32, float16 and int32.
-        v (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
+        v (Tensor): A tensor with the same type as `x` and the same dimension size as `x` except
             the first dimension, which must be the same as the size of `indices`.
 
     Returns:
@@ -957,9 +957,9 @@ def inplace_add(x, v, indices):
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
     Args:
-        x (Tensor) - The first input is a tensor whose data type is float16, float32, float64 or int32.
+        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        v (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
+        v (Tensor): The second input is a tensor that has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
@@ -1001,9 +1001,9 @@ def inplace_sub(x, v, indices):
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
-        x (Tensor) - The first input is a tensor whose data type is float16, float32, float64 or int32.
+        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        v (Tensor) - The second input is a tensor who has the same dimension sizes as `x` except
+        v (Tensor): The second input is a tensor who has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Returns:
@@ -1291,13 +1291,13 @@ def xlogy(x, y):
     the scalar could only be a constant.
 
     Args:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        y (Union[Tensor, number.Number, bool]): The second input is a number.Number or
+            a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2270,10 +2270,10 @@ def truncate_div(x, y):
         Broadcasting is supported.
 
     Args:
-        - x(Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - y(Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        x(Union[Tensor, Number, bool]): The first input is a number, or a bool,
+            or a tensor whose data type is number or bool.
+        y(Union[Tensor, Number, bool]): The second input is a number, or a bool when the first input
+            is a tensor, or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2307,10 +2307,10 @@ def truncate_mod(x, y):
     the scalar could only be a constant.
 
     Args:
-        - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, numbers.Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        x (Union[Tensor, numbers.Number, bool]): The first input is a number, or a bool,
+            or a tensor whose data type is number or bool.
+        y (Union[Tensor, numbers.Number, bool]): The second input is a number, or a bool when the first input
+            is a tensor, or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2339,7 +2339,7 @@ def trunc(input_x):
     Returns a new tensor with the truncated integer values of the elements of input.
 
     Args:
-        - **input_x** (Tensor) - input_x is a tensor.
+        input_x (Tensor): input_x is a tensor.
 
     Returns:
         Tensor, the same shape and data type as the input.
@@ -3111,8 +3111,8 @@ def hypot(x1, x2):
     one of: float32, float64
 
     Args:
-        - **x1** (Tensor) - The first input tensor.
-        - **x2** (Tensor) - The second input tensor.
+        x1 (Tensor): The first input tensor.
+        x2 (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
@@ -3149,9 +3149,9 @@ def heaviside(x, values):
             \end{array}\right.
 
     Args:
-        - **x** (Tensor) - The input tensor. With real number data type.
-        - **values** (Tensor) - The values to use where x is zero. Values can be broadcast with x.
-          'x' should have the same dtype with 'values'.
+        x (Tensor): The input tensor. With real number data type.
+        values (Tensor): The values to use where x is zero. Values can be broadcast with x.
+            'x' should have the same dtype with 'values'.
 
     Returns:
         Tensor, has the same type as 'x' and 'values'.
@@ -3719,8 +3719,8 @@ def deg2rad(x):
     Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
 
     Args:
-        - **x** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
-          With float16, float32 or float64 data type.
+        x (Tensor[Number]): The input tensor. It must be a positive-definite matrix.
+            With float16, float32 or float64 data type.
 
     Outputs:
         Tensor, has the same dtype as the `x`.
@@ -5088,9 +5088,10 @@ def log1p(x):
         out_i = {log_e}(x_i + 1)
 
     Args:
-        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-          The value must be greater than -1.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor. With float16 or float32 data type.
+            The value must be greater than -1.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions,
+            its rank should be less than 8.
 
     Returns:
         Tensor, has the same shape as the `x`.
@@ -5206,10 +5207,10 @@ def all(x, axis=(), keep_dims=False):
     controlling `keep_dims`.
 
     Args:
-        x (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        x (Tensor[bool]): The input tensor. The dtype of the tensor to be reduced is bool.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+            Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default : False.
 
@@ -5259,10 +5260,10 @@ def any(x, axis=(), keep_dims=False):
     controlling `keep_dims`.
 
     Args:
-        x (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        x (Tensor[bool]): The input tensor. The dtype of the tensor to be reduced is bool.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+            Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                          If false, don't keep these dimensions. Default : False.
 

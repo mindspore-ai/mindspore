@@ -463,7 +463,6 @@ Array操作
     mindspore.ops.TensorScatterMul
     mindspore.ops.TensorScatterSub
     mindspore.ops.TensorScatterUpdate
-    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorShape
     mindspore.ops.Tile
     mindspore.ops.Transpose
