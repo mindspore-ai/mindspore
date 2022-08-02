@@ -1215,6 +1215,8 @@ class UniqueWithPad(PrimitiveWithCheck):
         """init UniqueWithPad"""
 
     def __check__(self, x, pad_num):
+        validator.check_tensor_dtype_valid("x", x['dtype'], [mstype.int32, mstype.int64, mstype.float32], self.name)
+        validator.check_subclass("pad_num", pad_num['dtype'], [mstype.int32, mstype.int64, mstype.float32], self.name)
         x_shape = list(x['shape'])
         validator.check("rank of x", len(x_shape), '', 1, Rel.EQ, self.name)
 
