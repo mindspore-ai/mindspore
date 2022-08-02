@@ -26,6 +26,10 @@
 #ifdef ONLINE_DBG_MODE
 #include "ir/tensor.h"
 #endif
+
+constexpr size_t FLOAT32_SIZE = 4;
+constexpr size_t FLOAT64_SIZE = 8;
+
 namespace mindspore {
 typedef enum DbgDataType : unsigned int {
   DT_UNDEFINED = 0,
@@ -103,11 +107,14 @@ class TensorData {
     this->data_type_size_ = obj.data_type_size_;
     this->shape_ = obj.shape_;
     this->iteration_ = obj.iteration_;
+    this->prev_iteration_ = obj.prev_iteration_;
     this->device_id_ = obj.device_id_;
     this->data_ptr_ = obj.data_ptr_;
     this->root_graph_id_ = obj.root_graph_id_;
     this->is_output_ = obj.is_output_;
+    this->time_stamp_ = obj.time_stamp_;
 #ifdef ONLINE_DBG_MODE
+    this->format_ = obj.format_;
     this->tensor_ptr_ = obj.tensor_ptr_;
 #endif
   }
@@ -123,11 +130,14 @@ class TensorData {
       this->data_type_size_ = other.data_type_size_;
       this->shape_ = other.shape_;
       this->iteration_ = other.iteration_;
+      this->prev_iteration_ = other.prev_iteration_;
       this->device_id_ = other.device_id_;
       this->data_ptr_ = other.data_ptr_;
       this->root_graph_id_ = other.root_graph_id_;
       this->is_output_ = other.is_output_;
+      this->time_stamp_ = other.time_stamp_;
 #ifdef ONLINE_DBG_MODE
+      this->format_ = other.format_;
       this->tensor_ptr_ = other.tensor_ptr_;
 #endif
     }
@@ -218,7 +228,7 @@ class TensorData {
     }
   }
 
-  void SetType(unsigned int type) { ConvertMsToDbgType(type); }
+  void SetType(TypeId type) { ConvertMsToDbgType(type); }
 
   void SetType(const std::string &type_name) { ConvertStringToDbgType(type_name); }
 
@@ -226,67 +236,67 @@ class TensorData {
 
   void SetIsOutput(bool is_output) { this->is_output_ = is_output; }
 
-  void ConvertMsToDbgType(uint32_t type) {
+  void ConvertMsToDbgType(TypeId type) {
     switch (type) {
       case TypeId::kNumberTypeBool:
         this->data_type_ = DbgDataType::DT_BOOL;
-        this->data_type_size_ = 1;
+        this->data_type_size_ = sizeof(bool);
         break;
       case TypeId::kNumberTypeInt8:
         this->data_type_ = DbgDataType::DT_INT8;
-        this->data_type_size_ = 1;
+        this->data_type_size_ = sizeof(int8_t);
         break;
       case TypeId::kNumberTypeInt16:
         this->data_type_ = DbgDataType::DT_INT16;
-        this->data_type_size_ = 2;
+        this->data_type_size_ = sizeof(int16_t);
         break;
       case TypeId::kNumberTypeInt32:
         this->data_type_ = DbgDataType::DT_INT32;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = sizeof(int32_t);
         break;
       case TypeId::kNumberTypeInt64:
         this->data_type_ = DbgDataType::DT_INT64;
-        this->data_type_size_ = 8;
+        this->data_type_size_ = sizeof(int64_t);
         break;
       case TypeId::kNumberTypeUInt8:
         this->data_type_ = DbgDataType::DT_UINT8;
-        this->data_type_size_ = 1;
+        this->data_type_size_ = sizeof(uint8_t);
         break;
       case TypeId::kNumberTypeUInt16:
         this->data_type_ = DbgDataType::DT_UINT16;
-        this->data_type_size_ = 2;
+        this->data_type_size_ = sizeof(uint16_t);
         break;
       case TypeId::kNumberTypeUInt32:
         this->data_type_ = DbgDataType::DT_UINT32;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = sizeof(uint32_t);
         break;
       case TypeId::kNumberTypeUInt64:
         this->data_type_ = DbgDataType::DT_UINT64;
-        this->data_type_size_ = 8;
+        this->data_type_size_ = sizeof(uint64_t);
         break;
       case TypeId::kNumberTypeFloat16:
         this->data_type_ = DbgDataType::DT_FLOAT16;
-        this->data_type_size_ = 2;
+        this->data_type_size_ = sizeof(float16);
         break;
       case TypeId::kNumberTypeFloat32:
         this->data_type_ = DbgDataType::DT_FLOAT32;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = FLOAT32_SIZE;
         break;
       case TypeId::kNumberTypeFloat64:
         this->data_type_ = DbgDataType::DT_FLOAT64;
-        this->data_type_size_ = 8;
+        this->data_type_size_ = FLOAT64_SIZE;
         break;
       case TypeId::kNumberTypeInt:
         this->data_type_ = DbgDataType::DT_BASE_INT;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = sizeof(int);
         break;
       case TypeId::kNumberTypeUInt:
         this->data_type_ = DbgDataType::DT_BASE_UINT;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = sizeof(uint);
         break;
       case TypeId::kNumberTypeFloat:
         this->data_type_ = DbgDataType::DT_BASE_FLOAT;
-        this->data_type_size_ = 4;
+        this->data_type_size_ = sizeof(uint);
         break;
       default:
         MS_LOG(EXCEPTION) << "Unexpected type id: " << type;
@@ -296,51 +306,51 @@ class TensorData {
   bool ConvertNpyStringToDbgType(const std::string &type_name) {
     if (type_name == "b1") {
       this->data_type_ = DbgDataType::DT_BOOL;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(bool);
       return true;
     } else if (type_name == "i1") {
       this->data_type_ = DbgDataType::DT_INT8;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(int8_t);
       return true;
     } else if (type_name == "i2") {
       this->data_type_ = DbgDataType::DT_INT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(int16_t);
       return true;
     } else if (type_name == "i4") {
       this->data_type_ = DbgDataType::DT_INT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = sizeof(int32_t);
       return true;
     } else if (type_name == "i8") {
       this->data_type_ = DbgDataType::DT_INT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = sizeof(int64_t);
       return true;
     } else if (type_name == "u1") {
       this->data_type_ = DbgDataType::DT_UINT8;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(uint8_t);
       return true;
     } else if (type_name == "u2") {
       this->data_type_ = DbgDataType::DT_UINT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(uint16_t);
       return true;
     } else if (type_name == "u4") {
       this->data_type_ = DbgDataType::DT_UINT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = sizeof(uint32_t);
       return true;
     } else if (type_name == "u8") {
       this->data_type_ = DbgDataType::DT_UINT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = sizeof(uint64_t);
       return true;
     } else if (type_name == "f2") {
       this->data_type_ = DbgDataType::DT_FLOAT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(float16);
       return true;
     } else if (type_name == "f4") {
       this->data_type_ = DbgDataType::DT_FLOAT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = FLOAT32_SIZE;
       return true;
     } else if (type_name == "f8") {
       this->data_type_ = DbgDataType::DT_FLOAT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = FLOAT64_SIZE;
       return true;
     } else {
       return false;
@@ -356,40 +366,40 @@ class TensorData {
     (void)std::transform(type_name_lower.begin(), type_name_lower.end(), type_name_lower.begin(), ::tolower);
     if (type_name_lower == "bool") {
       this->data_type_ = DbgDataType::DT_BOOL;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(bool);
     } else if (type_name_lower == "int8") {
       this->data_type_ = DbgDataType::DT_INT8;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(int8_t);
     } else if (type_name_lower == "int16") {
       this->data_type_ = DbgDataType::DT_INT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(int16_t);
     } else if (type_name_lower == "int32") {
       this->data_type_ = DbgDataType::DT_INT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = sizeof(int32_t);
     } else if (type_name_lower == "int64") {
       this->data_type_ = DbgDataType::DT_INT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = sizeof(int64_t);
     } else if (type_name_lower == "uint8") {
       this->data_type_ = DbgDataType::DT_UINT8;
-      this->data_type_size_ = 1;
+      this->data_type_size_ = sizeof(uint8_t);
     } else if (type_name_lower == "uint16") {
       this->data_type_ = DbgDataType::DT_UINT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(uint16_t);
     } else if (type_name_lower == "uint32") {
       this->data_type_ = DbgDataType::DT_UINT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = sizeof(uint32_t);
     } else if (type_name_lower == "uint64") {
       this->data_type_ = DbgDataType::DT_UINT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = sizeof(uint64_t);
     } else if (type_name_lower == "float16") {
       this->data_type_ = DbgDataType::DT_FLOAT16;
-      this->data_type_size_ = 2;
+      this->data_type_size_ = sizeof(float16);
     } else if (type_name_lower == "float32") {
       this->data_type_ = DbgDataType::DT_FLOAT32;
-      this->data_type_size_ = 4;
+      this->data_type_size_ = sizeof(double);
     } else if (type_name_lower == "float64") {
       this->data_type_ = DbgDataType::DT_FLOAT64;
-      this->data_type_size_ = 8;
+      this->data_type_size_ = sizeof(long double);
     } else if (type_name_lower == "") {
       this->data_type_ = DbgDataType::DT_UNDEFINED;
       this->data_type_size_ = 0;
@@ -404,7 +414,7 @@ class TensorData {
   char *data_ptr_{nullptr};                           // pointer to the pre-allocated memory
   uint64_t size_{0};                                  // size_ in bytes
   DbgDataType data_type_{DbgDataType::DT_UNDEFINED};  // internal debugger type
-  unsigned int data_type_size_{0};
+  size_t data_type_size_{0};
   std::vector<int64_t> shape_;
   std::string name_;
   uint64_t slot_;

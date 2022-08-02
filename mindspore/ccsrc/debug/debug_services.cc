@@ -646,8 +646,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   chunk_data.chunk_time_stamp.resize(max_thread_num);
 
   std::vector<std::future<void>> tensor_future_vec;
-  int begin = 0;
-  int end = begin;
+  size_t begin = 0;
+  size_t end = begin;
   for (size_t i = 0; i < max_thread_num; i++) {
     end += chunk_size;
     if (remainder > 0) {
@@ -910,7 +910,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFileP
  * append into NPYFilePool. It's for Ascend async dump only.
  */
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                               const std::string &dump_key, NPYFilePool *const result_list) const {
+                                               const std::string &dump_key, NPYFilePool *const result_list) {
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
@@ -1808,8 +1808,9 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
       auto input_kernel = kernel->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto found = w_name.find_last_of('/');
-      if (found != std::string::npos && w_name.size() > found && w_name.substr(found + 1) == input_kernel_name)
+      if (found != std::string::npos && w_name.size() > found && w_name.substr(found + 1) == input_kernel_name) {
         return true;
+      }
     }
     return false;
   } else {
@@ -2157,7 +2158,7 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   return true;
 }
 
-std::string DebugServices::RealPath(const std::string &input_path) const {
+std::string DebugServices::RealPath(const std::string &input_path) {
   if (input_path.length() >= PATH_MAX) {
     MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
@@ -2194,7 +2195,7 @@ std::string DebugServices::RealPath(const std::string &input_path) const {
   return std::string(real_path);
 }
 
-uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) const {
+uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) {
 #if defined(__APPLE__)
   return *reinterpret_cast<const uint64_t *>(buffer.data());
 #else

@@ -1142,7 +1142,7 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
   tensor_statistics->set_max_value(static_cast<float>(tensor_stat.max_value));
   tensor_statistics->set_min_value(static_cast<float>(tensor_stat.min_value));
   tensor_statistics->set_avg_value(static_cast<float>(tensor_stat.avg_value));
-  tensor_statistics->set_count(SizeToInt(tensor_stat.count));
+  tensor_statistics->set_count(tensor_stat.count);
   tensor_statistics->set_neg_zero_count(tensor_stat.neg_zero_count);
   tensor_statistics->set_pos_zero_count(tensor_stat.pos_zero_count);
   tensor_statistics->set_nan_count(tensor_stat.nan_count);

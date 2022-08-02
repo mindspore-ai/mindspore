@@ -238,7 +238,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
   tensor_data->SetByteSize(out_tensor->data().nbytes());
-  tensor_data->SetType((unsigned int)host_type);
+  tensor_data->SetType(host_type);
   tensor_data->SetShape(out_tensor->shape());
   tensor_data->SetRootGraphId(root_graph_id);
   tensor_data->SetFormat(host_fmt);

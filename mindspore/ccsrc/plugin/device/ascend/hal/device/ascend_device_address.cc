@@ -724,7 +724,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
   tensor_data->SetByteSize(LongToSize(out_tensor->data().nbytes()));
-  tensor_data->SetType(static_cast<unsigned int>(host_type));
+  tensor_data->SetType(host_type);
   tensor_data->SetShape(out_tensor->shape());
   tensor_data->SetRootGraphId(root_graph_id);
   std::string tensor_format = trans_flag ? host_fmt : format_;
