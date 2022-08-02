@@ -45,7 +45,7 @@ TypePtr AdjustHueInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto prim_name = primitive->name();
   auto input_type_images = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type_images);
-  const std::set valid_types = {kFloat16, kFloat32};
+  const std::set valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_type_images, valid_types, prim_name);
   auto input_type_delta = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type_delta);
@@ -54,7 +54,7 @@ TypePtr AdjustHueInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(AdjustHue, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AdjustHue, BaseOperator);
 AbstractBasePtr AdjustHueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
