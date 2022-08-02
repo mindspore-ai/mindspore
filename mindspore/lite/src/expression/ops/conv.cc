@@ -27,6 +27,21 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+template <typename T>
+void UnpopulateConvPrim(T prim, const ConvParameter *conv_param) {
+  prim->activation_type = static_cast<schema::ActivationType>(conv_param->act_type_);
+  prim->format = static_cast<schema::Format>(conv_param->out_format_);
+  prim->stride = {conv_param->stride_h_, conv_param->stride_w_};
+  prim->kernel_size = {conv_param->kernel_h_, conv_param->kernel_w_};
+  prim->dilation = {conv_param->dilation_h_, conv_param->dilation_w_};
+  prim->out_channel = conv_param->output_channel_;
+  prim->in_channel = conv_param->input_channel_;
+  prim->group = conv_param->group_;
+  prim->pad_mode = static_cast<schema::PadMode>(conv_param->pad_mode_);
+  prim->pad_list = {conv_param->pad_u_, conv_param->pad_d_, conv_param->pad_l_, conv_param->pad_r_};
+}
+}  // namespace
 ConvM::ConvM(const ConvConfig &cfg) : Node() {
   auto op_param = calloc(1, sizeof(ConvParameter));
   if (op_param == nullptr) {
@@ -151,16 +166,7 @@ int ConvM::UnPopulate(const std::unique_ptr<schema::CNodeT> &cnode) {
     MS_LOG(ERROR) << "Cannot allocate primitive";
     return RET_ERROR;
   }
-  prim->activation_type = static_cast<schema::ActivationType>(conv_param->act_type_);
-  prim->format = static_cast<schema::Format>(conv_param->out_format_);
-  prim->stride = {conv_param->stride_h_, conv_param->stride_w_};
-  prim->kernel_size = {conv_param->kernel_h_, conv_param->kernel_w_};
-  prim->dilation = {conv_param->dilation_h_, conv_param->dilation_w_};
-  prim->out_channel = conv_param->output_channel_;
-  prim->in_channel = conv_param->input_channel_;
-  prim->group = conv_param->group_;
-  prim->pad_mode = static_cast<schema::PadMode>(conv_param->pad_mode_);
-  prim->pad_list = {conv_param->pad_u_, conv_param->pad_d_, conv_param->pad_l_, conv_param->pad_r_};
+  UnpopulateConvPrim<schema::Conv2DFusionT *>(prim, conv_param);
   prim->mode = 1;
   cnode->primitive->value.value = prim;
   return RET_OK;
@@ -182,16 +188,7 @@ int ConvInputGradM::UnPopulate(const std::unique_ptr<schema::CNodeT> &cnode) {
     MS_LOG(ERROR) << "Cannot allocate primitive";
     return RET_ERROR;
   }
-  prim->activation_type = static_cast<schema::ActivationType>(conv_param->act_type_);
-  prim->format = static_cast<schema::Format>(conv_param->out_format_);
-  prim->stride = {conv_param->stride_h_, conv_param->stride_w_};
-  prim->kernel_size = {conv_param->kernel_h_, conv_param->kernel_w_};
-  prim->dilation = {conv_param->dilation_h_, conv_param->dilation_w_};
-  prim->out_channel = conv_param->output_channel_;
-  prim->in_channel = conv_param->input_channel_;
-  prim->group = conv_param->group_;
-  prim->pad_mode = static_cast<schema::PadMode>(conv_param->pad_mode_);
-  prim->pad_list = {conv_param->pad_u_, conv_param->pad_d_, conv_param->pad_l_, conv_param->pad_r_};
+  UnpopulateConvPrim<schema::Conv2DBackpropInputFusionT *>(prim, conv_param);
   cnode->primitive->value.value = prim;
   return RET_OK;
 }
@@ -211,16 +208,7 @@ int ConvFilterGradM::UnPopulate(const std::unique_ptr<schema::CNodeT> &cnode) {
     MS_LOG(ERROR) << "Cannot allocate primitive";
     return RET_ERROR;
   }
-  prim->activation_type = static_cast<schema::ActivationType>(conv_param->act_type_);
-  prim->format = static_cast<schema::Format>(conv_param->out_format_);
-  prim->stride = {conv_param->stride_h_, conv_param->stride_w_};
-  prim->kernel_size = {conv_param->kernel_h_, conv_param->kernel_w_};
-  prim->dilation = {conv_param->dilation_h_, conv_param->dilation_w_};
-  prim->out_channel = conv_param->output_channel_;
-  prim->in_channel = conv_param->input_channel_;
-  prim->group = conv_param->group_;
-  prim->pad_mode = static_cast<schema::PadMode>(conv_param->pad_mode_);
-  prim->pad_list = {conv_param->pad_u_, conv_param->pad_d_, conv_param->pad_l_, conv_param->pad_r_};
+  UnpopulateConvPrim<schema::Conv2DBackpropFilterFusionT *>(prim, conv_param);
   cnode->primitive->value.value = prim;
   return RET_OK;
 }

@@ -19,7 +19,6 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "nnacl/errorcode.h"
 
 typedef struct ActivationGradParameter {
   OpParameter op_parameter;
