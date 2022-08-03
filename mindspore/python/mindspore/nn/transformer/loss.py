@@ -16,6 +16,7 @@
 Parallel Loss for the Parallel Training
 This is an experimental interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
 from mindspore.parallel import set_algo_parameters
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Communication management API"""
+from __future__ import absolute_import
 import os
 from mindspore import context
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched, _get_ps_context

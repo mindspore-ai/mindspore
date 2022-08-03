@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Interfaces for parallel-related functionality"""
+from __future__ import absolute_import
 from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
 

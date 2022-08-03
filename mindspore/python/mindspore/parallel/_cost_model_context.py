@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Context of cost_model in auto_parallel"""
+
+from __future__ import absolute_import
 import threading
 from mindspore._c_expression import CostModelContext
 from mindspore._checkparam import args_type_check

@@ -14,6 +14,7 @@
 # ============================================================================
 """Data parallel allreduce fusion"""
 
+from __future__ import absolute_import
 import ctypes
 
 _MAX_GROUP_NAME_LEN = 127
