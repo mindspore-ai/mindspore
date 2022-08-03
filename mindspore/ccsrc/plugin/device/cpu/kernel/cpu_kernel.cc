@@ -276,7 +276,7 @@ void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, Para
 }
 
 size_t CPUKernelUtils::CalcElementNum(const std::vector<size_t> &shape) {
-  size_t total = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+  size_t total = IntToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>()));
   return total;
 }
 

@@ -512,7 +512,7 @@ int64_t ReshapeInfo::GetSWCIndexByOutputLayoutWithZeroComm(const TensorLayout &o
   for (size_t i = 0; i < strategy_cost_.size(); ++i) {
     const auto &swc = strategy_cost_[i];
     if (swc->outputs_ptr[0].tensor_layout() == output_layout &&
-        swc->cost_list[0]->communication_without_parameter_ == 0.0) {
+        fabs(swc->cost_list[0]->communication_without_parameter_ - 0.0) < DBL_EPSILON) {
       (void)index_computation.emplace_back(SizeToLong(i), swc->cost_list[0]->computation_cost_);
     }
   }
@@ -555,7 +555,7 @@ int64_t ReshapeInfo::GetSWCIndexByInputLayoutWithZeroComm(const TensorLayout &in
   for (size_t i = 0; i < strategy_cost_.size(); ++i) {
     const auto &swc = strategy_cost_[i];
     if (swc->inputs_ptr[0].tensor_layout() == input_layout &&
-        swc->cost_list[0]->communication_without_parameter_ == 0.0) {
+        fabs(swc->cost_list[0]->communication_without_parameter_ - 0.0) < DBL_EPSILON) {
       (void)index_computation.emplace_back(SizeToLong(i), swc->cost_list[0]->computation_cost_);
     }
   }

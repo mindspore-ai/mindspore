@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,15 +46,12 @@ bool BucketizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   if (dtype_ != kNumberTypeInt32 && dtype_ != kNumberTypeInt64 && dtype_ != kNumberTypeFloat32 &&
       dtype_ != kNumberTypeFloat64) {
     MS_LOG(EXCEPTION) << "Input data type must int32 or int64 or float32 or float64, but got data type." << dtype_;
-    return false;
   }
   size_t input_sizes = input_shape_.size();
   size_t output_sizes = output_shape_.size();
   if (input_sizes != output_sizes) {
     MS_LOG(EXCEPTION) << "The tensor shape of input need be same with output.";
-    return false;
   }
-  // BucketizeCompute(inputs, outputs);
   switch (dtype_) {
     case kNumberTypeInt32:
       return BucketizeCompute<int32_t>(inputs, outputs);
@@ -74,28 +72,28 @@ bool BucketizeCpuKernelMod::BucketizeCompute(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_data = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  size_t data_num_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  size_t data_num_ = IntToSize(std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>()));
   std::vector<float> boundaries_data = boundaries_;
   std::sort(boundaries_data.begin(), boundaries_data.end());
   if (data_num_ >= kParallelDataNumSameShape) {
     auto sharder_bucketize = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         auto first_bigger_it = std::upper_bound(boundaries_data.begin(), boundaries_data.end(), input_data[i]);
-        output_data[i] = first_bigger_it - boundaries_data.begin();
+        output_data[i] = LongToInt(first_bigger_it - boundaries_data.begin());
       }
     };
     ParallelLaunchAutoSearch(sharder_bucketize, data_num_, this, &parallel_search_info_);
   } else {
     for (size_t i = 0; i < data_num_; i++) {
       auto first_bigger_it = std::upper_bound(boundaries_data.begin(), boundaries_data.end(), input_data[i]);
-      output_data[i] = first_bigger_it - boundaries_data.begin();
+      output_data[i] = LongToInt(first_bigger_it - boundaries_data.begin());
     }
   }
   return true;
 }
 
 std::vector<KernelAttr> BucketizeCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),

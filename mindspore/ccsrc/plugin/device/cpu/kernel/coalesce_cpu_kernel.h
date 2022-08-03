@@ -44,8 +44,8 @@ class CoalesceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckParam(const CNodePtr &kernel_node);
-  void Check(const std::vector<AddressPtr> &inputs);
+  void CheckParam(const CNodePtr &kernel_node) const;
+  void Check(const std::vector<AddressPtr> &inputs) const;
   TypeId dtype_{kTypeUnknown};
   size_t values_size_{0};
   size_t shape_size_{0};
