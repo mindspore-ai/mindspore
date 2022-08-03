@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr GeLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr GeLUInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_ptr = x->cast<abstract::ShapePtr>();

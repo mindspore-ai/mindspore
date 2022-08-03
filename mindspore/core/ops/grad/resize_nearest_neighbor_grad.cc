@@ -57,7 +57,7 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
-TypePtr ResizeNearestNeighborGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ResizeNearestNeighborGradInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   return input_args[0]->BuildType();
 }
 }  // namespace

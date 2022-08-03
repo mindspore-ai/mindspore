@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONCAT_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
 #include <utility>
 #include <complex>
 
