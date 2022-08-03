@@ -53,7 +53,9 @@ void MatrixDiagPartV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixDiagPartV3' is not in: 'LEFT_RIGHT', "
                            "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
     }
-    if (align_ == "") align_ = "RIGHT_LEFT";
+    if (align_ == "") {
+      align_ = "RIGHT_LEFT";
+    }
   } else {
     align_ = "RIGHT_LEFT";
   }
@@ -173,7 +175,7 @@ bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr
 
           for (int64_t n = 0; n < diag_len; n++) {
             output_data[LongToSize(out_begin_index + offset + n)] = input_data[LongToSize(
-              index_array * num_rows_ * num_cols_ + (n + col_offset) * num_cols_ + n + row_offset)];
+              SizeToLong(index_array) * num_rows_ * num_cols_ + (n + col_offset) * num_cols_ + n + row_offset)];
           }
           const bool left_align = (offset == 0);
           const int64_t padding_start = (left_align) ? diag_len : 0;
@@ -290,8 +292,8 @@ std::vector<std::pair<KernelAttr, MatrixDiagPartV3CpuKernelMod::MatrixDiagPartV3
 
 std::vector<KernelAttr> MatrixDiagPartV3CpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MatrixDiagPartV3Func> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixDiagPartV3Func> &pair) { return pair.first; });
   return support_list;
 }
 
