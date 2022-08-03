@@ -125,6 +125,8 @@ from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
+from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
+from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
@@ -2278,6 +2280,19 @@ test_case_math_ops = [
         'block': P.Erfinv(),
         'desc_inputs': [Tensor(np.array([0.1, 0.1, 0.1]).astype(np.float16))],
         'desc_bprop': [Tensor(np.array([1, 1, 1]).astype(np.float16))]}),
+    ('SparseSegmentSqrtN', {
+        'block': SparseSegmentSqrtN(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
+    ('SparseSegmentSqrtNWithNumSegments', {
+        'block': SparseSegmentSqrtNWithNumSegments(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(np.array([3]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([[1, 2, 4], [2, 4, 5], [2, 2, 6]]).astype(np.float32))]}),
     ('IndexAdd', {
         'block': IndexAdd(1),
         'desc_inputs': (Tensor(np.array([0, 1, 2]).astype(np.int32)),

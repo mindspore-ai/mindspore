@@ -268,6 +268,9 @@ from .segment_mean import _segment_mean_aicpu
 from .segment_min import _segment_min_aicpu
 from .segment_prod import _segment_prod_aicpu
 from .segment_sum import _segment_sum_aicpu
+from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
+from .sparse_segment_sqrt_n_grad import _sparse_segment_sqrt_n_grad_aicpu
+from .sparse_segment_sqrt_n_with_num_segments import _sparse_segment_sqrt_n_with_num_segments_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
 from .ctc_loss_v2 import _ctc_loss_v2_aicpu
