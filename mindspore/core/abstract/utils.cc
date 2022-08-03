@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const Abstrac
 }
 
 AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec) {
-  AbstractFunctionPtr f_spec = dyn_cast<AbstractFunction>(spec);
+  auto f_spec = dyn_cast_ptr<AbstractFunction>(spec);
   if (f_spec != nullptr) {
     return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   }
@@ -285,7 +285,7 @@ AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
 
   auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
   if (type->isa<TensorType>()) {
-    auto tensor_type = type->cast<TensorTypePtr>();
+    auto tensor_type = type->cast_ptr<TensorType>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
     tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
@@ -319,8 +319,8 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     }
     return MakeAbstractTensor(shape, type);
   } else if (base_shape->isa<TupleShape>() && type->isa<Tuple>()) {
-    auto shape_tuple = base_shape->cast<TupleShapePtr>();
-    auto type_tuple = type->cast<TuplePtr>();
+    auto shape_tuple = base_shape->cast_ptr<TupleShape>();
+    auto type_tuple = type->cast_ptr<Tuple>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_tuple->size(); ++it) {
       auto tensor_it = MakeAbstract((*shape_tuple)[it], (*type_tuple)[it]);
@@ -329,8 +329,8 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
     return tuple;
   } else if (base_shape->isa<ListShape>() && type->isa<List>()) {
-    auto shape_list = base_shape->cast<ListShapePtr>();
-    auto type_list = type->cast<ListPtr>();
+    auto shape_list = base_shape->cast_ptr<ListShape>();
+    auto type_list = type->cast_ptr<List>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_list->size(); ++it) {
       auto tensor_it = MakeAbstract((*shape_list)[it], (*type_list)[it]);

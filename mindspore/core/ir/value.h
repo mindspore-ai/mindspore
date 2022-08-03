@@ -435,7 +435,7 @@ IMM_TRAITS(StringImmPtr, const char *)
 
 /// \brief RefKey defines a class whose real type is String.
 /// \brief Notice: RefKey is keep for compatible only, we use RefKey just as StringImm.
-class MS_CORE_API RefKey : public StringImm {
+class MS_CORE_API RefKey final : public StringImm {
  public:
   /// \brief Constructor of RefKey.
   ///

@@ -315,7 +315,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
   }
 
-  AbstractFunctionPtr func = dyn_cast<AbstractFunction>(possible_func);
+  auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
   if (func == nullptr) {
     CheckInterpretedObject(possible_func);
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
@@ -357,11 +357,11 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
   // Check if func graph contains isolated side-effect, and sync.
   if (check_isolated_side_effect()) {
-    FuncGraphAbstractClosurePtr func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(func);
+    auto func_graph_abs = mindspore::cast<FuncGraphAbstractClosure>(func);
     if (func_graph_abs != nullptr) {
       contains_isolated_side_effect |= func_graph_abs->func_graph()->has_isolated_side_effect_node();
     }
-    MetaFuncGraphAbstractClosurePtr meta_func_graph_abs = dyn_cast<MetaFuncGraphAbstractClosure>(func);
+    auto meta_func_graph_abs = mindspore::cast<MetaFuncGraphAbstractClosure>(func);
     if (meta_func_graph_abs != nullptr) {
       contains_isolated_side_effect |= meta_func_graph_abs->meta_func_graph()->has_isolated_side_effect_node();
     }
@@ -652,7 +652,7 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
   // again, so update the config_map with new_conf;
   anfnode_config_map_[orig_conf] = new_conf;
   MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->ToString() << ", to new_conf: " << new_conf->ToString();
-  auto old_cnode = orig_conf->node()->cast<CNodePtr>();
+  auto old_cnode = orig_conf->node()->cast_ptr<CNode>();
   auto new_cnode = new_conf->node()->cast<CNodePtr>();
   if (old_cnode != nullptr && new_cnode != nullptr) {
     if (old_cnode->func_graph() == new_cnode->func_graph()) {
@@ -757,20 +757,20 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBa
          << spec->ToString() << ", and that of the previous branch is " << last_spec->ToString() << ".\n"
          << "The node is " << node->DebugString(recursive_level);
   if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>()->input(0);
+    auto cnode = node->cast_ptr<CNode>()->input(0);
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
       // {prim::kPrimSwitch, cond, true_branch, false_branch}
       constexpr int true_index = 2;
       constexpr int false_index = 3;
-      auto inputs = cnode->cast<CNodePtr>()->inputs();
+      const auto &inputs = cnode->cast_ptr<CNode>()->inputs();
       buffer << ", true branch: " << inputs.at(true_index)->ToString()
              << ", false branch: " << inputs.at(false_index)->ToString();
     } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
       constexpr int branch_index = 2;
-      auto tuple_node = cnode->cast<CNodePtr>()->input(branch_index);
+      const auto &tuple_node = cnode->cast_ptr<CNode>()->input(branch_index);
       if (IsPrimitiveCNode(tuple_node, prim::kPrimMakeTuple)) {
-        auto tuple_inputs = tuple_node->cast<CNodePtr>()->inputs();
+        const auto &tuple_inputs = tuple_node->cast_ptr<CNode>()->inputs();
         for (size_t i = 1; i < tuple_inputs.size(); i++) {
           buffer << ", branch" << i << ": " << tuple_inputs.at(i);
         }
@@ -827,7 +827,7 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
     return true;
   }
   if (abstract->isa<AbstractSequence>()) {
-    auto elements = abstract->cast<AbstractSequencePtr>()->elements();
+    auto elements = abstract->cast_ptr<AbstractSequence>()->elements();
     if (std::any_of(elements.begin(), elements.end(),
                     [](const AbstractBasePtr &item) { return NeedWaitForBranches(item); })) {
       return true;
@@ -888,7 +888,7 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
 AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
                                               const std::vector<AsyncAbstractPtr> &pending_async_abstract_list,
                                               const std::vector<std::size_t> &index) {
-  const auto sequence_abs = dyn_cast<AbstractSequence>(orig_abs);
+  auto sequence_abs = dyn_cast_ptr<AbstractSequence>(orig_abs);
   if (sequence_abs != nullptr) {
     const auto &orig_elements = sequence_abs->elements();
     AbstractBasePtrList new_elements;
@@ -1153,7 +1153,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {
     auto abs = value->ToAbstract();
-    auto sequence_abs = dyn_cast<AbstractSequence>(abs);
+    auto sequence_abs = dyn_cast_ptr<AbstractSequence>(abs);
     MS_EXCEPTION_IF_NULL(sequence_abs);
     if (anf_node != nullptr) {
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
@@ -1179,12 +1179,12 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   if (evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
   }
-  auto trivial_evaluator = dyn_cast<TrivialPrimEvaluator>(evaluator);
+  auto trivial_evaluator = dyn_cast_ptr<TrivialPrimEvaluator>(evaluator);
   if (trivial_evaluator != nullptr) {
     return trivial_evaluator->EvalPrim(nullptr, arg_specs);
   }
   // Support MakeTuple/MakeList ops in PyNative mode.
-  auto transition_evaluator = dyn_cast<TransitionPrimEvaluator>(evaluator);
+  auto transition_evaluator = dyn_cast_ptr<TransitionPrimEvaluator>(evaluator);
   if (transition_evaluator != nullptr &&
       (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
     return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);

@@ -43,7 +43,7 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
   MS_EXCEPTION_IF_NULL(graph_func);
   MS_EXCEPTION_IF_NULL(fg_evaluator);
   AnalysisContextPtr parent_context = nullptr;
-  auto func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(graph_func);
+  auto func_graph_abs = dyn_cast_ptr<FuncGraphAbstractClosure>(graph_func);
   if (func_graph_abs != nullptr) {  // Set parent context for FuncGraphAbstractClosure.
     parent_context = func_graph_abs->context();
   } else if (graph_func->isa<MetaFuncGraphAbstractClosure>()) {  // Or DummyContext for MetaFuncGraphAbstractClosure.
@@ -164,7 +164,7 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
                 << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
   EvalResultPtr node_eval_result = nullptr;
-  const auto &fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator());
+  auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator());
   if (fg_evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
   }
@@ -194,7 +194,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   // Check if child func graph contains isolated side-effect.
   if (engine->check_isolated_side_effect()) {
     if (last_stack_frame->func_graph()->has_isolated_side_effect_node()) {
-      auto cnode = dyn_cast<CNode>(CurrentNode());
+      auto cnode = dyn_cast_ptr<CNode>(CurrentNode());
       MS_EXCEPTION_IF_NULL(cnode);
       cnode->set_has_isolated_side_effect_node(true);
       cnode->func_graph()->set_has_isolated_side_effect_node(true);
@@ -205,7 +205,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   auto evaluator = last_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
   evaluator->evaluator_cache_mgr()->SetValue(last_stack_frame->args_abs_list(), result);
-  const auto &fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator);
+  auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator);
   if (fg_evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
   }

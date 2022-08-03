@@ -61,7 +61,7 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
 }  // namespace
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
-  auto new_sequence = dyn_cast<AbstractSequence>(arg);
+  auto new_sequence = dyn_cast_ptr<AbstractSequence>(arg);
   if (new_sequence != nullptr && new_sequence->sequence_nodes() != nullptr && new_sequence->size() != 0) {
     static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
     auto prev_result = cache_mgr.GetValue(conf);
@@ -69,7 +69,7 @@ bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg)
       return false;
     }
     auto prev_abs = prev_result->abstract();
-    auto old_sequence = dyn_cast<AbstractSequence>(prev_abs);
+    auto old_sequence = dyn_cast_ptr<AbstractSequence>(prev_abs);
     if (old_sequence != nullptr &&
         (old_sequence->sequence_nodes() == nullptr || old_sequence->sequence_nodes()->empty()) && *arg == *prev_abs) {
       MS_LOG(DEBUG) << "Always eval";
@@ -255,7 +255,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << fg->ToString() << "();";
   }
 
-  auto func_graph_evaluator = dyn_cast<FuncGraphEvaluator>(shared_from_base<BaseFuncGraphEvaluator>());
+  auto func_graph_evaluator = mindspore::cast<FuncGraphEvaluator>(this);
   if (func_graph_evaluator != nullptr) {
     if (engine->root_func_graph() == func_graph_evaluator->func_graph()) {
       engine->set_root_context(context);
@@ -551,7 +551,7 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   AbstractBasePtrList bparams;
   bparams.push_back(SensitivityTransform(primal_func_));
   // Check if primal func graph has the primitive returned sparse result in its bprop().
-  auto real_primal_func = dyn_cast<FuncGraphAbstractClosure>(primal_func_);
+  auto real_primal_func = dyn_cast_ptr<FuncGraphAbstractClosure>(primal_func_);
   MS_EXCEPTION_IF_NULL(real_primal_func);
   FuncGraphPtr primal_func_graph = real_primal_func->func_graph();
   MS_EXCEPTION_IF_NULL(primal_func_graph);
@@ -625,7 +625,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
     MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
                       << orig_abs->ToString() << ".";
   }
-  ShapeVector orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
+  ShapeVector orig_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape())->shape();
   int shape_len = SizeToInt(orig_shape.size());
   if (*axis < -shape_len || *axis >= shape_len) {
     MS_LOG(EXCEPTION) << "The axis: " << *axis << " in 'in_axes' is out of bounds for array of dimension ["
@@ -649,22 +649,21 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
 AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, const ValuePtr &in_axes, int *axis_size) {
   MS_EXCEPTION_IF_NULL(physical_view_abs);
   MS_EXCEPTION_IF_NULL(in_axes);
-  auto physical_view_abs_sequence = dyn_cast<abstract::AbstractSequence>(physical_view_abs);
+  auto physical_view_abs_sequence = dyn_cast_ptr<abstract::AbstractSequence>(physical_view_abs);
   if (physical_view_abs_sequence != nullptr) {
     AbstractBasePtrList abs_list = physical_view_abs_sequence->elements();
     AbstractBasePtrList logical_view_abs_list;
-    auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+    auto in_axes_seq = dyn_cast_ptr<ValueSequeue>(in_axes);
     int index = 0;
-    (void)std::transform(
-      abs_list.begin(), abs_list.end(), std::back_inserter(logical_view_abs_list),
-      [&axis_size, &index, &in_axes_seq, in_axes](const AbstractBasePtr &sub_abs) -> AbstractBasePtr {
-        ValuePtr sub_in_axes = in_axes;
-        if (in_axes->isa<ValueSequeue>()) {
-          sub_in_axes = (*in_axes_seq)[index];
-          index++;
-        }
-        return GetLogicalViewAbs(sub_abs, sub_in_axes, axis_size);
-      });
+    (void)std::transform(abs_list.begin(), abs_list.end(), std::back_inserter(logical_view_abs_list),
+                         [&axis_size, &index, in_axes_seq, in_axes](const AbstractBasePtr &sub_abs) -> AbstractBasePtr {
+                           ValuePtr sub_in_axes = in_axes;
+                           if (in_axes->isa<ValueSequeue>()) {
+                             sub_in_axes = (*in_axes_seq)[index];
+                             index++;
+                           }
+                           return GetLogicalViewAbs(sub_abs, sub_in_axes, axis_size);
+                         });
     if (physical_view_abs->isa<AbstractList>()) {
       return std::make_shared<AbstractList>(logical_view_abs_list, physical_view_abs_sequence->sequence_nodes());
     }
@@ -672,7 +671,7 @@ AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, cons
   }
   ValuePtr in_axis = in_axes;
   if (in_axis->isa<Int64Imm>()) {
-    int axis = dyn_cast<Int64Imm>(in_axis)->value();
+    int axis = dyn_cast_ptr<Int64Imm>(in_axis)->value();
     auto logical_view_abs = ReduceDim(&axis, physical_view_abs, axis_size);
     return logical_view_abs;
   }
@@ -689,7 +688,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   AbstractBasePtr out_abs = nullptr;
   ShapeVector orig_shape;
   if (orig_abs->isa<abstract::AbstractTensor>()) {
-    orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
+    orig_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape())->shape();
   }
   int shape_len = SizeToInt(orig_shape.size() + 1);
   if (*axis < -shape_len || *axis >= shape_len) {
@@ -713,11 +712,11 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
 
 AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, const ValuePtr &out_axes, int axis_size) {
   MS_EXCEPTION_IF_NULL(logical_view_abs);
-  auto logical_view_abs_sequence = dyn_cast<abstract::AbstractSequence>(logical_view_abs);
+  auto logical_view_abs_sequence = dyn_cast_ptr<abstract::AbstractSequence>(logical_view_abs);
   if (logical_view_abs_sequence != nullptr) {
     AbstractBasePtrList logical_view_abs_list = logical_view_abs_sequence->elements();
     AbstractBasePtrList physical_view_abs_list;
-    auto out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
+    auto out_axes_seq = dyn_cast_ptr<ValueSequeue>(out_axes);
     if (out_axes_seq != nullptr) {
       if (logical_view_abs_list.size() != out_axes_seq->size()) {
         MS_LOG(EXCEPTION) << "The size of vmap's 'out_axes' should be equal to the number of results of 'fn': "
@@ -727,7 +726,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
     int index = 0;
     (void)std::transform(
       logical_view_abs_list.begin(), logical_view_abs_list.end(), std::back_inserter(physical_view_abs_list),
-      [&axis_size, &index, &out_axes_seq, out_axes](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
+      [&axis_size, &index, out_axes_seq, out_axes](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
         ValuePtr sub_out_axes = out_axes;
         if (out_axes->isa<ValueSequeue>()) {
           sub_out_axes = (*out_axes_seq)[index];
@@ -737,7 +736,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
           return GetPhysicalViewAbs(arg_spec, sub_out_axes, axis_size);
         }
         if (sub_out_axes->isa<Int64Imm>()) {
-          int axis = dyn_cast<Int64Imm>(sub_out_axes)->value();
+          int axis = dyn_cast_ptr<Int64Imm>(sub_out_axes)->value();
           return ExtendDim(&axis, arg_spec, axis_size);
         } else if (sub_out_axes->isa<None>()) {
           return arg_spec;
@@ -763,7 +762,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
   }
 
   int axis = 0;
-  auto axis_int_ptr = dyn_cast<Int64Imm>(sub_out_axes);
+  auto axis_int_ptr = dyn_cast_ptr<Int64Imm>(sub_out_axes);
   if (axis_int_ptr != nullptr) {
     axis = LongToInt(axis_int_ptr->value());
   } else {
@@ -787,9 +786,9 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
   int axis_size = -1;
   int index = 0;
   auto in_axes = in_axes_;
-  auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+  auto in_axes_seq = dyn_cast_ptr<ValueSequeue>(in_axes);
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
-                       [&axis_size, &index, &in_axes_seq, in_axes](const ConfigPtr &conf) -> AbstractBasePtr {
+                       [&axis_size, &index, in_axes_seq, in_axes](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          AbstractBasePtr abs = conf->ObtainEvalResult()->abstract();
                          // Drop the side effect tag parameters, because it has no mapping axis.

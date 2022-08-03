@@ -186,8 +186,8 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
     return vecs;
   }
 
-  if (IsValueNode<FuncGraph>(node)) {
-    auto graph = GetValueNode<FuncGraphPtr>(node);
+  auto graph = GetValuePtr<FuncGraph>(node);
+  if (graph != nullptr) {
     auto &ret = graph->return_node();
     if (ret != nullptr) {
       vecs.push_back(ret);
@@ -209,19 +209,16 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
     return vecs;
   }
 
-  if (IsValueNode<FuncGraph>(node)) {
-    auto graph = GetValueNode<FuncGraphPtr>(node);
+  auto graph = GetValuePtr<FuncGraph>(node);
+  if (graph != nullptr) {
     auto &ret = graph->return_node();
     if (ret != nullptr) {
       vecs.push_back(ret);
     }
-    return vecs;
-  } else {
-    if (node->isa<CNode>()) {
-      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
-    }
-    return vecs;
+  } else if (node->isa<CNode>()) {
+    FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
   }
+  return vecs;
 }
 
 std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
@@ -234,26 +231,24 @@ std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
 }
 
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> vecs;
-  if (node == nullptr) {
-    return vecs;
-  }
   auto cnode = dyn_cast<CNode>(node);
-  if (cnode != nullptr) {
-    auto &inputs = cnode->inputs();
-    // Check if free variables used.
-    for (const auto &input : inputs) {
-      auto input_fg = GetValueNode<FuncGraphPtr>(input);
-      if (input_fg) {
-        for (auto &fv : input_fg->free_variables_nodes()) {
-          if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
-            vecs.push_back(fv);
-          }
+  if (cnode == nullptr) {
+    return {};
+  }
+  std::vector<AnfNodePtr> vecs;
+  const auto &inputs = cnode->inputs();
+  // Check if free variables used.
+  for (const auto &input : inputs) {
+    auto input_fg = GetValuePtr<FuncGraph>(input);
+    if (input_fg != nullptr) {
+      for (auto &fv : input_fg->free_variables_nodes()) {
+        if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
+          vecs.push_back(fv);
         }
       }
     }
-    FetchCNodeSuccessors(cnode, &vecs);
   }
+  FetchCNodeSuccessors(cnode, &vecs);
   return vecs;
 }
 
@@ -263,28 +258,24 @@ std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, cons
     return vecs;
   }
 
-  if (IsValueNode<FuncGraph>(node)) {
-    auto graph = GetValueNode<FuncGraphPtr>(node);
+  auto graph = GetValueNode<FuncGraphPtr>(node);
+  if (graph != nullptr) {
     if (graph_filter != nullptr && graph_filter(graph)) {
       return vecs;
     }
-
     auto &ret = graph->return_node();
     if (ret != nullptr) {
       vecs.push_back(ret);
     }
-    return vecs;
-  } else {
-    if (node->isa<CNode>()) {
-      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
-    }
-    return vecs;
+  } else if (node->isa<CNode>()) {
+    FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
   }
+  return vecs;
 }
 
 const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node) {
   static std::vector<AnfNodePtr> empty_inputs;
-  auto cnode = dyn_cast<CNode>(node);
+  auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode != nullptr) {
     return cnode->inputs();
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ AbstractFunctionPtr AbstractFuncAtom::Join(const AbstractFunctionPtr &other) {
     }
     return std::make_shared<AbstractFuncUnion>(this_func, other);
   }
-  auto other_union = dyn_cast<AbstractFuncUnion>(other);
+  auto other_union = dyn_cast_ptr<AbstractFuncUnion>(other);
   MS_EXCEPTION_IF_NULL(other_union);
   if (other_union->IsSuperSet(this_func)) {
     return other;
@@ -122,7 +122,7 @@ AbstractFunctionPtr AbstractFuncUnion::Join(const AbstractFunctionPtr &other) {
     }
     return std::make_shared<AbstractFuncUnion>(this_func, other);
   }
-  auto other_union = dyn_cast<AbstractFuncUnion>(other);
+  auto other_union = dyn_cast_ptr<AbstractFuncUnion>(other);
   MS_EXCEPTION_IF_NULL(other_union);
   if (other_union->IsSuperSet(this_func)) {
     return other;

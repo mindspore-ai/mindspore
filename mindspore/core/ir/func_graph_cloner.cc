@@ -87,7 +87,7 @@ void Cloner::CloneNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
 void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, bool is_add) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
-  auto old_param = node->cast<ParameterPtr>();
+  auto old_param = node->cast_ptr<Parameter>();
   MS_EXCEPTION_IF_NULL(old_param);
   auto debug_info = CloneNodeDebugInfo(node->debug_info(), relation_);
   auto new_param = (is_add ? target->add_parameter(std::move(debug_info))
@@ -136,7 +136,7 @@ void Cloner::CloneValueNode(const AnfNodePtr &node) {
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
-  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
+  new_const->set_has_new_value(node->cast_ptr<ValueNode>()->has_new_value());
   repl_node_[node] = std::move(new_const);
 }
 
@@ -148,7 +148,7 @@ void Cloner::CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr 
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
-  new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
+  new_const->set_has_new_value(node->cast_ptr<ValueNode>()->has_new_value());
   repl_node_[node] = std::move(new_const);
 }
 
@@ -229,7 +229,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
 
   auto &cnodes = func_graph->func_graph_cnodes_index();
   for (auto &cnode : cnodes) {
-    auto parent = cnode.first->first->cast<CNodePtr>();
+    auto parent = cnode.first->first->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(parent);
     const auto &valuenode = parent->input(IntToSize(cnode.first->second));
     CloneFuncGraphValueNode(valuenode, target_func_graph);
@@ -291,7 +291,7 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     auto free_var_node = utils::cast<AnfNodePtr>(free_var);
     // Don't lift weight parameter to top func_graph.
     if (IsLiftTopFuncGraph(func_graph) && free_var_node->isa<Parameter>()) {
-      auto free_var_param = free_var_node->cast<ParameterPtr>();
+      auto free_var_param = free_var_node->cast_ptr<Parameter>();
       if (free_var_param->has_default()) {
         MS_LOG(DEBUG) << "Bypass weight param: " << free_var_param->DebugString()
                       << " for top_func_graph: " << lift_top_func_graph->ToString();
@@ -306,7 +306,7 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     }
 
     MS_LOG(DEBUG) << "Gen param: " << free_var_node->ToString() << " for func_graph: " << func_graph->ToString();
-    auto fv_parameter = AddParameter(func_graph, utils::cast<AnfNodePtr>(free_var));
+    auto fv_parameter = AddParameter(func_graph, free_var_node);
     fv_parameter->set_user_data<bool>("lifted_from_fv", std::make_shared<bool>(true));
     auto &fg_params = repl_func_graph_params_[func_graph];
     (void)fg_params.emplace_back(fv_parameter);
@@ -316,7 +316,7 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
 void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) const {
   param->set_abstract(node->abstract());
   if (node->isa<Parameter>()) {
-    ParameterPtr old_param = node->cast<ParameterPtr>();
+    auto old_param = node->cast_ptr<Parameter>();
     if (old_param->has_default()) {
       // Default parameter can be shared since it is readonly.
       param->set_default_param(old_param->default_param());
@@ -728,11 +728,11 @@ void Cloner::CloneNodes() {
 
 void Cloner::LinkEdges() {
   for (auto &repl : repl_node_) {
-    CNodePtr old_node = dyn_cast<CNode>(repl.first);
+    auto old_node = dyn_cast_ptr<CNode>(repl.first);
     if (old_node == nullptr) {
       continue;
     }
-    CNodePtr new_node = repl.second->cast<CNodePtr>();
+    auto new_node = repl.second->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(new_node);
     for (auto &input : old_node->inputs()) {
       auto iter = repl_node_.find(input);

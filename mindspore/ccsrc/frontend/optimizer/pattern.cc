@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ MatchResultPtr Call::match(const AnfNodePtr &node) {
   }
   MatchResultPtr res = std::make_shared<MatchResult>();
   // IsPrimitiveCNode
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Check Primitive ValueNode
   if (prim_pattern_ != nullptr) {
@@ -120,20 +120,16 @@ MatchResultPtr Any::match(const AnfNodePtr &node) {
 }
 
 MatchResultPtr Imm::match(const AnfNodePtr &node) {
-  if (!IsValueNode<Int32Imm>(node)) {
+  auto value_ptr = GetValuePtr<Int32Imm>(node);
+  if (value_ptr == nullptr) {
     return nullptr;
   }
-  // Check value
-  auto value_node = node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto value_ptr = value_node->value()->cast<Int32ImmPtr>();
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  if (value_ptr->value() == value_) {
-    MatchResultPtr res = std::make_shared<MatchResult>();
-    res->add_entry(shared_from_base<Imm>(), node);
-    return res;
+  if (value_ptr->value() != value_) {
+    return nullptr;
   }
-  return nullptr;
+  MatchResultPtr res = std::make_shared<MatchResult>();
+  res->add_entry(shared_from_base<Imm>(), node);
+  return res;
 }
 
 AnfNodePtr MatchResult::get_node(const PatternPtr &pattern) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,8 +179,9 @@ AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const
                                                const std::size_t offset) {
   if (abs->isa<AbstractFuncAtom>()) {
     return abs->cast<AbstractFuncAtomPtr>();
-  } else if (abs->isa<AbstractSequence>()) {
-    const auto &abs_seq = abs->cast<AbstractSequencePtr>();
+  }
+  if (abs->isa<AbstractSequence>()) {
+    auto abs_seq = abs->cast_ptr<AbstractSequence>();
     MS_EXCEPTION_IF_NULL(abs_seq);
     const auto &elements = abs_seq->elements();
     if (offset >= index.size()) {
@@ -190,12 +191,12 @@ AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const
       MS_LOG(EXCEPTION) << "At offset" << offset << ", elements size of AsyncAbstract result: " << abs->ToString()
                         << " is less than or equal to index: " << index[offset];
     }
-    const auto &resolved = GetAbstractFuncRecursively(elements[index[offset]], index, offset + 1);
+    auto resolved = GetAbstractFuncRecursively(elements[index[offset]], index, offset + 1);
     if (!resolved->isa<AbstractFuncAtom>()) {
       MS_LOG(EXCEPTION) << "AsyncAbstract result cannot be resolved to AbstractFuncAtom, but: " << resolved->ToString();
     }
     MS_LOG(DEBUG) << "Return abstract: " << resolved->ToString();
-    return resolved->cast<AbstractFuncAtomPtr>();
+    return resolved;
   }
   MS_LOG(EXCEPTION) << "AsyncAbstract cannot resolved to AbstractFuncAtom or AbstractSeqeunce, but: "
                     << abs->ToString();

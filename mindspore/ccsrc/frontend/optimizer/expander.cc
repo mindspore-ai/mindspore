@@ -33,22 +33,25 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
+  static const std::map<std::string, std::vector<std::string>> op2attrs = {
+    {prim::kPrimBroadcastTo->name(), {kAttrShape}},
+    {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
+    {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
+    {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
+
   auto todos = TopoSort(graph->get_return());
   for (const auto &node : todos) {
     if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
     auto primitive = GetCNodePrimitive(node);
-    if (!primitive || dyn_cast<PrimitivePy>(primitive)) {
+    if (primitive == nullptr || primitive->isa<PrimitivePy>()) {
       continue;
     }
     parallel::OperatorAttrs attrs;
-    std::map<std::string, std::vector<std::string>> op2attrs = {{prim::kPrimBroadcastTo->name(), {kAttrShape}},
-                                                                {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
-                                                                {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
-                                                                {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
-    if (op2attrs.count(primitive->name()) != 0) {
-      for (auto &attr : op2attrs[primitive->name()]) {
+    auto iter = op2attrs.find(primitive->name());
+    if (iter != op2attrs.end()) {
+      for (auto &attr : iter->second) {
         if (primitive->HasAttr(attr)) {
           (void)attrs.emplace_back(std::pair{attr, primitive->GetAttr(attr)});
         } else {
@@ -57,10 +60,10 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
         }
       }
     }
-    auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "")->cast<PrimitivePtr>();
-    (void)new_prim->SetAttrs(primitive->attrs());
+    auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "");
+    (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primitive->attrs());
     AnfNodePtrList inputs = {NewValueNode(new_prim)};
-    auto cnode = dyn_cast<CNode>(node);
+    auto cnode = dyn_cast_ptr<CNode>(node);
     (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
     cnode->set_inputs(inputs);
   }

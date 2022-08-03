@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ static inline bool UseMPI() {
 }
 
 template <typename T>
-inline bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
+bool IsEqual(const T *a, const T *b) {
   if (a == b) {
     return true;
   }
@@ -111,6 +111,11 @@ inline bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
     return false;
   }
   return *a == *b;
+}
+
+template <typename T>
+bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
+  return IsEqual(a.get(), b.get());
 }
 
 template <typename T>
