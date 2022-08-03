@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ class MIND_API ApplyAdagradV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdagradV2);
   ApplyAdagradV2() : BaseOperator(kNameApplyAdagradV2) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
-
-  /// \brief Set epsilon, A small value (float) added for numerical stability.
+  void Init(float epsilon, bool update_slots = true);
   void set_epsilon(const float epsilon);
   /// \brief Get epsilon.
   ///

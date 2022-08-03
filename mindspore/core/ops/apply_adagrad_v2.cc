@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <set>
+#include <utility>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
@@ -37,9 +38,9 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   // lr must be a scalar [Number, Tensor]
   const int64_t kShapeSize_ = 1;
-  auto lr_shape_rank = SizeToLong(lr_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_rank, kLessEqual, kShapeSize_, primitive->name());
-  if (lr_shape_rank == 1) {
+  auto lr_shape_size = lr_shape.size();
+  (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_size, kLessEqual, kShapeSize_, primitive->name());
+  if (lr_shape_size == 1) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize_, primitive->name());
   }
   // var, accum and grad must have the same shape
@@ -47,8 +48,8 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, accum_shape});
   }
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
-  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
+  same_shape_args_map.insert({"accum", accum_shape});
+  same_shape_args_map.insert({"grad", grad_shape});
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', evaluator arg '" << elem.first
@@ -64,20 +65,25 @@ TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<Abs
   auto accum_type = input_args[kInputIndex1]->BuildType();
   auto lr_type = input_args[kInputIndex2]->BuildType();
   auto grad_type = input_args[kInputIndex3]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat};
   // var, accum, grad  must have the same type
   std::map<std::string, TypePtr> args;
-  (void)args.insert(std::make_pair("var_type", var_type));
-  (void)args.insert(std::make_pair("accum_type", accum_type));
-  (void)args.insert(std::make_pair("grad_type", grad_type));
+  (void)args.insert({"var_type", var_type});
+  (void)args.insert({"accum_type", accum_type});
+  (void)args.insert({"grad_type", grad_type});
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
   // lr mustr be a scalar
   std::map<std::string, TypePtr> args_lr;
-  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
+  (void)args_lr.insert({"lr_type", lr_type});
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type});
 }
 }  // namespace
+
+void ApplyAdagradV2::Init(const float epsilon, const bool update_slots) {
+  set_epsilon(epsilon);
+  set_update_slots(update_slots);
+}
 
 float ApplyAdagradV2::get_epsilon() const {
   auto value_ptr = this->GetAttr(kEpsilon);
