@@ -53,7 +53,7 @@ class MatrixDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;
-  TypeId diagonal_data_type_;
+  TypeId diagonal_data_type_{kTypeUnknown};
   std::string align_;
   bool align_superdiag_ = true;
   bool align_subdiag_ = true;

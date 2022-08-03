@@ -46,7 +46,9 @@ void MatrixSetDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "Attr 'align' of 'MatrixSetDiagV3' is not in: 'LEFT_RIGHT', "
                            "'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'.";
     }
-    if (align_ == "") align_ = "RIGHT_LEFT";
+    if (align_ == "") {
+      align_ = "RIGHT_LEFT";
+    }
   } else {
     align_ = "RIGHT_LEFT";
   }
@@ -143,10 +145,11 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
       int64_t m = t / SizeToLong(input_columns_);
       int64_t n = t % SizeToLong(input_columns_);
       int64_t x = n - std::max(k_upper_, ZERO);
-      if (n - m == k_upper_)
-        output_data[elem] = diagonal_data[LongToSize(index * diagonal_columns_ + x)];
-      else
+      if (n - m == k_upper_) {
+        output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
+      } else {
         output_data[elem] = input_data[elem];
+      }
     }
   } else {
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
@@ -197,10 +200,11 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
           int64_t m = t / SizeToLong(input_columns_);
           int64_t n = t % SizeToLong(input_columns_);
           int64_t x = n - std::max(k_upper_, ZERO);
-          if (n - m == k_upper_)
+          if (n - m == k_upper_) {
             output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
-          else
+          } else {
             output_data[elem] = input_data[elem];
+          }
         }
       } else {
         for (size_t elem = start; elem < end; ++elem) {
@@ -214,7 +218,8 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
             int64_t offset = 0;
             if (((align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT") && d >= 0) ||
                 ((align_ == "LEFT_RIGHT" || align_ == "RIGHT_RIGHT") && d <= 0)) {
-              offset = max_diag_len_ - std::min(input_columns_ - std::max(d, ZERO), input_rows_ + std::min(d, ZERO));
+              offset = max_diag_len_ - std::min(SizeToLong(input_columns_) - std::max(d, ZERO),
+                                                SizeToLong(input_rows_) + std::min(d, ZERO));
             }
             int64_t y = n - std::max(d, ZERO) + offset;
             size_t position = LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) +
