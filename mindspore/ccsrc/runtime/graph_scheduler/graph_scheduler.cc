@@ -1863,7 +1863,7 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
 }
 
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                                         const std::vector<KernelGraphPtr> &graphs) {
+                                                         const std::vector<KernelGraphPtr> &graphs) const {
   const size_t kCommunicationNodesMinNum = 2;
   if (communication_nodes.size() < kCommunicationNodesMinNum) {
     return;
@@ -2146,7 +2146,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
   }
 }
 
-void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
+void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
