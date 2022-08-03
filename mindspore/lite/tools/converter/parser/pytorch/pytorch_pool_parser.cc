@@ -24,24 +24,19 @@
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr PytorchPoolParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
-  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+int SetAttrsForPool(const torch::jit::Node *torch_node, PrimitiveCPtr prim_c) {
+  MS_ASSERT(torch_node != nullptr && prim_c != nullptr);
   auto node_type = PytorchNodeParser::GetTorchNodeType(torch_node);
-  auto prim = node_type.find("avg") != node_type.npos ? std::make_unique<ops::AvgPoolFusion>()
-                                                      : std::make_unique<ops::MaxPoolFusion>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  input_indices->push_back(0);
-  prim->set_pad_mode(mindspore::PadMode::PAD);
-
+  prim_c->AddAttr(ops::kPadMode, MakeValue(static_cast<int64_t>(mindspore::PadMode::PAD)));
   auto kernels = PytorchNodeParser::GetValueFromConstNode<std::vector<int64_t>>(torch_node->input(1));
-  prim->set_kernel_size(kernels);
+  prim_c->AddAttr(ops::kKernelSize, MakeValue(kernels));
   if (node_type.find("adaptive") != node_type.npos) {
     std::vector<int64_t> out_kernels = {1, 1};
     if (out_kernels == kernels) {
-      prim->set_global(true);
+      prim_c->AddAttr(ops::kGlobal, MakeValue(true));
     } else {
       MS_LOG(ERROR) << "Unsupported adaptive average pool with output kernels: " << kernels;
-      return nullptr;
+      return RET_ERROR;
     }
   }
 
@@ -60,11 +55,11 @@ PrimitiveCPtr PytorchPoolParser::Parse(const torch::jit::Node *torch_node, std::
   if (strides.empty()) {
     strides = {1, 1};
   }
-  prim->set_strides(strides);
+  prim_c->AddAttr(ops::kStrides, MakeValue(strides));
   if (pads.empty()) {
     pads = {0, 0, 0, 0};
   }
-  prim->set_pad(pads);
+  prim_c->AddAttr(ops::kPads, MakeValue(pads));
 
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   if (torch_node->inputs().size() > SIXTH_INPUT) {
@@ -72,18 +67,42 @@ PrimitiveCPtr PytorchPoolParser::Parse(const torch::jit::Node *torch_node, std::
                    ? mindspore::RoundMode::CEIL
                    : round_mode;
   }
-  prim->set_round_mode(round_mode);
-
-  auto prim_c = prim->GetPrim();
-  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  prim_c->AddAttr(ops::kRoundMode, MakeValue(static_cast<int64_t>(round_mode)));
   prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim_c->AddAttr(ops::kFmkType, MakeValue(static_cast<int>(converter::FmkType::kFmkTypePytorch)));
-  return prim->GetPrim();
+  return RET_OK;
+}
+PrimitiveCPtr PytorchAvgPoolParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  input_indices->push_back(0);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  if (SetAttrsForPool(torch_node, prim_c) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Set attributes for pooling failed.";
+    return nullptr;
+  }
+  return prim_c;
 }
 
-PytorchNodeRegistrar g_pytorchAvgPoolParser("avg_pool2d", new PytorchPoolParser());
-PytorchNodeRegistrar g_pytorchAdaptiveAvgPoolParser("adaptive_avg_pool2d", new PytorchPoolParser());
-PytorchNodeRegistrar g_pytorchMaxPoolParser("max_pool2d", new PytorchPoolParser());
-PytorchNodeRegistrar g_pytorchAdaptiveMaxPoolParser("adaptive_max_pool2d", new PytorchPoolParser());
+PrimitiveCPtr PytorchMaxPoolParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  input_indices->push_back(0);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  if (SetAttrsForPool(torch_node, prim_c) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Set attributes for pooling failed.";
+    return nullptr;
+  }
+  return prim_c;
+}
+
+PytorchNodeRegistrar g_pytorchAvgPoolParser("avg_pool2d", new PytorchAvgPoolParser());
+PytorchNodeRegistrar g_pytorchAdaptiveAvgPoolParser("adaptive_avg_pool2d", new PytorchAvgPoolParser());
+PytorchNodeRegistrar g_pytorchMaxPoolParser("max_pool2d", new PytorchMaxPoolParser());
+PytorchNodeRegistrar g_pytorchAdaptiveMaxPoolParser("adaptive_max_pool2d", new PytorchMaxPoolParser());
 }  // namespace lite
 }  // namespace mindspore

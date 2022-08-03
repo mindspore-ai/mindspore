@@ -86,7 +86,7 @@ void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkPar
     for (int j = 0; j < inner_loop_num; j++) {
       for (int m = 0; m < dim_size; m++) {
         int offset = in_offset + m * inner_loop_num + j;
-        top_map[m].element = *(cur_input_data + offset);
+        top_map[m].element = (float)(*(cur_input_data + offset));
         top_map[m].index = m;
       }
       qsort(top_map, dim_size, sizeof(top_map[0]), DescendCmp);
@@ -95,7 +95,7 @@ void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkPar
       }
       for (int m = 0; m < k; m++) {
         int offset = out_offset + m * inner_loop_num + j;
-        cur_output_data[offset] = top_map[m].element;
+        cur_output_data[offset] = (int)(top_map[m].element);
         cur_output_index[offset] = top_map[m].index;
       }
     }
