@@ -205,10 +205,10 @@ std::string MakeOutputName(const std::string &node_name, int output_index) {
   return node_name + "_" + std::to_string(output_index);
 }
 
-size_t RavelIndex(const std::vector<int64_t> &index, const std::vector<int64_t> &shape) {
+int64_t RavelIndex(const std::vector<int64_t> &index, const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_CHECK_FAIL(index.size() <= shape.size(), "Index ndims must be <= shape ndims");
-  size_t result = 0;
-  size_t stride = 1;
+  int64_t result = 0;
+  int64_t stride = 1;
   for (size_t i = 0; i < shape.size() - index.size(); ++i) {
     stride *= shape[shape.size() - 1 - i];
   }
@@ -1677,7 +1677,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   const auto &x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
   auto end_ignore_mask = GetOpAttribute<int64_t>(node, "end_mask");
   for (size_t i = 0; i < end_value.size(); ++i) {
-    if (((unsigned int)end_ignore_mask & (1 << i)) != 0) {
+    if ((static_cast<uint64_t>(end_ignore_mask) & (1 << i)) != 0) {
       end_value[i] = x_shape[i];
     }
   }
@@ -3067,16 +3067,16 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodeP
     MS_EXCEPTION_IF_CHECK_FAIL(stride == 1, "Slice must be contiguous");
   }
 
-  size_t flat_begin_index = RavelIndex(begin, x_shape);
+  int64_t flat_begin_index = RavelIndex(begin, x_shape);
 
   std::vector<int64_t> end_inclusive;
   (void)std::transform(end.begin(), end.end(), std::back_inserter(end_inclusive), [](auto x) { return x - 1; });
   (void)std::transform(x_shape.begin() + end.size(), x_shape.end(), std::back_inserter(end_inclusive),
                        [](auto x) { return x - 1; });
-  size_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
+  int64_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
   int64_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
-  size_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1UL, std::multiplies<size_t>());
+  int64_t value_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<int64_t>());
   MS_EXCEPTION_IF_CHECK_FAIL(value_size == flat_end_index - flat_begin_index, "Cannot copy 'value' to target slice");
 
   auto flat_x_name = node_name + "_flat_x";
