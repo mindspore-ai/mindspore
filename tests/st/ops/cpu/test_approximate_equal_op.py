@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore import dtype as mstype
+from mindspore.ops import functional as F
 from mindspore.ops.function.math_func import approximate_equal
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -207,3 +208,31 @@ def test_approxmiate_equal_functional_api():
     output = approximate_equal(Tensor(x1), Tensor(x2), tol)
     expect = my_approximate_equal(x1, x2, tol)
     assert(output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_approximate_equal():
+    """
+    Feature: ApproximateEqual cpu op vmap feature.
+    Description: test the vmap feature of ApproximateEqual.
+    Expectation: success.
+    """
+    def cal_approximate_equal(input0, input1):
+        func = P.ApproximateEqual(2.0)
+        return func(input0, input1)
+
+    def manually_batched(func, input0, input1):
+        out_manual = []
+        for i in range(input0.shape[0]):
+            out = func(input0[i], input1[i])
+            out_manual.append(out)
+        return F.stack(out_manual)
+
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]])).astype(np.float32)
+    y = Tensor(np.array([[2, 4, 6], [3, 5, 8]])).astype(np.float32)
+
+    out_manual = manually_batched(cal_approximate_equal, x, y)
+    out_vmap = F.vmap(cal_approximate_equal, in_axes=(0, 0))(x, y)
+    assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())
