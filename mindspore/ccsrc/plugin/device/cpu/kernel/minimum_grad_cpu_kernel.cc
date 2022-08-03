@@ -24,8 +24,7 @@ namespace {
 constexpr size_t kMinimumGradInputsNum = 3;
 constexpr size_t kMinimumGradOutputsNum = 2;
 
-void GetCargo(const std::vector<size_t> *cargo, const std::vector<size_t> &shape,
-              const std::vector<size_t> &dout_shape) {
+void GetCargo(std::vector<size_t> *cargo, const std::vector<size_t> &shape, const std::vector<size_t> &dout_shape) {
   int i = dout_shape.size() - 1;
   int j = shape.size() - 1;
   (*cargo)[i] = 1;
