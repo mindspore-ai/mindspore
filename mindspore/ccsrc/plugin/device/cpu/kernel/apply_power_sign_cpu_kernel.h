@@ -50,7 +50,7 @@ class ApplyPowerSignCpuKernelMod : public NativeCpuKernelMod {
   int64_t batch_size_{1};
   int64_t batch_rank_{0};
   bool use_locking{false};
-  int64_t input_elements_;
+  int64_t input_elements_{0};
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
