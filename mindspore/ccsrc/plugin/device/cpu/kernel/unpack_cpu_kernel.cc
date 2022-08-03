@@ -24,6 +24,7 @@ namespace {
 constexpr size_t kUnpackInputsNum = 1;
 constexpr size_t kUnpackOutputsMinNum = 1;
 constexpr size_t kUnpackWorkspaceMinNum = 1;
+constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
 void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -40,6 +41,7 @@ void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
   unstack_param_.after_dims_ = 1;
+  input_size_ = 1;
 
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i < IntToSize(unstack_param_.axis_)) {
@@ -49,6 +51,7 @@ void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     } else {
       unstack_param_.axis_dim_ = LongToInt(input_shape[i]);
     }
+    input_size_ *= LongToSize(input_shape[i]);
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -87,6 +90,12 @@ bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   void **outputs_host = reinterpret_cast<void **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {
     outputs_host[i] = reinterpret_cast<T *>(outputs[i]->addr);
+  }
+
+  size_t total_size = input_size_ * sizeof(T);
+  if (total_size >= kMaxDataSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the input data size cannot larger than 2GB, but got "
+                      << total_size << " bytes";
   }
   int data_size = SizeToInt(sizeof(T));
   Unstack(input, outputs_host, &unstack_param_, data_size);
