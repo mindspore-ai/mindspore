@@ -105,10 +105,10 @@ int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_
   if (aes_mode_ == AES_CBC) {
     switch (priv_key_len_) {
       case KEY_LENGTH_16:
-        ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, ivec);
+        ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), nullptr, key, ivec);
         break;
       case KEY_LENGTH_32:
-        ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
+        ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key, ivec);
         break;
       default:
         MS_LOG(ERROR) << "key length is incorrect!";
@@ -122,10 +122,10 @@ int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_
   } else if (aes_mode_ == AES_CTR) {
     switch (priv_key_len_) {
       case KEY_LENGTH_16:
-        ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), NULL, key, ivec);
+        ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, key, ivec);
         break;
       case KEY_LENGTH_32:
-        ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
+        ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), nullptr, key, ivec);
         break;
       default:
         MS_LOG(ERROR) << "key length is incorrect!";
@@ -167,10 +167,10 @@ int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, cons
   if (aes_mode_ == AES_CBC) {
     switch (priv_key_len_) {
       case KEY_LENGTH_16:
-        ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, ivec);
+        ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), nullptr, key, ivec);
         break;
       case KEY_LENGTH_32:
-        ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
+        ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key, ivec);
         break;
       default:
         MS_LOG(ERROR) << "key length is incorrect!";
@@ -183,10 +183,10 @@ int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, cons
   } else if (aes_mode_ == AES_CTR) {
     switch (priv_key_len_) {
       case KEY_LENGTH_16:
-        ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_ctr(), NULL, key, ivec);
+        ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, key, ivec);
         break;
       case KEY_LENGTH_32:
-        ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
+        ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), nullptr, key, ivec);
         break;
       default:
         MS_LOG(ERROR) << "key length is incorrect!";

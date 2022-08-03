@@ -19,7 +19,6 @@
 #ifndef _WIN32
 #include "openssl/bn.h"
 #endif
-#include <string>
 #include <vector>
 #include "utils/log_adapter.h"
 #include "fl/server/common.h"

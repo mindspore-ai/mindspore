@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_UNMASK_H
 #define MINDSPORE_CCSRC_ARMOUR_CIPHER_UNMASK_H
 
-#include <vector>
 #include <string>
 #include <map>
 #include "fl/armour/secure_protocol/secret_sharing.h"
