@@ -120,7 +120,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     } else {
       output_hw->push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride[0])));
       int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
-      pad_needed_h = std::max((int64_t)0, pad_needed_h);
+      pad_needed_h = std::max(int64_t(0), pad_needed_h);
       pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_h / 2)));
       pad_list->push_back(pad_needed_h - pad_list->at(0));
     }
@@ -132,7 +132,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     } else {
       output_hw->push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride[1])));
       int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
-      pad_needed_w = std::max((int64_t)0, pad_needed_w);
+      pad_needed_w = std::max(int64_t(0), pad_needed_w);
       pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_w / 2)));
       pad_list->push_back(pad_needed_w - pad_list->at(kInputIndex2));
     }

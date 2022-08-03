@@ -46,7 +46,7 @@ std::vector<int64_t> TenToTwo(int64_t num) {
 
 void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *begin_pos, std::vector<int64_t> *end_pos,
                          std::vector<int64_t> *ellipsis_pos, std::vector<int64_t> *new_axis_pos,
-                         std::vector<int64_t> *shrink_axis_pos, bool slice_dynamic) {
+                         std::vector<int64_t> *shrink_axis_pos) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto begin_mask = GetValue<int64_t>(primitive->GetAttr(kBeginMask));
   auto end_mask = GetValue<int64_t>(primitive->GetAttr(kEndMask));
@@ -138,7 +138,7 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, false);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
                                            SizeToLong(slice_len), primitive->name());
 
@@ -199,7 +199,7 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, true);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
 
   size_t i = 0;
   size_t j = 0;
@@ -265,7 +265,7 @@ ShapeMap DynamicComputeInferShape(const PrimitivePtr &primitive, const std::vect
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, false);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
 
   size_t i = 0;
   size_t j = 0;
