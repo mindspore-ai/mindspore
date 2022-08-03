@@ -238,7 +238,7 @@ ThreadPool::~ThreadPool() {
 
 int ThreadPool::TaskQueuesInit(size_t thread_num) {
   for (size_t i = 0; i < thread_num; ++i) {
-    task_queues_.emplace_back(std::make_unique<HQueue<TaskSplit>>());
+    (void)task_queues_.emplace_back(std::make_unique<HQueue<TaskSplit>>());
   }
   for (size_t i = 0; i < thread_num; ++i) {
     if (task_queues_[i]->Init(kMaxHqueueSize) != true) {
@@ -262,7 +262,7 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
   Task task = {func, content};
   std::vector<TaskSplit> task_list;
   for (int i = 0; i < task_num; ++i) {
-    task_list.emplace_back(TaskSplit{&task, i});
+    (void)task_list.emplace_back(TaskSplit{&task, i});
   }
   Worker *curr = CurrentWorker();
   DistributeTask(&task_list, &task, task_num, curr);
