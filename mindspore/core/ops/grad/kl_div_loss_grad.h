@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/op_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

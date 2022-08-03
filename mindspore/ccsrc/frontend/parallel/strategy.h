@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
-#include "frontend/parallel/status.h"
 
 namespace mindspore {
 namespace parallel {
@@ -51,12 +50,14 @@ class Strategy {
   }
 
   Strategy &operator=(const Strategy &another_stra) {
-    inputs_ = another_stra.GetInputDim();
-    internal_size_ = another_stra.GetInternalSize();
-    if (internal_size_ != 0) {
-      internal_stragies_ = another_stra.GetInternalStrategies();
-    } else {
-      internal_stragies_ = {};
+    if (this != &another_stra) {
+      inputs_ = another_stra.GetInputDim();
+      internal_size_ = another_stra.GetInternalSize();
+      if (internal_size_ != 0) {
+        internal_stragies_ = another_stra.GetInternalStrategies();
+      } else {
+        internal_stragies_ = {};
+      }
     }
     return *this;
   }

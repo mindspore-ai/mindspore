@@ -775,6 +775,9 @@ std::vector<bool> IsBorderAdaSumSendReceive(const AnfNodePtr &node, const RankLi
   PrimitivePtr send_rec_prim = GetCNodePrimitive(node);
   int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr(OPPOSITE_RANK));
   int64_t rank = g_device_manager->global_rank();
+  if (group_devices.size() - 1 == 0) {
+    MS_LOG(EXCEPTION) << "May division by zero.";
+  }
   int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / SizeToLong(group_devices.size() - 1);
   if (adasum_rank_distance < ADASUM_MIN_DIS) {
     adasum_rank_distance = ADASUM_MIN_DIS;
@@ -860,7 +863,7 @@ void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devic
   size_t step = size_t(GetValue<int64_t>(prim->GetAttr("step")));
   std::vector<int64_t> neighbor_ids;
   int64_t adasum_rank_distance =
-    SizeToLong((group_devices.back() - group_devices.front()) / (group_devices.size() - 1));
+    (group_devices.back() - group_devices.front()) / SizeToLong((group_devices.size() - 1));
   if (adasum_rank_distance < ADASUM_MIN_DIS) {
     adasum_rank_distance = ADASUM_MIN_DIS;
   }
@@ -874,7 +877,8 @@ void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devic
   for (size_t index = 0; index < double_d; ++index) {
     int64_t node_rank = rank / ADASUM_MIN_DIS;
     int64_t neighbor_id =
-      (node_rank / SizeToLong(double_d) * double_d + index) * ADASUM_MIN_DIS + rank % ADASUM_MIN_DIS;
+      (node_rank / SizeToLong(double_d) * SizeToLong(double_d) + SizeToLong(index)) * ADASUM_MIN_DIS +
+      rank % ADASUM_MIN_DIS;
     neighbor_ids.push_back(neighbor_id);
   }
   Group adasum_allreduce_group;
@@ -1006,7 +1010,7 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
     }
 
     int64_t adasum_rank_distance =
-      SizeToLong((group_devices.back() - group_devices.front()) / (group_devices.size() - 1));
+      (group_devices.back() - group_devices.front()) / SizeToLong((group_devices.size() - 1));
     // when the repeat dim is right, the parameter do not enable adasum.
     if (adasum_rank_distance == 1 && group_devices.size() < size_t(g_device_manager->stage_device_num())) {
       continue;

@@ -591,7 +591,7 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, con
   return std::make_pair(shape_list, dtype);
 }
 
-AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) {
+AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto real_node = GetRealKernelNode(node, -1);
   if (!real_node->isa<CNode>()) {
@@ -1106,7 +1106,7 @@ void PipelineTransformer::ElimParameter() {
       }
     }
     auto new_make_tuple = fg->NewCNode(new_inputs);
-    manager_->Replace(make_tuple, new_make_tuple);
+    (void)manager_->Replace(make_tuple, new_make_tuple);
   }
 }
 
