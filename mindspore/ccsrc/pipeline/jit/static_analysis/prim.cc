@@ -2403,6 +2403,124 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+class WithEnterEvaluator : public TransitionPrimEvaluator {
+ public:
+  WithEnterEvaluator() : TransitionPrimEvaluator("WithEnterEvaluator") {}
+  ~WithEnterEvaluator() override = default;
+  MS_DECLARE_PARENT(WithEnterEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto node = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cur_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+
+    if (args_spec_list.size() != 1) {
+      MS_LOG(EXCEPTION) << "The enter node has wrong input." << node->debug_info();
+    }
+
+    // Check class object
+    auto partial_abs = args_spec_list[0]->cast<PartialAbstractClosurePtr>();
+    MS_EXCEPTION_IF_NULL(partial_abs);
+    if (!IsCallInstance(partial_abs)) {
+      MS_LOG(EXCEPTION) << "The enter node has wrong input." << node->debug_info();
+    }
+
+    AbstractBasePtrList args = partial_abs->args();
+    py::object cls_obj;
+    ValuePtr value = nullptr;
+    if (!args.empty()) {
+      value = args[0]->BuildValue();
+      MS_EXCEPTION_IF_NULL(value);
+      auto value_obj = value->cast<parse::MsClassObjectPtr>();
+      if (value_obj != nullptr) {
+        cls_obj = value_obj->obj();
+      }
+    }
+    const std::string call_func = "__enter__";
+    if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
+      MS_EXCEPTION_IF_NULL(value);
+      auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value);
+      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
+    }
+    py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
+    FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
+    if (call_func_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "Parse python object " << call_func << " failed.";
+    }
+    FuncGraphManagerPtr manager = engine->func_graph_manager();
+    manager->AddFuncGraph(call_func_graph);
+
+    std::vector<AnfNodePtr> enter_inputs{NewValueNode(call_func_graph)};
+    //  __enter__(self)
+    auto call_enter_node = cur_graph->NewCNodeInOrder(enter_inputs);
+    // Continue to eval call_enter_node.
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(call_enter_node, out_conf->context(), out_conf->func_graph());
+    return engine->ForwardConfig(out_conf, fn_conf);
+  }
+};
+
+class WithExitEvaluator : public TransitionPrimEvaluator {
+ public:
+  WithExitEvaluator() : TransitionPrimEvaluator("WithExitEvaluator") {}
+  ~WithExitEvaluator() override = default;
+  MS_DECLARE_PARENT(WithExitEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto node = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cur_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+
+    if (args_spec_list.size() != 1) {
+      MS_LOG(EXCEPTION) << "The exit node has wrong input." << node->debug_info();
+    }
+
+    // Check class object
+    auto partial_abs = args_spec_list[0]->cast<PartialAbstractClosurePtr>();
+    MS_EXCEPTION_IF_NULL(partial_abs);
+    if (!IsCallInstance(partial_abs)) {
+      MS_LOG(EXCEPTION) << "The exit node has wrong input." << node->debug_info();
+    }
+
+    AbstractBasePtrList args = partial_abs->args();
+    py::object cls_obj;
+    ValuePtr value = nullptr;
+    if (!args.empty()) {
+      value = args[0]->BuildValue();
+      MS_EXCEPTION_IF_NULL(value);
+      auto value_obj = value->cast<parse::MsClassObjectPtr>();
+      if (value_obj != nullptr) {
+        cls_obj = value_obj->obj();
+      }
+    }
+    const std::string call_func = "__exit__";
+    if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
+      MS_EXCEPTION_IF_NULL(value);
+      auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value);
+      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
+    }
+    py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
+    FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
+    if (call_func_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "Parse python object " << call_func << " failed.";
+    }
+    FuncGraphManagerPtr manager = engine->func_graph_manager();
+    manager->AddFuncGraph(call_func_graph);
+
+    std::vector<AnfNodePtr> exit_inputs{NewValueNode(call_func_graph)};
+    constexpr size_t arg_size = 3;
+    //  __exit__(self, type, value, trace)
+    for (size_t i = 0; i < arg_size; ++i) {
+      (void)exit_inputs.emplace_back(NewValueNode(kNone));
+    }
+    auto call_exit_node = cur_graph->NewCNodeInOrder(exit_inputs);
+    // Continue to eval call_exit_node.
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(call_exit_node, out_conf->context(), out_conf->func_graph());
+    return engine->ForwardConfig(out_conf, fn_conf);
+  }
+};
+
 struct PrimitiveImplInferValue {
   PrimitiveImpl impl_;        // implement function of primitive
   bool eval_value_;           // whether evaluate value
@@ -2463,6 +2581,8 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimMakeTuple] = std::make_shared<MakeTupleEvaluator>();
   constructor[prim::kPrimMakeList] = std::make_shared<MakeListEvaluator>();
   constructor[prim::kPrimRaise] = std::make_shared<RaiseEvaluator>();
+  constructor[prim::kPrimWithEnter] = std::make_shared<WithEnterEvaluator>();
+  constructor[prim::kPrimWithExit] = std::make_shared<WithExitEvaluator>();
 }
 }  // namespace
 
