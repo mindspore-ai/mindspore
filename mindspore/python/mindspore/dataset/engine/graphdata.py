@@ -381,15 +381,15 @@ class GraphData:
         Returns:
             numpy.ndarray, array of neighbors.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-            >>> neighbors = graph_data.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-            ...                                              neighbor_types=[2, 1])
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neighbor_nums` is not list or ndarray.
             TypeError: If `neighbor_types` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neighbors = graph_data.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                              neighbor_types=[2, 1])
         """
         if not isinstance(strategy, SamplingStrategy):
             raise TypeError("Wrong input type for strategy, should be enum of 'SamplingStrategy'.")
@@ -1017,11 +1017,11 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> features = graph.get_graph_feature(feature_types=['graph_feature_1'])
-
         Raises:
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> features = graph.get_graph_feature(feature_types=['graph_feature_1'])
         """
         if self._working_mode in ['server']:
             raise Exception("This method is not supported when working mode is server.")
