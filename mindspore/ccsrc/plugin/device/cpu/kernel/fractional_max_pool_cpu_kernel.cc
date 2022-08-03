@@ -62,7 +62,8 @@ void FractionalMaxPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                              << "', the size of parameter 'pooling_ratio' must be 4, but got " << pooling_ratio_.size()
                              << ".";
   }
-  if (pooling_ratio_[kPoolingRatioIndex0] != 1.0 || pooling_ratio_[kPoolingRatioIndex3] != 1.0) {
+  if (!common::IsFloatEqual(pooling_ratio_[kPoolingRatioIndex0], 1.0) ||
+      !common::IsFloatEqual(pooling_ratio_[kPoolingRatioIndex3], 1.0)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the first and last elements of parameter 'pooling_ratio' must be 1.0.";
   }
@@ -89,19 +90,19 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
   } else {
     // generate random number u which is in (0,1)
     double alpha = static_cast<double>(input_length) / output_length;
-    int k = input_length / output_length;
+    int k = SizeToInt(input_length / output_length);
     double u_max1 = (k + 2) / alpha - 1;
-    if ((alpha - (output_length - 1)) == 0) {
+    if (common::IsDoubleEqual(alpha, LongToDouble(output_length - 1))) {
       MS_EXCEPTION(ValueError) << "For FractionalAvgPool, the input_length and output_length is wrong, please check "
                                   "the parameter 'pooling ratio'.";
     } else {
-      double u_max2 = (input_length + 1 - k) / alpha - (output_length - 1);
+      double u_max2 = (input_length + 1 - IntToSize(k)) / alpha - (output_length - 1);
       double max_u = std::min(u_max1, u_max2);
       std::default_random_engine random(seed);
       std::uniform_real_distribution<double> dis2(0.0, 1.0);
       const double u = dis2(random) * max_u;
       cum_seq[0] = 1;
-      cum_seq[output_length] = input_length + 1;
+      cum_seq[output_length] = SizeToLong(input_length + 1);
       for (size_t i = 1; i < output_length; ++i) {
         cum_seq[i] = static_cast<int>(ceil(alpha * (i + u)));
       }
@@ -117,7 +118,7 @@ static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, s
   if (output_length == 0) {
     MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
   } else {
-    int k = input_length / output_length;
+    int k = SizeToInt(input_length / output_length);
     size_t num_random_spot = input_length % output_length;
     std::vector<int64_t> diff(output_length, k);
     for (size_t i = 0; i < num_random_spot; ++i) {
@@ -138,14 +139,14 @@ std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t outpu
       diff = std::vector<int64_t>(output_length, input_length / output_length);
     } else {
       if (pseudo_random) {
-        diff = GeneratePoolingSequencePseudoRandom(input_length, output_length, seed);
+        diff = GeneratePoolingSequencePseudoRandom(LongToSize(input_length), LongToSize(output_length), seed);
       } else {
-        diff = GeneratePoolingSequenceRandom(input_length, output_length, seed);
+        diff = GeneratePoolingSequenceRandom(LongToSize(input_length), LongToSize(output_length), seed);
       }
     }
-    int k = input_length / output_length;
+    int k = LongToInt(input_length / output_length);
     for (size_t i = 0; i < LongToSize(output_length); i++) {
-      if (diff[i] < k || diff[i] > k + 1) {
+      if (diff[i] < k || diff[i] > IntToLong(k) + 1) {
         MS_EXCEPTION(ValueError) << "For FractionalAvgPool, GeneratePoolingSequence diff[" << i << "] is error";
       }
     }
@@ -160,13 +161,13 @@ std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t outpu
 template <typename T>
 bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<AddressPtr> &inputs,
                                                             const std::vector<AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_ptr = static_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = static_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_ptr);
-  int64_t *row_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[1]->addr);
+  int64_t *row_pooling_sequence_ptr = static_cast<int64_t *>(outputs[1]->addr);
   MS_EXCEPTION_IF_NULL(row_pooling_sequence_ptr);
-  int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->addr);
+  int64_t *col_pooling_sequence_ptr = static_cast<int64_t *>(outputs[2]->addr);
   MS_EXCEPTION_IF_NULL(col_pooling_sequence_ptr);
   for (size_t i = 0; i < kInputDims; i++) {
     output_shape_[i] = static_cast<int64_t>(std::floor(input_shape_[i] / pooling_ratio_[i]));
@@ -181,8 +182,8 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<Ad
   if (deterministic_) {
     // If both seeds are not set when deterministic is true, force set seeds.
     if ((seed_ == 0) && (seed2_ == 0)) {
-      seed = generator();
-      seed2 = generator();
+      seed = SizeToInt(generator());
+      seed2 = SizeToInt(generator());
     }
   } else {
     if ((seed_ != 0) || (seed2_ != 0)) {
@@ -215,7 +216,7 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<Ad
         const int64_t height_start = height_cum_seq[hs];
         int64_t height_end = overlapping_ ? height_cum_seq[hs + 1] : height_cum_seq[hs + 1] - 1;
         height_end = std::min(height_end, height_max);
-        FractionalMaxPoolDoCompute(input_ptr, output_ptr, b, hs, height_start, height_end, width_cum_seq);
+        (void)FractionalMaxPoolDoCompute(input_ptr, output_ptr, b, hs, height_start, height_end, width_cum_seq);
       }
     }
   };
@@ -224,7 +225,7 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<Ad
 }
 
 template <typename T>
-bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolDoCompute(T *input_ptr, T *output_ptr, size_t b, size_t hs,
+bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolDoCompute(const T *input_ptr, T *output_ptr, size_t b, size_t hs,
                                                                const int64_t height_start, int64_t height_end,
                                                                std::vector<int64_t> width_cum_seq) {
   const int64_t width_max = input_shape_[kInputShapeIndexW] - 1;
@@ -232,9 +233,11 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolDoCompute(T *input_ptr, T *
   // width sequence.
   for (size_t ws = 0; ws < width_cum_seq.size() - 1; ++ws) {
     for (int64_t c = 0; c <= depth_max; ++c) {
-      const int64_t out_offset = ((b * output_shape_[kInputShapeIndexH] + hs) * output_shape_[kInputShapeIndexW] + ws) *
-                                   output_shape_[kInputShapeIndexC] +
-                                 c;
+      const int64_t out_offset =
+        ((SizeToLong(b) * output_shape_[kInputShapeIndexH] + SizeToLong(hs)) * output_shape_[kInputShapeIndexW] +
+         SizeToLong(ws)) *
+          output_shape_[kInputShapeIndexC] +
+        c;
       // Initializes the output tensor with MIN<T>.
       T max = std::numeric_limits<T>::lowest();
       // width start and end.
@@ -243,9 +246,10 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolDoCompute(T *input_ptr, T *
       width_end = std::min(width_end, width_max);
       for (int64_t h = height_start; h <= height_end; ++h) {
         for (int64_t w = width_start; w <= width_end; ++w) {
-          const int64_t in_offset = ((b * input_shape_[kInputShapeIndexH] + h) * input_shape_[kInputShapeIndexW] + w) *
-                                      output_shape_[kInputShapeIndexC] +
-                                    c;
+          const int64_t in_offset =
+            ((SizeToLong(b) * input_shape_[kInputShapeIndexH] + h) * input_shape_[kInputShapeIndexW] + w) *
+              output_shape_[kInputShapeIndexC] +
+            c;
           max = max > *(input_ptr + in_offset) ? max : *(input_ptr + in_offset);
         }
       }
@@ -283,8 +287,8 @@ std::vector<std::pair<KernelAttr, FractionalMaxPoolCpuKernelMod::FractionalMaxPo
 
 std::vector<KernelAttr> FractionalMaxPoolCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, FractionalMaxPoolFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, FractionalMaxPoolFunc> &pair) { return pair.first; });
 
   return support_list;
 }
