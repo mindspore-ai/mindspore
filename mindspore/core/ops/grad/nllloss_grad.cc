@@ -50,8 +50,8 @@ void CheckNLLLossGradShapeValid(const std::string &prim_name, const ShapeVector 
   }
 
   CheckValueIn("x rank", x_shape.size(), {1, 2}, prim_name);
-  CheckAndConvertUtils::CheckInteger("target rank", SizeToLong(t_shape.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckInteger("weight rank", SizeToLong(w_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("target rank", SizeToLong(t_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("weight rank", SizeToLong(w_shape.size()), kEqual, 1, prim_name);
   if (x_shape.size() == 1) {
     CheckAndConvertUtils::Check("target_shape", 1, kEqual, t_shape[0], prim_name);
     CheckAndConvertUtils::Check("weight_shape", x_shape[0], kEqual, w_shape[0], prim_name);
