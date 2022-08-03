@@ -29,7 +29,7 @@ namespace mindspore {
 namespace device {
 class MemHandler {
  public:
-  explicit MemHandler(std::shared_ptr<MemoryManager> memory_manager) : memory_manager_(memory_manager) {}
+  explicit MemHandler(const std::shared_ptr<MemoryManager> &memory_manager) : memory_manager_(memory_manager) {}
   ~MemHandler() = default;
   size_t GetAvailableMemSize() { return memory_manager_->GetAvailableMemSize(); }
   void *MallocDevice(size_t mem_size) { return memory_manager_->MallocMemFromMemPool(mem_size, false); }

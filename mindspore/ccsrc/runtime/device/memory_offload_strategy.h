@@ -138,7 +138,7 @@ class MemOffloadStrategy {
   size_t GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
                                     const std::vector<size_t> &mem_used);
 
-  size_t GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info);
+  size_t GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const;
 
   void GenContinuousMemAllocSteps();
 
