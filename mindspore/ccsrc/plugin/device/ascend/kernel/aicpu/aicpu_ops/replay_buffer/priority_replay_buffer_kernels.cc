@@ -99,7 +99,7 @@ uint32_t PriorityReplayBufferPush::DoCompute() {
 uint32_t PriorityReplayBufferSample::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
   handle_ = attrs["handle"].i();
-  batch_size_ = attrs["batch_size"].i();
+  batch_size_ = static_cast<size_t>(attrs["batch_size"].i());
 
   aicpuops::AttrValue_ArrayValue shape = attrs["schema"].array();
   for (int i = 0; i < shape.i_size(); i++) {
