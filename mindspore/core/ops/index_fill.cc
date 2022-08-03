@@ -47,7 +47,7 @@ TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto index_type = input_args[kInputIndex2]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("index", index_type, {kInt32}, prim_name);
 
-  // Input 'x' must must be a tensor.
+  // Input 'x' must be a tensor.
   auto x_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_data_types, prim_name);
 
@@ -57,8 +57,8 @@ TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<Abst
 
   // Input 'x' and 'value' must have the same types.
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"x", x_type});
-  (void)args.insert({"value", value_type});
+  (void)args.emplace("x", x_type);
+  (void)args.emplace("value", x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_data_types, prim_name);
   return x_type;
 }

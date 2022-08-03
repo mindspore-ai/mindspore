@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/is_close_cpu_kernel.h"
-#include <cmath>
+#include <functional>
 #include <algorithm>
 #include <memory>
 #include "mindspore/core/ops/is_close.h"
@@ -26,15 +26,16 @@ namespace kernel {
 namespace {
 constexpr size_t kIsCloseInputsNum = 2;
 constexpr size_t kIsCloseOutputsNum = 1;
+constexpr size_t kIsCloseMaxDim = 10;
 template <typename T>
 inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
-  if (a == b) {
+  if (std::equal_to<T>()(a, b)) {
     return true;
   }
   if (equal_nan && std::isnan(a) && std::isnan(b)) {
     return true;
   }
-  if (atol == 0 && rtol == 0) {
+  if (std::equal_to<float>()(atol, 0) && std::equal_to<float>()(rtol, 0)) {
     return false;
   }
   auto left_side = std::abs(a - b);
@@ -43,14 +44,13 @@ inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
 }
 
 void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVector &output_shape,
-                       std::vector<int64_t> *index_list) {
+                       std::vector<size_t> *index_list) {
   // Given unaligned input shape and output shape, this function returns the mapping
   // from indices of output (logical) to corespondingly real input indices (physical).
   // The return will write to index_list, whose size is equal to total elements of output.
-  constexpr int MaxDim = 10;
-  int64_t logical_shape[MaxDim];
-  int64_t physical_shape[MaxDim];
-  int64_t size = 0, output_size = 1;
+  size_t logical_shape[kIsCloseMaxDim];
+  size_t physical_shape[kIsCloseMaxDim];
+  size_t size = 0, output_size = 1;
   // Align input shape to output shape by filling one into the outermost dimension.
   ShapeVector input_shape(output_shape.size());
   for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
@@ -58,11 +58,11 @@ void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVect
   }
   // Get logical shape and physical shape of input. Moreover, we will merge the dimensions with same
   // (logical or physical) property.
-  for (int i = SizeToInt(output_shape.size()) - 1; i >= 0;) {
-    int64_t stride = 1;
+  for (size_t i = output_shape.size(); i > 0;) {
+    size_t stride = 1;
     bool change = false, is_valid = false;
-    while (i >= 0 && input_shape[i] == output_shape[i]) {
-      stride *= output_shape[i];
+    while (i > 0 && input_shape[i - 1] == output_shape[i - 1]) {
+      stride *= output_shape[i - 1];
       change = is_valid = true;
       --i;
     }
@@ -73,8 +73,8 @@ void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVect
     }
     change = false;
     stride = 1;
-    while (i >= 0 && input_shape[i] == 1) {
-      stride *= output_shape[i];
+    while (i > 0 && input_shape[i - 1] == 1) {
+      stride *= output_shape[i - 1];
       change = is_valid = true;
       --i;
     }
@@ -90,13 +90,13 @@ void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVect
     }
   }
   // Get the flatten input indices according to "logical_shape" and "physical_shape".
-  int64_t offset = 1;
-  int64_t stride = 1;
+  size_t offset = 1;
+  size_t stride = 1;
   index_list->resize(output_size);
   (*index_list)[0] = 0;  // First element is set to 0.
-  for (int64_t i = 0; i < size; ++i) {
-    int64_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
-    for (int64_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
+  for (size_t i = 0; i < size; ++i) {
+    size_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
+    for (size_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
       (*index_list)[offset + j] = (*index_list)[j] + increment;
     }
     offset *= physical_shape[i];
@@ -137,7 +137,7 @@ int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
