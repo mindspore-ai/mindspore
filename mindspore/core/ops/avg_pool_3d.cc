@@ -90,7 +90,8 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
     }
   } else {
     out_d = DoubleToLong(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1));
-    out_h = DoubleToLong(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1));
+    out_h =
+      DoubleToLong(std::floor((in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h) / stride_h + 1));
     out_w =
       DoubleToLong(std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
   }
