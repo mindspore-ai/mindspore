@@ -19,9 +19,11 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-bool TCPServer::Initialize(const std::string &url) { return InitializeImpl(url); }
+bool TCPServer::Initialize(const std::string &url, const MemAllocateCallback &allocate_cb) {
+  return InitializeImpl(url, allocate_cb);
+}
 
-bool TCPServer::Initialize() { return InitializeImpl(""); }
+bool TCPServer::Initialize(const MemAllocateCallback &allocate_cb) { return InitializeImpl("", allocate_cb); }
 
 void TCPServer::Finalize() {
   if (tcp_comm_ != nullptr) {

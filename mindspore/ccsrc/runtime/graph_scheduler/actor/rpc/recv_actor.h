@@ -24,9 +24,11 @@
 #include <memory>
 #include <condition_variable>
 #include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace runtime {
+using CPUDeviceAddress = device::cpu::CPUDeviceAddress;
 // RecvActor inherits from RpcActor and it's used to receive data from other processes.
 class RecvActor : public RpcActor {
  public:
@@ -39,7 +41,8 @@ class RecvActor : public RpcActor {
         server_(nullptr),
         is_context_valid_(false),
         ip_(""),
-        port_(0) {}
+        port_(0),
+        recv_data_(nullptr) {}
   ~RecvActor() override;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
@@ -77,6 +80,13 @@ class RecvActor : public RpcActor {
   // Parse finalize command message from received message.
   virtual void ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) {}
 
+  /**
+   * @description: The callback set to rpc module to allocate message(Raw pointer).
+   * @param {size_t} size: The message size.
+   * @return {void *}: A pointer to the newly allocated memory.
+   */
+  virtual void *AllocateMessage(size_t size);
+
   std::unique_ptr<TCPServer> server_;
 
   // The variables used to ensure thread-safe of op context visited by recv actor.
@@ -106,6 +116,10 @@ class RecvActor : public RpcActor {
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
+
+  // The received data which should be allocated by framework.
+  // It will be used for copying the buffer from the kernel function.
+  std::shared_ptr<CPUDeviceAddress> recv_data_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;

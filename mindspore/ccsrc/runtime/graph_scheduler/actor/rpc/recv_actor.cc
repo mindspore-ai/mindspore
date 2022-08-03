@@ -60,7 +60,16 @@ bool RecvActor::StartServer() {
   // Step 1: Create a tcp server and start listening.
   server_ = std::make_unique<TCPServer>();
   MS_EXCEPTION_IF_NULL(server_);
-  if (!server_->Initialize()) {
+
+  // Only set the memory allocating callback when using void* message.
+  bool use_void_msg = common::GetEnv("use_void").empty() ? false : true;
+  std::function<void *(size_t size)> allocate_callback;
+  if (use_void_msg) {
+    allocate_callback = std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
+  } else {
+    allocate_callback = {};
+  }
+  if (!server_->Initialize(allocate_callback)) {
     MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
   }
   ip_ = server_->GetIP();
@@ -145,6 +154,10 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   if (input_op_inter_process_.count(context->sequential_num_) != 0) {
     (void)input_op_inter_process_.erase(context->sequential_num_);
   }
+  // Release data allocated by AllocateMessage.
+  if (recv_data_ != nullptr) {
+    device_contexts_[0]->device_res_manager_->FreeMemory(recv_data_.get());
+  }
 }
 
 void RecvActor::Run(OpContext<DeviceTensor> *const context) {
@@ -160,6 +173,25 @@ void RecvActor::Run(OpContext<DeviceTensor> *const context) {
     return;
   }
   KernelActor::Run(context);
+}
+
+void *RecvActor::AllocateMessage(size_t size) {
+  // Block this method until the context is valid.
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  context_cv_.wait(lock, [this] { return is_context_valid_; });
+  lock.unlock();
+
+  // Only need to create recv_data_ once.
+  // The real data is allocated and freed multiple times as recv_data_->ptr_.
+  if (recv_data_ == nullptr) {
+    recv_data_ = std::make_shared<CPUDeviceAddress>(nullptr, size);
+    MS_ERROR_IF_NULL_W_RET_VAL(recv_data_, nullptr);
+  }
+  if (!device_contexts_[0]->device_res_manager_->AllocateMemory(recv_data_.get())) {
+    MS_LOG(ERROR) << "Failed to allocate memory size " << size;
+    return nullptr;
+  }
+  return recv_data_->GetMutablePtr();
 }
 
 void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const ShapeVector &shapes, TypeId data_type,

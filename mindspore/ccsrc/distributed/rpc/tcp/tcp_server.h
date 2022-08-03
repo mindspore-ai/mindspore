@@ -32,10 +32,10 @@ class TCPServer {
   ~TCPServer() = default;
 
   // Init the tcp server using the specified url.
-  bool Initialize(const std::string &url);
+  bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {});
 
   // Init the tcp server using local IP and random port.
-  bool Initialize();
+  bool Initialize(const MemAllocateCallback &allocate_cb = {});
 
   // Destroy the tcp server.
   void Finalize();
@@ -48,7 +48,7 @@ class TCPServer {
   uint32_t GetPort() const;
 
  private:
-  bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb = {});
+  bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb);
 
   // The basic TCP communication component used by the server.
   std::unique_ptr<TCPComm> tcp_comm_;

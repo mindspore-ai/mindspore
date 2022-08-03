@@ -33,6 +33,7 @@ class RpcSendKernelMod : public RpcKernelMod {
     return true;
   }
 
+  void Init(const CNodePtr &kernel_node) override;
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
   std::vector<KernelAttr> GetOpSupport() override;

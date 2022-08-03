@@ -35,6 +35,7 @@ class SendActor : public RpcActor {
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kSendActor),
         client_(nullptr),
+        context_(nullptr),
         server_url_("") {}
   ~SendActor() override;
 
@@ -47,7 +48,7 @@ class SendActor : public RpcActor {
 
  protected:
   // Do real send operation in this method.
-  bool LaunchKernel() override;
+  bool LaunchKernel(OpContext<DeviceTensor> *const context) override;
 
   // Erase inter-process inputs for this sequential number.
   void EraseInput(const OpContext<DeviceTensor> *context) override;
@@ -55,9 +56,26 @@ class SendActor : public RpcActor {
   // Client only supports to send MessageBase, so build MessageBase with data and url.
   std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtrList &data_list, const std::string &server_url);
 
+  /**
+   * @description: Free message after it's sent to remote.
+   * @param {void} *data: Raw pointer data needs to be freed.
+   * @return {bool}: Whether the data is successfully freed.
+   */
+  virtual bool FreeMessage(void *data);
+
   std::unique_ptr<TCPClient> client_;
 
+  OpContext<DeviceTensor> *context_;
+
  private:
+  /**
+   * @description: Find the memory list needs to be freed after the data is sent to remote. This should be called by
+   * FreeMessage.
+   * @param {void} *data: Raw pointer data needs to be freed.
+   * @return {std::vector<DeviceTensor *>}: The memory list needs to be freed.
+   */
+  std::vector<DeviceTensor *> FindDeviceTensorNeedsFree(void *data);
+
   // Serialize dynamic shape data. The format is shown below:
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
   // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
