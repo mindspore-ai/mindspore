@@ -152,12 +152,12 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);
-  for (int i = out_cargo_size.size() - 2; i >= 0; --i) {
+  for (int i = static_cast<int>(out_cargo_size.size()) - 2; i >= 0; --i) {
     out_cargo_size[i] = output_shape_[i + 1] * out_cargo_size[i + 1];
   }
   // input_cargo_size
   std::vector<size_t> input_cargo_size = std::vector<size_t>(input_shape_.size(), 1);
-  for (int i = input_cargo_size.size() - 2; i >= 0; --i) {
+  for (int i = static_cast<int>(input_cargo_size.size()) - 2; i >= 0; --i) {
     input_cargo_size[i] = input_shape_[i + 1] * input_cargo_size[i + 1];
   }
   // copy task
