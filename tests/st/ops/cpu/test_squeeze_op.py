@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
 
 class SqueezeNet(Cell):
     def __init__(self):
@@ -35,60 +33,59 @@ class SqueezeNet(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_squeeze_shape_float32():
-    x = np.ones(shape=[1, 2, 1, 1, 8, 3, 1]).astype(np.float32)
-    expect = np.ones(shape=[2, 8, 3]).astype(np.float32)
+@pytest.mark.parametrize("data_type",
+                         [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
+                          np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_squeeze(data_type):
+    """
+    Feature: Test Squeeze CPU.
+    Description: The input data type contains common valid types including bool
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(data_type)
     net = SqueezeNet()
-    result = net(Tensor(x))
-    assert np.allclose(result.asnumpy(), expect, rtol=1.e-4,
-                       atol=1.e-8, equal_nan=True)
+    output = net(Tensor(x))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_squeeze_shape_int32():
-    x = np.array([[7], [11]]).astype(np.int32)
-    expect = np.array([7, 11]).astype(np.int32)
-    net = SqueezeNet()
-    result = net(Tensor(x))
-    assert np.allclose(result.asnumpy(), expect, rtol=1.e-4,
-                       atol=1.e-8, equal_nan=True)
+def test_func():
+    """
+    Feature: Test Squeeze CPU.
+    Description: Test functional api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+
+    output = P.squeeze(Tensor(x))
+    assert np.all(output.asnumpy() == x.squeeze())
+
+    output = P.squeeze(Tensor(x), 0)
+    assert np.all(output.asnumpy() == x.squeeze(0))
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_squeeze_shape_bool():
-    x = np.array([[True], [False]]).astype(np.bool_)
-    expect = np.array([True, False]).astype(np.bool_)
-    net = SqueezeNet()
-    result = net(Tensor(x))
-    assert np.allclose(result.asnumpy(), expect, rtol=1.e-4,
-                       atol=1.e-8, equal_nan=True)
+def test_tensor():
+    """
+    Feature: Test Squeeze CPU.
+    Description: Test Tensor api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
 
+    output = Tensor(x).squeeze()
+    assert np.all(output.asnumpy() == x.squeeze())
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_squeeze_shape_float64():
-    x = np.random.random([1, 2, 1, 1, 8, 3, 1]).astype(np.float64)
-    expect = np.squeeze(x)
-    net = SqueezeNet()
-    result = net(Tensor(x))
-    print(result.asnumpy()[0][0], expect[0][0])
-    assert np.allclose(result.asnumpy(), expect, rtol=1.e-4,
-                       atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_squeeze_shape_uint16():
-    x = np.random.random([1, 2, 1, 1, 8, 3, 1]).astype(np.uint16)
-    expect = np.squeeze(x)
-    net = SqueezeNet()
-    result = net(Tensor(x))
-    print(result.asnumpy()[0][0], expect[0][0])
-    assert np.allclose(result.asnumpy(), expect, rtol=1.e-4,
-                       atol=1.e-8, equal_nan=True)
+    output = Tensor(x).squeeze(0)
+    assert np.all(output.asnumpy() == x.squeeze(0))

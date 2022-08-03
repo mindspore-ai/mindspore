@@ -38,6 +38,7 @@ bool InstanceNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
                                       "For 'InstanceNormGpuKernelMod', it create para desc failed");
 
+  batch_rank_ = base_operator->get_batch_rank();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNorm>(base_operator);
   epsilon_ = kernel_ptr->get_epsilon();
   exp_avg_factor_ = kernel_ptr->get_momentum();
@@ -63,14 +64,21 @@ int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_OK;
   }
 
-  batch_ = LongToSize(input_shape[kIndex0]);
-  channel_ = LongToSize(input_shape[kIndex1]);
+  batch_rank_cum_ =
+    std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, int64_t(1), std::multiplies{});
+  batch_ = LongToSize(input_shape[batch_rank_ + kIndex0]);
+  channel_ = LongToSize(input_shape[batch_rank_ + kIndex1]);
 
   CheckTensorSize({input_shape});
   const int batch = 1;
   const int channel = SizeToInt(batch_) * SizeToInt(channel_);
   const int height = 1;
-  const int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), 1, std::multiplies{});
+  const int width =
+    std::accumulate(input_shape.begin() + batch_rank_ + kNCDims, input_shape.end(), int64_t(1), std::multiplies{});
+
+  input_offset_ = channel * width;
+  para_offset_ = channel_;
+  updated_para_offset_ = channel;
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),
@@ -125,18 +133,35 @@ bool InstanceNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   float *ws_var = GetDeviceAddress<float>(workspace, kIndex3);
   T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex4);
 
-  CopyMemDevice2Device(batch_, channel_, gamma_addr, beta_addr, runing_mean_addr, runnig_variance_addr, ws_gamma,
-                       ws_beta, ws_mean, ws_var, stream_ptr_);
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(handle_, stream_ptr_),
+                                      "For 'InstanceNormGpuKernelMod', cudnnSetStream failed.")
 
   const float alpha = 1;
   const float beta = 0;
-  float *reserve_addr = nullptr;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnBatchNormalizationForwardTrainingEx(
-      handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x_addr, z_desc_, z, y_desc_, y_addr, scale_bias_mean_var_desc_,
-      ws_gamma, ws_beta, exp_avg_factor_, ws_mean, ws_var, epsilon_, save_mean_addr, save_variance_addr, nullptr,
-      workspace_addr, workspace_size_, reserve_addr, 0),
-    "For 'InstanceNormGpuKernelMod', it launch cudnnBatchNormalizationForwardTrainingEx failed");
+
+  for (size_t i = 0; i < batch_rank_cum_; ++i) {
+    auto ith_x_addr = x_addr + input_offset_ * i;
+    auto ith_gamma_addr = gamma_addr + para_offset_ * i;
+    auto ith_beta_addr = beta_addr + para_offset_ * i;
+    auto ith_runing_mean_addr = runing_mean_addr + para_offset_ * i;
+    auto ith_runnig_variance_addr = runnig_variance_addr + para_offset_ * i;
+
+    auto ith_y_addr = y_addr + input_offset_ * i;
+    auto ith_save_mean_addr = save_mean_addr + updated_para_offset_ * i;
+    auto ith_save_variance_addr = save_variance_addr + updated_para_offset_ * i;
+
+    CopyMemDevice2Device(batch_, channel_, ith_gamma_addr, ith_beta_addr, ith_runing_mean_addr,
+                         ith_runnig_variance_addr, ws_gamma, ws_beta, ws_mean, ws_var, stream_ptr_);
+
+    float *reserve_addr = nullptr;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnBatchNormalizationForwardTrainingEx(
+        handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, ith_x_addr, z_desc_, z, y_desc_, ith_y_addr,
+        scale_bias_mean_var_desc_, ws_gamma, ws_beta, exp_avg_factor_, ws_mean, ws_var, epsilon_, ith_save_mean_addr,
+        ith_save_variance_addr, nullptr, workspace_addr, workspace_size_, reserve_addr, 0),
+      "For 'InstanceNormGpuKernelMod', it launch cudnnBatchNormalizationForwardTrainingEx failed")
+  }
+
   return true;
 }
 

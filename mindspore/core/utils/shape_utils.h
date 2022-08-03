@@ -39,6 +39,8 @@ inline size_t SizeOf(const ShapeVector &shape) {
 inline bool IsDynamic(const ShapeVector &shape) {
   return std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < 0; });
 }
+
+inline bool IsDynamicRank(const ShapeVector &shape) { return ((shape.size() == 1) && (shape[0] == UNKNOWN_RANK)); }
 }  // namespace mindspore
 
 #endif  // MINDSPORE_SHAPE_UTILS_INFO_H_

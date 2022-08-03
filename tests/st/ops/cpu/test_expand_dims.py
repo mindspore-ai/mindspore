@@ -21,71 +21,85 @@ from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 
 
-class SqueezeNet(nn.Cell):
+class Net(nn.Cell):
     def __init__(self):
-        super(SqueezeNet, self).__init__()
-        self.squeeze = P.Squeeze()
+        super(Net, self).__init__()
+        self.expand_dims = P.ExpandDims()
 
     def construct(self, tensor):
-        return self.squeeze(tensor)
+        return self.expand_dims(tensor, -1)
+
+
+class NetConstant(nn.Cell):
+    def __init__(self, data):
+        super(NetConstant, self).__init__()
+        self.expand_dims = P.ExpandDims()
+        self.tensor = Tensor(data)
+
+    def construct(self):
+        return self.expand_dims(self.tensor, -1)
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type",
                          [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
                           np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
-def test_squeeze(data_type):
+def test_net(data_type):
     """
-    Feature: Test Squeeze GPU.
+    Feature: Test ExpandDims CPU.
     Description: The input data type contains common valid types including bool
     Expectation: match to np benchmark.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
-    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = np.random.randn(1, 16, 1, 1).astype(data_type)
-    net = SqueezeNet()
+    net = Net()
     output = net(Tensor(x))
-    assert np.all(output.asnumpy() == x.squeeze())
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_constant():
+    """
+    Feature: Test ExpandDims CPU.
+    Description: The input data type contains common valid types including bool
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    net = NetConstant(x)
+    output = net()
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_func():
     """
-    Feature: Test Squeeze GPU.
+    Feature: Test ExpandDims CPU.
     Description: Test functional api.
     Expectation: match to np benchmark.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-
-    output = ops.squeeze(Tensor(x))
-    assert np.all(output.asnumpy() == x.squeeze())
-
-    output = ops.squeeze(Tensor(x), 0)
-    assert np.all(output.asnumpy() == x.squeeze(0))
+    output = ops.expand_dims(Tensor(x), -1)
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor():
     """
-    Feature: Test Squeeze GPU.
+    Feature: Test ExpandDims CPU.
     Description: Test Tensor api.
     Expectation: match to np benchmark.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-
-    output = Tensor(x).squeeze()
-    assert np.all(output.asnumpy() == x.squeeze())
-
-    output = Tensor(x).squeeze(0)
-    assert np.all(output.asnumpy() == x.squeeze(0))
+    output = Tensor(x).expand_dims(-1)
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
