@@ -197,7 +197,7 @@ def test_tensor_check(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
+@pytest.mark.parametrize('func', ['min', 'max'])
 def test_functional_check(func):
     """
     Feature: test_functional_check.
@@ -213,8 +213,6 @@ def test_functional_check(func):
         output_ms = F.unsorted_segment_min(x, segment_ids, num_segments)
     if func == 'max':
         output_ms = F.unsorted_segment_max(x, segment_ids, num_segments)
-    if func == 'sum':
-        output_ms = F.unsorted_segment_sum(x, segment_ids, num_segments)
 
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
@@ -228,10 +226,14 @@ def max_vmap_graph(x, segment_ids, num_segments):
     return P.UnsortedSegmentMax()(x, segment_ids, num_segments)
 
 
+def sum_vmap_graph(x, segment_ids, num_segments):
+    return P.UnsortedSegmentSum()(x, segment_ids, num_segments)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_vmap(func):
     """
     Feature: test_vmap.
@@ -250,6 +252,8 @@ def test_vmap(func):
         vmap_graph = min_vmap_graph
     if func == 'max':
         vmap_graph = max_vmap_graph
+    if func == 'sum':
+        vmap_graph = sum_vmap_graph
 
     vmap_round_net = ops.vmap(ops.vmap(vmap_graph, in_axes, out_axes), in_axes, out_axes)
     output = vmap_round_net(x, segment_ids, num_segments)
@@ -269,7 +273,7 @@ def test_vmap(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_vmap2(func):
     """
     Feature: test_vmap.
@@ -288,6 +292,8 @@ def test_vmap2(func):
         vmap_graph = min_vmap_graph
     if func == 'max':
         vmap_graph = max_vmap_graph
+    if func == 'sum':
+        vmap_graph = sum_vmap_graph
 
     vmap_round_net = ops.vmap(ops.vmap(vmap_graph, in_axes, out_axes), in_axes, out_axes)
     output = vmap_round_net(x, segment_ids, num_segments)

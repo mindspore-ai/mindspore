@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <utility>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -28,6 +29,47 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                         ShapeVector *num_vec, ShapeVector *num_min_vec, ShapeVector *num_max_vec) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string &op_name = primitive->name();
+  int64_t num_segments_v;
+  // num_segments is a Tensor when UnsortedSegmentSum is a dynamic shape operator
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+    auto n_value_ptr = input_args[kInputIndex2]->BuildValue();
+    MS_EXCEPTION_IF_NULL(n_value_ptr);
+    if (n_value_ptr->isa<tensor::Tensor>()) {
+      auto n_tensor_ptr = n_value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(n_tensor_ptr);
+      num_segments_v = *static_cast<int64_t *>(n_tensor_ptr->data_c());
+      (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
+      num_vec->push_back(num_segments_v);
+      num_min_vec->push_back(num_segments_v);
+      num_max_vec->push_back(num_segments_v);
+    } else {
+      auto n_abstract_tensor = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(n_abstract_tensor);
+      num_vec->push_back(-1);
+      auto num_min_value = n_abstract_tensor->get_min_value();
+      auto num_max_value = n_abstract_tensor->get_max_value();
+      if (num_min_value != nullptr && num_max_value != nullptr) {
+        *num_min_vec = GetValue<ShapeVector>(num_min_value);
+        *num_max_vec = GetValue<ShapeVector>(num_max_value);
+      }
+    }
+  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
+    num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
+    (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
+    num_vec->push_back(num_segments_v);
+    num_min_vec->push_back(num_segments_v);
+    num_max_vec->push_back(num_segments_v);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
+                      << input_args[kInputIndex2]->type_name() << ".";
+  }
+}
+
 abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -71,40 +113,14 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
   ShapeVector num_vec;
   ShapeVector num_min_vec;
   ShapeVector num_max_vec;
-  int64_t num_segments_v = 0;
-  // num_segments is a Tensor when UnsortedSegmentSum is a dynamic shape operator
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    auto n_value_ptr = input_args[kInputIndex2]->BuildValue();
-    MS_EXCEPTION_IF_NULL(n_value_ptr);
-    if (n_value_ptr->isa<tensor::Tensor>()) {
-      auto n_tensor_ptr = n_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_tensor_ptr);
-      num_segments_v = *static_cast<int64_t *>(n_tensor_ptr->data_c());
-      (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
-      num_vec.push_back(num_segments_v);
-      num_min_vec.push_back(num_segments_v);
-      num_max_vec.push_back(num_segments_v);
-    } else {
-      auto n_abstract_tensor = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_abstract_tensor);
-      num_vec.push_back(-1);
-      auto num_min_value = n_abstract_tensor->get_min_value();
-      auto num_max_value = n_abstract_tensor->get_max_value();
-      if (num_min_value != nullptr && num_max_value != nullptr) {
-        num_min_vec = GetValue<ShapeVector>(num_min_value);
-        num_max_vec = GetValue<ShapeVector>(num_max_value);
-      }
-    }
-  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
-    (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
-    num_vec.push_back(num_segments_v);
-    num_min_vec.push_back(num_segments_v);
-    num_max_vec.push_back(num_segments_v);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name
-                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex2]->type_name() << ".";
+  GetNumSegmentsValue(primitive, input_args, &num_vec, &num_min_vec, &num_max_vec);
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto batch_rank_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(batch_rank_ptr);
+  }
+  if (batch_rank != 0) {
+    (void)copy(x_shape.begin(), x_shape.begin() + batch_rank, std::back_inserter(output_shape));
   }
   auto calc_shape = [segment_ids_shape_rank](const ShapeVector &num_vec, const ShapeVector &x_shape) -> ShapeVector {
     ShapeVector out_vec;
@@ -114,7 +130,8 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
   };
   ShapeVector out_min_shape;
   ShapeVector out_max_shape;
-  output_shape = calc_shape(num_vec, x_shape);
+  auto out_vec = calc_shape(num_vec, x_shape);
+  (void)copy(out_vec.begin(), out_vec.end(), std::back_inserter(output_shape));
   auto output_shape_rank = SizeToLong(output_shape.size());
   auto out_max_shape_rank = SizeToLong(calc_shape(num_max_vec, x_max_shape).size());
   bool x_min_any_shape =
@@ -139,7 +156,7 @@ TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::ve
   /* check num_segments */
   auto num_ptr = input_args[kInputIndex2]->BuildType();
   std::map<std::string, TypePtr> args_num_segments;
-  (void)args_num_segments.insert({"num_segments", num_ptr});
+  (void)args_num_segments.insert(std::make_pair("num_segments", num_ptr));
   const std::set<TypePtr> num_type_set = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_num_segments, num_type_set, prim_name);
   /* check input_x */

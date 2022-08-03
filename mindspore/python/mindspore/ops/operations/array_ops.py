@@ -2332,7 +2332,35 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     r"""
     Computes the sum of a tensor along segments.
 
-    Refer to :func:`mindspore.ops.unsorted_segment_sum` for more detail.
+    Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
+    :math:`j` is a tuple describing the index of element in data.  `segment_ids` selects which elements in data to sum
+    up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
+    range.
+
+    The following figure shows the calculation process of UnsortedSegmentSum:
+
+    .. image:: UnsortedSegmentSum.png
+
+    Note:
+        - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
+        - On Ascend, if the value of segment_id is less than 0 or greater than the length of the input data shape, an
+          execution error will occur.
+
+    If the sum of the given segment_ids :math:`i` is empty, then :math:`\text{output}[i] = 0`. If the given segment_ids
+    is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)` ,
+          the value must be non-negative tensor. The data type must be int32.
+        - **num_segments** (int) - Set :math:`z` as num_segments.
+
+    Outputs:
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
+
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
