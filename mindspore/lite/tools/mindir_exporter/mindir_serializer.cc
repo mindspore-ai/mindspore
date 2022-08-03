@@ -384,6 +384,8 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
   mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
   if (attr_proto != nullptr) {
     attr_proto->set_name(kIsOptimized);
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
+    attr_proto->set_i(1);
   }
 
   auto realpath = Common::CreatePrefixPath(output_file, true);

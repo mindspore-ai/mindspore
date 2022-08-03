@@ -50,6 +50,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
 
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
+  void SetDeviceId();
   bool InitParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   int SetInputAndOutputAddr(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   int LoadModel();

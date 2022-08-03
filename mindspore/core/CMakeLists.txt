@@ -92,11 +92,6 @@ if(USE_GLOG)
   target_link_libraries(mindspore_core PRIVATE mindspore::glog)
 endif()
 
-if(MSLITE_ENABLE_ACL)
-    find_library(ACL_TDT_CHANNEL acl_tdt_channel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore_core PRIVATE ${ACL_TDT_CHANNEL})
-endif()
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if((NOT BUILD_LITE) OR (BUILD_LITE AND MSLITE_ENABLE_MODEL_ENCRYPTION))
         target_link_libraries(mindspore_core PRIVATE mindspore::crypto -pthread)
