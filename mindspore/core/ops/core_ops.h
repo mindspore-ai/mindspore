@@ -136,9 +136,6 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kNextAfter = "NextAfter";
 constexpr auto kMaximumGradGrad = "MaximumGradGrad";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
-constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
-constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
-constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
 constexpr auto kTridiagonalMatMul = "TridiagonalMatMul";
 constexpr auto kFFTWithSize = "FFTWithSize";
 constexpr auto kTrace = "Trace";
@@ -348,6 +345,12 @@ constexpr auto kSparseMatrixSoftmax = "SparseMatrixSoftmax";
 constexpr auto kSparseMatrixMatMul = "SparseMatrixMatMul";
 constexpr auto kSparseMatrixSparseMatMul = "SparseMatrixSparseMatMul";
 constexpr auto kSparseMatrixOrderingAMD = "SparseMatrixOrderingAMD";
+constexpr auto kSparseSegmentSum = "SparseSegmentSum";
+constexpr auto kSparseSegmentSumGrad = "SparseSegmentSumGrad";
+constexpr auto kSparseSegmentSumWithNumSegments = "SparseSegmentSumWithNumSegments";
+constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
+constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
+constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
@@ -1040,6 +1043,14 @@ GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSparseMatMul, std::make_shared<Primitive
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToDense, std::make_shared<Primitive>("CSRSparseMatrixToDense"));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixTranspose, std::make_shared<Primitive>(kSparseMatrixTranspose));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixOrderingAMD, std::make_shared<Primitive>(kSparseMatrixOrderingAMD));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSum, std::make_shared<Primitive>("SparseSegmentSum"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSumGrad, std::make_shared<Primitive>("SparseSegmentSumGrad"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSumWithNumSegments,
+         std::make_shared<Primitive>("SparseSegmentSumWithNumSegments"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtN, std::make_shared<Primitive>("SparseSegmentSqrtN"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNGrad, std::make_shared<Primitive>("SparseSegmentSqrtNGrad"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
+         std::make_shared<Primitive>("SparseSegmentSqrtNWithNumSegments"));
 
 // Sparse Grad ops
 GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGrad));
@@ -1192,10 +1203,6 @@ GVAR_DEF(PrimitivePtr, kPrimBucketize, std::make_shared<Primitive>("Bucketize"))
 GVAR_DEF(PrimitivePtr, kPrimEinsum, std::make_shared<Primitive>("Einsum"));
 GVAR_DEF(PrimitivePtr, kPrimEinsumGrad, std::make_shared<Primitive>("EinsumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMean, std::make_shared<Primitive>(kSparseSegmentMean));
-GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtN, std::make_shared<Primitive>("SparseSegmentSqrtN"));
-GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNGrad, std::make_shared<Primitive>("SparseSegmentSqrtNGrad"));
-GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
-         std::make_shared<Primitive>("SparseSegmentSqrtNWithNumSegments"));
 GVAR_DEF(PrimitivePtr, kPrimTrace, std::make_shared<Primitive>("Trace"));
 GVAR_DEF(PrimitivePtr, kPrimTraceGrad, std::make_shared<Primitive>("TraceGrad"));
 GVAR_DEF(PrimitivePtr, kPrimTridiagonalMatMul, std::make_shared<Primitive>(kTridiagonalMatMul));

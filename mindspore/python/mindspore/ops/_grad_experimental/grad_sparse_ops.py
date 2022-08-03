@@ -20,6 +20,8 @@ from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseSoftmax
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseAdd
+from mindspore.ops.operations.sparse_ops import SparseSegmentSum
+from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
@@ -31,6 +33,7 @@ from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from .._grad.grad_base import bprop_getters
+from .._utils.utils import is_shape_unknown
 
 # Unused parameters are placeholders.
 
@@ -103,13 +106,18 @@ def get_bprop_sparse_segment_sqrt_n(self):
     """Grad definition for `SparseSegmentSqrtN` operation."""
     input_grad = G.SparseSegmentSqrtNGrad()
     shape = P.Shape()
+    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, out, dout):
-        output_dim0 = F.scalar_to_tensor(shape(x)[0], mstype.int32)
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
         segment_ids = F.cast(segment_ids, mstype.int32)
         dx = input_grad(dout, indices, segment_ids, output_dim0)
-        return dx, zeros_like(indices), zeros_like(segment_ids)
+        all_d = (dx, zeros_like(indices), zeros_like(segment_ids))
+        return all_d
 
     return bprop
 
@@ -119,9 +127,55 @@ def get_bprop_sparse_segment_sqrt_n_with_num_segments(self):
     """Grad definition for `SparseSegmentSqrtNWithNumSegments` operation."""
     input_grad = G.SparseSegmentSqrtNGrad()
     shape = P.Shape()
+    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
-        output_dim0 = F.scalar_to_tensor(shape(x)[0], mstype.int32)
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
+        indices = F.cast(indices, mstype.int32)
+        segment_ids = F.cast(segment_ids, mstype.int32)
+        dx = input_grad(dout, indices, segment_ids, output_dim0)
+        all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
+        return all_d
+
+    return bprop
+
+
+@bprop_getters.register(SparseSegmentSum)
+def get_bprop_sparse_segment_sum(self):
+    """Grad definition for `SparseSegmentSum` operation."""
+    input_grad = G.SparseSegmentSumGrad()
+    shape = P.Shape()
+    dyn_shape_op = P.TensorShape()
+
+    def bprop(x, indices, segment_ids, out, dout):
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
+        indices = F.cast(indices, mstype.int32)
+        segment_ids = F.cast(segment_ids, mstype.int32)
+        dx = input_grad(dout, indices, segment_ids, output_dim0)
+        all_d = (dx, zeros_like(indices), zeros_like(segment_ids))
+        return all_d
+
+    return bprop
+
+
+@bprop_getters.register(SparseSegmentSumWithNumSegments)
+def get_bprop_sparse_segment_sum_with_num_segments(self):
+    """Grad definition for `SparseSegmentSumWithNumSegments` operation."""
+    input_grad = G.SparseSegmentSumGrad()
+    shape = P.Shape()
+    dyn_shape_op = P.TensorShape()
+
+    def bprop(x, indices, segment_ids, num_segments, out, dout):
+        shape_x = shape(x)
+        if is_shape_unknown(shape_x):
+            shape_x = dyn_shape_op(x)
+        output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
         segment_ids = F.cast(segment_ids, mstype.int32)
         dx = input_grad(dout, indices, segment_ids, output_dim0)

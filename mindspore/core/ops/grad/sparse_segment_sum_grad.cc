@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-#include <algorithm>
-#include <iostream>
-
-#include "ops/sparse_segment_sqrt_n.h"
+#include "ops/grad/sparse_segment_sum_grad.h"
 #include "abstract/dshape.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -33,39 +25,47 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
-                                                const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto output_dim0_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual, kInputIndex1,
                                            prim->name());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
                                            kInputIndex1, prim->name());
-  if (x_shape.size() < kInputIndex1) {
+  if (grad_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
-                             << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
+                             << "tensor grad's rank must be greater than 1, but got [" << grad_shape.size() << "].";
+  }
+  if (output_dim0_shape.size() != kInputIndex0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor output_dim0 should be a scalar, "
+                             << "but got [" << output_dim0_shape.size() << "].";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (!input_args[kInputIndex2]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
-    auto segment_ids_value_ptr = input_args[kInputIndex2]->BuildValue();
-    MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
-    auto segment_ids_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
-    size_t dim_zero = segment_ids_value_ptr_tensor.back() + kInputIndex1;
-    if (dim_zero < kInputIndex1) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "
+  if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
+      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
+    auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(output_dim0_value);
+    auto output_dim0_value_ptr = output_dim0_value->BuildValue();
+    MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
+    auto output_dim0_value_ptr_tensor =
+      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
+    size_t dim_zero = output_dim0_value_ptr_tensor[kInputIndex0];
+    if (dim_zero <= kInputIndex0) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
                                << "but got [" << dim_zero << "].";
     } else {
-      ShapeVector y_shape = x_shape;
+      ShapeVector y_shape = grad_shape;
       y_shape[kInputIndex0] = dim_zero;
       return std::make_shared<abstract::Shape>(y_shape);
     }
@@ -77,34 +77,37 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
   }
 }
 
-TypePtr SparseSegmentSqrtNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SparseSegmentSumGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto grad_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
+  auto output_dim0_type = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
+  (void)types.emplace("output_dim0", output_dim0_type);
   CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SparseSegmentSqrtN, BaseOperator);
-AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
-                                        const std::vector<AbstractBasePtr> &input_args) {
+MIND_API_OPERATOR_IMPL(SparseSegmentSumGrad, BaseOperator);
+AbstractBasePtr SparseSegmentSumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
+                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex3;
+  const int64_t input_num = kInputIndex4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto types = SparseSegmentSqrtNInferType(prim, input_args);
-  auto shapes = SparseSegmentSqrtNInferShape(prim, input_args);
+  auto types = SparseSegmentSumGradInferType(prim, input_args);
+  auto shapes = SparseSegmentSumGradInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSqrtN, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtN, prim::kPrimSparseSegmentSqrtN, SparseSegmentSqrtNInfer, nullptr, true);
+REGISTER_HOST_DEPENDS(kNameSparseSegmentSumGrad, {3});
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSumGrad, prim::kPrimSparseSegmentSumGrad, SparseSegmentSumGradInfer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore

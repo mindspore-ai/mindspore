@@ -2017,7 +2017,7 @@ class UpsampleNearest3DGrad(Primitive):
     """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
 
-      Args:
+    Args:
         input_size (listInt): An required listInt. contain 5 elements: [min_batch, channels, depth, height, width].
             Must: input_size[0] == grad_output_tensor_size[0], input_size[1] == grad_output_tensor_size[1].
         output_size (listInt): An optional listInt. Defaults to none.
@@ -2030,7 +2030,8 @@ class UpsampleNearest3DGrad(Primitive):
             The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
             The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
             One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
-      Inputs:
+
+    Inputs:
         - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
           float16, float32, float64.
 
@@ -3486,6 +3487,50 @@ class MedianGrad(Primitive):
         self.init_prim_io_names(inputs=['y_grad', 'x', 'y', 'indices'], outputs=['x_grad'])
 
 
+class SparseSegmentSumGrad(Primitive):
+    """
+    Computes gradients for SparseSegmentSumGrad operation.
+
+    Inputs:
+        - **grad** (Tensor) - A tensor.
+        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
+          Has same rank as segment_ids. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
+          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **output_dim0** (Tensor) - Output_dim0 is a 0-D tensor. Dimension 0 of `x` passed to SparseSegmentSum op.
+
+    Outputs:
+        A Tensor. Has the same type as `grad` .
+        Has same shape as `grad`, except for dimension 0 which is the value of `output_dim0`.
+
+    Raises:
+        TypeError: If `grad` or `indices` or `segment_ids` or `output_dim0` is not a tensor.
+        TypeError: If the dtype of `grad` is not any of the following data types: {float16, float32, float64}.
+        TypeError: If the dtype of `indices` and `segment_ids` and `output_dim0` is not int32 or int64.
+        ValueError: If dimension size of `grad` less than 1.
+        ValueError: If rank of `indices` or `segment_ids` is not 1.
+        ValueError: If dimension size of `output_dim0` is not 0.
+        ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If the last number of `segment_ids` is out of range of grad's first shape.
+        ValueError: If `indices` is bigger than or equal to `output_dim0`.
+
+    Supported Platforms:
+        ``GPU``
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('grad', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T),
+        sig.make_sig('segment_ids', dtype=sig.sig_dtype.T),
+        sig.make_sig('output_dim0', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentSumGrad"""
+        self.init_prim_io_names(inputs=['grad', 'indices', 'segment_ids', 'output_dim0'], outputs=['y'])
+
+
 class SparseSegmentSqrtNGrad(Primitive):
     """
     Computes gradients for SparseSegmentSqrtNGrad operation.
@@ -3513,12 +3558,12 @@ class SparseSegmentSqrtNGrad(Primitive):
         ValueError: If rank of `indices` or `segment_ids` is not 1.
         ValueError: If dimension size of `output_dim0` is not 0.
         ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
-        ValueError: If indices in `segment_ids` are not contiguous or do not start from 0.
         ValueError: If `segment_ids` is not sorted.
-        ValueError: If `indices` is out of range of `output_dim0`.
+        ValueError: If the last number of `segment_ids` is out of range of x's first shape.
+        ValueError: If `indices` is bigger than or equal to `output_dim0`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
