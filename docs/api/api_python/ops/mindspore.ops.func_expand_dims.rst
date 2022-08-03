@@ -9,8 +9,6 @@ mindspore.ops.expand_dims
 
     .. note::
         如果指定的 axis 是负数，那么它会从后往前，从1开始计算index。
-        If the specified axis is a negative number, the index is counted
-        backward from the end and starts at 1.
 
     参数：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(x_1, x_2, ..., x_R)`。
