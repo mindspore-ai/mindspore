@@ -33,7 +33,7 @@ int GetCpuCoreNum() {
 
 int ConcatCPUPath(int cpuID, const char *str1, const char *str2, char *str3) {
   if (cpuID > MAX_CPU_ID || str1 == NULL || str2 == NULL) {
-    return -1;
+    return RET_TP_SYSTEM_ERROR;
   }
   memset(str3, 0, strlen(str3));
   char *tmp = str3;
@@ -98,7 +98,7 @@ int SortCpuCores(int *cpu_cores, int *cpu_high_num, int *cpu_mid_num, int *cpu_l
   int cpu_core_num = GetCpuCoreNum();
   if (cpu_core_num <= 0 || cpu_core_num > MAX_CPU_ID) {
     LOG_ERROR("invalid cpu count");
-    return -1;
+    return RET_TP_SYSTEM_ERROR;
   }
   CpuInfo freq_set[MAX_CPU_ID] = {0};
   for (int i = 0; i < cpu_core_num; ++i) {

@@ -128,7 +128,7 @@ int main(int argc, const char **argv) {
   if (argc < 2) {
     printf("input command is invalid\n");
     usage();
-    return -1;
+    return kMSStatusLiteError;
   }
   printf("=======run benchmark======\n");
 
@@ -137,14 +137,14 @@ int main(int argc, const char **argv) {
     int thread_num = atoi(argv[5]);
     if (thread_num < 1 || thread_num > kMaxThreadNum) {
       printf("Thread number error! It should be greater than 0 and less than 5\n");
-      return -1;
+      return kMSStatusLiteParamInvalid;
     }
     int bind_mode = 1;
     if (argc >= 7) {
       bind_mode = atoi(argv[6]);
       if (bind_mode < 0 || bind_mode > 2) {
         printf("Thread bind mode error! 0: No bind, 1: Bind hign cpu, 2: Bind mid cpu.\n");
-        return -1;
+        return kMSStatusLiteParamInvalid;
       }
     }
     ms_context_handle = MSContextCreate();
@@ -210,7 +210,7 @@ int main(int argc, const char **argv) {
       warm_up_loop_count = atoi(argv[7]);
       if (warm_up_loop_count < 0) {
         printf("The warm up loop count error! Cannot be less than 0.\n");
-        return -1;
+        return kMSStatusLiteParamInvalid;
       }
   }
   printf("Running warm up loops...");
