@@ -195,7 +195,7 @@ void MinimumCpuKernelMod::BroadcastArithKernel(const int64_t l0, const int64_t l
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    output[pos] = MinimumFunc(input_x[static_cast<size_t>(l_index)], input_y[static_cast<size_t>(r_index)]);
+    output[pos] = MinimumFunc(input_x[LongToSize(l_index)], input_y[LongToSize(r_index)]);
   }
 }
 
