@@ -100,9 +100,6 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   }
   auto ms_outputs = TensorPtrToMSTensor(graph_outputs, session_->GetOutputNames());
   (void)std::copy(ms_outputs.begin(), ms_outputs.end(), std::back_inserter(*outputs));
-  // for (auto ms_output : ms_outputs) {
-  //   outputs->push_back(ms_output);
-  // }
   return kSuccess;
 }
 

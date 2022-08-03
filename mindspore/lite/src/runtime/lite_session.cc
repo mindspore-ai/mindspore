@@ -1671,17 +1671,7 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
   }
 
   mindspore::lite::Model *model = nullptr;
-  // if (model_type == kMindIR_Lite) {
   model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type);
-  // } else {
-  //   auto *model_loader = ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
-  //   if (model_loader == nullptr) {
-  //     MS_LOG(ERROR) << "Invalid model type";
-  //     return RET_ERROR;
-  //   }
-  //   model_loader->ImportModel(model_buf, buf_size, true);
-  // }
-  // auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;

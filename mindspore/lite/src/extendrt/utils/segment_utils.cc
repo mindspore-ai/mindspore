@@ -38,7 +38,7 @@ namespace mindspore {
 namespace compile {
 namespace {
 // Return the list of nodes whose values are required beyond this segment.
-// Arguments:
+// Arguments: see follow
 //   nodes: list of nodes in the segment
 //   users: dict mapping each node to its users (globally)
 //   seen: set of nodes that are part of the segment
