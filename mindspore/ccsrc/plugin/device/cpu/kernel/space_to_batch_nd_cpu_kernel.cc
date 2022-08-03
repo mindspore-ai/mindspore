@@ -87,8 +87,8 @@ bool SpaceToBatchNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   for (int64_t pos = 0; pos < input_size_; pos += 1) {
     std::vector<int64_t> input_index(input_shape_.size(), 0);
     int64_t cur_pos = pos;
-    for (int rev_i = input_shape_.size() - 1; rev_i >= 0; rev_i -= 1) {
-      input_index[rev_i] = cur_pos % input_shape_[IntToSize(rev_i)];
+    for (int rev_i = SizeToInt(input_shape_.size()) - 1; rev_i >= 0; rev_i -= 1) {
+      input_index[IntToSize(rev_i)] = cur_pos % input_shape_[IntToSize(rev_i)];
       cur_pos = cur_pos / input_shape_[IntToSize(rev_i)];
     }
 
