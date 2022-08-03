@@ -25,7 +25,7 @@ constexpr size_t kCoalesceOutputsNum = 3;
 constexpr char kKernelName[] = "Coalesce";
 }  // namespace
 
-void CoalesceCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void CoalesceCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kCoalesceInputsNum, kKernelName);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -67,12 +67,12 @@ void CoalesceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  values_size_ = indices_shape[1];
-  shape_size_ = indices_shape[0];
+  values_size_ = IntToSize(indices_shape[1]);
+  shape_size_ = IntToSize(indices_shape[0]);
   is_need_retrieve_output_shape_ = true;
 }
 
-void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) {
+void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) const {
   auto x_indices_addr = reinterpret_cast<int64_t *>(inputs[0]->addr);
   auto x_shape_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
   for (size_t i = 0; i < values_size_; i++) {

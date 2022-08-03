@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
 
 #include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
@@ -582,9 +583,24 @@ constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
 constexpr char MIN_MAX_UPDATE_PER_LAYER[] = "MinMaxUpdatePerLayer";
 constexpr char STACK[] = "Stack";
 
-constexpr size_t LAST_INDEX(size_t s) { return s - 1; }
-constexpr size_t SECOND_FROM_END(size_t s) { return s - 2; }
-constexpr size_t THIRD_FROM_END(size_t s) { return s - 3; }
+constexpr size_t LAST_INDEX(size_t s) {
+  if (s < 1) {
+    MS_LOG(EXCEPTION) << "Get last index for an empty size.";
+  }
+  return s - 1;
+}
+constexpr size_t SECOND_FROM_END(size_t s) {
+  if (s < 2) {
+    MS_LOG(EXCEPTION) << "Get second index from end for a size less than two.";
+  }
+  return s - 2;
+}
+constexpr size_t THIRD_FROM_END(size_t s) {
+  if (s < 3) {
+    MS_LOG(EXCEPTION) << "Get third index from end for a size less than three.";
+  }
+  return s - 3;
+}
 }  // namespace parallel
 }  // namespace mindspore
 
