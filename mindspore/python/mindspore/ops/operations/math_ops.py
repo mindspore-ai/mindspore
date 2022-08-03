@@ -5589,7 +5589,7 @@ class ComplexAbs(Primitive):
        TypeError: If the input type is not complex64 or complex128.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(3+4j)), mindspore.complex64)
