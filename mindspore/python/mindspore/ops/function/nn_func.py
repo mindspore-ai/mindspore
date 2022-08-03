@@ -726,7 +726,8 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         resize_bilinear_inner = _get_cache_prim(IMG.ResizeBilinearV2)(align_corners, half_pixel_centers)
         return resize_bilinear_inner(x, output_size)
 
-    raise ValueError("Input Error: For interpolate,  {} mode is not support now".format(mode))
+    raise TypeError(
+        "Input Error: For interpolate,  {} mode is not support now".format(mode))
 
 
 def softsign(x):
@@ -1531,8 +1532,8 @@ def mish(x):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.mish(input_x)
         >>> print(output)
-        [[-0.3034014  3.9974129 -0.00026832]
-         [ 1.9439590  -0.0033576 9.0000000]]
+        [[-3.0340147e-01  3.9974129e+00 -2.68311895e-03]
+         [ 1.9439590e+00  -3.3576239e-02 8.99999990e+00]]
     """
     return mish_(x)
 
