@@ -587,7 +587,7 @@ def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transfo
     elif mode == "bilinear":
         validator.check_int(input_dims, 4, Rel.EQ, "input dims", prim_name)
     else:
-        raise TypeError(f"{msg_prefix} mode must be 'linear' or 'bilinear', but got {mode}")
+        raise ValueError(f"{msg_prefix} mode must be 'linear' or 'bilinear', but got {mode}")
 
     if sizes is None and scales is None:
         raise ValueError(f"{msg_prefix} 'sizes' and 'scale' both none.")
