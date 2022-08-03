@@ -98,6 +98,7 @@ from .random_poisson import _random_poisson_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .rsqrt import _rsqrt_aicpu
 from .rsqrt_grad import _rsqrt_grad_aicpu
+from .sparseaddmm import _sparse_addmm_aicpu
 from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .unstack import _unstack_aicpu
