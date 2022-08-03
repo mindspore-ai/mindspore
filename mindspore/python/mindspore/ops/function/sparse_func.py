@@ -384,7 +384,7 @@ def _calc_out_shape(sp_input, concat_dim):
     return tuple(out_shape_list)
 
 
-def sparse_concat(sp_input, concat_dim):
+def sparse_concat(sp_input, concat_dim=0):
     """
     concatenates the input SparseTensor(COO format) along the specified dimension.
 
@@ -396,11 +396,12 @@ def sparse_concat(sp_input, concat_dim):
             for COOTensor input.
         concat_dim (scalar): decide the dimension to concatenation along.
             The value must be in range [-rank, rank), where rank is the number of dimensions in each input
-            SparseTensor.
+            SparseTensor. Default is 0.
 
     Outputs:
         - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
-            specified dimension.
+            specified dimension. OutShape: OutShape[non concat_dim] is equal to InShape[non concat_dim] and
+            OutShape[concat_dim] is all input concat_dim axis shape accumulate.
 
     Raises:
         ValueError: If only one sparse tensor input.
@@ -418,9 +419,8 @@ def sparse_concat(sp_input, concat_dim):
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indics1, values1, shape1)
-        >>> sparse_concat = ops.SparseConcat()
         >>> concat_dim = 1
-        >>> out = sparse_concat((input0, input1), concat_dim)
+        >>> out = F.sparse_concat((input0, input1), concat_dim)
         >>> print(out)
         shape = [3 4]
         [0 1]: "1"

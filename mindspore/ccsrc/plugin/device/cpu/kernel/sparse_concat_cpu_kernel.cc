@@ -168,6 +168,12 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   size_t size = input_num_ / 3;
   const auto &shape = reinterpret_cast<int64_t *>(inputs[kSpInputShapesStart * size]->addr);
   size_t shape_size = inputs[kSpInputShapesStart * size]->size / sizeof(int64_t);
+  if ((concat_dim_ < (static_cast<int64_t>(shape_size) * (-1))) || (concat_dim_ >= static_cast<int64_t>(shape_size))) {
+    MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "Input concat_dim is error, concat_dim is " << concat_dim_
+                      << " but COO tensor shape dim size is " << shape_size << " concat_dim value must be in range -"
+                      << shape_size << " to " << (shape_size - 1) << ".";
+  }
+  concat_dim_ = (concat_dim_ < 0) ? (concat_dim_ + shape_size) : concat_dim_;
   for (unsigned int i = 0; i < size; i++) {
     const auto &temp_shape = reinterpret_cast<int64_t *>(inputs[kSpInputShapesStart * size + i]->addr);
     if (shape_size != inputs[kSpInputShapesStart * size + i]->size / sizeof(int64_t)) {
@@ -183,13 +189,6 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
     }
   }
-  if ((concat_dim_ < (static_cast<int64_t>(shape_size) * (-1))) || (concat_dim_ >= static_cast<int64_t>(shape_size))) {
-    MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "Input concat_dim is error, concat_dim is " << concat_dim_
-                      << " but COO tensor shape dim size is " << shape_size << " concat_dim value must be in range -"
-                      << shape_size << " to " << (shape_size - 1) << ".";
-  }
-  concat_dim_ = (concat_dim_ < 0) ? (concat_dim_ + shape_size) : concat_dim_;
-
   SparseConcat<T, S>(inputs, workspace, outputs, shape_size, size);
   return true;
 }
