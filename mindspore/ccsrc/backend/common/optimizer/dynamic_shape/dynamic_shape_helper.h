@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H
 #define MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H
 
-#include <string>
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 #include "backend/common/optimizer/optimizer.h"
