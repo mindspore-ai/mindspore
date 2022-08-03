@@ -507,7 +507,7 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
   if (sparse_shape.size() != kCSRMVShapeSize || dense_shape.size() != kCSRMVShapeSize) {
     MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMVShapeSize << "-D inputs! "
                              << "But csr tensor has " << sparse_shape.size() << " dimensions, "
-                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
+                             << "and dense tensor has " << dense_shape.size() << " dimension(s). ";
   }
   if (dense_shape[kIndexZero] != sparse_shape[kIndexOne] || dense_shape[kIndexOne] != 1) {
     MS_EXCEPTION(ValueError) << "The dense_vector's shape should be (" << sparse_shape[kIndexOne] << ", 1)"
