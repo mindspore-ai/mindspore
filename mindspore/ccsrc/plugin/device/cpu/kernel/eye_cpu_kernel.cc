@@ -44,8 +44,7 @@ void EyeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
+bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   size_t data_num = outputs[0]->size;
