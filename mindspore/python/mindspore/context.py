@@ -803,7 +803,7 @@ def set_context(**kwargs):
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
             <https://www.mindspore.cn/tutorials/experts/en/master/debug/graph_fusion_engine.html>`_.
-        graph_kernel_flags (str) –
+        graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
             For example, context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text"). Some general options:
@@ -865,10 +865,11 @@ def set_context(**kwargs):
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
             When the network training performance of fp16 is worse than fp32,
             `disable_format_transform` can be set to True to try to improve training performance. Default: False.
-         support_binary (bool): Whether to support run .pyc or .so in graph mode. If want to support run .so or .pyc
-             in graph mode, coulde set 'support_binary' to be True, and run once .py file. It would save the source
-             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
-             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
+        support_binary (bool): Whether to support run .pyc or .so in graph mode. If want to support run .so or .pyc
+            in graph mode, coulde set 'support_binary' to be True, and run once .py file. It would save the source
+            of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
+            guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 
