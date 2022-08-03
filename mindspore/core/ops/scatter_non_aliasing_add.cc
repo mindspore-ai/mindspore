@@ -64,8 +64,8 @@ TypePtr ScatterNonAliasingAddInferType(const PrimitivePtr &primitive, const std:
   std::set<TypePtr> type_set = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace

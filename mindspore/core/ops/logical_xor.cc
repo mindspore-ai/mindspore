@@ -35,8 +35,8 @@ abstract::ShapePtr LogicalXorInferShape(const PrimitivePtr &primitive, const std
 TypePtr LogicalXorInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kBool};
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("y", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

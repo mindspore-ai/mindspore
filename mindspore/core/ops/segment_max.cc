@@ -63,7 +63,6 @@ abstract::ShapePtr SegmentMaxInferShape(const PrimitivePtr &primitive, const std
       for (size_t i = 0; i < data_size - 1; ++i) {
         if (segment_ids_data[i] > segment_ids_data[i + 1]) {
           MS_EXCEPTION(ValueError) << "segment_ids must be a tensor with element values sorted in ascending order.";
-          break;
         }
       }
       out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);
@@ -76,7 +75,6 @@ abstract::ShapePtr SegmentMaxInferShape(const PrimitivePtr &primitive, const std
       for (size_t i = 0; i < data_size - 1; ++i) {
         if (segment_ids_data[i] > segment_ids_data[i + 1]) {
           MS_EXCEPTION(ValueError) << "segment_ids must be a tensor with element values sorted in ascending order.";
-          break;
         }
       }
       out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);

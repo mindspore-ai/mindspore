@@ -262,7 +262,7 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   std::set<TypePtr> valid_types = common_valid_types;
-  valid_types.insert(kBool);
+  (void)valid_types.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
   return x_type;
 }

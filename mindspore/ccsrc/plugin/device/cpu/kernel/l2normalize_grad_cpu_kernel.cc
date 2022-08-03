@@ -107,7 +107,7 @@ void L2NormalizeGradCpuFunc<T>::CheckInputShape(const ShapeVector &output_shape)
   }
   auto input_x_shape = input_shape_list_[0];
   if (input_x_shape.size() != 0) {
-    if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](int64_t i) { return i == 0; })) {
+    if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](int64_t i) -> bool { return i == 0; })) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' can not be null.";
     }
   }

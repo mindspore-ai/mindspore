@@ -92,7 +92,7 @@ TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   auto x2_type = input_args[1]->BuildType();
   auto tensor_type = x2_type->cast<TensorTypePtr>();
   auto element = tensor_type->element();
-  CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, {element}, primitive->name());
 }
 AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

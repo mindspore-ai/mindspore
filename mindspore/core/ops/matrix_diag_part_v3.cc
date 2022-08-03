@@ -54,10 +54,10 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
   auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto padding_value_rank = SizeToLong(padding_shape.size());
-  CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
   int64_t row = x_shape[rank - kNumber2];
   int64_t col = x_shape[rank - 1];
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
@@ -81,8 +81,8 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
       auto padding_value_tensor = padding_value_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(padding_value_tensor);
       size_t padding_value_size = LongToSize(padding_value_tensor->DataSize());
-      CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(padding_value_size), kEqual, kNumber1,
-                                         prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(padding_value_size), kEqual, kNumber1,
+                                               prim_name);
     } else {
       MS_EXCEPTION(TypeError) << "For " << prim_name << ", input k and padding_value must be const Tensor.";
     }
@@ -141,7 +141,7 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
   auto prim_name = prim->name();
 
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto padding_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);

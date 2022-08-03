@@ -96,7 +96,7 @@ TypePtr LpNormInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto infer_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input", infer_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", infer_type, valid_types, prim->name());
   return infer_type;
 }
 }  // namespace

@@ -50,7 +50,7 @@ TuplePtr MinimumGradInferType(const PrimitivePtr &primitive, const std::vector<A
   const int64_t INPUT_GRADS_IDX = 2;
   auto x1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, INPUT_GRADS_IDX);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, INPUT_GRADS_IDX);
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);

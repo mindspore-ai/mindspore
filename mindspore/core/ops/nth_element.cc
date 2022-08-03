@@ -32,13 +32,13 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  CheckAndConvertUtils::CheckInteger("input shape", input_shape.size(), kGreaterEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input shape", input_shape.size(), kGreaterEqual, 1, primitive->name());
   auto n_val = 0;
   if (input_args[1]->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> valid_types = {kInt32};
-    CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->BuildType(), valid_types, primitive->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->BuildType(), valid_types, primitive->name());
     auto n = input_args[1]->cast<abstract::AbstractTensorPtr>();
     auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
     CheckAndConvertUtils::CheckInteger("n shape", SizeToLong(n_shape.size()), kEqual, 0, primitive->name());
@@ -63,12 +63,12 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
                             << "int or a scalar Tensor, but got " << input_args[1]->type_name() << ".";
   }
 
-  CheckAndConvertUtils::CheckInteger("n_value", n_val, kGreaterEqual, 0, primitive->name());
-  CheckAndConvertUtils::CheckInteger("n_value", n_val, kLessThan, input_shape.back(), primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kGreaterEqual, 0, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kLessThan, input_shape.back(), primitive->name());
   std::vector<int64_t> out_shape;
   int len = input_shape.size();
   for (int64_t i = 0; i < len - 1; i++) {
-    out_shape.emplace_back(input_shape[i]);
+    (void)out_shape.emplace_back(input_shape[i]);
   }
   auto return_shape = out_shape;
   return std::make_shared<abstract::Shape>(return_shape);
