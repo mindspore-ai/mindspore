@@ -51,9 +51,9 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> x_stride_;
   std::vector<size_t> grid_stride_;
   std::vector<size_t> output_stride_;
-  std::string interpolation_mode;
-  std::string padding_mode;
-  bool align_corners;
+  std::string interpolation_mode_;
+  std::string padding_mode_;
+  bool align_corners_;
   size_t output_number_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>

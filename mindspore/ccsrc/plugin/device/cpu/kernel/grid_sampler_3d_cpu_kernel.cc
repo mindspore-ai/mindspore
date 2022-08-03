@@ -49,9 +49,9 @@ void GridSampler3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   stride_compute(x_stride_, x_shape_);
   stride_compute(grid_stride_, grid_shape_);
   stride_compute(output_stride_, output_shape_);
-  interpolation_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
-  padding_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
-  align_corners = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  interpolation_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
+  padding_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
+  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
 }
 
 bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -85,13 +85,13 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
   T x = grid_addr[grid_offset];
   T y = grid_addr[static_cast<size_t>(grid_offset) + grid_stride_[kFour]];
   T z = grid_addr[static_cast<size_t>(grid_offset + kTwo * grid_stride_[kFour])];
-  x = grid_sampler_compute_source_index(x, static_cast<size_t>(x_shape_[kFour]), padding_mode, align_corners);
-  y = grid_sampler_compute_source_index(y, static_cast<size_t>(x_shape_[kThree]), padding_mode, align_corners);
-  z = grid_sampler_compute_source_index(z, static_cast<size_t>(x_shape_[kTwo]), padding_mode, align_corners);
+  x = grid_sampler_compute_source_index(x, static_cast<size_t>(x_shape_[kFour]), padding_mode_, align_corners_);
+  y = grid_sampler_compute_source_index(y, static_cast<size_t>(x_shape_[kThree]), padding_mode_, align_corners_);
+  z = grid_sampler_compute_source_index(z, static_cast<size_t>(x_shape_[kTwo]), padding_mode_, align_corners_);
   auto x_ptr_NC = out_iter[kZero] * x_stride_[kZero];
   auto output_ptr_NCDHW = out_iter[kZero] * output_stride_[kZero] + out_iter[kTwo] * output_stride_[kTwo] +
                           out_iter[kThree] * output_stride_[kThree] + out_iter[kFour] * output_stride_[kFour];
-  if (interpolation_mode == "bilinear") {
+  if (interpolation_mode_ == "bilinear") {
     int64_t x_tnw = static_cast<int64_t>(std::floor(x));
     int64_t y_tnw = static_cast<int64_t>(std::floor(y));
     int64_t z_tnw = static_cast<int64_t>(std::floor(z));
@@ -150,7 +150,7 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * bse;
       }
     }
-  } else if (interpolation_mode == "nearest") {
+  } else if (interpolation_mode_ == "nearest") {
     int64_t x_nearest = static_cast<int64_t>(std::round(x));
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     int64_t z_nearest = static_cast<int64_t>(std::round(z));
