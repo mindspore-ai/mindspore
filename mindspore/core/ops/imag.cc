@@ -15,7 +15,6 @@
  */
 
 #include "ops/imag.h"
-#include <map>
 #include <string>
 #include <set>
 #include "abstract/ops/primitive_infer_map.h"
@@ -27,6 +26,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr ImagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto name = primitive->name();
+  MS_LOG(DEBUG) << "Start infer shape for op: " << name;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];

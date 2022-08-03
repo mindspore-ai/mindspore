@@ -21,7 +21,6 @@
 #include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -41,14 +40,14 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSTFTIndex0]->GetShapeTrack())[kShape];
   auto window_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSTFTIndex1]->GetShapeTrack())[kShape];
   if (batch_rank == 0) {
-    (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-                                                      {kSTFT1DSignalInput, kSTFT2DSignalInput}, op_name);
+    CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                                {kSTFT1DSignalInput, kSTFT2DSignalInput}, op_name);
     (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual, kSTFT1DWindowDims,
                                              op_name);
   } else {
-    (void)CheckAndConvertUtils::CheckInRange<int64_t>(
-      "x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-      {kSTFT1DSignalInput + batch_rank, kSTFT2DSignalInput + batch_rank}, op_name);
+    CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                                {kSTFT1DSignalInput + batch_rank, kSTFT2DSignalInput + batch_rank},
+                                                op_name);
     (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual,
                                              kSTFT1DWindowDims + batch_rank, op_name);
   }
@@ -56,23 +55,23 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
   int64_t len = x_shape.back();
 
   int64_t n_fft = GetValue<int64_t>(primitive->GetAttr(kNFft));
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("n_fft", n_fft, kIncludeRight, {0, len}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("n_fft", n_fft, kIncludeRight, {0, len}, op_name);
 
   int64_t hop_length = GetValue<int64_t>(primitive->GetAttr(kHopLength));
   (void)CheckAndConvertUtils::CheckInteger("hop_length", hop_length, kGreaterThan, 0, op_name);
 
   int64_t win_length = GetValue<int64_t>(primitive->GetAttr(kWinLength));
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("win_length", win_length, kIncludeRight, {0, n_fft}, op_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("win_length", win_length, kIncludeRight, {0, n_fft}, op_name);
 
   (void)CheckAndConvertUtils::CheckInteger("window_shape", window_shape.back(), kEqual, win_length, op_name);
 
   std::vector<int64_t> out_shape = {};
   for (int64_t index = 0; index < batch_rank; index++) {
     (void)CheckAndConvertUtils::CheckInteger("batch_shape", x_shape[index], kEqual, window_shape[index], op_name);
-    out_shape.emplace_back(x_shape[index]);
+    (void)out_shape.emplace_back(x_shape[index]);
   }
   if (x_shape.size() - batch_rank == kSTFT2DInputDims) {
-    out_shape.emplace_back(x_shape[batch_rank]);
+    (void)out_shape.emplace_back(x_shape[batch_rank]);
   }
   int64_t n_frames = 1 + (len - n_fft) / hop_length;
   int64_t fft_length = n_fft;
@@ -82,13 +81,13 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
     constexpr int64_t k2FolderNum = 2;
     fft_length = n_fft / k2FolderNum + 1;
   }
-  out_shape.emplace_back(fft_length);
-  out_shape.emplace_back(n_frames);
+  (void)out_shape.emplace_back(fft_length);
+  (void)out_shape.emplace_back(n_frames);
   bool ret_complex = GetValue<bool>(primitive->GetAttr(kReturnComplex));
   if (!ret_complex) {
     // Split complex into real and image.
     constexpr int64_t k2DRealOutput = 2;
-    out_shape.emplace_back(k2DRealOutput);
+    (void)out_shape.emplace_back(k2DRealOutput);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
