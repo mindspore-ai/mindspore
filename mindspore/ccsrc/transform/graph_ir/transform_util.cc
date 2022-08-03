@@ -219,7 +219,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
       std::string string_to_add(string_element, string_length);
       (void)string_vector.emplace_back(string_to_add);
     }
-    delete string_element;
+    delete[] string_element;
     string_element = nullptr;
     tensor_ptr = make_shared<GeTensor>(*desc);
     (void)tensor_ptr->SetData(string_vector);
@@ -236,7 +236,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     std::string string_to_add(string_element, string_length);
     tensor_ptr = make_shared<GeTensor>(*desc);
     (void)tensor_ptr->SetData(string_to_add);
-    delete string_element;
+    delete[] string_element;
     string_element = nullptr;
   }
   return tensor_ptr;

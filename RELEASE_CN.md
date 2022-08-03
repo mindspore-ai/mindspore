@@ -10,7 +10,7 @@
 
 #### FrontEnd
 
-- [BETA]  提供`mindspore.Model.fit` API，增加两种callback方法 `mindspore.callback.EarlyStopping` 和 `mindspore.callback.ReduceLROnPlateau`。
+- [BETA]  提供`mindspore.Model.fit` API，增加两种callback方法 `mindspore.train.callback.EarlyStopping` 和 `mindspore.train.callback.ReduceLROnPlateau`。
 - [BETA] 自定义算子支持Julia算子。
 - [BETA] 自定义算子支持Hybrid DSL算子。
 - [STABLE] export()接口支持自定义加密算法导出模型，load()接口支持自定义解密算法导入模型。
