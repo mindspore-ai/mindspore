@@ -35,7 +35,7 @@ class FractionalMaxPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~FractionalMaxPoolCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -46,7 +46,7 @@ class FractionalMaxPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool FractionalMaxPoolLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool FractionalMaxPoolDoCompute(T *input_ptr, T *output_ptr, size_t b, size_t hs, const int64_t height_start,
+  bool FractionalMaxPoolDoCompute(const T *input_ptr, T *output_ptr, size_t b, size_t hs, const int64_t height_start,
                                   int64_t height_end, std::vector<int64_t> width_cum_seq);
   using FractionalMaxPoolFunc = std::function<bool(
     FractionalMaxPoolCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
