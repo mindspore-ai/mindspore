@@ -83,9 +83,8 @@ AbstractBasePtr LinearSumAssignmentInfer(const abstract::AnalysisEnginePtr &, co
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  constexpr int64_t kInput_size = 3;
-  (void)CheckAndConvertUtils::CheckInteger("Input numbers", SizeToLong(input_args.size()), kEqual, kInput_size,
-                                           op_name);
+  constexpr int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("Input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   auto shape = LinearSumAssignmentInferShape(primitive, input_args);
   auto type = LinearSumAssignmentInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
