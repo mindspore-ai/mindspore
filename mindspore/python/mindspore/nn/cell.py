@@ -1546,6 +1546,9 @@ class Cell(Cell_):
             >>>
             >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
             >>> net.to_float(mstype.float16)
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("For 'to_float', the argument 'dst_type' must be float32 or float16, "
