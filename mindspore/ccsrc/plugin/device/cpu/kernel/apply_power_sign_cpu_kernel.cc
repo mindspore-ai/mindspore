@@ -70,7 +70,7 @@ void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::Addre
         var[i] = var[i] - lr[0] * update;
       }
     };
-    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(input_elements_), this, &parallel_search_info_);
     var = var + input_elements_;
     m = m + input_elements_;
     gradient = gradient + input_elements_;
