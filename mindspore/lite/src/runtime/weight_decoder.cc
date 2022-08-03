@@ -22,14 +22,6 @@
 
 namespace mindspore::lite {
 #ifndef WEIGHT_DECODE_CLIP
-namespace {
-constexpr int kBit8 = 8;
-constexpr int kBit32 = 32;
-}  // namespace
-#endif
-
-#ifndef WEIGHT_DECODE_CLIP
-
 int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->quant_params().empty()) {
@@ -189,15 +181,15 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
   size_t index = 0;
   // parse coor_best_bit
   size_t coor_best_bit = 0;
-  for (size_t i = 0; i < kBit8; i++) {
+  for (size_t i = 0; i < kBitNum8; i++) {
     bool bit = bit_vec[index++];
-    coor_best_bit |= bit << static_cast<size_t>((kBit8 - i - 1));
+    coor_best_bit |= bit << static_cast<size_t>((kBitNum8 - i - 1));
   }
   // parse nz_cnt
   size_t nz_cnt = 0;
-  for (size_t i = 0; i < kBit32; i++) {
+  for (size_t i = 0; i < kBitNum32; i++) {
     bool bit = bit_vec[index++];
-    nz_cnt |= bit << static_cast<size_t>((kBit32 - i - 1));
+    nz_cnt |= bit << static_cast<size_t>((kBitNum32 - i - 1));
   }
   // parse unique_value cnt
   size_t unique_value_cnt = 0;
@@ -254,7 +246,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
   }
   auto dst_data = dst_tensor->data();
 
-  if (bit_num <= kBit8) {
+  if (bit_num <= kBitNum8) {
     ret =
       UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
                                  elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
@@ -271,10 +263,10 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
 }
 
 std::vector<bool> WeightDecoder::StringToBitVector(const std::string &str) {
-  std::vector<bool> vec(str.size() * kBit8);
+  std::vector<bool> vec(str.size() * kBitNum8);
   size_t index = 0;
   for (auto ch : str) {
-    for (size_t shift = kBit8; shift > 0; shift--) {
+    for (size_t shift = kBitNum8; shift > 0; shift--) {
       vec[index++] = (static_cast<unsigned char>(ch) >> static_cast<size_t>(shift - 1)) & 0x1;
     }
   }
@@ -327,17 +319,14 @@ STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, 
     unique_value_index_vec.push_back(unique_value_index);
   }
 
-  if (dst_tensor->data() != nullptr) {
-    MS_LOG(ERROR) << "data_c not null";
-    return RET_ERROR;
-  }
-  auto ret = dst_tensor->MallocData();
-  if (ret != RET_OK) {
+  MS_CHECK_FALSE_MSG(dst_tensor->data() != nullptr, RET_ERROR, "data_c not null");
+  if (dst_tensor->MallocData() != RET_OK) {
     MS_LOG(ERROR) << "Malloc tensor data failed";
     return RET_NULL_PTR;
   }
   auto dst_data = dst_tensor->data();
-  if (bit_num <= kBit8) {
+  int ret;
+  if (bit_num <= kBitNum8) {
     ret = UnIndexTensorData<int8_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
   } else {
     ret = UnIndexTensorData<int16_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());

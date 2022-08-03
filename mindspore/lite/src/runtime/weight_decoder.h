@@ -35,6 +35,7 @@ static constexpr int kPerTensor = 1;
 static constexpr int kBitNum1 = 1;
 static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;
+static constexpr int kBitNum32 = 32;
 
 namespace mindspore::lite {
 

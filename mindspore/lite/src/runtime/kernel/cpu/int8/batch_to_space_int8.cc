@@ -120,7 +120,7 @@ int BatchToSpaceInt8CPUKernel::Run() {
       }
     }
     no_crop_ = param->no_crop_;
-  } else if (in_tensors_.size() == 3) {
+  } else if (in_tensors_.size() == DIMENSION_3D) {
     auto ret = Processinput();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Processinput failed in BatchToSpace.";
@@ -128,7 +128,7 @@ int BatchToSpaceInt8CPUKernel::Run() {
     }
   }
 
-  if (in_tensors_.size() == 1 || in_tensors_.size() == 3) {
+  if (in_tensors_.size() == DIMENSION_1D || in_tensors_.size() == DIMENSION_3D) {
     if (std::abs(in_quant_arg_->scale_ - out_quant_arg_->scale_) < FLT_EPSILON &&
         in_quant_arg_->zp_ == out_quant_arg_->zp_) {
       if (no_crop_) {
