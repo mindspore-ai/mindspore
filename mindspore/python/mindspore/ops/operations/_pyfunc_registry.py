@@ -15,15 +15,44 @@
 
 """Register pyfunc for py_func_cpu_kernel"""
 
+from __future__ import absolute_import
 from mindspore.ops._register_for_op import PyFuncRegistry
 
 
-registered_py_id = PyFuncRegistry()
+class CustomPyFuncRegistry:
+    """
+    Registry class for custom pyfunc function.
+    Key: func id
+    Value : pyfunc
+    """
+
+    def __init__(self):
+        self._func_dict = PyFuncRegistry()
+
+    @classmethod
+    def instance(cls):
+        """
+        Get singleton of CustomPyFuncRegistry.
+
+        Returns:
+            An instance of CustomPyFuncRegistry.
+        """
+        if not hasattr(CustomPyFuncRegistry, "_instance"):
+            CustomPyFuncRegistry._instance = CustomPyFuncRegistry()
+        return CustomPyFuncRegistry._instance
+
+    def register(self, fn_id, fn):
+        """register id, pyfunc to dict"""
+        self._func_dict.register(fn_id, fn)
+
+    def get(self, fn_id):
+        """get pyfunc function by id"""
+        return self._func_dict.get(fn_id)
 
 
 def add_pyfunc(fn_id, fn):
-    registered_py_id.register(fn_id, fn)
+    CustomPyFuncRegistry.instance().register(fn_id, fn)
 
 
 def get_pyfunc(fn_id):
-    return registered_py_id.get(fn_id)
+    return CustomPyFuncRegistry.instance().get(fn_id)

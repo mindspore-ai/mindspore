@@ -15,38 +15,57 @@
 
 """Register bprop function for Custom Hybrid Autodiff"""
 
+from __future__ import absolute_import
 from mindspore import log as logger
 
-BPROP_FACTORY = dict()
 
-
-class Registry():
+class Registry:
     """
-    Registry class inherits from UserDict.
+    Registry class for custom bprop function.
     Key: length of signatures
     Value : bprop function for custom hybrid op
     """
+
+    def __init__(self):
+        self._bprops = {}
+
+    @classmethod
+    def instance(cls):
+        """
+        Get singleton of Registry.
+
+        Returns:
+            An instance of Registry.
+        """
+        if not hasattr(Registry, "_instance"):
+            Registry._instance = Registry()
+        return Registry._instance
+
     @staticmethod
     def register(sig_number):
+        """register length of signatures, bprop function to dict"""
         def deco(fn):
-            global BPROP_FACTORY
-            BPROP_FACTORY[sig_number] = fn
+            """deco function"""
+            Registry.instance().set(sig_number, fn)
             return fn
         return deco
 
-    @staticmethod
-    def get(sig_number):
-        global BPROP_FACTORY
-        if sig_number not in BPROP_FACTORY:
+    def get(self, sig_number):
+        """get bprop function by length of signatures"""
+        if sig_number not in self._bprops:
             logger.error(f"Autodiff currently doesn't support hyrbrid function with input num :{sig_number}. \
                 Supported input num is from 1 to 10")
-        fn = BPROP_FACTORY.get(sig_number)
+        fn = self._bprops.get(sig_number)
         return fn
+
+    def set(self, sig_number, fn):
+        """set length of signatures, bprop function to dict"""
+        self._bprops[sig_number] = fn
 
 
 def autodiff_bprop(n):
     """get bprop function"""
-    return Registry.get(n)
+    return Registry.instance().get(n)
 
 
 def get_outs(out, dout):
