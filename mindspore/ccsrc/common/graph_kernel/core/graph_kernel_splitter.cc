@@ -375,6 +375,7 @@ class Splitter {
   void RebuildGraph(const std::vector<size_t> &cnodes_group_id) {
     BindFuncGraph();
     RecoverParameter();
+    SetSplitNodeName(cnodes_group_id);
     ConnectToMainGraph(cnodes_group_id);
     UpdateSubGraphInfo();
     ResetInlinedNodesKernelInfo();
@@ -441,6 +442,23 @@ class Splitter {
       }
     }
     return output;
+  }
+
+  void SetSplitNodeName(const std::vector<size_t> &cnodes_group_id) const {
+    auto old_func_graph = GetCNodeFuncGraph(old_subgraph_cnode_);
+    std::string ori_node_name;
+    if (old_func_graph->has_attr(kAttrNodeName)) {
+      ori_node_name = GetValue<std::string>(old_func_graph->get_attr(kAttrNodeName));
+    } else {
+      ori_node_name = GetValue<std::string>(old_func_graph->get_attr("graph_kernel"));
+    }
+    for (size_t i = 0; i < new_subgraph_cnodes_.size(); ++i) {
+      auto group_id = cnodes_group_id[i];
+      if (!split_schemer_->NeedInline(group_id)) {
+        std::string node_name = ori_node_name + "_" + std::to_string(group_id);
+        AnfUtils::SetNodeAttr(kAttrNodeName, MakeValue(node_name), new_subgraph_cnodes_[i]);
+      }
+    }
   }
 
   // Set the new sub_func_graph node as input of nodes original main graph.

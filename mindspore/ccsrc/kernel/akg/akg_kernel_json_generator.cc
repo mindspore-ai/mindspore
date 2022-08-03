@@ -742,8 +742,10 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
 
   // gen hash id with the above info.
   size_t hash_id = GenHashId(kernel_json->dump());
-  kernel_name_ = op_name + "_";
-  (void)kernel_name_.append(std::to_string(hash_id));
+  kernel_name_ = op_name + "_" + std::to_string(hash_id);
+  if (dump_option_.gen_kernel_name_only) {
+    return true;
+  }
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
@@ -847,12 +849,17 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   auto fg = anf_nodes[0]->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   GenKernelName(fg, hash_id, kernel_json);
-
+  if (dump_option_.gen_kernel_name_only) {
+    return true;
+  }
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
+  if (fg->has_attr(kAttrNodeName)) {
+    (*kernel_json)[kJsonKeyNodeName] = GetValue<std::string>(fg->get_attr(kAttrNodeName));
+  }
 
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 

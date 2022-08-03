@@ -70,6 +70,7 @@ constexpr auto kJsonKeySmCount = "sm_count";
 constexpr auto kJsonKeySystem = "system";
 constexpr auto kJsonKeyArch = "arch";
 constexpr auto kJsonKeyFeature = "feature";
+constexpr auto kJsonKeyNodeName = "node_name";
 
 // dump option
 struct DumpOption {
@@ -77,6 +78,7 @@ struct DumpOption {
   bool save_ptr_address = false;
   bool extract_opinfo_from_anfnode = false;
   bool get_target_info = false;
+  bool gen_kernel_name_only = false;
 };
 
 class TargetInfoSetter {

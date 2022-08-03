@@ -204,6 +204,9 @@ class CostModelSplitSchemer : public SplitSchemer {
       MS_LOG(ERROR) << "Collect json desc failed.";
       return false;
     }
+    // set the "node_name" for tracing split result.
+    std::string node_name = json_desc["op"];
+    func_graph_->set_attr(kAttrNodeName, MakeValue(node_name));
 
     // call costmodel split function.
     auto json_desc_str = json_desc.dump();
