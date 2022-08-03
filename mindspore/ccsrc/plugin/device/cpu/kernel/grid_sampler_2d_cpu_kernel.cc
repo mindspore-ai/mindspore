@@ -39,7 +39,7 @@ void GridSampler2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t stride_tmp = 1;
   auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, ShapeVector shape) {
     for (int32_t i = 3; i > -1; i--) {
-      stride.insert(stride.begin(), stride_tmp);
+      (void)stride.insert(stride.begin(), stride_tmp);
       stride_tmp *= LongToSize(shape[IntToSize(i)]);
     }
     stride_tmp = 1;
@@ -66,18 +66,18 @@ bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void GridSampler2DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_addr, const size_t &seq) {
+void GridSampler2DCpuKernelMod::ComputeTask(const T *x_addr, const T *grid_addr, T *output_addr, const size_t &seq) {
   size_t out_iter[4] = {0, seq, 0, 0};
   size_t count = 3;
   while (out_iter[1] > 0) {
     if (count == 1) {
       count--;
     }
-    out_iter[count] = out_iter[kOne] % output_shape_[count];
-    out_iter[1] /= output_shape_[count--];
+    out_iter[count] = out_iter[kOne] % LongToSize(output_shape_[count]);
+    out_iter[1] /= LongToSize(output_shape_[count--]);
   }
-  const size_t out_c = output_shape_[kOne];
-  int64_t grid_offset =
+  const size_t out_c = LongToSize(output_shape_[kOne]);
+  size_t grid_offset =
     out_iter[kZero] * grid_stride_[kZero] + out_iter[kTwo] * grid_stride_[kOne] + out_iter[kThree] * grid_stride_[kTwo];
   T x = grid_addr[grid_offset];
   T y = grid_addr[grid_offset + grid_stride_[kThree]];
@@ -104,19 +104,19 @@ void GridSampler2DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
     for (size_t c = 0; c < out_c; c++, x_ptr_NC += x_stride_[1], output_ptr_NCDHW += output_stride_[1]) {
       output_addr[output_ptr_NCDHW] = static_cast<T>(0);
       if (WithinBounds2D(y_tnw, x_tnw, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tnw * x_stride_[kTwo] + x_tnw * x_stride_[kThree];
+        auto x_index = x_ptr_NC + LongToSize(y_tnw) * x_stride_[kTwo] + LongToSize(x_tnw) * x_stride_[kThree];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tnw;
       }
       if (WithinBounds2D(y_tne, x_tne, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tne * x_stride_[kTwo] + x_tne * x_stride_[kThree];
+        auto x_index = x_ptr_NC + LongToSize(y_tne) * x_stride_[kTwo] + LongToSize(x_tne) * x_stride_[kThree];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tne;
       }
       if (WithinBounds2D(y_tsw, x_tsw, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tsw * x_stride_[kTwo] + x_tsw * x_stride_[kThree];
+        auto x_index = x_ptr_NC + LongToSize(y_tsw) * x_stride_[kTwo] + LongToSize(x_tsw) * x_stride_[kThree];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tsw;
       }
       if (WithinBounds2D(y_tse, x_tse, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tse * x_stride_[kTwo] + x_tse * x_stride_[kThree];
+        auto x_index = x_ptr_NC + LongToSize(y_tse) * x_stride_[kTwo] + LongToSize(x_tse) * x_stride_[kThree];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tse;
       }
     }
@@ -125,7 +125,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     for (size_t c = 0; c < out_c; c++, x_ptr_NC += x_stride_[kOne], output_ptr_NCDHW += output_stride_[kOne]) {
       if (WithinBounds2D(y_nearest, x_nearest, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_nearest * x_stride_[kTwo] + x_nearest * x_stride_[kThree];
+        auto x_index = x_ptr_NC + LongToSize(y_nearest) * x_stride_[kTwo] + LongToSize(x_nearest) * x_stride_[kThree];
         output_addr[output_ptr_NCDHW] = x_addr[x_index];
       } else {
         output_addr[output_ptr_NCDHW] = static_cast<T>(0);
@@ -134,7 +134,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
   }
 }
 
-void GridSampler2DCpuKernelMod::ComputeTask(float16 *x_addr, float16 *grid_addr, float16 *output_addr,
+void GridSampler2DCpuKernelMod::ComputeTask(const float16 *x_addr, const float16 *grid_addr, float16 *output_addr,
                                             const size_t &seq) {
   size_t out_iter[4] = {0, seq, 0, 0};
   size_t count = 3;
@@ -149,7 +149,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(float16 *x_addr, float16 *grid_addr,
     }
   }
   const size_t out_c = LongToSize(output_shape_[kOne]);
-  int64_t grid_offset =
+  size_t grid_offset =
     out_iter[kZero] * grid_stride_[kZero] + out_iter[kTwo] * grid_stride_[kOne] + out_iter[kThree] * grid_stride_[kTwo];
   float x = static_cast<float>(grid_addr[grid_offset]);
   float y = static_cast<float>(grid_addr[grid_offset + grid_stride_[kThree]]);
@@ -176,19 +176,19 @@ void GridSampler2DCpuKernelMod::ComputeTask(float16 *x_addr, float16 *grid_addr,
     for (size_t c = 0; c < out_c; c++, x_ptr_NC += x_stride_[1], output_ptr_NCDHW += output_stride_[1]) {
       output_addr[output_ptr_NCDHW] = static_cast<float16>(0);
       if (WithinBounds2D(y_tnw, x_tnw, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tnw * x_stride_[2] + x_tnw * x_stride_[3];
+        auto x_index = x_ptr_NC + LongToSize(y_tnw) * x_stride_[2] + LongToSize(x_tnw) * x_stride_[3];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tnw;
       }
       if (WithinBounds2D(y_tne, x_tne, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tne * x_stride_[2] + x_tne * x_stride_[3];
+        auto x_index = x_ptr_NC + LongToSize(y_tne) * x_stride_[2] + LongToSize(x_tne) * x_stride_[3];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tne;
       }
       if (WithinBounds2D(y_tsw, x_tsw, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tsw * x_stride_[2] + x_tsw * x_stride_[3];
+        auto x_index = x_ptr_NC + LongToSize(y_tsw) * x_stride_[2] + LongToSize(x_tsw) * x_stride_[3];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tsw;
       }
       if (WithinBounds2D(y_tse, x_tse, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_tse * x_stride_[2] + x_tse * x_stride_[3];
+        auto x_index = x_ptr_NC + LongToSize(y_tse) * x_stride_[2] + LongToSize(x_tse) * x_stride_[3];
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tse;
       }
     }
@@ -197,7 +197,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(float16 *x_addr, float16 *grid_addr,
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     for (size_t c = 0; c < out_c; c++, x_ptr_NC += x_stride_[1], output_ptr_NCDHW += output_stride_[1]) {
       if (WithinBounds2D(y_nearest, x_nearest, x_shape_[kTwo], x_shape_[kThree])) {
-        auto x_index = x_ptr_NC + y_nearest * x_stride_[2] + x_nearest * x_stride_[3];
+        auto x_index = x_ptr_NC + LongToSize(y_nearest) * x_stride_[2] + LongToSize(x_nearest) * x_stride_[3];
         output_addr[output_ptr_NCDHW] = x_addr[x_index];
       } else {
         output_addr[output_ptr_NCDHW] = static_cast<float16>(0);
@@ -244,8 +244,8 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 }
 
 template <typename T>
-T GridSampler2DCpuKernelMod::GridSamplerComputerSourceIndex(T coord, int64_t size, std::string padding_mode,
-                                                            bool align_corners) {
+T GridSampler2DCpuKernelMod::GridSamplerComputerSourceIndex(T coord, int64_t size, const std::string &padding_mode,
+                                                            bool align_corners) const {
   const int64_t num2 = 2;
   if (align_corners) {
     coord = ((coord + 1.f) / num2) * (size - 1);
@@ -266,7 +266,7 @@ T GridSampler2DCpuKernelMod::GridSamplerComputerSourceIndex(T coord, int64_t siz
 }
 
 template <typename T>
-T GridSampler2DCpuKernelMod::ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high) {
+T GridSampler2DCpuKernelMod::ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high) const {
   const int64_t num2 = 2;
   if (twice_low == twice_high) {
     return static_cast<T>(0);
@@ -283,7 +283,7 @@ T GridSampler2DCpuKernelMod::ReflectCoordinates(T coord, int64_t twice_low, int6
   }
 }
 
-bool GridSampler2DCpuKernelMod::WithinBounds2D(int64_t h, int64_t w, int64_t H, int64_t W) {
+bool GridSampler2DCpuKernelMod::WithinBounds2D(int64_t h, int64_t w, int64_t H, int64_t W) const {
   return h >= 0 && h < H && w >= 0 && w < W;
 }
 

@@ -18,16 +18,11 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_GCD_CPU_KERNEL_H_
 
 #include <functional>
-#include <memory>
 #include <vector>
-#include <iostream>
-#include <string>
-#include <map>
 #include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/nnacl/arithmetic.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,6 +33,7 @@ class GcdCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    (void)workspace;
     return kernel_func_(this, inputs, outputs);
   }
 
