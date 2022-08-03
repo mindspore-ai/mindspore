@@ -48,7 +48,7 @@ class TopologyNode {
   bool Finalize();
 
   // Send data asynchronously to the specified rank node.
-  bool SendAsync(size_t rank_id, void *data, size_t size);
+  bool SendAsync(size_t rank_id, const void *data, size_t size);
 
   // Wait for all the pending sending tasks to the rank_id to be finished.
   bool WaitForSend(size_t rank_id);
@@ -56,9 +56,9 @@ class TopologyNode {
   // Receive data asynchronously from the specified rank node.
   bool Receive(size_t rank_id, MessageBase **message, size_t timeout = 15);
 
-  size_t rank_id();
+  size_t rank_id() const;
 
-  size_t rank_size();
+  size_t rank_size() const;
 
  private:
   // Handle the message received by the tcp server.

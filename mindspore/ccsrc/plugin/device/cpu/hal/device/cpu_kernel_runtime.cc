@@ -85,7 +85,7 @@ void CPUKernelRuntime::AssignKernelGraphAddress(session::KernelGraph *kernel_gra
   }
 }
 
-void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph) {
+void CPUKernelRuntime::AssignValueNodeAddress(const session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (auto &item_node : kernel_graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(item_node);
@@ -130,7 +130,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
   }
 }
 
-void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel_graph) {
+void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (auto &item : kernel_graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(item);
@@ -153,7 +153,7 @@ void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel
   }
 }
 
-void CPUKernelRuntime::AssignKernelOutputAddress(const session::KernelGraph *kernel_graph) {
+void CPUKernelRuntime::AssignKernelOutputAddress(const session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto kernels = kernel_graph->execution_order();
   for (auto &kernel : kernels) {
@@ -213,7 +213,7 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
       size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
       if (tensor_size < address->size_) {
         temp_shape.clear();
-        temp_shape.emplace_back(address->size_ / type_size);
+        (void)temp_shape.emplace_back(address->size_ / type_size);
       }
       tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
@@ -471,7 +471,7 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
       AnfAlgo::InferShape(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
       if (cpu_kernel != nullptr && cpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-                                     kernel::KRET_RESIZE_FAILED) {
+                                     static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed!";
       }
     }
@@ -494,7 +494,7 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
 #endif
     try {
-      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
+      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, nullptr);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel);
     }
