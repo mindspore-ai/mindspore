@@ -42,6 +42,7 @@ constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
 constexpr auto kCdist = "Cdist";
 constexpr auto kCdistGrad = "CdistGrad";
+constexpr auto kCompareAndBitpack = "CompareAndBitpack";
 // image
 constexpr auto kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 constexpr auto kResizeBilinearV2 = "ResizeBilinearV2";
@@ -1123,6 +1124,7 @@ GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionWithOverlaps,
 GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHue));
 GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2));
 GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturation));
+GVAR_DEF(PrimitivePtr, kPrimCompareAndBitpack, std::make_shared<Primitive>(kCompareAndBitpack));
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturn));
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
