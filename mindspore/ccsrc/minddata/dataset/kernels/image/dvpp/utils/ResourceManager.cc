@@ -64,12 +64,16 @@ void ResourceManager::Release() {
       return;
     }
   }
-  ret = aclFinalize();
-  if (ret != APP_ERR_OK) {
-    MS_LOG(ERROR) << "Failed to finalize acl, ret = " << ret << ".";
-    return;
-  }
-  MS_LOG(INFO) << "Finalized acl successfully.";
+
+  // release all the members
+  acl_env_ = nullptr;
+  deviceIds_.clear();
+  deviceIdMap_.clear();
+  ptr_ = nullptr;
+  initFlag_ = true;
+  contexts_.clear();
+
+  MS_LOG(INFO) << "Release the resource(s) successfully.";
 }
 
 std::shared_ptr<ResourceManager> ResourceManager::GetInstance() {
