@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/fill_diagonal_cpu_kernel.h"
 #include <algorithm>
 #include <vector>
-#include <cmath>
 #include <type_traits>
 #include <memory>
 #include <functional>
@@ -75,8 +74,6 @@ bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "the datatype of the input not support, support datatype: float, int32, int64.";
   }
-
-  return true;
 }
 
 template <typename T>
@@ -87,12 +84,19 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_ptr);
 
-  int64_t data_nums = static_cast<int64_t>(outputs[0]->size / sizeof(T));
-  if (data_nums <= kParallelDataNums) {
-    std::memcpy(output_ptr, input_ptr, data_nums * sizeof(T));
+  size_t data_nums = outputs[0]->size / sizeof(T);
+  if (SizeToLong(data_nums) <= kParallelDataNums) {
+    auto ret_code = memcpy_s(output_ptr, data_nums * sizeof(T), input_ptr, data_nums * sizeof(T));
+    if (ret_code != 0) {
+      MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret_code;
+    }
   } else {
     auto task = [this, input_ptr, output_ptr](size_t start, size_t end) {
-      std::memcpy(output_ptr + start, input_ptr + start, (end - start) * sizeof(T));
+      auto ret_code =
+        memcpy_s(output_ptr + start, (end - start) * sizeof(T), input_ptr + start, (end - start) * sizeof(T));
+      if (ret_code != 0) {
+        MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret_code;
+      }
     };
     CPUKernelUtils::ParallelFor(task, data_nums);
   }
@@ -102,8 +106,8 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   int64_t size = std::min(height, width);
 
   int64_t stride = 0;
-  for (int64_t i = (input_shape_.size() - 1); i >= 0; i--) {
-    stride += pow(width, i);
+  for (int64_t i = (SizeToLong(input_shape_.size()) - 1); i >= 0; i--) {
+    stride += static_cast<int64_t>(pow(width, i));
   }
   for (int64_t i = 0; i < size; ++i) {
     output_ptr[stride * i] = static_cast<T>(fill_value_);
@@ -111,7 +115,7 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 
   if (wrap_ && input_shape_.size() == kInputMinDim && height > width + 1) {
     int64_t location = size * (size + 1);
-    while (location < data_nums) {
+    while (location < SizeToLong(data_nums)) {
       output_ptr[location] = static_cast<T>(fill_value_);
       location += stride;
     }
@@ -121,7 +125,7 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 }
 
 std::vector<KernelAttr> FillDiagonalCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
