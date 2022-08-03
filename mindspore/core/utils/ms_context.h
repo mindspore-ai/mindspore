@@ -147,8 +147,8 @@ class MS_CORE_API MsContext {
   ~MsContext() = default;
   MsContext(const MsContext &) = delete;
   MsContext &operator=(const MsContext &) = delete;
-  using DeviceSeter = std::function<void(const std::string &device_target)>;
-  using DeviceTypeSeter = std::function<void(std::shared_ptr<MsContext> &)>;
+  using DeviceSeter = void (*)(const std::string &device_target);
+  using DeviceTypeSeter = void (*)(std::shared_ptr<MsContext> &);
   static std::shared_ptr<MsContext> GetInstance();
 
   bool enable_dump_ir() const;

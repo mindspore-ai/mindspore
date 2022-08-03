@@ -20,7 +20,6 @@
 #include "cxx_api/akg_kernel_register.h"
 #include "cxx_api/acl_utils.h"
 #include "utils/log_adapter.h"
-#include "runtime/device/context_extends.h"
 #include "mindspore/core/base/base_ref_utils.h"
 #include "backend/common/session/session_factory.h"
 #include "backend/common/session/executor_manager.h"
@@ -28,6 +27,7 @@
 #include "runtime/dev.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "include/common/utils/python_adapter.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace {
@@ -47,12 +47,15 @@ void InitHccl() {
 #ifndef ENABLE_SECURITY
     runtime_instance->PreInit();
 #endif
-    (void)context::OpenTsd(ms_context);
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
+
     if (!runtime_instance->Init()) {
       MS_LOG(EXCEPTION) << "Runtime init failed.";
     }
-  } else {
-    (void)context::OpenTsd(ms_context);
   }
 }
 
@@ -381,7 +384,11 @@ AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
 
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
       PythonEnvGuard guard;
-      if (!context::CloseTsd(ms_context)) {
+      const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      MS_EXCEPTION_IF_NULL(device_context);
+      MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+      if (!device_context->GetDeprecatedInterface()->CloseTsd(ms_context)) {
         MS_LOG(ERROR) << "CloseTsd failed!";
         return;
       }

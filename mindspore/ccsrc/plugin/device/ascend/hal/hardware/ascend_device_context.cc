@@ -65,6 +65,9 @@ void AscendDeviceContext::Destroy() {
 #endif
   MS_LOG(INFO) << "Status record: Enter Destroy...";
   if (!initialized_) {
+    if (deprecated_interface_ != nullptr) {
+      deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
+    }
     return;
   }
 
@@ -76,6 +79,9 @@ void AscendDeviceContext::Destroy() {
   device_res_manager_->Destroy();
   if (runtime_instance_) {
     runtime_instance_ = nullptr;
+  }
+  if (deprecated_interface_ != nullptr) {
+    deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
   initialized_ = false;
   MS_LOG(INFO) << "Status record: Destroy success.";
@@ -101,7 +107,7 @@ RunMode AscendDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
 DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
   // need lock when multi-threads
   if (deprecated_interface_ == nullptr) {
-    deprecated_interface_ = std::make_unique<AscendDeprecatedInterface>(this);
+    deprecated_interface_ = std::make_unique<AscendDeprecatedInterface>(nullptr);
   }
   return deprecated_interface_.get();
 }

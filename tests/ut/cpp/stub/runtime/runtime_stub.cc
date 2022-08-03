@@ -22,6 +22,7 @@
 #include "runtime/rt_model.h"
 #include "runtime/stream.h"
 #include "toolchain/adx_datadump_server.h"
+#include "toolchain/plog.h"
 
 rtError_t rtEventSynchronize(rtEvent_t event) { return RT_ERROR_NONE; }
 
@@ -219,3 +220,7 @@ RTS_API rtError_t rtKernelLaunchWithHandle(void *hdl, const uint64_t tilingKey, 
                                            const void *kernelInfo) {
   return RT_ERROR_NONE;
 }
+
+int DlogReportInitialize(void) { return 0; }
+
+int DlogReportFinalize(void) { return 0; }

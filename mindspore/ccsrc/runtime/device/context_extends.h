@@ -17,18 +17,6 @@
 #ifndef MINDSPORE_CCSRC_UTILS_CONTEXT_CONTEXT_EXTENDS_H
 #define MINDSPORE_CCSRC_UTILS_CONTEXT_CONTEXT_EXTENDS_H
 
-#include <memory>
-#include "utils/ms_context.h"
-#include "include/common/utils/tensorprint_utils.h"
-#include "include/backend/visible.h"
-
-namespace mindspore {
-namespace context {
-BACKEND_EXPORT bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr);
-BACKEND_EXPORT bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false);
-
-BACKEND_EXPORT bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context);
-}  // namespace context
-}  // namespace mindspore
+// this file makes static-code-checking happy
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONTEXT_CONTEXT_EXTENDS_H

@@ -27,21 +27,36 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-class AscendDeviceContext;
+class GeDeviceContext;
 
 class AscendDeprecatedInterface : public DeprecatedInterface {
  public:
-  explicit AscendDeprecatedInterface(AscendDeviceContext *ascend_device_context)
-      : ascend_device_context_(ascend_device_context) {}
+  explicit AscendDeprecatedInterface(GeDeviceContext *ge_device_context) : ge_device_context_(ge_device_context) {}
+  ~AscendDeprecatedInterface() override = default;
 
+  // for ge
+  void DoExecNonInputGraph(const std::string &phase) override;
+  bool InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
+                       const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                       const std::vector<int64_t> &input_indexes, const std::string &phase) override;
+  void ExportDFGraph(const std::string &file_name, const std::string &phase, const pybind11::object &encrypt,
+                     char *key) override;
+  FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
+  void ClearGraphWrapper() override;
+  void ClearOpAdapterMap() override;
+  void EraseGeResource() override;
+  // for ascend
   uint32_t InitCollective() override;
   void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) override;
 
+  bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) override;
+  bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) override;
+  bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) override;
+
  private:
-  AscendDeviceContext *const ascend_device_context_;
+  GeDeviceContext *const ge_device_context_;
 };
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEPRECATED_INTERFACE_H_

@@ -45,7 +45,6 @@
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
-#include "runtime/device/context_extends.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
@@ -1378,10 +1377,17 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   std::string name = MsContext::GetInstance()->backend_policy();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifndef NO_DLIB
-  if (!context::IsTsdOpened(ms_context)) {
-    InitPipeline();
+#ifdef WITH_BACKEND
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    if (!device_context->GetDeprecatedInterface()->IsTsdOpened(ms_context)) {
+      InitPipeline();
+    }
   }
+
 #endif
   if (iter_num == -1) {
     iter_num = INT32_MAX;
@@ -1392,10 +1398,8 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   std::string backend = ms_context->backend_policy();
 #ifdef WITH_BACKEND
   if (backend == "ge") {
-    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
     auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET),
-       MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
 
@@ -1536,15 +1540,15 @@ void InitHccl() {
 #endif
 
   mindspore::python_adapter::set_python_env_flag(true);
+  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  if (common::UseMPI() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+  if (common::UseMPI() && device_name == kAscendDevice) {
     const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_id = device_context->GetDeprecatedInterface()->InitCollective();
   }
-  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   if (ms_context->backend_policy() == "ms" &&
       ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
@@ -1553,12 +1557,14 @@ void InitHccl() {
 #ifndef ENABLE_SECURITY
     runtime_instance->PreInit();
 #endif
-    (void)context::OpenTsd(ms_context);
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
     if (!runtime_instance->Init()) {
       MS_LOG(EXCEPTION) << "Runtime init failed.";
     }
-  } else {
-    (void)context::OpenTsd(ms_context);
   }
 }
 
@@ -1635,11 +1641,18 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
   return func_graph;
 }
 
-void ReleaseGeTsd() {
+void CloseTsd(bool force) {
+#ifdef WITH_BACKEND
   auto context_ptr = MsContext::GetInstance();
-  if (context_ptr != nullptr) {
-    (void)context::CloseTsd(context_ptr, true);
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kAscendDevice, context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    (void)device_context->GetDeprecatedInterface()->CloseTsd(context_ptr, force);
   }
+#endif
 }
 
 void InitPipeline() {
@@ -1650,22 +1663,23 @@ void InitPipeline() {
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
+  auto device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
   if (backend == "ge") {
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     device_context->Initialize();
   }
-#endif
-  if (!context::OpenTsd(ms_context)) {
-    MS_LOG(EXCEPTION) << "Open tsd failed";
+  if (device_name == kAscendDevice) {
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+    if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
+      MS_LOG(EXCEPTION) << "Open tsd failed";
+    }
   }
+#endif
 }
 
-void FinalizeBackend() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  (void)context::CloseTsd(context_ptr);
-}
+void FinalizeBackend() { CloseTsd(); }
 
 void MemoryRecycle() {
 #ifdef ENABLE_DUMP_IR
@@ -1772,8 +1786,6 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   MS_LOG(INFO) << "End clear device context.";
-
-  ReleaseGeTsd();
 
   MS_LOG(INFO) << "Start clear AnalysisResultCacheMgr...";
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();

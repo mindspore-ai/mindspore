@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/common/utils/tensorprint_utils.h"
+#include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include <atomic>
 #include <fstream>
 #include <memory>
 #include <string>
-#include <vector>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
 #include "include/common/utils/utils.h"
-#include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
 #include "mindspore/core/utils/file_utils.h"
 
 namespace py = pybind11;
 namespace mindspore {
-
-#ifndef NO_DLIB
 static std::map<aclDataType, TypeId> print_acl_data_type_map = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
   {ACL_INT16, TypeId::kNumberTypeInt16},     {ACL_UINT16, TypeId::kNumberTypeUInt16},
@@ -75,7 +71,7 @@ bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *co
 }
 
 template <typename T>
-void PrintScalarToString(const char *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
+void PrintScalarToString(const void *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   *buf << "Tensor(shape=[], dtype=" << GetParseType(acl_data_type) << ", value=";
@@ -101,13 +97,13 @@ void PrintScalarToBoolString(const char *str_data_ptr, const aclDataType &acl_da
   }
 }
 
-void convertDataItem2Scalar(const char *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
+void ConvertDataItem2Scalar(const void *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   auto type_iter = print_acl_data_type_map.find(acl_data_type);
   auto type_id = type_iter->second;
   if (type_id == TypeId::kNumberTypeBool) {
-    PrintScalarToBoolString(str_data_ptr, acl_data_type, buf);
+    PrintScalarToBoolString(reinterpret_cast<const char *>(str_data_ptr), acl_data_type, buf);
   } else if (type_id == TypeId::kNumberTypeInt8) {
     PrintScalarToString<int8_t>(str_data_ptr, acl_data_type, buf);
   } else if (type_id == TypeId::kNumberTypeUInt8) {
@@ -178,7 +174,7 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
       if (!judgeLengthValid(acl_data_size, acl_data_type)) {
         MS_LOG(EXCEPTION) << "Print op receive data length is invalid.";
       }
-      convertDataItem2Scalar(acl_data, acl_data_type, &buf);
+      ConvertDataItem2Scalar(reinterpret_cast<void *>(acl_data), acl_data_type, &buf);
       continue;
     }
 
@@ -210,7 +206,6 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
     acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
     MS_EXCEPTION_IF_NULL(item);
     acltdtTensorType acl_tensor_type = acltdtGetTensorTypeFromItem(item);
-
     if (acl_tensor_type == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       MS_LOG(INFO) << "Acl channel received end-of-sequence for print op.";
       ret_end_thread = true;
@@ -358,5 +353,4 @@ void TensorPrint::operator()() {
     TensorPrintOut2File(acl_handle_, print_file_path_);
   }
 }
-#endif
 }  // namespace mindspore

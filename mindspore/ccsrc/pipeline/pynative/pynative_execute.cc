@@ -38,7 +38,6 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
-#include "runtime/device/context_extends.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/scoped_long_running.h"
@@ -2534,11 +2533,18 @@ MsBackendPolicy ForwardExecutor::GetBackendPolicy(const OpExecInfoPtr &op_exec_i
     if (ms_context->backend_policy() == "ge") {
       MS_LOG(EXCEPTION) << "In PyNative mode, not support ge backend!";
     }
-    if (!context::IsTsdOpened(ms_context)) {
-      if (!context::OpenTsd(ms_context)) {
+#ifdef WITH_BACKEND
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+
+    if (!device_context->GetDeprecatedInterface()->IsTsdOpened(ms_context)) {
+      if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
         MS_LOG(EXCEPTION) << "Open tsd failed";
       }
     }
+#endif
   }
   return backend_policy;
 }

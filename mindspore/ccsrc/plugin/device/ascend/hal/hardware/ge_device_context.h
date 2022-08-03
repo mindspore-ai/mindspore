@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <map>
-#include "plugin/device/ascend/hal/hardware/ge_deprecated_interface.h"
+#include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
@@ -92,7 +92,7 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManag
   void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
 
-  std::unique_ptr<GeDeprecatedInterface> deprecated_interface_;
+  std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
   bool initialized_;
 };
 }  // namespace ascend
