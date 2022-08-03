@@ -1005,25 +1005,6 @@ mindspore.Tensor
         - **TypeError** - 新shape不是整数、列表或元组。
         - **ValueError** - 新shape与原来Tensor的shape不兼容。
 
-    .. py:method:: reverse_sequence(seq_lengths, seq_dim, batch_dim=0)
-
-        对输入序列进行部分反转。
-
-        **参数：**
-
-        - **seq_lengths** (Tensor) - 指定反转长度，为一维向量，其数据类型为int32或int64。
-        - **seq_dim** (int) - 指定反转的维度，此值为必填参数。
-        - **batch_dim** (int) - 指定切片维度。默认值：0。
-
-        **返回：**
-
-        Tensor，shape和数据类型与输入相同。
-
-        **异常：**
-
-        - **TypeError** - `seq_dim` 或 `batch_dim` 不是int。
-        - **ValueError** -  `batch_dim` 大于或等于 `x` 的shape长度。
-
     .. py:method:: resize(*new_shape)
 
         将Tensor改为输入的新shape, 并将不足的元素补0。
@@ -1166,27 +1147,6 @@ mindspore.Tensor
 
         - **TypeError** - input不是Tensor，`axis` 不是整数或整数元组，`keepdims` 不是整数，或者 `initial` 不是标量。
         - **ValueError** - 任意轴超出范围或存在重复的轴。
-
-    .. py:method:: svd(full_matrices=False, compute_uv=True)
-
-        更多参考详见 :func:`mindspore.ops.svd`。
-
-        **参数：**
-
-        - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
-        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` , 否则只计算 :math:`S` 。默认值：True。
-
-        **返回：**
-
-        - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)`。
-        - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值不会返回。shape为 :math:`(*, M, P)` 。如果full_matrices为true，则shape为 :math:`(*, M, M)` 。
-        - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值不会返回。shape为 :math:`(*, P, N)` 。如果full_matrices为true，则shape为 :math:`(*, N, N)` 。
-
-        **异常：**
-
-        - **TypeError** - `full_matrices` 或 `compute_uv` 不是bool类型。
-        - **TypeError** - 输入的rank小于2。
-        - **TypeError** - 输入的数据类型不为float32或float64。
 
     .. py:method:: swapaxes(axis1, axis2)
 
