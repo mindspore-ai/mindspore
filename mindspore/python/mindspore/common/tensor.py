@@ -1226,7 +1226,7 @@ class Tensor(Tensor_):
             ValueError: If the value of `p` less than 1.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``CPU`` ``GPU``
 
         Examples:
             >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)

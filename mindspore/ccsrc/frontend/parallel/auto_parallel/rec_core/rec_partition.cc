@@ -16,7 +16,6 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
 #include <algorithm>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
