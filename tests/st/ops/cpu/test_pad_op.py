@@ -53,7 +53,7 @@ def run_case(x, paddings, expect):
 def test_pad_function_cpu():
     """
     Feature: test ops.Pad functional interface.
-    Description: paddings has negative values.
+    Description: paddings has positive or negative values.
     Expectation: the result match with numpy result.
     """
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
