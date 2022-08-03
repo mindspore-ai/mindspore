@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class FractionalMaxPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~FractionalMaxPoolGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -47,12 +47,12 @@ class FractionalMaxPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool FractionalMaxPoolGradLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool FractionalMaxPoolGradOutput(int tensor_in_num, T *output, T *out_backprop, int back_in_nums, int output_nums,
-                                   std::vector<int64_t> tensor_out_index);
+  void FractionalMaxPoolGradOutput(size_t tensor_in_num, T *output, const T *out_backprop, size_t back_in_nums,
+                                   size_t output_nums, std::vector<int64_t> tensor_out_index);
   template <typename T>
-  bool FractionalMaxPoolGradCompute(
-    const int64_t row_start, int64_t row_end, size_t col_seq_num, size_t b, size_t hs, int64_t *col_seq,
-    Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> tensor_in_mat,
+  void FractionalMaxPoolGradCompute(
+    const int64_t row_start, int64_t row_end, size_t col_seq_num, size_t b, size_t hs, const int64_t *col_seq,
+    const Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> tensor_in_mat,
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> output_mat,
     Eigen::Map<Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic>> output_index_mat);
   using FractionalMaxPoolGradFunc =

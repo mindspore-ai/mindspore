@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,22 +125,23 @@ bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradLaunch(const std::v
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, tensor_in_shape_[kInputShapeIndexN]);
+  CPUKernelUtils::ParallelFor(task, LongToSize(tensor_in_shape_[kInputShapeIndexN]));
   FractionalMaxPoolGradOutput(tensor_in_num, output, out_backprop, back_in_nums, output_nums, tensor_out_index);
   return true;
 }
 
 template <typename T>
-bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradCompute(
-  const int64_t row_start, int64_t row_end, size_t col_seq_num, size_t b, size_t hs, int64_t *col_seq,
-  Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> tensor_in_mat,
+void FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradCompute(
+  const int64_t row_start, int64_t row_end, size_t col_seq_num, size_t b, size_t hs, const int64_t *col_seq,
+  const Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> tensor_in_mat,
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> output_mat,
   Eigen::Map<Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic>> output_index_mat) {
   // width sequence.
   const int64_t width_max = tensor_in_shape_[kInputShapeIndexW] - 1;
   for (size_t ws = 0; ws < col_seq_num - 1; ++ws) {
     const int64_t output_index =
-      (b * tensor_out_shape_[kOutputShapeIndexH] + hs) * tensor_out_shape_[kOutputShapeIndexW] + ws;
+      (SizeToLong(b) * tensor_out_shape_[kOutputShapeIndexH] + SizeToLong(hs)) * tensor_out_shape_[kOutputShapeIndexW] +
+      SizeToLong(ws);
     // width start and end.
     const int64_t col_start = *(col_seq + ws);
     int64_t col_end = overlapping_ ? *(col_seq + ws + 1) : *(col_seq + ws + 1) - 1;
@@ -148,39 +149,39 @@ bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradCompute(
     for (int64_t h = row_start; h <= row_end; ++h) {
       for (int64_t w = col_start; w <= col_end; ++w) {
         const int64_t input_index =
-          (b * tensor_in_shape_[kInputShapeIndexH] + h) * tensor_in_shape_[kInputShapeIndexW] + w;
+          (SizeToLong(b) * tensor_in_shape_[kInputShapeIndexH] + SizeToLong(h)) * tensor_in_shape_[kInputShapeIndexW] +
+          SizeToLong(w);
         // Walk through each channel (depth).
         for (size_t d = 0; d < LongToSize(tensor_in_shape_[kInputShapeIndexC]); ++d) {
-          const T &input_ref = tensor_in_mat.coeffRef(d, input_index);
-          T &output_ref = output_mat.coeffRef(d, output_index);
-          int64_t &output_index_ref = output_index_mat.coeffRef(d, output_index);
+          const T &input_ref = tensor_in_mat.coeffRef(SizeToLong(d), input_index);
+          T &output_ref = output_mat.coeffRef(SizeToLong(d), output_index);
+          int64_t &output_index_ref = output_index_mat.coeffRef(SizeToLong(d), output_index);
           if (output_ref < input_ref || output_index_ref == kInvalidMaxPoolingIndex) {
             output_ref = input_ref;
-            int input_offset = input_index * tensor_in_shape_[kInputShapeIndexC] + d;
+            int64_t input_offset = input_index * tensor_in_shape_[kInputShapeIndexC] + SizeToLong(d);
             output_index_ref = input_offset;
           }
         }
       }
     }
   }
-  return true;
 }
 
 template <typename T>
-bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradOutput(int tensor_in_num, T *output, T *out_backprop,
-                                                                    int back_in_nums, int output_nums,
+void FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradOutput(size_t tensor_in_num, T *output,
+                                                                    const T *out_backprop, size_t back_in_nums,
+                                                                    size_t output_nums,
                                                                     std::vector<int64_t> tensor_out_index) {
-  for (int i = 0; i < tensor_in_num; i++) {
+  for (size_t i = 0; i < tensor_in_num; i++) {
     *(output + i) = 0;
   }
-  for (int index = 0; index < back_in_nums; ++index) {
-    int input_index = tensor_out_index[index];
-    if (input_index < 0 || input_index >= output_nums)
+  for (size_t index = 0; index < back_in_nums; ++index) {
+    int64_t input_index = tensor_out_index[index];
+    if (input_index < 0 || input_index >= SizeToLong(output_nums))
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', invalid input 'out_backprop' index:[" << input_index
                                << "], the maximum number of output is: [" << output_nums << "].";
     *(output + input_index) += *(out_backprop + index);
   }
-  return true;
 }
 
 std::vector<std::pair<KernelAttr, FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradFunc>>
@@ -220,8 +221,8 @@ std::vector<std::pair<KernelAttr, FractionalMaxPoolGradCpuKernelMod::FractionalM
 
 std::vector<KernelAttr> FractionalMaxPoolGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, FractionalMaxPoolGradFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, FractionalMaxPoolGradFunc> &pair) { return pair.first; });
 
   return support_list;
 }
