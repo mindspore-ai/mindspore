@@ -28,7 +28,6 @@
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
 #include "coder/generator/component/const_blocks/mcontext.h"
-#include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
@@ -66,7 +65,8 @@ void Generator::CodeNetRunFunc(std::ofstream &ofs) {
   // generate net inference code
   ofs << "void Inference() {\n";
   if (config_->support_parallel()) {
-    ofs << gThreadNum << " = GetCurrentThreadNum();\n ";
+    ofs << "  " << gThreadNum << " = GetCurrentThreadNum();\n";
+    ofs << "  SetSpinCountMaxValue();\n";
   }
   for (const auto &block : ctx_->code_blocks()) {
     ofs << "  {\n" << block << "  }\n";
@@ -74,6 +74,9 @@ void Generator::CodeNetRunFunc(std::ofstream &ofs) {
 
   for (const auto &block : ctx_->after_inference_code_blocks()) {
     ofs << block << "\n";
+  }
+  if (config_->support_parallel()) {
+    ofs << "  SetSpinCountMinValue();\n";
   }
   ofs << "}\n";
 }
@@ -193,9 +196,6 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "tensor.h", tensor_header_txt},
     {net_src_file_path_ + "tensor.c", tensor_source_txt}};
 
-  if (config_->support_parallel()) {
-    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + kThreadWrapper, thread_header));
-  }
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));

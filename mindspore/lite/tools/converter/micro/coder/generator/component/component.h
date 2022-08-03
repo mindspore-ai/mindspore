@@ -43,7 +43,7 @@ constexpr auto kAlignedString = "  ";
 
 constexpr auto kDebugUtils = "debug_utils.h";
 
-constexpr auto kThreadWrapper = "thread_wrapper.h";
+constexpr auto kThreadWrapper = "wrapper/thread/micro_thread_pool.h";
 
 constexpr auto kExternCpp =
   "#ifdef __cplusplus\n"

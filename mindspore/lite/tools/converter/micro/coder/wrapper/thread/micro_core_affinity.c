@@ -33,7 +33,7 @@ int GetCpuCoreNum() {
 
 int ConcatCPUPath(int cpuID, const char *str1, const char *str2, char *str3) {
   if (cpuID > MAX_CPU_ID || str1 == NULL || str2 == NULL) {
-    return -1;
+    return RET_TP_SYSTEM_ERROR;
   }
   memset(str3, 0, strlen(str3));
   char *tmp = str3;
@@ -98,7 +98,7 @@ int SortCpuCores(int *cpu_cores, int *cpu_high_num, int *cpu_mid_num, int *cpu_l
   int cpu_core_num = GetCpuCoreNum();
   if (cpu_core_num <= 0 || cpu_core_num > MAX_CPU_ID) {
     LOG_ERROR("invalid cpu count");
-    return -1;
+    return RET_TP_SYSTEM_ERROR;
   }
   CpuInfo freq_set[MAX_CPU_ID] = {0};
   for (int i = 0; i < cpu_core_num; ++i) {
@@ -201,7 +201,12 @@ int FreeScheduleThreads(const int *bind_id, ThreadPool *g_pool) {
     CPU_SET(bind_id[i], &mask);
   }
   for (int i = 0; i < thread_num; i++) {
-    int ret = SetAffinity(g_pool->thread_id[i], &mask);
+    int ret;
+    if (i == 0) {
+      ret = SetAffinity(pthread_self(), &mask);
+    } else {
+      ret = SetAffinity(g_pool->thread_id[i - 1], &mask);
+    }
     if (ret != RET_TP_OK) {
       return ret;
     }
@@ -217,7 +222,12 @@ int BindThreadsToCore(const int *bind_id, ThreadPool *g_pool) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(bind_id[i], &mask);
-    int ret = SetAffinity(g_pool->thread_id[i], &mask);
+    int ret;
+    if (i == 0) {
+      ret = SetAffinity(pthread_self(), &mask);
+    } else {
+      ret = SetAffinity(g_pool->thread_id[i], &mask);
+    }
     if (ret != RET_TP_OK) {
       LOG_ERROR("error binding task %zu to core %d\n", i, bind_id[i]);
       return ret;

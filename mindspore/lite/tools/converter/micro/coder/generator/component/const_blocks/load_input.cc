@@ -74,6 +74,7 @@ const char load_input_c[] = R"RAW(/**
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "c_api/status_c.h"
 
 void *ReadInputData(const char *real_input_path, int *size) {
   if (real_input_path == NULL) {
@@ -130,7 +131,7 @@ int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int input
   while ((token = strtok_r(path, delim, &path))) {
     if (i >= inputs_num) {
       printf("inputs num is error, need: %d\n", inputs_num);
-      return -1;
+      return kMSStatusLiteParamInvalid;
     }
     inputs_path[i] = token;
     printf("input %d: %s\n", i, inputs_path[i]);
@@ -142,7 +143,7 @@ int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int input
     buffers[i] = ReadInputData(inputs_path[i], &size);
     if (size != inputs_size[i] || buffers[i] == NULL) {
       printf("size mismatch, %s, input: %d, needed: %d\n", inputs_path[i], size, inputs_size[i]);
-      return -1;
+      return kMSStatusLiteError;
     }
   }
   return 0;
