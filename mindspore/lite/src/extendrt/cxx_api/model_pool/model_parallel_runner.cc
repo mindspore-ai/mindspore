@@ -68,7 +68,28 @@ Status ModelParallelRunner::Init(const std::vector<char> &model_path,
     MS_LOG(ERROR) << "model pool is nullptr.";
     return kLiteNullptr;
   }
-  auto status = model_pool_->Init(CharToString(model_path), runner_config);
+  auto status = model_pool_->InitByPath(CharToString(model_path), runner_config);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "model runner init failed.";
+    return kLiteError;
+  }
+  return status;
+}
+
+Status ModelParallelRunner::Init(const void *model_data, size_t data_size,
+                                 const std::shared_ptr<RunnerConfig> &runner_config) {
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
+  if (!PlatformInstructionSetSupportCheck()) {
+    return kLiteNotSupport;
+  }
+  model_pool_ = std::make_shared<ModelPool>();
+  if (model_pool_ == nullptr) {
+    MS_LOG(ERROR) << "model pool is nullptr.";
+    return kLiteNullptr;
+  }
+  auto status = model_pool_->InitByBuf(static_cast<const char *>(model_data), data_size, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;

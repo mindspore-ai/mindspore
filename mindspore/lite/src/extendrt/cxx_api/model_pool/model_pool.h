@@ -55,7 +55,11 @@ class ModelPool {
 
   ~ModelPool();
 
-  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+  Status InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+
+  Status InitByBuf(const char *model_data, size_t size, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
