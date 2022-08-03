@@ -206,6 +206,8 @@ constexpr auto kReverseV2 = "ReverseV2";
 constexpr auto kSparseSparseMinimum = "SparseSparseMinimum";
 
 // NN
+constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
+constexpr auto kFractionalMaxPoolGradWithFixedKsize = "FractionalMaxPoolGradWithFixedKsize";
 constexpr auto kApplyAddSign = "ApplyAddSign";
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
@@ -592,6 +594,10 @@ GVAR_DEF(PrimitivePtr, kPrimCropAndResize, std::make_shared<Primitive>(kCropAndR
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradImage, std::make_shared<Primitive>(kCropAndResizeGradImage));
 
 // NN
+GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolWithFixedKsize,
+         std::make_shared<Primitive>(kFractionalMaxPoolWithFixedKsize));
+GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolGradWithFixedKsize,
+         std::make_shared<Primitive>(kFractionalMaxPoolGradWithFixedKsize));
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
 GVAR_DEF(PrimitivePtr, kPrimAdam, std::make_shared<Primitive>("Adam"));
 GVAR_DEF(PrimitivePtr, kPrimAdamWeightDecay, std::make_shared<Primitive>("AdamWeightDecay"));

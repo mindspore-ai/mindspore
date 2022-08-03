@@ -92,6 +92,8 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPerm
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
+from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
+from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.image_ops import RGBToHSV
@@ -2351,6 +2353,24 @@ test_case_math_ops = [
 ]
 
 test_case_nn_ops = [
+    ('FractionalMaxPoolWithFixedKsize_1', {
+        'block': FractionalMaxPoolWithFixedKsize(ksize=(2, 2), output_shape=(2, 2), data_format="NCHW"),
+        'desc_inputs': [([3, 4, 6, 6], {'dtype': np.int64}),
+                        ([3, 4, 2], {'dtype': np.float32})],
+        'desc_bprop': [([3, 4, 2, 2], {'dtype': np.int64}),
+                       ([3, 4, 2, 2], {'dtype': np.int64})]}),
+    ('FractionalMaxPoolWithFixedKsize_2', {
+        'block': FractionalMaxPoolWithFixedKsize(ksize=2, output_shape=14, data_format="NCHW"),
+        'desc_inputs': [([100, 3, 28, 28], {'dtype': np.int64}),
+                        ([100, 3, 2], {'dtype': np.float32})],
+        'desc_bprop': [([100, 3, 14, 14], {'dtype': np.int64}),
+                       ([100, 3, 14, 14], {'dtype': np.int64})]}),
+    ('FractionalMaxPoolGradWithFixedKsize', {
+        'block': FractionalMaxPoolGradWithFixedKsize(data_format="NCHW"),
+        'desc_inputs': [Tensor(np.random.randint(0, 100, size=(3, 4, 6, 6)).astype(np.int32)),
+                        [3, 4, 2, 2],
+                        Tensor(np.random.randint(0, 35, size=(3, 4, 2, 2)).astype(np.int64))],
+        'skip': ['backward']}),
     ('FractionalMaxPool', {
         'block': FractionalMaxPool(pooling_ratio=[1.0, 1.4, 1.4, 1.0]),
         'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],

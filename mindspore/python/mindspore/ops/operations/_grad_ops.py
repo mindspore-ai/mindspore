@@ -3558,3 +3558,39 @@ class ResizeBicubicGrad(Primitive):
         return {'shape': out_shape,
                 'dtype': original_image_dtype,
                 'value': None}
+
+
+class FractionalMaxPoolGradWithFixedKsize(Primitive):
+    """
+    Computes the gradients of FractionalMaxPoolWithFixedKsize.
+
+    Args:
+        data_format (str): The optional value for data format, is 'NCHW'. Default: "NCHW".
+
+    Inputs:
+        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type must be int32 or int64.
+        - **out_backprop** (Tensor) - The gradients with respect to the output of FractionalMaxPoolWithFixedKsize
+        function. Tensor with data format "NCHW", whose data type is float16, float32, float64, int32 or int64.
+        - **argmax** (Tensor) - The second output of FractionalMaxPoolWithFixedKsize function, whose data
+        type is int64.
+
+    Outputs:
+        - **y** (Tensor) - Tensor, with the same shape as `origin_input`, and the same data type as
+        the input `out_backprop`.
+
+    Raises:
+        TypeError: If data type of `out_backprop` is not one of the following: float16, float32, float64, int32, int64.
+        TypeError: If data type of `argmax` is not int64.
+        ValueError: If the shape of `out_backprop` and `argmax` is not equal.
+        ValueError: If the first dimension size of `origin_input` and `out_backprop` is not equal.
+        ValueError: If the second dimension size of `origin_input` and `out_backprop` is not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, data_format="NCHW"):
+        self.data_format = validator.check_string(data_format, ['NCHW'], 'data_format', self.name)
+        self.add_prim_attr("data_format", self.data_format)
+        self.init_prim_io_names(inputs=['origin_input', 'out_backprop', 'argmax'], outputs=['y'])
