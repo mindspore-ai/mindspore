@@ -58,6 +58,9 @@ class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod,
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
+  template <typename T, typename S>
+  bool ComputeFunc(T *input_addr, S *ids_addr, T *output_addr);
+
   size_t comp_size_ = 1;
   size_t loop_size_ = 1;
   size_t out_size_ = 1;
