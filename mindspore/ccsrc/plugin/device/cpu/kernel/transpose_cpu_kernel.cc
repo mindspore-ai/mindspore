@@ -167,20 +167,20 @@ int TransposeFwdCpuKernelMod::DoTranspose(const T *in_data, T *out_data, const i
   } else {
     return NNACL_ERR;
   }
-  return NNACL_OK;
+  return static_cast<int>(NNACL_OK);
 }
 
 template <typename T>
-void TransposeFwdCpuKernelMod::TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *out_strides,
-                                             const int *perm, const int *output_shape) {
-  const int stride0 = strides[perm[kIndex0]];
-  const int stride1 = strides[perm[kIndex1]];
-  const int output0 = output_shape[kIndex0];
-  const int output1 = output_shape[kIndex1];
-  for (size_t i = 0; i < (unsigned int)output0; ++i) {
+void TransposeFwdCpuKernelMod::TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *,
+                                             const int *perm, const int *output_shape) const {
+  auto stride0 = IntToSize(strides[perm[kIndex0]]);
+  auto stride1 = IntToSize(strides[perm[kIndex1]]);
+  auto output0 = IntToSize(output_shape[kIndex0]);
+  auto output1 = IntToSize(output_shape[kIndex1]);
+  for (size_t i = 0; i < output0; ++i) {
     size_t out_stride0_i = i * output1;
     size_t stride0_i = i * 1 * stride0;
-    for (size_t j = 0; j < (unsigned int)output1; ++j) {
+    for (size_t j = 0; j < output1; ++j) {
       out_data[out_stride0_i + j] = in_data[stride0_i + j * stride1];
     }
   }
@@ -188,7 +188,7 @@ void TransposeFwdCpuKernelMod::TransposeDim2(const T *in_data, T *out_data, cons
 
 template <typename T>
 void TransposeFwdCpuKernelMod::TransposeDim3(const T *in_data, T *out_data, const int *strides, const int *out_strides,
-                                             const int *perm, const int *output_shape) {
+                                             const int *perm, const int *output_shape) const {
   const int stride0 = strides[perm[kIndex0]];
   const int stride1 = strides[perm[kIndex1]];
   const int stride2 = strides[perm[kIndex2]];
@@ -419,7 +419,7 @@ void TransposeFwdCpuKernelMod::TransposeDims(const T *in_data, T *out_data, cons
     return;
   }
   count = MSMIN(offset_size, (unsigned int)count);
-  for (int idx = task_offset; (unsigned int)idx < task_offset + count; ++idx) {
+  for (int idx = SizeToInt(task_offset); IntToSize(idx) < task_offset + count; ++idx) {
     int pos = idx;
     int output_idx = 0;
     int input_idx = 0;
