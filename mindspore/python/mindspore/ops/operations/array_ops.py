@@ -198,7 +198,7 @@ class Expand(Primitive):
     Examples:
         >>> x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
         >>> shape = Tensor(np.array([3,4]), mindspore.int32)
-        >>> expand = ops.Expand()
+        >>> expand = Expand()
         >>> y = expand(x, shape)
         >>> print(y)
         [[1. 1. 1. 1.]

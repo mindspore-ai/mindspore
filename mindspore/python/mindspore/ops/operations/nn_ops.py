@@ -6494,17 +6494,21 @@ class ApplyPowerSign(Primitive):
     If inputs are tensors and have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
+    Note:
+        On Ascend, input data type of float64 is currently not supported.
+
     Inputs:
-        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **var** (Parameter) - Variable tensor to be updated. With float64, float32 or float16 data type.
           If data type of `var` is float16, all inputs must have the same data type as `var`.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar or Tensor
-          with float32 or float16 data type.
-        - **logbase** (Union[Number, Tensor]) - Should be a scalar or Tensor with float32 or float16 data type.
-        - **sign_decay** (Union[Number, Tensor]) - Should be a scalar or Tensor with float32 or float16 data type.
+          with float64, float32 or float16 data type.
+        - **logbase** (Union[Number, Tensor]) - Should be a scalar or Tensor with float64, float32 or float16 data type.
+        - **sign_decay** (Union[Number, Tensor]) - Should be a scalar or Tensor with float64, float32 or
+          float16 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, should be a scalar or Tensor
-          with float32 or float16 data type.
+          with float64, float32 or float16 data type.
         - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
 
     Outputs:
@@ -6514,14 +6518,15 @@ class ApplyPowerSign(Primitive):
         - **m** (Tensor) - The same shape and data type as `m`.
 
     Raises:
-        TypeError: If dtype of `var`, `lr`, `logbase`, `sign_decay`, `beta` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `lr`, `logbase`, `sign_decay`, `beta` or `grad` is not one of float16,
+        float32 or float64.
         TypeError: If `lr`, `logbase`, `sign_decay` or `beta` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
         RuntimeError: If the data type of `lr`, `logbase`, `sign_decay` and `grad` conversion of Parameter
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
