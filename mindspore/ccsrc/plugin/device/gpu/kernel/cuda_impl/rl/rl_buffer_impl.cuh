@@ -31,6 +31,8 @@ void BufferSample(const size_t size, const size_t one_element, const unsigned in
                   unsigned char *out, cudaStream_t cuda_stream);
 void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key, cudaStream_t stream);
 void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream);
-void RandomGenUniform(const int size, curandState *globalState, const int up_bound, unsigned int *indexes,
+
+template <typename T>
+void RandomGenUniform(const int size, curandState *globalState, const int up_bound, T *indexes,
                       cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAM_IMPL_H_
