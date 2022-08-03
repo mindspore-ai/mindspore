@@ -105,7 +105,7 @@ bool DenseToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel::Addres
 
 template <typename indiceT, typename valueT>
 void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
+                                                      const std::vector<AddressPtr> &outputs) const {
   auto dense_input_ptr = reinterpret_cast<valueT *>(inputs[kInputIndex0]->addr);
   auto indices_ptr = reinterpret_cast<indiceT *>(inputs[kInputIndex1]->addr);
   auto y_dense_shape_ptr = reinterpret_cast<indiceT *>(outputs[kOutputIndex0]->addr);
@@ -123,12 +123,12 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
   }
   for (size_t i = kZero; i < total_nnz_; i++) {
     if (rank_ == kDefaultRank) {
-      size_t cur_idx = indices_ptr[i * rank_] * num_cols_ + indices_ptr[i * rank_ + kOne];
-      y_values_ptr[i] = dense_input_ptr[cur_idx];
+      auto cur_idx = indices_ptr[i * rank_] * indiceT(num_cols_) + indices_ptr[i * rank_ + kOne];
+      y_values_ptr[i] = dense_input_ptr[static_cast<size_t>(cur_idx)];
     } else {
-      size_t cur_idx = indices_ptr[i * rank_] * num_rows_ * num_cols_;
-      cur_idx = cur_idx + indices_ptr[i * rank_ + kOne] * num_cols_ + indices_ptr[i * rank_ + kTwo];
-      y_values_ptr[i] = dense_input_ptr[cur_idx];
+      auto cur_idx = indices_ptr[i * rank_] * indiceT(num_rows_) * indiceT(num_cols_) +
+                     indices_ptr[i * rank_ + kOne] * indiceT(num_cols_) + indices_ptr[i * rank_ + kTwo];
+      y_values_ptr[i] = dense_input_ptr[static_cast<size_t>(cur_idx)];
     }
   }
   for (size_t i = kZero; i < batch_size_ * (num_rows_ + kOne); i++) {
@@ -139,13 +139,13 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
     y_batch_pointers_ptr[kZero] = indiceT(kZero);
     ++prev_batch;
     for (size_t i = kZero; i < total_nnz_; ++i) {
-      y_row_pointers_ptr[indices_ptr[i * rank_] + kOne] += indiceT(kOne);
+      ++y_row_pointers_ptr[static_cast<size_t>(indices_ptr[i * rank_]) + kOne];
       y_col_indices_ptr[i] = indices_ptr[i * rank_ + kOne];
     }
   } else {
     for (size_t i = kZero; i < total_nnz_; ++i) {
-      size_t cur_batch = indices_ptr[i * rank_];
-      y_row_pointers_ptr[cur_batch * (num_rows_ + kOne) + indices_ptr[i * rank_ + kOne] + kOne] += kOne;
+      size_t cur_batch = static_cast<size_t>(indices_ptr[i * rank_]);
+      ++y_row_pointers_ptr[cur_batch * (num_rows_ + kOne) + static_cast<size_t>(indices_ptr[i * rank_ + kOne]) + kOne];
       y_col_indices_ptr[i] = indices_ptr[i * rank_ + kTwo];
       while (prev_batch < SizeToLong(cur_batch)) {
         y_batch_pointers_ptr[prev_batch + SizeToLong(kOne)] = indiceT(i);
@@ -154,80 +154,80 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
     }
   }
   while (prev_batch < SizeToLong(batch_size_)) {
-    y_batch_pointers_ptr[prev_batch + SizeToLong(kOne)] = total_nnz_;
+    y_batch_pointers_ptr[LongToSize(prev_batch + SizeToLong(kOne))] = indiceT(total_nnz_);
     ++prev_batch;
   }
   for (size_t batch_idx = 0; batch_idx < batch_size_; ++batch_idx) {
     auto *row_ptr_batch = y_row_pointers_ptr + batch_idx * (num_rows_ + kOne);
-    std::partial_sum(row_ptr_batch, row_ptr_batch + num_rows_ + kOne, row_ptr_batch);
+    (void)std::partial_sum(row_ptr_batch, row_ptr_batch + num_rows_ + kOne, row_ptr_batch);
   }
 }
 
 std::vector<KernelAttr> DenseToCSRSparseMatrixCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeFloat64),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeComplex64)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeComplex64),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeComplex128)
-                                                   .AddInputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeInt32)
-                                                   .AddOutputAttr(kNumberTypeComplex128),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat32)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat32),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeFloat64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeFloat64),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeComplex64)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeComplex64),
-                                                 KernelAttr()
-                                                   .AddInputAttr(kNumberTypeComplex128)
-                                                   .AddInputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeInt64)
-                                                   .AddOutputAttr(kNumberTypeComplex128)};
+  static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat32)
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeFloat32),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat64)
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeFloat64),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeComplex64)
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeComplex64),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeComplex128)
+                                                         .AddInputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeInt32)
+                                                         .AddOutputAttr(kNumberTypeComplex128),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat32)
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeFloat32),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat64)
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeFloat64),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeComplex64)
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeComplex64),
+                                                       KernelAttr()
+                                                         .AddInputAttr(kNumberTypeComplex128)
+                                                         .AddInputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeInt64)
+                                                         .AddOutputAttr(kNumberTypeComplex128)};
   return support_list;
 }
 
