@@ -54,11 +54,11 @@ namespace {
 // Whether device address of anf node is valid and device address type
 // is consistent with device type, for example, device address type
 // DeviceType::kGPU should be used on GPU device
-bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &kernel, size_t index) {
-  MS_EXCEPTION_IF_NULL(kernel);
+bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
-  if (AnfAlgo::OutputAddrExist(kernel, index)) {
-    const auto &address = AnfAlgo::GetOutputAddr(kernel, index, false);
+  if (AnfAlgo::OutputAddrExist(node, index)) {
+    const auto &address = AnfAlgo::GetOutputAddr(node, index, false);
     MS_EXCEPTION_IF_NULL(address);
     return address->GetDeviceType() == device_context->GetDeviceType();
   }
@@ -1021,7 +1021,7 @@ void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef
 }
 
 void GraphCompiler::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                                       device::DeviceContext *device_context) {
+                                       device::DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->DoAllReduceOnGrads(actor_info, outputs, device_context);
 }

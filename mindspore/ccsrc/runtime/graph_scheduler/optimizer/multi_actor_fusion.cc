@@ -35,7 +35,7 @@ bool SupportFusion(const AbstractActorPtr &actor) {
 }  // namespace
 
 // The max actors num in fusion actor.
-constexpr int64_t kActorFusionMaxNum = 1000;
+constexpr size_t kActorFusionMaxNum = 1000;
 
 void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -52,7 +52,7 @@ void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) 
   }
 }
 
-bool MultiActorFusion::AnalyzeDependency(const ActorSet *actor_set) {
+bool MultiActorFusion::AnalyzeDependency(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto need_processed_actors = SchedulerHelper::CollectActors(actor_set);
   // The second of pair indicates whether the actor finishes adding the dependency.
@@ -238,13 +238,17 @@ std::vector<FusionActorPtr> BuildFusionActorBySeed(
   std::vector<AbstractActorPtr> sub_fused_actors;
   size_t i = 0;
   for (; i < (need_fused_actors.size() / kActorFusionMaxNum); ++i) {
-    auto first = need_fused_actors.begin() + kActorFusionMaxNum * i;
-    auto end = need_fused_actors.begin() + kActorFusionMaxNum * (i + 1);
+    auto first =
+      need_fused_actors.begin() + static_cast<std::vector<AbstractActorPtr>::difference_type>(kActorFusionMaxNum * i);
+    auto end = need_fused_actors.begin() +
+               static_cast<std::vector<AbstractActorPtr>::difference_type>(kActorFusionMaxNum * (i + 1));
     sub_fused_actors.assign(first, end);
     (void)output_fused_actors.emplace_back(SchedulerHelper::BuildFusionActor(sub_fused_actors));
     sub_fused_actors.clear();
   }
-  sub_fused_actors.assign(need_fused_actors.begin() + kActorFusionMaxNum * i, need_fused_actors.end());
+  sub_fused_actors.assign(
+    need_fused_actors.begin() + static_cast<std::vector<AbstractActorPtr>::difference_type>(kActorFusionMaxNum * i),
+    need_fused_actors.end());
   if (sub_fused_actors.size() > 1) {
     (void)output_fused_actors.emplace_back(SchedulerHelper::BuildFusionActor(sub_fused_actors));
   }
