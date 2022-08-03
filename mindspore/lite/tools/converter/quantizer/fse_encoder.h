@@ -26,12 +26,13 @@
 namespace mindspore::lite::quant {
 constexpr int MAX_SYMS = 65534;
 constexpr int MAX_TABLE_LOG = 16;
-typedef struct {
-  uint16_t *symbol_table;        // the place to store the quantized tensor
-  int symbol_table_count;        // the number of symbols that exist
-  float centroids[MAX_SYMS];     // the mean of all the numbers that got quantized into it
-  uint32_t frequency[MAX_SYMS];  // holds the number of times each symbol appears in `*symbol_table`
-  int size;                      // the number of entries in `symbol_table`
+typedef struct FSEQuant {
+  uint16_t *symbol_table{nullptr};  // the place to store the quantized tensor
+  int32_t symbol_table_count{0};    // the number of symbols that exist
+  float centroids_float[MAX_SYMS];  // the mean of all the numbers that got quantized into it
+  int32_t centroids_int[MAX_SYMS];  // the mean of all the numbers that got quantized into it
+  uint32_t frequency[MAX_SYMS];     // holds the number of times each symbol appears in `*symbol_table`
+  int32_t size{0};                  // the number of entries in `symbol_table`
 } FSEQuant;
 
 class FSEEncoder {
@@ -39,7 +40,8 @@ class FSEEncoder {
   FSEEncoder() = default;
   ~FSEEncoder() = default;
 
-  int Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param);
+  int Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
+               TensorCompressionType compress_type);
 
  private:
   int FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log, uint32_t *delta_bit_count,
@@ -59,13 +61,15 @@ class FSEEncoder {
 
   int NormalizeFrequency(FSEQuant *q, int *table_log);
 
-  int SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log);
+  int SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log,
+                          TensorCompressionType compress_type);
 
   int SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size, uint8_t *out8,
-                          size_t *out_size);
+                          size_t *out_size, TensorCompressionType compress_type);
 
   template <typename T>
-  int SqueezeQuant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants) {
+  int SqueezeQuant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants,
+                   TensorCompressionType compress_type) {
     CHECK_NULL_RETURN(weight);
     CHECK_NULL_RETURN(quants);
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
@@ -108,9 +112,18 @@ class FSEEncoder {
         uncompressed_freqs_to_compressed_sym[i] = sym;
         quants->frequency[sym] = uncompressed_frequency[i];
         // real = varCorr * (q - zp) * scale + meanCorr
-        quants->centroids[sym] =
-          q_param.front().varCorr * static_cast<float>(i + qmin - q_param.front().zeroPoint) * (q_param.front().scale) +
-          q_param.front().meanCorr;
+        if (compress_type == kFSE) {
+          if (q_param.empty()) {
+            MS_LOG(ERROR) << "q_param is empty.";
+            return RET_ERROR;
+          }
+          quants->centroids_float[sym] = q_param.front().varCorr *
+                                           static_cast<float>(i + qmin - q_param.front().zeroPoint) *
+                                           (q_param.front().scale) +
+                                         q_param.front().meanCorr;
+        } else {
+          quants->centroids_int[sym] = i + qmin;
+        }
         sym++;
       }
     }

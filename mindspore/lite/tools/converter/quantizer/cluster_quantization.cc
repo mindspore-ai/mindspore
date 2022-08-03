@@ -21,6 +21,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
 #include "include/errorcode.h"
+#include "tools/converter/quantizer/fse_encoder.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -28,7 +29,7 @@ constexpr int kPowExponent = 2;
 constexpr int kMinSize = 2;
 constexpr int kAverage = 2;
 }  // namespace
-std::vector<float> ClusterQuantization::InitClusterCentroid(const float *data, size_t elem_count, size_t k) {
+std::vector<float> ClusterQuantization::LinearInit(const float *data, size_t elem_count, size_t k) {
   MS_ASSERT(data != nullptr);
   std::set<float> set_unique{};
   for (size_t i = 0; i < elem_count; i++) {
@@ -90,7 +91,7 @@ int ClusterQuantization::KMeans(const float *data, size_t elem_count, size_t k, 
   CHECK_LESS_RETURN(elem_count, 1);
   CHECK_LESS_RETURN(k, kMinSize);
   CHECK_LESS_RETURN(max_epochs, 1);
-  std::vector<float> centroid = InitClusterCentroid(data, elem_count, k);
+  std::vector<float> centroid = LinearInit(data, elem_count, k);
   if (centroid.size() < kMinSize) {
     MS_LOG(INFO) << "centroid size is " << centroid.size() << ", so KMeans function is not executed. ";
     return RET_NO_CHANGE;
@@ -113,8 +114,16 @@ int ClusterQuantization::KMeans(const float *data, size_t elem_count, size_t k, 
       cur_error += std::pow(data[j] - centroid.at(real_index), kPowExponent);
     }
     cur_error = std::sqrt(cur_error / elem_count);
+    MS_LOG(INFO) << "current epoch is " << epoch << ", error is " << cur_error
+                 << " , centroid size is:" << centroid.size();
+
     if (cur_error <= tol_error) {
       MS_LOG(INFO) << "current min_error is " << cur_error << " <= tolerance min_error " << tol_error;
+      break;
+    }
+
+    if (cur_error == min_error) {
+      MS_LOG(INFO) << "The cluster center has not changed, stop the iteration.";
       break;
     }
 
@@ -122,11 +131,6 @@ int ClusterQuantization::KMeans(const float *data, size_t elem_count, size_t k, 
       clusters->assign(cur_clusters_index.begin(), cur_clusters_index.end());
       cluster_centroid->assign(centroid.begin(), centroid.end());
       min_error = cur_error;
-    }
-
-    if (cur_error == min_error) {
-      MS_LOG(INFO) << "The cluster center has not changed, stop the iteration.";
-      break;
     }
   }
   return RET_OK;
@@ -143,6 +147,10 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
       continue;
     }
+    if (tensor_info->shape_c().size() == 1) {
+      MS_LOG(INFO) << "This op " << parameter->fullname_with_scope() << " is bias";
+      continue;
+    }
     auto data = static_cast<float *>(tensor_info->data().data());
     std::vector<float> cluster_centroid;
     std::vector<int8_t> clusters;
@@ -156,10 +164,16 @@ int ClusterQuantization::KMeansQuantization(const CNodePtr &cnode, const std::ve
 
     UpdateTensorDataAndSize(parameter, tensor_info, clusters.data(), clusters.size(), kNumberTypeInt8);
     // Optimize with Share Weight
-    auto holder = GetCNodeQuantHolder(cnode);
-    CHECK_NULL_RETURN(holder);
-    holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
-    holder->SetQuantClusters(idx - kPrimOffset, cluster_centroid);
+    auto quant_param_holder = GetCNodeQuantHolder(cnode);
+    CHECK_NULL_RETURN(quant_param_holder);
+    quant_param_holder->SetQuantClusters(idx - kPrimOffset, cluster_centroid);
+    quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
+
+    FSEEncoder fse_encoder;
+    ret = fse_encoder.Compress(parameter, {}, kFSEInt);
+    if (ret == RET_OK) {
+      MS_LOG(INFO) << "Execute FSE compression success.";
+    }
   }
   return RET_OK;
 }

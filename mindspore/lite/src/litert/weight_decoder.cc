@@ -489,8 +489,9 @@ int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite:
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
 #ifndef WEIGHT_DECODE_CLIP
-  if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_FSE) {
-    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
+  if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_FSE ||
+      src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_FSE_INT) {
+    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor, src_tensor.handler()->weightQuantCompressType());
   } else if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
   } else if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_SPARSE) {

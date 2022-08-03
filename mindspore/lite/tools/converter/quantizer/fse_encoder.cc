@@ -91,15 +91,16 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   return RET_OK;
 }
 
-int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param) {
+int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
+                         TensorCompressionType compress_type) {
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
   FSEQuant fse_quant;
   int ret = RET_ERROR;
   if (tensor_info->data_type() == kNumberTypeInt16) {
-    ret = SqueezeQuant<int16_t>(weight, q_param, &fse_quant);
+    ret = SqueezeQuant<int16_t>(weight, q_param, &fse_quant, compress_type);
   } else if (tensor_info->data_type() == kNumberTypeInt8) {
-    ret = SqueezeQuant<int8_t>(weight, q_param, &fse_quant);
+    ret = SqueezeQuant<int8_t>(weight, q_param, &fse_quant, compress_type);
   } else {
     MS_LOG(ERROR) << " type_id:" << tensor_info->data_type() << " don't support.";
     return ret;
@@ -131,9 +132,9 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
   }
   bs.Flush();
   // Serializing to out:
-  ret = SerializingToTensor(weight, &bs, fse_quant, table_log);
+  ret = SerializingToTensor(weight, &bs, fse_quant, table_log, compress_type);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Serializing To Out failed.";
+    MS_LOG(ERROR) << "Serializing To Tensor failed.";
     free(fse_quant.symbol_table);
     return ret;
   }
@@ -256,7 +257,7 @@ int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count
 }
 
 int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size,
-                                    uint8_t *out8, size_t *out_size) {
+                                    uint8_t *out8, size_t *out_size, TensorCompressionType compress_type) {
   MSLITE_CHECK_PTR(bs);
   MSLITE_CHECK_PTR(out_size);
   MSLITE_CHECK_PTR(out8);
@@ -302,7 +303,11 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
-    *(reinterpret_cast<float *>(&out8[offset])) = static_cast<float>(fse_quant.centroids[j]);
+    if (compress_type == kFSE) {
+      *(reinterpret_cast<float *>(&out8[offset])) = fse_quant.centroids_float[j];
+    } else {
+      *(reinterpret_cast<int32_t *>(&out8[offset])) = fse_quant.centroids_int[j];
+    }
     offset += sizeof(float);
   }
   while (offset % kAlignSize != 0) {
@@ -346,7 +351,7 @@ int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant,
 }
 
 int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant,
-                                    int table_log) {
+                                    int table_log, TensorCompressionType compress_type) {
   MSLITE_CHECK_PTR(weight);
   MSLITE_CHECK_PTR(bs);
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
@@ -354,33 +359,45 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
 
   auto max_size = tensor_info->Size();
   if (max_size == 0 || max_size > kMaxModelBufferSize) {
-    MS_LOG(ERROR) << weight->name() << " malloc size:" << max_size << " is invalid.";
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " malloc size:" << max_size << " is invalid.";
     return RET_ERROR;
   }
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   MSLITE_CHECK_PTR(out8);
   size_t out_size = 0;
-  auto ret = SerializingToBuffer(bs, fse_quant, table_log, max_size, out8, &out_size);
+  auto ret = SerializingToBuffer(bs, fse_quant, table_log, max_size, out8, &out_size, compress_type);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << weight->name() << " Store data to new_tensor failed.";
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " serializing to buffer failed.";
     free(out8);
     return ret;
   }
 
-  auto new_tensor =
-    std::make_shared<mindspore::tensor::Tensor>(kNumberTypeFloat32, tensor_info->shape(), out_size, kFSE);
-  ret = memcpy_s(new_tensor->data_c(), out_size, out8, out_size);
+  std::shared_ptr<mindspore::tensor::Tensor> compress_tensor;
+  if (compress_type == kFSE) {
+    compress_tensor =
+      std::make_shared<mindspore::tensor::Tensor>(kNumberTypeFloat32, tensor_info->shape(), out_size, compress_type);
+  } else {
+    compress_tensor = std::make_shared<mindspore::tensor::Tensor>(tensor_info->data_type(), tensor_info->shape(),
+                                                                  out_size, compress_type);
+  }
+  if (compress_tensor == nullptr) {
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " compress_tensor is nullptr.";
+    free(out8);
+    return RET_ERROR;
+  }
+
+  ret = memcpy_s(compress_tensor->data_c(), out_size, out8, out_size);
   if (ret != EOK) {
-    MS_LOG(ERROR) << weight->name() << " memcpy failed.";
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " memcpy failed.";
     free(out8);
     return RET_ERROR;
   }
   free(out8);
-  weight->set_default_param(new_tensor);
-  weight->set_abstract(new_tensor->ToAbstract());
-  auto ratio = 1.0 * tensor_info->Size() / new_tensor->Size();
-  MS_LOG(INFO) << weight->fullname_with_scope() << " origin:" << tensor_info->Size()
-               << " new_tensor:" << new_tensor->Size() << " ratio:" << ratio;
+  weight->set_default_param(compress_tensor);
+  weight->set_abstract(compress_tensor->ToAbstract());
+  auto ratio = 1.0 * tensor_info->Size() / compress_tensor->Size();
+  MS_LOG(INFO) << weight->fullname_with_scope() << " origin size:" << tensor_info->Size()
+               << " compress tensor size:" << compress_tensor->Size() << " compression ratio:" << ratio;
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

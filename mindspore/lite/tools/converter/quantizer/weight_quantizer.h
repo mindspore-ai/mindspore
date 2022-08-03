@@ -78,14 +78,15 @@ class WeightQuantizer : public Quantizer {
  private:
   int LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::set<PrimitivePtr> &per_layer_types,
                   const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
-                  bool compression);
+                  bool compression = true);
   int MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   int DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
   int DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &weight_indices,
-                         WeightQuantType weight_quant_type, int q_min, int q_max, bool symmetric, bool compression);
+                         WeightQuantType weight_quant_type, int q_min, int q_max, bool symmetric = false,
+                         bool compression = true);
   int DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx);
   int DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info,
-                    int preferred_dim, WeightQuantType weight_quant_type, bool symmetric);
+                    int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
 
  private:
   bool linear_quant{true};
