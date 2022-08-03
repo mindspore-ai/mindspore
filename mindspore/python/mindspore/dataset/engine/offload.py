@@ -167,6 +167,7 @@ class RandomHorizontalFlip(nn.Cell):
         self.cast = P.Cast()
         self.shape = P.Shape()
         self.reshape = P.Reshape()
+        self.h_flip = P.ReverseV2(axis=[2])
         self.mul = P.Mul()
 
     def construct(self, x):
@@ -180,7 +181,7 @@ class RandomHorizontalFlip(nn.Cell):
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
-        x_flip = x[:, :, ::-1, :]
+        x_flip = self.h_flip(x)
         x = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
 
         return x
@@ -199,6 +200,7 @@ class RandomVerticalFlip(nn.Cell):
         self.cast = P.Cast()
         self.shape = P.Shape()
         self.reshape = P.Reshape()
+        self.h_flip = P.ReverseV2(axis=[1])
         self.mul = P.Mul()
 
     def construct(self, x):
@@ -212,7 +214,7 @@ class RandomVerticalFlip(nn.Cell):
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
-        x_flip = x[:, ::-1, :, :]
+        x_flip = self.h_flip(x)
         x = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
 
         return x
