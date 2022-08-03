@@ -49,7 +49,7 @@ def numpy_apply_adam_with_amsgrad(var, m, v, vhat, grad, beta1=0.9, beta2=0.999,
     v = v * beta2 + grad * grad * (1 - beta2)
     vhat = np.maximum(vhat, v)
     var = var - new_lr * m / (np.sqrt(vhat) + eps)
-    return var, m, v, vhat
+    return var
 
 
 @pytest.mark.level0
@@ -71,14 +71,11 @@ def test_apply_adam_with_amsgrad_op(data_type):
     grad = Tensor(grad_np)
 
     output = amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
-    ms_var, ms_m, ms_v, ms_vhat = output[0].asnumpy(), output[1].asnumpy(), output[2].asnumpy(), output[3].asnumpy()
-    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(amsgrad.var_np, amsgrad.m_np,
-                                                                amsgrad.v_np, amsgrad.vhat_np, grad_np)
+    ms_var = output.asnumpy()
+    np_var = numpy_apply_adam_with_amsgrad(amsgrad.var_np, amsgrad.m_np,
+                                           amsgrad.v_np, amsgrad.vhat_np, grad_np)
 
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)
 
 
 class AmsgradNetVmap(nn.Cell):
@@ -119,15 +116,11 @@ def test_apply_adam_witm_amsgrad_op_vmap():
 
     vmap_amsgrad = AmsgradNetVmap(cal_amsgrad)
     _ = vmap_amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
-    ms_var, ms_m = vmap_amsgrad.var.asnumpy(), vmap_amsgrad.m.asnumpy()
-    ms_v, ms_vhat = vmap_amsgrad.v.asnumpy(), vmap_amsgrad.vhat.asnumpy()
-    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
-                                                                vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
+    ms_var = vmap_amsgrad.var.asnumpy()
+    np_var = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
+                                           vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
 
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)
 
 
 class AmsgradNetVmap2(nn.Cell):
@@ -167,15 +160,9 @@ def test_apply_adam_with_amsgrad_grad_op_vmap2():
     grad_np = np.random.randn(*shape).astype(np.float32)
     grad = Tensor(grad_np)
 
-
     vmap_amsgrad = AmsgradNetVmap2(cal_amsgrad)
     _ = vmap_amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
-    ms_var, ms_m = vmap_amsgrad.var.asnumpy(), vmap_amsgrad.m.asnumpy()
-    ms_v, ms_vhat = vmap_amsgrad.v.asnumpy(), vmap_amsgrad.vhat.asnumpy()
-    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
-                                                                vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
-
+    ms_var = vmap_amsgrad.var.asnumpy()
+    np_var = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
+                                           vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
-    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)

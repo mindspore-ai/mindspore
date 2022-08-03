@@ -30,7 +30,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_adam_with_amsgrad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -60,14 +59,14 @@ class ApplyAdamWithAmsgradGpuKernelMod : public NativeGpuKernelMod {
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
-  int unit_size_;
-  size_t input_elements_;
+  size_t unit_size_{0};
+  size_t input_elements_{0};
   int64_t batch_rank_;
   int64_t batch_size_;
 
-  float beta1_ = 0.9;
-  float beta2_ = 0.999;
-  float epsilon_ = 1e-8;
+  float beta1_{0.9};
+  float beta2_{0.999};
+  float epsilon_{1e-8};
 };
 }  // namespace kernel
 }  // namespace mindspore
