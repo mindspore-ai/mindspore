@@ -50,7 +50,6 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(shape_value);
 
   ShapeVector out_shape;
-  abstract::ShapePtr ret_shape;
 
   if (shapex->isa<abstract::AbstractTuple>()) {
     out_shape = CheckAndConvertUtils::CheckTupleInt("input[shapex]", shape_value, prim_name);
@@ -109,9 +108,9 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
   const size_t end_index = 3;
   const size_t stride_index = 4;
   auto valid_types = common_valid_types;
-  valid_types.insert(kComplex128);
-  valid_types.insert(kComplex64);
-  valid_types.insert(kBool);
+  (void)valid_types.insert(kComplex128);
+  (void)valid_types.insert(kComplex64);
+  (void)valid_types.insert(kBool);
 
   CheckSliceType(input_args[begin_index], "begin", prim_name);
   CheckSliceType(input_args[end_index], "end", prim_name);

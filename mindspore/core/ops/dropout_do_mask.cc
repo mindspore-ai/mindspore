@@ -33,8 +33,8 @@ template <typename T>
 T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
   auto value = reinterpret_cast<T *>(keep_prop->data_c());
   MS_EXCEPTION_IF_NULL(value);
-  T min = (T)0.0;
-  T max = (T)1.0;
+  T min = T(0.0);
+  T max = T(1.0);
   if (*value < min || *value > max) {
     MS_EXCEPTION(ValueError)
       << "For 'DropoutDoMask', the 'keep_prop' input value must be in the range [0, 1], but got: " << *value << ".";
