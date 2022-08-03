@@ -32,6 +32,9 @@ class MIND_API ResizeArea : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ResizeArea);
   ResizeArea() : BaseOperator(kNameResizeArea) { InitIOName({"images", "size"}, {"y"}); }
+  void Init(const bool align_corners = false);
+  void set_align_corners(const bool align_corners);
+  bool get_align_corners() const;
 };
 abstract::AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args);
