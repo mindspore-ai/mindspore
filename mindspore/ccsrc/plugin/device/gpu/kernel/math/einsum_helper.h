@@ -724,25 +724,35 @@ class EinsumHelper {
         }
         ShapeVector temp_vec(input_shapes[idx_input].begin() + idx_left,
                              input_shapes[idx_input].begin() + idx_shape_right + 1);
-
-        if (element_shape_map_.find(ELL_VAL) != element_shape_map_.end()) {
-          if (element_shape_map_[ELL_VAL] != temp_vec) {
-            if (temp_vec.size() == 0 || element_shape_map_[ELL_VAL].size() == 0) {
-              element_shape_map_[ELL_VAL] = temp_vec.size() == 0 ? element_shape_map_[ELL_VAL] : temp_vec;
-            } else {
-              MS_LOG(ERROR)
-                << "For " << node_name_
-                << ", the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
-              return false;
-            }
-          }
-        } else {
-          element_shape_map_[ELL_VAL] = temp_vec;
+        if (!AdjustElementMapShape(temp_vec)) {
+          return false;
         }
       }
     }
     return true;
   }
+
+  bool AdjustElementMapShape(const ShapeVector &temp_vec) {
+    const size_t ellipsis_val_num = 52;
+    auto iter = element_shape_map_.find(ellipsis_val_num);
+    if (iter != element_shape_map_.end()) {
+      ShapeVector cur_vec = iter->second;
+      if (cur_vec != temp_vec) {
+        if (temp_vec.empty() || cur_vec.empty()) {
+          element_shape_map_[ellipsis_val_num] = temp_vec.empty() ? cur_vec : temp_vec;
+        } else {
+          MS_LOG(ERROR)
+            << "For " << node_name_
+            << ", the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
+          return false;
+        }
+      }
+    } else {
+      element_shape_map_[ellipsis_val_num] = temp_vec;
+    }
+    return true;
+  }
+
   void CalAxisShape(const std::vector<size_t> &axis_val, const ShapeVector &shape_val, size_t *idx,
                     ShapeVector *re_shape, std::vector<size_t> *res_trans_axis) {
     for (auto val : axis_val) {

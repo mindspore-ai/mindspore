@@ -30,28 +30,30 @@ class SspaddmmCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   SspaddmmCPUKernelMod() = default;
   ~SspaddmmCPUKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckSparseIndices(const TypeId &indices_dtype, void *indices_addr, void *shape_addr, size_t num,
+                          const std::string &x_name) const;
+  void CheckParam(const CNodePtr &kernel_node) const;
   template <typename T, typename S>
-  void CheckSparseIndicesLegal(void *indices_addr, void *shape_addr, size_t num, std::string x_name);
+  void CheckSparseIndicesLegal(void *indices_addr, void *shape_addr, size_t num, const std::string &x_name) const;
   template <typename T>
-  void InitShape(void *input_shape, int64_t *y_shape);
+  void InitShape(void *input_shape, int64_t *y_shape) const;
   template <typename T>
   void ClearSparseValues(T *sparse_val, size_t data_num);
   template <typename T>
-  T *ScalarSparseMul(T *sparse_val, void *scalar_val, size_t data_num, TypeId tid);
+  T *ScalarSparseMul(const T *sparse_val, void *scalar_val, size_t data_num, const TypeId &tid);
   template <typename T, typename S>
-  void SparseAddSparse(void *input_indices, S *inut_values, size_t input_num, int64_t *y_indices, S *y_values,
+  void SparseAddSparse(void *input_indices, const S *inut_values, size_t input_num, int64_t *y_indices, S *y_values,
                        size_t y_num);
   template <typename T, typename S>
-  void SparseMulDense(void *mat1_indices, S *mat1_values, size_t mat1_vals_num, S *mat2_values_tensor,
-                      int64_t *y_indices, S *y_values, size_t y_vals_num, int64_t row, int64_t mat2_col);
+  void SparseMulDense(void *mat1_indices, const S *mat1_values, size_t mat1_vals_num, const S *mat2_addr,
+                      int64_t *y_indices, S *y_values, size_t y_vals_num, int64_t mat2_col);
 
   TypeId output_values_dtype_{kTypeUnknown};
   TypeId input_indices_dtype_{kTypeUnknown};
