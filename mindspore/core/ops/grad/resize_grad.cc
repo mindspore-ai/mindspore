@@ -17,7 +17,6 @@
 #include "ops/grad/resize_grad.h"
 #include <map>
 #include <string>
-#include <vector>
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -33,7 +32,7 @@ void ResizeGrad::Init(const ResizeMethod method, const bool align_corners) {
 }
 
 void ResizeGrad::set_method(const ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 

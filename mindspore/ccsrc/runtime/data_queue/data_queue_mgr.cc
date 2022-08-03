@@ -171,7 +171,7 @@ BlockQueueStatus_T DataQueueMgr::Clear(const std::string &channel_name) {
   return iter->second->Clear();
 }
 
-void DataQueueMgr::Close(const std::string &channel_name) noexcept {
+void DataQueueMgr::Close(const std::string &channel_name) const noexcept {
   MS_LOG(INFO) << "Close the queue: " << channel_name;
   return;
 }

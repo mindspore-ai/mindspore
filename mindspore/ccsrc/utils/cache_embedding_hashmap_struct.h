@@ -19,7 +19,7 @@
 #ifndef MINDSPORE_CCSRC_UTIL_CACHE_EMBBEDDING_HASHMAP_STRUCT_H_
 #define MINDSPORE_CCSRC_UTIL_CACHE_EMBBEDDING_HASHMAP_STRUCT_H_
 
-#include <math.h>
+#include <cmath>
 
 namespace mindspore {
 const int64_t kNullTag = 0;
@@ -44,7 +44,7 @@ struct HashmapEntry {
 
 template <typename T>
 T HashFunc(const T key, const size_t m) {
-  return (T)(((kGoldenRatio * key) - floor(kGoldenRatio * key)) * m);
+  return static_cast<T>(((kGoldenRatio * key) - floor(kGoldenRatio * key)) * m);
 }
 }  // namespace mindspore
 

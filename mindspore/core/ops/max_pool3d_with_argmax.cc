@@ -203,7 +203,7 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
 AbstractBasePtr MaxPool3DWithArgmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MaxPool3DWithArgmaxInferType(primitive, input_args);
   auto infer_shape = MaxPool3DWithArgmaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

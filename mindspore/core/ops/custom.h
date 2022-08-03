@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_CUSTOM_H_
 #define MINDSPORE_CORE_OPS_CUSTOM_H_
 #include <string>
-#include <utility>
 #include <vector>
 #include <map>
 #include <memory>
