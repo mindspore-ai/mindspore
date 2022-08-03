@@ -139,6 +139,7 @@ class StandardNormal(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> shape = (3, 4)
         >>> stdnormal = ops.StandardNormal(seed=2)
         >>> output = stdnormal(shape)
