@@ -43,17 +43,6 @@ class Gumbel(TransformedDistribution):
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'Gumbel'.
 
-    Inputs and Outputs of APIs:
-        The accessible APIs of the Gumbel distribution are defined in the base class, including:
-
-        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
-        - `mean`, `sd`, `mode`, `var`, and `entropy`
-        - `kl_loss` and `cross_entropy`
-        - `sample`
-
-        For more details of all APIs, including the inputs and outputs of all APIs of the Gumbel distribution,
-        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 

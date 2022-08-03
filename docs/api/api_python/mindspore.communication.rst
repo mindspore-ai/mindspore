@@ -140,7 +140,8 @@ mindspore.communication
         - GPU 版本的MindSpore不支持此方法；
         - 列表rank_ids的长度应大于1；
         - 列表rank_ids内不能有重复数据；
-        - `create_group` 方法应该在 `init` 方法之后使用。
+        - `create_group` 方法应该在 `init` 方法之后使用；
+        - PyNative模式下仅支持全局单通信组。
 
     **参数：**
 
