@@ -2287,8 +2287,7 @@ def truncate_div(x, y):
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> truncate_div = ops.truncate_div()
-        >>> output = truncate_div(x, y)
+        >>> output = ops.truncate_div(x, y)
         >>> print(output)
         [0 1 0]
     """
@@ -2327,15 +2326,14 @@ def truncate_mod(x, y):
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> truncate_mod = ops.truncate_mod()
-        >>> output = truncate_mod(x, y)
+        >>> output = ops.truncate_mod(x, y)
         >>> print(output)
         [ 2  1 -1]
     """
     return truncate_mod_(x, y)
 
 
-def trunc(x):
+def trunc(input_x):
     r"""
     Returns a new tensor with the truncated integer values of the elements of input.
 

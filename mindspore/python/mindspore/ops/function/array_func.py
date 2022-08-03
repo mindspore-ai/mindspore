@@ -3175,7 +3175,7 @@ def affine_grid(theta, output_size, align_corners=False):
         >>> import mindspore.ops as ops
         >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
         >>> out_size = (1, 3, 2, 3)
-        >>> output = op.affine_grid(theta, out_size, False)
+        >>> output = ops.affine_grid(theta, out_size, False)
         >>> print(output)
         [[[[-0.78333336 -0.06666666]
         [-0.25       -0.4       ]
