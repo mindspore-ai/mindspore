@@ -102,10 +102,11 @@ void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     MartixXd output = x * B;
     result = output;
   }
-  for (size_t i = 0; i < n; i++)
+  for (size_t i = 0; i < n; i++) {
     for (size_t j = 0; j < k; j++) {
       *(output_addr + i * k + j) = static_cast<T2>(result(i, j));
     }
+  }
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Lstsq, LstsqCpuKernelMod);
