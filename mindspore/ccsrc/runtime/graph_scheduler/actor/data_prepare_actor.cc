@@ -387,11 +387,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     SetInitTensorsIfNeeded(input_tensors);
     try {
       PrepareDataForDeviceTensorStore(input_tensors, context);
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        PrepareDataForHostTensorQueue(input_tensors, context);
-      } else if (strategy_ == GraphExecutionStrategy::kStep) {
-        PrepareDataForStepMode(input_tensors, context);
-      }
+      PrepareDataForHostTensorQueue(input_tensors, context);
     } catch (const std::exception &e) {
       std::string error_info = e.what();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
@@ -543,80 +539,6 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
   PrepareHostTensorQueueForControlNode(input_tensors.back(), &host_tensors, context);
 
   host_tensor_queue_->Push(host_tensors);
-}
-
-void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<TensorPtr>> &input_tensors,
-                                              OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  std::vector<TensorPtr> host_tensors;
-  if ((host_data_source_actor_ != nullptr) && (host_tensor_queue_ != nullptr)) {
-    host_tensors.resize(host_data_source_actor_->data_nodes().size());
-  }
-
-  for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
-    const auto &graph = graph_compiler_info_->graphs_[i];
-    const auto &device_context = graph_compiler_info_->device_contexts_[i];
-    MS_EXCEPTION_IF_NULL(graph);
-    MS_EXCEPTION_IF_NULL(device_context);
-
-    const auto &input_nodes = graph->input_nodes();
-    const auto &tensors = input_tensors[i];
-    for (size_t j = 0; j < input_nodes.size(); ++j) {
-      const auto &input_node = input_nodes[j];
-      const auto &input_tensor = tensors[j];
-      MS_EXCEPTION_IF_NULL(input_node);
-      MS_EXCEPTION_IF_NULL(input_tensor);
-      if (IsPersistentDeviceTensor(input_node)) {
-        continue;
-      }
-
-      UpdateDynamicShape(input_node, input_tensor);
-
-      if ((host_data_source_actor_ != nullptr) && (host_tensor_queue_ != nullptr)) {
-        auto tensor_position = host_data_source_actor_->FetchNodePosition({input_node, 0});
-        if (tensor_position >= host_tensors.size()) {
-          std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
-          SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
-        }
-        host_tensors[tensor_position] = input_tensor;
-      }
-
-      auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
-      if (host_tensor_address != nullptr) {
-        if (host_tensor_address->GetDeviceType() != device_context->GetDeviceType()) {
-          input_tensor->data_sync();
-          input_tensor->set_device_address(nullptr);
-        } else {
-          AnfAlgo::SetOutputAddr(host_tensor_address, 0, input_node.get());
-          host_tensor_address->SetNodeIndex(input_node, 0);
-          continue;
-        }
-      }
-
-      if (!AnfAlgo::OutputAddrExist(input_node, 0, false)) {
-        TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
-        if (output_type_id == kTypeUnknown) {
-          output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-        }
-        size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
-        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-          nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, 0), output_type_id,
-          trans::GetRuntimePaddingShape(input_node, 0));
-        MS_EXCEPTION_IF_NULL(device_address);
-        AnfAlgo::SetOutputAddr(device_address, 0, input_node.get());
-        device_address->SetNodeIndex(input_node, 0);
-      }
-      auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
-      input_tensor->set_device_address(device_tensor);
-      UpdateRefCount(device_tensor.get(), true);
-
-      SyncTensorData(input_tensor, device_tensor, input_node, device_context, context, real_strategy_);
-    }
-  }
-
-  if ((host_data_source_actor_ != nullptr) && (host_tensor_queue_ != nullptr)) {
-    host_tensor_queue_->Push(host_tensors);
-  }
 }
 
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
@@ -810,8 +732,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
       // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
-      if ((strategy_ == GraphExecutionStrategy::kStep) ||
-          (device_tensor->GetDeviceType() != device_context->GetDeviceType())) {
+      if (device_tensor->GetDeviceType() != device_context->GetDeviceType()) {
         host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
           device_tensor->host_shape());
@@ -825,12 +746,10 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     }
     MS_EXCEPTION_IF_NULL(host_tensor_address);
 
-    if (host_tensor_address->GetDeviceType() == device_tensor->GetDeviceType() &&
-        !(host_tensor_address->format() != device_tensor->format() && strategy_ == GraphExecutionStrategy::kStep)) {
+    if (host_tensor_address->GetDeviceType() == device_tensor->GetDeviceType()) {
       // In the scenario of training + inference , the device address of the weight node can not be changed when
       // multi-graphs sink mode is set.
-      if (device_tensor->is_ptr_persisted() && (host_tensor_address != device_tensor) &&
-          strategy_ != GraphExecutionStrategy::kStep) {
+      if (device_tensor->is_ptr_persisted() && (host_tensor_address != device_tensor)) {
         if (!Copy(device_tensor.get(), host_tensor_address.get())) {
           std::string error_info = "Sync data error.";
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
@@ -846,12 +765,6 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
                    << host_tensor_address->GetDeviceType() << " format:" << host_tensor_address->format()
                    << ", device tensor type:" << device_tensor->GetDeviceType()
                    << " format:" << device_tensor->format();
-      if (strategy_ == GraphExecutionStrategy::kStep) {
-        tensor->data_sync();
-        host_tensor_address = device_tensor;
-        tensor->set_device_address(host_tensor_address);
-        is_need_sync = true;
-      }
     }
   }
   // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,
