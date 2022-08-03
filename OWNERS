@@ -29,6 +29,13 @@ files:
   
   ".*\\.md$":
     approvers:
+    - kingxian
+    - guoqi1024
+    - baochong
+    - zhaizhiqiang
+    - stsuteng
+    - kisnwang
     - gemini524
     - Hanshize
     - rudy_tan
+    - luojianing1
