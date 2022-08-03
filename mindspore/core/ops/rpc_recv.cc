@@ -16,8 +16,6 @@
 
 #include "ops/rpc_recv.h"
 
-#include <utility>
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"

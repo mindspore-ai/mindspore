@@ -28,7 +28,7 @@ namespace kernel {
 // data is received and inputs are ready.
 class RpcRecvKernelMod : public RpcKernelMod {
  public:
-  RpcRecvKernelMod() : recv_monad_(false) {}
+  RpcRecvKernelMod() : recv_monad_(false), is_dynamic_shape_(false) {}
   ~RpcRecvKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
