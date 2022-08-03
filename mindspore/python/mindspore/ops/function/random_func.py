@@ -265,9 +265,9 @@ def standard_normal(shape, seed=0, seed2=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> shape = (4, 4)
-        >>> output = F.standard_normal(shape)
+        >>> output = ops.standard_normal(shape)
         >>> result = output.shape
         >>> print(result)
         (4, 4)
