@@ -50,7 +50,7 @@ int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTe
 }
 
 std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
+  std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
   return support_list;
 }
 

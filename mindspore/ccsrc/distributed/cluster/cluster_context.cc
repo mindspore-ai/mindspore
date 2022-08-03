@@ -125,7 +125,7 @@ uint32_t ClusterContext::node_num(const std::string &node_role) {
 
 uint32_t ClusterContext::node_num() const {
   uint32_t node_num = 0;
-  for (auto iter = node_num_each_role_.begin(); iter != node_num_each_role_.end(); iter++) {
+  for (auto iter = node_num_each_role_.begin(); iter != node_num_each_role_.end(); ++iter) {
     if (iter->first != kEnvRoleOfScheduler) {
       node_num += iter->second;
     }

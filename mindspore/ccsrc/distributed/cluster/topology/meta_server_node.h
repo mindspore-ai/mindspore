@@ -47,7 +47,7 @@ enum class NodeState {
 
 // Record the state of the compute graph node.
 struct NodeInfo {
-  explicit NodeInfo(std::string id) { node_id = id; }
+  explicit NodeInfo(const std::string &id) { node_id = id; }
   std::string node_id;
 
   // The local host name of this cluster node.
@@ -93,7 +93,7 @@ class MetaServerNode : public NodeBase {
 
   // Register the message handler for the user defined message which is specified by the `name` parameter.
   bool RegisterMessageHandler(const std::string &name,
-                              std::shared_ptr<std::function<std::string(const std::string &)>> handler);
+                              const std::shared_ptr<std::function<std::string(const std::string &)>> &handler);
 
  private:
   // Create and init the tcp server.

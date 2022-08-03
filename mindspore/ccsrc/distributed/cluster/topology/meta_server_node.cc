@@ -163,7 +163,7 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
 MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   RegistrationMessage registration;
   const std::string &body = message->Body();
-  (void)registration.ParseFromArray(body.c_str(), body.length());
+  (void)registration.ParseFromArray(body.c_str(), SizeToInt(body.length()));
 
   // Add the compute graph node into registered nodes.
   const auto &node_id = registration.node_id();
@@ -544,8 +544,8 @@ size_t MetaServerNode::GetAliveNodeNum() {
   return count;
 }
 
-bool MetaServerNode::RegisterMessageHandler(const std::string &name,
-                                            std::shared_ptr<std::function<std::string(const std::string &)>> handler) {
+bool MetaServerNode::RegisterMessageHandler(
+  const std::string &name, const std::shared_ptr<std::function<std::string(const std::string &)>> &handler) {
   if (message_handlers_.find(name) != message_handlers_.end()) {
     MS_LOG(ERROR) << "The message name: " << name << " have already been registered";
     return false;
