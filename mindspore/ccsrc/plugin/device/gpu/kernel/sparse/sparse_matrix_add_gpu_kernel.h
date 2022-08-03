@@ -171,10 +171,10 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
  private:
   void SetInputAndOutputSizeLists(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
+    for (size_t i = 0; i < input_num; ++i) {
+      TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
       size_t type_size = GetTypeByte(TypeIdToType(type_id));
-      auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
+      auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       size_t tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       tensor_size = std::max(tensor_size, type_size);
