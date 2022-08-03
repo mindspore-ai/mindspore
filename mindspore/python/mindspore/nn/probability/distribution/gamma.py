@@ -45,17 +45,6 @@ class Gamma(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.
 
-    Inputs and Outputs of APIs:
-        The accessible APIs of the Gamma distribution are defined in the base class, including:
-
-        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
-        - `mean`, `sd`, `mode`, `var`, and `entropy`
-        - `kl_loss` and `cross_entropy`
-        - `sample`
-
-        For more details of all APIs, including the inputs and outputs of all APIs of the Gamma distribution,
-        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
-
     Supported Platforms:
         ``Ascend``
 

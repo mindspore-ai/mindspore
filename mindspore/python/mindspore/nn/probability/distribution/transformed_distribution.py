@@ -40,16 +40,6 @@ class TransformedDistribution(Distribution):
           will use this seed; elsewise, the underlying distribution's seed will be used.
         name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
-    Inputs and Outputs of APIs:
-        The accessible APIs of the transformed distribution are defined in the base class, including:
-
-        - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
-        - `mean`
-        - `sample`
-
-        For more details of all APIs, including the inputs and outputs of all APIs of the transformed distribution,
-        please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

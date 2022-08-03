@@ -27,18 +27,6 @@ class Exp(PowerTransform):
     Args:
         name (str): The name of the Bijector. Default: 'Exp'.
 
-    Inputs and Outputs of APIs:
-        The accessible apis of the Exp bijector are defined in the base class, including:
-
-        - **forward**
-        - **inverse**
-        - **forward_log_jacobian**
-        - **inverse_log_jacobian**
-
-        It should be notice that the inputs to the APIs of the Exp bijector should be always a tensor.
-        For more details of all APIs, including the inputs and outputs of the APIs of the Exp bijector,
-        please refer to :class:`mindspore.nn.probability.bijector.Bijector`, and examples below.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 
