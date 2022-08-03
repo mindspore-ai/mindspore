@@ -1312,7 +1312,7 @@ class InMemoryGraphDataset(GeneratorDataset):
         >>>         self.graphs.append(graph)
         >>>
         >>>     def __getitem__(self, index):
-        >>>         # this method and `__len__` method are required when iterating created dataset
+        >>>         # this method and '__len__' method are required when iterating created dataset
         >>>         graph = self.graphs[index]
         >>>         return graph.get_all_edges("0")
         >>>
