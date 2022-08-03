@@ -28,7 +28,8 @@ namespace {
 template <typename T>
 std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std::vector<int64_t> x_shape,
                                          const int64_t x_shape_size, const int64_t shape_size,
-                                         tensor::TensorPtr shape_tensor, int64_t max_length, string prim_name) {
+                                         const tensor::TensorPtr shape_tensor, int64_t max_length,
+                                         const string prim_name) {
   auto input_shape_ptr = reinterpret_cast<T *>(shape_tensor->data_c());
   auto shape_m = 1;
   if (shape_size >= x_shape_size) {

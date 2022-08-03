@@ -31,8 +31,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-int64_t CalculateShape(tensor::TensorPtr starts_ptr, tensor::TensorPtr limits_ptr, tensor::TensorPtr deltas_ptr,
-                       int64_t nrows) {
+int64_t CalculateShape(const tensor::TensorPtr starts_ptr, const tensor::TensorPtr limits_ptr,
+                       const tensor::TensorPtr deltas_ptr, int64_t nrows) {
   T *starts_val = reinterpret_cast<T *>(starts_ptr->data_c());
   T *limits_val = reinterpret_cast<T *>(limits_ptr->data_c());
   T *deltas_val = reinterpret_cast<T *>(deltas_ptr->data_c());

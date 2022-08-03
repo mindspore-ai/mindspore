@@ -28,7 +28,7 @@ class MIND_API TruncateDiv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TruncateDiv);
   TruncateDiv() : BaseOperator(kNameTruncateDiv) { InitIOName({"x", "y"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr TruncateDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args);

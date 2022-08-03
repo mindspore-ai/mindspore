@@ -29,7 +29,7 @@ class MIND_API Sinh : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sinh);
   Sinh() : BaseOperator(kNameSinh) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr SinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);

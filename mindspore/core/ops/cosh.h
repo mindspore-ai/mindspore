@@ -28,7 +28,7 @@ class MIND_API Cosh : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Cosh);
   Cosh() : BaseOperator(kNameCosh) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr CoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);

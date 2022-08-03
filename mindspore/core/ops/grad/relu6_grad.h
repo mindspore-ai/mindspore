@@ -30,7 +30,7 @@ class MIND_API ReLU6Grad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReLU6Grad);
   ReLU6Grad() : BaseOperator(kNameReLU6Grad) {}
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

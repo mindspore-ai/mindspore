@@ -40,8 +40,8 @@ class UnravelIndexCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t indices_type_;
-  size_t dims_type_;
+  size_t indices_type_{0};
+  size_t dims_type_{0};
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   using UnravelIndexFunc = std::function<bool(UnravelIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,

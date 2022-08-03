@@ -43,7 +43,7 @@ class TrilCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   int64_t diagonal_{0};
   std::vector<size_t> input_shape_;
-  size_t input_dims_;
+  size_t input_dims_{0};
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

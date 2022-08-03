@@ -29,7 +29,7 @@ class MIND_API AssignSub : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AssignSub);
   AssignSub() : BaseOperator(kNameAssignSub) { InitIOName({"val", "value"}, {"val"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr AssignSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);

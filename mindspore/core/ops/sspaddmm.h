@@ -39,7 +39,7 @@ class MIND_API Sspaddmm : public BaseOperator {
       {"y_indices", "y_values", "y_shape"});
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Sspaddmm for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr SspaddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);
