@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kApplyAdamWithAmsgradInputsNum = 8;
-constexpr size_t kApplyAdamWithAmsgradOutputsNum = 4;
+constexpr size_t kApplyAdamWithAmsgradOutputsNum = 1;
 constexpr size_t kScalarIndex = 0;
 constexpr size_t kIndexVar = 0;
 constexpr size_t kIndexM = 1;
@@ -65,9 +65,9 @@ bool ApplyAdamWithAmsgradCpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
 
-  beta1_[0] = kernel_ptr->get_beta1();
-  beta2_[0] = kernel_ptr->get_beta2();
-  epsilon_[0] = kernel_ptr->get_epsilon();
+  beta1_ = kernel_ptr->get_beta1();
+  beta2_ = kernel_ptr->get_beta2();
+  epsilon_ = kernel_ptr->get_epsilon();
 
   return true;
 }
@@ -139,15 +139,14 @@ void ApplyAdamWithAmsgradCpuKernelMod::LaunchApplyAdamWithAmsgrad(const std::vec
   T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
   T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
 
-  T beta1 = static_cast<T>(beta1_[0]);
-  T beta2 = static_cast<T>(beta2_[0]);
-  T epsilon = static_cast<T>(epsilon_[0]);
+  T beta1 = static_cast<T>(beta1_);
+  T beta2 = static_cast<T>(beta2_);
+  T epsilon = static_cast<T>(epsilon_);
 
-  constexpr float ONE = 1.0;
+  T ONE = static_cast<T>(1.0);
   for (int64_t b = 0; b < batch_size_; b++) {
     // multithreading
-    T new_lr = static_cast<T>(static_cast<float>(lr[b]) * std::sqrt(ONE - static_cast<float>(beta2_power[b])) /
-                              (ONE - static_cast<float>(beta1_power[b])));
+    T new_lr = lr[b] * static_cast<T>(std::sqrt(static_cast<double>(ONE - beta2_power[b]))) / (ONE - beta1_power[b]);
     auto task = [this, &var, &m, &v, &vhat, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
       T one = static_cast<T>(1.0);
       for (size_t i = start; i < end; i++) {
@@ -215,13 +214,7 @@ std::vector<KernelAttr> ApplyAdamWithAmsgradCpuKernelMod::GetOpSupport() {
                                                    .AddInputAttr(kNumberTypeFloat32)
                                                    .AddInputAttr(kNumberTypeFloat32)
                                                    .AddOutputAttr(kNumberTypeFloat32)
-                                                   .AddOutputAttr(kNumberTypeFloat32)
-                                                   .AddOutputAttr(kNumberTypeFloat32)
-                                                   .AddOutputAttr(kNumberTypeFloat32)
-                                                   .AddOutInRef(0, 0)
-                                                   .AddOutInRef(1, 1)
-                                                   .AddOutInRef(2, 2)
-                                                   .AddOutInRef(3, 3),
+                                                   .AddOutInRef(0, 0),
                                                  KernelAttr()
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddInputAttr(kNumberTypeFloat16)
@@ -232,13 +225,7 @@ std::vector<KernelAttr> ApplyAdamWithAmsgradCpuKernelMod::GetOpSupport() {
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddOutputAttr(kNumberTypeFloat16)
-                                                   .AddOutputAttr(kNumberTypeFloat16)
-                                                   .AddOutputAttr(kNumberTypeFloat16)
-                                                   .AddOutputAttr(kNumberTypeFloat16)
-                                                   .AddOutInRef(0, 0)
-                                                   .AddOutInRef(1, 1)
-                                                   .AddOutInRef(2, 2)
-                                                   .AddOutInRef(3, 3)};
+                                                   .AddOutInRef(0, 0)};
   return support_list;
 }
 

@@ -29,8 +29,11 @@ class MIND_API ApplyAdamWithAmsgrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdamWithAmsgrad);
   ApplyAdamWithAmsgrad() : BaseOperator(kNameApplyAdamWithAmsgrad) {
-    InitIOName({"var", "m", "v", "vhat", "beta1_power", "beta2_power", "lr", "grad"}, {"var", "m", "v", "vhat"});
+    InitIOName({"var", "m", "v", "vhat", "beta1_power", "beta2_power", "lr", "grad"}, {"var"});
   }
+
+  void Init(const float beta1 = 0.9, const float beta2 = 0.999, const float epsilon = 1e-8,
+            const bool use_locking = false);
 
   void set_beta1(const float beta1);
 

@@ -21,7 +21,7 @@
 template <typename T>
 CUDA_LIB_EXPORT void CalApplyAdamWithAmsgrad(const size_t size, const int64_t batch_size, T *var, T *m, T *v, T *vhat,
                                              T *beta1_power, T *beta2_power, const T *lr, const T *grad,
-                                             const float beta1, const float beta2, const float epsilon,
+                                             const T beta1, const T beta2, const T epsilon, T *output_var,
                                              const uint32_t &device_id, cudaStream_t stream_ptr);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_APPLY_ADAM_WITH_AMSGRAD_IMPL_CUH_
