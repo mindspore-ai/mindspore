@@ -41,7 +41,7 @@ void SegmentMinCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-std::vector<int64_t> SegmentMinCPUKernelMod::CalcSegmentIds(const T *segment_ids_data_addr) {
+std::vector<int64_t> SegmentMinCPUKernelMod::CalcSegmentIds(const T *segment_ids_data_addr) const {
   std::vector<int64_t> segments;
   int64_t seg_tmp = 1;
   for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
@@ -119,9 +119,9 @@ template <typename T1, typename T2>
 bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  T1 *input_x_data_addr = GetDeviceAddress<T1>(inputs, kIndex0);
+  T2 *segment_ids_data_addr = GetDeviceAddress<T2>(inputs, kIndex1);
+  T1 *output_data_addr = GetDeviceAddress<T1>(outputs, kIndex0);
   std::vector<int64_t> segments = CalcSegmentIds(segment_ids_data_addr);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
@@ -133,7 +133,7 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = segments[i];
+      const size_t count = LongToSize(segments[i]);
       size_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
         count_no += segments[j];
@@ -145,9 +145,7 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
           T1 min_value = input_x_data_addr[min_init_addr];
           for (size_t k = 1; k < count; ++k) {
             int cmp_addr = min_init_addr + k * num_compare_per;
-            if (min_value > input_x_data_addr[cmp_addr]) {
-              min_value = input_x_data_addr[cmp_addr];
-            }
+            min_value = std::min(min_value, input_x_data_addr[cmp_addr]);
           }
           output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = min_value;
         }
@@ -172,9 +170,7 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
           T1 min_value = input_x_data_addr[min_init_addr];
           for (size_t k = 1; k < count; ++k) {
             int cmp_addr = min_init_addr + k * num_compare_per;
-            if (min_value > input_x_data_addr[cmp_addr]) {
-              min_value = input_x_data_addr[cmp_addr];
-            }
+            min_value = std::min(min_value, input_x_data_addr[cmp_addr]);
           }
           output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = min_value;
         }
