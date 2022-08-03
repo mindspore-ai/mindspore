@@ -100,15 +100,16 @@ int QuickStart(int argc, const char **argv) {
   }
 
   // Print Output Tensor Data.
-  for (size_t i = 0; i < inputs.handle_num; ++i) {
-    MSTensorHandle tensor = inputs.handle_list[i];
+  for (size_t i = 0; i < outputs.handle_num; ++i) {
+    MSTensorHandle tensor = outputs.handle_list[i];
     int64_t element_num = MSTensorGetElementNum(tensor);
-    printf("Tensor name: %s, elements num: %ld.\n", MSTensorGetName(tensor), element_num);
+    printf("Tensor name: %s, tensor size is %ld ,elements num: %ld.\n", MSTensorGetName(tensor),
+           MSTensorGetDataSize(tensor), element_num);
     const float *data = (const float *)MSTensorGetData(tensor);
     printf("output data is:\n");
     const int max_print_num = 50;
     for (int j = 0; j < element_num && j <= max_print_num; ++j) {
-      printf("%f ", data[i]);
+      printf("%f ", data[j]);
     }
     printf("\n");
   }
