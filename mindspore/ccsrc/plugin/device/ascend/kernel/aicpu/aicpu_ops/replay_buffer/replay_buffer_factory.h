@@ -59,7 +59,7 @@ class ReplayBufferFactory {
   }
 
   // Delete the replay buffer instance.
-  void Delete(int64_t handle) { map_handle_to_instances_.erase(handle); }
+  void Delete(int64_t handle) { (void)map_handle_to_instances_.erase(handle); }
 
   // Get replay buffer instance by handle.
   std::shared_ptr<T> GetByHandle(int64_t handle) {
