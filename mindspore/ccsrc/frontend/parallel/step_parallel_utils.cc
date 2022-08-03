@@ -658,7 +658,9 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
 }
 
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key) {
-  if (!node) return nullptr;
+  if (!node) {
+    return nullptr;
+  }
   auto cnode = node->cast<CNodePtr>();
   auto prim = GetCNodePrimitive(cnode);
   if (prim && prim->HasAttr(key)) {
@@ -793,6 +795,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   std::vector<Shapes> shape_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
 
+  const int concat_size = 2;
   size_t inputs_size = all_inputs.size();
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
@@ -811,13 +814,13 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       g_RefMap[parameters[0]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
+               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
       input_shapes = GetNodeShape(input);
     } else {
       continue;
     }
     if (input_shapes.size() != 1) {
-      if (inputs_size == 2) {  // like concat
+      if (inputs_size == concat_size) {  // like concat
         shape_inputs = input_shapes;
         break;
       } else {

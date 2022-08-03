@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "frontend/parallel/device_matrix.h"
-#include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {

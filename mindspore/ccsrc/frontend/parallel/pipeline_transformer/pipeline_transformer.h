@@ -82,7 +82,7 @@ class PipelineTransformer {
                         std::vector<AnfNodePtr> *receive_ops);
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
                    const std::string &tag) const;
-  AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
+  AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node) const;
   std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode, int tuple_index);
