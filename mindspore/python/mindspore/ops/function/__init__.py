@@ -333,7 +333,6 @@ from .random_func import (
     standard_normal,
     random_gamma,
     uniform_candidate_sampler,
-    poisson,
 )
 from .grad import (
     grad_func,

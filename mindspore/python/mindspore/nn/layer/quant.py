@@ -787,7 +787,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
             >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
             >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted,
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            ...                                         activation=FakeQuantWithMinMaxObserver.partial_init())
             >>> conv_bn_quant = nn.Conv2dBnFoldQuantOneConv.from_float(conv_bn_op, quant_config)
         """
 
@@ -1054,7 +1054,7 @@ class Conv2dBnFoldQuant(Cell):
             >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
             >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            ...                                         activation=FakeQuantWithMinMaxObserver.partial_init())
             >>> extra_args = {"freeze_bn": 100000}
             >>> conv_bn_quant = nn.Conv2dBnFoldQuant.from_float(conv_bn_op, quant_config, extra_args)
         """
@@ -1272,7 +1272,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
             >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
             >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            ...                                         activation=FakeQuantWithMinMaxObserver.partial_init())
             >>> conv_bn_quant = nn.Conv2dBnFoldQuant.from_float(conv_bn_op, quant_config)
         """
 
@@ -1450,7 +1450,7 @@ class Conv2dQuant(Cell):
             >>> conv_op = nn.Conv2d(ic, oc, kernel_size)
             >>> # when apply QAT on `conv_op`, QAT need to create a quant conv2d whose weight is fake-quanted
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            ...                                         activation=FakeQuantWithMinMaxObserver.partial_init())
             >>> conv_quant = nn.Conv2dQuant.from_float(conv_op, quant_config)
         """
         conv_quant = cls(
@@ -1601,7 +1601,7 @@ class DenseQuant(Cell):
             >>> dense_op = nn.Dense(ic, oc)
             >>> # when apply QAT on `dense_op`, QAT need to create a quant dense whose weight is fake-quanted
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            ...                                         activation=FakeQuantWithMinMaxObserver.partial_init())
             >>> dense_quant = nn.DenseQuant.from_float(dense_op, quant_config)
         """
         dense_quant = cls(

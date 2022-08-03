@@ -14,6 +14,7 @@
 # ============================================================================
 """Operators for random."""
 
+from mindspore.common._decorator import deprecated
 from ..._checkparam import Validator, Rel
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
@@ -450,7 +451,7 @@ class Poisson(PrimitiveWithInfer):
         TypeError: If `mean` is not a Tensor whose dtype is not float32.
 
     Supported Platforms:
-        ``Ascend``
+        deprecated
 
     Examples:
         >>> shape = (4, 1)
@@ -462,6 +463,7 @@ class Poisson(PrimitiveWithInfer):
         (4, 2)
     """
 
+    @deprecated("2.0", "mindspore.ops.operations.Poisson", False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize Poisson"""
