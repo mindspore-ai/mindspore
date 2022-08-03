@@ -18,6 +18,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
+from mindspore.ops import functional as F
 import mindspore.ops.operations as P
 
 
@@ -130,3 +131,33 @@ def test_cpu_float16():
     expect1 = np.array(332.75).astype(np.float16)
     assert output0.asnumpy() == expect0
     assert output1.asnumpy() == expect1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_square_sum_all():
+    """
+    Feature: SquareSumAll cpu op vmap feature.
+    Description: test the vmap feature of SquareSumAll.
+    Expectation: success.
+    """
+    def manually_batched(op, inp0, inp1):
+        out0_manual = []
+        out1_manual = []
+        for i in range(inp0.shape[0]):
+            out = op(inp0[i], inp1[i])
+            out0_manual.append(out[0])
+            out1_manual.append(out[1])
+        return (F.stack(out0_manual), F.stack(out1_manual))
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    inp0 = Tensor(np.arange(0, 10, 1).reshape(2, 5).astype(np.float32))
+    inp1 = Tensor(np.arange(0, 10, 1).reshape(2, 5).astype(np.float32))
+    net = Net()
+    out_manual = manually_batched(net, inp0, inp1)
+    out_vmap = F.vmap(net, in_axes=(0, 0))(inp0, inp1)
+
+    assert out_manual[0][0] == out_vmap[0][0]
+    assert out_manual[0][1] == out_vmap[0][1]
+    assert out_manual[1][0] == out_vmap[1][0]
+    assert out_manual[1][1] == out_vmap[1][1]
