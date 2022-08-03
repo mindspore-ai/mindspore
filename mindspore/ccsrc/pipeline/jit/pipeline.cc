@@ -1684,6 +1684,9 @@ void MemoryRecycle() {
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
   trace::ClearTraceStack();
+  pynative::PynativeExecutor::GetInstance()->ClearRes();
+  ConfigManager::GetInstance().ResetConfig();
+  ScopeManager::GetInstance().ClearScope();
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 
