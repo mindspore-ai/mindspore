@@ -50,7 +50,7 @@ std::vector<int> DecodeExecutor::ConstructMaskArray(int seed, float upload_spars
 bool DecodeExecutor::DeQuantSparseDiff(std::map<std::string, std::vector<float>> *weight_map,
                                        const std::vector<CompressFeatureMap> &compress_feature_maps, size_t num_bits,
                                        float upload_sparse_rate, int seed, const std::vector<std::string> &name_vec,
-                                       size_t data_size) {
+                                       size_t data_size) const {
   std::vector<std::vector<float>> decompress_feature_maps;
 
   // origin parameters
