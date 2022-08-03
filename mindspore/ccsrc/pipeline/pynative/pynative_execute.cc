@@ -1118,24 +1118,20 @@ void UpdateValueToDynamicShape(const ValuePtr &value,
   }
 }
 
-ValuePtr SetSensValue(const ValuePtr &value, TensorIdWithTensorObject *tensor_id_with_tensor_object) {
+ValuePtr SetSensValue(const ValuePtr &value, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(tensor_id_with_tensor_object);
+  MS_EXCEPTION_IF_NULL(top_cell);
   if (value->isa<ValueTuple>()) {
     ValuePtrList values;
     auto value_tuple = value->cast<ValueTuplePtr>();
     (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
-                         [tensor_id_with_tensor_object](const ValuePtr &elem) {
-                           return SetSensValue(elem, tensor_id_with_tensor_object);
-                         });
+                         [&top_cell](const ValuePtr &elem) { return SetSensValue(elem, top_cell); });
     return std::make_shared<ValueTuple>(values);
   } else if (value->isa<ValueList>()) {
     ValuePtrList values;
     auto value_list = value->cast<ValueTuplePtr>();
     (void)std::transform(value_list->value().begin(), value_list->value().end(), std::back_inserter(values),
-                         [tensor_id_with_tensor_object](const ValuePtr &elem) {
-                           return SetSensValue(elem, tensor_id_with_tensor_object);
-                         });
+                         [&top_cell](const ValuePtr &elem) { return SetSensValue(elem, top_cell); });
     return std::make_shared<ValueList>(values);
   } else if (value->isa<tensor::Tensor>()) {
     auto tensor_value = value->cast<tensor::TensorPtr>();
@@ -1144,7 +1140,7 @@ ValuePtr SetSensValue(const ValuePtr &value, TensorIdWithTensorObject *tensor_id
     sens_tensor->set_base_shape(tensor_value->base_shape_ptr());
     MS_LOG(DEBUG) << "Make new tensor for sens id " << sens_tensor->id() << ", abstract "
                   << sens_tensor->ToAbstract()->ToString();
-    (void)(*tensor_id_with_tensor_object)[sens_tensor->id()].emplace_back(sens_tensor);
+    top_cell->SetTensorIdWithTensorObject(sens_tensor->id(), sens_tensor);
     return sens_tensor;
   } else {
     return value;
@@ -2475,7 +2471,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
     TensorValueToTensor(value_node->value(), &tensors_in_bprop_graph);
   }
   // Check exception case.
-  auto &tensor_id_with_tensor_object = top_cell()->tensor_id_with_tensor_object();
+  const auto &tensor_id_with_tensor_object = top_cell()->tensor_id_with_tensor_object();
   MS_LOG(DEBUG) << "Current tensor_id_with_tensor_object size " << tensor_id_with_tensor_object.size();
   // Save tensor in value node of bprop graph
   for (const auto &tensor : tensors_in_bprop_graph) {
@@ -2484,7 +2480,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
       continue;
     }
     tensor->set_is_forward_output(true);
-    (void)tensor_id_with_tensor_object[tensor->id()].emplace_back(tensor);
+    top_cell()->SetTensorIdWithTensorObject(tensor->id(), tensor);
     MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
                   << " device address: " << tensor->device_address() << " shape and dtype "
                   << tensor->GetShapeAndDataTypeInfo();
@@ -3306,7 +3302,7 @@ ValuePtr GradExecutor::GetSensValueForDynamicShapeOutput(const py::object &out, 
   }
   MS_LOG(DEBUG) << "Set sens value with op info: " << kSensInfo;
   // Create sens value
-  auto sens_value = SetSensValue(out_value, &(top_cell()->tensor_id_with_tensor_object()));
+  auto sens_value = SetSensValue(out_value, top_cell());
   // Ready for replace
   std::vector<tensor::TensorPtr> all_op_tensors;
   // Get output tensors
@@ -4057,7 +4053,7 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
       continue;
     }
     // Second graph no this weight param, need add to second graph
-    if (!params_weights_set.count(fir.first)) {
+    if (params_weights_set.count(fir.first) == 0) {
       MS_LOG(DEBUG) << "Can't find " << fir.first << " in outer graph, add it";
       second_df_builder->add_parameter(fir.second);
       SetParamNodeMapInGraphInfoMap(second_df_builder, fir.first, fir.second);
@@ -4314,7 +4310,7 @@ py::object PynativeExecutor::GetDynamicInput(const py::object &actual_input) con
   return forward_executor()->GetDynamicInput(actual_input);
 }
 
-void PynativeExecutor::set_py_exe_path(const py::object &py_exe_path) {
+void PynativeExecutor::set_py_exe_path(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
@@ -4447,7 +4443,7 @@ void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::obj
   PynativeExecutorTry(grad_executor()->GradGraph, &ret, grad, cell, weights, grad_position, args);
 }
 
-void PynativeExecutor::Sync() {
+void PynativeExecutor::Sync() const {
   ExecuteLazyTask();
 
   mindspore::ScopedLongRunning long_running;
@@ -4470,7 +4466,7 @@ void PynativeExecutor::Sync() {
   }
 }
 
-void PynativeExecutor::SetLazyBuild(bool enable) { forward_executor()->set_lazy_build(enable); }
+void PynativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set_lazy_build(enable); }
 
 bool PynativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
