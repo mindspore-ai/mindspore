@@ -1114,7 +1114,7 @@ DebugServices::NPYFilePool DebugServices::PreProcessDumpDirSync(const std::strin
 
 void DebugServices::ProcessConvertList(const DumpFileMap &dump_dir_mapped_files,
                                        const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
-                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) const {
+                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) {
   MS_EXCEPTION_IF_NULL(dir_to_files_map);
   auto it = dump_dir_mapped_files.find(specific_dump_dir);
   if (it == dump_dir_mapped_files.end()) {
