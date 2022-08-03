@@ -121,18 +121,18 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     ResetFunctionCallDepth();
     ResetStackFrameDepth();
     AnalysisContextPtr dummy_context = AnalysisContext::DummyContext();
+    MS_LOG(DEBUG) << func_graph->ToString() << ": Run begin.";
     AnalysisContextPtr root_context = Run(func_graph, dummy_context, args_conf_list);
+    AnalysisSchedule::GetInstance().Wait();
     MS_EXCEPTION_IF_NULL(root_context);
     auto root_context_fg = root_context->func_graph();
     MS_EXCEPTION_IF_NULL(root_context_fg);
     AnfNodeConfigPtr output_conf = MakeConfig(root_context_fg->get_return(), root_context, root_context_fg);
     MS_EXCEPTION_IF_NULL(func_graph);
-    MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
+    MS_LOG(DEBUG) << func_graph->ToString() << ": Run finished.";
 
     MS_EXCEPTION_IF_NULL(output_conf);
     auto eval_result = output_conf->ObtainEvalResult();
-    // Set the sequence nodes' elements use flags all true.
-    SetSequenceElementsUseFlagsRecursively(eval_result->abstract(), true);
     result.eval_result = eval_result;
     result.context = root_context;
   } catch (const std::exception &ex) {
@@ -140,6 +140,10 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     AnalysisSchedule::GetInstance().HandleException(ex);
   }
   AnalysisSchedule::GetInstance().Wait();
+  MS_LOG(DEBUG) << func_graph->ToString() << ": Run end.";
+  // Set the sequence nodes' elements use flags all true.
+  SetSequenceElementsUseFlagsRecursively(result.eval_result->abstract(), true);
+  MS_LOG(DEBUG) << func_graph->ToString() << ":SetSequenceElementsUseFlagsRecursively Run end.";
   return result;
 }
 
@@ -811,14 +815,15 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
 }
 
 void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
-                   const std::string &thread_id, AsyncAbstractPtr async_result_branch,
-                   AsyncAbstractPtr async_result_main, AsyncInferTaskPtr async_task,
-                   const trace::TraceGraphEvalStack &graph_evals,
-                   const trace::TraceCNodeEvalStack &trace_c_node_evals) {
+                   std::string thread_id, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
+                   AsyncInferTaskPtr async_task, trace::TraceGraphEvalStack graph_evals,
+                   trace::TraceCNodeEvalStack trace_c_node_evals) {
   AnalysisSchedule::set_thread_id(thread_id);
   // Restore trace stack for dump stack when there is exception.
   trace::TraceEvalCNodeStackPrepare(trace_c_node_evals);
+  trace_c_node_evals.clear();
   trace::TraceGraphEvalStackPrepare(graph_evals);
+  graph_evals.clear();
 
   try {
     // Wait for Signal to run
@@ -829,9 +834,11 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     // Acquire GIL for eval to callback python.
     EvalResultPtr result;
     {
+      MS_LOG(DEBUG) << std::this_thread::get_id() << " begin.";
       py::gil_scoped_acquire py_guard;
       result = eval->Run(engine, args_conf_list, out_conf);
     }
+    MS_LOG(DEBUG) << std::this_thread::get_id() << " end.";
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->abstract());
 
@@ -849,6 +856,9 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     MS_LOG(INFO) << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString() << " threw exception.";
     AnalysisSchedule::GetInstance().HandleException(ex);
   }
+  trace::ClearTraceStack();
+  ClearThreadLocal();
+  MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " exited.";
   // Thread number will be drop when thread exits.
   AnalysisSchedule::GetInstance().DecreaseThreadCount();
 }
@@ -933,7 +943,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   // Release GIL for C++
+  MS_LOG(DEBUG) << std::this_thread::get_id() << " begin.";
   py::gil_scoped_release infer_gil_release;
+
+  // Only one thread to run
+  AnalysisSchedule::GetInstance().WaitForRun();
+
   // Wait for the last switch node to finish.
   MS_LOG(DEBUG) << GetInferThread() << "async : entry switch  " << out_conf->ToString();
   auto eval_result = AnalysisResultCacheMgr::GetInstance().GetSwitchValue(out_conf);
@@ -959,13 +974,13 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
     control_run_order->set_result(std::make_shared<AbstractScalar>(1));
     AsyncInferTaskPtr async_task = AsyncInferTask::MakeShared(control_run_order, thread_id);
-
     AnalysisSchedule::GetInstance().IncreaseThreadCount();
     MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluator->ToString();
     auto thread = std::thread(ExecEvaluator, evaluator, shared_from_this(), args_conf_list, out_conf, thread_id,
                               async_result_branch, async_result_main, async_task, trace::GetCurrentGraphEvalStack(),
                               trace::GetCNodeDebugStack());
     thread.detach();
+
     // Push to list of running loop
     MS_LOG(DEBUG) << " add to schedule: " << async_task.get();
     AnalysisSchedule::GetInstance().Add2Schedule(async_task);  // Activate order witch child thread.
@@ -996,6 +1011,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     }
   }
 
+  MS_LOG(DEBUG) << std::this_thread::get_id() << " finish.";
   const auto &processed_result = ProcessEvalResults(out_specs, out_conf->node());
   if (processed_result != nullptr) {
     // This is the final switch()() value.

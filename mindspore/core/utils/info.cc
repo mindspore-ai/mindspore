@@ -35,6 +35,11 @@ thread_local DebugInfoPtr record_debug_info_ = nullptr;
 thread_local bool record_debug_info_flag_ = false;
 }  // namespace
 
+void ClearThreadLocal() {
+  trace_context_stack_.clear();
+  record_debug_info_.reset();
+}
+
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
   std::string temp_line = line;
   if (col_begin < col_end && col_begin != -1 && col_end <= SizeToLong(temp_line.length()) &&
