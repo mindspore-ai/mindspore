@@ -372,12 +372,15 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""
     # For axis, it's value in Union[int, list, tuple]
+    logical_x_ndim = x_ndim - 1
     if isinstance(axis, int):
         axis = (axis,)
 
     batch_axis = ()
     if axis:
         for index in axis:
+            if index < 0:
+                index += logical_x_ndim
             if index < x_dim:
                 batch_axis = batch_axis + (index,)
             else:
