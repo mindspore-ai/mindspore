@@ -218,6 +218,8 @@ Reduction函数
     mindspore.ops.amax
     mindspore.ops.amin
     mindspore.ops.argmin
+    mindspore.ops.cummax
+    mindspore.ops.cummin
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
@@ -356,6 +358,7 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.index_add
+    mindspore.ops.index_fill
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
     mindspore.ops.gumbel_softmax
@@ -363,6 +366,7 @@ Array操作
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_set_diag
+    mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.meshgrid
     mindspore.ops.narrow
@@ -382,6 +386,7 @@ Array操作
     mindspore.ops.size
     mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
+    mindspore.ops.sparse_segment_mean
     mindspore.ops.split
     mindspore.ops.squeeze
     mindspore.ops.stack
@@ -480,6 +485,7 @@ Parameter操作函数
     mindspore.ops.scatter_mul
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
+    mindspore.ops.scatter_nd_max
     mindspore.ops.scatter_nd_min
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
