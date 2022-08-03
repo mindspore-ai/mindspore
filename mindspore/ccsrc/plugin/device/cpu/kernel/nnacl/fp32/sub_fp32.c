@@ -15,6 +15,7 @@
  */
 #include "nnacl/fp32/sub_fp32.h"
 #include "nnacl/sub_fp32_simd.h"
+#include "nnacl/errorcode.h"
 
 int ElementOptSub(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
   int index = 0;

@@ -43,7 +43,7 @@ abstract::ShapePtr GridSampler3DInferShape(const PrimitivePtr &primitive,
       << input_args[kInputIndex1]->BuildShape()->ToString() << " , and the shape of 'input_x' is "
       << input_args[kInputIndex0]->BuildShape()->ToString() << ".";
   }
-  if (grid_shape[kInputIndex4] != kInputIndex3) {
+  if (grid_shape[kInputIndex4] != static_cast<int64_t>(kInputIndex3)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of grid must be 3, but got "
                              << std::to_string(grid_shape[kInputIndex4]) << ".";
   }

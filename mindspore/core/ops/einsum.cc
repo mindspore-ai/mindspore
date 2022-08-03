@@ -62,7 +62,7 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       }
       idx += (kEinsumEllLen - 1);
       found_ell = true;
-      (*left_elements)[cur_element].emplace_back(kEinsumEllVal);
+      (void)(*left_elements)[cur_element].emplace_back(kEinsumEllVal);
     } else if (label == ',') {
       if ((found_ell && (*left_elements)[cur_element].size() > input_shapes[cur_element].size() + 1) ||
           (!found_ell && (*left_elements)[cur_element].size() != input_shapes[cur_element].size())) {
@@ -123,8 +123,8 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
       }
       idx += (kEinsumEllLen - 1);
       found_ell = true;
-      out_shape->insert(out_shape->end(), (*element_shape_map)[kEinsumEllVal].begin(),
-                        (*element_shape_map)[kEinsumEllVal].end());
+      (void)out_shape->insert(out_shape->end(), (*element_shape_map)[kEinsumEllVal].begin(),
+                              (*element_shape_map)[kEinsumEllVal].end());
     } else if (isalpha(right_equation[idx])) {
       auto val = char_to_index(right_equation[idx]);
       if (exit_flag[val]) {
@@ -147,8 +147,8 @@ static void seg_right_equation_without_arrow(const std::string &left_equation,
                                              const std::vector<int64_t> &element_count,
                                              std::vector<int64_t> *out_shape) {
   if (left_equation.find('.') != std::string::npos) {
-    out_shape->insert(out_shape->begin(), (*element_shape_map)[kEinsumEllVal].begin(),
-                      (*element_shape_map)[kEinsumEllVal].end());
+    (void)out_shape->insert(out_shape->begin(), (*element_shape_map)[kEinsumEllVal].begin(),
+                            (*element_shape_map)[kEinsumEllVal].end());
   }
   for (size_t idx = 0; idx < element_count.size(); ++idx) {
     if (element_count[idx] == 1) {
