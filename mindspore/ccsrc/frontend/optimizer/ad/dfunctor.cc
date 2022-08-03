@@ -198,12 +198,12 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     // Replace hook node with make tuple node.
     abstract::AbstractBasePtrList multi_output_abs;
     std::vector<AnfNodePtr> multi_output_nodes{NewValueNode(prim::kPrimMakeTuple)};
-    std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
-                  [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
-                    MS_EXCEPTION_IF_NULL(inp);
-                    (void)multi_output_nodes.emplace_back(inp);
-                    (void)multi_output_abs.emplace_back(inp->abstract());
-                  });
+    (void)std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
+                        [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
+                          MS_EXCEPTION_IF_NULL(inp);
+                          (void)multi_output_nodes.emplace_back(inp);
+                          (void)multi_output_abs.emplace_back(inp->abstract());
+                        });
     auto primal_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(primal_graph);
     auto make_tuple = primal_graph->NewCNode(std::move(multi_output_nodes));

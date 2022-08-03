@@ -196,7 +196,7 @@ int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes) {
     }
     axis = axis < 0 ? shape_len + axis : axis;
     *in_axes = std::make_shared<Int64Imm>(axis);
-    axis_size = orig_shape[LongToSize(axis)];
+    axis_size = LongToInt(orig_shape[LongToSize(axis)]);
     return axis_size;
   }
   return axis_size;

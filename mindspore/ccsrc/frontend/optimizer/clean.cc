@@ -345,7 +345,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // dict(k0:v0, k1:v1, ...) --> tuple(v0, v1, ...)
-  ValueTuplePtr DictToTuple(const ValueDictionaryPtr &dict) {
+  ValueTuplePtr DictToTuple(const ValueDictionaryPtr &dict) const {
     const auto &elements = dict->value();
     std::vector<ValuePtr> values;
     values.reserve(elements.size());
