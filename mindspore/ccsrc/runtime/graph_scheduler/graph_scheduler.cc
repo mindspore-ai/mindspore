@@ -195,7 +195,7 @@ void IntHandler(int, siginfo_t *, void *) {
 #endif
 
 #ifdef WITH_BACKEND
-bool SendFinishTransform(const std::string &actor_set_name) {
+void SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
   auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
@@ -213,7 +213,6 @@ bool SendFinishTransform(const std::string &actor_set_name) {
   }
   MS_LOG(INFO) << "The transform finish info has been reported to the meta server for rank: " << cgn->rank_id()
                << " sub graph: " << actor_set_name;
-  return true;
 }
 
 bool QueryFinishTransform(const std::string &actor_set_name) {
@@ -256,7 +255,8 @@ void DoDisasterRecovery(const std::string &actor_set_name) {
 
       RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
 
-      ret = (SendFinishTransform(actor_set_name) && QueryFinishTransform(actor_set_name));
+      SendFinishTransform(actor_set_name);
+      ret = QueryFinishTransform(actor_set_name);
       if (!ret) {
         CollectiveManager::instance()->set_need_reinit(true);
         (void)CollectiveManager::instance()->Finalize();
@@ -517,12 +517,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
 
 #ifdef WITH_BACKEND
   if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
-    while (!SendFinishTransform(graph_compiler_info.name_)) {
-      MS_LOG(WARNING) << "Send finish transform graph failed.";
-      // The time interval for sending finish transform graph to scheduler.
-      constexpr uint32_t kWaitDuration = 10;
-      std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
-    }
+    SendFinishTransform(graph_compiler_info.name_);
   }
 #endif
 
