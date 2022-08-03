@@ -33,18 +33,18 @@ struct HashmapEntry {
   T step_;
   T tag_;
 
-  bool IsEmpty() { return tag_ == kNullTag; }
+  bool IsEmpty() const { return tag_ == kNullTag; }
 
-  bool IsUsing(const T train_step) { return step_ >= (train_step - 1); }
+  bool IsUsing(const T train_step) const { return step_ >= (train_step - 1); }
 
-  bool IsKey(const T emb_idx) { return key_ == emb_idx; }
+  bool IsKey(const T emb_idx) const { return key_ == emb_idx; }
 
   void SetEmpty() { tag_ = kNullTag; }
 };
 
 template <typename T>
 T HashFunc(const T key, const size_t m) {
-  return (T)(((kGoldenRatio * key) - floor(kGoldenRatio * key)) * m);
+  return static_cast<T>(((kGoldenRatio * key) - floor(kGoldenRatio * key)) * m);
 }
 }  // namespace mindspore
 

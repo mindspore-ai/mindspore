@@ -68,7 +68,9 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   int64_t count = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     T temp = input_x[i] - offset;
-    if (temp < 0 || temp >= max_num) continue;
+    if (temp < 0 || temp >= max_num) {
+      continue;
+    }
     filter_res[count] = temp;
     filter_idx[count] = static_cast<T>(i);
     count++;
