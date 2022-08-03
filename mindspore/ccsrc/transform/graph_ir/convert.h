@@ -290,7 +290,7 @@ class DfGraphConvertor {
 
   mindspore::HashMap<size_t, OutHandler> bypass_node_prev_handle_cache_;
   mindspore::HashMap<size_t, OutHandler> bypass_node_handle_cache_;
-  size_t case_call_input_size_;
+  size_t case_call_input_size_ = 0;
 };
 }  // namespace transform
 }  // namespace mindspore
