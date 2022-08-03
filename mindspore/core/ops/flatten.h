@@ -33,7 +33,7 @@ class MIND_API Flatten : public BaseOperator {
   /// \brief Constructor.
   Flatten() : BaseOperator(kNameFlatten) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Flatten for the inputs.
-  void Init(const int64_t axis = 0);
+  void Init(const int64_t axis = 1);
   /// \brief Set axis.
   void set_axis(const int64_t axis);
   /// \brief Get axis.
