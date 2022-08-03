@@ -75,8 +75,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   const int64_t out_rows = out_backprop_shape_[kShapeIndexH];
   const int64_t out_cols = out_backprop_shape_[kShapeIndexW];
   const int64_t out_depth = out_backprop_shape_[kShapeIndexC];
-  int64_t row_seq_nums = inputs[2]->size / sizeof(int64_t);
-  int64_t col_seq_nums = inputs[3]->size / sizeof(int64_t);
+  int64_t row_seq_nums = SizeToLong(inputs[2]->size / sizeof(int64_t));
+  int64_t col_seq_nums = SizeToLong(inputs[3]->size / sizeof(int64_t));
   if (row_seq_nums <= out_rows) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', given 'out_backprop' shape [" << out_batch << ","
                              << out_rows << "," << out_cols << "," << out_depth
@@ -98,12 +98,11 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
     if (orig_input_tensor_shape[i] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                                << "', each dimension of input 'orig_input_tensor_shape' must be greater than 0.";
-      return false;
     }
     out_shape.push_back(orig_input_tensor_shape[i]);
   }
 
-  size_t output_nums = in_batch * in_rows * in_cols * in_depth;
+  size_t output_nums = LongToSize(in_batch * in_rows * in_cols * in_depth);
   std::vector<double> in_backprop_tensor_temp(output_nums);
   for (size_t i = 0; i < output_nums; i++) {
     in_backprop_tensor_temp[i] = 0;
@@ -122,8 +121,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
         const int64_t height_start = *(row_seq + hs);
         int64_t height_end = overlapping_ ? *(row_seq + hs + 1) : *(row_seq + hs + 1) - 1;
         height_end = std::min(height_end, height_max);
-        FractionalAvgPoolGradCompute(out_cols, col_seq, height_start, height_end, b, hs, out_rows, out_depth, in_rows,
-                                     in_cols, out_backprop_mat, in_backprop_tensor_temp_mat);
+        FractionalAvgPoolGradCompute(out_cols, col_seq, height_start, height_end, SizeToLong(b), hs, out_rows,
+                                     out_depth, in_rows, in_cols, out_backprop_mat, in_backprop_tensor_temp_mat);
       }
     }
   };
@@ -137,10 +136,10 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
 }
 
 template <typename T>
-bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(
-  const int64_t out_cols, int64_t *col_seq, const int64_t height_start, int64_t height_end, int64_t b, size_t hs,
+void FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(
+  const int64_t out_cols, const int64_t *col_seq, const int64_t height_start, int64_t height_end, int64_t b, int64_t hs,
   const int64_t out_rows, const int64_t out_depth, const int64_t in_rows, const int64_t in_cols,
-  Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> out_backprop_mat,
+  const Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> &out_backprop_mat,
   Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> in_backprop_tensor_temp_mat) {
   const int64_t width_max = in_cols - 1;
   for (int64_t ws = 0; ws < out_cols; ++ws) {
@@ -166,7 +165,6 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(
       }
     }
   }
-  return true;
 }
 
 std::vector<std::pair<KernelAttr, FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradFunc>>
@@ -202,8 +200,8 @@ std::vector<std::pair<KernelAttr, FractionalAvgPoolGradCpuKernelMod::FractionalA
 
 std::vector<KernelAttr> FractionalAvgPoolGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, FractionalAvgPoolGradFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, FractionalAvgPoolGradFunc> &pair) { return pair.first; });
 
   return support_list;
 }
