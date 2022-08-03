@@ -1081,6 +1081,9 @@ def slice(input_x, begin, size):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
         ...                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
@@ -4091,10 +4094,10 @@ def top_k(input_x, k, sorted=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
-        >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> input_x = Tensor([1, 2, 3, 4, 5], ms.float16)
+        >>> from mindspore import ops
+        >>> import mindspore
+        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
         >>> values, indices = ops.top_k(input_x, k, sorted=True)
         >>> print((values, indices))

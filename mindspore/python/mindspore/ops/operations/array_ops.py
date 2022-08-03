@@ -2338,6 +2338,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import mindspore
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
@@ -2955,6 +2958,9 @@ class Slice(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
         ...                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
@@ -7515,13 +7521,12 @@ class TopK(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.nn_ops import TopK
-        >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> top_k = TopK(sorted=True)
-        >>> input_x = Tensor([1, 2, 3, 4, 5], ms.float16)
+        >>> from mindspore import ops
+        >>> import mindspore
+        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
-        >>> values, indices = top_k(input_x, k)
+        >>> values, indices = ops.TopK(sorted=True)(input_x, k)
         >>> print((values, indices))
         (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
           dtype=Int32, value= [4, 3, 2]))
