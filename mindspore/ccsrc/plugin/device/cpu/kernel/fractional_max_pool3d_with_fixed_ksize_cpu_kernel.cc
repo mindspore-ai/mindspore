@@ -15,7 +15,6 @@
  */
 #include "plugin/device/cpu/kernel/fractional_max_pool3d_with_fixed_ksize_cpu_kernel.h"
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <limits>
 #include <utility>
@@ -222,7 +221,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::v
         }
       }
     };
-    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_with_fixed_ksize, inputN_);
+    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_with_fixed_ksize, LongToSize(inputN_));
   }
   return true;
 }
@@ -278,14 +277,14 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixed
 template <typename scalar_t, typename random_sample_t>
 bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs,
                                                                             const std::vector<AddressPtr> &outputs,
-                                                                            TypeId argmax_type_) {
-  switch (argmax_type_) {
+                                                                            TypeId argmax_type) {
+  switch (argmax_type) {
     case kNumberTypeInt32:
       return ComputeTemplate<scalar_t, random_sample_t, int32_t>(inputs, outputs);
     case kNumberTypeInt64:
       return ComputeTemplate<scalar_t, random_sample_t, int64_t>(inputs, outputs);
     default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type_
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type
                               << "not support, must be in [{DT_INT32, DT_INT64}].";
       return false;
   }
@@ -293,8 +292,8 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(cons
 
 template <typename scalar_t>
 bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(
-  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, TypeId random_samples_type_) {
-  switch (random_samples_type_) {
+  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, TypeId random_samples_type) {
+  switch (random_samples_type) {
     case kNumberTypeFloat16:
       return DoComputeWithArgmaxType<scalar_t, float16>(inputs, outputs, argmax_type_);
     case kNumberTypeFloat32:
@@ -302,7 +301,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesTy
     case kNumberTypeFloat64:
       return DoComputeWithArgmaxType<scalar_t, double>(inputs, outputs, argmax_type_);
     default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'random_samples'" << random_samples_type_
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'random_samples'" << random_samples_type
                               << "not support, must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE}].";
       return false;
   }

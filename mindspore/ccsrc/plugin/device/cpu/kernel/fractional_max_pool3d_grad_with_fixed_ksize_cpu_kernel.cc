@@ -15,7 +15,6 @@
  */
 #include "plugin/device/cpu/kernel/fractional_max_pool3d_grad_with_fixed_ksize_cpu_kernel.h"
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <limits>
 #include <utility>
@@ -70,40 +69,26 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
     d_dim_ = kFormatNCDHWIndexD;
     h_dim_ = kFormatNCDHWIndexH;
     w_dim_ = kFormatNCDHWIndexW;
-    if (input_shape_.size() == kDimSize5) {
-      inputN_ = input_shape_[0];
-      c_dim_++;
-      d_dim_++;
-      h_dim_++;
-      w_dim_++;
-    }
-    inputC_ = input_shape_[c_dim_];
-    inputD_ = input_shape_[d_dim_];
-    inputH_ = input_shape_[h_dim_];
-    inputW_ = input_shape_[w_dim_];
-    outputD_ = out_backprop_shape_[d_dim_];
-    outputH_ = out_backprop_shape_[h_dim_];
-    outputW_ = out_backprop_shape_[w_dim_];
   } else {
     c_dim_ = kFormatNDHWCIndexC;
     d_dim_ = kFormatNDHWCIndexD;
     h_dim_ = kFormatNDHWCIndexH;
     w_dim_ = kFormatNDHWCIndexW;
-    if (input_shape_.size() == kDimSize5) {
-      inputN_ = input_shape_[0];
-      c_dim_++;
-      d_dim_++;
-      h_dim_++;
-      w_dim_++;
-    }
-    inputC_ = input_shape_[c_dim_];
-    inputD_ = input_shape_[d_dim_];
-    inputH_ = input_shape_[h_dim_];
-    inputW_ = input_shape_[w_dim_];
-    outputD_ = out_backprop_shape_[d_dim_];
-    outputH_ = out_backprop_shape_[h_dim_];
-    outputW_ = out_backprop_shape_[w_dim_];
   }
+  if (input_shape_.size() == kDimSize5) {
+    inputN_ = input_shape_[0];
+    c_dim_++;
+    d_dim_++;
+    h_dim_++;
+    w_dim_++;
+  }
+  inputC_ = input_shape_[c_dim_];
+  inputD_ = input_shape_[d_dim_];
+  inputH_ = input_shape_[h_dim_];
+  inputW_ = input_shape_[w_dim_];
+  outputD_ = out_backprop_shape_[d_dim_];
+  outputH_ = out_backprop_shape_[h_dim_];
+  outputW_ = out_backprop_shape_[w_dim_];
   if (!(input_dims == kDimSize4 || input_dims == kDimSize5)) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_
                             << "', the dimension of 'input' must be equal to 4 or 5, but got " << input_dims << ".";
@@ -172,7 +157,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
         }
       }
     };
-    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_grad_with_fixed_ksize, inputC_);
+    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_grad_with_fixed_ksize, LongToSize(inputC_));
   } else {
     auto shard_fractional_max_pool3d_grad_with_fixed_ksize = [&](size_t start, size_t end) {
       for (auto batch = start; batch < end; ++batch) {
@@ -199,7 +184,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
         }
       }
     };
-    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_grad_with_fixed_ksize, inputN_);
+    CPUKernelUtils::ParallelFor(shard_fractional_max_pool3d_grad_with_fixed_ksize, LongToSize(inputN_));
   }
   return true;
 }
@@ -207,17 +192,17 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
 template <typename backprop_t>
 bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs,
                                                                                 const std::vector<AddressPtr> &outputs,
-                                                                                TypeId argmax_type_) {
-  switch (argmax_type_) {
+                                                                                TypeId argmax_type) {
+  switch (argmax_type) {
     case kNumberTypeInt32:
       return GradComputeTemplate<backprop_t, int32_t>(inputs, outputs);
     case kNumberTypeInt64:
       return GradComputeTemplate<backprop_t, int64_t>(inputs, outputs);
     default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type_
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type
                               << "not support, must be in [{DT_INT32, DT_INT64}].";
-      return false;
   }
+  return false;
 }
 
 bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
