@@ -47,6 +47,7 @@ from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import NextAfter
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Orgqr
+from mindspore.ops.operations.math_ops import CompareAndBitpack
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations import nn_ops as nps
@@ -1352,6 +1353,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[2, 3, 4]], np.float32)),
                         Tensor(np.array([[2, 3, 4]], np.float32))],
         'desc_bprop': [Tensor(np.array([[2, 3, 4]], np.float32))]}),
+    ('CompareAndBitpack', {
+        'block': CompareAndBitpack(),
+        'desc_inputs': [Tensor([[1, 2, 3, 4, 5, 6, 7, 8]], mstype.float32),
+                        Tensor(3, mstype.float32)],
+        'skip': ['backward']}),
     ('Cross', {
         'block': P.Cross(dim=1),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),

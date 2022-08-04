@@ -6842,6 +6842,48 @@ class NextAfter(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
 
 
+class CompareAndBitpack(Primitive):
+    """
+    Compare values of `x` to `threshold` and pack resulting bits into a `uint8`.
+
+    Each comparison returns a boolean true (if x_value > threshold) or and false otherwise.
+
+    Given an `x` shaped `[s0, s1, ..., s_n]`, the output is a `uint8` tensor shaped `[s0, s1, ..., s_n / 8]`.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor. Values to compare against `threshold` and bitpack. The data type must be
+          bool, float16, float32, float64, int8, int16, int32, int64.
+          Note: Currently, the innermost dimension of the tensor must be divisible by 8.
+        - **threshold** (Tensor) - A 0D Tensor, whose data type is same as x.
+
+    Outputs:
+        Tensor, has the uint8 type.
+
+    Raises:
+        TypeError: If `x` or `threshold` is not a Tensor.
+        TypeError: If the dtype of 'x' is not one of: bool, float16, float32, float64, int8, int16, int32, int64.
+        TypeError: If `threshold`'s type is not as same 'x'.
+        ValueError: If `threshold` is not a 0D Tensor.
+        ValueError: If `x` is a 0D Tensor.
+        ValueError: If the innermost dimension of `x`'s shape is not disvisible by 8.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32)
+        >>> threshold = Tensor(6, mindspore.float32)
+        >>> net = ops.CompareAndBitpack()
+        >>> output = net(x, threshold)
+        >>> print(output)
+        [3]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CompareAndBitPack"""
+
+
 class Orgqr(Primitive):
     r"""
     Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch

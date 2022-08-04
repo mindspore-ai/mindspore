@@ -284,6 +284,7 @@ from .cholesky import _cholesky_aicpu
 from .sspaddmm import _sspaddmm_aicpu
 from .cholesky_solve import _cholesky_solve_aicpu
 from .resize_area import _resize_area_aicpu
+from .compare_and_bitpack import _compare_and_bitpack_aicpu
 from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
 from .addcdiv import _addcdiv_aicpu
 from . left_shift import _left_shift_aicpu
