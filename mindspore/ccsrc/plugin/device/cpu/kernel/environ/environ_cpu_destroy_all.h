@@ -33,7 +33,7 @@ class EnvironDestroyAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &node);
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeBool)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
 };

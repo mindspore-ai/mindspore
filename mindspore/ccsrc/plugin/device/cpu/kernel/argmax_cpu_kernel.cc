@@ -66,7 +66,7 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
       int64_t src_index_j = src_index_i + j;
       for (int64_t k = 0; k < dim_axis_; k++) {
         auto src_index_k = LongToSize(k * num_after_axis_ + src_index_j);
-        array_axis[k] = static_cast<float>(input[src_index_k]);
+        array_axis[LongToSize(k)] = static_cast<float>(input[src_index_k]);
       }
       auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
       auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));

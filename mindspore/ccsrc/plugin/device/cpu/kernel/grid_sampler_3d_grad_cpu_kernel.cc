@@ -55,7 +55,7 @@ void GridSampler3DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   stride_compute(dgrid_stride_, dgrid_shape_);
   interpolation_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
   padding_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
-  align_corners = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
 }
 
 bool GridSampler3DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -184,9 +184,9 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
         T y = grid_addr[grid_ptr_NDHW + grid_stride_[kFour]];
         T z = grid_addr[grid_ptr_NDHW + kTwo * grid_stride_[kFour]];
         T gx_mult, gy_mult, gz_mult;
-        x = grid_sampler_compute_source_index_set_grad(x, x_shape_[kFour], padding_mode, align_corners, &gx_mult);
-        y = grid_sampler_compute_source_index_set_grad(y, x_shape_[kThree], padding_mode, align_corners, &gy_mult);
-        z = grid_sampler_compute_source_index_set_grad(z, x_shape_[kTwo], padding_mode, align_corners, &gz_mult);
+        x = grid_sampler_compute_source_index_set_grad(x, x_shape_[kFour], padding_mode, align_corners_, &gx_mult);
+        y = grid_sampler_compute_source_index_set_grad(y, x_shape_[kThree], padding_mode, align_corners_, &gy_mult);
+        z = grid_sampler_compute_source_index_set_grad(z, x_shape_[kTwo], padding_mode, align_corners_, &gz_mult);
         if (interpolation_mode == "bilinear") {
           size_t grad_ptr_NCDHW =
             n * grad_stride_[kZero] + d * grad_stride_[kTwo] + h * grad_stride_[kThree] + w * grad_stride_[kFour];

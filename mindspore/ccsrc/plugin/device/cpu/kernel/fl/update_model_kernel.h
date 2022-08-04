@@ -138,7 +138,7 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) { return; }
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    static const std::vector<KernelAttr> support_list = {
       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
