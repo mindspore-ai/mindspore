@@ -705,8 +705,8 @@ class Reshape(PrimitiveWithInfer):
             max_shape = list(shape_v)
             min_shape = list(shape_v)
             if neg_index != -1:
-                max_shape[neg_index] = max_arr_prod // dim_prod
-                min_shape[neg_index] = min_arr_prod // dim_prod
+                max_shape[neg_index] = int(max_arr_prod // dim_prod)
+                min_shape[neg_index] = int(min_arr_prod // dim_prod)
             out['max_shape'] = tuple(max_shape)
             out['min_shape'] = tuple(min_shape)
         return out
@@ -720,7 +720,7 @@ class Reshape(PrimitiveWithInfer):
                              f"The product of 'input_shape' should > 0, but got {dim_prod}.")
         arr_prod = np.prod(x_shp)
         if neg_index != -1:
-            shape_v[neg_index] = arr_prod // dim_prod
+            shape_v[neg_index] = int(arr_prod // dim_prod)
             dim_prod *= shape_v[neg_index]
         if dim_prod != arr_prod:
             raise ValueError(f"For '{self.name}', the product of the 'input_x' shape "
