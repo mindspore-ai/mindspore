@@ -535,7 +535,8 @@ bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
   return false;
 }
 
-void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution) {
+void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution,
+                        const NodeUsersMap &node_users_map) {
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -552,9 +553,8 @@ void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tenso
   }
 
   // Find Redistribution next_nodes
-  auto node_users_map = manager->node_users();
   std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> next_nodes;
-  RedistributionNextNode(cnode, manager, &node_users_map, -1, &next_nodes);
+  RedistributionNextNode(cnode, manager, node_users_map, -1, &next_nodes);
 
   // Insert Redistribution nodes between pre_nodes and next_nodes
   for (auto &pre_node : pre_nodes) {
@@ -2477,12 +2477,13 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     }
   }
 
+  auto node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       if (IsValueNode<FuncGraph>(cnode->input(0))) {
-        StepRedistribution(cnode, tensor_redistribution);
+        StepRedistribution(cnode, tensor_redistribution, node_users_map);
         continue;
       }
       // the make_tuple is parallel care node, but it may have not operator info
@@ -2503,7 +2504,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
         }
 
         // insert redistribution ops
-        StepRedistribution(cnode, tensor_redistribution);
+        StepRedistribution(cnode, tensor_redistribution, node_users_map);
       }
       // insert backward ops
       if (!IsControlFlowNode(cnode) && (has_backward || IsPynativeParallel())) {
