@@ -24,6 +24,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -87,6 +88,8 @@ void MaxPoolWithArgmax::Init(const std::vector<int64_t> &kernel_size, const std:
 namespace {
 abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->BuildShape())[kShape];
   Format format = Format(CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat)));
@@ -136,6 +139,18 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
     out_w = static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w)));
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  if (is_ascend || is_gpu) {
+    for (size_t i = 0; i < out_shape.size(); i++) {
+      if (out_shape[i] <= 0 && out_shape[i] != -1) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name << "',"
+                                 << " the each element of the output shape must be larger than 0, but got: "
+                                 << "output shape: [" << batch << ", " << channel << ", " << out_h << ", " << out_w
+                                 << "].";
+      }
+    }
+  }
 
   // Process attr mapping problems from mindspore to tbe
   // kernel_size -> ksize

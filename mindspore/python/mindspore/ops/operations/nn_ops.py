@@ -1810,7 +1810,7 @@ class MaxPoolV1(Primitive):
         self.add_prim_attr("strides", strides_adapted)
 
 
-class MaxPoolWithArgmax(_Pool):
+class MaxPoolWithArgmax(Primitive):
     r"""
     Performs max pooling on the input Tensor and returns both max values and indices.
 
@@ -1878,16 +1878,25 @@ class MaxPoolWithArgmax(_Pool):
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         """Initialize MaxPoolWithArgmax."""
-        super(MaxPoolWithArgmax, self).__init__(kernel_size, strides, pad_mode, data_format)
+        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'data_format' is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
+        self.kernel_size = _check_positive_int_or_tuple(
+            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
+        self.kernel_size = (1, self.kernel_size[-2], self.kernel_size[-1], 1)
+        self.add_prim_attr("kernel_size", self.kernel_size)
 
-    def infer_shape(self, x_shape):
-        out_shape = _Pool.infer_shape(self, x_shape)
-        return out_shape, out_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, (mstype.float16, mstype.float32), self.name)
-        argmax_dtype = mstype.int32
-        return x_dtype, argmax_dtype
+        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, allow_four=False, ret_four=True)
+        self.strides = (1, self.strides[-2], self.strides[-1], 1)
+        self.add_prim_attr("strides", self.strides)
 
 
 class MaxPool3D(PrimitiveWithInfer):
