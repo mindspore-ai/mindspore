@@ -240,7 +240,6 @@ void SingleOpInferSession::AssignInputNodeAddress(KernelGraphPtr kernel_graph) {
           fmt_shape.empty() ? type_size
                             : std::accumulate(fmt_shape.begin(), fmt_shape.end(), type_size, std::multiplies<size_t>());
         auto format = AnfAlgo::GetOutputFormat(item, index);
-        // auto address = CreateDeviceAddress(nullptr, tensor_size, format, output_type_id);
         auto address = CreateDeviceAddress(malloc(tensor_size), tensor_size, format, output_type_id);
         address->set_from_persistent_mem(true);
         AnfAlgo::SetOutputAddr(address, index, item.get());

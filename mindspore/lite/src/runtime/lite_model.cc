@@ -509,7 +509,6 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, minds
   auto model_loader = mindspore::infer::ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
   if (model_loader != nullptr) {
     MS_LOG(INFO) << "import model from model loader";
-    // return nullptr;
     auto model = model_loader->ImportModel(model_buf, size, true);
     if (model != nullptr) {
       return model;

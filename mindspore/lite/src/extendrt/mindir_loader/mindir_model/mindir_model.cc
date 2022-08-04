@@ -42,12 +42,7 @@ int MindirModel::ConvertTensors(std::vector<mindspore::lite::Tensor *> *lite_ten
   auto model_output_indices = this->graph_.output_indices_;
 
   for (uint32_t i = 0; i < tensor_count; ++i) {
-    // auto *src_tensor = reinterpret_cast<const mind_ir::TensorProto *>(this->all_mindir_tensors_[i]);
     auto src_tensor = this->all_mindir_tensors_[i];
-    // if (src_tensor == nullptr) {
-    //   MS_LOG(ERROR) << i << "th tensor in model is nullptr";
-    //   return RET_NULL_PTR;
-    // }
     auto *dst_tensor = ConvertTensor(src_tensor);
     if (dst_tensor == nullptr) {
       MS_LOG(ERROR) << "Convert new " << i << "th tensor failed!";
@@ -176,10 +171,7 @@ void MindirModel::Free() {
   auto nodes_size = this->graph_.all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = this->graph_.all_nodes_[i];
-    // auto *primitive_shared_ptr =
-    //   reinterpret_cast<std::shared_ptr<ops::BaseOperator> *>(const_cast<void *>(node->primitive_));
     auto *primitive_ptr = reinterpret_cast<ops::BaseOperator *>(const_cast<void *>(node->primitive_));
-    // delete primitive_shared_ptr;
     delete primitive_ptr;
     node->primitive_ = nullptr;
   }
