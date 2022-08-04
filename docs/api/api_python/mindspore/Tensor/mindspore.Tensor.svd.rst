@@ -3,6 +3,8 @@ mindspore.Tensor.svd
 
 .. py:method:: mindspore.Tensor.svd(full_matrices=False, compute_uv=True)
 
+    计算单个或多个矩阵的奇异值分解。
+
     更多参考详见 :func:`mindspore.ops.svd`。
 
     参数：
