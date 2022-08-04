@@ -38,7 +38,7 @@ class CPUKernelRuntime : public KernelRuntime {
 
   bool Init();
   bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
-  void AssignKernelGraphAddress(session::KernelGraph *kernel_graph);
+  void AssignKernelGraphAddress(const session::KernelGraph *kernel_graph);
   void CreateOutputTensors(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                            VectorRef *outputs, std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
   void BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,

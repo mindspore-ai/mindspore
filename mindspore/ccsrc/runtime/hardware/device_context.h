@@ -182,7 +182,7 @@ class GraphExecutor {
   }
 
  protected:
-  DeviceContext *device_context_;
+  DeviceContext *device_context_{nullptr};
 
  private:
   template <class... Args>
@@ -212,7 +212,7 @@ class KernelExecutor {
   }
 
  protected:
-  DeviceContext *device_context_;
+  DeviceContext *device_context_{nullptr};
 
  private:
   template <class... Args>

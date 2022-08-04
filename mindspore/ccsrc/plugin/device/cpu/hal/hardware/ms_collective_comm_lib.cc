@@ -250,14 +250,18 @@ bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size
       return CollectiveOpsImpl::GetInstance().Broadcast<char>(send_buff, recv_buff, send_count, root_rank, node_,
                                                               group_info);
     case TypeId::kNumberTypeInt32:
-      [[fallthrough]] case TypeId::kNumberTypeInt : return CollectiveOpsImpl::GetInstance().Broadcast<int32_t>(
-                                                      send_buff, recv_buff, send_count, root_rank, node_, group_info);
+      [[fallthrough]];
+    case TypeId::kNumberTypeInt:
+      return CollectiveOpsImpl::GetInstance().Broadcast<int32_t>(send_buff, recv_buff, send_count, root_rank, node_,
+                                                                 group_info);
     case TypeId::kNumberTypeUInt64:
       return CollectiveOpsImpl::GetInstance().Broadcast<uint64_t>(send_buff, recv_buff, send_count, root_rank, node_,
                                                                   group_info);
     case TypeId::kNumberTypeFloat32:
-      [[fallthrough]] case TypeId::kNumberTypeFloat : return CollectiveOpsImpl::GetInstance().Broadcast<float>(
-                                                        send_buff, recv_buff, send_count, root_rank, node_, group_info);
+      [[fallthrough]];
+    case TypeId::kNumberTypeFloat:
+      return CollectiveOpsImpl::GetInstance().Broadcast<float>(send_buff, recv_buff, send_count, root_rank, node_,
+                                                               group_info);
     default:
       return false;
   }
