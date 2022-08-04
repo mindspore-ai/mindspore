@@ -241,6 +241,7 @@ Reduction函数
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
+    mindspore.ops.median
     mindspore.ops.min
     mindspore.ops.norm
     mindspore.ops.prod
