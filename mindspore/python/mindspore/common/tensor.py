@@ -4496,12 +4496,12 @@ class Tensor(Tensor_):
 
         Examples:
             >>> from mindspore import Tensor
-            >>> x = Tensor([1, 2, 3, 4])
+            >>> x = Tensor([1, 2, 3, 4]).astype('int32')
             >>> output = x.diag()
             >>> print(output)
-            [[1, 0, 0, 0],
-             [0, 2, 0, 0],
-             [0, 0, 3, 0],
+            [[1, 0, 0, 0]
+             [0, 2, 0, 0]
+             [0, 0, 3, 0]
              [0, 0, 0, 4]]
         """
         self._init_check()
