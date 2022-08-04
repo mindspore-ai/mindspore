@@ -121,12 +121,12 @@ class CostGraph {
   // Applying Edge Elimination in DP algorithm
   EdgePtr EliminationEdges(const std::vector<EdgePtr> &edges) const;
   // Applying Merge Elimination in DP algorithm
-  OperatorInfoPtr EliminationMerge(const OperatorInfoPtr &op);
+  OperatorInfoPtr EliminationMerge(const OperatorInfoPtr &op) const;
   void CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &op_cost_list,
                                          const CostPtrList &edge_cost_list, StrategyPtr tar_op_strategy,
                                          const CostPtrList &tar_cost_list, CostPtrList *tar_cost_list_new) const;
   // Applying Contract Elimination in DP algorithm
-  OperatorInfoPtr EliminationContract(const OperatorInfoPtr &op);
+  OperatorInfoPtr EliminationContract(const OperatorInfoPtr &op) const;
   void CreateContractEliminationSubCostList(StrategyPtr, const CostPtrList &, const CostPtrList &, StrategyPtr,
                                             const CostPtrList &, CostPtrList *) const;
 
@@ -134,7 +134,8 @@ class CostGraph {
   OperatorInfoPtr EliminationTriangle(const OperatorInfoPtr &elimi_op, const EdgePtr &edge_left_right);
   void CreateTriangleEliminationCostList(const OperatorInfoPtr &, const CostPtrList &, const CostPtrList &,
                                          const StrategyPtr &, const StrategyPtr &, const StrategyPtr &,
-                                         const CostPtrList &, const CostPtrList &, const CostPtrList &, CostPtrList *);
+                                         const CostPtrList &, const CostPtrList &, const CostPtrList &,
+                                         CostPtrList *) const;
   // Given the relevant costlist, create the TriangleElimination cost
   void CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, StrategyPtr left_op_stra,
                                             StrategyPtr right_op_stra, const CostPtr &right_op_cost,
@@ -146,7 +147,8 @@ class CostGraph {
   // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
   std::vector<EdgePtr> EliminationStar(const OperatorInfoPtr &op);
   void CreateStarEliminationCostList(std::vector<EdgePtr> &, const StrategyPtr &, const CostPtrList &,
-                                     const CostPtrList &, const StrategyPtr &, const CostPtrList &, CostPtrList *);
+                                     const CostPtrList &, const StrategyPtr &, const CostPtrList &,
+                                     CostPtrList *) const;
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
                                         CostPtrList &, CostPtrList &, CostPtrList *) const;
