@@ -62,10 +62,10 @@ TypePtr TensorScatterElementsInferType(const PrimitivePtr &primitive, const std:
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
   std::set<TypePtr> check_list(common_valid_types);
-  check_list.insert(kBool);
+  (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);
 }
 }  // namespace
@@ -75,7 +75,7 @@ AbstractBasePtr TensorScatterElementsInfer(const abstract::AnalysisEnginePtr &, 
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = TensorScatterElementsInferType(primitive, input_args);
   auto infer_shape = TensorScatterElementsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

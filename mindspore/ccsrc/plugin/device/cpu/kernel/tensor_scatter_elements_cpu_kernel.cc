@@ -41,7 +41,7 @@ int TensorScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs,
                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, KRET_RESIZE_FAILED);
   int ret = 0;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
@@ -76,7 +76,7 @@ int TensorScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (base_operator->HasAttr(kAttrAxis)) {
     axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrAxis));
     if (axis_ < 0) {
-      axis_ += input_dims_;
+      axis_ += static_cast<int64_t>(input_dims_);
     }
   }
 
@@ -104,13 +104,13 @@ int TensorScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   // calculate indices_stride
   indices_stride_.resize(input_dims_, 1);
   for (size_t i = input_dims_ - 1; i > 0; --i) {
-    indices_stride_[i - 1] = indices_stride_[i] * indices_shape_[i];
+    indices_stride_[i - 1] = indices_stride_[i] * static_cast<size_t>(indices_shape_[i]);
   }
 
   // calculate output_stride
   output_stride_.resize(input_dims_, 1);
   for (size_t i = input_dims_ - 1; i > 0; --i) {
-    output_stride_[i - 1] = output_stride_[i] * input_shape[i];
+    output_stride_[i - 1] = output_stride_[i] * static_cast<size_t>(input_shape[i]);
   }
   return KRET_OK;
 }

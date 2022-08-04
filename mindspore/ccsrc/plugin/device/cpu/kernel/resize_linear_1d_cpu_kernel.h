@@ -64,7 +64,7 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    CoordinateTransformationMode coordinate_transformation_mode);
+    CoordinateTransformationMode coordinate_transformation_mode) const;
 
   template <typename T>
   void ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
