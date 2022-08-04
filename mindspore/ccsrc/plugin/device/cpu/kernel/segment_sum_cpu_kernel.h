@@ -44,9 +44,9 @@ class SegmentSumCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   ShapeVector input_x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector output_shape_;
-  size_t input_x_num_;
-  size_t segment_ids_num_;
-  size_t output_num_;
+  size_t input_x_num_{0};
+  size_t segment_ids_num_{0};
+  size_t output_num_{0};
   TypeId input_x_dtype_{kTypeUnknown};
   TypeId segment_ids_dtype_{kTypeUnknown};
   TypeId output_dtype_{kTypeUnknown};
