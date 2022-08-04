@@ -136,7 +136,7 @@ class Edge {
 
   CostPtrList CreateOpEliminationCostList(const std::shared_ptr<Edge> &e1, const StrategyPtr &output_st_ptr,
                                           const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &e2,
-                                          const StrategyPtr &input_st_ptr);
+                                          const StrategyPtr &input_st_ptr) const;
   // In the Operation Elimination operation in DP algorithm, 'op', 'e1' and 'e2' are replaced by a new edge.
   // This method is used to set cost for this new edge
   void OpEliminationSetNewCost(const std::shared_ptr<Edge> &e1, const std::shared_ptr<OperatorInfo> &op,
