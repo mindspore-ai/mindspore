@@ -30,12 +30,12 @@ from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.composite import _Grad, Shard, _Vmap, _TaylorOperation
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
-from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
 typeof = Primitive('typeof')

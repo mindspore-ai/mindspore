@@ -19,10 +19,10 @@ from __future__ import absolute_import
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
-from ..primitive import Primitive
-from .. import operations as P
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from .grad_base import taylor_fprop_getters
+from mindspore.ops.primitive import Primitive
+from mindspore.ops import operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops._grad.grad_base import taylor_fprop_getters
 
 
 def _factorial(order):
