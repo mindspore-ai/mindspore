@@ -53,6 +53,8 @@ constexpr float kHalf = 0.5;                 // to get the half of a value
 constexpr dsize_t kRIndex = 0;               // index of red channel in RGB format
 constexpr dsize_t kGIndex = 1;               // index of green channel in RGB format
 constexpr dsize_t kBIndex = 2;               // index of blue channel in RGB format
+constexpr dsize_t kHeightIndex = 0;          // index of height of HWC images
+constexpr dsize_t kWidthIndex = 1;           // index of width of HWC images
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
@@ -326,9 +328,21 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 /// \param random_color: whether or not random fill value should be used
 /// \param fill_colors: vector of color fill values for erase
 /// \param is_hwc: Check if input is HWC/CHW format
-Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-             std::vector<uint8_t> fill_colors = {}, bool is_hwc = true);
+Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
+              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
+              std::vector<uint8_t> fill_colors = {}, bool is_hwc = true);
+
+/// \brief Erase the input image with given value
+/// \param input: input Tensor
+/// \param output: erase Tensor
+/// \param top: top of the cropped box
+/// \param left: left of the cropped box
+/// \param height: height of the cropped box
+/// \param width: width of the cropped box
+/// \param value: fill value for erase
+/// \param inplace: whether to apply erasing inplace
+Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
+             int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace);
 
 /// \brief Pads the input image and puts the padded image in the output
 /// \param input: input Tensor

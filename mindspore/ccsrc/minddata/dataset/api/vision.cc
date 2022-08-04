@@ -32,6 +32,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
 #include "minddata/dataset/kernels/ir/vision/horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
@@ -396,6 +397,26 @@ std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env
 Equalize::Equalize() = default;
 
 std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<EqualizeOperation>(); }
+
+// Erase Operation.
+struct Erase::Data {
+  Data(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace)
+      : top_(top), left_(left), height_(height), width_(width), value_(value), inplace_(inplace) {}
+  int32_t top_;
+  int32_t left_;
+  int32_t height_;
+  int32_t width_;
+  std::vector<uint8_t> value_;
+  bool inplace_;
+};
+
+Erase::Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace)
+    : data_(std::make_shared<Data>(top, left, height, width, value, inplace)) {}
+
+std::shared_ptr<TensorOperation> Erase::Parse() {
+  return std::make_shared<EraseOperation>(data_->top_, data_->left_, data_->height_, data_->width_, data_->value_,
+                                          data_->inplace_);
+}
 #endif  // not ENABLE_ANDROID
 
 // GaussianBlur Transform Operation.

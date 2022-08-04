@@ -312,6 +312,41 @@ class MS_API Equalize final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \brief Erase the input image with given value.
+class MS_API Erase final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] top Vertical ordinate of the upper left corner of erased region.
+  /// \param[in] left Horizontal ordinate of the upper left corner of erased region.
+  /// \param[in] height Height of erased region.
+  /// \param[in] width Width of erased region.
+  /// \param[in] value Pixel value used to pad the erased area.
+  ///     If a single integer is provided, it will be used for all RGB channels.
+  ///     If a sequence of length 3 is provided, it will be used for R, G, B channels respectively. Default: 0.
+  /// \param[in] inplace Whether to erase inplace. Default: False.
+  /// \par Example
+  /// \code
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
+  ///                             std::make_shared<vision::Erase>(10, 10, 10, 10)}, // operations
+  ///                            {"image"});                                        // input columns
+  /// \endcode
+  Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value = {0, 0, 0},
+        bool inplace = false);
+
+  /// \brief Destructor.
+  ~Erase() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Get the number of input image channels.
 /// \param[in] image Tensor of the image.
 /// \param[out] channels Channels of the image.
