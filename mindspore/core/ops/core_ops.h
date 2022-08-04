@@ -126,6 +126,8 @@ constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
 constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
 constexpr auto kTridiagonalMatMul = "TridiagonalMatMul";
 constexpr auto kFFTWithSize = "FFTWithSize";
+constexpr auto kTrace = "Trace";
+constexpr auto kTraceGrad = "TraceGrad";
 
 // Arrays
 constexpr auto kLeftShift = "LeftShift";

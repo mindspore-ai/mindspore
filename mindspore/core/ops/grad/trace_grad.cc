@@ -31,43 +31,59 @@ namespace {
 abstract::ShapePtr TraceGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-  auto x_shape = shape_map[kShape];
-  // TraceGrad x_shape must be 2
-  (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
-  // build Trace output shape
-  auto x = input_args[1]->BuildValue();
-  auto x_tensor = x->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(x_tensor);
-  auto data_size = x_tensor->DataSize();
-  auto type_id = x_tensor->data_type();
-  ShapeVector out_shape = {};
-  switch (type_id) {
-    case kNumberTypeInt32: {
-      int32_t *x_data = reinterpret_cast<int32_t *>(x_tensor->data_c());
-      for (size_t i = 0; i < data_size; ++i) {
-        out_shape.push_back(static_cast<int64_t>(x_data[i]));
+  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->BuildValue()->isa<AnyValue>() &&
+      !input_args[1]->BuildValue()->isa<None>()) {
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+    auto x_shape = shape_map[kShape];
+    // TraceGrad x_shape must be 2
+    (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
+    // build Trace output shape
+    auto x = input_args[1]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(x);
+    auto x_ptr = x->BuildValue();
+    MS_EXCEPTION_IF_NULL(x_ptr);
+    auto x_tensor = x_ptr->cast<tensor::TensorPtr>();
+
+    MS_EXCEPTION_IF_NULL(x_tensor);
+    auto data_size = x_tensor->DataSize();
+    auto type_id = x_tensor->data_type();
+    ShapeVector out_shape = {};
+    switch (type_id) {
+      case kNumberTypeInt32: {
+        int32_t *x_data = reinterpret_cast<int32_t *>(x_tensor->data_c());
+        for (size_t i = 0; i < data_size; ++i) {
+          out_shape.push_back(static_cast<int64_t>(x_data[i]));
+        }
+        break;
       }
-      break;
-    }
-    case kNumberTypeInt64: {
-      int64_t *x_data = reinterpret_cast<int64_t *>(x_tensor->data_c());
-      for (size_t i = 0; i < data_size; ++i) {
-        out_shape.push_back(static_cast<int64_t>(x_data[i]));
+      case kNumberTypeInt64: {
+        int64_t *x_data = reinterpret_cast<int64_t *>(x_tensor->data_c());
+        for (size_t i = 0; i < data_size; ++i) {
+          out_shape.push_back(static_cast<int64_t>(x_data[i]));
+        }
+        break;
       }
-      break;
+      default: {
+        MS_EXCEPTION(TypeError) << "For TraceGrad, the type of shape must be int32 or int64";
+      }
     }
-    default: {
-      MS_EXCEPTION(TypeError) << "For TraceGrad, the type of shape must be int32 or int64";
-    }
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else {
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+    auto x_shape = shape_map[kShape];
+    // TraceGrad x_shape must be 2
+    (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
+    auto infer_shape_max = shape_map[kMaxShape];
+    std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> infer_shape_min = {0};
+    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }
-  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr TraceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  const std::set<TypePtr> valid_grad_types = {kInt8,    kInt16, kInt32,  kInt64,  kFloat16, kFloat32,
-                                              kFloat64, kUInt8, kUInt16, kUInt32, kUInt64};
+  const std::set<TypePtr> valid_grad_types = {kInt8,  kInt16,  kInt32,  kInt64,  kFloat16,   kFloat32,   kFloat64,
+                                              kUInt8, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
   const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("x_shape", input_args[1]->BuildType(), valid_shape_types, prim->name());
   return CheckAndConvertUtils::CheckTypeValid("y_grad", input_args[0]->BuildType(), valid_grad_types, prim->name());

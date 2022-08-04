@@ -39,8 +39,8 @@ abstract::ShapePtr TraceInferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr TraceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
-  const std::set<TypePtr> valid_types = {kInt8,    kInt16, kInt32,  kInt64,  kFloat16, kFloat32,
-                                         kFloat64, kUInt8, kUInt16, kUInt32, kUInt64};
+  const std::set<TypePtr> valid_types = {kInt8,  kInt16,  kInt32,  kInt64,  kFloat16,   kFloat32,   kFloat64,
+                                         kUInt8, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return x_type;
 }

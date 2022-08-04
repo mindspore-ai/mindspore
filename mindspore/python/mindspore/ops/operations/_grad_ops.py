@@ -3182,12 +3182,12 @@ class TraceGrad(Primitive):
         ValueError: If length of shape of `x_shape` is not equal to 2.
 
     Support Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
     """
 
     @prim_attr_register
     def __init__(self):
-        pass
+        self.init_prim_io_names(inputs=['y_grad', 'x_shape'], outputs=['x_grad'])
 
 
 class IgammaGradA(Primitive):
