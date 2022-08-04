@@ -5478,7 +5478,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
         TypeError: If `paddings` is neither list nor tuple.
         ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
         ValueError: If the length of `block_shape` is not 2 on Ascend.
-        ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_shape`.
+        ValueError: If shape of `paddings` is not (M, 2), where M is the length of `block_shape`.
         ValueError: If the element of `block_shape` is not an integer larger than 1.
         ValueError: If the element of `paddings` is not an integer larger than 0.
 
@@ -5502,7 +5502,6 @@ class SpaceToBatchND(PrimitiveWithInfer):
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
         validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
-        validator.check('paddings length', len(paddings), 'default value', 2, Rel.EQ, self.name)
 
         if isinstance(block_shape, int):
             block_shape = (block_shape,) * np.array(paddings).shape[0]
