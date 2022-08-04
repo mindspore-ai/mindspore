@@ -29,6 +29,7 @@ void QuantParamHolder::set_input_quant_param(const size_t &index,
     this->input_quant_params_.insert(this->input_quant_params_.end(), index + 1 - input_quant_params_.size(),
                                      place_quant);
   }
+
   this->input_quant_params_.at(index) = input_quant_param;
 }
 
@@ -46,24 +47,20 @@ bool QuantParamHolder::IsInputQuantParamsInited() {
   if (this->input_quant_params_.empty()) {
     return false;
   }
-  for (auto &quant_param : this->input_quant_params_) {
-    if (!quant_param.front().inited) {
-      return false;
-    }
-  }
-  return true;
+  bool is_quant_params_inited =
+    std::all_of(this->input_quant_params_.begin(), this->input_quant_params_.end(),
+                [](const std::vector<schema::QuantParamT> &quant_params) { return quant_params.front().inited; });
+  return is_quant_params_inited;
 }
 
 bool QuantParamHolder::IsOutputQuantParamsInited() {
   if (this->output_quant_params_.empty()) {
     return false;
   }
-  for (auto &quant_param : this->output_quant_params_) {
-    if (!quant_param.front().inited) {
-      return false;
-    }
-  }
-  return true;
+  bool is_quant_params_inited =
+    std::all_of(this->output_quant_params_.begin(), this->output_quant_params_.end(),
+                [](const std::vector<schema::QuantParamT> &quant_params) { return quant_params.front().inited; });
+  return is_quant_params_inited;
 }
 
 void QuantParamHolder::ClearQuantParams() {
@@ -85,9 +82,7 @@ bool QuantParamHolder::CheckInit(size_t index, bool is_input) {
     }
     param = output_quant_params_.at(index);
   }
-  bool is_quant_params_inited = !std::any_of(
-    param.begin(), param.end(), [](const schema::QuantParamT &quant_param) { return !quant_param.inited; });
-  return is_quant_params_inited;
+  return (!param.empty() && param.front().inited);
 }
 
 void QuantParamHolder::SetQuantClusters(size_t index, const std::vector<float> &quant_cluster) {

@@ -28,8 +28,8 @@ std::pair<size_t, size_t> QuantTypeDeterminer::GetQuantParamsNum(const QuantPara
   auto input_inited_quant_params = 0;
   auto input_tensors = quant_holder->get_input_quant_params();
   for (auto input : input_tensors) {
-    bool is_quant_params_inited = !std::any_of(
-      input.begin(), input.end(), [](const schema::QuantParamT &quant_param) { return !quant_param.inited; });
+    bool is_quant_params_inited = std::all_of(
+      input.begin(), input.end(), [](const schema::QuantParamT &quant_param) { return quant_param.inited; });
     if (is_quant_params_inited) {
       input_inited_quant_params++;
     }
@@ -70,14 +70,41 @@ bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
   if (quant_holder->quant_type() != schema::QuantType_QUANT_NONE) {
     return quant_holder->quant_type() == schema::QuantType_QUANT_ALL;
   }
-
-  if (!quant_holder->IsInputQuantParamsInited() || !quant_holder->IsOutputQuantParamsInited()) {
+  if (!quant_holder->IsOutputQuantParamsInited()) {
     return false;
+  }
+  if (CheckNodeInSet(cnode, bias_ops_)) {
+    auto input_quant_params = quant_holder->get_input_quant_params();
+    MS_CHECK_TRUE_RET(!input_quant_params.empty(), false);
+    bool input_params_inited =
+      (!input_quant_params.at(kInputIndex).empty() && input_quant_params.at(kInputIndex).front().inited) &&
+      (!input_quant_params.at(kWeightIndex).empty() && input_quant_params.at(kWeightIndex).front().inited);
+    if (!input_params_inited || !quant_holder->IsOutputQuantParamsInited()) {
+      return false;
+    }
   }
 
   auto in_out_quant_params = GetQuantParamsNum(quant_holder);
   // Check quant param size is same as tensor size.
   auto input_size = (cnode->size() - kPrimOffset);
+  if (CheckNodeInSet(cnode, bias_ops_)) {
+    input_size -= kPrimOffset;
+  }
+  // exclude input(not fp32)
+  for (size_t index = 1; index < cnode->size(); ++index) {
+    CHECK_NULL_RETURN(cnode->input(index));
+    auto abstract_base = cnode->input(index)->abstract();
+    if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " index: " << index << " should be AbstractTensorPtr.";
+      return RET_ERROR;
+    }
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+    CHECK_NULL_RETURN(abstract_tensor);
+    CHECK_NULL_RETURN(abstract_tensor->element());
+    if (abstract_tensor->element()->GetTypeTrack()->type_id() != kNumberTypeFloat32) {
+      input_size -= kPrimOffset;
+    }
+  }
   auto output_size = opt::GetOutputSize(cnode);
   if (in_out_quant_params.first == input_size && in_out_quant_params.second == output_size) {
     quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
@@ -107,12 +134,12 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
     auto input = cnode->input(i);
     // non-constants(CNode) don't include quantization parameters
     if (input->isa<mindspore::CNode>()) {
-      if (quant_holder->CheckInit(i, true)) {
+      if (quant_holder->CheckInit(i - kPrimOffset, true)) {
         return false;
       }
     } else {
       // Constants have quantization parameters
-      if (quant_holder->CheckInit(i, true)) {
+      if (quant_holder->CheckInit(i - kPrimOffset, true)) {
         return true;
       }
     }

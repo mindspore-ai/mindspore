@@ -34,31 +34,6 @@
 #include "tools/converter/quantizer/cle_strategy.h"
 
 namespace mindspore::lite::quant {
-void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(all_func_graphs != nullptr);
-  all_func_graphs->insert(func_graph);
-  auto nodes = func_graph->GetOrderedCnodes();
-  std::deque<CNodePtr> to_process{};
-  to_process.insert(to_process.end(), nodes.begin(), nodes.end());
-  while (!to_process.empty()) {
-    auto &cur_cnode = to_process.front();
-    for (auto &input : cur_cnode->inputs()) {
-      if (!IsValueNode<FuncGraph>(input)) {
-        continue;
-      }
-      auto new_fg = GetValueNode<FuncGraphPtr>(input);
-      if (all_func_graphs->find(new_fg) != all_func_graphs->end()) {
-        continue;
-      }
-      all_func_graphs->insert(new_fg);
-      auto new_nodes = new_fg->GetOrderedCnodes();
-      to_process.insert(to_process.end(), new_nodes.begin(), new_nodes.end());
-    }
-    to_process.pop_front();
-  }
-}
-
 int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto quantizer = std::make_unique<FullQuantQuantizer>(param);
   if (quantizer == nullptr) {
@@ -301,7 +276,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 
 int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs{};
-  GetFuncGraphs(func_graph, &all_func_graphs);
+  quant::GetFuncGraphs(func_graph, &all_func_graphs);
   // Support for multi-subgraph models
   for (auto &item : all_func_graphs) {
     auto status = DoSingleGraphQuantize(item, param_);
