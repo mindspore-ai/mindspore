@@ -352,7 +352,7 @@ def _tensor_index_by_bool(data, bool_value):
 
 def check_range(x, dim_size):
     """Check whether x is within the range of dim_size"""
-    tensor_x = const_utils.scalar_to_tensor(x)
+    tensor_x = const_utils.make_tensor(x)
     if tensor_x >= dim_size or tensor_x < -dim_size:
         return tensor_x
     tensor_x = tensor_x % dim_size
@@ -362,8 +362,8 @@ def check_range(x, dim_size):
 def get_stride_info_from_integer(tensor_int):
     """Convert integer to slice"""
     begin_strides = [tensor_int]
-    end_strides = [tensor_int + const_utils.scalar_to_tensor(1)]
-    step_strides = [const_utils.scalar_to_tensor(1)]
+    end_strides = [tensor_int + const_utils.make_tensor(1)]
+    step_strides = [const_utils.make_tensor(1)]
     begin_tensor = stack(begin_strides)
     end_tensor = stack(end_strides)
     step_tensor = stack(step_strides)
@@ -478,20 +478,20 @@ def get_slice_stride(slice_index, dim_size):
     step = slice_get_item(slice_index, "step")
 
     if start is None:
-        start = const_utils.scalar_to_tensor(0)
+        start = const_utils.make_tensor(0)
     if stop is None:
         stop = dim_size
     if step is None:
-        step = const_utils.scalar_to_tensor(1)
+        step = const_utils.make_tensor(1)
 
     if F.issubclass_(F.typeof(start), mstype.number):
-        start = const_utils.scalar_to_tensor(start)
+        start = const_utils.make_tensor(start)
 
     if F.issubclass_(F.typeof(stop), mstype.number):
-        stop = const_utils.scalar_to_tensor(stop)
+        stop = const_utils.make_tensor(stop)
 
     if F.issubclass_(F.typeof(step), mstype.number):
-        step = const_utils.scalar_to_tensor(step)
+        step = const_utils.make_tensor(step)
 
     return start, stop, step
 
@@ -531,8 +531,8 @@ def _get_stride_info_from_tuple(data, tuple_index):
         elif isinstance(index, int):
             int_tensor = check_range(index, dim_size)
             begin_strides.append(int_tensor)
-            end_strides.append(int_tensor + const_utils.scalar_to_tensor(1))
-            step_strides.append(const_utils.scalar_to_tensor(1))
+            end_strides.append(int_tensor + const_utils.make_tensor(1))
+            step_strides.append(const_utils.make_tensor(1))
             shrink_axis = shrink_axis + (2 ** index_count)
             index_count = index_count + 1
         elif index is ...:
@@ -540,10 +540,10 @@ def _get_stride_info_from_tuple(data, tuple_index):
             if ellipsis_count > 1:
                 const_utils.raise_value_error("An index can have only one ellipsis (...)")
             ellipsis_range_size = data_dim - tuple_index_len + 1
-            begin_strides.extend([const_utils.scalar_to_tensor(0)] * ellipsis_range_size)
+            begin_strides.extend([const_utils.make_tensor(0)] * ellipsis_range_size)
             end_strides.extend(
                 [shape for shape in data_shape[index_count: index_count + ellipsis_range_size]])
-            step_strides.extend([const_utils.scalar_to_tensor(1)] * ellipsis_range_size)
+            step_strides.extend([const_utils.make_tensor(1)] * ellipsis_range_size)
             index_count = index_count + ellipsis_range_size
         else:
             exp_msg = const_utils.gen_exception_msg("Not supported index data type, got {},  type is {}", index,
@@ -959,10 +959,10 @@ def tensor_copy_slice_from_tuple(data, tuple_index, value):
     if dim1_stop - dim1_start <= 0:
         return data
     dim0_start = check_range(tuple_index[0], data_shape[0])
-    dim0_stop = dim0_start + const_utils.scalar_to_tensor(1)
+    dim0_stop = dim0_start + const_utils.make_tensor(1)
     start = (dim0_start, dim1_start)
     stop = (dim0_stop, dim1_stop)
-    step = (const_utils.scalar_to_tensor(1), const_utils.scalar_to_tensor(1))
+    step = (const_utils.make_tensor(1), const_utils.make_tensor(1))
     start_tensor = stack(start)
     stop_tensor = stack(stop)
     step_tensor = stack(step)
