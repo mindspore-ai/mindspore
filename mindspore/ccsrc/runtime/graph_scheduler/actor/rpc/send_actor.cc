@@ -97,82 +97,25 @@ void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void SendActor::SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec,
-                                             const TypeId &data_type, const kernel::AddressPtr &addr) const {
-  MS_EXCEPTION_IF_NULL(msg_body);
-  MS_EXCEPTION_IF_NULL(addr);
-
-  rpc::DynamicShapeMessage pb_msg;
-  pb_msg.set_type_id(static_cast<int>(data_type));
-  *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
-  std::string pb_msg_str = pb_msg.SerializeAsString();
-
-  // 1. Magic header for dynamic shape.
-  (void)msg_body->append(kRpcDynamicShapeData);
-  // 2. The size of the protobuf message DynamicShapeMessage.
-  size_t pb_msg_size = pb_msg_str.size();
-  (void)msg_body->append(reinterpret_cast<char *>(&pb_msg_size), sizeof(pb_msg_size));
-  // 3. Protobuf message DynamicShapeMessage.
-  (void)msg_body->append(pb_msg_str);
-  // 4. The real data buffer of the input.
-  (void)msg_body->append(static_cast<char *>(addr->addr), addr->size);
-}
-
 std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtrList &data_list,
                                                         const std::string &server_url) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->to = AID("", server_url);
 
+  // To reach optimal performance, we use workspace memory as the data sent to the remote. So the size must be
+  // strictly checked to avoid illegal memory access.
+  auto send_workspace = launch_info_.workspaces_;
+  if (send_workspace.empty()) {
+    MS_LOG(EXCEPTION) << "RpcSendKernel's workspace should not be empty.";
+  }
+  // Only use one piece of workspace memory to avoid extra memory copying and serialize inputs data to one message.
+  auto workspace_addr = send_workspace[kIndex0];
   if (is_dynamic_shape_) {
     MS_LOG(INFO) << "This send actor builds message with dynamic shape.";
-    size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
-    for (size_t i = 0; i < input_size; i++) {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
-      auto real_input = input_node_with_index.first;
-      auto real_input_index = input_node_with_index.second;
-      MS_EXCEPTION_IF_NULL(real_input);
-
-      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-      for (const auto &shape : shapes) {
-        MS_LOG(INFO) << "Shape of input " << real_input->fullname_with_scope() << " is " << shape;
-      }
-      TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-
-      // Serialize the message body and append the data.
-      SerializeDynamicShapeMessgae(&message->body, shapes, data_type, data_list[i]);
-    }
+    SerializeDynamicShapeMessage(message.get(), data_list, workspace_addr);
   } else {
-    size_t total_size = 0;
-    total_size =
-      std::accumulate(data_list.begin(), data_list.end(), total_size,
-                      [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
-    auto send_workspace = launch_info_.workspaces_;
-    if (send_workspace.empty()) {
-      MS_LOG(EXCEPTION) << "RpcSendKernel workspace should not be empty.";
-    }
-    if (send_workspace[0]->size != total_size) {
-      MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << send_workspace[0]->size
-                        << " and " << total_size;
-    }
-
-    if (common::GetEnv("use_void").empty()) {
-      message->body.reserve(total_size);
-      for (const auto &data : data_list) {
-        (void)message->body.append(static_cast<char *>(data->addr), data->size);
-      }
-    } else {
-      size_t offset = 0;
-      for (const auto &data : data_list) {
-        if (EOK !=
-            memcpy_s(static_cast<char *>(send_workspace[0]->addr) + offset, data->size, data->addr, data->size)) {
-          MS_LOG(EXCEPTION) << "memcpy_s for send data failed.";
-        }
-        offset += data->size;
-      }
-      message->data = send_workspace[0]->addr;
-      message->size = total_size;
-    }
+    SerializeCommonMessage(message.get(), data_list, workspace_addr);
   }
   return message;
 }
@@ -195,5 +138,123 @@ std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(void *data) {
   }
   return free_list;
 }
+
+void SendActor::SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec,
+                                             const TypeId &data_type, const kernel::AddressPtr &addr) const {
+  MS_EXCEPTION_IF_NULL(msg_body);
+  MS_EXCEPTION_IF_NULL(addr);
+
+  rpc::DynamicShapeMessage pb_msg;
+  pb_msg.set_type_id(static_cast<int>(data_type));
+  *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
+  std::string pb_msg_str = pb_msg.SerializeAsString();
+
+  // 1. Magic header for dynamic shape.
+  (void)msg_body->append(kRpcDynamicShapeData);
+  // 2. The size of the protobuf message DynamicShapeMessage.
+  size_t pb_msg_size = pb_msg_str.size();
+  (void)msg_body->append(reinterpret_cast<RpcDataPtr>(&pb_msg_size), sizeof(pb_msg_size));
+  // 3. Protobuf message DynamicShapeMessage.
+  (void)msg_body->append(pb_msg_str);
+  // 4. The real data buffer of the input.
+  (void)msg_body->append(static_cast<RpcDataPtr>(addr->addr), addr->size);
+}
+
+size_t SendActor::SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const ShapeVector &shape_vec,
+                                                   const TypeId &data_type, const kernel::AddressPtr &addr) const {
+  MS_EXCEPTION_IF_NULL(rpc_data);
+  MS_EXCEPTION_IF_NULL(addr);
+
+  // The serialize data size needs to be computed.
+  size_t serialized_data_size = 0;
+
+  // Serialize data's meta info to protobuffer.
+  rpc::DynamicShapeMessage pb_msg;
+  pb_msg.set_type_id(static_cast<int>(data_type));
+  *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
+  std::string pb_msg_str = pb_msg.SerializeAsString();
+
+  // Part 1. Magic header for dynamic shape.
+  size_t header_size = strlen(kRpcDynamicShapeData);
+  if (!CopyRpcDataWithOffset(&rpc_data, kRpcDynamicShapeData, header_size)) {
+    MS_LOG(EXCEPTION) << "Failed to copy data for kRpcDynamicShapeData.";
+  }
+  serialized_data_size += header_size;
+
+  // Part 2. The size of the protobuf message DynamicShapeMessage.
+  size_t pb_msg_size = pb_msg_str.size();
+  if (!CopyRpcDataWithOffset(&rpc_data, &pb_msg_size, sizeof(pb_msg_size))) {
+    MS_LOG(EXCEPTION) << "Failed to copy data for protobuffer data's size.";
+  }
+  serialized_data_size += sizeof(pb_msg_size);
+
+  // Part 3. Protobuf message DynamicShapeMessage.
+  if (!CopyRpcDataWithOffset(&rpc_data, pb_msg_str.c_str(), pb_msg_str.size())) {
+    MS_LOG(EXCEPTION) << "Failed to copy data for protobuffer data.";
+  }
+  serialized_data_size += pb_msg_str.size();
+
+  // Part 4. The real data buffer of the input.
+  if (!CopyRpcDataWithOffset(&rpc_data, addr->addr, addr->size)) {
+    MS_LOG(EXCEPTION) << "Failed to copy data for real input data.";
+  }
+  serialized_data_size += addr->size;
+
+  return serialized_data_size;
+}
+
+void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                                             const kernel::AddressPtr &workspace_addr) const {
+  size_t offset = 0;
+  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
+  for (size_t i = 0; i < input_size; i++) {
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
+    auto real_input = input_node_with_index.first;
+    auto real_input_index = input_node_with_index.second;
+    MS_EXCEPTION_IF_NULL(real_input);
+
+    auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
+    TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+
+    if (common::GetEnv("use_void").empty()) {
+      SerializeDynamicShapeMessgae(&message->body, shapes, data_type, data_list[i]);
+    } else {
+      size_t serialized_data_size =
+        SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, data_list[i]);
+      offset += serialized_data_size;
+    }
+  }
+}
+
+void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                                       const kernel::AddressPtr &workspace_addr) const {
+  size_t total_size = 0;
+  total_size =
+    std::accumulate(data_list.begin(), data_list.end(), total_size,
+                    [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
+
+  if (common::GetEnv("use_void").empty()) {
+    message->body.reserve(total_size);
+    for (const auto &data : data_list) {
+      (void)message->body.append(static_cast<RpcDataPtr>(data->addr), data->size);
+    }
+  } else {
+    if (workspace_addr->size != total_size) {
+      MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->size
+                        << " and " << total_size;
+    }
+
+    RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
+    for (size_t i = 0; i < data_list.size(); i++) {
+      if (!CopyRpcDataWithOffset(&rpc_data, data_list[i]->addr, data_list[i]->size)) {
+        MS_LOG(EXCEPTION) << "Failed to copy data for rpc send input " << i;
+      }
+    }
+    message->data = workspace_addr->addr;
+    message->size = workspace_addr->size;
+  }
+}
+
 }  // namespace runtime
 }  // namespace mindspore

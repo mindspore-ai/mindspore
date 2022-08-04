@@ -45,6 +45,9 @@ constexpr char kInterProcessEdgeMark[] = "->";
 // The magic header of the rpc data which indicates this message contains dynamic shape data.
 constexpr char kRpcDynamicShapeData[] = "RPC_DYNAMIC_SHAPE_DATA";
 
+// RpcDataPtr will be used for serializing and deserializing rpc message raw pointer data.
+using RpcDataPtr = char *;
+
 // RpcActor is used to do rpc with other processes in distributed execution.
 // Besides data arrows and controlling arrows, RpcActor also has inter-process arrows which is in charge of remote
 // communication with other processes. It supports both sync and async communication.
@@ -82,6 +85,15 @@ class RpcActor : public KernelActor {
                             const std::string &dst_node_name) {}
 
  protected:
+  /**
+   * @description: Copy rpc data with size and update the input data's address with offset.
+   * @param {RpcDataPtr} *rpc_data: Destination data address which will be updated in this method.
+   * @param {void} *src_data: Source data address.
+   * @param {size_t} src_data_size: Source data size and the offset.
+   * @return {bool}: Whether data is successfully copied.
+   */
+  bool CopyRpcDataWithOffset(RpcDataPtr *rpc_data, const void *src_data, size_t src_data_size) const;
+
   // The op context to run rpc actor inter-process op. Set by method 'SetOpcontext'.
   OpContext<DeviceTensor> *op_context_;
 

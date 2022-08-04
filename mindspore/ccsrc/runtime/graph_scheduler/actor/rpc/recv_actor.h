@@ -106,6 +106,9 @@ class RecvActor : public RpcActor {
   size_t ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
                                size_t count);
 
+  size_t ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, size_t data_size,
+                               AbstractBasePtrList *args_spec_list, size_t count);
+
   // After Recv actor receives data from a remote peer, the data could be with dynamic shape so we need to preprocess
   // it, e.g., infer shape for RpcRecv kernel and call Resize().
   void PreprocessRemoteInput(MessageBase *const msg, bool *need_finalize);

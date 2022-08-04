@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr char kRpcDynamicShapeData[] = "RPC_DYNAMIC_SHAPE_DATA";
 // RpcSendKernel send data to another process across network communication.
 class RpcSendKernelMod : public RpcKernelMod {
  public:
