@@ -16,10 +16,7 @@
 
 #include "plugin/device/cpu/kernel/gcd_cpu_kernel.h"
 
-#include <string>
 #include <vector>
-#include <memory>
-#include <map>
 #include <algorithm>
 #include <utility>
 #include <numeric>
@@ -74,7 +71,8 @@ bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
       iter.GenNextPos();
     }
   };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+
+  ParallelLaunchAutoSearch(task, LongToSize(output_size_), this, &parallel_search_info_);
   return true;
 }
 

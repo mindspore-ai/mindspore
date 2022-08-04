@@ -38,7 +38,7 @@ class GridSampler2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
+    static const std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
@@ -53,21 +53,22 @@ class GridSampler2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> output_stride_;
   std::string interpolation_mode_;
   std::string padding_mode_;
-  bool align_corners_;
-  size_t output_number_;
+  bool align_corners_{false};
+  size_t output_number_{0};
   TypeId dtype_{kTypeUnknown};
   template <typename T>
-  void ComputeTask(T *x_data_addr, T *grid_data_addr, T *output_data_addr, const size_t &seq);
+  void ComputeTask(const T *x_data_addr, const T *grid_data_addr, T *output_data_addr, const size_t &seq);
 
-  void ComputeTask(float16 *x_data_addr, float16 *grid_data_addr, float16 *output_data_addr, const size_t &seq);
-
-  template <typename T>
-  T GridSamplerComputerSourceIndex(T coord, int64_t size, std::string padding_mode, bool align_corners);
+  void ComputeTask(const float16 *x_data_addr, const float16 *grid_data_addr, float16 *output_data_addr,
+                   const size_t &seq);
 
   template <typename T>
-  T ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high);
+  T GridSamplerComputerSourceIndex(T coord, int64_t size, const std::string &padding_mode, bool align_corners) const;
 
-  bool WithinBounds2D(int64_t h, int64_t w, int64_t H, int64_t W);
+  template <typename T>
+  T ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high) const;
+
+  bool WithinBounds2D(int64_t h, int64_t w, int64_t H, int64_t W) const;
 };
 }  // namespace kernel
 }  // namespace mindspore
