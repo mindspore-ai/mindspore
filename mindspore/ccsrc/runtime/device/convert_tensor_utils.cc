@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "runtime/device/convert_tensor_utils.h"
+#include <complex>
 #include <vector>
 namespace mindspore {
 namespace device {
@@ -122,6 +123,10 @@ void ConvertSameType(void *const dst, const void *src, size_t size, TypeId type)
     auto dst_data = static_cast<double *>(dst);
     auto src_data = static_cast<const double *>(src);
     ConvertSameType(dst_data, src_data, size / sizeof(double));
+  } else if (type == kNumberTypeInt8) {
+    auto dst_data = static_cast<int8_t *>(dst);
+    auto src_data = static_cast<const int8_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(int8_t));
   } else if (type == kNumberTypeInt16) {
     auto dst_data = static_cast<int16_t *>(dst);
     auto src_data = static_cast<const int16_t *>(src);
@@ -134,6 +139,34 @@ void ConvertSameType(void *const dst, const void *src, size_t size, TypeId type)
     auto dst_data = static_cast<int64_t *>(dst);
     auto src_data = static_cast<const int64_t *>(src);
     ConvertSameType(dst_data, src_data, size / sizeof(int64_t));
+  } else if (type == kNumberTypeBool) {
+    auto dst_data = static_cast<bool *>(dst);
+    auto src_data = static_cast<const bool *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(bool));
+  } else if (type == kNumberTypeUInt8) {
+    auto dst_data = static_cast<uint8_t *>(dst);
+    auto src_data = static_cast<const uint8_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(uint8_t));
+  } else if (type == kNumberTypeUInt16) {
+    auto dst_data = static_cast<uint16_t *>(dst);
+    auto src_data = static_cast<const uint16_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(uint16_t));
+  } else if (type == kNumberTypeUInt32) {
+    auto dst_data = static_cast<uint32_t *>(dst);
+    auto src_data = static_cast<const uint32_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(uint32_t));
+  } else if (type == kNumberTypeUInt64) {
+    auto dst_data = static_cast<uint64_t *>(dst);
+    auto src_data = static_cast<const uint64_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(uint64_t));
+  } else if (type == kNumberTypeComplex64) {
+    auto dst_data = static_cast<std::complex<float> *>(dst);
+    auto src_data = static_cast<const std::complex<float> *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(std::complex<float>));
+  } else if (type == kNumberTypeComplex128) {
+    auto dst_data = static_cast<std::complex<double> *>(dst);
+    auto src_data = static_cast<const std::complex<double> *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(std::complex<double>));
   } else {
     MS_LOG(EXCEPTION) << "Invalid Type: " << TypeIdLabel(type);
   }
