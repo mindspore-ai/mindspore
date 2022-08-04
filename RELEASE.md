@@ -10,7 +10,7 @@
 
 #### FrontEnd
 
-- [BETA] Add `mindspore.Model.fit` API, add `mindspore.callback.EarlyStopping` and `mindspore.callback.ReduceLROnPlateau` in Callback.
+- [BETA] Add `mindspore.Model.fit` API, add `mindspore.train.callback.EarlyStopping` and `mindspore.train.callback.ReduceLROnPlateau` in Callback.
 - [BETA] Support custom operator implemented by Julia.
 - [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
 - [STABLE] The export() interface supports the export of a model using a custom encryption algorithm, and the load() interface supports the import of a model using a custom decryption algorithm.
