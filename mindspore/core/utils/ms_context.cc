@@ -127,10 +127,6 @@ bool MsContext::set_backend_policy(const std::string &policy) {
   auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
   if (enable_ge == "1") {
     policy_new = "ge";
-    // set MS_CTX_ENABLE_GE_HETEROGENOUS true if ge heterogeneous mode
-    int32_t is_heterogeneous = 0;
-    (void)rtGetIsHeterogenous(&is_heterogeneous);
-    set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
   }
 #endif
   if (policy_map_.find(policy_new) == policy_map_.end()) {
@@ -141,64 +137,6 @@ bool MsContext::set_backend_policy(const std::string &policy) {
   MS_LOG(INFO) << "ms set context backend policy:" << policy_new;
   return true;
 }
-
-#ifdef ENABLE_TDTQUE
-void MsContext::CreateTensorPrintThread(const PrintThreadCrt &ctr) {
-  if (get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    return;
-  }
-  uint32_t device_id = get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  std::string kReceivePrefix = "TF_RECEIVE_";
-  std::string channel_name = "_npu_log";
-  acl_handle_ = acltdtCreateChannel(device_id, (kReceivePrefix + channel_name).c_str());
-  if (acl_handle_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Get acltdt handle failed";
-  }
-  MS_LOG(INFO) << "Success to create acltdt handle, tsd reference = " << get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
-  std::string print_file_path = get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
-  acl_tdt_print_ = ctr(print_file_path, acl_handle_);
-  TdtHandle::AddHandle(&acl_handle_, &acl_tdt_print_);
-}
-
-static void JoinAclPrintThread(std::thread *thread) {
-  try {
-    if (thread->joinable()) {
-      MS_LOG(INFO) << "join acl tdt host receive process";
-      thread->join();
-    }
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
-  }
-}
-
-void MsContext::DestroyTensorPrintThread() {
-  if (get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    return;
-  }
-  // if TdtHandle::DestroyHandle called at taskmanger, all acl_handle_ will be set to nullptr;
-  // but not joined the print thread, so add a protect to join the thread.
-  if (acl_handle_ == nullptr) {
-    MS_LOG(INFO) << "The acl handle has been destroyed and the point is nullptr";
-    JoinAclPrintThread(&acl_tdt_print_);
-    return;
-  }
-  aclError stopStatus = acltdtStopChannel(acl_handle_);
-  if (stopStatus != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed stop acl data channel and the stopStatus is " << stopStatus << std::endl;
-    return;
-  }
-  MS_LOG(INFO) << "Succeed stop acl data channel for host queue ";
-  JoinAclPrintThread(&acl_tdt_print_);
-  aclError destroydStatus = acltdtDestroyChannel(acl_handle_);
-  if (destroydStatus != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed destroy acl channel and the destroyStatus is " << destroydStatus << std::endl;
-    return;
-  }
-  TdtHandle::DelHandle(&acl_handle_);
-  MS_LOG(INFO) << "Succeed destroy acl channel";
-}
-
-#endif
 
 std::string MsContext::backend_policy() const {
   auto res = std::find_if(

@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include "acl/acl_tdt.h"
 #include "runtime/dev.h"
+#include "runtime/config.h"
 #include "toolchain/plog.h"
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
@@ -242,9 +243,11 @@ void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &
 }
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
-  if (ms_context_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  // set MS_CTX_ENABLE_GE_HETEROGENOUS true if ge heterogeneous mode
+  int32_t is_heterogeneous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogeneous);
+  ms_context_ptr->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
 
   if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
@@ -298,15 +301,13 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
     return std::thread(TensorPrint(path, acl_handle));
   };
-  ms_context_ptr->CreateTensorPrintThread(thread_crt);
+  CreateTensorPrintThread(thread_crt);
 #endif
   return true;
 }
 
 bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
-  if (ms_context_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "ms_context_prt is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_LOG(INFO) << "Start to close tsd, ref = " << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF);
   if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     return true;
@@ -316,7 +317,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
 #ifdef ENABLE_TDTQUE
     pybind11::gil_scoped_release gil_release;
-    ms_context_ptr->DestroyTensorPrintThread();
+    DestroyTensorPrintThread();
 #endif
     if (ErrorManager::GetInstance().Init() != 0) {
       MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
