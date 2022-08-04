@@ -111,6 +111,17 @@ def _get_reduce_out_dim(x_dim, x_ndim, batch_axis):
     return out_dim
 
 
+@constexpr
+def _get_reduce_out_keep_dim(batch_axis, x_dim, keep_dim):
+    """get out_dim for reduce* operation with keep_dim attribute."""
+    if keep_dim is True:
+        return x_dim
+    out_dim = x_dim
+    if batch_axis < x_dim:
+        out_dim -= 1
+    return out_dim
+
+
 @vmap_rules_getters.register(P.Argmin)
 def get_argmin_vmap_rule(prim, axis_size):
     """VmapRule for `Argmin` operations."""
@@ -153,7 +164,7 @@ def get_arg_min_with_value_vmap_rule(prim, axis_size):
         x_ndim = ops.rank(var)
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
         index, out = P.ArgMinWithValue(batch_axis, keep_dims)(var)
-        out_dim = _get_reduce_out_dim(x_dim, x_ndim, batch_axis)
+        out_dim = _get_reduce_out_keep_dim(batch_axis, x_dim, keep_dims)
         return (index, out_dim), (out, out_dim)
 
     return vmap_rule
