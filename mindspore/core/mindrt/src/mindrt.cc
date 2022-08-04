@@ -67,8 +67,9 @@ int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const
   return ret;
 }
 
-int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
-               const std::string &udpUrlAdv, int threadCount) {
+int Initialize([[maybe_unused]] const std::string &tcpUrl, [[maybe_unused]] const std::string &tcpUrlAdv,
+               [[maybe_unused]] const std::string &udpUrl, [[maybe_unused]] const std::string &udpUrlAdv,
+               [[maybe_unused]] int threadCount) {
   /* support repeat initialize  */
   int result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
   static MindrtExit mindrtExit;

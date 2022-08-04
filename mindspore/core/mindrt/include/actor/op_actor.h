@@ -66,7 +66,7 @@ class MS_CORE_API RandInt {
   static RandInt &Instance();
 
  private:
-  RandInt() { srand(time(nullptr)); }
+  RandInt() { srand(static_cast<unsigned int>(time(nullptr))); }
 };
 
 template <typename T>

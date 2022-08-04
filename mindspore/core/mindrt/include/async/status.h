@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_STATUS_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_STATUS_H
 
+#include <cstdint>
+
 namespace mindspore {
 class MindrtStatus {
  public:

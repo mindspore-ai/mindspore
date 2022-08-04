@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_UUID_BASE_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_UUID_BASE_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <sstream>
 #include <iostream>

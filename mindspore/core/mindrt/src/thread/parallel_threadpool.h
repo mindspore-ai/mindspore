@@ -60,7 +60,7 @@ class ParallelWorker : public Worker {
   void WaitUntilActive() override;
 
  private:
-  void Run();
+  void Run() override;
   bool RunQueueActorTask();
   ParallelThreadPool *parallel_pool_{nullptr};
 };
@@ -117,7 +117,7 @@ class ParallelThreadPool : public ActorThreadPool {
 
   bool RunParallel();
 
-  size_t tasks_size() { return tasks_size_; }
+  size_t tasks_size() const { return tasks_size_; }
 
  private:
   ParallelThreadPool() {}

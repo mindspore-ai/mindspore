@@ -33,7 +33,7 @@ class MailBox {
   virtual std::list<std::unique_ptr<MessageBase>> *GetMsgs() = 0;
   virtual std::unique_ptr<MessageBase> GetMsg() = 0;
   inline void SetNotifyHook(std::unique_ptr<std::function<void()>> &&hook) { notifyHook = std::move(hook); }
-  inline bool TakeAllMsgsEachTime() { return takeAllMsgsEachTime; }
+  inline bool TakeAllMsgsEachTime() const { return takeAllMsgsEachTime; }
 
  protected:
   // if this flag is true, GetMsgs() should be invoked to take all enqueued msgs each time, otherwise we can only get

@@ -49,7 +49,7 @@ struct AsyncHelper;
 template <>
 struct AsyncHelper<void> {
   template <typename F>
-  void operator()(const AID &aid, F &&f) {
+  void operator()(const AID &aid, F &&f) const {
     std::function<void(ActorBase *)> handler = [=](ActorBase *) { f(); };
     auto msg = std::unique_ptr<MessageBase>(new (std::nothrow) MessageAsync(std::move(handler)));
     MINDRT_OOM_EXIT(msg);
@@ -60,7 +60,7 @@ struct AsyncHelper<void> {
 template <typename R>
 struct AsyncHelper<Future<R>> {
   template <typename F>
-  Future<R> operator()(const AID &aid, F &&f) {
+  Future<R> operator()(const AID &aid, F &&f) const {
     auto promise = std::shared_ptr<Promise<R>>(new (std::nothrow) Promise<R>());
     MINDRT_OOM_EXIT(promise);
     Future<R> future = promise->GetFuture();
@@ -77,7 +77,7 @@ struct AsyncHelper<Future<R>> {
 template <typename R>
 struct AsyncHelper {
   template <typename F>
-  Future<R> operator()(const AID &aid, F &&f) {
+  Future<R> operator()(const AID &aid, F &&f) const {
     auto promise = std::shared_ptr<Promise<R>>(new (std::nothrow) Promise<R>());
     MINDRT_OOM_EXIT(promise);
     Future<R> future = promise->GetFuture();
