@@ -288,7 +288,7 @@ size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr
   return max_span_mem_in_device;
 }
 
-size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) {
+size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const {
   size_t earliest_malloc_index = continuous_mem_info->compute_index_;
   for (const auto &key_index : continuous_mem_info->key_index_map_) {
     const auto &events_iter = mem_events_.find(key_index.first);

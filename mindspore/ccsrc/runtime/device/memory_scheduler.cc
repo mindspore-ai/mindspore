@@ -70,7 +70,7 @@ void MemHandler::FreeHost(void *ptr) {
     MS_LOG(ERROR) << "Free ptr not be created from manager!";
   }
   auto mem_size = iter->second->size();
-  cached_host_mem_[mem_size].emplace(iter->first);
+  (void)cached_host_mem_[mem_size].emplace(iter->first);
 }
 
 void MemScheduler::Clear() {
@@ -248,7 +248,7 @@ bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void
   if (!PreComputeMalloc(event, stream)) {
     return false;
   }
-  PreComputeMalloc(event, stream);
+  (void)PreComputeMalloc(event, stream);
   const auto device_ptr = mem_result_[event->key];
   MS_EXCEPTION_IF_NULL(device_ptr);
   bool from_init = true;
@@ -346,7 +346,7 @@ bool MemScheduler::PostCompute(void *stream) {
       }
       mem_handler_->FreeDevice(ptr);
       (void)mem_result_.erase(event->key);
-      continuous_mem_key_.erase(event->key);
+      (void)continuous_mem_key_.erase(event->key);
     } else if (event->type == kSwapOut) {
       auto device_ptr = mem_result_[event->key];
       if (device_ptr == nullptr) {
@@ -357,7 +357,7 @@ bool MemScheduler::PostCompute(void *stream) {
   }
   for (const auto &info : continuous_mem_info_helper_->GetIndexContinuousMemInfo(current_step_)) {
     for (const auto &key_index : info->key_index_map_) {
-      continuous_mem_key_.erase(key_index.first);
+      (void)continuous_mem_key_.erase(key_index.first);
     }
   }
   ++current_step_;
@@ -469,7 +469,7 @@ void *MemScheduler::MallocDevice(size_t mem_size, void *stream) {
       MS_EXCEPTION_IF_NULL(device_ptr);
       return device_ptr;
     }
-    mem_can_swap.push({key, device_mem_size});
+    mem_can_swap.emplace(key, device_mem_size);
     ++iter;
   }
 
@@ -518,7 +518,7 @@ std::vector<void *> MemScheduler::MallocContinuousMem(size_t total_size, const s
       }
       return device_ptr_list;
     }
-    mem_can_swap.push({key, device_mem_size});
+    mem_can_swap.emplace(key, device_mem_size);
     ++iter;
   }
 
@@ -547,7 +547,7 @@ void MemScheduler::SwapOutAndFreeDevice(const void *key, void *device_ptr, size_
   MS_EXCEPTION_IF_NULL(host_ptr);
   if (!from_init || updated_high_priority_mem_.find(key) != updated_high_priority_mem_.end()) {
     mem_handler_->SwapOut(device_ptr, host_ptr, mem_size, stream);
-    updated_high_priority_mem_.erase(key);
+    (void)updated_high_priority_mem_.erase(key);
   }
   mem_handler_->FreeDevice(device_ptr);
   (void)mem_result_.erase(key);
