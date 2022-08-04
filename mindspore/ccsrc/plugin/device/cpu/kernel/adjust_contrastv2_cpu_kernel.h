@@ -30,7 +30,7 @@ class AdjustContrastv2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   AdjustContrastv2CpuKernelMod() = default;
   ~AdjustContrastv2CpuKernelMod() override = default;
   void InitKernel(const CNodePtr &Kernel_node);
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override;
