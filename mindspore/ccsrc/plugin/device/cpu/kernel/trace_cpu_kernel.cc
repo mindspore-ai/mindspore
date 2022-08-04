@@ -82,8 +82,8 @@ bool TraceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 
 template <typename T>
 void TraceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   size_t min_size = std::min(input_shape_[0], input_shape_[1]);
   (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   for (size_t i = 0; i < min_size; ++i) {
