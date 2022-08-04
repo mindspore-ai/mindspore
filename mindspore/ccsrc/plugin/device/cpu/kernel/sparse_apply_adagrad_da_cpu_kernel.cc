@@ -101,7 +101,7 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, var must be at least 1D.";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, rank(grad) should be same as rank(var), but got rank(grad): "
@@ -120,12 +120,12 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, the shape of var and grad must equal in dimension " << i << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, indices must be 1D, but got " << indices_shape.size() << ".";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION)
       << "For SparseApplyAdagradDA, grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
