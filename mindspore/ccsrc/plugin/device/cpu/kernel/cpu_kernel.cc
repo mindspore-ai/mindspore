@@ -627,7 +627,7 @@ void AxisIterator::Init(const ShapeVector &input_shape, size_t axis) {
     outer_size_ *= LongToSize(input_shape[i]);
   }
 
-  axis_size_ = input_shape[axis];
+  axis_size_ = LongToSize(input_shape[axis]);
 
   inner_size_ = 1;
   for (size_t i = axis + 1; i < input_shape.size(); ++i) {
