@@ -29,6 +29,7 @@ class SingleOpInferSession : public InferSession {
   SingleOpInferSession() = default;
   virtual ~SingleOpInferSession() = default;
   Status Init(const std::shared_ptr<Context> context) override;
+  Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) override;
@@ -48,6 +49,7 @@ class SingleOpInferSession : public InferSession {
   std::vector<std::string> input_names_;
   std::vector<tensor::TensorPtr> outputs_;
   std::vector<std::string> output_names_;
+  uint32_t device_id_ = 0;
 };
 }  // namespace mindspore
 

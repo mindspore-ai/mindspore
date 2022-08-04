@@ -15,13 +15,13 @@
  */
 
 #include "extendrt/kernel/ascend/src/custom_ascend_kernel.h"
-
 #include <utility>
+#include "acl/acl_base.h"
+#include "acl/acl_rt.h"
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "extendrt/kernel/ascend/model/model_infer.h"
-#include "extendrt/kernel/ascend/options/acl_options_parser.h"
 #include "core/ops/custom.h"
 #include "plugin/factory/ms_factory.h"
 #include "src/common/log_util.h"
@@ -54,6 +54,25 @@ void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorP
   }
 }
 
+void CustomAscendKernelMod::SetDeviceId() {
+  if (acl_options_ == nullptr) {
+    MS_LOG(ERROR) << "Acl options is nullptr.";
+    return;
+  }
+  uint32_t device_count;
+  if (aclrtGetDeviceCount(&device_count) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Get device count failed, set default device id 0.";
+    return;
+  }
+  if (device_id_ >= device_count) {
+    MS_LOG(WARNING) << "Current device id " << device_id_ << " is larger than max count " << device_count
+                    << ",please check the device info of context and set the default device id 0.";
+    return;
+  }
+  acl_options_->device_id = static_cast<int32_t>(device_id_);
+  MS_LOG(INFO) << "Set device id " << device_id_;
+}
+
 bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
@@ -63,10 +82,7 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
   inputs_.assign(inputs.begin(), inputs.end() - 1);
   outputs_.assign(outputs.begin(), outputs.end());
   acl_options_ = std::make_shared<AclModelOptions>();
-  if (acl_options_ == nullptr) {
-    MS_LOG(ERROR) << "Create AclModelOptions failed.";
-    return false;
-  }
+  SetDeviceId();
   int idx = inputs.size() - 1;
   if (inputs[idx] == nullptr || inputs[idx]->GetData() == nullptr) {
     MS_LOG(ERROR) << "Input " << idx << " is invalid.";
