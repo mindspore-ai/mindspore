@@ -16,7 +16,7 @@ mindspore.ops.scatter_div
 
     - **input_x** (Parameter) - scatter_div的输入，任意维度的Parameter。
     - **indices** (Tensor) - 指定相除操作的索引，数据类型必须为mindspore.int32或者mindspore.int64。
-    - **updates** (Tensor) - 指定与 `input_x` 取最小值操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
+    - **updates** (Tensor) - 指定与 `input_x` 相除的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
     **输出：**
 
