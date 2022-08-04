@@ -15,7 +15,7 @@ mindspore_lite.FmkType
     * **类型**
 
       目前，支持以下第三方模型框架类型：
-      ``TF`` 类型, ``CAFFE`` 类型, ``ONNX`` 类型, ``MINDIR`` 类型, ``TFLITE`` 类型和 ``PYTORCH`` 类型。
+      ``TF`` 类型, ``CAFFE`` 类型, ``ONNX`` 类型, ``MINDIR`` 类型和 ``TFLITE`` 类型。
       下表列出了详细信息。
 
       ===========================  ====================================================
@@ -26,5 +26,4 @@ mindspore_lite.FmkType
       ``FmkType.ONNX``             ONNX模型的框架类型，该模型使用.onnx作为后缀
       ``FmkType.MINDIR``           MindSpore模型的框架类型，该模型使用.mindir作为后缀
       ``FmkType.TFLITE``           TensorFlow Lite模型的框架类型，该模型使用.tflite作为后缀
-      ``FmkType.PYTORCH``          PYTORCH模型的框架类型，该模型使用.pt或.pth作为后缀
       ===========================  ====================================================
