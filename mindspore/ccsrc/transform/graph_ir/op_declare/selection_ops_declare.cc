@@ -196,4 +196,10 @@ INPUT_MAP(ReverseV2D) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(ReverseV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReverseV2D, kNameReverseV2, ADPT_DESC(ReverseV2D))
+
+// MaskedSelect
+INPUT_MAP(MaskedSelect) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}};
+ATTR_MAP(MaskedSelect) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MaskedSelect) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaskedSelect, kNameMaskedSelect, ADPT_DESC(MaskedSelect))
 }  // namespace mindspore::transform

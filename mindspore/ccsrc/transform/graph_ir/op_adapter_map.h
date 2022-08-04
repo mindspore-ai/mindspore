@@ -363,6 +363,7 @@ constexpr const char kNameRandomStandardNormal[] = "RandomStandardNormal";
 constexpr const char kNameUnsortedSegmentSum[] = "UnsortedSegmentSum";
 constexpr const char kNameSpaceToBatchTF[] = "SpaceToBatchTF";
 constexpr const char kNameBatchToSpaceTF[] = "BatchToSpaceTF";
+constexpr const char kNameMaskedSelect[] = "MaskedSelect";
 
 class OpAdapterDesc;
 
