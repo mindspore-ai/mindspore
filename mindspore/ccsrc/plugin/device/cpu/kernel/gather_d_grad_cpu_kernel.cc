@@ -150,19 +150,16 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   }
   auto out_size = get_element_num(output_shape_);
-  auto ret = memset_s(out, out_size * sizeof(T), 0x00, out_size * sizeof(T));
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << ret;
-  }
+  memset(out, 0, out_size * sizeof(T));
 
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);
-  for (int i = out_cargo_size.size() - 2; i >= 0; --i) {
+  for (int i = static_cast<int>(out_cargo_size.size()) - 2; i >= 0; --i) {
     out_cargo_size[i] = output_shape_[i + 1] * out_cargo_size[i + 1];
   }
   // grad_cargo_size
   std::vector<size_t> grad_cargo_size = std::vector<size_t>(grad_shape_.size(), 1);
-  for (int i = grad_cargo_size.size() - 2; i >= 0; --i) {
+  for (int i = static_cast<int>(grad_cargo_size.size()) - 2; i >= 0; --i) {
     grad_cargo_size[i] = grad_shape_[i + 1] * grad_cargo_size[i + 1];
   }
 
