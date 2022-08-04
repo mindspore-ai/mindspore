@@ -134,11 +134,11 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
       const size_t count = segments[i];
-      size_t count_no = 0;
+      int64_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
         count_no += segments[j];
       }
-      size_t input_addr_base = count_no * num_compare_per;
+      size_t input_addr_base = LongToSize(count_no) * num_compare_per;
       auto task = [&](size_t start, size_t end) {
         for (size_t j = start; j < end; ++j) {
           size_t max_init_addr = input_addr_base + j;
@@ -149,7 +149,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
               max_value = input_x_data_addr[cmp_addr];
             }
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
+          output_data_addr[segment_ids_data_addr[LongToSize(count_no)] * num_compare_per + j] = max_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -162,11 +162,11 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
         const size_t count = segments[i];
-        size_t count_no = 0;
+        int64_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
           count_no += segments[j];
         }
-        size_t input_addr_base = count_no * num_compare_per;
+        size_t input_addr_base = LongToSize(count_no) * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {
           size_t max_init_addr = input_addr_base + j;
           T1 max_value = input_x_data_addr[max_init_addr];
@@ -176,7 +176,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
               max_value = input_x_data_addr[cmp_addr];
             }
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = max_value;
+          output_data_addr[segment_ids_data_addr[LongToSize(count_no)] * num_compare_per + j] = max_value;
         }
       }
     };
