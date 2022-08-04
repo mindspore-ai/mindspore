@@ -21,7 +21,6 @@ from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.parallel._utils import _infer_rank_list
 
-
 class Net(nn.Cell):
     """Net definition"""
     def __init__(self):

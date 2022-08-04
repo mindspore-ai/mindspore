@@ -26,6 +26,10 @@ from mindspore.ops import operations as P
 from mindspore.context import ParallelMode
 from mindspore.communication._comm_helper import GlobalComm
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 class Net(nn.Cell):
     def __init__(self, input_channel, out_channel):
         super(Net, self).__init__()

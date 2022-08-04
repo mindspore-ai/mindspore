@@ -26,6 +26,10 @@ from mindspore.ops import operations as P
 from mindspore import context
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(nn.Cell):
     """Net definition"""
     def __init__(self):
@@ -190,7 +194,8 @@ def test_user_define_threshold():
 def test_AdamWeightDecay():
     """ test_AdamWeightDecay """
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True,
-                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1})
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1},
+                                      dataset_strategy="data_parallel")
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
@@ -207,7 +212,8 @@ def test_AdamWeightDecay():
 def test_lamb_compile():
     """ test_Lamb_compile """
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True,
-                                      parallel_optimizer_config={"parallel_optimizer_threshold": 2})
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 2},
+                                      dataset_strategy="data_parallel")
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
@@ -224,7 +230,7 @@ def test_lamb_compile():
 def test_lamb_split_fusion():
     """ test_Lamb_split_fusion """
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True,
-                                      all_reduce_fusion_config=[2, 4, 6, 8],
+                                      all_reduce_fusion_config=[2, 4, 6, 8], dataset_strategy="data_parallel",
                                       parallel_optimizer_config={"parallel_optimizer_threshold": 1})
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
@@ -248,11 +254,11 @@ def test_edge_case():
         Lamb(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         context.set_context(device_target="GPU")
-        context.set_auto_parallel_context(parallel_mode="data_parallel")
+        context.set_auto_parallel_context(parallel_mode="data_parallel", dataset_strategy="data_parallel")
         Lamb(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         context.set_context(device_target="Ascend")
-        context.set_auto_parallel_context(parallel_mode="data_parallel")
+        context.set_auto_parallel_context(parallel_mode="data_parallel", dataset_strategy="data_parallel")
         Adam(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         context.set_auto_parallel_context(device_num=16)

@@ -850,6 +850,11 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   abstract::AbstractBasePtrList args_abs;
   std::vector<ValuePtr> arguments;
   std::size_t size = args.size();
+  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+  bool is_auto_parallel = (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
+                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel) &&
+                          !py::hasattr(source_obj, parallel::kSkipAutoParallelCompile) &&
+                          !py::hasattr(source_obj, parallel::kKeepInputUnchanged);
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
     // In some parallel mode need full_tensor which cause the args of GenerateArgumentsKey not same to compile,
@@ -857,6 +862,12 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter != cur_convert_input_.end()) {
       (void)arguments.emplace_back(iter->second.first);
+      if (is_auto_parallel) {
+        auto abs_item = iter->second.second->Clone();
+        (void)parallel::ExtendInputArgsAbstractShape(abs_item, i);
+        (void)args_abs.emplace_back(abs_item);
+        continue;
+      }
       (void)args_abs.emplace_back(iter->second.second);
       continue;
     }
@@ -865,7 +876,11 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
     (void)arguments.emplace_back(converted);
-    (void)args_abs.emplace_back(ArgsToAbstract(converted, enable_tuple_broaden_));
+    auto args_abstract_item = ArgsToAbstract(converted, enable_tuple_broaden_);
+    if (is_auto_parallel) {
+      (void)parallel::ExtendInputArgsAbstractShape(args_abstract_item, i);
+    }
+    (void)args_abs.emplace_back(args_abstract_item);
   }
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);

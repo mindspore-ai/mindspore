@@ -9,7 +9,6 @@ from mindspore.common.parameter import Parameter
 from mindspore.train.model import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell
 
-
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data

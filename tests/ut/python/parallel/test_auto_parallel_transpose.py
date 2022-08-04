@@ -25,6 +25,10 @@ from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -84,5 +88,5 @@ def test_two_matmul_transpose():
                            'Default/network-Net/Transpose-op1': [[16, 1]],
                            'Default/network-Net/MatMul-op4': [[16, 1], [1, 1]],
                            'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]],
-                           'Default/_VirtualDataset-op3': [[16, 1], [16, 1], [16, 1]]}
+                           'Default/_VirtualDataset-op3': [[1, 1], [1, 1], [1, 1]]}
     assert strategies == expected_strategies

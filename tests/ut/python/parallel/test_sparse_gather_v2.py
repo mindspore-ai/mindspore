@@ -24,6 +24,10 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -78,8 +82,9 @@ def test_gatherv2_semi_auto0():
     """
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
+    context.set_auto_parallel_context(dataset_strategy="data_parallel")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
-    compile_net(net, [64, 64], [64, 64, 64])
+    compile_net(net, [64 // 8, 64], [64 // 8, 64, 64])
 
 
 def test_gatherv2_semi_auto1():

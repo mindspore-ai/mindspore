@@ -26,7 +26,6 @@ from mindspore.ops.operations.comm_ops import AllReduce
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Adam
 
-
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -72,7 +71,7 @@ def test_bprop_with_sparse_feature_allreduce(test_context):
 
 
 def test_bprop_with_sparse_feature_mirror(test_context):
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=True)
 
     class Net(nn.Cell):
         def __init__(self, shape=None):

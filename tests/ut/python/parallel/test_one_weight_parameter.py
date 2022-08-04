@@ -23,6 +23,10 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_by_list = C.GradOperation(get_by_list=True)
 
 

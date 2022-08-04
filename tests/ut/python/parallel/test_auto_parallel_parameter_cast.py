@@ -27,6 +27,10 @@ from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -78,8 +82,8 @@ def test_common_parameter():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('MatMul-op0', k) is not None:
-            assert v == [[4, 1], [1, 2]]
-        elif re.search('MatMul-op', k) is not None:
             assert v == [[8, 1], [1, 1]]
+        elif re.search('MatMul-op4', k) is not None:
+            assert v == [[1, 1], [1, 8]]
         elif re.search('Cast-op', k) is not None:
             assert v == [[1, 1]]

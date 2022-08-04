@@ -27,6 +27,10 @@ from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from mindspore.parallel._cost_model_context import _set_algo_single_loop
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class SubNet(nn.Cell):
     def __init__(self, index):
         super().__init__()

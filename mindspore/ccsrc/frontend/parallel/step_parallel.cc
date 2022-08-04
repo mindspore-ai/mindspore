@@ -2768,53 +2768,6 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
   }
 }
 
-CommInfo GetCommInfo() {
-  int64_t device_num = ParallelContext::GetInstance()->device_num();
-  int64_t global_rank = ParallelContext::GetInstance()->global_rank();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  std::string world_group;
-  std::string communication_backend;
-  if (backend == kAscendDevice || backend == kDavinciDevice) {
-    world_group = HCCL_WORLD_GROUP;
-    communication_backend = HCCL_BACKEND;
-  } else if (backend == kGPUDevice) {
-    world_group = NCCL_WORLD_GROUP;
-    communication_backend = NCCL_BACKEND;
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend;
-  }
-  uint32_t world_rank_size = 0;
-  if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
-    MS_LOG(EXCEPTION) << "Get rank size failed";
-  }
-
-  if (!ParallelContext::GetInstance()->device_num_is_set()) {
-    device_num = UintToInt(world_rank_size);
-    MS_LOG(INFO) << "Get device num from communication model, the device num is  " << device_num;
-  }
-#if (!defined(_WIN32) && !defined(__APPLE__) && !(defined(ENABLE_TESTCASES) || defined(ENABLE_TEST)))
-  if (ParallelContext::GetInstance()->device_num_is_set() && world_rank_size != device_num &&
-      !ParallelContext::GetInstance()->hccl_test_available()) {
-    // hccl_test_available is used when we compile graphs in real ascend card environment, but with hccl_test.
-    MS_LOG(EXCEPTION) << "The device_num " << device_num << " set in the context is not consist with "
-                      << world_rank_size << " devices you have"
-                      << ". Please check your rank_table file(for Ascend) or host file(for GPU).";
-  }
-#endif
-  uint32_t rank_id = 0;
-  if (!ParallelContext::GetInstance()->global_rank_is_set()) {
-    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-      MS_LOG(EXCEPTION) << "Get rank id failed";
-    }
-    global_rank = UintToInt(rank_id);
-    MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
-  }
-  CommInfo comm_info{device_num, global_rank, world_group, communication_backend};
-  return comm_info;
-}
-
 Status ParallelInit() {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();

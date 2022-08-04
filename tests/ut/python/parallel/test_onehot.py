@@ -23,6 +23,10 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 context.set_context(mode=context.GRAPH_MODE)
 
 

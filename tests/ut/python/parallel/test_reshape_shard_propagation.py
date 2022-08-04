@@ -26,6 +26,10 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 grad_all = C.GradOperation(get_all=True)
 
 

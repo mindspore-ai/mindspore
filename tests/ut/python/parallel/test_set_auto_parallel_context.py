@@ -19,6 +19,10 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 def test_set_auto_parallel_context():
     context.set_auto_parallel_context(device_num=4, global_rank=3, gradients_mean=True, gradient_fp32_sync=False,
                                       parallel_mode="auto_parallel", parameter_broadcast=False,

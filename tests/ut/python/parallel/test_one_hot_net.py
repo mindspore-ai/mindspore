@@ -33,6 +33,10 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 from parallel.utils.utils import BasicValidator
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -325,7 +329,8 @@ def test_semi_one_hot_net_model():
     dataset = Dataset(predict, label, 2, input_num=2)
 
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=16)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=16,
+                                      dataset_strategy="data_parallel")
     context.set_context(mode=context.GRAPH_MODE)
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyModel())
     opt = Momentum(net.trainable_params(), learning_rate, momentum)

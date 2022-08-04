@@ -28,6 +28,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
+
 context.set_context(mode=context.PYNATIVE_MODE)
 
 class Net(nn.Cell):
@@ -213,7 +214,7 @@ def test_lamb_split_fusion_in_index():
     """
     comm_fusion_dict = {"allreduce": {"mode": "index", "config": [2, 4, 6, 8]}}
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True,
-                                      comm_fusion=comm_fusion_dict)
+                                      comm_fusion=comm_fusion_dict, dataset_strategy="data_parallel")
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()

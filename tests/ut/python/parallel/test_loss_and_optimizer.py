@@ -24,6 +24,10 @@ from mindspore.nn.optim import Momentum, LARS
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()

@@ -21,6 +21,10 @@ from mindspore.nn.wrap.cell_wrapper import _BroadCastCell
 from mindspore.common.api import _cell_graph_executor
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 def test_param_broadcast_cell():
     """
     Feature: param broadcast cell

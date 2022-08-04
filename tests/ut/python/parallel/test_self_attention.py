@@ -27,6 +27,10 @@ from mindspore.common.parameter import Parameter
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -93,6 +97,7 @@ class Net(nn.Cell):
 
 
 def test_self_attention_standalone():
+    context.reset_auto_parallel_context()
     set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="stand_alone")
     net = GradWrap(NetWithLoss(

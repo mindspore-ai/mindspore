@@ -29,7 +29,6 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 
-
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 clip_grad = C.MultitypeFuncGraph("clip_grad")

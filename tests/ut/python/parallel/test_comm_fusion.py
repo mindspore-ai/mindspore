@@ -114,7 +114,8 @@ def test_fusion_size():
     reducescatter_threshold = 16
     comm_fusion_dict = {"allgather": {"mode": "size", "config": allgather_threshold},
                         "reducescatter": {"mode": "size", "config": reducescatter_threshold}}
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict,
+                                      dataset_strategy="data_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64]), dtype=ms.float32)
@@ -137,7 +138,8 @@ def test_fusion_auto():
     comm_fusion_dict = {"allgather": {"mode": "auto", "config": None},
                         "reducescatter": {"mode": "auto", "config": None}}
     context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True,
-                                      parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+                                      parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict,
+                                      dataset_strategy="data_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 1))
@@ -161,7 +163,8 @@ def test_fusion_optimizer_parallel():
     comm_fusion_dict = {"allgather": {"mode": "size", "config": allgather_threshold},
                         "reducescatter": {"mode": "size", "config": reducescatter_threshold}}
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
-                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict)
+                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict,
+                                      dataset_strategy="full_batch")
     _w0 = Tensor(np.ones([64, 16, 2]), dtype=ms.float32)
     _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     _w2 = Tensor(np.ones([32]), dtype=ms.float32)
@@ -173,7 +176,8 @@ def test_fusion_optimizer_parallel():
     comm_fusion_dict = {"allgather": {"mode": "auto", "config": None},
                         "reducescatter": {"mode": "auto", "config": None}}
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
-                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict)
+                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict,
+                                      dataset_strategy="full_batch")
     compile_net(net)
 
 def test_allgather_fusion_invalid_value_failed():

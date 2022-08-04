@@ -312,7 +312,7 @@ def reshape_net2(backbone):
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
     input_ = Tensor(np.ones([batch_size * device_num, 512, 7, 7]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(backbone))
@@ -482,7 +482,7 @@ def test_batchnorm_reshape_train():
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
     input_ = Tensor(np.ones([batch_size * device_num, 512]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(_VirtualDatasetCell(BatchNormReshapeNet())))
@@ -520,7 +520,7 @@ def test_bn_reshape_dense_bn_train():
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
     input_ = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))

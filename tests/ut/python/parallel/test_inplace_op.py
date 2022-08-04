@@ -21,6 +21,10 @@ from mindspore.ops import operations as P
 
 from parallel.utils.utils import compile_net
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 x_ = Tensor(np.random.normal(size=[32, 8, 8]).astype(np.float32))
 input_v_ = Tensor(np.random.normal(size=[16, 8, 8]).astype(np.float32))
 indices_ = tuple(range(16))

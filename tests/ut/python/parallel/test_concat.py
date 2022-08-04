@@ -20,6 +20,10 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 class Net(Cell):
     def __init__(self, weight, weight2, strategy1=None, strategy2=None, is_parameter=True):
         super().__init__()

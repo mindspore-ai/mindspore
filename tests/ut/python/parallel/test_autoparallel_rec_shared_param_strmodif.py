@@ -26,7 +26,6 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.common.api import _cell_graph_executor
 from tests.dataset_mock import MindData
 
-
 class Dataset(MindData):
     def __init__(self, input_ids, length=3):
         super(Dataset, self).__init__(size=length)

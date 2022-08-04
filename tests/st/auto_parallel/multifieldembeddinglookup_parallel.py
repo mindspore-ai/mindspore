@@ -278,6 +278,7 @@ class ParallelMultiHotFactory:
                                                                epoch=epoch, dataset=dataset)
 
     def checkpoint_cmp(self, inputs_np, label):
+        context.reset_auto_parallel_context()
         standalone_net = MultiHotNet(vocab_size=self.vocab_size, embedding_size=self.embedding_size,
                                      field_size=self.field_size, param_init=self.param_init, target=self.target,
                                      slice_mode=self.slice_mode, sparse=self.sparse, operator=self.operator,

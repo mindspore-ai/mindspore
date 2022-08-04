@@ -21,6 +21,10 @@ from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class DenseMutMulNet(nn.Cell):
     def __init__(self):
         super(DenseMutMulNet, self).__init__()

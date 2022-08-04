@@ -20,6 +20,10 @@ from mindspore.ops import operations as P
 
 from parallel.utils.utils import ParallelValidator, compile_net
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 logits_ = Tensor(np.random.uniform(0, 1, [8, 8]), mstype.float32)
 labels_ = Tensor(np.random.randint(0, 10, [8, 8]), mstype.float32)
 

@@ -135,7 +135,7 @@ def test_dense_relu_semi_auto():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel",
                                       dataset_strategy="data_parallel")
     net = DenseMutMulNet()
-    x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
+    x = Tensor(np.ones([32 // 8, 128]).astype(np.float32) * 0.01)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -157,7 +157,7 @@ def test_dense_relu_auto():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel",
                                       dataset_strategy="data_parallel")
     net = DenseMutMulNet()
-    x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
+    x = Tensor(np.ones([32 // 8, 128]).astype(np.float32) * 0.01)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -179,7 +179,7 @@ def test_mul_neg_two_output_semi_auto():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel",
                                       dataset_strategy="data_parallel")
     net = MulNegTwoOutputNet()
-    x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
+    x = Tensor(np.ones([32 // 8, 128]).astype(np.float32) * 0.01)
     strategies = compile_graph(x, net)
     count = 0
     for (k, v) in strategies.items():
@@ -207,7 +207,7 @@ def test_mul_neg_two_output_auto():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel",
                                       dataset_strategy="data_parallel")
     net = MulNegTwoOutputNet()
-    x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
+    x = Tensor(np.ones([32 // 8, 128]).astype(np.float32) * 0.01)
     strategies = compile_graph(x, net)
     count = 0
     for (k, v) in strategies.items():
@@ -237,7 +237,7 @@ def test_reshape_matmul_semi_auto():
     strategy1 = None
     strategy2 = ((1, 1), (1, 8))
     net = ReshapeMatMulNet(strategy1, strategy2)
-    x = Tensor(np.ones([64, 4, 7]), ms.float32)
+    x = Tensor(np.ones([64 // 8, 4, 7]), ms.float32)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -250,7 +250,7 @@ def test_reshape_matmul_auto():
     strategy1 = None
     strategy2 = ((1, 1), (1, 8))
     net = ReshapeMatMulNet(strategy1, strategy2)
-    x = Tensor(np.ones([64, 4, 7]), ms.float32)
+    x = Tensor(np.ones([64 // 8, 4, 7]), ms.float32)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -263,7 +263,7 @@ def test_matmul_reshape_semi_auto():
     strategy2 = None
     strategy1 = ((1, 1), (1, 8))
     net = MatMulReshapeNet(strategy1, strategy2)
-    x = Tensor(np.ones([128, 28]), ms.float32)
+    x = Tensor(np.ones([128 // 8, 28]), ms.float32)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -276,7 +276,7 @@ def test_matmul_reshape_auto():
     strategy2 = None
     strategy1 = ((1, 1), (1, 8))
     net = MatMulReshapeNet(strategy1, strategy2)
-    x = Tensor(np.ones([128, 28]), ms.float32)
+    x = Tensor(np.ones([128 // 8, 28]), ms.float32)
     strategies = compile_graph(x, net)
     for (k, v) in strategies.items():
         if re.search('VirtualOutput-op', k) is not None:
@@ -311,8 +311,8 @@ def test_scalar_output_semi_auto():
     net = ParallelMulNet()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
     eval_net = nn.WithEvalCell(net, loss_fn)
-    x = Tensor(np.ones([4096, 1, 2, 1024]).astype(np.float32)*0.01)
-    label = Tensor(np.ones([4096, 250]).astype(np.float32)*0.01)
+    x = Tensor(np.ones([4096 // 8, 1, 2, 1024]).astype(np.float32)*0.01)
+    label = Tensor(np.ones([4096 // 8, 250]).astype(np.float32)*0.01)
     strategies = compile_graph_two_input(x, label, eval_net)
     count = 0
     for (k, v) in strategies.items():
@@ -328,8 +328,8 @@ def test_scalar_output_auto():
     net = ParallelMulNet()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
     eval_net = nn.WithEvalCell(net, loss_fn)
-    x = Tensor(np.ones([4096, 1, 2, 1024]).astype(np.float32)*0.01)
-    label = Tensor(np.ones([4096, 250]).astype(np.float32)*0.01)
+    x = Tensor(np.ones([4096 // 8, 1, 2, 1024]).astype(np.float32)*0.01)
+    label = Tensor(np.ones([4096 // 8, 250]).astype(np.float32)*0.01)
     strategies = compile_graph_two_input(x, label, eval_net)
     count = 0
     for (k, v) in strategies.items():

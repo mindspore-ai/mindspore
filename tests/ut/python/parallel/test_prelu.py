@@ -24,6 +24,10 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
@@ -142,7 +146,6 @@ def test_matmul_prelu_parallel_success():
             out = self.prelu(out, w)
             return out
 
-    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=64, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 2))

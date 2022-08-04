@@ -22,6 +22,10 @@ import mindspore.ops as ops
 
 from parallel.utils.utils import compile_net
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 B = 8
 P = 8
 R = 8

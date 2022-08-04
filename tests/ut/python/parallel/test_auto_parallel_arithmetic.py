@@ -25,6 +25,10 @@ from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -90,7 +94,7 @@ def test_auto_parallel_arithmetic():
         elif re.search('MatMul-op', k) is not None:
             assert v == [[8, 1], [1, 1]]
         elif re.search('_VirtualDataset-op', k) is not None:
-            assert v == [[8, 1], [8, 1], [8, 1]]
+            assert v == [[1, 1], [1, 1], [1, 1]]
 
 
 def test_auto_parallel_arithmetic_broadcast_both():
@@ -157,11 +161,11 @@ def test_auto_parallel_arithmetic_broadcast_right():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[8, 1], [1]]
+            assert v == [[1, 8], [8]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[8, 1], [1, 1]]
+            assert v == [[1, 1], [1, 8]]
         elif re.search('_VirtualDataset-op', k) is not None:
-            assert v == [[8, 1], [8, 1], [8]]
+            assert v == [[1, 1], [1, 1], [1]]
 
 
 def test_auto_parallel_arithmetic_broadcast_left():
@@ -193,8 +197,8 @@ def test_auto_parallel_arithmetic_broadcast_left():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[1, 1], [8, 1, 1]]
+            assert v == [[1, 1], [1, 1, 1]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[8, 1], [1, 1]]
+            assert v == [[1, 1], [1, 1]]
         elif re.search('_VirtualDataset-op', k) is not None:
-            assert v == [[8, 1], [8, 1], [8, 1, 1]]
+            assert v == [[1, 1], [1, 1], [1, 1, 1]]

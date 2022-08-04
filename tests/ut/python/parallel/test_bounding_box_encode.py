@@ -22,6 +22,10 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 _anchor_box = Tensor(np.ones([32, 4]), ms.float32)
 _gt_boxes = Tensor(np.ones([32, 4]), ms.float32)
 
