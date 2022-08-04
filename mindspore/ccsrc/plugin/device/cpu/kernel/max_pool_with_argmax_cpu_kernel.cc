@@ -205,7 +205,7 @@ bool MaxPoolWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
         }
       }
       output[i] = maxData;
-      mask[i] = maxIdx - posc * cWeight;
+      mask[i] = maxIdx;
     }
   };
   ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
