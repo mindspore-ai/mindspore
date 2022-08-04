@@ -73,8 +73,7 @@ class TensorScatterElementsCpuKernelMod : public NativeCpuKernelMod,
   std::vector<int64_t> indices_shape_{};
   std::vector<size_t> output_stride_{};
   std::vector<size_t> indices_stride_{};
-  std::string kernel_name_;
-  ReductionType reduction_type_;
+  ReductionType reduction_type_{REDCUTION_INVALID_TYPE};
 };
 }  // namespace mindspore::kernel
 
