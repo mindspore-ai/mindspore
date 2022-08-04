@@ -5561,7 +5561,7 @@ class Erfinv(Primitive):
         TypeError: If dtype of `input_x` is neither float32 nor float16.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)

@@ -33,7 +33,7 @@ abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr ErfinvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto infer_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", infer_type, valid_types, prim->name());
   return infer_type;
@@ -46,8 +46,7 @@ AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", SizeToLong(input_args.size()), kEqual, input_num,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", input_args.size(), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
