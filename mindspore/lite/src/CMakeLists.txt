@@ -158,6 +158,13 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
             )
 endif()
 
+if(MSLITE_ENABLE_CAPTURE_SIGNALS)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/signal_handler.cc
+        )
+endif()
+
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
