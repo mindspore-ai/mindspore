@@ -409,12 +409,12 @@ class DebugServices {
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                           std::vector<unsigned int> root_graph_id, NPYFilePool *const result_list);
 
-  void ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files, const std::vector<ProtoDump> &proto_dump,
-                              const std::string &specific_dump_dir, NPYFilePool *const result_list);
+  static void ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files, const std::vector<ProtoDump> &proto_dump,
+                                     const std::string &specific_dump_dir, NPYFilePool *const result_list);
 
-  void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
-                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
-                          NPYFilePool *const result_list) const;
+  static void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
+                                 const std::string &specific_dump_dir, DirMap *dir_to_files_map,
+                                 NPYFilePool *const result_list);
 
   void GetTensorDataInfoAsync(const std::vector<ProtoDump> &proto_dump, const std::string &specific_dump_dir,
                               uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,

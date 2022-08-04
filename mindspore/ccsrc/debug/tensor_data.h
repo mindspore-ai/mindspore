@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "base/float16.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/mindapi/base/type_id.h"
 #ifdef ONLINE_DBG_MODE
