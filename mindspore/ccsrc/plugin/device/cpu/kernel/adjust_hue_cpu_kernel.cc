@@ -150,7 +150,7 @@ HsvTuple rgb2hsv(const float r, const float g, const float b) {
     if (M == r) {
       const float num = (g - b) / chroma;
       const float sign = copysignf(1.0f, num);
-      h = ((sign < 0.0f) * 6.0f + sign * fmodf(sign * num, 6.0f)) / 6.0f;
+      h = (static_cast<float>(sign < 0.0f) * 6.0f + sign * fmodf(sign * num, 6.0f)) / 6.0f;
     } else if (M == g) {
       h = ((b - r) / chroma + 2.0f) / 6.0f;
     } else {
@@ -183,9 +183,12 @@ RgbTuple hsv2rgb(const float h, const float s, const float v) {
   const bool between_3_and_4 = new_h >= 3.0f && new_h < 4.0f;
   const bool between_4_and_5 = new_h >= 4.0f && new_h < 5.0f;
   const bool between_5_and_6 = new_h >= 5.0f && new_h < 6.0f;
-  tuple.r = chroma * (between_0_and_1 || between_5_and_6) + x * (between_1_and_2 || between_4_and_5) + new_m;
-  tuple.g = chroma * (between_1_and_2 || between_2_and_3) + x * (between_0_and_1 || between_3_and_4) + new_m;
-  tuple.b = chroma * (between_3_and_4 || between_4_and_5) + x * (between_2_and_3 || between_5_and_6) + new_m;
+  tuple.r = chroma * static_cast<float>(between_0_and_1 || between_5_and_6) +
+            x * static_cast<float>(between_1_and_2 || between_4_and_5) + new_m;
+  tuple.g = chroma * static_cast<float>(between_1_and_2 || between_2_and_3) +
+            x * static_cast<float>(between_0_and_1 || between_3_and_4) + new_m;
+  tuple.b = chroma * static_cast<float>(between_3_and_4 || between_4_and_5) +
+            x * static_cast<float>(between_2_and_3 || between_5_and_6) + new_m;
   return tuple;
 }
 
