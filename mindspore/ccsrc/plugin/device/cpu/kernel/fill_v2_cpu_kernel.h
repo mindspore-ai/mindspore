@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FILL_V2_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FILL_V2_CPU_KERNEL_H_
 
-#include <memory>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -39,7 +38,7 @@ class FillV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchKernel(AddressPtr *output, const AddressPtr &value);
 
   template <typename T>
-  void CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims);
+  void CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims) const;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
