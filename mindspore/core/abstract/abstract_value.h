@@ -206,11 +206,16 @@ class MS_CORE_API AbstractBase : public Base {
   static void set_interpret_bool_checker(InterpretBoolChecker checker) { interpret_bool_checker_ = checker; }
   static inline InterpretBoolChecker interpret_bool_checker() { return interpret_bool_checker_; }
 
+  std::string name() const { return name_; }
+
+  void set_name(const std::string &name) { name_ = name; }
+
  protected:
   /// \brief Build a value when value is not set.
   ///
   /// \return A pointer to the Value.
   virtual ValuePtr RealBuildValue() const { return kAnyValue; }
+  std::string name_;
 
  private:
   ValuePtr value_;

@@ -436,6 +436,9 @@ abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const 
     auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(tensor_info, ref_key);
     return abs_ref;
   }
+  if (tensor_proto.has_name()) {
+    tensor_info->set_name(tensor_proto.name());
+  }
   return tensor_info;
 }
 

@@ -914,38 +914,37 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
       auto data_type = kernel_build_info->GetOutputDeviceType(0);
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
       inputs->push_back(ms_tensor);
-      inputs_name->push_back(parameter->name());
+      auto abstract = parameter->abstract();
+      inputs_name->push_back(abstract->name());
     }
   }
 }
 
-void KernelGraphUtils::UpdateCustomAscendOutputNames(const std::vector<AnfNodePtr> &outputs,
-                                                     std::vector<std::string> *output_names) const {
+void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
+                                      std::vector<std::string> *output_names) const {
   MS_EXCEPTION_IF_NULL(output_names);
   for (const auto &output : outputs) {
     auto real_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(output, 0);
     auto real_output = real_output_with_index.first;
+    auto idx = real_output_with_index.second;
     MS_EXCEPTION_IF_NULL(real_output);
     MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
-    std::string node_name = common::AnfAlgo::GetCNodeName(real_output);
-    if (node_name == "CustomAscend") {
-      if (real_output->isa<CNode>()) {
-        auto primitive = GetCNodePrimitive(real_output);
-        if (primitive != nullptr) {
-          auto val_ptr = primitive->GetAttr("outputs_names");
-          if (val_ptr != nullptr) {
-            auto real_output_names = GetValue<std::vector<std::string>>(val_ptr);
-            if (outputs.size() != real_output_names.size()) {
-              MS_LOG(ERROR) << "Output size[" << outputs.size() << "] is not equal with Output names size["
-                            << real_output_names.size() << "]";
-              return;
-            }
-            (*output_names).swap(real_output_names);
-          }
-        }
+    auto cnode = real_output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    AbstractBasePtr abstract = cnode->abstract();
+    if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
+      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
+      MS_EXCEPTION_IF_NULL(abstract_tuple);
+      auto abstract_list = abstract_tuple->elements();
+      if (abstract_list.size() <= idx) {
+        MS_LOG(ERROR) << "AbstractTuple's size[" << abstract_list.size() << "] is smaller than expect size[" << idx
+                      << "]";
+        return;
       }
-      break;
+      abstract = abstract_list[idx];
     }
+    MS_EXCEPTION_IF_NULL(abstract);
+    output_names->emplace_back(abstract->name());
   }
 }
 
@@ -970,10 +969,7 @@ void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor
     vector_outputs.emplace_back(CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node, &node_to_tensor));
   }
   *outputs = TransformVectorRefToMultiTensor(vector_outputs);
-  for (size_t i = 0; i < outputs->size(); i++) {
-    output_names->push_back("output" + std::to_string(i));
-  }
-  UpdateCustomAscendOutputNames(anf_outputs, output_names);
+  GetOutputNames(anf_outputs, output_names);
 }
 
 CNodePtr KernelGraphUtils::CreateNewCNode(const CNodePtr &cnode, KernelGraphPtr graph,

@@ -136,7 +136,12 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_ERROR, "Transform anf graph return nullptr.");
   // export protobuf
   if (param->export_mindir == kMindIR) {
-    auto status = MindIRSerialize(param, graph);
+    auto status = UpdateFuncGraphInputAndOutputNames(graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
+      return RET_ERROR;
+    }
+    status = MindIRSerialize(param, graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Export to mindir proto failed";
       return RET_ERROR;
@@ -195,7 +200,12 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
 
   // export protobuf
   if (param->export_mindir == kMindIR) {
-    auto status = MindIRSerialize(param, graph);
+    auto status = UpdateFuncGraphInputAndOutputNames(graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
+      return RET_ERROR;
+    }
+    status = MindIRSerialize(param, graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Export to mindir failed";
       return RET_ERROR;
