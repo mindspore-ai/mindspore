@@ -17,16 +17,30 @@
 #include <cuda_runtime.h>
 #include "include/cuda_fp16.h"
 
+__device__ __forceinline__ bool isfinite(half x) {
+  return std::isfinite(static_cast<float>(x));
+}
+
+template <typename T>
+__device__ __forceinline__ bool isfinite(T x) {
+  return std::isfinite(x);
+}
+
 template <typename T>
 __global__ void InTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output,
                        size_t batch_size, size_t class_id_count, int64_t k) {
   size_t gt_id = blockIdx.x * blockDim.x + threadIdx.x;
   for (; gt_id < batch_size; gt_id += blockDim.x * gridDim.x) {
     int32_t target_index = targets[gt_id];
-    T predicted_value = predictions[gt_id * class_id_count + target_index];
-    T top_k_smallest_value = top_k_output[gt_id * k + k - 1];
-
-    output[gt_id] = predicted_value >= top_k_smallest_value;
+    bool is_invalid = (static_cast<size_t>(target_index) >= class_id_count);
+    if (!is_invalid) {
+      T predicted_value = predictions[gt_id * class_id_count + target_index];
+      T top_k_smallest_value = top_k_output[gt_id * k + k - 1];
+      is_invalid = is_invalid || !isfinite(predicted_value);
+      output[gt_id] = is_invalid ? false : predicted_value >= top_k_smallest_value;
+    } else {
+      output[gt_id] = false;
+    }
   }
 }
 
