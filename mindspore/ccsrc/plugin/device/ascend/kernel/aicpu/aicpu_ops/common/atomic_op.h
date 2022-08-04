@@ -32,7 +32,7 @@ void AtomicAddTask(T *const address, const T val) {
     assumed = old;
     assumed_t = reinterpret_cast<T *>(&assumed);
     desired_s = reinterpret_cast<S *>(&desired);
-    desired = *assumed_t + static_cast<T>(val);
+    desired = (*assumed_t) + static_cast<T>(val);
     old = __sync_val_compare_and_swap(address_as_ull, assumed, *desired_s);
   } while (assumed != old);
 }

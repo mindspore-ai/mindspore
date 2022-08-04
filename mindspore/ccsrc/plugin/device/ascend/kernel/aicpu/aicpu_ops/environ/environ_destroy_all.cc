@@ -21,16 +21,16 @@ namespace aicpu {
 uint32_t EnvironDestroyAllKernel::DoCompute() {
   AICPU_LOGD("Destroy all env handle");
   EnvironMgr::GetInstance().Clear();
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t EnvironDestroyAllKernel::ParseKernelParam() {
   AICPU_LOGD("Enter ParseKernelParam.");
   if (!EnvironMgr::GetInstance().IsScalarTensor(node_def_.outputs(aicpu::kIndex0))) {
     AICPU_LOGE("The output is not scalar tensor.");
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu
 

@@ -34,14 +34,14 @@ uint32_t EnvironSetKernel::DoCompute() {
   auto *output_handle_ptr = reinterpret_cast<int64_t *>(io_addrs_[aicpu::kIndex3]);
 
   auto *value_ptr = malloc(value_size_);
-  AICPU_CHECK_NULLPTR(value_ptr, AICPU_KERNEL_STATE_PARAM_INVALID, "Malloc failed.")
+  AICPU_CHECK_NULLPTR(value_ptr, kAicpuKernelStateInvalid, "Malloc failed.")
   auto ret = memcpy_s(value_ptr, value_size_, input_value_ptr, value_size_);
-  AICPU_CHECK_FALSE((ret == EOK), AICPU_KERNEL_STATE_PARAM_INVALID, "Memcpy size from input[2] to environ failed.",
+  AICPU_CHECK_FALSE((ret == EOK), kAicpuKernelStateInvalid, "Memcpy size from input[2] to environ failed.",
                     value_size_);
 
   // Set env member.
   const auto &env = env_mgr.Get(input_handle_ptr[0]);
-  AICPU_CHECK_NULLPTR(env, AICPU_KERNEL_STATE_PARAM_INVALID, "Get handle[%d] failed.", input_handle_ptr[0]);
+  AICPU_CHECK_NULLPTR(env, kAicpuKernelStateInvalid, "Get handle[%d] failed.", input_handle_ptr[0]);
 
   auto env_value = std::make_shared<EnvironValue>(value_ptr, value_size_, attr_value_type_);
   env->Set(input_key_ptr[0], env_value);
@@ -50,7 +50,7 @@ uint32_t EnvironSetKernel::DoCompute() {
 
   // Set output handle
   output_handle_ptr[0] = input_handle_ptr[0];
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t EnvironSetKernel::ParseKernelParam() {
@@ -58,12 +58,12 @@ uint32_t EnvironSetKernel::ParseKernelParam() {
   auto &env_mgr = EnvironMgr::GetInstance();
   if (!env_mgr.CheckEnvInput(node_def_)) {
     AICPU_LOGE("The input checks invalid. ");
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
 
   if (!env_mgr.IsScalarTensor(node_def_.outputs(aicpu::kIndex0))) {
     AICPU_LOGE("The output handle is not equal of input handle.");
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
 
   // Get value type.
@@ -73,7 +73,7 @@ uint32_t EnvironSetKernel::ParseKernelParam() {
   // Get value size.
   aicpuops::Tensor value_tensor = node_def_.inputs(aicpu::kIndex2);
   value_size_ = value_tensor.data_size();
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu
 

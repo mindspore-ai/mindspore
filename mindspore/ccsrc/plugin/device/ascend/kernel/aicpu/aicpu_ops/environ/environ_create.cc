@@ -25,16 +25,16 @@ uint32_t EnvironCreateKernel::DoCompute() {
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[aicpu::kIndex0]);
   output_data[0] = env_handle;
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t EnvironCreateKernel::ParseKernelParam() {
   AICPU_LOGD("Enter ParseKernelParam.");
   if (!EnvironMgr::GetInstance().IsScalarTensor(node_def_.outputs(aicpu::kIndex0))) {
     AICPU_LOGE("The output is not scalar tensor.");
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu
 
