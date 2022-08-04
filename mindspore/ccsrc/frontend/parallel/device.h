@@ -21,8 +21,6 @@
 #include <string>
 #include <utility>
 
-#include "frontend/parallel/status.h"
-
 namespace mindspore {
 namespace parallel {
 class Device {

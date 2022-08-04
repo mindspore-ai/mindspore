@@ -1223,7 +1223,7 @@ void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const
 
 // This method is for the 'Merge' operation in DP algorithm. It creates new costlist for each strategy in the
 // target_op
-OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr &op) {
+OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr &op) const {
   MS_EXCEPTION_IF_NULL(op);
   auto target_op = op->GetAliveSuccEdges()[0]->next_operator();
   auto edge_ptr = op->GetAliveSuccEdges()[0];
@@ -1307,7 +1307,7 @@ void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_str
 
 // This method is for the 'Contract' operation in DP algorithm. It creates new costlist for each strategy in the
 // target_op
-OperatorInfoPtr CostGraph::EliminationContract(const OperatorInfoPtr &op) {
+OperatorInfoPtr CostGraph::EliminationContract(const OperatorInfoPtr &op) const {
   MS_EXCEPTION_IF_NULL(op);
   auto target_op = op->GetAlivePrevEdges()[0]->prev_operator();
   auto edge_ptr = op->GetAlivePrevEdges()[0];
@@ -1399,7 +1399,7 @@ void CostGraph::CreateTriangleEliminationCostList(const OperatorInfoPtr &elimi_o
                                                   const StrategyPtr &left_node_stra, const StrategyPtr &right_node_stra,
                                                   const CostPtrList &elimi_op_clist, const CostPtrList &left_edge_clist,
                                                   const CostPtrList &left_node_clist_origin,
-                                                  CostPtrList *left_node_clist_new) {
+                                                  CostPtrList *left_node_clist_new) const {
   MS_EXCEPTION_IF_NULL(elimi_op);
   for (auto &right_node_cost : right_node_clist) {
     MS_EXCEPTION_IF_NULL(right_node_cost);
@@ -1540,7 +1540,7 @@ void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>
                                               const CostPtrList &first_succ_node_clist,
                                               const CostPtrList &first_succ_edge_clist,
                                               const StrategyPtr &merged_op_stra, const CostPtrList &merged_op_clist,
-                                              CostPtrList *first_succ_node_clist_new) {
+                                              CostPtrList *first_succ_node_clist_new) const {
   std::vector<StrategyPtr> succ_nodes_stras(succ_edges.size(), nullptr);
   CostPtrList succ_edges_costs(succ_edges.size(), nullptr), succ_nodes_costs(succ_edges.size(), nullptr);
   std::function<void(size_t)> recursive = [&first_succ_node_stra, &first_succ_node_clist, &first_succ_edge_clist,

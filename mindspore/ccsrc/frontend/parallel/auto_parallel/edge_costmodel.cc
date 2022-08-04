@@ -264,7 +264,7 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
 
 CostPtrList Edge::CreateOpEliminationCostList(const EdgePtr &e1, const StrategyPtr &output_st_ptr,
                                               const OperatorInfoPtr &op, const EdgePtr &e2,
-                                              const StrategyPtr &input_st_ptr) {
+                                              const StrategyPtr &input_st_ptr) const {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(e1);
   MS_EXCEPTION_IF_NULL(e2);
