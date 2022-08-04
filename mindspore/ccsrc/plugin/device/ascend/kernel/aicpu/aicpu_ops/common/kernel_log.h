@@ -66,12 +66,12 @@ bool CheckLogLevel(int log_level_check);
     }                                                                           \
   } while (LOG_COUNT != 0)
 
-#define AICPU_CHK_STATUS_RET(expr...)                                  \
-  do {                                                                 \
-    const uint32_t status = (expr);                                    \
-    if (status != static_cast<uint32_t>(AICPU_KERNEL_STATE_SUCCESS)) { \
-      return status;                                                   \
-    }                                                                  \
+#define AICPU_CHK_STATUS_RET(expr...)        \
+  do {                                       \
+    const uint32_t status = (expr);          \
+    if (status != kAicpuKernelStateSucess) { \
+      return status;                         \
+    }                                        \
   } while (0);
 
 #define AICPU_CHECK_NULLPTR_VOID(value, logText...) \
