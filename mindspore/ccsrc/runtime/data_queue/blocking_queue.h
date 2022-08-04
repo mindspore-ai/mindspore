@@ -21,7 +21,6 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <cstring>
 #include <string>
 #include <vector>
 #include <condition_variable>

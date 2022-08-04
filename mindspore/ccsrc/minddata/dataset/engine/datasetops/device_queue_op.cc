@@ -819,7 +819,6 @@ Status DeviceQueueOp::SendDataToAscendDynamic() {
 
   bool is_break_loop = false;
 
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   std::function<void(void *, int32_t)> release_function([](void *, int32_t) { return; });
   auto ret = mindspore::DataQueueHandler::OpenDynamicBufQueue(channel_name_, release_function);
   if (ret != BlockQueueStatus_T::SUCCESS) {
@@ -840,7 +839,7 @@ Status DeviceQueueOp::SendDataToAscendDynamic() {
         device::DataQueueItem data_item;
         data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
         data_item.shapes_ = i->shape().AsVector();
-        data_item.data_ptr_ = const_cast<void *>((const void *)(i->GetBuffer()));
+        data_item.data_ptr_ = const_cast<void *>(static_cast<const void *>(i->GetBuffer()));
         data_item.data_type_ = i->type().ToString();
         items.push_back(data_item);
       }

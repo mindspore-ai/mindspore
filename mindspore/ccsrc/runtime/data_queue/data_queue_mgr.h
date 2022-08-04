@@ -74,7 +74,7 @@ class DataQueueMgr {
   EXPORT BlockQueueStatus_T Open(const std::string &channel_name, std::function<void(void *, int32_t)> func);
 
   // call for Front/Pop thread
-  EXPORT BlockQueueStatus_T Open(const std::string &channel_name);
+  EXPORT BlockQueueStatus_T Open(const std::string &channel_name) const;
   EXPORT BlockQueueStatus_T Push(const std::string &channel_name, const std::vector<DataQueueItem> &data,
                                  unsigned int timeout_in_sec);
   EXPORT BlockQueueStatus_T Front(const std::string &channel_name, std::vector<DataQueueItem> *data);
@@ -119,7 +119,7 @@ class DataQueueMgr {
 
   std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
 
-  inline bool isCreated(const std::string &channel_name);
+  inline bool isCreated(const std::string &channel_name) const;
 
   DataQueueMgr(const DataQueueMgr &) = delete;
   DataQueueMgr &operator=(const DataQueueMgr &) = delete;

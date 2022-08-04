@@ -38,8 +38,8 @@ DataQueueMgr &DataQueueMgr::GetInstance() noexcept {
 
 BlockQueueStatus_T DataQueueMgr::Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
                                         const size_t &capacity) {
-  MS_LOG(INFO) << "Gpu queue: " << channel_name << " created.";
-  if (name_queue_map_.count(channel_name)) {
+  MS_LOG(INFO) << "Static GPU queue: " << channel_name << " created";
+  if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue already exist: " << channel_name;
     return QUEUE_EXIST;
   }
@@ -63,7 +63,7 @@ BlockQueueStatus_T DataQueueMgr::Create(const std::string &channel_name, void *a
 BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name,
                                       const std::function<void(void *, int32_t)> func) {
   MS_LOG(INFO) << "Gpu queue: " << channel_name << " open.";
-  if (!name_queue_map_.count(channel_name)) {
+  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return QUEUE_NOT_EXIST;
   }
@@ -75,7 +75,7 @@ BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name,
 BlockQueueStatus_T DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name,
                                                      const std::function<void(void *, int32_t)> func) {
   std::unique_lock<std::mutex> locker(mutex_);
-  if (!name_queue_map_.count(channel_name)) {
+  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     BlockQueueStatus_T status = CreateDynamicBufQueue(channel_name, default_capacity_);
     MS_EXCEPTION_IF_CHECK_FAIL(status == BlockQueueStatus_T::SUCCESS, "Create dynamic buffer queue failed");
     MS_LOG_INFO << "Create dynamic buffer queue: " << channel_name;
@@ -97,7 +97,7 @@ BlockQueueStatus_T DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_
 }
 
 BlockQueueStatus_T DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity) {
-  if (name_queue_map_.count(channel_name)) {
+  if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue already exist: " << channel_name;
     return QUEUE_EXIST;
   }
@@ -123,8 +123,8 @@ BlockQueueStatus_T DataQueueMgr::CreateDynamicBufQueue(const std::string &channe
 #endif
 }
 
-BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name) {
-  if (!name_queue_map_.count(channel_name)) {
+BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name) const {
+  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return QUEUE_NOT_EXIST;
   }
@@ -195,11 +195,8 @@ bool DataQueueMgr::Destroy() {
   return true;
 }
 
-inline bool DataQueueMgr::isCreated(const std::string &channel_name) {
-  if (name_queue_map_.count(channel_name) != 0) {
-    return true;
-  }
-  return false;
+inline bool DataQueueMgr::isCreated(const std::string &channel_name) const {
+  return name_queue_map_.find(channel_name) != name_queue_map_.end();
 }
 
 bool DataQueueMgr::CloseNotify() {
@@ -226,7 +223,7 @@ bool DataQueueMgr::CloseNotify() {
 void DataQueueMgr::CloseConfirm() { sema.Signal(); }
 
 size_t DataQueueMgr::Size(const std::string &channel_name) {
-  if (!name_queue_map_.count(channel_name)) {
+  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return 0;
   }
@@ -234,7 +231,7 @@ size_t DataQueueMgr::Size(const std::string &channel_name) {
 }
 
 size_t DataQueueMgr::Capacity(const std::string &channel_name) {
-  if (!name_queue_map_.count(channel_name)) {
+  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return 0;
   }
@@ -248,8 +245,8 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   MS_EXCEPTION_IF_CHECK_FAIL(ret == device::BlockQueueStatus_T::SUCCESS, "Open dynamic data queue failed");
   std::vector<device::DataQueueItem> data;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
-  buf_mgr.Front(queue_name, &data);
-  buf_mgr.Pop(queue_name);
+  (void)buf_mgr.Front(queue_name, &data);
+  (void)buf_mgr.Pop(queue_name);
   std::vector<std::shared_ptr<device::DeviceAddress>> device_tensors;
   for (auto &device_tensor : kernel_info->output_address_list()) {
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -265,7 +262,7 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
     device_tensors[i]->SetSize(data[i].data_len_);
     device_tensors[i]->set_from_mem_pool(true);
     output_size_list.push_back(data[i].data_len_);
-    kernel_info->SetOutputAddr(device_tensors[i], i);
+    (void)kernel_info->SetOutputAddr(device_tensors[i], i);
     shapes.push_back(data[i].shapes_);
     types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
   }
