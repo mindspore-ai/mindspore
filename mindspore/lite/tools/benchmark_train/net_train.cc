@@ -245,13 +245,11 @@ int NetTrain::MarkPerformance() {
   uint64_t time_min = 0xFFFFFFFFFFFFFFFF;
   uint64_t time_max = 0;
   uint64_t time_avg = 0;
-  std::vector<MSTensor> outputs;
 
   for (int i = 0; i < flags_->epochs_; i++) {
     auto start = GetTimeUs();
-    auto status = flags_->time_profiling_
-                    ? ms_model_.Predict(ms_inputs_for_api_, &outputs, before_call_back_, after_call_back_)
-                    : ms_model_.Predict(ms_inputs_for_api_, &outputs);
+    auto status =
+      flags_->time_profiling_ ? ms_model_.RunStep(before_call_back_, after_call_back_) : ms_model_.RunStep();
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
@@ -299,8 +297,7 @@ int NetTrain::MarkAccuracy(bool enforce_accuracy) {
         return RET_ERROR;
     }
   }
-  std::vector<MSTensor> outputs;
-  auto status = ms_model_.Predict(ms_inputs_for_api_, &outputs);
+  auto status = ms_model_.RunStep();
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;

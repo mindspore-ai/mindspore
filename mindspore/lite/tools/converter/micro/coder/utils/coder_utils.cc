@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "coder/utils/coder_utils.h"
-#include <set>
 #include <queue>
 #include <string>
 #include <memory>
 #include <fstream>
+#include "src/common/prim_util.h"
 #include "tools/converter/micro/coder/log.h"
 #include "tools/converter/micro/coder/utils/type_cast.h"
 #include "tools/converter/micro/coder/allocator/allocator.h"

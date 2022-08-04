@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-int EraseBlankSpaceAndLineBreak(std::string *input_string) {
+bool EraseBlankSpaceAndLineBreak(std::string *input_string) {
   if (input_string == nullptr) {
     MS_LOG(ERROR) << "input_string is nullptr";
     return false;
@@ -33,7 +33,7 @@ int EraseBlankSpaceAndLineBreak(std::string *input_string) {
   return true;
 }
 
-int EraseQuotes(std::string *input_string) {
+bool EraseQuotes(std::string *input_string) {
   if (input_string == nullptr) {
     MS_LOG(ERROR) << "input_string is nullptr";
     return false;
@@ -45,6 +45,19 @@ int EraseQuotes(std::string *input_string) {
       input_string->erase(pos, 1);
       pos = input_string->find('\"', pos);
     }
+  }
+  return true;
+}
+
+bool FindAndReplaceAll(std::string *input_str, const std::string &search, const std::string &replace) {
+  if (input_str == nullptr) {
+    MS_LOG(ERROR) << "input_str is nullptr";
+    return false;
+  }
+  auto pos = input_str->find(search);
+  while (pos != std::string::npos) {
+    input_str->replace(pos, search.size(), replace);
+    pos = input_str->find(search, pos + replace.size());
   }
   return true;
 }

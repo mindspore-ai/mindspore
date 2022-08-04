@@ -44,10 +44,12 @@ class Generator {
  protected:
   virtual int CodeNetHFile() = 0;
   virtual int CodeNetCFile() = 0;
+  virtual void CodeNetExecuteFunc(std::ofstream &ofs) = 0;
   virtual int CodeWeightFile();
   virtual int CodeRegKernelHFile();
 
-  void CodeNetRunFunc(std::ofstream &ofs);
+  void CodeCommonNetH(std::ofstream &ofs);
+  void CodeCommonNetC(std::ofstream &ofs);
 
   Configurator *config_{nullptr};
   std::unique_ptr<CoderContext> ctx_{nullptr};

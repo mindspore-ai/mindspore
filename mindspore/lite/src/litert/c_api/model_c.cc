@@ -383,6 +383,21 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   return static_cast<MSStatus>(ret.StatusCode());
 }
 
+MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMSStatusLiteNotSupport;
+}
+
+MSStatus MSModelSetTrainMode(const MSModelHandle model, bool train) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMSStatusLiteNotSupport;
+}
+
+MSStatus MSModelExportWeight(const MSModelHandle model, const char *export_path) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMSStatusLiteNotSupport;
+}
+
 MSTensorHandleArray MSModelGetInputs(const MSModelHandle model) {
   if (model == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";

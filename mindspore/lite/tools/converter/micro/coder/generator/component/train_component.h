@@ -26,12 +26,10 @@
 #include "tools/converter/micro/coder/context.h"
 
 namespace mindspore::lite::micro {
-void CodeTrainParams(std::ofstream &ofs);
-
-void CodeFeaturesState(std::ofstream &ofs);
-void CodeFeaturesImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
-
-void CodeTrainState(std::ofstream &ofs);
-void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelExportWeight(std::ofstream &ofs);
+void CodeCopyTrainOutputsState(std::ofstream &ofs);
+void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_TRAIN_COMPONENT_H_

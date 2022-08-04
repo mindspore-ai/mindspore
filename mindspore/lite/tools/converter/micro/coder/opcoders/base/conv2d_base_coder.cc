@@ -21,10 +21,10 @@
 #include "nnacl/int8/quantize.h"
 #include "coder/log.h"
 #include "src/litert/tensor_category.h"
-#include "src/common/quant_utils.h"
 namespace mindspore::lite::micro {
 namespace {
 constexpr int kRoundUp = 2;
+constexpr int kPerTensor = 1;
 }  // namespace
 Conv2DBaseCoder::~Conv2DBaseCoder() {
   FreeConvQuantParams();

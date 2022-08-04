@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_PRIM_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_PRIM_UTIL_H_
 
+#include "src/common/version_manager.h"
+
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *primitive, int schema_version);
+int GetPrimitiveType(const void *primitive, int schema_version = SCHEMA_CUR);
 const char *GetPrimitiveTypeName(const void *primitive, int schema_version);
 const char *PrimitiveCurVersionTypeName(int type);
 int GenPrimVersionKey(int primitive_type, int schema_version);

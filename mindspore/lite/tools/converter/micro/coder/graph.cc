@@ -24,6 +24,7 @@
 #include "coder/log.h"
 #include "coder/opcoders/op_coder_register.h"
 #include "coder/utils/type_cast.h"
+#include "coder/utils/train_utils.h"
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
@@ -183,7 +184,8 @@ int CoderGraph::InitGraphInOutTensors() {
     }
   }
   SetOutputIndices(output_indices);
-  InitInputs();
+  int ret = InitInputs();
+  MS_CHECK_RET_CODE(ret, "init graph input tensors failed.");
   InitOutputs();
   return RET_OK;
 }
@@ -192,21 +194,88 @@ std::vector<lite::Tensor *> CoderGraph::input_tensors() const { return input_ten
 
 std::vector<lite::Tensor *> CoderGraph::output_tensors() const { return output_tensors_; }
 
-void CoderGraph::InitInputs() {
-  for (const auto &pair : inputs_map_) {
-    std::vector<Tensor *> tensors = pair.second;
-    input_tensors_.insert(input_tensors_.end(), tensors.begin(), tensors.end());
-  }
-  // remove duplicate tensors
-  std::set<lite::Tensor *> unique;
-  unique.insert(input_tensors_.begin(), input_tensors_.end());
+std::vector<lite::Tensor *> CoderGraph::eval_output_tensors() const { return eval_output_tensors_; }
+
+std::vector<lite::Tensor *> CoderGraph::train_output_tensors() const { return train_output_tensors_; }
+
+int CoderGraph::InitInputs() {
   input_tensors_.clear();
-  input_tensors_.insert(input_tensors_.end(), unique.begin(), unique.end());
+  auto graph_in_size = model_->graph_.input_indices_.size();
+  for (size_t i = 0; i < graph_in_size; i++) {
+    auto in_tensor_idx = model_->graph_.input_indices_[i];
+    MS_CHECK_TRUE_MSG(in_tensor_idx < all_tensors_.size(), RET_ERROR, "in tensor idx is out of range.");
+    auto in_tensor = all_tensors_.at(in_tensor_idx);
+    MS_CHECK_TRUE_MSG(in_tensor != nullptr, RET_ERROR, "in_tensor is nullptr.");
+    input_tensors_.emplace_back(in_tensor);
+  }
+  return RET_OK;
 }
 
 void CoderGraph::InitOutputs() {
-  std::transform(output_indices_.begin(), output_indices_.end(), std::back_inserter(output_tensors_),
-                 [&](uint32_t a) { return this->all_tensors_.at(a); });
+  output_tensors_.clear();
+  (void)std::transform(output_indices_.begin(), output_indices_.end(), std::back_inserter(output_tensors_),
+                       [&](uint32_t a) { return this->all_tensors_.at(a); });
+}
+
+int CoderGraph::CompileTrainOutputs(const std::vector<OperatorCoder *> &train_coders) {
+  train_outputs_map_.clear();
+  train_output_tensors_.clear();
+  for (auto train_coder : train_coders) {
+    MS_CHECK_TRUE_MSG(train_coder != nullptr, RET_ERROR, "train coder is nullptr.");
+    if (outputs_map_.find(train_coder->name()) == outputs_map_.end() || IsMaskOutput(train_coder) ||
+        train_outputs_map_.find(train_coder->name()) != train_outputs_map_.end()) {  // filter optimizer out tensors out
+      continue;
+    }
+    MS_CHECK_TRUE_MSG(!train_coder->output_tensors().empty(), RET_ERROR, "output tensors is empty.");
+    auto ms_tensor = train_coder->output_tensors().at(0);
+    if (ms_tensor != nullptr) {
+      train_outputs_map_[train_coder->name()].emplace_back(ms_tensor);
+      train_output_tensors_.emplace_back(ms_tensor);
+    }
+  }
+  if (train_outputs_map_.empty()) {
+    train_outputs_map_ = outputs_map_;
+  }
+  if (train_output_tensors_.empty()) {
+    train_output_tensors_ = output_tensors_;
+  }
+  return RET_OK;
+}
+
+int CoderGraph::CompileEvalOutputs(const std::vector<OperatorCoder *> &train_coders) {
+  eval_outputs_map_.clear();
+  eval_output_tensors_.clear();
+  for (auto coder : train_coders) {
+    MS_CHECK_TRUE_MSG(coder != nullptr, RET_ERROR, "coder is nullptr.");
+    if (!IsLossCoder(coder) || IsGradCoder(coder)) {
+      continue;
+    }
+    for (auto in_coder : coder->input_ops()) {
+      if (IsLossCoder(in_coder) || IsGradCoder(in_coder)) {
+        continue;
+      }
+      auto in_in_coders = in_coder->input_ops();
+      bool is_loss = std::any_of(in_in_coders.begin(), in_in_coders.end(),
+                                 [](const OperatorCoder *coder) { return IsLossCoder(coder); });
+      if (is_loss || eval_outputs_map_.find(in_coder->name()) != eval_outputs_map_.end()) {
+        continue;
+      }
+      MS_CHECK_TRUE_MSG(!in_coder->output_tensors().empty(), RET_ERROR, "output tensors is empty.");
+      auto ms_tensor = in_coder->output_tensors().at(0);
+      if (ms_tensor != nullptr) {
+        ms_tensor->set_init_ref_count(ms_tensor->init_ref_count() + 1);
+        eval_outputs_map_[in_coder->name()].emplace_back(ms_tensor);
+        eval_output_tensors_.emplace_back(ms_tensor);
+      }
+    }
+  }
+  if (eval_outputs_map_.empty()) {
+    eval_outputs_map_ = outputs_map_;
+  }
+  if (eval_output_tensors_.empty()) {
+    eval_output_tensors_ = output_tensors_;
+  }
+  return RET_OK;
 }
 
 void CoderGraph::SetAllTensors(const std::vector<Tensor *> &all_tensors) {
@@ -240,6 +309,8 @@ void CoderGraph::AddOutputMap(const std::string &node_id, Tensor *output_tensor)
 std::vector<lite::Tensor *> CoderGraph::all_tensors() const { return this->all_tensors_; }
 
 const std::map<std::string, std::vector<lite::Tensor *>> &CoderGraph::GetOutputsMap() const { return outputs_map_; }
+
+const std::map<std::string, std::vector<Tensor *>> &CoderGraph::GetEvalOutputsMap() const { return eval_outputs_map_; }
 
 std::vector<uint32_t> CoderGraph::input_indices() const { return this->input_indices_; }
 

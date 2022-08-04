@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_TRAIN_GENERATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_TRAIN_GENERATOR_H_
 
 #include <utility>
 #include <memory>
+#include <string>
+#include <vector>
 #include "tools/converter/micro/coder/generator/generator.h"
 
 namespace mindspore::lite::micro {
 class TrainGenerator : public Generator {
  public:
-  explicit TrainGenerator(std::unique_ptr<CoderContext> ctx) : Generator(std::move(ctx)) {}
+  TrainGenerator(std::unique_ptr<CoderContext> ctx, std::vector<std::pair<std::string, bool>> code_blocks_with_flag)
+      : Generator(std::move(ctx)), code_blocks_with_flag_(std::move(code_blocks_with_flag)) {}
   ~TrainGenerator() override = default;
 
  private:
+  void CodeTrainAndEvalFunc(std::ofstream &ofs);
+  void CodeNetExecuteFunc(std::ofstream &ofs) override;
   int CodeNetHFile() override;
   int CodeNetCFile() override;
-  void CodeGradientFunc(std::ofstream &ofs) const;
+
+ private:
+  std::vector<std::pair<std::string, bool>> code_blocks_with_flag_;  // <code block, is op only in train mode>
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_TRAIN_GENERATOR_H_

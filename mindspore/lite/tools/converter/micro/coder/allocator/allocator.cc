@@ -26,16 +26,18 @@ const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat, sizeof(float)},   
                                            {kNumberTypeInt32, sizeof(int32_t)}, {kNumberTypeInt16, sizeof(int16_t)},
                                            {kNumberTypeInt8, sizeof(int8_t)},   {kNumberTypeUInt8, sizeof(uint8_t)}};
 }
-void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type) {
+void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type,
+                                          const std::string &tensor_name) {
   auto item = size_map.find(type_id);
-  MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type idnex");
+  MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type index");
 
   size_t type_size = item->second;
-  MS_CHECK_TRUE_RET_NULL(type_size > 0, "type size should");
+  MS_CHECK_TRUE_RET_NULL(type_size > 0, "type size should be greater than 0");
   std::vector<int> shape = {1, static_cast<int>(size / type_size)};
   auto cate = type == kOfflinePackWeight ? lite::Category::CONST_TENSOR : lite::Category::VAR;
   Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, mindspore::NHWC, cate);
   MS_CHECK_PTR_RET_NULL(weight);
+  weight->set_tensor_name(tensor_name);
   std::string runtime_addr = kWeightPrefixName + std::to_string(weight_index_++);
   malloc_weights_addr_.insert(std::make_pair(weight, runtime_addr));
   if (type == kOfflinePackWeight) {
@@ -88,6 +90,9 @@ std::map<Tensor *, std::string> MemoryAllocator::tensors_map() const {
   std::map<Tensor *, std::string> res;
   res.insert(tensors_addr_.begin(), tensors_addr_.end());
   res.insert(malloc_weights_addr_.begin(), malloc_weights_addr_.end());
+  for (const auto &iter : saved_weights_addr_) {
+    res.insert({iter.second, iter.first});
+  }
   return res;
 }
 

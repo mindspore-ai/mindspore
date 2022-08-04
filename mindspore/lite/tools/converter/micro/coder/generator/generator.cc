@@ -29,7 +29,9 @@
 #include "coder/generator/component/const_blocks/mtensor.h"
 #include "coder/generator/component/const_blocks/mcontext.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
+#include "coder/generator/component/const_blocks/benchmark_train.h"
 #include "coder/generator/component/const_blocks/license.h"
+#include "coder/generator/component/train_component.h"
 #include "coder/log.h"
 #include "coder/opcoders/parallel.h"
 #include "coder/opcoders/kernel_registry.h"
@@ -61,26 +63,6 @@ Generator::Generator(std::unique_ptr<CoderContext> ctx) {
 
 Generator::~Generator() { (void)umask(origin_umask_); }
 
-void Generator::CodeNetRunFunc(std::ofstream &ofs) {
-  // generate net inference code
-  ofs << "void Inference() {\n";
-  if (config_->support_parallel()) {
-    ofs << "  " << gThreadNum << " = GetCurrentThreadNum();\n";
-    ofs << "  SetSpinCountMaxValue();\n";
-  }
-  for (const auto &block : ctx_->code_blocks()) {
-    ofs << "  {\n" << block << "  }\n";
-  }
-
-  for (const auto &block : ctx_->after_inference_code_blocks()) {
-    ofs << block << "\n";
-  }
-  if (config_->support_parallel()) {
-    ofs << "  SetSpinCountMinValue();\n";
-  }
-  ofs << "}\n";
-}
-
 int Generator::CodeSourceCMakeFile() {
   std::string src_cmake_file = net_src_file_path_ + cmake_file_name_;
   std::ofstream ofs(src_cmake_file);
@@ -100,7 +82,7 @@ int Generator::CodeDataCFile() {
   cofs << "#include \"data.h\"\n";
 
   auto inputs_num = ctx_->graph_inputs().size();
-  auto outputs_num = ctx_->graph_outputs().size();
+  auto outputs_num = ctx_->graph_eval_outputs().size();
 
   cofs << "#define NET_INPUTS_NUM " << inputs_num << "\n";
   cofs << "#define NET_OUTPUTS_NUM " << outputs_num << "\n";
@@ -129,7 +111,7 @@ int Generator::CodeDataCFile() {
                             << "  },\n";
   }
   for (size_t i = 0; i < outputs_num; i++) {
-    Tensor *tensor = ctx_->graph_outputs()[i];
+    Tensor *tensor = ctx_->graph_eval_outputs()[i];
     cofs << "#define NET_OUTPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
     data_def << "float output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE];\n";
     calib_data_def << "float calib_output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE] = {};\n";
@@ -174,6 +156,9 @@ int Generator::CodeStaticContent() {
   std::string context_source_txt = context_source;
   std::string tensor_header_txt = tensor_header;
   std::string tensor_source_txt = tensor_source;
+  if (config_->code_mode() == CodeMode::Train) {
+    benchmark_source_txt = benchmark_train_source;
+  }
   if (config_->target() == kCortex_M) {
     bench_cmake_lists_txt = bench_cmake_lists_cortex;
     calib_header_txt = calib_header_cortex;
@@ -233,7 +218,13 @@ int Generator::CodeMSModelImplement() {
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, config_);
   ofs << model_runtime_other_source;
-  CodeMSModelPredict(ofs, ctx_);
+  if (config_->code_mode() == CodeMode::Train) {
+    CodeMSModelRunStep(ofs, ctx_);
+    CodeMSModelSetTrainMode(ofs, ctx_);
+    CodeMSModelExportWeight(ofs);
+  } else {
+    CodeMSModelPredict(ofs, ctx_);
+  }
   CodeMSModelDestory(ofs, config_);
   return RET_OK;
 }
@@ -253,6 +244,7 @@ int Generator::CodeWeightFile() {
   MS_LOG(INFO) << "write " << cfile;
   cofs << g_hwLicense;
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
+  cofs << "#include <stdio.h>\n\n";
   cofs << "int  " << gThreadNum << " = 1; \n";
   std::vector<Tensor *> inputs = ctx_->graph_inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -275,12 +267,45 @@ int Generator::CodeWeightFile() {
     CodeModelParamsData(cofs, ctx_->saved_weights());
   }
   CodeModelParamsForNet(hofs, cofs, ctx_, *config_);
-  CodeInitWeightState(hofs);
-
+  CodeInitWeightState(hofs, *config_);
   CodeWeightInitFunc(cofs, ctx_, *config_);
+  if (config_->code_mode() == CodeMode::Train) {
+    CodeExportWeightState(hofs, *config_);
+    CodeWeightExportFunc(cofs, ctx_, *config_);
+  }
   hofs.close();
   cofs.close();
   return RET_OK;
+}
+
+void Generator::CodeCommonNetH(std::ofstream &ofs) {
+  ofs << g_hwLicense;
+  ofs << kExternCpp;
+  CodeInputState(ofs);
+  if (is_get_quant_args_) {
+    CodeGraphQuantArgsState(ofs);
+  }
+  CodeManageResourceState(ofs);
+  CodeExecuteState(ofs);
+}
+
+void Generator::CodeCommonNetC(std::ofstream &ofs) {
+  ofs << g_hwLicense << "\n"
+      << "#include \"" << net_weight_hfile_ << "\"\n"
+      << "#include \"" << net_inc_hfile_ << "\"\n\n";
+  if (config_->support_parallel()) {
+    ofs << "#include \"" << kThreadWrapper << "\"\n\n";
+  }
+  if (config_->debug_mode()) {
+    ofs << "#include \"" << kDebugUtils << "\"\n";
+  }
+  CodeGlobalCodeBlocks(ofs, ctx_);
+  CodeInputImplement(ofs, ctx_);
+  CodeInitResourceImplement(ofs, ctx_);
+  CodeFreeResourceImplement(ofs, ctx_, *config_);
+  if (is_get_quant_args_) {
+    CodeGraphQuantArgsImplement(ofs, ctx_);
+  }
 }
 
 int Generator::CodeRegKernelHFile() {

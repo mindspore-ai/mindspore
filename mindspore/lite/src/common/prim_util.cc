@@ -19,7 +19,6 @@
 #include "nnacl/op_base.h"
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
-#include "src/common/version_manager.h"
 
 namespace mindspore {
 namespace lite {

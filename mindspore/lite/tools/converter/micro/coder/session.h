@@ -36,11 +36,16 @@ class CoderSession {
 
   int Init(const void *content, int size);
 
-  int Build();
+  virtual int Build();
 
-  int Run();
+  virtual int Run();
 
-  int GenerateCode();
+  virtual int GenerateCode();
+
+ protected:
+  int Preprocess();
+  virtual int DoCode();
+  virtual int PassArgsToContext();
 
  private:
   OpParameter *GenParameterAndInfer(const LiteGraph::Node *node, const std::vector<lite::Tensor *> &inputs,
@@ -50,15 +55,15 @@ class CoderSession {
   int CreateOpCoders();
   int InitCodeGraph();
   int CompileGraph();
-  int EndCode();
 
+ protected:
+  std::vector<std::unique_ptr<OperatorCoder>> op_coders_;
   std::unique_ptr<CoderGraph> coder_graph_{nullptr};
   std::unique_ptr<CoderContext> context_{nullptr};
   MemoryAllocator *allocator_{nullptr};
-  std::vector<std::unique_ptr<OperatorCoder>> op_coders_;
+
+ private:
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
 };
-
-std::shared_ptr<CoderSession> CreateCoderSession();
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_

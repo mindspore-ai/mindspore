@@ -16,7 +16,6 @@
 
 #include "coder/generator/component/common_component.h"
 #include <memory>
-#include "coder/generator/component/const_blocks/license.h"
 #include "coder/generator/component/component.h"
 #include "coder/utils/type_cast.h"
 #include "coder/utils/coder_utils.h"
@@ -28,6 +27,7 @@ namespace mindspore::lite::micro {
 const char model_runtime_init_source[] = R"RAW(
 typedef struct {
   void *runtime_buffer;
+  bool train_mode;  // true: train mode, false: eval mode
   MSTensorHandleArray inputs;
   MSTensorHandleArray outputs;
 } MicroModel;
@@ -58,6 +58,11 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
   } else {
     ofs << "  micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
   }
+  if (config.code_mode() == CodeMode::Inference) {
+    ofs << "  micro_model->train_mode = false;\n";
+  } else if (config.code_mode() == CodeMode::Train) {
+    ofs << "  micro_model->train_mode = true;\n";
+  }
   auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
     ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
     ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
@@ -76,7 +81,11 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
   };
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
-
+  if (config.code_mode() == CodeMode::Inference) {
+    outputs = ctx->graph_outputs();
+  } else if (config.code_mode() == CodeMode::Train) {
+    outputs = ctx->graph_train_outputs();
+  }
   size_t inputs_size = inputs.size();
   ofs << "  MSTensorHandleArray model_inputs;\n";
   ofs << "  model_inputs.handle_num = " << inputs_size << ";\n";
@@ -156,7 +165,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   auto outputs_num = ctx->graph_outputs().size();
   ofs << R"RAW(
 MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
-                          const MSKernelCallBackC before, const MSKernelCallBackC after) {
+                        const MSKernelCallBackC before, const MSKernelCallBackC after) {
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
@@ -174,7 +183,7 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
   ofs << "  }\n";
   ofs << "  SetInputs(inputs_data_array, " << inputs_num << ");\n";
   ofs << "\n";
-  ofs << "  Inference();\n";
+  ofs << "  Execute(micro_model->train_mode);\n";
   ofs << "\n";
   ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
   ofs << "  for (int i = 0; i < " << outputs_num << "; i++) {\n";
@@ -191,7 +200,6 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   auto tensor_map = ctx->tensors_map();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
   size_t outputs_size = outputs.size();
-
   ofs << "int CopyOutputsData(void **outputs, int num) {\n"
          "  if (outputs == NULL) {\n"
          "    return RET_ERROR;\n"
@@ -350,11 +358,11 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   ofs << "}\n";
 }
 
-void CodeInferenceState(std::ofstream &ofs) {
+void CodeExecuteState(std::ofstream &ofs) {
   ofs << "/**\n"
-      << "  * net inference function\n"
+      << "  * net execute function\n"
       << "  **/\n"
       << "void "
-      << "Inference();\n\n";
+      << "Execute(bool train_mode);\n\n";
 }
 }  // namespace mindspore::lite::micro

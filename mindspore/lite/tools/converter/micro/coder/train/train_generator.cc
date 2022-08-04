@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,51 +14,74 @@
  * limitations under the License.
  */
 
-#include "coder/generator/inference/inference_generator.h"
+#include "coder/train/train_generator.h"
 #include <string>
-#include "coder/generator/component/common_component.h"
-#include "coder/generator/component/component.h"
+#include "coder/generator/component/train_component.h"
 #include "coder/opcoders/parallel.h"
+#include "coder/generator/component/component.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore::lite::micro {
-void InferenceGenerator::CodeNetExecuteFunc(std::ofstream &ofs) {
+void TrainGenerator::CodeTrainAndEvalFunc(std::ofstream &ofs) {
+  size_t i = 0;
+  size_t code_blocks_size = code_blocks_with_flag_.size();
+  while (i < code_blocks_size) {
+    bool is_train_only = code_blocks_with_flag_.at(i).second;
+    if (!is_train_only) {
+      ofs << "  {\n" << code_blocks_with_flag_.at(i).first << "  }\n";
+      i++;
+      continue;
+    }
+
+    size_t j = i;
+    while (j < code_blocks_size && code_blocks_with_flag_.at(j).second) {  // is loss or grad op
+      j++;
+    }
+    ofs << "  if (train_mode) {\n";
+    for (; i < j; i++) {
+      auto code_block = code_blocks_with_flag_.at(i).first;
+      (void)FindAndReplaceAll(&code_block, "    ", "      ");
+      ofs << "    {\n" << code_block << "    }\n";
+    }
+    ofs << "  }\n";
+  }
+}
+
+void TrainGenerator::CodeNetExecuteFunc(std::ofstream &ofs) {
   ofs << "void Execute(bool train_mode) {\n";
   if (config_->support_parallel()) {
     ofs << "  " << gThreadNum << " = GetCurrentThreadNum();\n";
     ofs << "  SetSpinCountMaxValue();\n";
   }
-  for (const auto &block : ctx_->code_blocks()) {
-    ofs << "  {\n" << block << "  }\n";
-  }
 
-  for (const auto &block : ctx_->after_inference_code_blocks()) {
-    ofs << block << "\n";
-  }
+  CodeTrainAndEvalFunc(ofs);
+
   if (config_->support_parallel()) {
     ofs << "  SetSpinCountMinValue();\n";
   }
+
   ofs << "}\n";
 }
 
-int InferenceGenerator::CodeNetHFile() {
+int TrainGenerator::CodeNetHFile() {
   std::string net_include_file = net_src_file_path_ + net_inc_hfile_;
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   CodeCommonNetH(ofs);
-  CodeCopyOutputsState(ofs);
+  CodeCopyTrainOutputsState(ofs);
   ofs << kEndExternCpp;
   ofs.close();
   return RET_OK;
 }
 
-int InferenceGenerator::CodeNetCFile() {
+int TrainGenerator::CodeNetCFile() {
   std::string net_impl_file = net_src_file_path_ + net_src_cfile_;
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
   CodeCommonNetC(ofs);
-  CodeCopyOutputsImplement(ofs, ctx_);
+  CodeCopyTrainOutputsImplement(ofs, ctx_);
   CodeNetExecuteFunc(ofs);
   ofs.close();
   return RET_OK;

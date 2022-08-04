@@ -74,9 +74,17 @@ class CoderContext {
 
   void set_graph_inputs(const std::vector<Tensor *> &graph_inputs) { graph_inputs_ = graph_inputs; }
   void set_graph_outputs(const std::vector<Tensor *> &graph_outputs) { graph_outputs_ = graph_outputs; }
+  void set_graph_eval_outputs(const std::vector<Tensor *> &graph_eval_outputs) {
+    graph_eval_outputs_ = graph_eval_outputs;
+  }
+  void set_graph_train_outputs(const std::vector<Tensor *> &graph_train_outputs) {
+    graph_train_outputs_ = graph_train_outputs;
+  }
 
   std::vector<Tensor *> graph_inputs() const { return graph_inputs_; }
   std::vector<Tensor *> graph_outputs() const { return graph_outputs_; }
+  std::vector<Tensor *> graph_eval_outputs() const { return graph_eval_outputs_; }
+  std::vector<Tensor *> graph_train_outputs() const { return graph_train_outputs_; }
 
   std::string input_name() { return input_name_; }
   std::string output_name() { return output_name_; }
@@ -107,6 +115,8 @@ class CoderContext {
  private:
   std::vector<Tensor *> graph_inputs_;
   std::vector<Tensor *> graph_outputs_;
+  std::vector<Tensor *> graph_eval_outputs_;
+  std::vector<Tensor *> graph_train_outputs_;
   // primitive const tensors, parsed from model, without packed.
   std::map<std::string, Tensor *> saved_weights_;
   // all tensors, include parsed from model and packed tensors.
@@ -134,6 +144,7 @@ class CoderContext {
   std::set<std::string> asm_files_;
   // operator header files
   std::set<std::string> h_files_;
+
   // net.c's content, include the Inference and Training implementation
   std::vector<std::string> code_blocks_;
   std::vector<std::string> global_code_blocks_;
