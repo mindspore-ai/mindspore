@@ -91,7 +91,7 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) const {
+float FusedAdaFactorCpuKernelMod::CalcRMS(const T *input, size_t elem_num) const {
   if (elem_num == 0 || input == nullptr) {
     return 0.0f;
   }
