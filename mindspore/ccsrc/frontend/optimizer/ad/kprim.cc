@@ -407,7 +407,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
     func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
   }
   pipeline::ResourceBasePtr res = (resources != nullptr) ? resources : std::make_shared<pipeline::Resource>();
-  (void)parse::ResolveFuncGraph(func_graph, res);
+  (void)parse::ResolveFuncGraph(func_graph, res, false);
 #ifndef _WIN32
   // Check whether the bprop needs to be exported.
   if (serializable) {
