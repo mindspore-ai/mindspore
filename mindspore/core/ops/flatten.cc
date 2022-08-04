@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace ops {
+void Flatten::Init(const int64_t axis) { this->set_axis(axis); }
 void Flatten::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t Flatten::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
