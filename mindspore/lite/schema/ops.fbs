@@ -565,7 +565,7 @@ table FftImag {
 }
 
 table Flatten {
-    axis: long = 0;
+    axis: long = 1;
 }
 
 table FlattenGrad {
