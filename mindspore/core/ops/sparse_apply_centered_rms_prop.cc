@@ -49,10 +49,10 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape, prim_name);
 
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of mg", mg_shape});
-  (void)same_shape_args_map.insert({"ms", ms_shape});
-  (void)same_shape_args_map.insert({"mom", mom_shape});
-  (void)same_shape_args_map.insert({"grad", grad_shape});
+  (void)same_shape_args_map.emplace("shape of mg", mg_shape);
+  (void)same_shape_args_map.emplace("ms", ms_shape);
+  (void)same_shape_args_map.emplace("mom", mom_shape);
+  (void)same_shape_args_map.emplace("grad", grad_shape);
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
@@ -82,15 +82,15 @@ TypePtr SparseApplyCenteredRMSPropInferType(const PrimitivePtr &primitive,
   auto indices = input_args[9]->BuildType();
 
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var", var});
-  (void)args.insert({"ms", mg});
-  (void)args.insert({"mg", ms});
-  (void)args.insert({"mom", mom});
-  (void)args.insert({"lr", lr});
-  (void)args.insert({"rho", rho});
-  (void)args.insert({"momentum", momentum});
-  (void)args.insert({"epsilon", epsilon});
-  (void)args.insert({"grad", grad});
+  (void)args.emplace("var", var);
+  (void)args.emplace("ms", mg);
+  (void)args.emplace("mg", ms);
+  (void)args.emplace("mom", mom);
+  (void)args.emplace("lr", lr);
+  (void)args.emplace("rho", rho);
+  (void)args.emplace("momentum", momentum);
+  (void)args.emplace("epsilon", epsilon);
+  (void)args.emplace("grad", grad);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, common_valid_types, prim_name);
   const std::set<TypePtr> valids1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices, valids1, prim_name);

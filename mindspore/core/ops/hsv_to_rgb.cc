@@ -31,9 +31,9 @@ abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &primitive, const std::
   const int64_t kLastDim = 3;
   const int64_t input_dims = SizeToLong(input_shape.size());
   const int64_t input_last_dims = SizeToLong(input_shape.cend()[-1]);
-  CheckAndConvertUtils::CheckInteger("the dimension of [x]", input_dims, kEqual, kNumDims, kNameHSVToRGB);
-  CheckAndConvertUtils::CheckInteger("the last dimension of the shape of [x]", input_last_dims, kEqual, kLastDim,
-                                     kNameHSVToRGB);
+  (void)CheckAndConvertUtils::CheckInteger("the dimension of [x]", input_dims, kEqual, kNumDims, kNameHSVToRGB);
+  (void)CheckAndConvertUtils::CheckInteger("the last dimension of the shape of [x]", input_last_dims, kEqual, kLastDim,
+                                           kNameHSVToRGB);
 
   return std::make_shared<abstract::Shape>(input_shape);
 }
@@ -41,7 +41,7 @@ abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &primitive, const std::
 TypePtr HSVToRGBInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", input_dtype, input_valid_types, kNameHSVToRGB);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_dtype, input_valid_types, kNameHSVToRGB);
   return input_dtype;
 }
 }  // namespace

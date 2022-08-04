@@ -99,7 +99,7 @@ TypePtr BartlettWindowInferType(const PrimitivePtr &prim, const std::vector<Abst
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("window_length", input_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("window_length", input_type, valid_types, prim->name());
   auto dtype_attr = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   auto infer_type = dtype_attr->cast<TypePtr>();

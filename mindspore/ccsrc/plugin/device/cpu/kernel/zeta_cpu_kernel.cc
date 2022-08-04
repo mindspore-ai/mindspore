@@ -87,13 +87,11 @@ bool ZetaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
         return false;
       }
       return LaunchKernel<float>(inputs, outputs);
-      break;
     case (kNumberTypeFloat64):
       if (CheckZeta<double>(inputs, outputs, kZetaInputNum, kZetaOutputNum) == false) {
         return false;
       }
       return LaunchKernel<double>(inputs, outputs);
-      break;
     default:
       MS_LOG(EXCEPTION) << "the datatype of the input not support, support datatype: "
                            "float32, float64.";

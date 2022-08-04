@@ -68,8 +68,8 @@ TypePtr ScatterSubInferType(const PrimitivePtr &primitive, const std::vector<Abs
                                                    prim_name);
 
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_x_type_ptr);
-  type_dict.emplace("updates", updates_type_ptr);
+  (void)type_dict.emplace("input_x", input_x_type_ptr);
+  (void)type_dict.emplace("updates", updates_type_ptr);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace

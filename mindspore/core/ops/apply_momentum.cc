@@ -97,9 +97,9 @@ TypePtr ApplyMomentumInferType(const PrimitivePtr &primitive, const std::vector<
   (void)args_g.insert(std::make_pair("g_type", g_type));
   std::map<std::string, TypePtr> args_m;
   (void)args_m.insert(std::make_pair("m_type", m_type));
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l, valid_types, prim_name);
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_g, valid_types, prim_name);
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_m, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_g, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_m, valid_types, prim_name);
   return v_tensor_type;
 }
 }  // namespace

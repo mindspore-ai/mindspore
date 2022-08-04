@@ -35,7 +35,7 @@ int64_t compute_output_indices_unique_size_int32(int32_t *indices, size_t size) 
   std::set<int32_t> mat1_indices_set;
   size_t half_size = size / 2;
   for (size_t i = 0; i < half_size; i++) {
-    mat1_indices_set.insert(indices[i]);
+    (void)mat1_indices_set.insert(indices[i]);
   }
   return mat1_indices_set.size();
 }
@@ -44,7 +44,7 @@ int64_t compute_output_indices_unique_size_int64(int64_t *indices, size_t size) 
   std::set<int64_t> mat1_indices_set;
   size_t half_size = size / 2;
   for (size_t i = 0; i < half_size; i++) {
-    mat1_indices_set.insert(indices[i]);
+    (void)mat1_indices_set.insert(indices[i]);
   }
   return mat1_indices_set.size();
 }
@@ -82,7 +82,6 @@ int64_t GetInt64AlphaDataOther(void *values, TypeId tid, const TypePtr expect_dt
     default:
       MS_EXCEPTION(TypeError) << "For Sspaddmm, alpha dtype is not support, only support"
                               << " number type and bool, complex64, complex128. ";
-      break;
   }
   if (flag2) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, alpha value cannot be converted to type uint8 without overflow. ";

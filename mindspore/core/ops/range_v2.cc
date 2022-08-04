@@ -111,13 +111,13 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_shape = {};
   if (is_compile) {
-    out_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)out_shape.emplace_back(abstract::Shape::SHP_ANY);
     ShapeVector out_min_shape = {1};
     ShapeVector out_max_shape = {max_len};
     return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
   }
 
-  out_shape.emplace_back(shape_size);
+  (void)out_shape.emplace_back(shape_size);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

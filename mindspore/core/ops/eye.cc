@@ -47,8 +47,8 @@ abstract::ShapePtr EyeInferShape(const PrimitivePtr &primitive, const std::vecto
   auto n_v = GetValue<int64_t>(n_ptr);
   auto m_v = GetValue<int64_t>(m_ptr);
   std::vector<int64_t> state_shape = {n_v, m_v};
-  primitive->AddAttr("num_rows", MakeValue(static_cast<int64_t>(n_v)));
-  primitive->AddAttr("num_columns", MakeValue(static_cast<int64_t>(m_v)));
+  (void)primitive->AddAttr("num_rows", MakeValue(static_cast<int64_t>(n_v)));
+  (void)primitive->AddAttr("num_columns", MakeValue(static_cast<int64_t>(m_v)));
   return std::make_shared<abstract::Shape>(state_shape);
 }
 
@@ -71,7 +71,7 @@ TypePtr EyeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
     {kNumberTypeComplex128, 17}, {kNumberTypeBool, 12}};
   auto iter = type_to_num.find(output_type_value);
   auto dtype_num = iter->second;
-  prim->AddAttr("dtype", MakeValue(static_cast<int64_t>(dtype_num)));
+  (void)prim->AddAttr("dtype", MakeValue(static_cast<int64_t>(dtype_num)));
   return dtype_ret;
 }
 

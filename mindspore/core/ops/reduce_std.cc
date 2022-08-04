@@ -51,7 +51,7 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
     for (size_t i = 0; i < axis.size(); ++i) {
       auto temp = axis;
       auto idx = std::find(temp.begin(), temp.end(), axis[i]);
-      temp.erase(idx);
+      (void)temp.erase(idx);
       auto re_idx = std::find(temp.begin(), temp.end(), axis[i]);
       if (re_idx != temp.end()) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements in attribute axis must be different.";

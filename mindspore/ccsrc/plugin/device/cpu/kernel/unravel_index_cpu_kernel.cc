@@ -49,7 +49,6 @@ bool UnravelIndexCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
   } else {
     MS_EXCEPTION(TypeError) << "Both input data types are supported only support int32, int64.";
   }
-  return true;
 }
 
 template <typename T>

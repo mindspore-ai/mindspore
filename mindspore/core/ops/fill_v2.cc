@@ -140,7 +140,7 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(input2);
   if (input2->isa<abstract::AbstractTensor>()) {
     auto output_valid_types = common_valid_types;
-    output_valid_types.insert(kBool);
+    (void)output_valid_types.insert(kBool);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output datatype", input2_type, output_valid_types, prim_name);
   } else {
     MS_EXCEPTION(TypeError)
