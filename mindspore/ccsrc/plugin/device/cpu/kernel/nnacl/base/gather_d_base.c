@@ -60,7 +60,7 @@ int InitCalVec(size_t *in_strides, size_t *out_strides, size_t *pos, const size_
   for (size_t i = 0; i < input_shape_size; ++i) {
     in_strides[i] = 1;
   }
-  for (int i = input_shape_size - 2; i >= 0; --i) {
+  for (int i = (int)input_shape_size - 2; i >= 0; --i) {
     in_strides[i] = input_shape[i + 1] * in_strides[i + 1];
   }
 
@@ -69,7 +69,7 @@ int InitCalVec(size_t *in_strides, size_t *out_strides, size_t *pos, const size_
   for (size_t i = 0; i < output_shape_size; ++i) {
     out_strides[i] = 1;
   }
-  for (int i = output_shape_size - 2; i >= 0; --i) {
+  for (int i = (int)output_shape_size - 2; i >= 0; --i) {
     out_strides[i] = output_shape[i + 1] * out_strides[i + 1];
   }
 

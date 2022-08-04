@@ -105,7 +105,7 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (input_size_list_.size() != output_size_list_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be equal, but get "
                   << input_size_list_.size() << " and " << output_size_list_.size();
-    return KRET_RESIZE_FAILED;
+    return static_cast<int>(KRET_RESIZE_FAILED);
   }
   shape_info_.input_shape_size_ = SizeToInt(inputs.size());
   shape_info_.output_shape_size_ = SizeToInt(inputs.size());
@@ -113,7 +113,7 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of output must be at most 8. But get and the dimension of target shape: "
                   << shape_info_.output_shape_size_;
-    return KRET_RESIZE_FAILED;
+    return static_cast<int>(KRET_RESIZE_FAILED);
   }
 
   input_shape_lists_.clear();
@@ -123,7 +123,7 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     auto shape = input->GetShapeVector();
     if (shape.size() != 1) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', each input tensor shape size must be 1, but get " << shape.size();
-      return KRET_RESIZE_FAILED;
+      return static_cast<int>(KRET_RESIZE_FAILED);
     }
     input_shape_lists_.push_back(shape[0]);
     out_shape.push_back(shape[0]);
@@ -145,13 +145,13 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                     << "', each output tensor shape should be the combination of all input tensor shape. But get the "
                        "shape of all inputs tensor shape: "
                     << Vector2Str(out_shape) << ", and the shape of output: " << Vector2Str(shape);
-      return KRET_RESIZE_FAILED;
+      return static_cast<int>(KRET_RESIZE_FAILED);
     }
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
-bool MeshgridCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool MeshgridCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &outputs) {
   for (size_t i = 0; i < outputs.size(); i++) {
     auto input_index = (i <= 1 && swap_indexing_ == true) ? 1 - i : i;

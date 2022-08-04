@@ -26,11 +26,11 @@ void FormatTranspose::Init(const Format &src_format, const Format &dst_format) {
 }
 
 void FormatTranspose::set_src_format(const Format &src_format) {
-  (void)this->AddAttr(kSrcFormat, api::MakeValue(src_format));
+  (void)this->AddAttr(kSrcFormat, api::MakeValue(static_cast<int>(src_format)));
 }
 
 void FormatTranspose::set_dst_format(const Format &dst_format) {
-  (void)this->AddAttr(kDstFormat, api::MakeValue(dst_format));
+  (void)this->AddAttr(kDstFormat, api::MakeValue(static_cast<int>(dst_format)));
 }
 
 Format FormatTranspose::get_src_format() const {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/fp32_grad/maxpool_grad_grad.h"
+#include "nnacl/errorcode.h"
 
 int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
                     PoolingParameter *param) {
