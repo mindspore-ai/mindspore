@@ -206,7 +206,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
     char *string_element = new char[string_max_length];
     size_t string_length = 0;
     for (size_t i = 0; i < elements_num; i++) {
-      std::fill_n(string_element, string_max_length, '\0');
+      (void)std::fill_n(string_element, string_max_length, '\0');
       for (size_t j = 0; j < string_max_length; j++) {
         char char_element = data_ptr[i * string_max_length * single_char_offset + single_char_offset * j];
         if (static_cast<int>(char_element) == 0) {

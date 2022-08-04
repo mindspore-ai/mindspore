@@ -467,6 +467,10 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
+    Note:
+        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+        will not accept `**kwargs`.
+
     Args:
         fn (Function): The Python function that will be run as a graph. Default: None.
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
