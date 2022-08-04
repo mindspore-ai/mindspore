@@ -41,7 +41,7 @@ bool AllReduceLauncher::Initialize() {
   const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
   MS_EXCEPTION_IF_NULL(cluster_ctx);
   node_role_ = cluster_ctx->node_role();
-  rank_size_ = IntToSize(cluster_ctx->node_num(cluster_ctx->node_role()));
+  rank_size_ = IntToSize(static_cast<int>(cluster_ctx->node_num(cluster_ctx->node_role())));
   return true;
 }
 

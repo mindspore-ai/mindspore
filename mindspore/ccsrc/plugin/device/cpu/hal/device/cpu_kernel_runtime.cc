@@ -60,7 +60,7 @@ bool CPUKernelRuntime::Init() {
 }
 
 const size_t INIT_NODE_REF = 1;
-void CPUKernelRuntime::AssignKernelGraphAddress(session::KernelGraph *kernel_graph) {
+void CPUKernelRuntime::AssignKernelGraphAddress(const session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
