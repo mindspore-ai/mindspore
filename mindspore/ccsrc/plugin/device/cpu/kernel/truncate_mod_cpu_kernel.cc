@@ -147,7 +147,7 @@ bool TruncateModCpuKernelMod::LaunchKernelHalf(const std::vector<kernel::Address
       for (size_t i = start; i < end; ++i) {
         auto dividend = input_addr_a[i];
         auto divisor = input_addr_b[i];
-        auto zero = (float16)0;
+        auto zero = static_cast<float16>(0);
         if (divisor == zero) {
           if (dividend == zero) {
             output_addr[i] = std::numeric_limits<float16>::quiet_NaN();
@@ -170,7 +170,7 @@ bool TruncateModCpuKernelMod::LaunchKernelHalf(const std::vector<kernel::Address
       for (size_t i = start; i < end; ++i) {
         auto dividend = input_addr_a[iter.GetInputPosA()];
         auto divisor = input_addr_b[iter.GetInputPosB()];
-        auto zero = (float16)0;
+        auto zero = static_cast<float16>(0);
         if (divisor == zero) {
           if (dividend == zero) {
             output_addr[i] = std::numeric_limits<float16>::quiet_NaN();

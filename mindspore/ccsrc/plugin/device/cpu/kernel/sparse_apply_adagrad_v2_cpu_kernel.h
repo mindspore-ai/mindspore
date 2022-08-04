@@ -18,9 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAGRAD_V2_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
-#include <map>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
