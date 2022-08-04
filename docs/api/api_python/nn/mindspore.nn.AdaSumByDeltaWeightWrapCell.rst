@@ -22,7 +22,7 @@ mindspore.nn.AdaSumByDeltaWeightWrapCell
             使用本接口时，训练的卡的数量必须是2的幂，并且至少需要16张卡。目前，使用本接口时不支持优化器并行和流水线并行。
 
     参数：
-        - **optimizer** (nn.optimizer) - 必须是单输入的优化器。
+        - **optimizer** (Union[Cell]) - 必须是单输入的优化器。
 
     输入：
         - **grads** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同，与所传优化器的输入一致。
