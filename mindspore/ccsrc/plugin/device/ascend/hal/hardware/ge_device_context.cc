@@ -472,7 +472,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     // memcpy_s does not support data that more than 2GB
     (void)memcpy(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), tensor->GetData(), tensor->GetSize());
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
-    output_shapes.emplace_back(std::move(actual_shapes));
+    (void)output_shapes.emplace_back(std::move(actual_shapes));
   }
   UpdateOutputNodeShape(graph_outputs, me_types, output_shapes);
   MS_LOG(INFO) << "GE run graph end.";

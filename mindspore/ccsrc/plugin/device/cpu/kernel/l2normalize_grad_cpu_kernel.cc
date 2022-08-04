@@ -141,7 +141,7 @@ std::vector<T> L2NormalizeGradCpuFunc<T>::GetVector(const std::vector<size_t> &h
   auto x_shape = input_shape_list_[0];
   std::vector<T> x_vector;
   auto idx = IntToSize(axis_);
-  x_vector.reserve(x_shape[idx]);
+  x_vector.reserve(LongToSize(x_shape[idx]));
   for (size_t i = 0; i < LongToSize(x_shape[idx]); i++) {
     size_t oneDimIndex = 0;
     std::vector<size_t> tmp_high_dim_index = high_dim_index;
