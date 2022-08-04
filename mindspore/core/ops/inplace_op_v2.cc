@@ -45,19 +45,20 @@ abstract::ShapePtr InplaceOpV2InferShape(const PrimitivePtr &primitive,
   auto v_in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape_ptr)[kShape];
 
   // check dimensions except for the first one
-  CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
+                                                 primitive->name());
 
   for (size_t i = 1; i < x_in_shape.size(); ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
-                                              std::to_string(i) + "th dim of v", v_in_shape.at(i), primitive->name());
+    (void)CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
+                                                    std::to_string(i) + "th dim of v", v_in_shape.at(i),
+                                                    primitive->name());
   }
 
   auto indices = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
 
   // check indices
-  CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.at(0), kEqual, "v.shape[0]",
-                                           LongToSize(v_in_shape.at(0)), primitive->name());
+  (void)CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.at(0), kEqual, "v.shape[0]",
+                                                 LongToSize(v_in_shape.at(0)), primitive->name());
 
   return x_shape_ptr->cast<abstract::ShapePtr>();
 }
