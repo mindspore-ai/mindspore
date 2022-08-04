@@ -80,7 +80,7 @@ class ComputeGraphNode : public NodeBase {
   bool Heartbeat();
 
   // Call the `Reconnect` function if the input func execution failed.
-  bool ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error, size_t retry);
+  bool ReconnectIfNeeded(const std::function<bool(void)> &func, const std::string &error, size_t retry);
 
   // Reconnect to the meta server node.
   bool Reconnect();

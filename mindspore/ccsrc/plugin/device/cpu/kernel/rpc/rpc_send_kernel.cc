@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
+  std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
   return support_list;
 }
 
