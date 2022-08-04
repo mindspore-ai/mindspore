@@ -107,13 +107,19 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
        &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
     {kInv,
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+       &UnaryOpGpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kInvert,
      {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
        &UnaryOpGpuKernelMod::LaunchKernel<char>},
@@ -369,9 +375,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
-      {kTan, Tan<T>},
-      {kCosh, Cosh<T>},
-      {kAtanh, Atanh<T>},
+      {kTan, Tan<T>}, {kCosh, Cosh<T>}, {kAtanh, Atanh<T>}, {kReciprocal, Reciprocal<T>}, {kInv, Inv<T>},
     };
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {

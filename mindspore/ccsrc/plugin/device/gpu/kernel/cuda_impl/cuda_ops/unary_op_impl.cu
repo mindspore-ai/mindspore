@@ -1410,7 +1410,7 @@ template CUDA_LIB_EXPORT void Cos<uint16_t>(const uint16_t *input, uint16_t *out
 template CUDA_LIB_EXPORT void Tan<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sinh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
-                                            cudaStream_t cuda_stream);
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
@@ -1582,6 +1582,10 @@ template CUDA_LIB_EXPORT void Tan<Complex<float>>(const Complex<float> *input, C
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                         const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                   const size_t count, cudaStream_t cuda_stream);
 
 // complex128
@@ -1596,6 +1600,10 @@ template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input,
 template CUDA_LIB_EXPORT void Cosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                          const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 
 // bool

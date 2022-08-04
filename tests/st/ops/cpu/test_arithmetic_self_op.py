@@ -262,7 +262,8 @@ def test_reciprocal(shape, dtype, tol):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol',
-                         [(np.int32, 1.0e-7), (np.float16, 1.0e-5), (np.float32, 1.0e-5)])
+                         [(np.int32, 1.0e-4), (np.int64, 1.0e-4), (np.float16, 1.0e-3), (np.float32, 1.0e-4),
+                          (np.float64, 1.0e-5), (np.complex64, 1.0e-6), (np.complex128, 1.0e-10)])
 def test_inv(shape, dtype, tol):
     """
     Feature: ALL To ALL
@@ -274,9 +275,7 @@ def test_inv(shape, dtype, tol):
     x = np.random.randn(*shape).astype(dtype) * prop
     output = inv(Tensor(x))
     expect_output = np.reciprocal(x).astype(dtype)
-    diff = output.asnumpy() - expect_output
-    error = np.ones(shape=expect_output.shape) * tol
-    assert np.all(np.abs(diff) < error)
+    assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
 
 
 @pytest.mark.level0
@@ -332,7 +331,7 @@ def test_inv_dynamic_shape(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
-@pytest.mark.parametrize('dtype', [np.int16, np.uint16])
+@pytest.mark.parametrize('dtype', [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64])
 def test_invert(shape, dtype):
     """
     Feature: ALL To ALL

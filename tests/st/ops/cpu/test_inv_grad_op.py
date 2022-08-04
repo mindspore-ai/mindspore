@@ -52,22 +52,23 @@ class InvGradDynamicShapeNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_inv_grad_float32(mode):
+@pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
+def test_inv_grad_float32_and_complex(mode, dtype):
     """
     Feature: ALL To ALL
-    Description: test cases for InvGrad for float32
+    Description: test cases for InvGrad for float32 and complex
     Expectation: the result match to numpy
     """
     context.set_context(mode=mode, device_target="CPU")
     y = Tensor(np.array([[-1, 1, 12],
                          [5, 34, 6],
-                         [10, 2, -1]]).astype(np.float32))
+                         [10, 2, -1]]).astype(dtype))
     dy = Tensor(np.array([[29, 1, 55],
                           [2.2, 63, 2],
-                          [3, 3, 12]]).astype(np.float32))
+                          [3, 3, 12]]).astype(dtype))
     expect = np.array([[-29, -1, -7920],
                        [-55, -72828, -72],
-                       [-300, -12, -12]]).astype(np.float32)
+                       [-300, -12, -12]]).astype(dtype)
     net = NetInvGrad()
     output = net(y, dy)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)

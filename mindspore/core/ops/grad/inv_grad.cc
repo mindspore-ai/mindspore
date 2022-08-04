@@ -22,6 +22,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,9 +53,18 @@ TypePtr InvGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
                             << ".";
   }
-  std::set<TypePtr> check_list = {kFloat16, kFloat32, kInt32, kInt8};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, check_list, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, check_list, prim->name());
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  std::set<TypePtr> valid_types{};
+  if (is_gpu || is_cpu) {
+    valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  } else {
+    valid_types = {kFloat16, kFloat32, kInt32, kInt8};
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim->name());
   return x_type;
 }
 }  // namespace

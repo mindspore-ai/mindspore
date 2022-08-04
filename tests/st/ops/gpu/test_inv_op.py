@@ -49,7 +49,8 @@ class InvDynamicShapeNet(nn.Cell):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol',
-                         [(np.int32, 1.0e-7), (np.float16, 1.0e-5), (np.float32, 1.0e-5)])
+                         [(np.int32, 1.0e-4), (np.int64, 1.0e-4), (np.float16, 1.0e-3), (np.float32, 1.0e-4),
+                          (np.float64, 1.0e-5), (np.complex64, 1.0e-6), (np.complex128, 1.0e-10)])
 def test_inv(mode, shape, dtype, tol):
     """
     Feature: ALL To ALL
@@ -61,10 +62,8 @@ def test_inv(mode, shape, dtype, tol):
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
     output = inv(Tensor(x))
-    expect_output = (1. / x).astype(dtype)
-    diff = output.asnumpy() - expect_output
-    error = np.ones(shape=expect_output.shape) * tol
-    assert np.all(np.abs(diff) < error)
+    expect_output = (1.0 / x).astype(dtype)
+    assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
 
 
 @pytest.mark.level0

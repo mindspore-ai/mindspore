@@ -40,7 +40,7 @@ class InvertDynamicShapeNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
-@pytest.mark.parametrize('dtype', [np.int16, np.uint16])
+@pytest.mark.parametrize('dtype', [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64])
 def test_invert(mode, shape, dtype):
     """
     Feature: ALL To ALL

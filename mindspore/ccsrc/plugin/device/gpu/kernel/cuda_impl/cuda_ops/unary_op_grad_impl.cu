@@ -16,6 +16,7 @@
 
 #include "unary_op_grad_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
 __global__ void SqrtGradKernel(const T *input, const T *dout, T *output, const size_t count) {
@@ -115,10 +116,8 @@ __global__ void AcoshGradKernel(const T *input, const T *dout, T *output, const 
 template <typename T>
 __global__ void ReciprocalGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
-    float inputf = static_cast<float>(input[i]);
-    float doutf = static_cast<float>(dout[i]);
-    float res = -1 * doutf * inputf * inputf;
-    output[i] = static_cast<T>(res);
+    T neg_one = static_cast<T>(-1);
+    output[i] = neg_one * dout[i] * input[i] * input[i];
   }
   return;
 }
@@ -348,3 +347,17 @@ template CUDA_LIB_EXPORT void ReciprocalGrad<int64_t>(const int64_t *input, cons
                                                       const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
                                                const size_t count, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ReciprocalGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                             Complex<float> *output, const size_t count,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                      Complex<float> *output, const size_t count,
+                                                      cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void ReciprocalGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                              Complex<double> *output, const size_t count,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                       Complex<double> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);

@@ -16,7 +16,6 @@
 
 #include "ops/inv.h"
 #include <set>
-#include <map>
 #include <string>
 #include <vector>
 #include "ops/primitive_c.h"
@@ -24,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,7 +42,16 @@ abstract::ShapePtr InvInferShape(const PrimitivePtr &primitive, const std::vecto
 
 TypePtr InvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto x_dtype = input_args[0]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  std::set<TypePtr> valid_types{};
+  if (is_gpu || is_cpu) {
+    valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  } else {
+    valid_types = {kFloat16, kFloat32, kInt32};
+  }
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
   return x_dtype;
 }

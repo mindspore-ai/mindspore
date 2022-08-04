@@ -37,7 +37,7 @@ class MatrixBandPartDynamicShapeNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize('dtype', [np.int32, np.float16, np.float32, np.float64])
+@pytest.mark.parametrize('dtype', [np.int32, np.float16, np.float32, np.float64, np.complex64, np.complex128])
 @pytest.mark.parametrize('batch_shape, rows, cols',
                          [([], 1, 1), ([], 1, 7), ([], 7, 1), ([], 7, 7),
                           ([2], 1, 1), ([2], 1, 7), ([2], 7, 1), ([2], 7, 7),
