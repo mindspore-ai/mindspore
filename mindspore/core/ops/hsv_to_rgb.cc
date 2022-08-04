@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   const int64_t kNumDims = 4;
   const int64_t kLastDim = 3;
@@ -38,7 +38,7 @@ abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &primitive, const std::
   return std::make_shared<abstract::Shape>(input_shape);
 }
 
-TypePtr HSVToRGBInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr HSVToRGBInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_dtype, input_valid_types, kNameHSVToRGB);

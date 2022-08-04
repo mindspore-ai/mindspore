@@ -89,7 +89,7 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
       if (pull_weight_rsp_msg == nullptr || pull_weight_rsp_msg->data() == nullptr) {
         continue;
       }
-      auto pull_weight_rsp_data = reinterpret_cast<const uint8_t *>(pull_weight_rsp_msg->data());
+      auto pull_weight_rsp_data = static_cast<const uint8_t *>(pull_weight_rsp_msg->data());
 
       flatbuffers::Verifier verifier(pull_weight_rsp_data, sizeof(unsigned char) * pull_weight_rsp_msg->size());
       if (!verifier.VerifyBuffer<schema::ResponsePullWeight>()) {

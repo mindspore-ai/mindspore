@@ -21,7 +21,6 @@
 #endif
 #include "nnacl/op_base.h"
 #include "nnacl/base/arithmetic_base.h"
-#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
