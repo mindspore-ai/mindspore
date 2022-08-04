@@ -92,7 +92,7 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     }
   };
 
-  ParallelLaunchAutoSearch(task, num, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, LongToSize(num), this, &parallel_search_info_);
   return true;
 }
 

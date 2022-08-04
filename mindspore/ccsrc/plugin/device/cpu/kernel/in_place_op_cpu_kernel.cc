@@ -50,14 +50,14 @@ struct Update {
 template <typename Op>
 struct NoCheck {
   template <typename T>
-  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+  static inline void compute(T *x, const int64_t x_idx, const T *v, const int64_t v_idx) {
     x[x_idx] = Op()(x[x_idx], v[v_idx]);
   }
 };
 template <typename Op>
 struct Atomic {
   template <typename T>
-  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+  static inline void compute(T *x, const int64_t x_idx, const T *v, const int64_t v_idx) {
     auto &atomic_ = reinterpret_cast<std::atomic<T> *>(x)[x_idx];
     T expect = atomic_.load();
     T result = T(0);
