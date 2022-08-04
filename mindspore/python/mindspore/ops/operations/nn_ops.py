@@ -7364,7 +7364,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
         return b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
 
 
-class InTopK(PrimitiveWithInfer):
+class InTopK(Primitive):
     r"""
     Determines whether the targets are in the top `k` predictions.
 
@@ -7387,18 +7387,6 @@ class InTopK(PrimitiveWithInfer):
         """Initialize InTopK"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'k'], outputs=['y'])
         validator.check_value_type("k", k, [int], self.name)
-
-    def infer_dtype(self, x1_dtype, x2_dtype):
-        validator.check_tensor_dtype_valid("x1", x1_dtype, (mstype.float16, mstype.float32,), self.name)
-        validator.check_tensor_dtype_valid("x2", x2_dtype, (mstype.int32,), self.name)
-
-        return mstype.tensor_type(mstype.bool_)
-
-    def infer_shape(self, x1_shape, x2_shape):
-        validator.check("x1 shape", len(x1_shape), "", 2, Rel.EQ, self.name)
-        validator.check("x2 shape", len(x2_shape), "", 1, Rel.EQ, self.name)
-        validator.check("size of x2", x2_shape[0], "x1's first dimension", x1_shape[0], Rel.EQ, self.name)
-        return x2_shape
 
 
 class LRN(PrimitiveWithInfer):
