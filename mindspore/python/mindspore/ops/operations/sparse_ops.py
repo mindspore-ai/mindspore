@@ -1525,3 +1525,77 @@ class SparseSplit(Primitive):
         self.init_prim_io_names(inputs=['split_dim', 'indices', 'values', 'shape'],
                                 outputs=['y_indices', 'y_values', 'y_shape'])
         validator.check_value_type("num_split", num_split, [int], self.name)
+
+
+class SparseMatrixOrderingAMD(Primitive):
+    r"""
+    Computes the Approximate Minimum Degree (AMD) ordering of `input`.
+    Computes the Approximate Minimum Degree (AMD) ordering for a sparse matrix.
+
+    The returned permutation may be used to permute the rows and columns of the given sparse matrix.
+    This typically results in permuted sparse matrix's sparse Cholesky (or other decompositions) in
+    having fewer zero fill-in compared to decomposition of the original matrix.
+
+    The input sparse matrix may have rank 2 or rank 3. The output Tensor, representing would then have
+    rank 1 or 2 respectively, with the same batch shape as the `input`.
+
+    Each component of the input sparse matrix must represent a square symmetric matrix; only the lower
+    triangular part of the matrix is read. The values of the sparse matrix does not affect the returned
+    permutation, only the sparsity pattern of the sparse matrix is used. Hence, a single AMD ordering may
+    be reused for the Cholesky decompositions of sparse matrices with the same sparsity pattern but
+    with possibly different values.
+
+    Each batch component of the output permutation represents a permutation of `N` elements, where
+    the input sparse matrix components each have `N` rows. That is, the component contains each of the
+    integers :math:`{0, .. N-1}` exactly once. The `i`th element represents the row index that the `i`th
+    row maps to.
+
+    Inputs:
+        - **x_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the input CSR sparse matrix x, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **x_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix x is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of nonzero values of the first `i - 1` batches.
+        - **x_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix x is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          nonzero values of the first `i - 1` rows in the corresponding batch.
+        - **x_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
+          in the input CSR sparse matrix x.
+        - **x_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
+          input CSR sparse matrix x.
+
+    Outputs:
+        Tensor, the dtype is int32.
+        If there are n batch within input sparse matrix, the shape is :math:`(n,)`.
+
+    Raises:
+        TypeError: If the dtype of `x_dense_shape` is not int64.
+        TypeError: If the dtype of `x_batch_pointers`, `x_row_pointers` or `x_col_indices` is not int32.
+        TypeError: If the dtype of `x_values` is not supported.
+        TypeError: If any of the inputs is not a tensor.
+        ValueError: If any of the inputs is not 1-D.
+        ValueError: If `x_values` and `x_col_indices` have different length.
+        ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseMatrixOrderingAMD
+        >>> dense_shape = Tensor([2, 2], dtype=ms.int64)
+        >>> batch_pointers = Tensor([0, 1], dtype=ms.int32)
+        >>> row_pointers = Tensor([0, 1, 1], dtype=ms.int32)
+        >>> col_indices = Tensor([0], dtype=ms.int32)
+        >>> values = Tensor([99], dtype=ms.float32)
+        >>> sparse_matrix_ordering_amd = SparseMatrixOrderingAMD()
+        >>> output = sparse_matrix_ordering_amd(dense_shape, batch_pointers, row_pointers, col_indices, values)
+        >>> print(output)
+        [0 1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseMatrixOrderingAMD."""
+        self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
+                                        'x_col_indices', 'x_values'], outputs=['y'])
