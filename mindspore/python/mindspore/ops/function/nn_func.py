@@ -330,11 +330,11 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 def dropout(x, p=0.5, seed0=0, seed1=0):
     """
     During training, randomly zeroes some of the elements of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    with probability `p` from a Bernoulli distribution.
 
     Args:
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
-        p (float): The keep rate, between 0 and 1, e.g. p = 0.1,
+        p (float): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
         seed0 (int): Seed0 value for random generating. Default: 0.
         seed1 (int): Seed1 value for random generating. Default: 0.
@@ -344,7 +344,7 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
         - **mask** (Tensor) - With the same shape as `x`.
 
     Raises:
-        TypeError: If `keep_prob` is not a float.
+        TypeError: If `p` is not a float.
         TypeError: If `Seed0` or `Seed1` is not an int.
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
@@ -355,7 +355,7 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
     Examples:
         >>> from mindspore.ops import dropout
         >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output, mask = dropout(x, keep_prob=0.5)
+        >>> output, mask = dropout(x, p=0.5)
         >>> print(output.shape)
         (2, 2)
     """
@@ -1878,12 +1878,12 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
 
     Examples:
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
-                                         [[0.9, 0.4, 0.2]]]).astype(np.float32))
+        ...                              [[0.9, 0.4, 0.2]]]).astype(np.float32))
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
         >>> input_lengths = Tensor(np.array([2]), mstype.int32)
         >>> target_lengths = Tensor(np.array([1]), mstype.int32)
         >>> loss, log_alpha = fun.ctc_loss(log_probs, targets, input_lengths,
-                                           target_lengths, 0, 'mean', True)
+        ...                                target_lengths, 0, 'mean', True)
         >>> print(loss)
         -2.2986124
         >>> print(log_alpha)

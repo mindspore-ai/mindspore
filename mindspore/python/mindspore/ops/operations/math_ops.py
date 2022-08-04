@@ -2457,7 +2457,7 @@ class Einsum(Primitive):
         >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> equation = "i->"
         >>> einsum = ops.Einsum(equation)
-        >>> output = einsum(*[x])
+        >>> output = einsum([x])
         >>> print(output)
         [7.]
         >>>
@@ -2475,26 +2475,29 @@ class Einsum(Primitive):
         >>> einsum = ops.Einsum(equation)
         >>> output = einsum((x, y))
         >>> print(output)
-        [[16., 22.], [37., 52.]]
+        [[16. 22.]
+        [37. 52.]]
         >>>
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "ij->ji"
         >>> einsum = ops.Einsum(equation)
-        >>> output = einsum((x))
+        >>> output = einsum((x,))
         >>> print(output)
-        [[1., 4.], [2., 5.], [3., 6.]]
+        [[1. 4.]
+        [2. 5.]
+        [3. 6.]]
         >>>
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "ij->j"
         >>> einsum = ops.Einsum(equation)
-        >>> output = einsum((x))
+        >>> output = einsum((x,))
         >>> print(output)
-        [[5., 7., 9.]]
+        [5. 7. 9.]
         >>>
         >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
         >>> equation = "...->"
         >>> einsum = ops.Einsum(equation)
-        >>> output = einsum((x))
+        >>> output = einsum((x,))
         >>> print(output)
         [21.]
         >>>
@@ -2504,7 +2507,9 @@ class Einsum(Primitive):
         >>> einsum = ops.Einsum(equation)
         >>> output = einsum((x, y))
         >>> print(output)
-        [[2., 4., 1.], [4., 8., 2.], [6., 12., 3.]]
+        [[ 2. 4. 1.]
+        [ 4. 8. 2.]
+        [ 6. 12. 3.]]
     """
 
     @prim_attr_register
