@@ -30,13 +30,13 @@
 namespace mindspore {
 namespace parallel {
 // main step of Auto-parallel
-bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
+bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &);
 
 void InitCostGraph();
 
-Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &);
 
-Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &);
 
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes);
 

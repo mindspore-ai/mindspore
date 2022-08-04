@@ -70,7 +70,7 @@ void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncG
   }
 }
 
-bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
+bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
 #ifdef WITH_BACKEND
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
@@ -397,7 +397,7 @@ void AddUsersUniqueIdWhenSharingParameter(
 }
 
 // Using CNode's UniqueIds to construct nodes
-Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueId to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
@@ -521,7 +521,7 @@ void SetOperatorToCNode(const OperatorInfoPtr &current_op_ptr, const PrimitivePt
 }
 
 // Using CNode's UniqueIdThroughCopys to construct nodes
-Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueIdThroughCopy to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
