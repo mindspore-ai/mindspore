@@ -66,12 +66,12 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   if (!input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> output_shape;
-    uint32_t shape_m = 1;
+    int64_t shape_m = 1;
     auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
     for (auto i = 0; i < shape_v[kInputIndex0]; ++i) {
       if (input_shape_ptr[i] > 0) {
         output_shape.push_back(input_shape_ptr[i]);
-        shape_m *= input_shape_ptr[i];
+        shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
       }
     }
     if (shape_m > max_length) {

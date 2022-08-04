@@ -66,7 +66,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kGreaterEqual, 0, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kLessThan, input_shape.back(), primitive->name());
   std::vector<int64_t> out_shape;
-  int len = input_shape.size();
+  int64_t len = SizeToLong(input_shape.size());
   for (int64_t i = 0; i < len - 1; i++) {
     (void)out_shape.emplace_back(input_shape[i]);
   }

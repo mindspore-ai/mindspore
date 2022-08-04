@@ -35,7 +35,7 @@ void SearchSortedCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   right_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "right");
   sequence_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  search_len = sequence_shape_.back();
+  search_len = LongToSize(sequence_shape_.back());
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

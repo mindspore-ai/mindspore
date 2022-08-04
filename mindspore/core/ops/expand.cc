@@ -31,22 +31,22 @@ std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std:
                                          const tensor::TensorPtr shape_tensor, int64_t max_length,
                                          const string prim_name) {
   auto input_shape_ptr = reinterpret_cast<T *>(shape_tensor->data_c());
-  auto shape_m = 1;
+  int64_t shape_m = 1;
   if (shape_size >= x_shape_size) {
     int64_t sub = shape_size - x_shape_size;
     for (int i = 0; i < shape_size; i = i + 1) {
       if (i >= sub) {
-        if (x_shape[i - sub] != input_shape_ptr[i]) {
+        if (x_shape[LongToSize(i - sub)] != input_shape_ptr[i]) {
           if (input_shape_ptr[i] != -1) {
-            if (x_shape[i - sub] != 1) {
+            if (x_shape[LongToSize(i - sub)] != 1) {
               MS_EXCEPTION(ValueError) << "For " << prim_name << ", the expanded size of the tensor ("
                                        << std::to_string(input_shape_ptr[i]) << ") must be equal to the existing size ("
-                                       << std::to_string(x_shape[i - sub]) << ") which is not 1 at dim ("
+                                       << std::to_string(x_shape[LongToSize(i - sub)]) << ") which is not 1 at dim ("
                                        << std::to_string(i) << ").";
             }
           } else {
-            output_shape.push_back(x_shape[i - sub]);
-            shape_m *= input_shape_ptr[i];
+            output_shape.push_back(x_shape[LongToSize(i - sub)]);
+            shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
             continue;
           }
         }
@@ -55,7 +55,7 @@ std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std:
                                  << ") isn't allowed in a leading, non-existing dimension " << std::to_string(i) << ".";
       }
       output_shape.push_back(input_shape_ptr[i]);
-      shape_m *= input_shape_ptr[i];
+      shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
     }
   } else {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the size of shape provided (" << std::to_string(shape_size)

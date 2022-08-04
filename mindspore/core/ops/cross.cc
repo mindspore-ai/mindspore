@@ -72,9 +72,9 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
     dim = static_cast<int64_t>(x1_shape.size()) + dim;
   }
   int64_t dim_size = 3;
-  if (x1_shape[dim] != dim_size && x2_shape[dim] != dim_size && dim != default_dim) {
+  if (x1_shape[LongToSize(dim)] != dim_size && x2_shape[LongToSize(dim)] != dim_size && dim != default_dim) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size of inputs dim must be 3, but got "
-                             << x1_shape[dim] << ".";
+                             << x1_shape[LongToSize(dim)] << ".";
   }
   return std::make_shared<abstract::Shape>(x1_shape);
 }

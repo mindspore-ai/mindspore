@@ -77,11 +77,11 @@ abstract::ShapePtr SegmentMaxInferShape(const PrimitivePtr &primitive, const std
           MS_EXCEPTION(ValueError) << "segment_ids must be a tensor with element values sorted in ascending order.";
         }
       }
-      out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);
+      out_shape[0] = IntToLong(segment_ids_data[data_size - 1] + 1);
     }
-    uint32_t length = 1;
+    int64_t length = 1;
     for (size_t i = 0; i < out_shape.size(); ++i) {
-      length *= out_shape[i];
+      length *= static_cast<int64_t>(out_shape[i]);
     }
     if (length > max_length) {
       MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
@@ -90,9 +90,9 @@ abstract::ShapePtr SegmentMaxInferShape(const PrimitivePtr &primitive, const std
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    uint32_t length = 1;
+    int64_t length = 1;
     for (size_t i = 1; i < x_shape.size(); ++i) {
-      length *= x_shape[i];
+      length *= static_cast<int64_t>(x_shape[i]);
     }
     const uint32_t max_shape_value = static_cast<uint32_t>(max_length) / length;
     ShapeVector min_shape(x_shape);

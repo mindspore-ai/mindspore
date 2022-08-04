@@ -60,13 +60,13 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
-    auto shape_m = 1;
+    int64_t shape_m = 1;
     if (input_type_element->type_id() == kNumberTypeInt32) {
       auto input_shape_ptr = reinterpret_cast<int32_t *>(input_shape_tensor->data_c());
       for (auto i = 0; i < shape_v[0]; ++i) {
         if (input_shape_ptr[i] > 0) {
           out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= input_shape_ptr[i];
+          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
         } else {
           MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
         }
@@ -76,7 +76,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
       for (auto i = 0; i < shape_v[0]; ++i) {
         if (input_shape_ptr[i] > 0) {
           out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= input_shape_ptr[i];
+          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
         } else {
           MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
         }

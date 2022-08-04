@@ -54,8 +54,8 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[x_length + i] == abstract::Shape::SHP_ANY) ||
-               (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
+    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::SHP_ANY) ||
+               (y_shape[LongToSize(y_length + i)] == abstract::Shape::SHP_ANY)) {
       (void)broadcast_shape.push_back(abstract::Shape::SHP_ANY);
     } else {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
@@ -142,7 +142,7 @@ void ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, ShapeVector *sha
     int64_t axis_value = GetValue<int64_t>(axis);
     axis_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
     if (keep_dims_value) {
-      shape->at(axis_value) = 1;
+      shape->at(LongToSize(axis_value)) = 1;
     } else {
       (void)shape->erase(shape->begin() + axis_value);
     }

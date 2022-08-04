@@ -98,7 +98,7 @@ MIND_API_OPERATOR_IMPL(GridSampler3DGrad, BaseOperator);
 AbstractBasePtr GridSampler3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = kThree;
+  const int64_t input_num = UlongToLong(kThree);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_types = GridSampler3DGradInferType(primitive, input_args);
   auto infer_shapes = GridSampler3DGradInferShape(primitive, input_args);

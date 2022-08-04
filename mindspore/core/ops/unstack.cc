@@ -57,7 +57,7 @@ TuplePtr UnstackInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 
   auto output_num = x_shape[axis];
   (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 1, name);
-  (void)prim->AddAttr("num", MakeValue(SizeToLong(output_num)));
+  (void)prim->AddAttr("num", MakeValue(output_num));
 
   std::vector<TypePtr> type_tuple;
   for (int64_t i = 0; i < output_num; ++i) {
