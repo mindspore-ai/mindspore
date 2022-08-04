@@ -1289,6 +1289,9 @@ def xlogy(x, y):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+    .. warning::
+        - On Ascend, the data type of `x` and `y` must be float16 or float32.
+
     Args:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
@@ -1304,7 +1307,7 @@ def xlogy(x, y):
 
     Raises:
         TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
-        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64].
+        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128].
         ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
 
     Supported Platforms:
@@ -1313,8 +1316,7 @@ def xlogy(x, y):
     Examples:
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
         >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
-        >>> xlogy = ops.Xlogy()
-        >>> output = xlogy(x, y)
+        >>> output = ops.xlogy(x, y)
         >>> print(output)
         [-3.465736   0.        2.7725887]
     """

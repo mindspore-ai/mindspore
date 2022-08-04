@@ -4600,6 +4600,9 @@ class Tensor(Tensor_):
         When the inputs are one tensor and one scalar,
         the scalar could only be a constant.
 
+        .. warning::
+            - On Ascend, the data type of `x` and `y` must be float16 or float32.
+
         Args:
             - **y** (Union[Tensor, number.Number, bool]) - The `y` input is a number.Number or
               a bool or a tensor whose data type is number or bool.
@@ -4610,7 +4613,7 @@ class Tensor(Tensor_):
 
         Raises:
             TypeError: If `y` is not a number.Number or a bool or a Tensor.
-            TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64] .
+            TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128] .
             ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
 
         Supported Platforms:
