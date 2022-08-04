@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <cmath>
 #include <cfloat>
 
 #include "kernel/common_utils.h"
@@ -146,7 +145,7 @@ bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
   auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
   auto beta1_power = reinterpret_cast<float *>(inputs[kBeta1PowIndex]->addr)[0];
-  if (abs(beta1_power - 1) < FLT_EPSILON) {
+  if (std::abs(beta1_power - 1) < FLT_EPSILON) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can not be 1.";
   }
   auto beta2_power = reinterpret_cast<float *>(inputs[kBeta2PowIndex]->addr)[0];
