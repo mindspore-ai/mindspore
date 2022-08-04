@@ -40,7 +40,7 @@ class GetKeysKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 

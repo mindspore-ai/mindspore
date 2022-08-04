@@ -164,7 +164,7 @@ std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() const {
 }
 
 std::vector<KernelAttr> ExchangeKeysKernelMod::GetOpSupport() {
-  const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+  static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }
 
