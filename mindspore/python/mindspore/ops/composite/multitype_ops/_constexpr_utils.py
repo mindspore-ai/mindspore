@@ -73,6 +73,11 @@ def raise_unimplemented_error(msg):
 
 
 @constexpr
+def log_warning(msg):
+    logger.warning(msg)
+
+
+@constexpr
 def check_equal(param1, param2, msg="{},{}"):
     """Checks whether the two parameters are equal or not."""
     if param1 != param2:

@@ -16,9 +16,10 @@
 """Implementation for internal polymorphism `mul` operations."""
 
 from . import _compile_utils as utils
+from ._constexpr_utils import check_equal
 from ...composite import base
 from ... import functional as F
-from ....common import CSRTensor
+from ....common import CSRTensor, COOTensor
 
 mul = base.MultitypeFuncGraph("mul", True)
 """
@@ -221,3 +222,29 @@ def _tensor_mul_csrtensor(x, y):
     """
     data = F.csr_mul(y, x)
     return CSRTensor(y.indptr, y.indices, data, y.shape)
+
+
+@mul.register("COOTensor", "Tensor")
+def _cootensor_mul_tensor(x, y):
+    """
+    Returns x * y where x is COOTensor and y is Tensor.
+
+    Outputs:
+       COOTensor, equal to x * y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    other_values = F.gather_nd(y, x.indices)
+    return COOTensor(x.indices, x.values * other_values, x.shape)
+
+
+@mul.register("Tensor", "COOTensor")
+def _tensor_mul_cootensor(x, y):
+    """
+    Returns x * y where x is Tensor and y is COOTensor.
+
+    Outputs:
+       COOTensor, equal to x * y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    other_values = F.gather_nd(x, y.indices)
+    return COOTensor(y.indices, y.values * other_values, y.shape)

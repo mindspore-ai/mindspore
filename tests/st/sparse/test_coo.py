@@ -419,3 +419,128 @@ def test_dense_to_coo():
     assert isinstance(coo_tensor, COOTensor)
     compare_coo(coo_tensor, expect)
     compare_coo(coo_tensor_graph, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_coo_magic_methods():
+    """
+    Feature: Test coo magic methods.
+    Description: Test COOTensor.__neg__, COOTensor.__add__, COOTensor.__sub__, COOTensor.__mul__, COOTensor.__div__.
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+    indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
+    values = Tensor([-1, 2], dtype=mstype.float32)
+    indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
+    values = Tensor([-1, 2], dtype=mstype.float32)
+    shape = (3, 4)
+    dense = Tensor([[0, 1, 2, 0], [0, 0, 2, 0], [1, 0, 0, 0]], dtype=mstype.float32)
+
+    indices_2 = Tensor([[0, 2], [1, 2], [2, 3]], dtype=mstype.int64)
+    values_2 = Tensor([3, -2, 1], dtype=mstype.float32)
+
+    def test_coo_neg(indices, values, shape):
+        coo_tensor = COOTensor(indices, values, shape)
+        return -coo_tensor
+
+    def test_coo_add_coo(indices, indices_2, values, values_2, shape):
+        coo_tensor_1 = COOTensor(indices, values, shape)
+        coo_tensor_2 = COOTensor(indices_2, values_2, shape)
+        return coo_tensor_1 + coo_tensor_2
+
+    def test_coo_add_dense(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return coo_tensor + dense
+
+    def test_dense_add_coo(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return dense + coo_tensor
+
+    def test_coo_sub_coo(indices, indices_2, values, values_2, shape):
+        coo_tensor_1 = COOTensor(indices, values, shape)
+        coo_tensor_2 = COOTensor(indices_2, values_2, shape)
+        return coo_tensor_1 - coo_tensor_2
+
+    def test_coo_sub_dense(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return coo_tensor - dense
+
+    def test_dense_sub_coo(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return dense - coo_tensor
+
+    def test_coo_mul_dense(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return coo_tensor * dense
+
+    def test_dense_mul_coo(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return dense * coo_tensor
+
+    def test_coo_div_dense(indices, values, shape, dense):
+        coo_tensor = COOTensor(indices, values, shape)
+        return coo_tensor / dense
+
+    neg_expect = COOTensor(indices, Tensor([1, -2], mstype.float32), shape)
+    neg_output = test_coo_neg(indices, values, shape)
+    compare_coo(neg_output, neg_expect)
+    neg_output = ms_function(test_coo_neg)(indices, values, shape)
+    compare_coo(neg_output, neg_expect)
+
+    coo_add_coo_expect = COOTensor(Tensor([[0, 1], [0, 2], [1, 2], [2, 3]], mstype.int64),
+                                   Tensor([-1, 3, 0, 1], mstype.float32), shape)
+    coo_add_coo_output = test_coo_add_coo(indices, indices_2, values, values_2, shape)
+    compare_coo(coo_add_coo_output, coo_add_coo_expect)
+    coo_add_coo_output = ms_function(test_coo_add_coo)(indices, indices_2, values, values_2, shape)
+    compare_coo(coo_add_coo_output, coo_add_coo_expect)
+
+    coo_add_dense_expect = np.array([[0, 0, 2, 0], [0, 0, 4, 0,], [1, 0, 0, 0,]], np.int64)
+    coo_add_dense_output = test_coo_add_dense(indices, values, shape, dense)
+    assert np.allclose(coo_add_dense_expect, coo_add_dense_output.asnumpy())
+    coo_add_dense_output = ms_function(test_coo_add_dense)(indices, values, shape, dense)
+    assert np.allclose(coo_add_dense_expect, coo_add_dense_output.asnumpy())
+
+    dense_add_coo_output = test_dense_add_coo(indices, values, shape, dense)
+    assert np.allclose(coo_add_dense_expect, dense_add_coo_output.asnumpy())
+    dense_add_coo_output = ms_function(test_dense_add_coo)(indices, values, shape, dense)
+    assert np.allclose(coo_add_dense_expect, dense_add_coo_output.asnumpy())
+
+    coo_sub_coo_expect = COOTensor(Tensor([[0, 1], [0, 2], [1, 2], [2, 3]], mstype.int64),
+                                   Tensor([-1, -3, 4, -1], mstype.float32), shape)
+    coo_sub_coo_output = test_coo_sub_coo(indices, indices_2, values, values_2, shape)
+    compare_coo(coo_sub_coo_output, coo_sub_coo_expect)
+    coo_sub_coo_output = ms_function(test_coo_sub_coo)(indices, indices_2, values, values_2, shape)
+    compare_coo(coo_sub_coo_output, coo_sub_coo_expect)
+
+    coo_sub_dense_expect = np.array([[0, -2, -2, 0], [0, 0, 0, 0], [-1, 0, 0, 0]], np.int32)
+    coo_sub_dense_output = test_coo_sub_dense(indices, values, shape, dense)
+    assert np.allclose(coo_sub_dense_expect, coo_sub_dense_output.asnumpy())
+    coo_sub_dense_output = ms_function(test_coo_sub_dense)(indices, values, shape, dense)
+    assert np.allclose(coo_sub_dense_expect, coo_sub_dense_output.asnumpy())
+
+    dense_sub_coo_expect = np.array([[0, 2, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], np.int64)
+    dense_sub_coo_output = test_dense_sub_coo(indices, values, shape, dense)
+    assert np.allclose(dense_sub_coo_expect, dense_sub_coo_output.asnumpy())
+    dense_sub_coo_output = ms_function(test_dense_sub_coo)(indices, values, shape, dense)
+    assert np.allclose(dense_sub_coo_expect, dense_sub_coo_output.asnumpy())
+
+    coo_mul_dense_expect = COOTensor(indices, Tensor([-1, 4], mstype.float32), shape)
+    coo_mul_dense_output = test_coo_mul_dense(indices, values, shape, dense)
+    compare_coo(coo_mul_dense_output, coo_mul_dense_expect)
+    coo_mul_dense_output = ms_function(test_coo_mul_dense)(indices, values, shape, dense)
+    compare_coo(coo_mul_dense_output, coo_mul_dense_expect)
+
+    dense_mul_coo_output = test_dense_mul_coo(indices, values, shape, dense)
+    compare_coo(dense_mul_coo_output, coo_mul_dense_expect)
+    dense_mul_coo_output = ms_function(test_dense_mul_coo)(indices, values, shape, dense)
+    compare_coo(dense_mul_coo_output, coo_mul_dense_expect)
+
+    coo_div_dense_expect = COOTensor(indices, Tensor([-1, 1], mstype.float32), shape)
+    coo_div_dense_output = test_coo_div_dense(indices, values, shape, dense)
+    compare_coo(coo_div_dense_output, coo_div_dense_expect)
+    coo_div_dense_output = ms_function(test_coo_div_dense)(indices, values, shape, dense)
+    compare_coo(coo_div_dense_output, coo_div_dense_expect)

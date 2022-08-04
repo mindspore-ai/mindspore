@@ -234,7 +234,7 @@ def csr_to_coo(tensor):
         ValueError: If input tensor is not 2-D.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, CSRTensor
@@ -244,14 +244,16 @@ def csr_to_coo(tensor):
         >>> shape = (2, 4)
         >>> x = CSRTensor(indptr, indices, values, shape)
         >>> output = ops.csr_to_coo(x)
-        >>> print(output)
+        >>> print(output.indices)
+        [[0 0]
+        [1 1]]
     """
     if not isinstance(tensor, CSRTensor):
         raise_type_error("For functional operator csr_to_coo, input argument must be a CSRTensor.")
     if len(tensor.shape) != 2:
         raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
     shape = tensor.shape
-    indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
+    indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, mstype.int32), batch_csr_pointers_empty,
                                                             tensor.indptr, tensor.indices, tensor.values)
     return COOTensor(indices, values, shape)
 
@@ -332,11 +334,17 @@ def dense_to_sparse_coo(tensor):
         ``GPU``
 
     Examples:
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, ops
         >>> import mindspore as ms
         >>> x = Tensor([[1, 0], [-5, 0]], ms.float32)
         >>> output = ops.dense_to_sparse_coo(x)
-        >>> print(output)
+        >>> print(output.indices)
+        [[0 0]
+        [1 0]]
+        >>> print(output.values)
+        [ 1. -5.]
+        >>> print(output.shape)
+        (2, 2)
     """
     if not isinstance(tensor, Tensor):
         raise_type_error("For functional operator dense_to_sparse_coo, input argument must be a Tensor.")
@@ -373,11 +381,16 @@ def dense_to_sparse_csr(tensor):
         ``GPU``
 
     Examples:
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, ops
         >>> import mindspore as ms
         >>> x = Tensor([[1, 0], [-5, 0]], ms.float32)
         >>> output = ops.dense_to_sparse_csr(x)
-        >>> print(output)
+        >>> print(output.indptr)
+        [0 1 2]
+        >>> print(output.indices)
+        [0 0]
+        >>> print(output.shape)
+        (2, 2)
     """
     if not isinstance(tensor, Tensor):
         raise_type_error("For functional operator dense_to_sparse_csr, input argument must be a Tensor.")
@@ -544,7 +557,7 @@ def sparse_add(x1, x2, thresh):
     x1_values = x1.values
     x2_indices = x2.indices
     x2_values = x2.values
-    den_shp = Tensor(x1.shape)
+    den_shp = make_tensor(x1.shape, x1_indices.dtype)
     add_op = SparseAdd()
     indices, values, _ = add_op(x1_indices, x1_values, den_shp, x2_indices, x2_values, den_shp, thresh)
     return COOTensor(indices, values, x1.shape)
@@ -589,8 +602,8 @@ def csr_softmax(logits, dtype):
     if not isinstance(logits, CSRTensor):
         raise_type_error("For functional operator sparse_matrix_softmax, logits must be type of CSRTensor.")
     sparse_matrix_softmax_op = SparseMatrixSoftmax(dtype)
-    logits_batch_pointers = make_tensor([0, logits.values.shape[0]], dtype=mstype.int32)
-    logits_shape = make_tensor(logits.shape, dtype=mstype.int32)
+    logits_batch_pointers = make_tensor([0, logits.values.shape[0]], mstype.int32)
+    logits_shape = make_tensor(logits.shape, mstype.int32)
     shape, _, indptr, indices, values = sparse_matrix_softmax_op(logits_shape, logits_batch_pointers, logits.indptr,
                                                                  logits.indices, logits.values)
     output_shape = tuple(shape.asnumpy().tolist())
@@ -644,15 +657,15 @@ def csr_add(a, b, alpha, beta):
     if not isinstance(alpha, Tensor) or not isinstance(beta, Tensor):
         raise_type_error("For functional operator csr_add, both inputs alpha and beta must be Tensor.")
     csr_add_op = SparseMatrixAdd()
-    a_batch_pointers = make_tensor([0, a.values.shape[0]], dtype=mstype.int32)
-    b_batch_pointers = make_tensor([0, b.values.shape[0]], dtype=mstype.int32)
-    a_shape = make_tensor(a.shape, dtype=mstype.int32)
-    b_shape = make_tensor(b.shape, dtype=mstype.int32)
+    a_batch_pointers = make_tensor([0, a.values.shape[0]], mstype.int32)
+    b_batch_pointers = make_tensor([0, b.values.shape[0]], mstype.int32)
+    a_shape = make_tensor(a.shape, mstype.int32)
+    b_shape = make_tensor(b.shape, mstype.int32)
     shape, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
                                                    b_shape, b_batch_pointers, b.indptr, b.indices, b.values,
                                                    alpha, beta)
     output_shape = tuple(shape.asnumpy().tolist())
-    return CSRTensor(indptr=indptr, indices=indices, values=values, shape=output_shape)
+    return CSRTensor(indptr, indices, values, output_shape)
 
 
 __all__ = [
