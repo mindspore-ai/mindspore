@@ -5,18 +5,7 @@ mindspore.ops.Pad
 
     根据参数 `paddings` 对输入进行填充。
 
-    输出Tensor的shape计算公式如下：
-
-    .. math::
-        \begin{aligned}
-            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
-            &\begin{aligned}
-                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
-                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
-                                 &... , \\
-                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
-            \end{aligned}
-        \end{aligned}
+    更多参考详见 :func:`mindspore.ops.pad`。如果 `paddings` 里存在负数值，请使用 :func:`mindspore.ops.pad` 接口。
 
     **参数：**
 

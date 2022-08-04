@@ -3997,18 +3997,8 @@ class Pad(PrimitiveWithInfer):
     r"""
     Pads the input tensor according to the paddings.
 
-    The formula to calculate the shape of the output tensor is as follows,
-
-    .. math::
-        \begin{aligned}
-            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
-            &\begin{aligned}
-                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
-                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
-                                 &... , \\
-                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
-            \end{aligned}
-        \end{aligned}
+    Refer to :func:`mindspore.ops.pad` for more detail. Use :func:`mindspore.ops.pad` instead if `paddings` has
+    negative values.
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
