@@ -1542,9 +1542,9 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
     r"""
     Performs a 3D max pooling on the input Tensor.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
-    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+    Typically the input is a Tensor with shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, outputs
+    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given `kernel_size`
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and `stride` :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
@@ -1552,34 +1552,35 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`.
+        x (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8,
+            int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
             value, is an int number that represents depth, height and width of the kernel, or a tuple of
             three int numbers that represent depth, height and width respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: `kernel_size`.
-        padding (Union[int, tuple[int]]): int number that represents the depth, height and width of movement are both
+        padding (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: '(1, 1, 1)'.
+            Default: 0.
+        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: 1.
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be return,
-            else would not be return. Default: False.
+        return_indices (bool): Whether to output the indices of max value. Default: False.
 
     Returns:
         If `return_indices` is False, return a Tensor `output`, else return a tuple (`output`, `argmax`).
 
-        - **output** (Tensor) -  Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
-        - **argmax** (Tensor) -  Max values' index represented by the mask. Data type is int64. It will be return only
-          when `return_indices` is True.
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
+          only when `return_indices` is True.
 
     Raises:
-        TypeError: If `kernel_size` or `stride` is not int, list or tuple.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `kernel_size` or `stride` is less than 1.
-        ValueError: If `pads` is less than 0.
         ValueError: If length of shape of `x` is not equal to 5.
+        TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is not int or tuple.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If `padding` is less than 0.
 
     Supported Platforms:
         ``GPU``
