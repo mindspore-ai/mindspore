@@ -22,7 +22,6 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_mod.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
