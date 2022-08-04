@@ -947,7 +947,8 @@ class Cell(Cell_):
         """
         Compile and run Cell, the input must be consistent with the input defined in construct.
 
-        Note: It is not recommended to call directly.
+        Note:
+            It is not recommended to call directly.
 
         Args:
             inputs (tuple): Inputs of the Cell object.
@@ -1080,7 +1081,8 @@ class Cell(Cell_):
         """
         Defines the computation to be performed. This method must be overridden by all subclasses.
 
-        Note: It is not supported currently that inputs contain both tuple and non-tuple types at same time.
+        Note:
+            It is not supported currently that inputs contain both tuple and non-tuple types at same time.
 
         Args:
             inputs (tuple): Tuple of variable parameters.

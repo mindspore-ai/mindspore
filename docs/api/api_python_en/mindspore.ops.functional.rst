@@ -513,7 +513,7 @@ Parameter Operation Functions
     mindspore.ops.scatter_update
 
 Differential Functions
-----------------
+----------------------
 
 .. msplatformautosummary::
     :toctree: ops
