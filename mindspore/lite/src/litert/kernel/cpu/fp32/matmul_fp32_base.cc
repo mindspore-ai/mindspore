@@ -504,15 +504,17 @@ int MatmulFp32BaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::InitBroadcastParams() {
-  auto a_shape = in_tensors_[kInputIndex]->shape();
+int MatmulFp32BaseCPUKernel::InitBroadcastParams(const std::vector<int> &a_shape_const,
+                                                 const std::vector<int> &b_shape_const, MatMulParameter *params,
+                                                 std::vector<int> *a_offsets, std::vector<int> *b_offsets) {
+  std::vector<int> a_shape = a_shape_const;
   if (a_shape.size() < kNCHWDimNumber) {
     size_t add_nums = kNCHWDimNumber - a_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
       a_shape.insert(a_shape.begin(), 1);
     }
   }
-  auto b_shape = in_tensors_[kWeightIndex]->shape();
+  std::vector<int> b_shape = b_shape_const;
   if (b_shape.size() < kNCHWDimNumber) {
     size_t add_nums = kNCHWDimNumber - b_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
@@ -545,11 +547,11 @@ int MatmulFp32BaseCPUKernel::InitBroadcastParams() {
       return RET_ERROR;
     }
   }
-  params_->batch = out_batch;
+  params->batch = out_batch;
 
-  a_offset_.resize(params_->batch, 0);
-  b_offset_.resize(params_->batch, 0);
-  for (int i = 0; i < params_->batch; ++i) {
+  a_offsets->resize(params->batch, 0);
+  b_offsets->resize(params->batch, 0);
+  for (int i = 0; i < params->batch; ++i) {
     int delta = i;
     int a_offset = 0;
     int b_offset = 0;
@@ -565,8 +567,8 @@ int MatmulFp32BaseCPUKernel::InitBroadcastParams() {
         b_offset += (delta * b_shape[j] / std::max(a_shape[j], b_shape[j]));
       }
     }
-    a_offset_[i] = a_offset;
-    b_offset_[i] = b_offset;
+    (*a_offsets)[i] = a_offset;
+    (*b_offsets)[i] = b_offset;
   }
 
   return RET_OK;
@@ -575,8 +577,12 @@ int MatmulFp32BaseCPUKernel::InitBroadcastParams() {
 int MatmulFp32BaseCPUKernel::MatmulReSize() {
   InitShapeA();
   InitShapeB();
-  (void)InitBroadcastParams();
-
+  auto ret = MatmulFp32BaseCPUKernel::InitBroadcastParams(
+    in_tensors_[kInputIndex]->shape(), in_tensors_[kWeightIndex]->shape(), params_, &a_offset_, &b_offset_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitBroadcastParams failed.";
+    return RET_ERROR;
+  }
   return MatmulFp32BaseCPUKernel::ReSize();
 }
 

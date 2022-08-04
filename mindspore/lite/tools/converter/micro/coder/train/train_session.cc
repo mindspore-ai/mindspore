@@ -91,8 +91,8 @@ int CoderTrainSession::UpdateCodeBlocksWithFlag() {
 }
 
 int CoderTrainSession::PassArgsToContext() {
-  int ret = RET_OK;
-  (void)CoderSession::PassArgsToContext();
+  int ret = CoderSession::PassArgsToContext();
+  MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   if (Configurator::GetInstance()->debug_mode()) {
     ret = UpdateCodeBlocksWithFlag();
     MS_CHECK_RET_CODE(ret, "update code_blocks_with_flag_ failed.");

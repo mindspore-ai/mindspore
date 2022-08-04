@@ -16,9 +16,12 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_MATMUL_BASE_INT8_CODER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_MATMUL_BASE_INT8_CODER_H_
+
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/matmul_parameter.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+
 namespace mindspore::lite::micro::nnacl {
 class MatMulBaseInt8Coder : public OperatorCoder {
  public:
@@ -37,6 +40,7 @@ class MatMulBaseInt8Coder : public OperatorCoder {
   virtual int ReSize(CoderContext *const context);
 
  private:
+  void DoBatchCode(NNaclInt8Serializer *code_ptr);
   void ResizeParameter();
   int MallocQuantParam();
   void FreeQuantParam();
@@ -62,6 +66,8 @@ class MatMulBaseInt8Coder : public OperatorCoder {
   int *input_sums_{nullptr};
   size_t weight_bias_sums_size_{0};
   int *weight_bias_sums_{nullptr};
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
 
  private:
   int weight_quant_num_{0};

@@ -23,6 +23,7 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
 #include "coder/utils/common.h"
+#include "coder/opcoders/nnacl/int8/add_int8_coder.h"
 
 using mindspore::schema::PrimitiveType_AddFusion;
 
@@ -94,5 +95,33 @@ int AddInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-REG_OPERATOR_CODER(kCortex_M, kNumberTypeInt8, PrimitiveType_AddFusion, CPUOpCoderCreator<AddInt8Coder>)
+
+std::unique_ptr<OperatorCoder> AddFusionInt8CoderCreator(const std::vector<Tensor *> &in_tensors,
+                                                         const std::vector<Tensor *> &out_tensors,
+                                                         const LiteGraph::Node *node, size_t node_index, Target target,
+                                                         int schema_version) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is null";
+    return nullptr;
+  }
+  if (in_tensors.size() != kTwo) {
+    MS_LOG(ERROR) << "in_tensors size error.";
+    return nullptr;
+  }
+  std::unique_ptr<OperatorCoder> coder;
+  if (in_tensors[0]->ElementsNum() == in_tensors[1]->ElementsNum()) {
+    coder = std::make_unique<AddInt8Coder>(in_tensors, out_tensors, node, node_index, target);
+  } else {
+    coder =
+      std::make_unique<mindspore::lite::micro::nnacl::AddInt8Coder>(in_tensors, out_tensors, node, node_index, target);
+  }
+  if (coder == nullptr) {
+    return nullptr;
+  }
+
+  coder->SetSchemaVersion(schema_version);
+  return coder;
+}
+
+REG_OPERATOR_CODER(kCortex_M, kNumberTypeInt8, PrimitiveType_AddFusion, AddFusionInt8CoderCreator)
 }  // namespace mindspore::lite::micro::cmsis

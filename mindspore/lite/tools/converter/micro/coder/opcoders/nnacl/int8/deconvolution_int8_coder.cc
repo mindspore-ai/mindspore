@@ -24,9 +24,9 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int DeconvolutionInt8Coder::Init(CoderContext *const context) {
+  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder Init error!");
   CheckSupportOptimize();
   MS_CHECK_RET_CODE(SetQuantParam(), "deconv int8 SetQuantParam error!");
-  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder SetQuantParam error!");
   MS_CHECK_RET_CODE(InitParam(), "deconv int8 InitParam error!");
   MS_CHECK_RET_CODE(InitBiasWeight(context), "deconv int8 InitBiasWeight error!");
   MS_CHECK_RET_CODE(InitData(context), "deconv int8 InitData error!");
@@ -34,6 +34,8 @@ int DeconvolutionInt8Coder::Init(CoderContext *const context) {
 }
 
 int DeconvolutionInt8Coder::Prepare(CoderContext *const context) {
+  conv_param_ = reinterpret_cast<ConvParameter *>(parameter_);
+  conv_transpore_ = true;
   conv_param_->thread_num_ = thread_num_;
   conv_param_->op_parameter_.thread_num_ = thread_num_;
   thread_count_ = thread_num_;
@@ -123,12 +125,11 @@ int DeconvolutionInt8Coder::InitRunBuf(CoderContext *const context) {
 int DeconvolutionInt8Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
-            "nnacl/int8/deconv.h",
+            "nnacl/int8/deconv_int8.h",
           },
           {
-            "int8/deconv.c",
+            "deconv_int8.c",
             "pack_int8.c",
-            "quantization/fixed_point.c",
           });
 
   nnacl::NNaclInt8Serializer code;

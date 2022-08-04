@@ -52,6 +52,8 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int MatmulReSize();
   int Conv1x1ReSize();
   int Run() override;
+  static int InitBroadcastParams(const std::vector<int> &a_shape_const, const std::vector<int> &b_shape_const,
+                                 MatMulParameter *params, std::vector<int> *a_offsets, std::vector<int> *b_offsets);
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
@@ -89,7 +91,6 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   void GetThreadCuttingInfoByRow();
   void InitShapeA();
   void InitShapeB();
-  int InitBroadcastParams();
 
  protected:
   MatMulParameter *params_ = nullptr;

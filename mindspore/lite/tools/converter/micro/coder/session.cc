@@ -50,6 +50,10 @@ int CoderSession::PassArgsToContext() {
   if (Configurator::GetInstance()->debug_mode()) {
     std::vector<std::string> blocks;
     blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
+    if (blocks.size() == 0) {
+      MS_LOG(ERROR) << "AddDumpDataInfo failed.";
+      return RET_ERROR;
+    }
     context_->set_code_blocks(blocks);
   }
   return RET_OK;
@@ -91,7 +95,8 @@ int CoderSession::Run() {
   ret = DoCode();
   MS_CHECK_RET_CODE(ret, "do code failed");
 
-  (void)PassArgsToContext();
+  ret = PassArgsToContext();
+  MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   MS_LOG(INFO) << "run opcoders success";
   return RET_OK;
 }

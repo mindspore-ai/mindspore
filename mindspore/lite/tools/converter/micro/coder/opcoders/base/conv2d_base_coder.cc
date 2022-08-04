@@ -156,8 +156,13 @@ int Conv2DBaseCoder::SetIfPerChannel() {
   }
 
   if (conv_quant_arg_->filter_arg_num_ != kPerTensor) {
-    MS_CHECK_TRUE(conv_quant_arg_->filter_arg_num_ == output_channel,
-                  "weight per channel quant param length is not equal to filter num.");
+    if (conv_transpore_) {
+      MS_CHECK_TRUE(conv_quant_arg_->filter_arg_num_ == input_channel,
+                    "weight per channel quant param length is not equal to filter num.");
+    } else {
+      MS_CHECK_TRUE(conv_quant_arg_->filter_arg_num_ == output_channel,
+                    "weight per channel quant param length is not equal to filter num.");
+    }
     per_channel = per_channel | FILTER_PER_CHANNEL;
   }
 

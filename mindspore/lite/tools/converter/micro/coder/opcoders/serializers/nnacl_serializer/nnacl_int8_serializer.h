@@ -31,6 +31,7 @@
 #include "nnacl/reshape_parameter.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/batchnorm_parameter.h"
+#include "nnacl/transpose.h"
 #include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::lite::micro::nnacl {
@@ -40,6 +41,7 @@ class NNaclInt8Serializer : public Serializer {
   ~NNaclInt8Serializer() override = default;
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
   void CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter);
+  void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
   void CodeStruct(const std::string &name, const AddQuantParameter &add_quant_parameter);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter);

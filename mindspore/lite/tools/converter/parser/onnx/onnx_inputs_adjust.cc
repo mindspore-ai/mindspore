@@ -382,6 +382,18 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
   return lite::RET_OK;
 }
 
+STATUS AdjustUnsqueeze(bool *need_update_manager, const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
+  if (cnode->inputs().size() == opt::kInputSizeThree) {
+    auto new_input = cnode->inputs();
+    new_input.erase(new_input.begin() + opt::kInputIndexTwo);
+    cnode->set_inputs(new_input);
+    *need_update_manager = true;
+  }
+  return lite::RET_OK;
+}
+
 STATUS AdjustRandomNormal(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   if (cnode->size() != 1) {
@@ -485,6 +497,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
       status = AdjustRandomNormal(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimGatherD)) {
       status = AdjustGatherD(func_graph, cnode);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimUnsqueeze)) {
+      status = AdjustUnsqueeze(&need_update_manager, cnode);
     } else {
       continue;
     }

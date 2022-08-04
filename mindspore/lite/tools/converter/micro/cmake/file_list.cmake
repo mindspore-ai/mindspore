@@ -138,6 +138,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/relux_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/div_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/transpose_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/tanh_int8_coder.cc
         #### nnacl dequant coder
         ${MICRO_DIR}/coder/opcoders/nnacl/dequant/de_quant.cc
         #### custom

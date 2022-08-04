@@ -41,6 +41,7 @@ class MatmulBaseInt8CPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  int MatmulReSize();
 
  public:
   int RunImpl(int task_id);
@@ -90,6 +91,8 @@ class MatmulBaseInt8CPUKernel : public LiteKernel {
   bool support_sdot_ = false;
   PackFunc a_pack_func_{nullptr};
   PackFunc b_pack_func_{nullptr};
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
 };
 }  // namespace mindspore::kernel
 

@@ -67,7 +67,7 @@ int MatmulInt8CPUKernel::ReSize() {
   param_->col_ = o_shape[o_shape.size() - col_offset];
   param_->deep_ = param_->a_transpose_ ? x_shape[x_shape.size() - row_offset] : x_shape[x_shape.size() - col_offset];
 
-  auto ret = MatmulBaseInt8CPUKernel::ReSize();
+  auto ret = MatmulBaseInt8CPUKernel::MatmulReSize();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MatmulBaseInt8CPUKernel failed";
     return ret;

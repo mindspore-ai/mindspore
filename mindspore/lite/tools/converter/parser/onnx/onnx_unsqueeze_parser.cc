@@ -26,15 +26,39 @@ PrimitiveCPtr OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, con
   auto prim = std::make_unique<ops::Unsqueeze>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int64_t> axis;
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "axes") {
-      for (int i = 0; i < onnx_node_attr.ints().size(); ++i) {
-        axis.emplace_back(onnx_node_attr.ints(i));
+  if (onnx_node.input_size() == 1) {
+    for (const auto &onnx_node_attr : onnx_node.attribute()) {
+      const auto &attribute_name = onnx_node_attr.name();
+      if (attribute_name == "axes") {
+        for (int i = 0; i < onnx_node_attr.ints().size(); ++i) {
+          axis.emplace_back(onnx_node_attr.ints(i));
+        }
       }
-      prim->set_axis(axis);
+    }
+  } else {
+    MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
+    const auto &input_name = onnx_node.input(1);
+    auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
+                                  [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
+    if (node_iter == onnx_graph.initializer().end()) {
+      MS_LOG(ERROR) << "not find initializer node: " << input_name.c_str();
+      return nullptr;
+    }
+    const onnx::TensorProto *slope_data = &(*node_iter);
+    const auto slope_raw_data = reinterpret_cast<const int64_t *>(slope_data->raw_data().data());
+    MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
+    const int64_t slope_size = slope_data->raw_data().size() / sizeof(int64_t);
+    axis.resize(slope_size);
+    if (INT_MUL_OVERFLOW_THRESHOLD(slope_size, sizeof(int64_t), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow";
+      return nullptr;
+    }
+    if (memcpy_s(axis.data(), slope_size * sizeof(int64_t), slope_raw_data, slope_data->raw_data().size()) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return nullptr;
     }
   }
+  prim->set_axis(axis);
 
   return prim->GetPrim();
 }

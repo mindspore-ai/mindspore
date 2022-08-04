@@ -45,37 +45,31 @@ int TransposeInt8Coder::Prepare(CoderContext *const context) {
     param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
-
-  if (in_tensor->shape().size() == DIMENSION_4D && ((param_->perm_[0] == 0 && param_->perm_[1] == kTwo &&
-                                                     param_->perm_[kTwo] == kThree && param_->perm_[kThree] == 1) ||
-                                                    (param_->perm_[0] == 0 && param_->perm_[1] == kThree &&
-                                                     param_->perm_[kTwo] == 1 && param_->perm_[kThree] == kTwo))) {
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Currently transpose op only supports NCHW<->NHWC";
-    return RET_ERROR;
-  }
+  return RET_OK;
 }
 
 int TransposeInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context,
-          {
-            "nnacl/int8/pack_int8.h",
-          },
-          {
-            "pack_int8.c",
-          });
+  Collect(context, {"nnacl/int8/pack_int8.h", "nnacl/int8/transpose_int8.h"}, {"pack_int8.c", "transpose_int8.c"});
 
   NNaclInt8Serializer code;
   auto out_shape = output_tensors_[0]->shape();
-  if (param_->perm_[0] == 0 && param_->perm_[1] == kTwo && param_->perm_[kTwo] == kThree &&
-      param_->perm_[kThree] == 1) {
+  if (param_->num_axes_ == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kTwo &&
+      param_->perm_[kTwo] == kThree && param_->perm_[kThree] == 1) {
     code.CodeFunction("PackNCHWToNHWCInt8", input_tensors_[0], output_tensors_[0], out_shape[0],
                       out_shape[1] * out_shape[kTwo], out_shape[kThree]);
-  } else if (param_->perm_[0] == 0 && param_->perm_[1] == kThree && param_->perm_[kTwo] == 1 &&
-             param_->perm_[kThree] == kTwo) {
+  } else if (param_->num_axes_ == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kThree &&
+             param_->perm_[kTwo] == 1 && param_->perm_[kThree] == kTwo) {
     code.CodeFunction("PackNHWCToNCHWInt8", input_tensors_[0], output_tensors_[0], out_shape[0],
                       out_shape[kTwo] * out_shape[kThree], out_shape[1]);
+  } else {
+    code << "int out_shape[" << param_->num_axes_ << "] = {";
+    for (int i = 0; i < param_->num_axes_; i++) {
+      code << out_shape[i] << ",";
+    }
+    code << "};\n";
+
+    code.CodeStruct("transpore_param", *param_);
+    code.CodeFunction("DoTransposeInt8", input_tensors_[0], output_tensors_[0], "out_shape", "&transpore_param");
   }
   context->AppendCode(code.str());
   return RET_OK;

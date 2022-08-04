@@ -71,6 +71,13 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParame
     matmul_parameter.a_const_, matmul_parameter.b_const_, matmul_parameter.act_type_);
 }
 
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter) {
+  CodeBaseStruct("TransposeParameter", name, transpose_parameter.op_parameter_, ToString(transpose_parameter.perm_),
+                 transpose_parameter.perm_size_, transpose_parameter.conjugate_, ToString(transpose_parameter.strides_),
+                 ToString(transpose_parameter.out_strides_), transpose_parameter.num_axes_,
+                 transpose_parameter.data_num_);
+}
+
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const AddQuantParameter &add_quant_parameter) {
   CodeBaseStruct<false>("AddQuantParameter", name, add_quant_parameter.left_shift_, add_quant_parameter.min_,
                         add_quant_parameter.max_, add_quant_parameter.in0_args_, add_quant_parameter.in1_args_,
