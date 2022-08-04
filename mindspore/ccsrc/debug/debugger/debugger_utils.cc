@@ -21,11 +21,7 @@
 #include <string>
 #include "include/common/debug/anf_dump_utils.h"
 #include "debug/debugger/debugger.h"
-#include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
-#ifdef ENABLE_D
-#include "debug/dump_data_builder.h"
-#endif
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
@@ -333,81 +329,4 @@ void SuperKernelE2eDump(const KernelGraphPtr &graph) {
   Dump(graph, GetRankID());
 #endif
 }
-
-#ifdef ENABLE_D
-/*
- * Feature group: Dump.
- * Target device group: Ascend.
- * Runtime category: Old runtime, MindRT.
- * Description: It is a function to be registered to Adx server for a + m dump feature with the following steps:
- * 1) Merge chunks into one memory segment after receiving all the data for one node.
- * 2) Parse dump data object.
- * 3) Convert data from device to host format.
- * 4) Dump to disk based on configuration.
- */
-int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
-  MS_LOG(DEBUG) << "ADX DumpDataCallBack is called";
-  MS_LOG(DEBUG) << "The dump_chunk size is: " << size;
-  string file_name = dump_chunk->fileName;
-  uint32_t isLastChunk = dump_chunk->isLastChunk;
-
-  // parse chunk header
-  auto debugger = Debugger::GetInstance();
-  MS_EXCEPTION_IF_NULL(debugger);
-  auto dump_data_build = debugger->LoadDumpDataBuilder(file_name);
-  if (dump_data_build == nullptr) {
-    MS_LOG(ERROR) << "Failed to load dump data builder for node " << file_name;
-    return 0;
-  }
-  if (!dump_data_build->CopyDumpChunk(dump_chunk)) {
-    return 1;
-  }
-
-  if (isLastChunk == 1) {
-    // construct dump data object
-    debugger::dump::DumpData dump_data;
-    std::vector<char> data_buf;
-    if (!dump_data_build->ConstructDumpData(&dump_data, &data_buf)) {
-      MS_LOG(ERROR) << "Failed to parse data for node " << file_name;
-      return 0;
-    }
-
-    // convert and save to files
-    auto separator = file_name.rfind("/");
-    auto path_name = file_name.substr(0, separator);
-    auto file_base_name = file_name.substr(separator + 1);
-    if (file_base_name.rfind("Opdebug.Node_OpDebug.") == 0) {
-      // save overflow data
-      E2eDump::DumpOpDebugToFile(file_name, dump_data, data_buf.data());
-    } else {
-      // save tensor data
-      // generate fully qualified file name
-      // before: op_type.op_name.task_id.stream_id.timestamp
-      // after: op_type.op_name_no_scope.task_id.stream_id.timestamp
-      size_t first_dot = file_base_name.find(".");
-      size_t second_dot = file_base_name.size();
-      const int kNumDots = 3;
-      int nth_dot_from_back = 0;
-      while (nth_dot_from_back != kNumDots && second_dot != std::string::npos) {
-        second_dot = file_base_name.rfind(".", second_dot - 1);
-        nth_dot_from_back++;
-      }
-      if (first_dot == std::string::npos || second_dot == std::string::npos) {
-        MS_LOG(ERROR) << "Failed to generate fully qualified file name for " << file_name;
-        return 0;
-      }
-      auto op_type = file_base_name.substr(0, first_dot);
-      auto task_stream_timestamp = file_base_name.substr(second_dot);
-      std::string op_name = dump_data.op_name();
-      auto op_name_no_scope = GetOpNameWithoutScope(op_name, "/");
-      E2eDump::DumpTensorToFile(path_name + "/" + op_type + "." + op_name_no_scope + task_stream_timestamp, dump_data,
-                                data_buf.data());
-    }
-
-    debugger->ClearDumpDataBuilder(file_name);
-  }
-
-  return 0;
-}
-#endif
 }  // namespace mindspore

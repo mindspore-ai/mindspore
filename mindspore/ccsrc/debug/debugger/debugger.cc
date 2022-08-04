@@ -1791,44 +1791,4 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   }
   return false;
 }
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend.
- * Runtime category: Old runtime, MindRT.
- * Description: Load DumpDataBuilder object from dump_data_construct_map_ for tracking data chunks of node_name. It's
- * for Ascend a + m dump. If not found, create a new one for it and add to dump_data_construct_map_.
- */
-std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string &node_name) {
-  std::map<std::string, std::shared_ptr<DumpDataBuilder>>::const_iterator iter =
-    dump_data_construct_map_.find(node_name);
-  if (iter == dump_data_construct_map_.cend()) {
-    dump_data_construct_map_[node_name] = std::make_shared<DumpDataBuilder>();
-  }
-  return dump_data_construct_map_[node_name];
-}
-
-void Debugger::ClearDumpDataBuilder(const std::string &node_name) { (void)dump_data_construct_map_.erase(node_name); }
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend.
- * Runtime category: MindRT.
- * Description: This function is used for A+M dump to make sure training processing ends after tensor data have been
- * dumped to disk completely. Check if dump_data_construct_map_ is empty to see if no dump task is alive. If not, sleep
- * for 500ms and check again.
- */
-void Debugger::WaitForWriteFileFinished() const {
-  const int kRetryTimeInMilliseconds = 500;
-  const int kMaxRecheckCount = 10;
-  int recheck_cnt = 0;
-  while (recheck_cnt < kMaxRecheckCount && !dump_data_construct_map_.empty()) {
-    MS_LOG(INFO) << "Sleep for " << std::to_string(kRetryTimeInMilliseconds)
-                 << " ms to wait for dumping files to finish. Retry count: " << std::to_string(recheck_cnt + 1) << "/"
-                 << std::to_string(kMaxRecheckCount);
-    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryTimeInMilliseconds));
-    recheck_cnt++;
-  }
-}
-
 }  // namespace mindspore

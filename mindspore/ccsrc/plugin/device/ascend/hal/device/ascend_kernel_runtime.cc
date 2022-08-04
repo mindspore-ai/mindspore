@@ -45,6 +45,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #ifndef ENABLE_SECURITY
+#include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
 #endif
@@ -292,7 +293,7 @@ void AsyncDataDumpUninit() {
     if (device_type == kAscendDevice) {
       // When it is A+M dump mode, wait until file save is finished.
       if (DumpJsonParser::GetInstance().FileFormatIsNpy()) {
-        Debugger::GetInstance()->WaitForWriteFileFinished();
+        mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
       }
     }
     if (AdxDataDumpServerUnInit() != 0) {

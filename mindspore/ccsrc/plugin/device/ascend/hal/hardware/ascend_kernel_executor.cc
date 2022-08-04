@@ -41,6 +41,7 @@
 #include "utils/anf_utils.h"
 #include "plugin/device/ascend/hal/profiler/pynative_profiling.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -70,7 +71,7 @@ void DumpInit(uint32_t device_id) {
 #if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES))
     // register callback to adx
     if (json_parser.FileFormatIsNpy()) {
-      AdxRegDumpProcessCallBack(DumpDataCallBack);
+      AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
     }
 #endif
     if (AdxDataDumpServerInit() != 0) {

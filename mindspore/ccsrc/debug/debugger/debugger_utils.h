@@ -22,11 +22,6 @@
 #include "debug/debugger/debugger.h"
 #include "kernel/kernel.h"
 #include "runtime/hardware/device_context.h"
-#ifdef ENABLE_D
-#include "toolchain/adx_datadump_callback.h"
-
-using Adx::DumpChunk;
-#endif
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchInfo;
 
@@ -52,10 +47,5 @@ std::string CheckDynamicShape(const KernelGraphPtr &graph_ptr);
 void LoadDataForDebugger(const KernelGraphPtr &graph_ptr);
 
 void SuperKernelE2eDump(const KernelGraphPtr &graph);
-
-#ifdef ENABLE_D
-// Callback function to dump ascend async mode
-int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size);
-#endif
 }  // namespace mindspore
 #endif
