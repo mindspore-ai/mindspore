@@ -52,7 +52,7 @@ class AscendKernelMod : public KernelMod {
   std::string GetAtomicCompileInfo() const { return atomic_compile_info_; }
 
  protected:
-  void UpdateOutputSizeList();
+  virtual void UpdateOutputSizeList();
 
   AnfNodeWeakPtr anf_node_;
   std::vector<CNodeWeakPtr> atomic_clean_nodes_;

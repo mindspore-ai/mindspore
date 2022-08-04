@@ -42,7 +42,7 @@ class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
   std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
   void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss) const;
   void GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
-                 const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
+                 const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output) const;
   std::vector<ShapeVector> input_shape_list_;
   std::vector<size_t> dim_elem_num_list_;
   int axis_{0};
@@ -180,7 +180,7 @@ void L2NormalizeGradCpuFunc<T>::GetSumOfProduct(const std::vector<T> &x_vector, 
 template <typename T>
 void L2NormalizeGradCpuFunc<T>::GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
                                           const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index,
-                                          T *output) {
+                                          T *output) const {
   size_t axis_index = high_dim_index[axis_];
   T dout = dout_vector[axis_index];
   T y = y_vector[axis_index];

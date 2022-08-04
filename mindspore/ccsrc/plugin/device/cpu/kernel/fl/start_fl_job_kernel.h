@@ -101,7 +101,7 @@ class StartFLJobKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() { return; }
+  void InitSizeLists() const { return; }
 
  private:
   bool BuildStartFLJobReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
