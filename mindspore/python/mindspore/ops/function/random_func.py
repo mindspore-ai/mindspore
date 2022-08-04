@@ -290,7 +290,7 @@ def uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range
         num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
             of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
         unique (bool): Whether all sampled classes in a batch are unique.
-        range_max (int): The number of possible classes, must be non-negative.
+        range_max (int): The number of possible classes, must be positive.
         seed (int): Used for random number generation, must be non-negative. If seed has a value of 0,
             the seed will be replaced with a randomly generated value. Default: 0.
         remove_accidental_hits (bool): Whether accidental hit is removed. Default: False.

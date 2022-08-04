@@ -121,7 +121,7 @@ def _broadcast_by_axis(x, dst: int, axis_size: int):
         axis_size (int): The size of the destination axis to be broadcast.
 
     Returns:
-        Tensor, array after broadcast along the destination axmapGeneralPreis.
+        Tensor, array after broadcast along the destination axis.
 
     Raises:
         ValueError: If destination axes are out of the range of ``[-ndim, ndim)``, ``ndim = x.ndim + 1``.
