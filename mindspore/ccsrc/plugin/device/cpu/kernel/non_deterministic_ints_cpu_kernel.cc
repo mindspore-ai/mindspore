@@ -66,13 +66,13 @@ bool NonDeterministicIntsCPUKernelMod::Launch(const std::vector<AddressPtr> &inp
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (output_type_ == kNumberTypeInt32 && input_type_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t, int32_t>(inputs, outputs);
+    (void)LaunchKernel<int32_t, int32_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt64 && input_type_ == kNumberTypeInt32) {
-    LaunchKernel<int64_t, int32_t>(inputs, outputs);
+    (void)LaunchKernel<int64_t, int32_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt32 && input_type_ == kNumberTypeInt64) {
-    LaunchKernel<int32_t, int64_t>(inputs, outputs);
+    (void)LaunchKernel<int32_t, int64_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt64 && input_type_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t, int64_t>(inputs, outputs);
+    (void)LaunchKernel<int64_t, int64_t>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "The output data type must be one of int32 or int64.";
   }
