@@ -75,6 +75,10 @@ void GridSampler2DCpuKernelMod::ComputeTask(const T *x_addr, const T *grid_addr,
     }
     out_iter[count] = out_iter[kOne] % LongToSize(output_shape_[count]);
     out_iter[1] /= LongToSize(output_shape_[count--]);
+    if (count == 0) {
+      break;
+    }
+    count--;
   }
   const size_t out_c = LongToSize(output_shape_[kOne]);
   size_t grid_offset =
@@ -144,9 +148,10 @@ void GridSampler2DCpuKernelMod::ComputeTask(const float16 *x_addr, const float16
     }
     out_iter[count] = out_iter[kOne] % LongToSize(output_shape_[count]);
     out_iter[1] /= LongToSize(output_shape_[count]);
-    if (count > 0) {
-      count--;
+    if (count == 0) {
+      break;
     }
+    count--;
   }
   const size_t out_c = LongToSize(output_shape_[kOne]);
   size_t grid_offset =
