@@ -43,6 +43,7 @@ using CTask = std::function<void(size_t, size_t)>;
 namespace mindspore {
 namespace kernel {
 constexpr char KERNEL_SIZE[] = "kernel_size";
+constexpr char VALIDATE_INDICES[] = "validate_indices";
 constexpr char STRIDE[] = "stride";
 constexpr char STRIDES[] = "strides";
 constexpr char DILATION[] = "dilation";

@@ -89,6 +89,60 @@ class SparseToDense(PrimitiveWithInfer):
         return out
 
 
+class SparseToDenseV2(Primitive):
+    """
+    Converts a sparse representation into a dense tensor.
+
+    Args:
+        validate_indices (bool): If true, indices are checked to make sure they are sorted in
+                                 lexicographic order and that there are no repeats. Default: True.
+
+    Inputs:
+        - **indices** (Tensor) - A 0D, 1D, or 2D Tensor of type int32 or int64, represents the position
+                                 of the element in the sparse tensor.
+        - **output_shape** (Tensor) - A 1D Tensor of the same type as `indices`, represents the shape
+                                      of the dense output tensor.
+        - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`
+                                or a scalar value to be used for all indices.
+        - **default_value** (Tensor) - A 0D Tensor of the same type as `sparse_values`, scalar value to
+                                       set for indices not specified in indices.
+
+    Returns:
+        Tensor, converted from sparse tensor. The dtype is same as `values`, and the shape is `output_shape`.
+
+    Raises:
+        TypeError: If the dtype of `indices` is neither Int32 nor Int64.
+        TypeError: If the dtype of `outputshape` is neither Int32 nor Int64.
+        ValueError: If the shape of `output_shape`, shape of `indices`, shape of
+                    `default_value` and shape of `values` don't meet the parameter description.
+        ValueError: If each Element of `output_shape` is not > 0.
+        ValueError: If the shape[0] of `indices` don't match with the element of `values`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+        >>> output_shape = Tensor([3, 4], dtype=ms.int32)
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> default_value = Tensor(0, dtype=ms.float32)
+        >>> sparse_to_dense_v2 = ops.SparseToDenseV2()
+        >>> out = sparse_to_dense_v2(indices, output_shape, values, default_value)
+        >>> print(out)
+        [[0. 1. 0. 0.]
+         [0. 0. 2. 0.]
+         [0. 0. 0. 0.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, validate_indices=True):
+        """Initialize SparseToDenseV2."""
+        self.add_prim_attr("max_length", 1000000)
+        self.validate_indices = validate_indices
+        self.add_prim_attr("validate_indices", self.validate_indices)
+        self.init_prim_io_names(inputs=['indices', 'output_shape', 'values', 'default_value'], outputs=['output'])
+
+
 class SparseTensorDenseAdd(Primitive):
     """
     Add a sparse tensor and a dense tensor to get a dense tensor.

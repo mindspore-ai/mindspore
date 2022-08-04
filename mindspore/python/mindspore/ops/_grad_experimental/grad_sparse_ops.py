@@ -16,6 +16,7 @@
 """bprop primitives"""
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
+from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.common import dtype as mstype
@@ -50,6 +51,19 @@ def get_bprop_csr_sparse_matrix_to_sparse_tensor(self):
         dx = op(dout[0], dout[1], dout[2])
         dx_all = (dx[0], dx[1], dx[2], dx[3], dx[4])
         return dx_all
+
+    return bprop
+
+
+@bprop_getters.register(SparseToDenseV2)
+def get_bprop_sparse_to_dense_v2(self):
+    """Generate bprop for SparseToDenseV2"""
+
+    def bprop(indices, output_shape, values, default_value, out, dout):
+        sparse_values_grad = F.gather_nd(dout, indices)
+        default_value_grad = F.reduce_sum(dout) - F.reduce_sum(sparse_values_grad)
+        result_all = (zeros_like(indices), zeros_like(output_shape), sparse_values_grad, default_value_grad)
+        return result_all
 
     return bprop
 

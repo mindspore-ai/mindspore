@@ -122,6 +122,7 @@ from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
+from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
@@ -3248,6 +3249,13 @@ test_case_array_ops = [
         'block': P.SpaceToDepth(2),
         'desc_inputs': [[1, 3, 2, 2]],
         'desc_bprop': [[1, 12, 1, 1]]}),
+    ('SparseToDenseV2', {
+        'block': SparseToDenseV2(),
+        'desc_inputs': [Tensor(np.array([[0, 1]]).astype(np.int32)),
+                        Tensor(np.array([2, 2]).astype(np.int32)),
+                        Tensor(np.array([1.0]).astype(np.float32)),
+                        Tensor(0.0, dtype=mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[0.0, 1.0], [0.0, 0.0]]).astype(np.float32))]}),
     ('DepthToSpace', {
         'block': P.DepthToSpace(2),
         'desc_inputs': [[1, 12, 1, 1]],

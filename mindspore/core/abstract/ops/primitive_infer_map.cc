@@ -67,6 +67,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
+  static const auto &kSparseToDenseV2 = prim::kPrimSparseToDenseV2->name();
   static const auto &kResizeBicubic = prim::kPrimResizeBicubic->name();
   static const auto &kRandomCategorical = prim::kPrimRandomCategorical->name();
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
@@ -156,6 +157,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kResizeNearestNeighborV2, ShapeSet{1}},
                                          {kResizeNearestNeighborV2Grad, ShapeSet{1}},
                                          {kScatterNd, ShapeSet{2}},
+                                         {kSparseToDenseV2, ShapeSet{1}},
                                          {kSliceGrad, ShapeSet{2, 3}},
                                          {kFillV2, ShapeSet{0}},
                                          {kRandomCategorical, ShapeSet{1}},
