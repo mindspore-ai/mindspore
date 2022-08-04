@@ -293,7 +293,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
         axes[k] = i;
         ++k;
       } else {
-        stride *= static_cast<size_t>(input_shape_[i]);
+        stride *= LongToSize(input_shape_[IntToSize(i)]);
         ++j;
       }
     }
