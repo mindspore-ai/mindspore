@@ -1617,9 +1617,9 @@ def scatter_div(input_x, indices, updates):
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or
+        indices (Tensor): The index to do divide operation whose data type must be mindspore.int32 or
           mindspore.int64.
-        updates (Tensor): The tensor doing the min operation with `input_x`,
+        updates (Tensor): The tensor doing the divide operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Outputs:
