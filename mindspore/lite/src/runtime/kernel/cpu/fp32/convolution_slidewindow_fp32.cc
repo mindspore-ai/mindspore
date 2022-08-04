@@ -92,8 +92,8 @@ int ConvolutionSWCPUKernel::ReSize() {
 
 int ConvolutionSWCPUKernel::RunImpl(int task_id) {
   if (conv_param_->kernel_w_ == 1 && conv_param_->kernel_h_ == 1) {
-    Conv1x1SWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-                  output_data_, task_id, conv_param_, slidingWindow_param_);
+    Conv1x1SWAVXFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
+                     output_data_, task_id, conv_param_, slidingWindow_param_);
   } else {
     ConvSWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
                output_data_, task_id, conv_param_, slidingWindow_param_);
