@@ -130,7 +130,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs) override;
-  CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
+  CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
   CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode) const;
   CNodePtr NewCNode(const CNodePtr &cnode);

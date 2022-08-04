@@ -924,9 +924,7 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
 
   ShapeVector lengths_shape = lengths->shape()->shape();
   ShapeVector lengths_shape_min = lengths->shape()->min_shape();
-
   ShapeVector lengths_shape_max = lengths->shape()->max_shape();
-
   if (!lengths_shape_max.empty() && !lengths_shape_min.empty()) {
     lengths_shape_min.push_back(maxlen_value);
     lengths_shape_max.push_back(maxlen_value);
