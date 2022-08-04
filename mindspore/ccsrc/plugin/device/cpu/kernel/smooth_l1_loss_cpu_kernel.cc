@@ -148,7 +148,6 @@ int SmoothL1LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 const std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::KernelRunFunc>>
   &SmoothL1LossCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::KernelRunFunc>> func_list = {
-    {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat16, float16)},
     {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat32, float)},
     {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat64, double)},
   };
