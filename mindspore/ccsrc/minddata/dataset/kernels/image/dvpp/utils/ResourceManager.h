@@ -65,7 +65,14 @@ class ResourceManager {
  public:
   ResourceManager(){};
 
-  ~ResourceManager(){};
+  ~ResourceManager() {
+    // finalize the acl when the process exit
+    auto ret = aclFinalize();
+    if (ret != APP_ERR_OK) {
+      MS_LOG(ERROR) << "Failed to finalize acl, ret = " << ret << ".";
+      return;
+    }
+  };
 
   // Get the Instance of resource manager
   static std::shared_ptr<ResourceManager> GetInstance();
