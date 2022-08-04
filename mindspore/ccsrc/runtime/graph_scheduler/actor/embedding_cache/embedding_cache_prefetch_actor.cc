@@ -1354,7 +1354,7 @@ std::unique_ptr<std::vector<char>> EmbeddingCachePrefetchActor::ReceiveFromRemot
 
 bool EmbeddingCachePrefetchActor::RetrieveEmbeddings(
   const int *ids, size_t ids_num, const std::vector<std::vector<int>> &slice_ids_list,
-  const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list, std::vector<float> *outputs) {
+  const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list, std::vector<float> *outputs) const {
   MS_ERROR_IF_NULL(ids);
   MS_ERROR_IF_NULL(outputs);
 

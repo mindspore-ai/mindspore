@@ -185,7 +185,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Retrieve embeddings by input ids order.
   bool RetrieveEmbeddings(const int *ids, size_t ids_num, const std::vector<std::vector<int>> &slice_ids_list,
                           const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list,
-                          std::vector<float> *outputs);
+                          std::vector<float> *outputs) const;
 
   // Send finalize request to remote and finalize it.
   bool FinalizeRemote();
