@@ -647,7 +647,7 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
         RuntimeError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
