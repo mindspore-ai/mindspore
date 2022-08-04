@@ -311,25 +311,25 @@ inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
 #define MS_EXCEPTION(type) MSLOG_THROW(type)
 }  // namespace mindspore
 
-#define MS_EXCEPTION_IF_NULL(ptr)                                    \
+#define MS_EXCEPTION_IF_NULL(ptr)                                  \
+  do {                                                             \
+    if ((ptr) == nullptr) {                                        \
+      MS_LOG(EXCEPTION) << "The pointer[" << #ptr << "] is null."; \
+    }                                                              \
+  } while (0)
+
+#define MS_EXCEPTION_IF_CHECK_FAIL(condition, error_info)            \
   do {                                                               \
-    if ((ptr) == nullptr) {                                          \
-      MS_LOG(EXCEPTION) << ": The pointer[" << #ptr << "] is null."; \
+    if (!(condition)) {                                              \
+      MS_LOG(EXCEPTION) << "Failure info [" << (error_info) << "]."; \
     }                                                                \
   } while (0)
 
-#define MS_EXCEPTION_IF_CHECK_FAIL(condition, error_info)              \
-  do {                                                                 \
-    if (!(condition)) {                                                \
-      MS_LOG(EXCEPTION) << ": Failure info [" << (error_info) << "]."; \
-    }                                                                  \
-  } while (0)
-
-#define MS_EXCEPTION_IF_ZERO(name, value)                     \
-  do {                                                        \
-    if ((value) == 0) {                                       \
-      MS_LOG(EXCEPTION) << ": The " << (name) << " is zero."; \
-    }                                                         \
+#define MS_EXCEPTION_IF_ZERO(name, value)                   \
+  do {                                                      \
+    if ((value) == 0) {                                     \
+      MS_LOG(EXCEPTION) << "The " << (name) << " is zero."; \
+    }                                                       \
   } while (0)
 
 #define MS_ERROR_IF_NULL(ptr)                                    \
