@@ -13,8 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """ test transformer"""
+import os
+import shutil
 import numpy as np
 import pytest
+
+
+import mindspore
 from mindspore import Tensor
 from mindspore.common import dtype
 from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
@@ -271,3 +276,60 @@ def test_sparse_attention():
     v = Tensor(np.ones((2, 1024, 512)), dtype.float16)
     mask = Tensor(np.ones((2, 1024, 1024)), dtype.float32)
     _cell_graph_executor.compile(model, q, k, v, mask)
+
+
+class TestBasicWarningValidator:
+    log_envs = dict(GLOG_v=None, GLOG_logtostderr=None, GLOG_log_dir=None, logger_maxBytes=None,
+                    logger_backupCount=None)
+    log_path = './TestBasicWarningValidator'
+
+    def setup_method(self):
+        for env in self.log_envs:
+            self.log_envs[env] = os.environ.get(env, None)
+        os.environ['GLOG_log_dir'] = self.log_path
+        os.environ['GLOG_v'] = '1'
+        os.environ['GLOG_logtostderr'] = '0'
+        # Force to generate the logger again
+        # pylint: disable=W0212
+        mindspore.log._global_logger = None
+
+    def teardown_method(self):
+        for env in self.log_envs:
+            if self.log_envs.get(env, False):
+                os.environ[env] = self.log_envs.get(env, "False")
+        shutil.rmtree(os.path.join(self.log_path))
+
+    def check_warning_log(self):
+        cmd = f'cd {self.log_path} && grep WARNING rank_0/logs/mindspore.log.* |wc -l'
+        file_count = os.popen(cmd).read().strip()
+        assert file_count == "0"
+
+    def test_cross_entory_no_warning(self):
+        """
+        Feature: Test the warning log
+        Description: Test a forward compile has no warning error
+        Expectation: To compile passed
+        """
+        # Force to rebuild the logger
+        test_cross_entroy()
+        self.check_warning_log()
+
+    def test_transformer_encoder_no_warning(self):
+        """
+        Feature: Test the warning log
+        Description: Test a forward compile has no warning error
+        Expectation: To compile passed
+        """
+        # Force to rebuild the logger
+        test_transformer_encoder_only()
+        self.check_warning_log()
+
+    def test_transformer_decoder_no_warning(self):
+        """
+        Feature: Test the warning log
+        Description: Test a forward compile has no warning error
+        Expectation: To compile passed
+        """
+        # Force to rebuild the logger
+        test_transformer_decoder()
+        self.check_warning_log()
