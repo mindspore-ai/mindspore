@@ -30,25 +30,54 @@ constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 }  // namespace
 
-void CheckValidCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  anchor_box_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  img_metas_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool CheckValidCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ != prim::kPrimCheckValid->name()) {
+    MS_LOG(ERROR) << "For 'CheckValid', the kernel name must be 'CheckValid', but got " << kernel_name_;
+    return false;
+  }
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "CheckValid does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'CheckValid', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int CheckValidCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto anchor_box_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto img_metas_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  anchor_box_shape_.clear();
+  img_metas_shape_.clear();
+  img_metas_shape_.clear();
+  (void)std::transform(anchor_box_shape.begin(), anchor_box_shape.end(), std::back_inserter(anchor_box_shape_),
+                       LongToSize);
+  (void)std::transform(img_metas_shape.begin(), img_metas_shape.end(), std::back_inserter(img_metas_shape_),
+                       LongToSize);
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  auto input0_element_num =
+    std::accumulate(anchor_box_shape_.begin(), anchor_box_shape_.end(), size_t(1), std::multiplies<size_t>());
+  auto input1_element_num =
+    std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
+  is_null_input_ = (input0_element_num == 0 || input1_element_num == 0);
+  return KRET_OK;
 }
 
 template <typename T>
 bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   CheckParams<T>(inputs, outputs);
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);

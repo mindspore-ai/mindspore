@@ -405,7 +405,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
             validator.check_value_type("area_range[%d]" % i, value, [float], self.name)
 
 
-class CheckValid(PrimitiveWithInfer):
+class CheckValid(Primitive):
     """
     Checks bounding box.
 
@@ -456,19 +456,6 @@ class CheckValid(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CheckValid."""
         self.init_prim_io_names(inputs=['bboxes', 'img_metas'], outputs=['output'])
-
-    def infer_shape(self, bboxes_shape, metas_shape):
-        validator.check("bboxes rank", len(bboxes_shape), "", 2, Rel.EQ, self.name)
-        validator.check("bboxes_shape[-1]", bboxes_shape[-1], "", 4, Rel.EQ, self.name)
-        validator.check("img_metas rank", len(metas_shape), "", 1, Rel.EQ, self.name)
-        validator.check("img_metas shape[0]", metas_shape[0], "", 3, Rel.EQ, self.name)
-        return bboxes_shape[:-1]
-
-    def infer_dtype(self, bboxes_type, metas_type):
-        valid_type = [mstype.float32, mstype.float16, mstype.int16, mstype.uint8]
-        validator.check_tensor_dtype_valid("bboxes_type", bboxes_type, valid_type, self.name)
-        validator.check_tensor_dtype_valid("metas_type", metas_type, valid_type, self.name)
-        return mstype.bool_
 
 
 class IOU(Primitive):

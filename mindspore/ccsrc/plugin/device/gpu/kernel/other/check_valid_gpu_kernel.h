@@ -18,85 +18,43 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_OTHER_CHECK_VALID_GPU_KERNEL_H
 
 #include <vector>
-#include <string>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/check_valid_impl.cuh"
+#include <utility>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class CheckValidGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CheckValidGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CheckValidGpuKernelMod() : anchor_boxes_size_(0), img_metas_size_(0), valid_size_(0), is_null_input_(false) {}
+  CheckValidGpuKernelMod() = default;
   ~CheckValidGpuKernelMod() override = default;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    VARIABLE_NOT_USED(workspace);
-    T *anchor_boxes_addr = GetDeviceAddress<T>(inputs, 0);
-    T *img_metas_addr = GetDeviceAddress<T>(inputs, 1);
-    S *valid_addr = GetDeviceAddress<S>(outputs, 0);
-
-    const size_t coordinate = 4;
-    const size_t block_size = inputs[0]->size / sizeof(T);
-    if ((block_size % coordinate) != 0) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
-      return false;
-    }
-
-    const size_t size = block_size / coordinate;
-    CheckValid(size, anchor_boxes_addr, img_metas_addr, valid_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
-    }
-    anchor_boxes_size_ = sizeof(T);
-    img_metas_size_ = sizeof(T);
-    valid_size_ = sizeof(S);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    auto anchor_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto img_metas_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto valid_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(anchor_boxes_shape, kernel_name_, "bboxes") ||
-                     CHECK_SHAPE_NULL(img_metas_shape, kernel_name_, "img_metas") ||
-                     CHECK_SHAPE_NULL(valid_shape, kernel_name_, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-    anchor_boxes_size_ *= SizeOf(anchor_boxes_shape);
-    img_metas_size_ *= SizeOf(img_metas_shape);
-    valid_size_ *= SizeOf(valid_shape);
-
-    InitSizeLists();
-
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(anchor_boxes_size_);
-    input_size_list_.push_back(img_metas_size_);
-    output_size_list_.push_back(valid_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t anchor_boxes_size_;
-  size_t img_metas_size_;
-  size_t valid_size_;
-  bool is_null_input_;
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using CheckValidFunc = std::function<bool(CheckValidGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CheckValidFunc>> func_list_;
+  CheckValidFunc kernel_func_;
+  bool is_null_input_{false};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
