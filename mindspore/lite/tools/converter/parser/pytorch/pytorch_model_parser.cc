@@ -273,7 +273,7 @@ STATUS CopyDataFromTorchTensor(char *dst_data, const at::Tensor &torch_tensor, T
       for (int i = 0; i < data_shape[dim]; i++) {
         auto src_ptr = data_ptr + offset + i * stride[dim] * ele_size;
         auto dst_ptr = dst_data + (idx++) * ele_size;
-        memcpy(dst_ptr, src_ptr, ele_size);
+        MS_CHECK_TRUE_RET_VOID(memcpy_s(dst_ptr, ele_size, src_ptr, ele_size) == EOK);
       }
     } else {
       for (int i = 0; i < data_shape[dim]; i++) {
