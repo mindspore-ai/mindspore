@@ -92,9 +92,21 @@ int ArithmeticFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
   int completed_size = task_id * size;
   int cur_size = MSMIN(size, args->size_ - completed_size);
   if (cur_size <= 0) return NNACL_OK;
-  void *input0 = (void *)((float *)args->input0_ + completed_size);
-  void *input1 = (void *)((float *)args->input1_ + completed_size);
   void *output = (void *)((float *)args->output_ + completed_size);
+  void *input0;
+  void *input1;
+  if (args->is_opt_) {
+    if (args->param->in_elements_num0_ == 1) {
+      input0 = (void *)args->input0_;
+      input1 = (void *)((float *)args->input1_ + completed_size);
+    } else {
+      input0 = (void *)((float *)args->input0_ + completed_size);
+      input1 = (void *)args->input1_;
+    }
+  } else {
+    input0 = (void *)((float *)args->input0_ + completed_size);
+    input1 = (void *)((float *)args->input1_ + completed_size);
+  }
   ArithmeticExecute(input0, input1, output, cur_size, args->is_opt_, args->func_type_, args->arithmetic_func_,
                     args->param);
   return NNACL_OK;

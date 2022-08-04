@@ -80,8 +80,13 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
           {});
   nnacl::NNaclFp32Serializer code;
   // call the op function
-  code.CodeStruct("conv_parameter", *conv_param_);
-  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_, bias_, "&conv_parameter", kDefaultTaskId);
+  std::string param_name = "conv_parameter";
+  code.CodeStruct(param_name, *conv_param_);
+  if (support_parallel_) {
+    code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+    code << "    " << param_name << ".thread_num_ = 1;\n";
+  }
+  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_, bias_, "&" + param_name, kDefaultTaskId);
   context->AppendCode(code.str());
   return RET_OK;
 }
