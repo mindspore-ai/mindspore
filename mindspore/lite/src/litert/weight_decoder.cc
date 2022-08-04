@@ -81,6 +81,32 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, 
   return RET_OK;
 }
 
+int WeightDecoder::DecodeKMeansWeight(lite::Tensor *tensor, TypeId dst_data_type = kNumberTypeFloat32) {
+  void *dequant_data = nullptr;
+  if (dst_data_type == kNumberTypeFloat32) {
+    auto dequant_data_ptr = static_cast<float *>(dequant_data);
+    DecodeKMeansData(tensor, &dequant_data_ptr);
+    dequant_data = dequant_data_ptr;
+  } else if (dst_data_type == kNumberTypeFloat16) {
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+    auto dequant_data_ptr = static_cast<float16_t *>(dequant_data);
+    DecodeKMeansData(tensor, &dequant_data_ptr);
+    dequant_data = dequant_data_ptr;
+#else
+    MS_LOG(ERROR) << "Current library or hardware don't support FP16.";
+    return RET_ERROR;
+#endif
+  } else {
+    MS_LOG(ERROR) << dst_data_type << " data type is not support KMeans.";
+    return RET_ERROR;
+  }
+  tensor->FreeData();
+  tensor->set_data(dequant_data);
+  tensor->set_own_data(true);
+  tensor->set_data_type(dst_data_type);
+  return RET_OK;
+}
+
 int WeightDecoder::DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(src_tensor.data() != nullptr);
@@ -344,16 +370,24 @@ int WeightDecoder::DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_d
       !(dst_data_type == TypeId::kNumberTypeFloat32 || dst_data_type == TypeId::kNumberTypeFloat16)) {
     return RET_NO_CHANGE;
   }
-  bool need_dequant = !tensor->quant_params().empty() && tensor->quant_params().front().inited &&
-                      (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeInt16 ||
-                       tensor->data_type() == kNumberTypeInt32);
-  if (!need_dequant) {
-    return RET_NO_CHANGE;
-  }
-  auto ret = WeightDecoder::DequantWeight(tensor, preferred_dim, dst_data_type);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Dequant data failed: " << ret;
-    return ret;
+  if (!tensor->quant_params().empty()) {
+    bool need_dequant = tensor->quant_params().front().inited &&
+                        (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeInt16 ||
+                         tensor->data_type() == kNumberTypeInt32);
+    if (!need_dequant) {
+      return RET_NO_CHANGE;
+    }
+    auto ret = WeightDecoder::DequantWeight(tensor, preferred_dim, dst_data_type);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << tensor->tensor_name() << " Dequant data failed: " << ret;
+      return ret;
+    }
+  } else if (!tensor->quant_clusters().empty()) {
+    auto ret = DecodeKMeansWeight(tensor, dst_data_type);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << tensor->tensor_name() << " Decode KMeans weight failed: " << ret;
+      return ret;
+    }
   }
   return RET_OK;
 }
