@@ -258,7 +258,7 @@ class Addcdiv(Primitive):
         - **value** (Tensor) - The multiplier for tensor x1/x2.
 
     Outputs:
-        Tensor y, has the same shape and dtype as x1/x2.
+        Tensor, has the same shape and dtype as x1/x2.
 
     Raises:
         TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
