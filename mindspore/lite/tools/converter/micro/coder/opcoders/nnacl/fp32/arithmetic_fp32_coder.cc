@@ -313,10 +313,10 @@ void ArithmeticFP32Coder::CollectFilesForFunc(CoderContext *const context) {
   } else if (arithmetic_run_ == "ElementAddRelu") {
     Collect(context,
             {
-              "nnacl/fp32/add_relu_fp32.h",
+              "nnacl/fp32/add_fp32.h",
             },
             {
-              "add_relu_fp32.c",
+              "add_fp32.c",
             });
   } else if (arithmetic_run_ == "ElementDivRelu6" || arithmetic_run_ == "ElementDivRelu" ||
              arithmetic_run_ == "ElementDiv") {

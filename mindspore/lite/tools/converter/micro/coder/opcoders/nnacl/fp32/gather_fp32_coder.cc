@@ -37,10 +37,10 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   // generate code .h .c
   Collect(context,
           {
-            "nnacl/fp32/gather.h",
+            "nnacl/base/gather_base.h",
           },
           {
-            "nnacl/fp32/gather.c",
+            "gather_base.c",
           });
 
   NNaclFp32Serializer code;
@@ -66,13 +66,25 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   int stride = UP_DIV(outer_size, thread_num_);
   int start = stride * kDefaultTaskId;
   int count = MSMIN(stride, outer_size - stride * kDefaultTaskId);
-  code << "\t\tconst int8_t *int8_in = (const int8_t *)input0->data();\n";
-  code << "\t\tMS_CHECK_PTR(int8_in);\n";
+  std::string input0_data = MemoryAllocator::GetInstance()->GetRuntimeAddr(input0, true);
+  if (input0_data.empty()) {
+    MS_LOG(ERROR) << "pointer is not allocated by the allocator";
+    return RET_ERROR;
+  }
+  std::string input1_data = MemoryAllocator::GetInstance()->GetRuntimeAddr(input1, true);
+  if (input1_data.empty()) {
+    MS_LOG(ERROR) << "pointer is not allocated by the allocator";
+    return RET_ERROR;
+  }
+  std::string output_data = MemoryAllocator::GetInstance()->GetRuntimeAddr(output_tensor_, true);
+  if (output_data.empty()) {
+    MS_LOG(ERROR) << "pointer is not allocated by the allocator";
+    return RET_ERROR;
+  }
+  code << "\t\tconst int8_t *int8_in = (const int8_t *)" << input0_data << ";\n";
   code << "\t\tint8_in += " << std::to_string(start * limit * byte_inner_size) << ";\n";
-  code << "\t\tconst int *index_data = (const int *)input1->data();\n";
-  code << "\t\tMS_CHECK_PTR(index_data);\n";
-  code << "\t\tint8_t *int8_out = (int8_t *)output_tensor_->data();\n";
-  code << "\t\tMS_CHECK_PTR(int8_out);\n";
+  code << "\t\tconst int *index_data = (const int *)" << input1_data << ";\n";
+  code << "\t\tint8_t *int8_out = (int8_t *)" << output_data << ";\n";
   code << "\t\tint8_out += " << std::to_string(start * byte_out_stride) << ";\n";
   // call the op function
   code.CodeFunction("Gather", "int8_in", count, byte_inner_size, limit, "index_data", indices_element_size, "int8_out",
