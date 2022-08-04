@@ -623,6 +623,7 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
     }
+    tensor->SetShape(model_pool_outputs_.at(i).Shape());
     outputs.push_back(*tensor);
     delete tensor;
   }
