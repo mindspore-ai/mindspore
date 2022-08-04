@@ -35,7 +35,7 @@ class AdamCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddOutInRef(0, 0)};
+    std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddOutInRef(0, 0)};
     return support_list;
   }
 

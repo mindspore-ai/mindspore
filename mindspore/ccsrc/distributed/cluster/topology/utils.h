@@ -43,7 +43,7 @@ __attribute__((unused)) static bool FillMetaServerAddress(struct MetaServerAddre
     MS_LOG(ERROR) << "Failed to get port of meta server from environment variables.";
     return false;
   }
-  auto port = std::strtol(ms_port.c_str(), nullptr, kDecimal);
+  auto port = std::stoi(ms_port.c_str(), nullptr, kDecimal);
   // Valid port number range.
   static const int min_port = 1;
   static const int max_port = 65535;

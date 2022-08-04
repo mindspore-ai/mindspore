@@ -239,7 +239,7 @@ bool ComputeGraphNode::Heartbeat() {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
     MS_LOG(INFO) << "The heartbeat thread is started.";
-    size_t interval = 3;
+    uint32_t interval = 3;
     uint32_t timeout = 10;
 
     while (enable_hb_) {
@@ -296,7 +296,8 @@ bool ComputeGraphNode::Heartbeat() {
   return true;
 }
 
-bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error, size_t retry) {
+bool ComputeGraphNode::ReconnectIfNeeded(const std::function<bool(void)> &func, const std::string &error,
+                                         size_t retry) {
   bool success = false;
 
   while (!success && retry > 0) {
@@ -324,13 +325,13 @@ bool ComputeGraphNode::Reconnect() {
 
   // Reconnect to the meta server node.
   if (!tcp_client_->IsConnected(server_url)) {
-    tcp_client_->Connect(server_url, kNoRetry);
+    (void)tcp_client_->Connect(server_url, kNoRetry);
   }
   if (!tcp_client_->IsConnected(server_url)) {
     return false;
   }
   if (!hb_client_->IsConnected(server_url)) {
-    hb_client_->Connect(server_url, kNoRetry);
+    (void)hb_client_->Connect(server_url, kNoRetry);
   }
   return hb_client_->IsConnected(server_url);
 }
@@ -349,7 +350,7 @@ bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::s
       return false;
     }
   } else {
-    tcp_client_->SendSync(std::move(message));
+    (void)tcp_client_->SendSync(std::move(message));
     return true;
   }
 }

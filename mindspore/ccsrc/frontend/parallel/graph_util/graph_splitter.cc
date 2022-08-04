@@ -472,10 +472,10 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
     MS_EXCEPTION_IF_NULL(ps_optimizer);
     // Load attributes for this optimizer.
     auto gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
-                            ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
+                            ? LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex))
                             : UINT64_MAX;
     size_t indices_index = common::AnfAlgo::HasNodeAttr(kAttrIndicesInputIndex, ps_optimizer)
-                             ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrIndicesInputIndex)
+                             ? LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrIndicesInputIndex))
                              : UINT64_MAX;
     std::string gradient_type = (common::AnfAlgo::HasNodeAttr(kAttrGradientType, ps_optimizer))
                                   ? common::AnfAlgo::GetNodeAttr<std::string>(ps_optimizer, kAttrGradientType)
@@ -527,7 +527,7 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
         auto &make_tuple_node = make_tuple_get_item_nodes.first;
         auto &tuple_get_item_node = make_tuple_get_item_nodes.second;
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, tuple_get_item_node);
-        node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
+        (void)node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
         (void)node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), make_tuple_node);
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), tuple_get_item_node);
@@ -1418,7 +1418,7 @@ void GraphSplitter::AddDependencyForSend(const FusedInterProcessOpPairMap &fused
     MS_EXCEPTION_IF_NULL(fused_send_node);
     // Make tuple all fused send nodes.
     if (send_label == this_process_label_) {
-      fused_send_node_tuple_inputs.emplace_back(fused_send_node);
+      (void)fused_send_node_tuple_inputs.emplace_back(fused_send_node);
     }
   }
   CNodePtr fused_send_make_tuple_node = CreateMakeTupleNode(func_graph_, fused_send_node_tuple_inputs);
