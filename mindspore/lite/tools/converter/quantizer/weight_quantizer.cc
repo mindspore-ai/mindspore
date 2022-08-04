@@ -156,12 +156,10 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     auto tensor_quant_params = quant_param_holder->get_input_quant_params();
     MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
     auto quant_params = tensor_quant_params.at(idx - 1);
-    status = fse_encoder.Compress(parameter, quant_params);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "fse encode compress failed." << status;
-      return RET_ERROR;
+    status = fse_encoder.Compress(parameter, quant_params, kFSE);
+    if (status == RET_OK) {
+      quant_param_holder->ClearQuantParams();
     }
-    quant_param_holder->ClearQuantParams();
   }
   // rollback to 8 bit.
   if (status == RET_ERROR || status == RET_NO_CHANGE) {

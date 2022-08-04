@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_DECODER_H_
 
 #include <cstdint>
+#include <vector>
 #include "tools/converter/quantizer/fse_bit_stream.h"
 #include "src/tensor.h"
 #include "src/litert/lite_model.h"
@@ -28,11 +29,48 @@ class FSEDecoder {
   FSEDecoder() = default;
   ~FSEDecoder() = default;
 
-  static int DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
+  static int DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor,
+                        schema::WeightQuantCompressType compress_type);
 
  private:
-  static int FSEDecode(FSEBitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
-                       const float *centroids, int table_log);
+  template <typename C_TYPE, typename OUT_TYPE>
+  static int FSEDecode(FSEBitStream *bs, OUT_TYPE *buff, int buff_count, uint32_t *frequency, int frequency_count,
+                       const C_TYPE *centroids, int table_log) {
+    MS_ASSERT(bs != nullptr);
+    MS_ASSERT(buff != nullptr);
+    MS_ASSERT(frequency != nullptr);
+    MS_ASSERT(centroids != nullptr);
+    int table_size = 1 << table_log;
+    std::vector<uint16_t> states_table(table_size);
+    std::vector<uint8_t> bit_count_table(table_size);
+    std::vector<uint16_t> symbol_table(table_size);
+    auto ret = FSECreateStatesForDecoding(frequency, frequency_count, table_log, states_table.data(),
+                                          bit_count_table.data(), symbol_table.data());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "FSE create states for decoding failed.";
+      return RET_ERROR;
+    }
+
+    uint16_t state = static_cast<uint16_t>(bs->Pop(table_log));
+    while ((bs->GetCurrChunkIndex() >= 0) || (bit_count_table[state] == 0) || (bs->GetCurrBitCount() > 0)) {
+      if (buff_count == 0) {
+        return RET_OK;
+      }
+      buff[--buff_count] = static_cast<OUT_TYPE>(centroids[symbol_table[state]]);
+      state = states_table[state] + static_cast<size_t>(bs->Pop(bit_count_table[state]));
+    }
+
+    int remaining_buff_count = buff_count;
+    if (remaining_buff_count < 0) {
+      MS_LOG(ERROR) << "out buffer too small";
+      return RET_ERROR;
+    }
+    if (remaining_buff_count > 0) {
+      MS_LOG(ERROR) << "out buffer too large";
+      return RET_ERROR;
+    }
+    return ret;
+  }
 
   static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
                                         uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table);

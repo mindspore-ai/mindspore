@@ -43,7 +43,8 @@ enum WeightQuantCompressType: int {
     INDEXING,
     SPARSE,
     FSE,
-    BITPACKING
+    BITPACKING,
+    FSE_INT,
 }
 
 table ExternalData {

@@ -62,45 +62,8 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   return RET_OK;
 }
 
-int FSEDecoder::FSEDecode(FSEBitStream *bs, float *buff, int buff_count, uint32_t *frequency, int frequency_count,
-                          const float *centroids, int table_log) {
-  MS_ASSERT(bs != nullptr);
-  MS_ASSERT(buff != nullptr);
-  MS_ASSERT(frequency != nullptr);
-  MS_ASSERT(centroids != nullptr);
-  int table_size = 1 << table_log;
-  std::vector<uint16_t> states_table(table_size);
-  std::vector<uint8_t> bit_count_table(table_size);
-  std::vector<uint16_t> symbol_table(table_size);
-  auto ret = FSECreateStatesForDecoding(frequency, frequency_count, table_log, states_table.data(),
-                                        bit_count_table.data(), symbol_table.data());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "FSE create states for decoding failed.";
-    return RET_ERROR;
-  }
-
-  uint16_t state = static_cast<uint16_t>(bs->Pop(table_log));
-  while ((bs->GetCurrChunkIndex() >= 0) || (bit_count_table[state] == 0) || (bs->GetCurrBitCount() > 0)) {
-    if (buff_count == 0) {
-      return RET_OK;
-    }
-    buff[--buff_count] = centroids[symbol_table[state]];
-    state = states_table[state] + static_cast<size_t>(bs->Pop(bit_count_table[state]));
-  }
-
-  int remaining_buff_count = buff_count;
-  if (remaining_buff_count < 0) {
-    MS_LOG(ERROR) << "out buffer too small";
-    return RET_ERROR;
-  }
-  if (remaining_buff_count > 0) {
-    MS_LOG(ERROR) << "out buffer too large";
-    return RET_ERROR;
-  }
-  return ret;
-}
-
-int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor,
+                           schema::WeightQuantCompressType compress_type) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(src_tensor.data() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
@@ -110,8 +73,6 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
   }
   CHECK_NULL_RETURN(src_tensor.data());
   auto total_size = src_tensor.length();
-  auto *output = static_cast<float *>(dst_tensor->data());
-  CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
   MS_CHECK_GT(out_sz, 0, RET_ERROR);
   // deserialize from `data`:
@@ -153,7 +114,6 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     return RET_ERROR;
   }
   auto centroids = reinterpret_cast<void *>(&data8[i]);
-  auto centroids_float = reinterpret_cast<float *>(centroids);
   i += frequency_count * sizeof(float);
   // Used for 8-byte alignment
   i = ((i + kAlignOffset) >> kTableExtend) << kTableExtend;
@@ -177,9 +137,20 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     return RET_ERROR;
   }
   bs.SetCurrBitCount(*(reinterpret_cast<uint8_t *>(&data8[i])));
-
-  auto res = FSEDecode(&bs, output, out_sz, frequency, frequency_count, centroids_float, table_log);
-  if (res != RET_OK) {
+  int ret;
+  if (compress_type == schema::WeightQuantCompressType_FSE) {
+    ret = FSEDecode<float, float>(&bs, static_cast<float *>(dst_tensor->data()), out_sz, frequency, frequency_count,
+                                  static_cast<float *>(centroids), table_log);
+  } else {
+    if (src_tensor.handler()->dataType() == kNumberTypeInt8) {
+      ret = FSEDecode<int, int8_t>(&bs, static_cast<int8_t *>(dst_tensor->data()), out_sz, frequency, frequency_count,
+                                   static_cast<int *>(centroids), table_log);
+    } else {
+      ret = FSEDecode<int, int16_t>(&bs, static_cast<int16_t *>(dst_tensor->data()), out_sz, frequency, frequency_count,
+                                    static_cast<int *>(centroids), table_log);
+    }
+  }
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "FSE Decode failed.";
     return RET_ERROR;
   }
