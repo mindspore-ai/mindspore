@@ -143,6 +143,7 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info, const s
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
 bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b);
+bool CheckShapesSame(const ShapeArray &shape_array);
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);
@@ -199,8 +200,10 @@ template <typename T>
 inline std::string Vector2Str(const std::vector<T> &inputs) {
   if (!inputs.empty()) {
     std::ostringstream oss;
+    oss << "(";
     (void)std::copy(inputs.begin(), inputs.end() - 1, std::ostream_iterator<T>(oss, ", "));
     oss << inputs.back();
+    oss << ")";
     return oss.str();
   }
   return "";
