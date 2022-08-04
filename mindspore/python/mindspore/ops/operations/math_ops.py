@@ -2724,6 +2724,47 @@ class Hypot(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
 
+class Heaviside(Primitive):
+    r"""
+    Computes the Heaviside step function for each element in input.
+
+    .. math::
+            \text { heaviside }(\text { x, values })=\left\{\begin{array}{ll}
+            0, & \text { if x }<0 \\
+            \text { values, } & \text { if x }==0 \\
+            1, & \text { if x }>0
+            \end{array}\right.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. With real number data type.
+        - **values** (Tensor) - The values to use where x is zero. Values can be broadcast with x.
+          'x' should have the same dtype with 'values'.
+
+    Outputs:
+        Tensor, has the same type as 'x' and 'values'.
+
+    Raises:
+        TypeError: If `x` or `values` is not Tensor.
+        TypeError: If data type `x` and `values` is different.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1.5, 0., 2.]))
+        >>> values = Tensor(np.array([0.5]))
+        >>> heaviside = ops.Heaviside()
+        >>> y = heaviside(x, values)
+        >>> print(y)
+            [0.  0.5 1. ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'values'], outputs=['y'])
+
+
 class Erf(Primitive):
     r"""
     Computes the Gauss error function of `x` element-wise.

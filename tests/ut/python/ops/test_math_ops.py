@@ -417,6 +417,16 @@ class HypotFunc(nn.Cell):
         return y
 
 
+class HeavisideFunc(nn.Cell):
+    def __init__(self):
+        super(HeavisideFunc, self).__init__()
+        self.heaviside_ = ops.function.heaviside
+
+    def construct(self, x, values):
+        y = self.heaviside_(x, values)
+        return y
+
+
 class LogAddExpFunc(nn.Cell):
     def __init__(self):
         super(LogAddExpFunc, self).__init__()
@@ -766,6 +776,11 @@ raise_set = [
         'block': HypotFunc(),
         'desc_inputs': [Tensor(np.array([3, 5, 7]).astype(np.float32)),
                         Tensor(np.array([4, 12, 24]).astype(np.float32))]}),
+    ('Heaviside', {
+        'block': HeavisideFunc(),
+        'desc_inputs': [Tensor(np.array([4, 4, 12]).astype(np.float32)),
+                        Tensor(np.array([4, 8, 12]).astype(np.float32))],
+        'skip': ['backward']}),
     ('Trunc', {
         'block': P.Trunc(),
         'desc_inputs': [Tensor(np.array([[1.1, 2.2, -4.1]], np.float32))],

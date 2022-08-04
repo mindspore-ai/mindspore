@@ -76,6 +76,7 @@ from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Hypot
+from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
@@ -1743,6 +1744,11 @@ test_case_math_ops = [
         'block': Hypot(),
         'desc_inputs': [Tensor(np.array([3, 5, 7]).astype(np.float32)),
                         Tensor(np.array([4, 12, 24]).astype(np.float32))]}),
+    ('Heaviside', {
+        'block': Heaviside(),
+        'desc_inputs': [Tensor(np.array([6, 8, 10]).astype(np.float32)),
+                        Tensor(np.array([6, 8, 10]).astype(np.float32))],
+        'skip': ['backward']}),
     ('Select', {
         'block': P.Select(),
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),

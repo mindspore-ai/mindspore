@@ -45,6 +45,7 @@ from ..operations.math_ops import (
     Orgqr,
     Renorm,
     Hypot,
+    Heaviside,
     Lcm,
     Gcd,
     Sinc,
@@ -3134,6 +3135,45 @@ def hypot(x1, x2):
 
     hypot_ = Hypot()
     return hypot_(x1, x2)
+
+
+def heaviside(x, values):
+    r"""
+    Computes the Heaviside step function for each element in input.
+
+    .. math::
+            \text { heaviside }(\text { x, values })=\left\{\begin{array}{ll}
+            0, & \text { if x }<0 \\
+            \text { values, } & \text { if x }==0 \\
+            1, & \text { if x }>0
+            \end{array}\right.
+
+    Args:
+        - **x** (Tensor) - The input tensor. With real number data type.
+        - **values** (Tensor) - The values to use where x is zero. Values can be broadcast with x.
+          'x' should have the same dtype with 'values'.
+
+    Returns:
+        Tensor, has the same type as 'x' and 'values'.
+
+    Raises:
+        TypeError: If `x` or `values` is not Tensor.
+        TypeError: If data type `x` and `values` is different.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    Examples:
+        >>> x = Tensor(np.array([-1.5, 0., 2.]))
+        >>> values = Tensor(np.array([0.5]))
+        >>> heaviside = ops.Heaviside()
+        >>> y = heaviside(x, values)
+        >>> print(y)
+        [ 0.  0.5 1. ]
+    """
+
+    heaviside_ = Heaviside()
+    return heaviside_(x, values)
 
 
 def logaddexp(x1, x2):
