@@ -50,6 +50,7 @@ constexpr char kNoGroupParallel[] = "no_group_parallel";
 
 constexpr char kIsFirstIteration[] = "is_first_iteration";
 constexpr char kPynativeShard[] = "pynative_shard";
+constexpr char kSkipAutoParallelCompile[] = "skip_auto_parallel_compile";
 
 constexpr char kFusionAuto[] = "auto";
 constexpr char kFusionSize[] = "size";

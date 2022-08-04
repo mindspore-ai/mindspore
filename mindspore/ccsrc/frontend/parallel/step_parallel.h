@@ -75,7 +75,7 @@ AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::str
 
 void MarkForwardCNode(const FuncGraphPtr &root);
 
-bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
+void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
 
 void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution);
 

@@ -902,7 +902,7 @@ bool IsPynativeParallel() {
 // if IsPynativeParallel() is true, it maybe has some graphs that we no care, so need to check 'pynative_shard' flag
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(kStandalone)) {
+  if (func_graph->has_flag(kSkipAutoParallelCompile)) {
     return false;
   }
 
