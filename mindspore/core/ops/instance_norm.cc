@@ -79,14 +79,14 @@ abstract::TupleShapePtr InstanceNormInferShape(const PrimitivePtr &primitive,
                                                  "(C, )", channel, prim_name);
 
   for (size_t i = 0; i < batch_rank; ++i) {
-    (void)CheckAndConvertUtils::CheckValue<size_t>("gamma batch dim", gamma_shape[i], kEqual, "input_x batch dim",
-                                                   input_x_shape[i], prim_name);
-    (void)CheckAndConvertUtils::CheckValue<size_t>("beta batch dim", beta_shape[i], kEqual, "input_x batch dim",
-                                                   input_x_shape[i], prim_name);
-    (void)CheckAndConvertUtils::CheckValue<size_t>("mean batch dim", mean_shape[i], kEqual, "input_x batch dim",
-                                                   input_x_shape[i], prim_name);
-    (void)CheckAndConvertUtils::CheckValue<size_t>("variance batch dim", variance_shape[i], kEqual, "input_x batch dim",
-                                                   input_x_shape[i], prim_name);
+    (void)CheckAndConvertUtils::CheckValue("gamma batch dim", gamma_shape[i], kEqual, "input_x batch dim",
+                                           input_x_shape[i], prim_name);
+    (void)CheckAndConvertUtils::CheckValue("beta batch dim", beta_shape[i], kEqual, "input_x batch dim",
+                                           input_x_shape[i], prim_name);
+    (void)CheckAndConvertUtils::CheckValue("mean batch dim", mean_shape[i], kEqual, "input_x batch dim",
+                                           input_x_shape[i], prim_name);
+    (void)CheckAndConvertUtils::CheckValue("variance batch dim", variance_shape[i], kEqual, "input_x batch dim",
+                                           input_x_shape[i], prim_name);
   }
 
   const int64_t batch_channel = SizeToLong(batch * channel);
