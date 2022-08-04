@@ -6958,7 +6958,6 @@ class ExtractVolumePatches(Primitive):
         x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)`.
 
     Raises:
-        TypeError: If dtype of input_x is neither float16 nor float32.
         TypeError: If kernel_size or strides is not a list, a tuple or an int.
         TypeError: If input_x is not a tensor.
         TypeError: If padding is not str.
@@ -6976,9 +6975,13 @@ class ExtractVolumePatches(Primitive):
         ValueError: If x_d * x_h * x_w is greater than 2048.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Example:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops as P
+        >>> from mindspore import dtype as mstype
+        >>> import numpy as np
         >>> kernel_size = (1, 1, 2, 2, 2)
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"

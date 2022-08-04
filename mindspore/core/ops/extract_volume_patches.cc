@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "ops/extract_volume_patches.h"
+#include "ir/dtype/number.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -91,10 +92,43 @@ TypePtr ExtractVolumePatchesInferType(const PrimitivePtr &prim, const std::vecto
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
+                                         kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
 }
 }  // namespace
+
+void ExtractVolumePatches::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &strides,
+                                const std::string &padding) {
+  set_kernel_size(kernel_size);
+  set_strides(strides);
+  set_padding(padding);
+}
+
+void ExtractVolumePatches::set_kernel_size(const std::vector<int64_t> &kernel_size) {
+  (void)AddAttr(kKernelSize, api::MakeValue(kernel_size));
+}
+
+void ExtractVolumePatches::set_strides(const std::vector<int64_t> &strides) {
+  (void)AddAttr(kStrides, api::MakeValue(strides));
+}
+
+void ExtractVolumePatches::set_padding(const std::string &padding) { (void)AddAttr(kPadding, api::MakeValue(padding)); }
+
+std::vector<int64_t> ExtractVolumePatches::get_kernel_size() const {
+  auto value_ptr = GetAttr(kKernelSize);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+std::vector<int64_t> ExtractVolumePatches::get_strides() const {
+  auto value_ptr = GetAttr(kStrides);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+std::string ExtractVolumePatches::get_padding() const {
+  auto value_ptr = GetAttr(kPadding);
+  return GetValue<std::string>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(ExtractVolumePatches, BaseOperator);
 AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
