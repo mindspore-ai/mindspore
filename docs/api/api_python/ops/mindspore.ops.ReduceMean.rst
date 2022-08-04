@@ -1,33 +1,29 @@
 mindspore.ops.ReduceMean
-=========================
+========================
 
 .. py:class:: mindspore.ops.ReduceMean(keep_dims=False)
 
-    默认情况下，输出Tensor各维度上的平均值，以达到对所有维度进行归约的目的。也可以对指定维度进行求平均值归约。
-
-    通过指定 `keep_dims` 参数，来控制输出和输入的维度是否相同。
+   默认情况下，使用指定维度的平均值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
 
     **参数：**
 
-    - **keep_dims** (bool) - 如果为True，则保留计算的维度，长度为1。如果为False，则不保留计算维度。默认值：False，输出结果会降低维度。
+    - **keep_dims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
 
     **输入：**
 
-    - **x** (Tensor[Number]) - ReduceMean的输入，其数据类型为number。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
-    - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值，取值范围[-rank(`x`), rank(`x`))。
+    - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
+    - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。取值必须在[-rank( `x` ), rank( `x` ))范围内。
 
     **输出：**
 
-    Tensor，shape与输入 `x` 相同。
+    Tensor。
 
-    - 如果轴为()，且keep_dims为False，则输出一个0维Tensor，表示输入Tensor中所有元素的平均值。
-
-    - 如果轴为int，取值为2，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
-
-    - 如果轴为tuple(int)或list(int)，取值为(2, 3)，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_4, ..., x_R)` 。
+    - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的平均值。
+    - 如果 `axis` 为int，取值为2，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
+    - 如果 `axis` 为tuple(int)或list(int)，取值为(2, 3)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_1, x_4, ..., x_R)` 。
 
     **异常：**
 
-    - **TypeError** - `keep_dims` 不是bool。
+    - **TypeError** - `keep_dims` 不是bool类型。
     - **TypeError** - `x` 不是Tensor。
-    - **TypeError** - `axis` 不是int、tuple或list。
+    - **TypeError** - `axis` 不是以下数据类型之一：int、Tuple或List。

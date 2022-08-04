@@ -1,5 +1,5 @@
 ﻿mindspore.ops.ReduceMin
-=======================
+========================
 
 .. py:class:: mindspore.ops.ReduceMin(keep_dims=False)
 
@@ -11,20 +11,16 @@
 
     **输入：**
 
-    - **x** (Tensor[Number]) - 输入Tensor。
-      shape: :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度，其秩应小于8。
+    - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
     - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。取值必须在[-rank( `x` ), rank( `x` ))范围内。
 
     **输出：**
 
     Tensor。
 
-    - 如果 `axis` 为()，且 `keep_dims` 为False，
-      则输出一个0维Tensor，表示输入Tensor中所有元素的最小值。
-    - 如果 `axis` 为int，值为2，并且 `keep_dims` 为False，
-      则输出Tensor的shape为： :math:`(x_1, x_3, ..., x_R)` 。
-    - 如果 `axis` 为tuple(int)，值为(2, 3)，并且 `keep_dims` 为False，
-      则输出Tensor的shape为 :math:`(x_1, x_4, ..., x_R)` 。
+    - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最小值。
+    - 如果 `axis` 为int，取值为2，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
+    - 如果 `axis` 为tuple(int)或list(int)，取值为(2, 3)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_1, x_4, ..., x_R)` 。
 
     **异常：**
 
