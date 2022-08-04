@@ -486,10 +486,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -1500,15 +1500,6 @@ def std(x, axis=None, ddof=0, keepdims=False):
     """
     x_var = var(x, axis, ddof, keepdims)
     return F.tensor_pow(x_var, 0.5)
-
-
-def one_hot(self, depth, on_value, off_value, axis=-1):
-    r"""
-    Computes an one-hot tensor.
-    Refer to :func:`mindspore.ops.one_hot` for more detail.
-    """
-    check_is_int(axis, 'axis')
-    return P.OneHot(axis)(self, depth, on_value, off_value)
 
 
 def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
