@@ -24,7 +24,8 @@ constexpr size_t output_num_ = 1;
 constexpr int kResizeFuncIndex = 2;
 }  // namespace
 
-void ReverseSequenceCpuKernelMod::ComputeStrides(const std::vector<int64_t> &shape, int *strides, const int ndim) {
+void ReverseSequenceCpuKernelMod::ComputeStrides(const std::vector<int64_t> &shape, int *strides,
+                                                 const int ndim) const {
   int stride = 1;
   for (int i = ndim - 1; i >= 0; i--) {
     strides[i] = stride;
@@ -64,12 +65,12 @@ void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr
     greater_axis = seq_dim_;
   }
   outer_count_ = CalcCountPreAxis(input0_shape_, less_axis);
-  outer_stride_ = input0_shape_[less_axis] * CalcCountAfterAxis(input0_shape_, less_axis);
+  outer_stride_ = LongToInt(input0_shape_[LongToSize(less_axis)]) * CalcCountAfterAxis(input0_shape_, less_axis);
   inner_count_ = 1;
   for (int64_t i = less_axis + 1; i < greater_axis; ++i) {
     inner_count_ *= input0_shape_[i];
   }
-  inner_stride_ = input0_shape_[greater_axis] * CalcCountAfterAxis(input0_shape_, greater_axis);
+  inner_stride_ = LongToInt(input0_shape_[LongToSize(greater_axis)]) * CalcCountAfterAxis(input0_shape_, greater_axis);
   total_data_size_ = static_cast<int>(sizeof(T));
   for (int64_t i = 0; i < ndim_; ++i) {
     total_data_size_ *= input0_shape_[i];
@@ -83,7 +84,7 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto input0 = reinterpret_cast<T *>(inputs[0]->addr);
   auto input1 = reinterpret_cast<S *>(inputs[1]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto ret = memcpy_s(output, total_data_size_, input0, total_data_size_);
+  auto ret = memcpy_s(output, IntToSize(total_data_size_), input0, IntToSize(total_data_size_));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed. Error no: " << ret;
   }
@@ -149,7 +150,7 @@ int ReverseSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 bool ReverseSequenceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);

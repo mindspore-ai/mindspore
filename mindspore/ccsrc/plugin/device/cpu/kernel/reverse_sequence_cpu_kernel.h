@@ -48,8 +48,6 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::string kernel_name_;
-
   int64_t seq_dim_{0};
   int64_t batch_dim_{0};
 
@@ -60,15 +58,15 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
   int output_stride_[5];
 
   // other parameter
-  int ndim_;
-  int outer_count_;
-  int outer_stride_;
-  int inner_count_;
-  int inner_stride_;
-  int copy_byte_size_;
-  int total_data_size_;
+  int ndim_{0};
+  int outer_count_{0};
+  int outer_stride_{0};
+  int inner_count_{0};
+  int inner_stride_{0};
+  int copy_byte_size_{0};
+  int total_data_size_{0};
 
-  void ComputeStrides(const std::vector<int64_t> &shape, int *strides, const int ndim);
+  void ComputeStrides(const std::vector<int64_t> &shape, int *strides, const int ndim) const;
   int CalcCountPreAxis(const std::vector<int64_t> &shape, int64_t axis) const;
   int CalcCountAfterAxis(const std::vector<int64_t> &shape, int64_t axis) const;
   template <typename T>

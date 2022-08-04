@@ -15,9 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/linear_sum_assignment_cpu_kernel.h"
-#include <cmath>
-#include <cstring>
 #include <algorithm>
+#include <limits>
 #include <numeric>
 #include "mindspore/core/ops/linear_sum_assignment.h"
 
@@ -27,9 +26,9 @@ namespace {
 using LSAP_FUNC_VECTOR = std::vector<std::pair<KernelAttr, LinearSumAssignmentCpuKernelMod::KernelRunFunc>>;
 
 template <typename T>
-inline bool check_value(T *cost, int64_t nr, int64_t nc) {
+inline bool check_value(const T *cost, int64_t nr, int64_t nc) {
   for (int64_t i = 0; i < nr * nc; i++) {
-    if (std::isnan(cost[i]) || cost[i] == -INFINITY) {
+    if (std::isnan(cost[i]) || cost[i] == -std::numeric_limits<T>::infinity()) {
       return false;
     }
   }
@@ -102,7 +101,7 @@ const LSAP_FUNC_VECTOR &LinearSumAssignmentCpuKernelMod::GetFuncList() const {
 
 template <typename T>
 bool LinearSumAssignmentCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspaces,
+                                                   const std::vector<AddressPtr> &,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
   int64_t dimension_limit = *reinterpret_cast<int64_t *>(inputs[1]->addr);
   int64_t nr = cost_matrix_shape_[0];
@@ -113,7 +112,6 @@ bool LinearSumAssignmentCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "' input dimension_limit must <= the 1st dimension's size of the cost_matrix, "
                       << "which is " << cost_matrix_shape_[1] << ", but got " << dimension_limit << ".";
-    return false;
   } else if (dimension_limit <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dimension_limit must be positive.";
     return false;
@@ -135,27 +133,27 @@ int64_t LinearSumAssignmentCpuKernelMod::AugmentingPath(int64_t nc, T *cost, std
                                                         std::vector<int64_t> *path, std::vector<int64_t> *row4col,
                                                         std::vector<T> *shortest_path_costs, int64_t i,
                                                         std::vector<bool> *SR, std::vector<bool> *SC,
-                                                        std::vector<int64_t> *remaining, T *p_min_val) {
-  int64_t num_remaining = nc;
+                                                        std::vector<int64_t> *remaining, T *p_min_val) const {
+  size_t num_remaining = LongToSize(nc);
   for (int64_t it = 0; it < nc; it++) {
-    remaining->at(it) = nc - it - 1;
+    remaining->at(LongToSize(it)) = nc - it - 1;
   }
 
   std::fill(SR->begin(), SR->end(), false);
   std::fill(SC->begin(), SC->end(), false);
-  std::fill(shortest_path_costs->begin(), shortest_path_costs->end(), INFINITY);
+  std::fill(shortest_path_costs->begin(), shortest_path_costs->end(), std::numeric_limits<T>::infinity());
 
   int64_t sink = -1;
   T min_val = 0;
   while (sink == -1) {
-    int64_t index = -1;
-    T lowest = INFINITY;
-    SR->at(i) = true;
+    size_t index = 0;
+    T lowest = std::numeric_limits<T>::infinity();
+    SR->at(LongToSize(i)) = true;
 
-    for (int64_t it = 0; it < num_remaining; it++) {
-      int64_t j = remaining->at(it);
+    for (size_t it = 0; it < num_remaining; it++) {
+      size_t j = LongToSize(remaining->at(it));
 
-      T r = min_val + cost[i * nc + j] - u->at(i) - v->at(j);
+      T r = min_val + cost[LongToSize(i * nc) + j] - u->at(LongToSize(i)) - v->at(j);
       if (r < shortest_path_costs->at(j)) {
         path->at(j) = i;
         shortest_path_costs->at(j) = r;
@@ -168,13 +166,13 @@ int64_t LinearSumAssignmentCpuKernelMod::AugmentingPath(int64_t nc, T *cost, std
     }
 
     min_val = lowest;
-    if (min_val == INFINITY) {
+    if (min_val == std::numeric_limits<T>::infinity()) {
       return -1;
     }
 
-    int64_t j = remaining->at(index);
+    size_t j = LongToSize(remaining->at(index));
     if (row4col->at(j) == -1) {
-      sink = j;
+      sink = SizeToLong(j);
     } else {
       i = row4col->at(j);
     }
@@ -189,7 +187,7 @@ int64_t LinearSumAssignmentCpuKernelMod::AugmentingPath(int64_t nc, T *cost, std
 
 template <typename T>
 bool LinearSumAssignmentCpuKernelMod::Solve(int64_t nr, int64_t nc, int64_t raw_nc, T *cost, bool maximize, int64_t *a,
-                                            int64_t *b) {
+                                            int64_t *b) const {
   if (nr == 0 || nc == 0) {
     return true;
   }
@@ -200,7 +198,7 @@ bool LinearSumAssignmentCpuKernelMod::Solve(int64_t nr, int64_t nc, int64_t raw_
 
   std::vector<T> temp;
   if (transpose || maximize) {
-    temp.resize(nr * nc);
+    temp.resize(LongToSize(nr * nc));
     ReArrange(&nr, &nc, raw_nc, &temp, cost, transpose, maximize);
     cost = temp.data();
   }
@@ -219,28 +217,28 @@ bool LinearSumAssignmentCpuKernelMod::Solve(int64_t nr, int64_t nc, int64_t raw_
   std::vector<bool> SC(nc);
   std::vector<int64_t> remaining(nc);
 
-  for (int64_t cur_row = 0; cur_row < nr; cur_row++) {
+  for (size_t cur_row = 0; cur_row < LongToSize(nr); cur_row++) {
     T min_val;
-    int64_t sink = AugmentingPath<T>(nc, cost, &u, &v, &path, &row4col, &shortest_path_costs, cur_row, &SR, &SC,
-                                     &remaining, &min_val);
+    int64_t sink = AugmentingPath<T>(nc, cost, &u, &v, &path, &row4col, &shortest_path_costs, SizeToLong(cur_row), &SR,
+                                     &SC, &remaining, &min_val);
     if (sink < 0) {
       return false;
     }
 
     u[cur_row] += min_val;
-    for (int64_t i = 0; i < nr; i++) {
+    for (size_t i = 0; i < LongToSize(nr); i++) {
       if (SR[i] && i != cur_row) {
         u[i] += min_val - shortest_path_costs[col4row[i]];
       }
     }
 
-    for (int64_t j = 0; j < nc; j++) {
+    for (size_t j = 0; j < LongToSize(nc); j++) {
       if (SC[j]) {
         v[j] -= min_val - shortest_path_costs[j];
       }
     }
 
-    AugmentPreviousSolution(sink, cur_row, &path, &row4col, &col4row);
+    AugmentPreviousSolution(sink, SizeToLong(cur_row), &path, &row4col, &col4row);
   }
 
   PostProcess(a, b, col4row, transpose, nr, nc, element_num);
@@ -250,35 +248,36 @@ bool LinearSumAssignmentCpuKernelMod::Solve(int64_t nr, int64_t nc, int64_t raw_
 
 template <typename T>
 void LinearSumAssignmentCpuKernelMod::ReArrange(int64_t *origin_nr, int64_t *origin_nc, int64_t raw_nc,
-                                                std::vector<T> *temp, T *cost, bool transpose, bool maximize) {
-  int nr = *origin_nr, nc = *origin_nc;
+                                                std::vector<T> *temp, T *cost, bool transpose, bool maximize) const {
+  int64_t nr = *origin_nr;
+  int64_t nc = *origin_nc;
   if (transpose) {
     for (int64_t i = 0; i < nr; i++) {
       for (int64_t j = 0; j < nc; j++) {
-        temp->at(j * nr + i) = cost[i * raw_nc + j];
+        temp->at(LongToSize(j * nr + i)) = cost[i * raw_nc + j];
       }
     }
     std::swap(*origin_nr, *origin_nc);
   } else {
     for (int64_t i = 0; i < nr; i++) {
       for (int64_t j = 0; j < nc; j++) {
-        temp->at(i * nr + j) = cost[i * raw_nc + j];
+        temp->at(LongToSize(i * nr + j)) = cost[i * raw_nc + j];
       }
     }
   }
 
   if (maximize) {
-    std::transform(temp->cbegin(), temp->cend(), temp->begin(), [](T value) { return -value; });
+    (void)std::transform(temp->cbegin(), temp->cend(), temp->begin(), [](T value) { return -value; });
   }
 }
 
 void LinearSumAssignmentCpuKernelMod::AugmentPreviousSolution(int64_t j, int64_t cur_row, std::vector<int64_t> *path,
                                                               std::vector<int64_t> *row4col,
-                                                              std::vector<int64_t> *col4row) {
+                                                              std::vector<int64_t> *col4row) const {
   while (true) {
-    int64_t i = path->at(j);
-    row4col->at(j) = i;
-    std::swap(col4row->at(i), j);
+    int64_t i = path->at(LongToSize(j));
+    row4col->at(LongToSize(j)) = i;
+    std::swap(col4row->at(LongToSize(i)), j);
     if (i == cur_row) {
       break;
     }
@@ -286,27 +285,27 @@ void LinearSumAssignmentCpuKernelMod::AugmentPreviousSolution(int64_t j, int64_t
 }
 
 void LinearSumAssignmentCpuKernelMod::PostProcess(int64_t *a, int64_t *b, const std::vector<int64_t> &col4row,
-                                                  bool transpose, int nr, int nc, int element_num) {
-  std::vector<int64_t> index(col4row.size());
-  std::iota(index.begin(), index.end(), 0);
-  std::sort(index.begin(), index.end(), [&col4row](int64_t i, int64_t j) { return col4row[i] < col4row[j]; });
+                                                  bool transpose, int64_t nr, int64_t nc, int64_t element_num) const {
+  std::vector<size_t> index(col4row.size());
+  std::iota(index.begin(), index.end(), size_t(0));
+  std::sort(index.begin(), index.end(), [&col4row](size_t i, size_t j) { return col4row[i] < col4row[j]; });
 
   if (transpose) {
-    int64_t i = 0;
+    size_t i = 0;
     for (auto val : index) {
       a[i] = col4row[val];
       b[i] = val;
       i++;
     }
   } else {
-    for (int64_t i = 0; i < nr; i++) {
+    for (size_t i = 0; i < LongToSize(nr); i++) {
       a[i] = i;
       b[i] = col4row[i];
     }
   }
 
-  int64_t offset = std::min(nr, nc);
-  for (int64_t i = offset; i < element_num; i++) {
+  size_t offset = LongToSize(std::min(nr, nc));
+  for (size_t i = offset; i < LongToSize(element_num); i++) {
     a[i] = -1;
     b[i] = -1;
   }
