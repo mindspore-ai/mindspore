@@ -18,6 +18,9 @@
 #include "src/runtime/cxx_api/model_pool/runner_config.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/cpu_info.h"
+#ifdef CAPTURE_SIGNALS
+#include "src/runtime/signal_handler.h"
+#endif
 namespace mindspore {
 namespace {
 constexpr size_t kMaxSectionNum = 100;
@@ -57,6 +60,9 @@ std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfi
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();
+#endif
+#ifdef CAPTURE_SIGNALS
+  CaptureSignal();
 #endif
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;

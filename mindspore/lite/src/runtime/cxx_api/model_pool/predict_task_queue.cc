@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/cxx_api/model_pool/predict_task_queue.h"
-#include "src/common/log.h"
+#include "src/common/log_adapter.h"
 namespace mindspore {
 PredictTaskQueue::~PredictTaskQueue() {
   if (predict_task_ != nullptr) {
