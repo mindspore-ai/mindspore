@@ -40,7 +40,7 @@ mindspore.communication
 
     .. note::
         - `release` 方法应该在 `init` 方法之后使用。
-        - 在运行以下示例之前，在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
+        - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **异常：**
 
@@ -95,9 +95,10 @@ mindspore.communication
     由指定通信组中的设备序号获取通信集群中的全局设备序号。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
-        - 参数 `group` 不能是 `hccl_world_group`；
-        - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
+        - GPU 版本的MindSpore不支持此方法。
+        - 参数 `group` 不能是 `hccl_world_group`。
+        - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。
+        - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **参数：**
 
@@ -119,8 +120,8 @@ mindspore.communication
     由通信集群中的全局设备序号获取指定用户通信组中的rank ID。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
-        - 参数 `group` 不能是 `hccl_world_group`；
+        - GPU 版本的MindSpore不支持此方法。
+        - 参数 `group` 不能是 `hccl_world_group`。
         - `get_group_rank_from_world_rank` 方法应该在 `init` 方法之后使用。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
@@ -144,9 +145,9 @@ mindspore.communication
     创建用户自定义的通信组实例。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
-        - 列表rank_ids的长度应大于1；
-        - 列表rank_ids内不能有重复数据；
+        - GPU 版本的MindSpore不支持此方法。
+        - 列表rank_ids的长度应大于1。
+        - 列表rank_ids内不能有重复数据。
         - `create_group` 方法应该在 `init` 方法之后使用。
         - PyNative模式下仅支持全局单通信组。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
@@ -167,8 +168,8 @@ mindspore.communication
     获取指定通信组中当前设备的本地设备序号。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
-        - `get_local_rank` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
+        - GPU 版本的MindSpore不支持此方法。
+        - `get_local_rank` 方法应该在 `init` 方法之后使用。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **参数：**
@@ -190,7 +191,7 @@ mindspore.communication
     获取指定通信组的本地设备总数。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
+        - GPU 版本的MindSpore不支持此方法。
         - `get_local_rank_size` 方法应该在 `init` 方法之后使用。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
@@ -213,8 +214,8 @@ mindspore.communication
     注销用户通信组。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法；
-        - 参数 `group` 不能是 `hccl_world_group`；
+        - GPU 版本的MindSpore不支持此方法。
+        - 参数 `group` 不能是 `hccl_world_group`。
         - `destroy_group` 方法应该在 `init` 方法之后使用。
 
     **参数：**
