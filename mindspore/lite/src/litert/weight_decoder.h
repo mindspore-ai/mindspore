@@ -220,6 +220,19 @@ class WeightDecoder {
 
   static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
+  static int DecodeKMeansWeight(lite::Tensor *tensor, TypeId dst_data_type);
+
+  template <typename T>
+  static int DecodeKMeansData(lite::Tensor *tensor, T **dequant_data) {
+    *dequant_data = static_cast<T *>(malloc(tensor->ElementsNum() * sizeof(T)));
+    CHECK_NULL_RETURN(dequant_data);
+    for (int64_t i = 0; i < tensor->ElementsNum(); i++) {
+      auto index = static_cast<int8_t *>(tensor->data())[i] - INT8_MIN;
+      (*dequant_data)[i] = static_cast<T>(tensor->quant_clusters().at(index));
+    }
+    return RET_OK;
+  }
+
   template <typename T1, typename T2>
   static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,
                          size_t *count, bool is_last) {
