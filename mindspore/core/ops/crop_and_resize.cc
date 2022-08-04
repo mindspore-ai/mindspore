@@ -136,7 +136,7 @@ void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
 }
 
 void CropAndResize::set_method(ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 

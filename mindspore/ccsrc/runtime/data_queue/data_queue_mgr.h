@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_DATA_QUEUE_MGR_H_
 
 #include <unistd.h>
-#include <cstring>
 #include <iostream>
 #include <functional>
 #include <map>
@@ -87,7 +86,7 @@ class DataQueueMgr {
   EXPORT BlockQueueStatus_T CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity);
   EXPORT BlockQueueStatus_T OpenDynamicBufQueue(const std::string &channel_name);
 
-  EXPORT void Close(const std::string &channel_name) noexcept;
+  EXPORT void Close(const std::string &channel_name) const noexcept;
 
   EXPORT bool IsInit() const;
 

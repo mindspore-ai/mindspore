@@ -32,7 +32,7 @@ void ReverseSequenceCpuKernelMod::ComputeStrides(const std::vector<int64_t> &sha
   }
 }
 
-int ReverseSequenceCpuKernelMod::CalcCountPreAxis(const std::vector<int64_t> &shape, int64_t axis) {
+int ReverseSequenceCpuKernelMod::CalcCountPreAxis(const std::vector<int64_t> &shape, int64_t axis) const {
   int count = 1;
   for (int i = 0; i < axis; ++i) {
     count *= shape.at(i);
@@ -40,7 +40,7 @@ int ReverseSequenceCpuKernelMod::CalcCountPreAxis(const std::vector<int64_t> &sh
   return count;
 }
 
-int ReverseSequenceCpuKernelMod::CalcCountAfterAxis(const std::vector<int64_t> &shape, int64_t axis) {
+int ReverseSequenceCpuKernelMod::CalcCountAfterAxis(const std::vector<int64_t> &shape, int64_t axis) const {
   int count = 1;
   for (int i = axis + 1; i < static_cast<int>(shape.size()); ++i) {
     count *= shape.at(i);
