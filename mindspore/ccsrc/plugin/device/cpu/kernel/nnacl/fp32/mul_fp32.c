@@ -16,6 +16,7 @@
 #include "nnacl/fp32/mul_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/mul_fp32_simd.h"
+#include "nnacl/errorcode.h"
 
 int BroadcastMul(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param) {

@@ -39,7 +39,7 @@ void ImpleNeg(void *origin, void *target, size_t size) {
     target_data[i] = -origin_data[i];
   }
 }
-abstract::ShapePtr NegInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr NegInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_ptr = x->cast<abstract::ShapePtr>();
