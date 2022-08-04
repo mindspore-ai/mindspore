@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -529,6 +529,58 @@ class Sspaddmm(Primitive):
         """Initialize Sspaddmm."""
         self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2_indices', 'x2_values', 'x2_shape',
                                         'x3_dense', 'alpha', 'beta'], outputs=['y_indices', 'y_values', 'y_shape'])
+
+
+class SparseAddmm(Primitive):
+    """
+    Multiplies sparse matrix `A` by dense matrix `B` * `alpha` and add dense matrix `C` * `beta`.
+    The rank of sparse matrix and dense matrix must equal to `2`.
+
+    Inputs:
+        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          Support float32, float64, int8, int16, int32, int64, uint8, uint16, uint32, uint64.
+          The shape should be :math:`(n,)`.
+        - **sparse_shape** (Tensor) - A positive int tuple which specifies the shape of sparse tensor.
+          Support int32, int64, should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+        - **x2_dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
+        - **x3_dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
+        - **alpha** (Tensor) - A 1-D Tensor, the dtype is same as `values`.
+        - **beta** (Tensor) - A 1-D Tensor, the dtype is same as `values`.
+
+    Outputs:
+        Tensor, the dtype is the same as `values`.
+
+    Raises:
+        TypeError: If dtype of `indices`, dtype of `values` and dtype of `dense` don't meet the parameter description.
+        ValueError: If `sparse_shape`, shape of `indices, shape of `values`, and shape of `dense` don't meet the
+                    parameter description.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> sparse_shape = Tensor([1, 2], dtype=ms.int32)
+        >>> x2_dense = Tensor([[1,1], [2,2], [3,3], [4,4]], dtype=ms.float32)
+        >>> x3_dense = Tensor([[2,2], [6,6], [0,0]], dtype=ms.float32)
+        >>> alpha = Tensor([1], dtype=ms.float32)
+        >>> beta = Tensor([1], dtype=ms.float32)
+        >>> sparse_addmm = ops.SparseAddmm()
+        >>> out = sparse_addmm(indices, values, sparse_shape, x2_dense, x3_dense, alpha, beta)
+        >>> print(out)
+        [[4 4]
+         [12 12]
+         [0 0]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseAddmm"""
+        self.init_prim_io_names(inputs=['indices', 'values', 'sparse_shape', 'x2_dense', 'x3_dense', 'alpha', 'beta'],
+                                outputs=['output'])
 
 
 class SparseConcat(Primitive):

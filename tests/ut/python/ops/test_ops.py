@@ -126,6 +126,7 @@ from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
+from mindspore.ops.operations.sparse_ops import SparseAddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
@@ -3232,6 +3233,16 @@ test_case_array_ops = [
     ('UnravelIndex', {
         'block': UnravelIndex(),
         'desc_inputs': [Tensor(np.array([5, 5]).astype(np.int64)), Tensor(np.array([3, 3]).astype(np.int64))],
+        'skip': ['backward']}),
+    ('SparseAddmm', {
+        'block': SparseAddmm(),
+        'desc_inputs': [Tensor(np.array([[0, 1], [1, 2]]).astype(np.int32)),
+                        Tensor(np.array([1, 2]).astype(np.int32)),
+                        Tensor(np.array([3, 4]).astype(np.int32)),
+                        Tensor(np.array([[1, 1], [2, 2], [3, 3], [4, 4]]).astype(np.int32)),
+                        Tensor(np.array([[2, 2], [6, 6], [0, 0]]).astype(np.int32)),
+                        Tensor(np.array([1]).astype(np.int32)),
+                        Tensor(np.array([1]).astype(np.int32))],
         'skip': ['backward']}),
     ('SpaceToDepth', {
         'block': P.SpaceToDepth(2),
