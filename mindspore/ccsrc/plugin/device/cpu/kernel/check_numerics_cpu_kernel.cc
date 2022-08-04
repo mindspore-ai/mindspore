@@ -52,7 +52,7 @@ bool CheckNumericsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void CheckNumericsCpuKernelMod::CheckNanOrInf(T value) {
+void CheckNumericsCpuKernelMod::CheckNanOrInf(T value) const {
   if (std::isnan(value)) {
     MS_LOG(EXCEPTION) << ": Tensor had NaN values";
   } else if (std::isinf(value)) {
