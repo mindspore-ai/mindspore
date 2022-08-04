@@ -351,7 +351,7 @@ ShapeVector MakeFakeShape(const ShapeVector &shape) {
   return new_shape;
 }
 
-ShapeVector MakeFakeShapeBack(const PrimitivePtr &prim, const ShapeVector &shape, const ShapeVector &unknown_shape) {
+ShapeVector MakeFakeShapeBack(const ShapeVector &shape, const ShapeVector &unknown_shape) {
   ShapeVector new_shape = shape;
   MS_EXCEPTION_IF_CHECK_FAIL(shape.size() == unknown_shape.size(),
                              "Input and output shape size must be consistent for element-wise op");
@@ -398,7 +398,7 @@ ValuePtr EvalShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrLis
     return nullptr;
   }
   if (convert_shape) {
-    shape_value = MakeFakeShapeBack(prim, shape_value, arg_shapes[0]);
+    shape_value = MakeFakeShapeBack(shape_value, arg_shapes[0]);
     MS_LOG(DEBUG) << "Convert back shape: " << shape_value;
   }
   return MakeValue(shape_value);

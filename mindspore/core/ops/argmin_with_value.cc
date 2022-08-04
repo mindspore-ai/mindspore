@@ -40,7 +40,6 @@ bool ArgMinWithValue::keep_dims() const {
 namespace {
 abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
   auto x_shape_ptr = input_args[0]->BuildShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];

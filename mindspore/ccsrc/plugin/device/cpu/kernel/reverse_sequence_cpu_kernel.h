@@ -69,8 +69,8 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
   int total_data_size_;
 
   void ComputeStrides(const std::vector<int64_t> &shape, int *strides, const int ndim);
-  int CalcCountPreAxis(const std::vector<int64_t> &shape, int64_t axis);
-  int CalcCountAfterAxis(const std::vector<int64_t> &shape, int64_t axis);
+  int CalcCountPreAxis(const std::vector<int64_t> &shape, int64_t axis) const;
+  int CalcCountAfterAxis(const std::vector<int64_t> &shape, int64_t axis) const;
   template <typename T>
   void ResizeKernel(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   template <typename T, typename S>

@@ -131,7 +131,7 @@ AbstractBasePtr SparseApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 4;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = SparseApplyAdagradV2InferType(primitive, input_args);
   auto infer_shape = SparseApplyAdagradV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

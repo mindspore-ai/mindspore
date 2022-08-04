@@ -36,7 +36,7 @@ PadMode MaxPoolGradWithArgmax::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto mode_str = GetValue<std::string>(value_ptr);
-  std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
   MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),
                              "MaxPoolGradWithArgmax only supports pad mode 'SAME' or 'VALID', but get " + mode_str);
   return mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
