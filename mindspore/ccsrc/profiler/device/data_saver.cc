@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "profiler/device/data_saver.h"
 #include <fstream>
 #include <numeric>
+#include <cmath>
+#include <cfloat>
 #include "sys/stat.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
+#include "profiler/device/data_saver.h"
 
 namespace mindspore {
 namespace profiler {
@@ -42,7 +44,7 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
   float total_time_sum = GetTotalOpTime(op_info_maps);
   for (auto item : op_info_maps) {
     op_timestamps_map_[item.first] = item.second.start_duration;
-    if (total_time_sum == 0.0) {
+    if (fabs(total_time_sum) <= FLT_EPSILON) {
       MS_LOG(ERROR) << "The total operation times can not be 0.";
       return;
     }

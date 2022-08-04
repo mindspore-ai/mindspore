@@ -53,12 +53,12 @@ uint64_t Profiler::GetHostMonoTimeStamp() const {
 
 uint64_t Profiler::GetRealTimeStamp() const {
   struct timeval tv = {0, 0};
-  (void)gettimeofday(&tv, NULL);
+  (void)gettimeofday(&tv, nullptr);
   int64_t kUSecondInSecond = 1000000;
   int64_t ts = kUSecondInSecond * static_cast<int64_t>(tv.tv_sec);
   ts += static_cast<int64_t>(tv.tv_usec);
   // us timestamp
-  return (uint64_t)ts;
+  return static_cast<uint64_t>(ts);
 }
 
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
@@ -82,7 +82,7 @@ void Profiler::RecordOneStepStartEndInfo() {
   std::lock_guard<std::mutex> locker(record_mutex_);
   std::string step_end_op_name;
   std::string op_type = "GetNext";
-  uint32_t vector_size = (uint32_t)step_start_end_info_vector_.size();
+  uint32_t vector_size = static_cast<uint32_t>(step_start_end_info_vector_.size());
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
   step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
 
@@ -165,13 +165,13 @@ std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {
 bool ProfilerManager::GetProfilingEnableFlag() const {
 #if ENABLE_GPU
   return profiler::gpu::GPUProfiler::GetInstance()->GetEnableFlag();
-#endif
-#if ENABLE_D
+#elif ENABLE_D
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
   return ascend_instance->GetProfilingEnableFlag();
-#endif
+#else
   return false;
+#endif
 }
 
 void ProfilerManager::RecordOneStepStartEndInfo() const {
@@ -188,8 +188,9 @@ std::string ProfilerManager::GetProfilingOptions() const {
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
   return ascend_instance->GetProfilingOptions();
-#endif
+#else
   return "";
+#endif
 }
 }  // namespace profiler
 }  // namespace mindspore

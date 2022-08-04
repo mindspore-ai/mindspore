@@ -17,12 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_PROFILING_H
 #define MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_PROFILING_H
 #include <algorithm>
-#include <cstdio>
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 #include "profiler/device/profiling.h"
 #if ENABLE_GPU

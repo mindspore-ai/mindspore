@@ -16,9 +16,7 @@
 
 #include "profiler/device/cpu/cpu_profiling.h"
 
-#include <cxxabi.h>
 #include <cmath>
-#include <ctime>
 #include "profiler/device/cpu/cpu_data_saver.h"
 #include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
@@ -132,7 +130,8 @@ void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
     cur_kernel_info.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
     cur_kernel_info.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
   }
-  for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
+  uint32_t input_size = static_cast<uint32_t>(kernel->inputs().size());
+  for (uint32_t i = 0; i < input_size; ++i) {
     if (kernel->input(i)->Shape() != nullptr) {
       cur_kernel_input_info.input_id = i;
       cur_kernel_input_info.shape = kernel->input(i)->Shape()->DumpText();
