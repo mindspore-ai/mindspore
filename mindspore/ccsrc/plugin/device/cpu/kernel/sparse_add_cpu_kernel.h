@@ -46,7 +46,7 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename T, typename S>
+  template <typename T, typename S, typename K>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>

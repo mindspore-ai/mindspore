@@ -33,30 +33,22 @@ class MIND_API SparseAdd : public BaseOperator {
   SparseAdd() : BaseOperator(kNameSparseAdd) {
     InitIOName(
       {
-        "a_indices",
-        "a_values",
-        "b_indices",
-        "b_values",
+        "x1_indices",
+        "x1_values",
+        "x1_shape",
+        "x2_indices",
+        "x2_values",
+        "x2_shape",
+        "thresh",
       },
-      {"sum_indices", "sum_values"});
+      {"sum_indices", "sum_values", "sum_shape"});
   }
   /// \brief Init.
-  /// Refer to the parameters of python API @ref mindspore.ops._csr_ops.SparseAdd for the inputs.
-  void Init(const std::vector<int64_t> &a_shape, const std::vector<int64_t> &b_shape, const float &thresh);
-  /// \brief Set dense shape.
-  void set_a_dense_shape(const std::vector<int64_t> &shape);
-  void set_b_dense_shape(const std::vector<int64_t> &shape);
-  void set_thresh(const float &thresh);
-  /// \brief Get dense shape.
-  ///
-  /// \return dense shape.
-  std::vector<int64_t> get_a_dense_shape() const;
-  std::vector<int64_t> get_b_dense_shape() const;
-  float get_thresh() const;
+  void Init() const {}
 };
 abstract::AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SPARSE_MATRIX_ADD_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_ADD_H_
