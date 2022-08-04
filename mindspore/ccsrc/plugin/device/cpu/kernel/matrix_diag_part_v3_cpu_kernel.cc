@@ -162,7 +162,7 @@ bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr
 
   if (data_num_ >= kParallelArrayNumSameShape) {
     auto task = [this, &output_data, &input_data, padding_value](size_t start, size_t end) {
-      int64_t out_begin_index = SizeToLong(start * output_elements_in_batch_);
+      int64_t out_begin_index = SizeToLong(start) * output_elements_in_batch_;
       for (size_t index_array = start; index_array < end; index_array++) {
         for (int64_t i = 0; i < num_diags_; i++) {
           int64_t offset = 0;
