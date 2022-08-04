@@ -84,10 +84,14 @@ inline bool ParallelThreadPool::RunTaskOnce(int start, int end) {
       int expected_index = p_task->started;
       while (expected_index < p_task->task_num) {
         if (p_task->started.compare_exchange_strong(expected_index, expected_index + 1)) {
-          p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
-          find = true;
-          expected_index = p_task->started;
-          finish++;
+          if (expected_index < p_task->task_num) {
+            p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
+            find = true;
+            expected_index = p_task->started;
+            finish++;
+          } else {
+            break;
+          }
         }
       }
       if (find) {
@@ -115,10 +119,14 @@ bool ParallelThreadPool::RunParallel() {
           int expected_index = p_task->started;
           while (expected_index < p_task->task_num) {
             if (p_task->started.compare_exchange_strong(expected_index, expected_index + 1)) {
-              p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
-              find = true;
-              expected_index = p_task->started;
-              finish++;
+              if (expected_index < p_task->task_num) {
+                p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
+                find = true;
+                expected_index = p_task->started;
+                finish++;
+              } else {
+                break;
+              }
             }
           }
           if (find) {
@@ -194,7 +202,7 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   p_task->status |= p_task->func(p_task->content, 0, 0, 0);
 
   int expected_index = p_task->started;
-  while (expected_index < p_task->task_num) {
+  while (expected_index < task_num) {
     if (p_task->started.compare_exchange_strong(expected_index, expected_index + 1)) {
       p_task->status |= p_task->func(p_task->content, expected_index, 0, 0);
       (void)++p_task->finished;
@@ -207,6 +215,7 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
       std::this_thread::yield();
     }
   }
+  p_task->task_num = 0;
   p_task->occupied = false;
   // check the return value of task
   if (p_task->status != THREAD_OK) {
