@@ -830,9 +830,9 @@ def inplace_update(x, v, indices):
         indices (Union[int, tuple], Tensor): Indices into the left-most dimension of `x`, and determines which rows of x
             to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x). If the type
             is Tensor, it supports dynamic shape. Otherwise, it only supports static shape.
-        x (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+        x (Tensor): A tensor which to be inplace updated. It can be one of the following data types:
             float32, float16 and int32.
-        v (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
+        v (Tensor): A tensor with the same type as `x` and the same dimension size as `x` except
             the first dimension, which must be the same as the size of `indices`.
 
     Returns:
@@ -871,9 +871,9 @@ def inplace_add(x, v, indices):
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
-        x (Tensor) - The first input is a tensor whose data type is float16, float32, float64 or int32.
+        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        v (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
+        v (Tensor): The second input is a tensor that has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Returns:
@@ -913,9 +913,9 @@ def inplace_sub(x, v, indices):
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
-        x (Tensor) - The first input is a tensor whose data type is float16, float32, float64 or int32.
+        x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        v (Tensor) - The second input is a tensor who has the same dimension sizes as `x` except
+        v (Tensor): The second input is a tensor who has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Returns:
@@ -1172,13 +1172,13 @@ def xlogy(x, y):
     the scalar could only be a constant.
 
     Args:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
+        y (Union[Tensor, number.Number, bool]): The second input is a number.Number or
+            a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2150,10 +2150,10 @@ def truncate_div(x, y):
         Broadcasting is supported.
 
     Args:
-        - x(Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - y(Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        x(Union[Tensor, Number, bool]): The first input is a number, or a bool,
+            or a tensor whose data type is number or bool.
+        y(Union[Tensor, Number, bool]): The second input is a number, or a bool when the first input
+            is a tensor, or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2187,10 +2187,10 @@ def truncate_mod(x, y):
     the scalar could only be a constant.
 
     Args:
-        - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, numbers.Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        x (Union[Tensor, numbers.Number, bool]): The first input is a number, or a bool,
+            or a tensor whose data type is number or bool.
+        y (Union[Tensor, numbers.Number, bool]): The second input is a number, or a bool when the first input
+            is a tensor, or a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2219,7 +2219,7 @@ def trunc(x):
     Returns a new tensor with the truncated integer values of the elements of input.
 
     Args:
-        - **input_x** (Tensor) - Input_x is a tensor.
+        input_x (Tensor): Input_x is a tensor.
 
     Returns:
         Tensor, the same shape and data type as the input.
@@ -2730,8 +2730,8 @@ def isreal(x):
     A complex value is considered real when its imaginary part is 0.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        x (Tensor): The input tensor.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -2898,8 +2898,8 @@ def hypot(x1, x2):
     one of: float32, float64
 
     Args:
-        - **x1** (Tensor) - The first input tensor.
-        - **x2** (Tensor) - The second input tensor.
+        x1 (Tensor): The first input tensor.
+        x2 (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
@@ -3422,8 +3422,8 @@ def deg2rad(x):
     Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
 
     Args:
-        - **x** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
-          With float16, float32 or float64 data type.
+        x (Tensor[Number]): The input tensor. It must be a positive-definite matrix.
+            With float16, float32 or float64 data type.
 
     Outputs:
         Tensor, has the same dtype as the `x`.
@@ -4504,9 +4504,10 @@ def log1p(x):
         out_i = {log_e}(x_i + 1)
 
     Args:
-        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-          The value must be greater than -1.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor. With float16 or float32 data type.
+            The value must be greater than -1.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions,
+            its rank should be less than 8.
 
     Returns:
         Tensor, has the same shape as the `x`.

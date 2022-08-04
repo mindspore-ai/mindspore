@@ -247,7 +247,7 @@ def uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range
     If unique=True, candidates are drawn without replacement, else unique=False with replacement.
 
     Args:
-        true_classes (Tensor) - A Tensor. The target classes with a Tensor shape of (batch_size, num_true).
+        true_classes (Tensor): A Tensor. The target classes with a Tensor shape of (batch_size, num_true).
         num_true (int): The number of target classes in each training example.
         num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
             of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.

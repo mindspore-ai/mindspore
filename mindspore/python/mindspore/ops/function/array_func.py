@@ -1173,7 +1173,7 @@ def stack(input_x, axis=0):
     :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
-        input_x (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+        input_x (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
         axis (int): Dimension to stack. Default: 0.
             Negative values wrap around. The range is [-(R+1), R+1).
 
@@ -1213,7 +1213,7 @@ def unstack(input_x, axis=0):
     This is the opposite of pack.
 
     Args:
-        input_x (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
         axis (int): Dimension along which to unpack. Default: 0.
             Negative values wrap around. The range is [-R, R).
@@ -1384,11 +1384,11 @@ def scatter_mul(input_x, indices, updates):
     the relatively highest priority data type.
 
     Args:
-        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
+        updates (Tensor): The tensor doing the min operation with `input_x`,
+            the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -1469,10 +1469,10 @@ def scatter_max(input_x, indices, updates):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     Args:
-        input_x (Parameter) - The target tensor, with data type of Parameter.
+        input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor) - The index to do max operation whose data type must be mindspore.int32.
-        updates (Tensor) - The tensor doing the max operation with `input_x`,
+        indices (Tensor): The index to do max operation whose data type must be mindspore.int32.
+        updates (Tensor): The tensor doing the max operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
 
     Outputs:
@@ -1801,12 +1801,12 @@ def scatter_update(input_x, indices, updates):
     the relatively highest priority data type.
 
     Args:
-        input_x (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor) - The index of input tensor. With int32 or int64 data type.
-          If there are duplicates in indices, the order for updating is undefined.
-        updates (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape = indices.shape + input_x.shape[1:].
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index of input tensor. With int32 or int64 data type.
+            If there are duplicates in indices, the order for updating is undefined.
+        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+            and updates.shape = indices.shape + input_x.shape[1:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -2482,11 +2482,11 @@ def tensor_scatter_add(input_x, indices, updates):
         not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
     Args:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates. Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        indices (Tensor): The index of input tensor whose data type is int32 or int64.
+            The rank must be at least 2.
+        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+            and updates. Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3367,8 +3367,8 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
         Ascend platform only supports float16 type for input_x.
 
     Args:
-        input_x (Tensor) - The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
-          with float16, float32 or float64 data type.
+        input_x (Tensor): The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
+            with float16, float32 or float64 data type.
 
         output_size (Union[int, tuple]): The target output size is H x W.
             ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
@@ -3570,11 +3570,11 @@ def tensor_scatter_div(input_x, indices, updates):
           there is no 0 value in `updates`.
 
     Args:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        indices (Tensor): The index of input tensor whose data type is int32 or int64.
+            The rank must be at least 2.
+        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
