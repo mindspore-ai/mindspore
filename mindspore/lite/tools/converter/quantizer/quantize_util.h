@@ -84,6 +84,8 @@ int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_
 
 int GetQuantType(const CNodePtr &cnode);
 
+void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
+
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
                 std::vector<T> *dequant_data, int preferred_dim = 0) {

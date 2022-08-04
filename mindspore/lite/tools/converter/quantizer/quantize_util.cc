@@ -23,6 +23,7 @@
 #include <vector>
 #include <set>
 #include <functional>
+#include <deque>
 #include "tools/common/graph_util.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
@@ -162,6 +163,31 @@ int GetQuantType(const CNodePtr &cnode) {
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   return quant_param_holder->quant_type();
+}
+
+void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(all_func_graphs != nullptr);
+  all_func_graphs->insert(func_graph);
+  auto nodes = func_graph->GetOrderedCnodes();
+  std::deque<CNodePtr> to_process{};
+  to_process.insert(to_process.end(), nodes.begin(), nodes.end());
+  while (!to_process.empty()) {
+    auto &cur_cnode = to_process.front();
+    for (auto &input : cur_cnode->inputs()) {
+      if (!IsValueNode<FuncGraph>(input)) {
+        continue;
+      }
+      auto new_fg = GetValueNode<FuncGraphPtr>(input);
+      if (all_func_graphs->find(new_fg) != all_func_graphs->end()) {
+        continue;
+      }
+      all_func_graphs->insert(new_fg);
+      auto new_nodes = new_fg->GetOrderedCnodes();
+      to_process.insert(to_process.end(), new_nodes.begin(), new_nodes.end());
+    }
+    to_process.pop_front();
+  }
 }
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {

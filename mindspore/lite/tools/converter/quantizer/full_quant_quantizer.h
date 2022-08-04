@@ -36,10 +36,28 @@
 #include "tools/converter/quantizer/quant_strategy.h"
 
 namespace mindspore::lite::quant {
+struct FullQuantInitParam {
+  // Config
+  TypeId activation_quant_data_type_{kNumberTypeInt8};
+  TypeId activation_target_data_type_{kNumberTypeInt8};
+  // quant and export are same data type.
+  TypeId weight_data_type_{kNumberTypeInt8};
+  size_t bit_num_{k8Bit};
+  int activation_q_min_{INT8_MIN};
+  int activation_q_max_{INT8_MAX};
+  int weight_channel_q_min_{-INT8_MAX};
+  int weight_channel_q_max_{INT8_MAX};
+  int weight_layer_q_min_{INT8_MIN};
+  int weight_layer_q_max_{INT8_MAX};
+  bool activation_symmetric_{false};
+  bool weight_channel_symmetric_{true};
+  bool weight_layer_symmetric_{false};
+};
+
 class FullQuantQuantizer : public Quantizer {
  public:
   explicit FullQuantQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
-    bit_num_ = param_->commonQuantParam.bit_num;
+    init_param_.bit_num_ = param_->commonQuantParam.bit_num;
   }
 
   ~FullQuantQuantizer() override;
@@ -87,21 +105,9 @@ class FullQuantQuantizer : public Quantizer {
   int QuantWithKL();
 
  private:
-  // Config
-  TypeId activation_quant_data_type_{kNumberTypeInt8};
-  TypeId activation_target_data_type_{kNumberTypeInt8};
-  // quant and export are same data type.
-  TypeId weight_data_type_{kNumberTypeInt8};
-  size_t bit_num_{k8Bit};
-  int activation_q_min_{INT8_MIN};
-  int activation_q_max_{INT8_MAX};
-  int weight_channel_q_min_{-INT8_MAX};
-  int weight_channel_q_max_{INT8_MAX};
-  int weight_layer_q_min_{INT8_MIN};
-  int weight_layer_q_max_{INT8_MAX};
-  bool activation_symmetric_{false};
-  bool weight_channel_symmetric_{true};
-  bool weight_layer_symmetric_{false};
+  //  size_t bit_num_{k8Bit};
+  FullQuantInitParam init_param_;
+
   std::set<PrimitivePtr> support_int8_ops_;
   std::set<PrimitivePtr> skip_check_dtype_ops_;
   std::set<PrimitivePtr> per_channel_ops_;

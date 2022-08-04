@@ -17,25 +17,32 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_QUANT_TYPE_DETERMINER_H_
 
 #include <utility>
+#include <set>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::lite::quant {
 class QuantTypeDeterminer {
  public:
   explicit QuantTypeDeterminer(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+
   ~QuantTypeDeterminer() = default;
 
   int Determine();
 
  private:
   bool DetermineQuantAll(const CNodePtr &cnode);
+
   std::pair<size_t, size_t> GetQuantParamsNum(const QuantParamHolderPtr &quant_holder);
+
   bool DetermineQuantWeight(const CNodePtr &cnode);
 
  private:
   FuncGraphPtr func_graph_ = nullptr;
+  std::set<PrimitivePtr> bias_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                      prim::kPrimMatMulFusion, prim::kPrimFullConnection};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_QUANT_TYPE_DETERMINER_H_

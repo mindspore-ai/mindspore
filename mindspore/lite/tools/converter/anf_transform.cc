@@ -99,6 +99,10 @@
 #include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
+#include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
+#include "tools/converter/quantizer/quant_helper/propagete_quant_param_pass.h"
+#include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
+#include "tools/converter/quantizer/insert_quant_node_manager.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -399,15 +403,39 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   return RET_OK;
 }
 
-STATUS AnfTransform::QATTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
       param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
-    auto remove_pass = quant::RemoveUnusedQuantParam(old_graph);
+    auto remove_pass = quant::RemoveUnusedQuantParam(func_graph);
     auto ret = remove_pass.Remove();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "remove unused quant param failed.";
       return RET_ERROR;
     }
+  }
+  auto propogate_pass = quant::PropagateQuantParamPass(func_graph);
+  auto ret = propogate_pass.Propagate();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Propagate quant param failed.";
+    return ret;
+  }
+  auto determiner = quant::QuantTypeDeterminer(func_graph);
+  ret = determiner.Determine();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run quant type determine failed.";
+    return ret;
+  }
+  auto quant_node_pass = quant::QuantNodePass(func_graph);
+  ret = quant_node_pass.Quant();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run quant node pass failed.";
+    return ret;
+  }
+  quant::InsertQuantNodeManager inset_quant_node_pass;
+  ret = inset_quant_node_pass.InsertQuantDtypeCastNode(func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "add QuantCast error";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -522,12 +550,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
 
   if (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE) {
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
-    return nullptr;
-  }
-
-  status = QATTransform(old_graph, param);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "QAT model transform failed.";
     return nullptr;
   }
 
