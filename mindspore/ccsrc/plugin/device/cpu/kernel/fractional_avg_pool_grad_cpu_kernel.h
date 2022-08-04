@@ -31,25 +31,24 @@ namespace mindspore {
 namespace kernel {
 class FractionalAvgPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  FractionalAvgPoolGradCpuKernelMod() = default;
+  FractionalAvgPoolGradCpuKernelMod() : kernel_func_(nullptr), output_type_(kTypeUnknown) {}
   ~FractionalAvgPoolGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool FractionalAvgPoolGradLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool FractionalAvgPoolGradCompute(
-    const int64_t out_cols, int64_t *col_seq, const int64_t height_start, int64_t height_end, int64_t b, size_t hs,
-    const int64_t out_rows, const int64_t out_depth, const int64_t in_rows, const int64_t in_cols,
-    Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> out_backprop_mat,
+  void FractionalAvgPoolGradCompute(
+    const int64_t out_cols, const int64_t *col_seq, const int64_t height_start, int64_t height_end, int64_t b,
+    int64_t hs, const int64_t out_rows, const int64_t out_depth, const int64_t in_rows, const int64_t in_cols,
+    const Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> &out_backprop_mat,
     Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> in_backprop_tensor_temp_mat);
   using FractionalAvgPoolGradFunc =
     std::function<bool(FractionalAvgPoolGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
