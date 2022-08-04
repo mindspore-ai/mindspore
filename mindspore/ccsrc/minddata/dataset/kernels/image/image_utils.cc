@@ -393,6 +393,16 @@ void JpegSetSource(j_decompress_ptr cinfo, const void *data, int64_t datasize) {
   cinfo->src->next_input_byte = static_cast<const JOCTET *>(data);
 }
 
+thread_local std::vector<Status> jpeg_status;
+
+Status CheckJpegExit(jpeg_decompress_struct *cinfo) {
+  if (!jpeg_status.empty()) {
+    jpeg_destroy_decompress(cinfo);
+    return jpeg_status[0];
+  }
+  return Status::OK();
+}
+
 static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_scanlines_to_read, JSAMPLE *buffer,
                                 int buffer_size, int crop_w, int crop_w_aligned, int offset, int stride) {
   // scanlines will be read to this buffer first, must have the number
@@ -406,6 +416,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
     int num_lines_read = 0;
     try {
       num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
+      RETURN_IF_NOT_OK(CheckJpegExit(cinfo));
     } catch (std::runtime_error &e) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: image decode failed.");
     }
@@ -468,9 +479,12 @@ static Status JpegSetColorSpace(jpeg_decompress_struct *cinfo) {
 }
 
 void JpegErrorExitCustom(j_common_ptr cinfo) {
-  char jpeg_last_error_msg[JMSG_LENGTH_MAX];
-  (*(cinfo->err->format_message))(cinfo, jpeg_last_error_msg);
-  throw std::runtime_error(jpeg_last_error_msg);
+  char jpeg_error_msg[JMSG_LENGTH_MAX];
+  (*(cinfo->err->format_message))(cinfo, jpeg_error_msg);
+  // we encounter core dump when execute jpeg_start_decompress at arm platform,
+  // so we collect Status instead of throwing exception.
+  jpeg_status.push_back(
+    STATUS_ERROR(StatusCode::kMDUnexpectedError, "Error raised by libjpeg: " + std::string(jpeg_error_msg)));
 }
 
 Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int crop_x, int crop_y,
@@ -489,6 +503,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
+    RETURN_IF_NOT_OK(CheckJpegExit(&cinfo));
   } catch (std::runtime_error &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
@@ -514,8 +529,10 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   unsigned int crop_w_aligned = crop_w + crop_x - crop_x_aligned;
   try {
     bool status = jpeg_start_decompress(&cinfo);
-    CHECK_FAIL_RETURN_UNEXPECTED(status, "JpegCropAndDecode: fail to decode multiscan jpeg image.");
+    CHECK_FAIL_RETURN_UNEXPECTED(status, "JpegCropAndDecode: fail to decode, jpeg maybe a multi-scan file or broken.");
+    RETURN_IF_NOT_OK(CheckJpegExit(&cinfo));
     jpeg_crop_scanline(&cinfo, &crop_x_aligned, &crop_w_aligned);
+    RETURN_IF_NOT_OK(CheckJpegExit(&cinfo));
   } catch (std::runtime_error &e) {
     return DestroyDecompressAndReturnError(e.what());
   }
@@ -1179,7 +1196,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
       uchar LUT[256] = {};
       auto kMaxPixelValueFloat = static_cast<float>(kMaxBitValue);
-      for (int i = 0; i < 256; i++) {
+      for (int i = 0; i <= kMaxBitValue; i++) {
         float f = i / kMaxPixelValueFloat;
         f = pow(f, gamma);
         LUT[i] =
@@ -1690,9 +1707,9 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
         cv::Vec3s *p1 = input_cv->mat().ptr<cv::Vec3s>(i);
         cv::Vec3s *p2 = image.ptr<cv::Vec3s>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
+          p2[j][kBIndex] = p1[j][kRIndex];
+          p2[j][kGIndex] = p1[j][kGIndex];
+          p2[j][kRIndex] = p1[j][kBIndex];
         }
       }
     } else if (input_type == DataType::DE_FLOAT32 || input_type == DataType::DE_INT32) {
@@ -1700,9 +1717,9 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
         cv::Vec3f *p1 = input_cv->mat().ptr<cv::Vec3f>(i);
         cv::Vec3f *p2 = image.ptr<cv::Vec3f>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
+          p2[j][kBIndex] = p1[j][kRIndex];
+          p2[j][kGIndex] = p1[j][kGIndex];
+          p2[j][kRIndex] = p1[j][kBIndex];
         }
       }
     } else if (input_type == DataType::DE_FLOAT64) {
@@ -1710,9 +1727,9 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
         cv::Vec3d *p1 = input_cv->mat().ptr<cv::Vec3d>(i);
         cv::Vec3d *p2 = image.ptr<cv::Vec3d>(i);
         for (int j = 0; j < input_cv->mat().cols; ++j) {
-          p2[j][2] = p1[j][0];
-          p2[j][1] = p1[j][1];
-          p2[j][0] = p1[j][2];
+          p2[j][kBIndex] = p1[j][kRIndex];
+          p2[j][kGIndex] = p1[j][kGIndex];
+          p2[j][kRIndex] = p1[j][kBIndex];
         }
       }
     } else {
@@ -1758,6 +1775,7 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
     JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
     (void)jpeg_read_header(&cinfo, TRUE);
     jpeg_calc_output_dimensions(&cinfo);
+    RETURN_IF_NOT_OK(CheckJpegExit(&cinfo));
   } catch (std::runtime_error &e) {
     jpeg_destroy_decompress(&cinfo);
     RETURN_STATUS_UNEXPECTED(e.what());
