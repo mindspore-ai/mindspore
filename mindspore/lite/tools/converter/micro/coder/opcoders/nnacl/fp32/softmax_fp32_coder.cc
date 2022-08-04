@@ -60,9 +60,13 @@ int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
             "exp_fp32.c",
           });
   NNaclFp32Serializer code;
-  code.CodeStruct("softmax_parameter", *softmax_param_);
+  std::string param_name = "softmax_parameter";
+  code.CodeStruct(param_name, *softmax_param_);
   code.CodeFunction("memset", sum_data_, "0", sum_data_size_);
   auto primitive_type = softmax_param_->op_parameter_.type_;
+  if (support_parallel_) {
+    code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+  }
   if (primitive_type == schema::PrimitiveType_Softmax) {
     code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
   } else {

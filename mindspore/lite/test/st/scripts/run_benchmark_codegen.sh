@@ -2,7 +2,7 @@
 source ./scripts/base_functions.sh
 
 function Run_x86_codegen() {
-    # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig
+    # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig $7:parallel_flag
     local bind_mode thread_num suffix run_result
     rm -rf $1
     mkdir -p $1
@@ -74,7 +74,7 @@ function Run_x86_codegen() {
       bind_mode=""
       thread_num=""
       suffix=""
-      if [[ $3 =~ "parallel" ]]; then
+      if [[ $7 == "parallel" ]]; then
           bind_mode="0"
           thread_num="4"
           suffix="_parallel"
@@ -426,7 +426,7 @@ fi
 # Set model-list
 models_codegen_config=${basepath}/../${config_folder}/models_codegen.cfg
 models_cortex_codegen_config=${basepath}/../${config_folder}/models_codegen_cortex.cfg
-models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen_parallel.cfg
+models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen.cfg
 
 #micro config
 micro_x86_config=${basepath}/../${config_folder}/micro/micro_x86.cfg
@@ -470,7 +470,7 @@ echo "current backend is ${backend}"
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ]]; then
     # Run on x86-codegen
     echo "start Run x86 codegen ..."
-    Run_x86_codegen ${build_path_x86} ${models_path} ${models_codegen_config} ${run_x86_codegen_log_file} ${run_benchmark_result_file} ${micro_x86_config}
+    Run_x86_codegen ${build_path_x86} ${models_path} ${models_codegen_config} ${run_x86_codegen_log_file} ${run_benchmark_result_file} ${micro_x86_config} ""
     Run_x86_codegen_status=$?
 #    Run_x86_codegen_PID=$!
 #    sleep 1
@@ -478,7 +478,7 @@ fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" ]]; then
     # Run on x86-codegen-parallel
     echo "start Run x86 codegen parallel ..."
-    Run_x86_codegen ${build_path_parallel} ${models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} ${micro_x86_parallel_config}
+    Run_x86_codegen ${build_path_parallel} ${models_path} ${models_codegen_parallel_config} ${run_x86_codegen_parallel_log_file} ${run_benchmark_result_file} ${micro_x86_parallel_config} "parallel"
     Run_x86_codegen_parallel_status=$?
 #    Run_x86_codegen_parallel_PID=$!
 #    sleep 1

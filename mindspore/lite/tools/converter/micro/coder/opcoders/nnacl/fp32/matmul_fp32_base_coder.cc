@@ -29,6 +29,9 @@ using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int MatMulFP32BaseCoder::ReSize() {
+  if (support_parallel_) {
+    thread_num_ = 1;
+  }
   ResizeParameter();
   MS_CHECK_TRUE(params_->col_align_ != 0, "params_->col_align_ = 0");
   thread_count_ = MSMIN(thread_num_, UP_DIV(params_->col_align_, col_tile_));
@@ -175,8 +178,12 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
   NNaclFp32Serializer code, init_code;
   size_t w_buf_size = 0;
+  std::string param_name = "mat_mul_parameter";
 
-  code.CodeStruct("mat_mul_parameter", *params_);
+  code.CodeStruct(param_name, *params_);
+  if (support_parallel_) {
+    code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+  }
   init_code.CodeStruct("mat_mul_parameter", *params_);
   // do bias packing to init
   if (input_tensors_.size() == DIMENSION_3D) {

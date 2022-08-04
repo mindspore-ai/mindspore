@@ -42,7 +42,8 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   pooling_parameter->thread_num_ = pooling_parameter->op_parameter_.thread_num_;
 
   NNaclFp32Serializer code;
-  code.CodeStruct("pooling_parameter", *pooling_parameter);
+  std::string param_name = "pooling_parameter";
+  code.CodeStruct(param_name, *pooling_parameter);
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
   Collect(context,
@@ -71,12 +72,18 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   }
   if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
     if (!support_parallel_) {
+      code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+      code << "    " << param_name << ".thread_num_ = 1;\n";
       code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
     } else {
       code.CodeBaseStruct("PoolingFp32Args", kRunArgs, input_tensor_, output_tensor_, minf, maxf, "&pooling_parameter");
       code.CodeFunction(kParallelLaunch, "DoMaxPooling", kRunArgsAddr, "pooling_parameter.op_parameter_.thread_num_");
     }
   } else {
+    if (support_parallel_) {
+      code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+      code << "    " << param_name << ".thread_num_ = 1;\n";
+    }
     code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   }
 
