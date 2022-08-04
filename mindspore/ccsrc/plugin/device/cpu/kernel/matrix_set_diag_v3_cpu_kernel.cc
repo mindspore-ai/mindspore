@@ -121,7 +121,8 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k[0] can not be larger than k[1] ,received " << k_lower_
                       << " is larger than " << k_upper_;
   }
-  max_diag_len_ = std::min(input_rows_ + std::min(k_upper_, ZERO), input_columns_ + std::min(-k_lower_, ZERO));
+  max_diag_len_ = std::min(SizeToLong(input_rows_) + std::min(k_upper_, ZERO),
+                           SizeToLong(input_columns_) + std::min(-k_lower_, ZERO));
 
   return DoLaunch<T>(inputs, outputs);
 }
@@ -139,8 +140,8 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
       int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
       int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-      int64_t m = t / input_columns_;
-      int64_t n = t % input_columns_;
+      int64_t m = t / SizeToLong(input_columns_);
+      int64_t n = t % SizeToLong(input_columns_);
       int64_t x = n - std::max(k_upper_, ZERO);
       if (n - m == k_upper_)
         output_data[elem] = diagonal_data[LongToSize(index * diagonal_columns_ + x)];
@@ -151,18 +152,20 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
       int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
       int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-      int64_t m = t / input_columns_;
-      int64_t n = t % input_columns_;
+      int64_t m = t / SizeToLong(input_columns_);
+      int64_t n = t % SizeToLong(input_columns_);
       int64_t d = n - m;
       if (d >= k_lower_ && d <= k_upper_) {
         int64_t x = k_upper_ - d;
         int64_t offset = 0;
         if (((align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT") && d >= 0) ||
             ((align_ == "LEFT_RIGHT" || align_ == "RIGHT_RIGHT") && d <= 0)) {
-          offset = max_diag_len_ - std::min(input_columns_ - std::max(d, ZERO), input_rows_ + std::min(d, ZERO));
+          offset = max_diag_len_ - std::min(SizeToLong(input_columns_) - std::max(d, ZERO),
+                                            SizeToLong(input_rows_) + std::min(d, ZERO));
         }
         int64_t y = n - std::max(d, ZERO) + offset;
-        size_t position = LongToSize(index * diagonal_rows_ * diagonal_columns_ + x * diagonal_columns_ + y);
+        size_t position =
+          LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) + x * SizeToLong(diagonal_columns_) + y);
         output_data[elem] = diagonal_data[position];
       } else {
         output_data[elem] = input_data[elem];
@@ -191,11 +194,11 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
         for (size_t elem = start; elem < end; ++elem) {
           int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
           int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-          int64_t m = t / input_columns_;
-          int64_t n = t % input_columns_;
+          int64_t m = t / SizeToLong(input_columns_);
+          int64_t n = t % SizeToLong(input_columns_);
           int64_t x = n - std::max(k_upper_, ZERO);
           if (n - m == k_upper_)
-            output_data[elem] = diagonal_data[LongToSize(index * diagonal_columns_ + x)];
+            output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
           else
             output_data[elem] = input_data[elem];
         }
@@ -203,8 +206,8 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
         for (size_t elem = start; elem < end; ++elem) {
           int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
           int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-          int64_t m = t / input_columns_;
-          int64_t n = t % input_columns_;
+          int64_t m = t / SizeToLong(input_columns_);
+          int64_t n = t % SizeToLong(input_columns_);
           int64_t d = n - m;
           if (d >= k_lower_ && d <= k_upper_) {
             int64_t x = k_upper_ - d;
@@ -214,7 +217,8 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
               offset = max_diag_len_ - std::min(input_columns_ - std::max(d, ZERO), input_rows_ + std::min(d, ZERO));
             }
             int64_t y = n - std::max(d, ZERO) + offset;
-            size_t position = LongToSize(index * diagonal_rows_ * diagonal_columns_ + x * diagonal_columns_ + y);
+            size_t position = LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) +
+                                         x * SizeToLong(diagonal_columns_) + y);
             output_data[elem] = diagonal_data[position];
           } else {
             output_data[elem] = input_data[elem];
