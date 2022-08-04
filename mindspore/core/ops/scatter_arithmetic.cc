@@ -53,7 +53,7 @@ abstract::ShapePtr ScatterArithmeticInferShape(const PrimitivePtr &primitive,
   if ((indices_shape != std::vector<int64_t>{-1}) && (!updates_shape.empty()) &&
       (updates_shape != check_update_shape)) {
     MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", "
-                             << "updates_shape = indices_shape + x_shape[1:], but got x_shape: "
+                             << "updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: "
                              << input_x_shape_ptr->ToString() << ", indices_shape: " << indices_shape_ptr->ToString()
                              << ", updates_shape: " << updates_shape_ptr->ToString() << ".";
   }
