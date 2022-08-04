@@ -50,8 +50,11 @@ class LinSpaceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
-
+  template <typename T>
+  bool LaunchVmapKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                        const std::vector<AddressPtr> &outputs);
   int64_t batch_num_{0};
+  bool multi_dims_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
