@@ -381,7 +381,7 @@ StrategyRec CostConvolution::ChoseStr(const std::vector<double> &cost_op, Strate
 // Get optimal strategy for Pooling
 StrategyRec CostPooling::GetOptimalStr(const Graph::NodeType &node,
                                        const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                                       const Graph &graph) {
+                                       const Graph &graph) const {
   int64_t tensor_n = static_cast<int64_t>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
   int64_t tensor_c = static_cast<int64_t>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
 

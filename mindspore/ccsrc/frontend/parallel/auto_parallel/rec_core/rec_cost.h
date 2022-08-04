@@ -153,7 +153,7 @@ class CostPooling {
  public:
   StrategyRec GetOptimalStr(const Graph::NodeType &node,
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
+                            const Graph &graph) const;
 
   double GetMinCostIn() const { return cost_in_; }
 

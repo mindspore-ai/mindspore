@@ -85,11 +85,11 @@ def init(backend_name=None):
     Initialize distributed backend, e.g. HCCL/NCCL, it is required before using the communication service.
 
     Note:
-        The full name of HCCL is Huawei Collective Communication Library.
-        The full name of NCCL is NVIDIA Collective Communication Library.
-        The full name of MCCL is MindSpore Collective Communication Library.
-        This method should be used after set_context. The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.management.
+        - The full name of HCCL is Huawei Collective Communication Library.
+        - The full name of NCCL is NVIDIA Collective Communication Library.
+        - The full name of MCCL is MindSpore Collective Communication Library.
+        - This method should be used after set_context. The user needs to preset communication environment variables
+        before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         backend_name (str): Backend, using HCCL/NCCL/MCCL. If the `backend_name` is None, system will recognize
@@ -167,7 +167,7 @@ def release():
 
     Note:
         This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.managerment.
+        before running the following example, please see the docstring of the mindspore.communication.
 
     Raises:
         RuntimeError: If failed to release distributed resource.
@@ -189,7 +189,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.managerment.
+        before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -226,7 +226,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Note:
         GPU version of MindSpore doesn't support this method.
         This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.managerment.
+        before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -266,7 +266,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         This method should be used after init(). The user needs to preset communication environment variables before
-        running the following example, please see the docstring of the mindspore.managerment.
+        running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
@@ -305,7 +305,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
     Note:
         GPU version of MindSpore doesn't support this method.
         This method should be used after init(). The user needs to preset communication environment variables before
-        running the following example, please see the docstring of the mindspore.managerment.
+        running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
@@ -347,7 +347,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init(). The user needs to preset communication environment variables
-        before running the following example, please see the docstring of the mindspore.managerment.
+        before running the following example, please see the docstring of the mindspore.communication.
 
     Args:
         group (str): The communication group to work on. The group is created by create_group.
