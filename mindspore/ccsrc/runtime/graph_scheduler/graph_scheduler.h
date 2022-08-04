@@ -169,7 +169,7 @@ class BACKEND_EXPORT GraphScheduler {
   void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) const;
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                           const std::vector<KernelGraphPtr> &graphs);
+                                           const std::vector<KernelGraphPtr> &graphs) const;
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<AbstractActor *> &auto_monad_actors);
   void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
                                            const ControlNodeParserPtr &parser) const;
@@ -181,7 +181,7 @@ class BACKEND_EXPORT GraphScheduler {
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info) const;
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
-  void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
+  void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) const;
   // When the parameters of root graph are not in backend kernel graphs, need persist device tensor by this function.
   void PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) const;
 

@@ -169,7 +169,7 @@ class GraphCompiler {
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
 
   void DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                          device::DeviceContext *device_context);
+                          device::DeviceContext *device_context) const;
 
   // Clear resource in bucket, such as useless tensors and device memory of all communication operators,
   // Bucket is used in PyNative distributed training mode, one bucket handles all resource to launch and sync allreduce

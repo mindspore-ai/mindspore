@@ -35,7 +35,7 @@ class MultiActorFusion : public ActorPass {
   void Process(ActorSet *const actor_set, AbstractActor *const actor) override;
 
  private:
-  bool AnalyzeDependency(const ActorSet *actor_set);
+  bool AnalyzeDependency(const ActorSet *actor_set) const;
   bool AddDependency(std::pair<AbstractActor *, bool> *const actor_info,
                      mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos) const;
 

@@ -62,11 +62,11 @@ struct OpData {
 
 class MS_CORE_API RandInt {
  public:
-  int Get() { return rand(); }
+  int Get() const { return rand(); }
   static RandInt &Instance();
 
  private:
-  RandInt() { srand(time(NULL)); }
+  RandInt() { srand(time(nullptr)); }
 };
 
 template <typename T>
@@ -86,20 +86,20 @@ struct OpContext {
   const void *kernel_call_back_before_;
   const void *kernel_call_back_after_;
 
-  void SetFailed(int32_t code) {
+  void SetFailed(int32_t code) const {
     if (code == MindrtStatus::KINIT) {
       code = MindrtStatus::KERROR;
     }
     results_->front().SetFailed(code);
   }
 
-  void SetSuccess(int32_t code) {
+  void SetSuccess(int32_t code) const {
     for (auto promise : *results_) {
       promise.SetValue(code);
     }
   }
 
-  void SetResult(size_t index, int value) { results_->at(index).SetValue(value); }
+  void SetResult(size_t index, int value) const { results_->at(index).SetValue(value); }
 };
 
 template <typename T>
