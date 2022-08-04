@@ -152,7 +152,7 @@ class AscendStreamAssign {
   CNodePtr GetTargetOutputNode(const vector<CNodePtr> &moved_backward_cnodes, const CNodePtr first_node,
                                const NotNull<KernelGraphPtr> &graph_ptr) const;
   bool FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) const;
-  void TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr);
+  void TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr) const;
 
   uint32_t GetMaxIndexTarget(const NotNull<KernelGraphPtr> &graph_ptr);
   uint32_t GetIndexByKey(const NotNull<KernelGraphPtr> &graph_ptr, const CNodeKey &key) const;
@@ -223,7 +223,7 @@ class AscendStreamAssign {
   uint32_t max_task_count_ = 0;
 
   // insert event for kernel by kernel
-  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph);
+  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const;
   void GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv) const;

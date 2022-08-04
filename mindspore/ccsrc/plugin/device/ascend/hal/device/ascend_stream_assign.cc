@@ -471,7 +471,7 @@ void AscendStreamAssign::UpdateEventsToExecutionOrder(
   MS_LOG(DEBUG) << "Finish UpdateEventsToExecutionOrder.";
 }
 
-void AscendStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) {
+void AscendStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());
@@ -827,7 +827,7 @@ bool AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) con
 
 // performance optimization for trailing time in distribute mode
 // allreduce of the last batch of gradients and the optimizer can be done parallel
-void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr) const {
   vector<CNodePtr> last_grad_and_status;
   CheckScenario(graph_ptr, &last_grad_and_status);
   if (last_grad_and_status.empty()) {
