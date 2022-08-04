@@ -32,7 +32,14 @@ abstract::TupleShapePtr SquareSumAllInferShape(const PrimitivePtr &primitive,
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto input_y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("x", input_x_shape, kEqual, input_y_shape, prim_name, ValueError);
-  auto output_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>());
+  std::vector<int64_t> shape_vec;
+  if (primitive->HasAttr(kBatchRank)) {
+    int64_t batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
+    for (int64_t index = 0; index < batch_rank; index++) {
+      shape_vec.push_back(input_x_shape[index]);
+    }
+  }
+  auto output_shape = std::make_shared<abstract::Shape>(shape_vec);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output_shape, output_shape});
 }
 

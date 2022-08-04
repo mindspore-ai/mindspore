@@ -20,6 +20,7 @@ import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -139,3 +140,27 @@ def test_truncatediv_dtype_not_supported():
         input_y = Tensor(np.array([True]), mindspore.bool_)
 
         _ = TruncateDiv()(input_x, input_y).asnumpy()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_truncate_div():
+    """
+    Feature: TruncateDiv cpu op vmap feature.
+    Description: test the vmap feature of TruncateDiv.
+    Expectation: success.
+    """
+    def manually_batched(func, input0, input1):
+        out_manual = []
+        for i in range(input0.shape[0]):
+            out = func(input0[i], input1[i])
+            out_manual.append(out)
+        return F.stack(out_manual)
+
+    x = Tensor(np.array([[2, 4, -1], [6, 2, 8]])).astype(np.int32)
+    y = Tensor(np.array([[3, 3, 3], [5, 3, 4]])).astype(np.int32)
+    net = TruncateDiv()
+    out_manual = manually_batched(net, x, y)
+    out_vmap = F.vmap(net, in_axes=(0, 0))(x, y)
+    assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())

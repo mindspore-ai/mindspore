@@ -63,6 +63,9 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseXor)
 @vmap_rules_getters.register(P.IsClose)
 @vmap_rules_getters.register(P.Xlogy)
+@vmap_rules_getters.register(P.ApproximateEqual)
+@vmap_rules_getters.register(P.TruncateDiv)
+@vmap_rules_getters.register(P.TruncateMod)
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
 
@@ -761,6 +764,35 @@ def get_sparse_segment_mean_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(math_ops.SquareSumAll)
+def get_square_sum_all_vmap_rule(prim, axis_size):
+    """VmapRule for `SquareSumAll` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = math_ops.SquareSumAll()
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim, y_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+
+        out_x, out_y = batch_prim(x, y)
+        return ((out_x, 0), (out_y, 0))
+
+    return vmap_rule
+
+
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
 # Unary vmap
@@ -816,6 +848,8 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Trunc)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.PopulationCount)(get_unop_vmap_rule)
 # UnaryGrad vmap
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.LogitGrad)(get_unary_grad_vmap_rule)
