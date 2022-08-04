@@ -206,6 +206,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"expand_dims", std::string("expand_dims")},                        // P.expand_dims()
        {"squeeze", std::string("squeeze")},                                // P.squeeze()
        {"astype", std::string("astype")},                                  // P.cast()
+       {"median", std::string("median")},                                  // P.median()
        {"cumsum", std::string("cumsum")},                                  // P.cumsum()
        {"cummin", std::string("cummin")},                                  // cummin()
        {"cummax", std::string("cummax")},                                  // cummax()

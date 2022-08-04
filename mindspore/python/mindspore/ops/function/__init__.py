@@ -177,6 +177,7 @@ from .math_func import (
     linspace,
     matrix_solve,
     maximum,
+    median,
     logaddexp,
     logaddexp2,
     logit,

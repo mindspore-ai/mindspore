@@ -27,6 +27,38 @@
 
 namespace mindspore {
 namespace ops {
+void Median::Init(const bool global_median, const int64_t axis, const bool keep_dims) {
+  this->set_global_median(global_median);
+  this->set_axis(axis);
+  this->set_keep_dims(keep_dims);
+}
+
+void Median::set_global_median(const bool global_median) {
+  (void)this->AddAttr(kGlobalMedian, api::MakeValue(global_median));
+}
+
+void Median::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
+
+void Median::set_axis(const int64_t &axis) {
+  int64_t f = axis;
+  (void)this->AddAttr(kAxis, api::MakeValue(f));
+}
+
+bool Median::get_global_median() const {
+  auto value_ptr = GetAttr(kGlobalMedian);
+  return GetValue<bool>(value_ptr);
+}
+
+bool Median::get_keep_dims() const {
+  auto value_ptr = GetAttr(kKeepDims);
+  return GetValue<bool>(value_ptr);
+}
+
+int64_t Median::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+
 namespace {
 abstract::TupleShapePtr MedianInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
@@ -34,18 +66,18 @@ abstract::TupleShapePtr MedianInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t x_size = x_shape.size();
   std::vector<int64_t> out;
-  auto check_global_median = primitive->GetAttr("global_median");
+  auto check_global_median = primitive->GetAttr(kGlobalMedian);
   MS_EXCEPTION_IF_NULL(check_global_median);
   bool global_median = GetValue<bool>(check_global_median);
   if (!global_median) {
-    auto check_axis = primitive->GetAttr("axis");
+    auto check_axis = primitive->GetAttr(kAxis);
     auto axis = GetValue<int64_t>(check_axis);
-    auto check_keepdim = primitive->GetAttr("keep_dims");
+    auto check_keepdim = primitive->GetAttr(kKeepDims);
     bool keepdim = GetValue<bool>(check_keepdim);
     if (x_size == 0) {
-      CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeLeft, {-1, 1}, "Median");
+      CheckAndConvertUtils::CheckInRange(kAxis, axis, kIncludeLeft, {-1, 1}, "Median");
     } else {
-      CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeLeft, {-x_size, x_size}, "Median");
+      CheckAndConvertUtils::CheckInRange(kAxis, axis, kIncludeLeft, {-x_size, x_size}, "Median");
     }
     if (axis < 0) {
       axis += x_size;

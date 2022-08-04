@@ -30,7 +30,7 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_a
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
     get_unary_grad_vmap_rule, _vmap_clone_prim, _bdim_at_any
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
-                                   BesselK1e)
+                                   BesselK1e, Median)
 
 
 @constexpr
@@ -468,6 +468,34 @@ def get_reducer_vmap_rule(prim, axis_size):
         out = prim(x, batch_axis)
         out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
         return (out, out_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(Median)
+def get_median_vmap_rule(prim, axis_size):
+    """VmapRule for median operations."""
+    global_median = prim.global_median
+    axis = prim.axis
+    keep_dims = prim.keep_dims
+
+    @constexpr
+    def trans_axis(axis, rank, dim, keep_dims):
+        if axis < 0:
+            axis += rank - 1
+        axis_new = axis + 1 if dim <= axis else axis
+        if keep_dims:
+            dim_new = axis_new
+        else:
+            dim_new = dim - 1 if dim > axis_new else dim
+        return axis_new, dim_new
+
+    def vmap_rule(x_bdim):
+        x, x_dim = x_bdim
+        rank = len(x.shape)
+        axis_new, dim_new = trans_axis(axis, rank, x_dim, keep_dims)
+        y, indices = Median(global_median, axis_new, keep_dims)(x)
+        return (y, dim_new), (indices, dim_new)
 
     return vmap_rule
 
