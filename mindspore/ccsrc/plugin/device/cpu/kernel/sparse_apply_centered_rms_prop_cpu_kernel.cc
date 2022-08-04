@@ -112,7 +112,7 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, var must be at least 1D";
   } else {
-    var_first_dim_size_ = var_shape[0];
+    var_first_dim_size_ = LongToSize(var_shape[0]);
   }
   if (!IsSameShape(var_shape, mg_shape) && !IsSameShape(var_shape, ms_shape) && !IsSameShape(var_shape, mom_shape) &&
       !IsSameShape(var_shape, grad_shape)) {
@@ -123,12 +123,12 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
       MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, the shape of var and grad must equal in dimension " << i
                         << ".";
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, indices must be 1D, but got " << indices_shape.size() << "D.";
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION)
       << "For SparseApplyCenteredRMSProp, grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
