@@ -112,11 +112,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    int32_t thread_count = GlobalContext::config_manager()->num_cpu_threads();
-    // constrain the workers
-    int32_t kThreadCount = 8;
-    thread_count = thread_count < kThreadCount ? thread_count : kThreadCount;
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files, thread_count));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
 
     // Add the shuffle op after this op
     RETURN_IF_NOT_OK(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
@@ -148,20 +144,16 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
     return Status::OK();
   }
   int64_t num_rows;
-  int32_t thread_count = GlobalContext::config_manager()->num_cpu_threads();
-  // constrain the workers
-  int32_t kThreadCount = 8;
-  thread_count = thread_count < kThreadCount ? thread_count : kThreadCount;
-
+  constexpr int64_t kThreadCount = 8;
   // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
   if (!shard_equal_rows_ && !IsCached()) {
     // Data will be sharded by file
     std::vector<std::string> shard_file_list;
     RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, thread_count, estimate));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate));
   } else {
     // Data will be sharded by row
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, thread_count, estimate));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate));
     num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
   }
   *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;
