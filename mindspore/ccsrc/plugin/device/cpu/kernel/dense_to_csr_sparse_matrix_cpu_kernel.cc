@@ -124,11 +124,11 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
   for (size_t i = kZero; i < total_nnz_; i++) {
     if (rank_ == kDefaultRank) {
       auto cur_idx = indices_ptr[i * rank_] * indiceT(num_cols_) + indices_ptr[i * rank_ + kOne];
-      y_values_ptr[i] = dense_input_ptr[static_cast<size_t>(cur_idx)];
+      y_values_ptr[i] = dense_input_ptr[LongToSize(cur_idx)];
     } else {
       auto cur_idx = indices_ptr[i * rank_] * indiceT(num_rows_) * indiceT(num_cols_) +
                      indices_ptr[i * rank_ + kOne] * indiceT(num_cols_) + indices_ptr[i * rank_ + kTwo];
-      y_values_ptr[i] = dense_input_ptr[static_cast<size_t>(cur_idx)];
+      y_values_ptr[i] = dense_input_ptr[LongToSize(cur_idx)];
     }
   }
   for (size_t i = kZero; i < batch_size_ * (num_rows_ + kOne); i++) {
@@ -139,13 +139,13 @@ void DenseToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<AddressP
     y_batch_pointers_ptr[kZero] = indiceT(kZero);
     ++prev_batch;
     for (size_t i = kZero; i < total_nnz_; ++i) {
-      ++y_row_pointers_ptr[static_cast<size_t>(indices_ptr[i * rank_]) + kOne];
+      ++y_row_pointers_ptr[LongToSize(indices_ptr[i * rank_]) + kOne];
       y_col_indices_ptr[i] = indices_ptr[i * rank_ + kOne];
     }
   } else {
     for (size_t i = kZero; i < total_nnz_; ++i) {
-      size_t cur_batch = static_cast<size_t>(indices_ptr[i * rank_]);
-      ++y_row_pointers_ptr[cur_batch * (num_rows_ + kOne) + static_cast<size_t>(indices_ptr[i * rank_ + kOne]) + kOne];
+      size_t cur_batch = LongToSize(indices_ptr[i * rank_]);
+      ++y_row_pointers_ptr[cur_batch * (num_rows_ + kOne) + LongToSize(indices_ptr[i * rank_ + kOne]) + kOne];
       y_col_indices_ptr[i] = indices_ptr[i * rank_ + kTwo];
       while (prev_batch < SizeToLong(cur_batch)) {
         y_batch_pointers_ptr[prev_batch + SizeToLong(kOne)] = indiceT(i);
