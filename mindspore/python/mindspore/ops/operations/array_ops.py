@@ -3719,13 +3719,13 @@ class Diag(PrimitiveWithCheck):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor([1, 2, 3, 4])
+        >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
         >>> diag = ops.Diag()
         >>> output = diag(input_x)
         >>> print(output)
-        [[1, 0, 0, 0],
-         [0, 2, 0, 0],
-         [0, 0, 3, 0],
+        [[1, 0, 0, 0]
+         [0, 2, 0, 0]
+         [0, 0, 3, 0]
          [0, 0, 0, 4]]
     """
 
