@@ -84,7 +84,7 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
     if (inputs.size() == kGatherInputsNum) {
       axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(node, AXIS);
     } else if (inputs.size() == kGatherInputsNum + 1) {
-      axis_ = reinterpret_cast<int64_t *>(inputs[2]->addr)[0];
+      axis_ = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr)[0];
     } else {
       MS_LOG(EXCEPTION) << "Gather requires " << kGatherInputsNum << " or " << (kGatherInputsNum + 1)
                         << " inputs, but got " << inputs.size();
