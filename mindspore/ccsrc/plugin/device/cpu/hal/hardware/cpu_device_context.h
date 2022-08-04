@@ -43,7 +43,6 @@ class CPUDeviceResManager : public DeviceResManager {
 
   bool LoadCollectiveCommLib() override;
 
- protected:
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;

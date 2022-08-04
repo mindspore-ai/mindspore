@@ -86,7 +86,7 @@ bool CollectiveNode::SynchronizeAddresses() {
       success = cgn_->PutMetadata(rank_id, address);
       if (!success) {
         MS_LOG(WARNING) << "Retry to register the address of rank " << rank_id << "...";
-        sleep(interval);
+        (void)sleep(interval);
       } else {
         MS_LOG(INFO) << "The address of rank " << rank_id << " has been registered successfully.";
         break;
@@ -116,7 +116,7 @@ bool CollectiveNode::SynchronizeAddresses() {
         } else {
           MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
                        << " times.";
-          sleep(interval);
+          (void)sleep(interval);
         }
         MsException::Instance().CheckException();
       }
