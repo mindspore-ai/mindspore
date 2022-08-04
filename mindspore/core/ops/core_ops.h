@@ -201,6 +201,7 @@ constexpr auto kSparseTensorToCSRSparseMatrix = "SparseTensorToCSRSparseMatrix";
 constexpr auto kSparseSplit = "SparseSplit";
 constexpr auto kReverseV2 = "ReverseV2";
 constexpr auto kSparseSparseMinimum = "SparseSparseMinimum";
+constexpr auto kBroadcastTo = "BroadcastTo";
 
 // NN
 constexpr auto kApplyAddSign = "ApplyAddSign";
