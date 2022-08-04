@@ -136,7 +136,7 @@ bool FillV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-void FillV2CpuKernelMod::CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims) {
+void FillV2CpuKernelMod::CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims) const {
   MS_EXCEPTION_IF_NULL(input);
   auto *input_data = reinterpret_cast<T *>(input->addr);
   size_t data_num = input->size / sizeof(T);
