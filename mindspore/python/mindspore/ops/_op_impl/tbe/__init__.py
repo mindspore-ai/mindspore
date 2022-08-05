@@ -380,6 +380,7 @@ from .floor_ds import _floor_ds_tbe
 from .ceil import _ceil_tbe
 from .ceil_ds import _ceil_ds_tbe
 from .log1p import _log1p_tbe
+from .log1p_ds import _log1p_ds_tbe
 from .resize_bilinear import _resize_bilinear_tbe
 from .resize_bilinear_v2 import _resize_bilinear_v2_tbe
 from .resize_bilinear_grad import _resize_bilinear_grad_tbe
@@ -435,6 +436,7 @@ from .rsqrt_grad_ds import _rsqrt_grad_ds_tbe
 from .scatter_add import _scatter_add_tbe
 from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
+from .atan2_ds import _atan2_ds_tbe
 from .bessel_i0e import _bessel_i0e_tbe
 from .bessel_i0e_ds import _bessel_i0e_ds_tbe
 from .bessel_i1e import _bessel_i1e_tbe
