@@ -35,7 +35,19 @@ constexpr auto kMakeTupleName = "MakeTuple";
 constexpr auto kUpdateStateName = "UpdateState";
 constexpr auto kDependName = "Depend";
 constexpr auto kLoadName = "Load";
+constexpr size_t kAvgpoolInputSize = 2;
 const std::set<std::string> kInOutOperatorSet = {kAllReduceOpName, kBroadcastOpName, kMakeTupleName};
+
+int64_t GetAvgpoolGroups(const AnfNodePtr &node, const std::string &node_name) {
+  if (node_name == kAvgPoolOpName && common::AnfAlgo::GetInputTensorNum(node) == kAvgpoolInputSize &&
+      AnfAlgo::GetInputFormat(node, 1) == kOpFormat_FRAC_Z) {
+    auto filter_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+    if (filter_shape.size() > 0 && filter_shape[0] > 0) {
+      return filter_shape[0];
+    }
+  }
+  return 1;
+}
 
 AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cnode, int64_t groups,
                          const size_t index = 0) {
@@ -266,6 +278,10 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
       auto node_name = common::AnfAlgo::GetCNodeName(cnode);
       if (node_name == kConv2DOpName || node_name == kConv2DBackpropInputOpName ||
           node_name == kConv2DBackpropFilterOpName) {
+        changed = SetAttrFraczGroup(func_graph, cnode) || changed;
+      }
+      if (int64_t avgpool_group = GetAvgpoolGroups(node, node_name); avgpool_group != 1) {
+        common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(avgpool_group), node);
         changed = SetAttrFraczGroup(func_graph, cnode) || changed;
       }
     }
