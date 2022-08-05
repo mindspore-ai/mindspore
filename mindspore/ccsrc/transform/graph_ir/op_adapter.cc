@@ -450,7 +450,7 @@ void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNode
 }
 
 void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node,
-                                            const std::string format) {
+                                            const std::string format) const {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is nullptr";
     return;

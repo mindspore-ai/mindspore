@@ -1114,7 +1114,7 @@ class OnnxExporter {
   void SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto *value_proto, int64_t output_index = -1);
 
   void MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
-                    mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
+                    mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
   void MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                          mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr);
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, std::string> *node_map_ptr,
@@ -1389,7 +1389,7 @@ void OnnxExporter::SetValueInfoType(const AnfNodePtr &node, onnx::ValueInfoProto
 }
 
 void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
-                                mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) {
+                                mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
   auto &op_merged_infos = *op_merged_infos_ptr;
 
   for (auto &node : nodes) {
