@@ -52,6 +52,12 @@ extern "C" {
 void common_log_init();
 }
 namespace lite {
+#define CONVERTER_LOG_ERROR(str)   \
+  do {                             \
+    MS_LOG(ERROR) << str;          \
+    std::cout << str << std::endl; \
+  } while (0);
+
 namespace {
 constexpr size_t kMaxNum1024 = 1024;
 constexpr size_t kPluginPathMaxNum = 10;
@@ -528,19 +534,232 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
   return res;
 }
 
+int CheckFmkType(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    std::set valid_values = {FmkType::kFmkTypeTf, FmkType::kFmkTypeCaffe,  FmkType::kFmkTypeOnnx,
+                             FmkType::kFmkTypeMs, FmkType::kFmkTypeTflite, FmkType::kFmkTypePytorch};
+    if (std::find(valid_values.begin(), valid_values.end(), param->fmk_type) == valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: fmk_type must be kFmkTypeTf|kFmkTypeCaffe|kFmkTypeOnnx|kFmkTypeMs|kFmkTypeTflite"
+                    << ", but got " << param->fmk_type;
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (param->fmk_type != converter::kFmkTypeCaffe && !param->weight_file.empty()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: weight_file is not a valid flag";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckModelFile(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    if (param->model_file.empty()) {
+      MS_LOG(ERROR) << "INPUT MISSING: model file path is necessary";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckOutputFile(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    if (param->output_file.empty()) {
+      MS_LOG(ERROR) << "INPUT MISSING: output file path is necessary";
+      return RET_INPUT_PARAM_INVALID;
+    }
+
+#ifdef _WIN32
+    replace(param->output_file.begin(), param->output_file.end(), '/', '\\');
+#endif
+
+    if (param->output_file.rfind('/') == param->output_file.length() - 1 ||
+        param->output_file.rfind('\\') == param->output_file.length() - 1) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: output file must be a valid file path";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckInputShape(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    if (param->input_shape.empty()) {
+      return RET_OK;
+    }
+    for (const auto &elem : param->input_shape) {
+      std::vector<int64_t> dims = elem.second;
+      if (dims.empty()) {
+        MS_LOG(ERROR) << "INPUT MISSING: input tensor dim is empty";
+        return lite::RET_ERROR;
+      }
+      bool has_negative_dim = std::any_of(dims.begin(), dims.end(), [](int64_t dim) { return dim < 0; });
+      if (has_negative_dim) {
+        MS_LOG(ERROR) << "INPUT ILLEGAL: Unsupported dim < 0.";
+        return lite::RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int CheckInputFormat(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    std::set valid_values = {NHWC, NCHW};
+    if (std::find(valid_values.begin(), valid_values.end(), param->input_format) == valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: input_format is not in {NHWC, NCHW}, but got " << param->input_format;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckInputOutputDataType(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    std::set input_valid_values = {DataType::kNumberTypeFloat32, DataType::kNumberTypeInt8, DataType::kNumberTypeUInt8,
+                                   DataType::kTypeUnknown};
+    if (std::find(input_valid_values.begin(), input_valid_values.end(), param->input_data_type) ==
+        input_valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: input_data_type is not in {kNumberTypeFloat32, kNumberTypeInt8, "
+                    << "kNumberTypeUInt8, kTypeUnknown}, but got " << param->input_data_type;
+      return RET_INPUT_PARAM_INVALID;
+    }
+
+    std::set output_valid_values = {DataType::kNumberTypeFloat32, DataType::kNumberTypeInt8, DataType::kNumberTypeUInt8,
+                                    DataType::kTypeUnknown};
+    if (std::find(output_valid_values.begin(), output_valid_values.end(), param->output_data_type) ==
+        output_valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: output_data_type is not in {kNumberTypeFloat32, kNumberTypeInt8, "
+                    << "kNumberTypeUInt8, kTypeUnknown}, but got " << param->output_data_type;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckExportMindIR(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    std::set valid_values = {kMindIR, kMindIR_Lite};
+    if (std::find(valid_values.begin(), valid_values.end(), param->export_mindir) == valid_values.end()) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: export_mindir is not in {kMindIR, kMindIR_Lite}, but got "
+                    << param->export_mindir;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckEncrypt(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    if (param->enable_encryption) {
+      if (param->encrypt_key.empty()) {
+        MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false"
+                      << " or param->enable_encryption=false.";
+        return RET_INPUT_PARAM_INVALID;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int CheckTrainModel(const std::shared_ptr<ConverterPara> &param) {
+  if (param != nullptr) {
+    if (param->train_model) {
+      if (param->fmk_type != converter::FmkType::kFmkTypeMs) {
+        MS_LOG(ERROR) << "INPUT ILLEGAL: train model converter supporting only MINDIR format";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      if ((param->input_data_type != DataType::kNumberTypeFloat32) &&
+          (param->input_data_type != DataType::kTypeUnknown)) {
+        MS_LOG(ERROR) << "INPUT ILLEGAL: train model converter supporting only FP32 input tensors";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      if ((param->output_data_type != DataType::kNumberTypeFloat32) &&
+          (param->output_data_type != DataType::kTypeUnknown)) {
+        MS_LOG(ERROR) << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors";
+        return RET_INPUT_PARAM_INVALID;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "INPUT MISSING: param is nullptr.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  auto ret = CheckFmkType(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of fmk_type failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckModelFile(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of model_file failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckOutputFile(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of output_file failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckInputShape(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of input_shape failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckInputFormat(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of input_format failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckInputOutputDataType(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of input_data_type or output_data_type failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckExportMindIR(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of export_mindir failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckEncrypt(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of encrypt failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = CheckTrainModel(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check value of train model failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  return RET_OK;
+}
+
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::common_log_init();
 
+  int status = CheckValueParam(param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Converter input parameters check valid failed";
+    return status;
+  }
   ConverterImpl converter_impl;
   auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();
-  int status = ReturnCode::GetSingleReturnCode()->status_code();
-  std::ostringstream oss;
+  status = ReturnCode::GetSingleReturnCode()->status_code();
   if (meta_graph == nullptr) {
-    oss.clear();
-    oss << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status);
-    MS_LOG(ERROR) << oss.str();
-    std::cout << oss.str() << std::endl;
+    CONVERTER_LOG_ERROR("CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status));
     status = RET_ERROR;
     return status;
   }
@@ -550,10 +769,7 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
   if (param->pre_infer) {
     status = PreInference(*meta_graph, param->train_model);
     if (status != RET_OK) {
-      oss.clear();
-      oss << "PRE INFERENCE FAILED:" << status << " " << GetErrorInfo(status);
-      MS_LOG(ERROR) << oss.str();
-      std::cout << oss.str() << std::endl;
+      CONVERTER_LOG_ERROR("PRE INFERENCE FAILED:" << status << " " << GetErrorInfo(status));
       delete meta_graph;
       return status;
     }
@@ -565,10 +781,7 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
                                                      param->microParam.debug_mode);
     if (status != RET_OK) {
       delete meta_graph;
-      oss.clear();
-      oss << "MICRO CODEGEN FAILED:" << status << " " << GetErrorInfo(status);
-      MS_LOG(ERROR) << oss.str();
-      std::cout << oss.str() << std::endl;
+      CONVERTER_LOG_ERROR("MICRO CODEGEN FAILED:" << status << " " << GetErrorInfo(status));
       return status;
     }
   } else {
@@ -607,18 +820,13 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     }
     if (status != RET_OK) {
       delete meta_graph;
-      oss.clear();
-      oss << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
-      MS_LOG(ERROR) << oss.str();
-      std::cout << oss.str() << std::endl;
+      CONVERTER_LOG_ERROR("SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status));
       return status;
     }
   }
   delete meta_graph;
-  oss.clear();
-  oss << "CONVERT RESULT SUCCESS:" << status;
-  MS_LOG(INFO) << oss.str();
-  std::cout << oss.str() << std::endl;
+  MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
+  std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
   return status;
 }
 }  // namespace lite
