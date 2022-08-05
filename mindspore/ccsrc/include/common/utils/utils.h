@@ -404,6 +404,7 @@ constexpr auto kCSRDivOpName = "CSRDiv";
 constexpr auto kCSRGatherOpName = "CSRGather";
 constexpr auto kCSR2COOOpName = "CSR2COO";
 constexpr auto kCOO2CSROpName = "COO2CSR";
+constexpr auto kRandomShuffle = "RandomShuffle";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
