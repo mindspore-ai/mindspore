@@ -32,7 +32,8 @@ from mindspore.ops.operations.random_ops import RandomPoisson
 from mindspore.ops.primitive import Primitive
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
     _raise_value_error, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
-    get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis
+    get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, _vmap_update_prim_attr, \
+    _bdim_at_any
 from mindspore.ops.composite import _VmapGeneralRule
 
 
@@ -1269,6 +1270,47 @@ def get_gatherd_vmap_rule(prim, axis_size):
 
         out = prim(x, dim_value, index)
         return out, out_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.GatherDGradV2)
+def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
+    """VmapRule for GatherDGradV2 operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    dim = 0
+    if hasattr(prim, 'dim'):
+        dim = prim.dim
+
+    def vmap_rule(x_bdim, index_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, index_bdim, grad_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        index, index_dim = index_bdim
+        grad, grad_dim = grad_bdim
+
+        batch_dim = 0
+        if x_dim is not None:
+            batch_dim = x_dim
+        elif index_dim is not None:
+            batch_dim = index_dim
+        elif grad_dim is not None:
+            batch_dim = grad_dim
+
+        x = _bdim_at_any(x, x_dim, batch_dim, axis_size)
+        index = _bdim_at_any(index, index_dim, batch_dim, axis_size)
+        grad = _bdim_at_any(grad, grad_dim, batch_dim, axis_size)
+
+        # Adjust dim-attr if needed
+        if dim >= batch_dim:
+            _vmap_update_prim_attr(prim, 'dim', dim + 1)
+
+        out = prim(x, index, grad)
+        return (out, batch_dim)
 
     return vmap_rule
 
