@@ -163,17 +163,17 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
         const size_t count = LongToSize(segments[i]);
         size_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
-          count_no += segments[j];
+          count_no += LongToSize(segments[j]);
         }
         size_t input_addr_base = count_no * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {
           size_t min_init_addr = input_addr_base + j;
           T1 min_value = input_x_data_addr[min_init_addr];
           for (size_t k = 1; k < count; ++k) {
-            int cmp_addr = min_init_addr + k * num_compare_per;
+            int cmp_addr = static_cast<int>(min_init_addr + k * num_compare_per);
             min_value = std::min(min_value, input_x_data_addr[cmp_addr]);
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = min_value;
+          output_data_addr[static_cast<size_t>(segment_ids_data_addr[count_no]) * num_compare_per + j] = min_value;
         }
       }
     };
