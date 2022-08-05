@@ -1301,23 +1301,23 @@ class InMemoryGraphDataset(GeneratorDataset):
         >>> from mindspore.dataset import InMemoryGraphDataset, Graph
         >>>
         >>> class MyDataset(InMemoryGraphDataset):
-        >>>     def __init__(self, data_dir):
-        >>>         super().__init__(data_dir)
-        >>>
-        >>>     def process(self):
-        >>>         # create graph with loading data in given data_dir
-        >>>         # here create graph with numpy array directly instead
-        >>>         edges = np.array([[0, 1], [1, 2]])
-        >>>         graph = Graph(edges=edges)
-        >>>         self.graphs.append(graph)
-        >>>
-        >>>     def __getitem__(self, index):
-        >>>         # this method and '__len__' method are required when iterating created dataset
-        >>>         graph = self.graphs[index]
-        >>>         return graph.get_all_edges("0")
-        >>>
-        >>>     def __len__(self):
-        >>>         return len(self.graphs)
+        ...     def __init__(self, data_dir):
+        ...         super().__init__(data_dir)
+        ...
+        ...     def process(self):
+        ...         # create graph with loading data in given data_dir
+        ...         # here create graph with numpy array directly instead
+        ...         edges = np.array([[0, 1], [1, 2]])
+        ...         graph = Graph(edges=edges)
+        ...         self.graphs.append(graph)
+        ...
+        ...     def __getitem__(self, index):
+        ...         # this method and '__len__' method are required when iterating created dataset
+        ...         graph = self.graphs[index]
+        ...         return graph.get_all_edges("0")
+        ...
+        ...     def __len__(self):
+        ...         return len(self.graphs)
     """
 
     def __init__(self, data_dir, save_dir="./processed", column_names="graph", num_samples=None, num_parallel_workers=1,
