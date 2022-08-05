@@ -32,8 +32,8 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   explicit MemcpyCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~MemcpyCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+            const std::vector<KernelTensorPtr> &) override {
     MS_EXCEPTION_IF_NULL(base_operator);
     kernel_name_ = base_operator->name();
     return true;

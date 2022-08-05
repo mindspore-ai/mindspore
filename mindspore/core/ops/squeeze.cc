@@ -63,7 +63,8 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
       // If shape dims contain unknown dim, ignore it.
       if (in_shape[LongToSize(idx)] != UNKNOWN_DIM) {
         const std::string ith_shape = "input_x.shape[" + std::to_string(idx) + "]";
-        CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, in_shape[LongToSize(idx)], kEqual, kSqueezedDim, op_name);
+        (void)CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, in_shape[LongToSize(idx)], kEqual, kSqueezedDim,
+                                                        op_name);
       }
     }
     for (int64_t i = 0; i < rank; i++) {
@@ -83,7 +84,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
 
 TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
@@ -92,7 +93,7 @@ MIND_API_OPERATOR_IMPL(Squeeze, BaseOperator);
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t squeeze_input_length = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, squeeze_input_length, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, squeeze_input_length, primitive->name());
   auto type = SqueezeInferType(primitive, input_args);
   auto shape = SqueezeInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
