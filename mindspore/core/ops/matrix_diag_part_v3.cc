@@ -109,10 +109,10 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       }
       max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
-      out_shape.push_back(k_val[1] - k_val[0] + 1);
+      out_shape.push_back(IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
       out_shape.push_back(max_diag_len);
       true_value *= max_diag_len;
-      true_value *= (k_val[1] - k_val[0] + 1);
+      true_value *= (IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
     }
     auto max_length_ptr = primitive->GetAttr("max_length");
     MS_EXCEPTION_IF_NULL(max_length_ptr);

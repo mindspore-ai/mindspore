@@ -55,7 +55,7 @@ AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto infer_type = DataFormatVecPermuteInferType(primitive, input_args);
   auto infer_shape = DataFormatVecPermuteInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

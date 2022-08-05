@@ -61,8 +61,8 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   (void)CheckAndConvertUtils::CheckInteger("indices dim", SizeToLong(indices_shape.size()), kEqual, kDim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of var", SizeToLong(var_shape.size()), kGreaterEqual, kDim,
                                            prim_name);
-  (void)CheckAndConvertUtils::Check("indices shape should be same as the first dimension of var", indices_shape[0],
-                                    kEqual, var_shape[0], prim_name);
+  CheckAndConvertUtils::Check("indices shape should be same as the first dimension of var", indices_shape[0], kEqual,
+                              var_shape[0], prim_name);
   return std::make_shared<abstract::Shape>(var_shape);
 }
 

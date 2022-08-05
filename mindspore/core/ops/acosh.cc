@@ -52,7 +52,7 @@ AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = AcoshInferType(primitive, input_args);
   auto shapes = AcoshInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

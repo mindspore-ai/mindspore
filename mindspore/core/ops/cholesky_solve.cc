@@ -29,11 +29,11 @@ namespace {
 abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t kDefalutRank = 2;
+  const int64_t kDefalutRank = 2;
   const size_t kBatchRank = 3;
-  const size_t kBatchIndex = 3;
-  const size_t kRowIndex = 2;
-  const size_t kColIndex = 1;
+  const int64_t kBatchIndex = 3;
+  const int64_t kRowIndex = 2;
+  const int64_t kColIndex = 1;
   auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto x1_shape = x1_shape_map[kShape];
@@ -100,7 +100,7 @@ AbstractBasePtr CholeskySolveInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto infer_type = CholeskySolveInferType(primitive, input_args);
   auto infer_shape = CholeskySolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

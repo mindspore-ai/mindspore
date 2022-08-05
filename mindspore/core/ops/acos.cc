@@ -53,7 +53,7 @@ AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto types = ACosInferType(primitive, input_args);
   auto shapes = ACosInferShape(primitive, input_args);

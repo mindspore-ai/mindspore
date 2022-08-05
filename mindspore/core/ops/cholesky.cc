@@ -64,7 +64,7 @@ AbstractBasePtr CholeskyInfer(const abstract::AnalysisEnginePtr &, const Primiti
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto infer_type = CholeskyInferType(primitive, input_args);
   auto infer_shape = CholeskyInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

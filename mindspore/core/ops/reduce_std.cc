@@ -35,15 +35,14 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
   auto temp_shape = input_shape;
-  (void)CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
+  CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
   if (axis.size() == 0) {
     for (size_t i = 0; i < input_shape.size(); i++) {
       axis.push_back(i);
     }
   } else {
     for (size_t i = 0; i < axis.size(); ++i) {
-      (void)CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank},
-                                               prim_name);
+      CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank}, prim_name);
       if (axis[i] < 0) {
         axis[i] += input_rank;
       }
@@ -91,7 +90,7 @@ AbstractBasePtr ReduceStdInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = ReduceStdInferType(primitive, input_args);
   auto infer_shape = ReduceStdInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

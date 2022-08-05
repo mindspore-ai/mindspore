@@ -151,7 +151,7 @@ AbstractBasePtr UnsortedSegmentArithmeticInfer(const abstract::AnalysisEnginePtr
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = UnsortedSegmentArithmeticInferType(primitive, input_args);
   auto infer_shape = UnsortedSegmentArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

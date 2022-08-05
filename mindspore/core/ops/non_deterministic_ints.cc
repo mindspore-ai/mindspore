@@ -113,7 +113,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");

@@ -33,7 +33,7 @@ abstract::TupleShapePtr ApplyProximalAdagradInferShape(const PrimitivePtr &primi
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
@@ -73,7 +73,7 @@ TuplePtr ApplyProximalAdagradInferType(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto accum_type = input_args[kInputIndex1]->BuildType();
   auto lr_type = input_args[kInputIndex2]->BuildType();

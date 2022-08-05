@@ -31,7 +31,7 @@ namespace ops {
 namespace {
 const int64_t MAX_LEN = 1000000;
 
-int64_t compute_output_indices_unique_size_int32(int32_t *indices, size_t size) {
+int64_t compute_output_indices_unique_size_int32(const int32_t *indices, size_t size) {
   std::set<int32_t> mat1_indices_set;
   size_t half_size = size / 2;
   for (size_t i = 0; i < half_size; i++) {
@@ -40,7 +40,7 @@ int64_t compute_output_indices_unique_size_int32(int32_t *indices, size_t size) 
   return mat1_indices_set.size();
 }
 
-int64_t compute_output_indices_unique_size_int64(int64_t *indices, size_t size) {
+int64_t compute_output_indices_unique_size_int64(const int64_t *indices, size_t size) {
   std::set<int64_t> mat1_indices_set;
   size_t half_size = size / 2;
   for (size_t i = 0; i < half_size; i++) {
@@ -126,14 +126,14 @@ int64_t GetInt64AlphaData(void *values, TypeId tid, const TypePtr expect_dtype, 
 void CheckAlphaBeta(const std::vector<AbstractBasePtr> &input_args) {
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
-  if (!(alpha_shape.size() == dim1Num && alpha_shape[0] == dim1Num)) {
+  if (!(alpha_shape.size() == dim1Num && alpha_shape[0] == SizeToLong(dim1Num))) {
     if (alpha_shape.size() != dim0Num) {
       MS_EXCEPTION(ValueError) << "For Sspaddmm, alpha shape should be (1,) or ()"
                                << ", but get dim num is " << alpha_shape.size() << ", dim0 size is " << alpha_shape[0]
                                << ".";
     }
   }
-  if (!(beta_shape.size() == dim1Num && beta_shape[0] == dim1Num)) {
+  if (!(beta_shape.size() == dim1Num && beta_shape[0] == SizeToLong(dim1Num))) {
     if (beta_shape.size() != dim0Num) {
       MS_EXCEPTION(ValueError) << "For Sspaddmm, beta shape should be (1,) or ()"
                                << ", but get dim num is " << beta_shape.size() << ", dim0 size is " << beta_shape[0]
@@ -159,7 +159,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices should be a 2-D tensor"
                              << ", while x1_indices dim num is " << x1_indices_shape.size() << ".";
   }
-  if (x1_indices_shape[0] != dim2Num) {
+  if (x1_indices_shape[0] != SizeToLong(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices shape should be (2, n)"
                              << ", while x1_indices shape dim0 is " << x1_indices_shape[0] << ".";
   }
@@ -178,7 +178,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
                              << ", x1_shape should be a 1-D tensor, while x1_shape dim num is " << x1_shape_shape.size()
                              << ".";
   }
-  if (x1_shape_shape[0] != dim2Num) {
+  if (x1_shape_shape[0] != SizeToLong(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", the shape of x1_shape should be [2] but got shape [" << x1_shape_shape[0] << "].";
   }
@@ -186,7 +186,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x2_indices should be a 2-D tensor"
                              << ", while x2_indices dim num is " << x2_indices_shape.size() << ".";
   }
-  if (x2_indices_shape[0] != dim2Num) {
+  if (x2_indices_shape[0] != SizeToLong(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x2_indices shape should be (2, n)"
                              << ", while x2_indices shape dim0 is " << x2_indices_shape[0] << ".";
   }
@@ -205,7 +205,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
                              << ", x2_shape should be a 1-D tensor, while x2_shape dim num is " << x2_shape_shape.size()
                              << ".";
   }
-  if (x2_shape_shape[0] != dim2Num) {
+  if (x2_shape_shape[0] != SizeToLong(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", the shape of x2_shape should be [2] but got shape [" << x2_shape_shape[0] << "].";
   }
@@ -217,7 +217,7 @@ void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
 }
 
 template <typename T>
-void IndicesBoundCheck(T *indices_val, size_t indices_num, T *shape_val, const std::string &name) {
+void IndicesBoundCheck(const T *indices_val, size_t indices_num, const T *shape_val, const std::string &name) {
   if (shape_val[0] <= 0 || shape_val[1] <= 0) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, " << name << "_shape should be positive, "
                              << "while got shape [" << shape_val[0] << ", " << shape_val[1] << "].";

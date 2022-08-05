@@ -92,7 +92,7 @@ MIND_API_OPERATOR_IMPL(Squeeze, BaseOperator);
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t squeeze_input_length = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, squeeze_input_length, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, squeeze_input_length, primitive->name());
   auto type = SqueezeInferType(primitive, input_args);
   auto shape = SqueezeInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

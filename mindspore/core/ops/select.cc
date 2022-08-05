@@ -113,7 +113,7 @@ AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, "ops [select]");
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, "ops [select]");
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

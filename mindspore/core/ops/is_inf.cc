@@ -29,7 +29,7 @@ namespace {
 abstract::ShapePtr IsInfInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -42,7 +42,7 @@ TypePtr IsInfInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     MS_EXCEPTION_IF_NULL(item);
   }
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
                                                    prim->name());
   return std::make_shared<TensorType>(kBool);
