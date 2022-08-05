@@ -44,8 +44,8 @@ constexpr size_t kBIndicesIdx = 8;
 constexpr size_t kBValuesIdx = 9;
 constexpr size_t kAlphaIndex = 10;
 constexpr size_t kBetaIndex = 11;
-constexpr size_t kDefaultRank = 2;
-constexpr size_t kBatchedRank = 3;
+constexpr int64_t kDefaultRank = 2;
+constexpr int64_t kBatchedRank = 3;
 
 inline void CheckSparseShape(const size_t sparse_shape_size, const size_t expected_dim, const std::string &arg_name) {
   if (sparse_shape_size != expected_dim) {
