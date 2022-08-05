@@ -22,10 +22,6 @@
 #include <algorithm>
 #include "transpose_impl_opt.cuh"
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
 // Optimize nchw2nhwc && nhwc2nchw with tiling and shared memory.
 // Firstly, combined 2 dims hw together, treat input and output as 3D tensor.
 // Secondly, determine whether a matrix is a large matrix or a narrow matrix,
@@ -258,16 +254,6 @@ void CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *
                        d_output, cuda_stream);
 }
 
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<Complex<float>>(const size_t size, const size_t shape_size,
-                                                          const Complex<float> *d_input, const size_t *input_shape,
-                                                          const size_t *input_axis, const size_t *d_input_shape,
-                                                          const size_t *d_input_axis, Complex<float> *d_output,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<Complex<double>>(const size_t size, const size_t shape_size,
-                                                          const Complex<double> *d_input, const size_t *input_shape,
-                                                          const size_t *input_axis, const size_t *d_input_shape,
-                                                          const size_t *d_input_axis, Complex<double> *d_output,
-                                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<bool>(const size_t size, const size_t shape_size,
                                                           const bool *d_input, const size_t *input_shape,
                                                           const size_t *input_axis, const size_t *d_input_shape,
@@ -328,16 +314,6 @@ template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint8_t>(const size_t size, 
                                                              const size_t *d_input_axis, uint8_t *d_output,
                                                              cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<Complex<float>>(const size_t size, const size_t shape_size,
-                                                          const Complex<float> *d_input, const size_t *input_shape,
-                                                          const size_t *input_axis, const size_t *d_input_shape,
-                                                          const size_t *d_input_axis, Complex<float> *d_output,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<Complex<double>>(const size_t size, const size_t shape_size,
-                                                          const Complex<double> *d_input, const size_t *input_shape,
-                                                          const size_t *input_axis, const size_t *d_input_shape,
-                                                          const size_t *d_input_axis, Complex<double> *d_output,
-                                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
                                                           const bool *d_input, const size_t *input_shape,
                                                           const size_t *input_axis, const size_t *d_input_shape,

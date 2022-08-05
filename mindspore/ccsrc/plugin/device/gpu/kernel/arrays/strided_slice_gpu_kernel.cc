@@ -15,18 +15,9 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/strided_slice_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
-
-MS_REG_GPU_KERNEL_ONE(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                      StridedSliceGpuKernelMod, Complex<float>)
-MS_REG_GPU_KERNEL_ONE(StridedSlice,
-                      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                      StridedSliceGpuKernelMod, Complex<double>)
 MS_REG_GPU_KERNEL_ONE(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                       StridedSliceGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

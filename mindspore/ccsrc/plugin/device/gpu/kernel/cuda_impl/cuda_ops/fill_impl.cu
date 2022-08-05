@@ -17,10 +17,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_impl.cuh"
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void FillKernel(const size_t m, const size_t n, const T *input, T *output) {
@@ -41,5 +37,3 @@ template CUDA_LIB_EXPORT void Fill<half>(const size_t &m, const size_t &n, const
                                          cudaStream_t stream);
 template CUDA_LIB_EXPORT void Fill<double>(const size_t &m, const size_t &n, const double *input, double *output,
                                            cudaStream_t stream);
-template CUDA_LIB_EXPORT void Fill<Complex<float>>(const size_t &m, const size_t &n, const Complex<float> *input,
-                                           Complex<float> *output, cudaStream_t stream);
