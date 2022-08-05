@@ -251,7 +251,7 @@ def get_bprop_index_addcmul(self):
     mul_op = P.Mul()
 
     def bprop(input_data, x1, x2, value, out, dout):
-        if dout.dtype in [mstype.float16, mstype.float64, mstype.uint8, mstype.int8]:
+        if dout.dtype in [mstype.float16, mstype.float64, mstype.uint8, mstype.int8, mstype.int32, mstype.int64]:
             input_data = F.cast(input_data, mstype.float32)
             x1 = F.cast(x1, mstype.float32)
             x2 = F.cast(x2, mstype.float32)
@@ -265,7 +265,7 @@ def get_bprop_index_addcmul(self):
         _, dx1 = binop_grad_common(inner_out, x1, dout, dx1)
         _, dx2 = binop_grad_common(inner_out, x2, dout, dx2)
         _, dvalue = binop_grad_common(inner_out, value, dout, dvalue)
-        if dout.dtype in [mstype.float16, mstype.uint8, mstype.int8, mstype.float64]:
+        if dout.dtype in [mstype.float16, mstype.uint8, mstype.int8, mstype.float64, mstype.int32, mstype.int64]:
             dinput_data = F.cast(dinput_data, dout.dtype)
             dx1 = F.cast(dx1, dout.dtype)
             dx2 = F.cast(dx2, dout.dtype)

@@ -56,7 +56,7 @@ TypePtr AddcmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
     MS_EXCEPTION_IF_NULL(item);
   }
   auto op_name = prim->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32, kFloat64, kInt8, kUInt8, kInt64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kFloat64, kInt8, kUInt8, kInt64};
   auto input_data_type = input_args[kInputIndex0]->BuildType();
   auto x1_type = input_args[kInputIndex1]->BuildType();
   auto x2_type = input_args[kInputIndex2]->BuildType();
@@ -69,7 +69,6 @@ TypePtr AddcmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   (void)types.emplace("input_data", input_data_type);
   (void)types.emplace("x1", x1_type);
   (void)types.emplace("x2", x2_type);
-  (void)types.emplace("value", value_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return input_data_type;
 }
