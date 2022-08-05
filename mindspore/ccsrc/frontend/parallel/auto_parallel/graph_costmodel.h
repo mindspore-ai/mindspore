@@ -131,7 +131,7 @@ class CostGraph {
                                             const CostPtrList &, CostPtrList *) const;
 
   // Applying Triangle Elimination in DP algorithm. return the left_node
-  OperatorInfoPtr EliminationTriangle(const OperatorInfoPtr &elimi_op, const EdgePtr &edge_left_right);
+  OperatorInfoPtr EliminationTriangle(const OperatorInfoPtr &elimi_op, const EdgePtr &edge_left_right) const;
   void CreateTriangleEliminationCostList(const OperatorInfoPtr &, const CostPtrList &, const CostPtrList &,
                                          const StrategyPtr &, const StrategyPtr &, const StrategyPtr &,
                                          const CostPtrList &, const CostPtrList &, const CostPtrList &,
@@ -145,7 +145,7 @@ class CostGraph {
 
   // Applying the Star Elimination in DP algorithm. Return the successive edges of this merged_op
   // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
-  std::vector<EdgePtr> EliminationStar(const OperatorInfoPtr &op);
+  std::vector<EdgePtr> EliminationStar(const OperatorInfoPtr &op) const;
   void CreateStarEliminationCostList(std::vector<EdgePtr> &, const StrategyPtr &, const CostPtrList &,
                                      const CostPtrList &, const StrategyPtr &, const CostPtrList &,
                                      CostPtrList *) const;

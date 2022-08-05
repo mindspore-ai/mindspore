@@ -29,8 +29,8 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
 from mindspore.log import _LogActionOnce
 from mindspore import log as logger
-from .layers import _check_input_dtype, _check_input_shape
-from .op_parallel_config import default_dpmp_config, OpParallelConfig
+from mindspore.nn.transformer.layers import _check_input_dtype, _check_input_shape
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = ["CrossEntropyLoss"]
 
@@ -88,6 +88,7 @@ class _Softmax(Cell):
         return softmax_result, one_hot_label
 
     def bprop(self, logits, label, out, dout):
+        """The bprop function, just return the gradients."""
         d_logits = F.cast(dout[0], F.dtype(logits))
         return d_logits, F.zeros_like(label)
 
@@ -144,6 +145,7 @@ class _NLLLoss(Cell):
         return loss_reduce
 
     def bprop(self, softmax_result, one_hot_label, out, dout):
+        """The optimized bprop of simplified method"""
         logits = softmax_result - one_hot_label
         logits = logits * P.ExpandDims()(dout, -1) * self.repeat_loss
 

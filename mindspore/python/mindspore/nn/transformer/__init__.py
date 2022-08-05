@@ -18,13 +18,14 @@ NOTE:
     This is an experimental interface that is subject to change or deletion.
 """
 from __future__ import absolute_import
-from .transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, TransformerEncoder, \
+from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, \
+    FeedForward, TransformerEncoder, \
     TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, TransformerOpParallelConfig, \
     EmbeddingOpParallelConfig, TransformerRecomputeConfig
-from .moe import MoEConfig
-from .layers import FixedSparseAttention
-from .loss import CrossEntropyLoss
-from .op_parallel_config import OpParallelConfig
+from mindspore.nn.transformer.moe import MoEConfig
+from mindspore.nn.transformer.layers import FixedSparseAttention
+from mindspore.nn.transformer.loss import CrossEntropyLoss
+from mindspore.nn.transformer.op_parallel_config import OpParallelConfig
 
 __all__ = []
 __all__.extend(transformer.__all__)

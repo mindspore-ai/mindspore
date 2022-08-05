@@ -17,12 +17,12 @@ from __future__ import absolute_import
 import os
 from mindspore import context
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched, _get_ps_context
-from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
+from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
     _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps
-from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
+from mindspore._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",

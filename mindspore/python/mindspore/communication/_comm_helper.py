@@ -18,8 +18,8 @@ import os
 from mindspore import context
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _is_ps_mode, _get_ps_context
 from mindspore import log as logger
-from ._hccl_management import load_lib as hccl_load_lib
-from .._c_expression import get_rank_id, get_rank_size, CollectiveManager
+from mindspore.communication._hccl_management import load_lib as hccl_load_lib
+from mindspore._c_expression import get_rank_id, get_rank_size, CollectiveManager
 
 _HCCL_AVAILABLE = False
 _HCCL_TEST_AVAILABLE = False
@@ -39,7 +39,7 @@ except RuntimeError:
     _HCCL_AVAILABLE = False
 
 if _HCCL_AVAILABLE:
-    from . import _hccl_management as hccl
+    import mindspore.communication._hccl_management as hccl
     try:
         import mindspore._ascend_mpi as mpi
         _MPI_AVAILABLE = True

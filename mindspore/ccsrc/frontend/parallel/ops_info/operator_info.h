@@ -50,7 +50,7 @@ using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
 
-#define FILTER_LOG(x) x ? void(0) : MS_LOG(ERROR)
+#define FILTER_LOG(x) (x) ? void(0) : MS_LOG(ERROR)
 
 class Edge;
 
