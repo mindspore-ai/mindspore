@@ -67,8 +67,8 @@ void CoalesceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  values_size_ = IntToSize(indices_shape[1]);
-  shape_size_ = IntToSize(indices_shape[0]);
+  values_size_ = LongToSize(indices_shape[1]);
+  shape_size_ = LongToSize(indices_shape[0]);
   is_need_retrieve_output_shape_ = true;
 }
 
