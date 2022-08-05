@@ -1904,7 +1904,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   AnfNodePtr while_condition_node = header_block->ForceToWhileCond(condition_node);
   UpdateInterpretForUserNode(while_condition_node, condition_node);
   while_condition_node = HandleInterpret(header_block, while_condition_node, test_node);
-  header_block->ConditionalJump(while_condition_node, body_block, after_block);
+  (void)header_block->ConditionalJump(while_condition_node, body_block, after_block);
 
   body_block->Mature();
   // Parse loop body statements with loop context.
@@ -2594,7 +2594,7 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNo
   }
 }
 
-void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) {
+void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) const {
   for (auto &node : nodes) {
     UpdateInterpretForUserNode(user_node, node);
   }
@@ -2640,7 +2640,7 @@ bool Parser::IsTensorType(const AnfNodePtr &node, const std::string &script_text
 }
 
 bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
-                                       const string &script_text) {
+                                       const string &script_text) const {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(node);
   // If the Tensor is present as type, should not convert Interpret node.

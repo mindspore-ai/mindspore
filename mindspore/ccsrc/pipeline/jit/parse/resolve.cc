@@ -509,7 +509,7 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
     // Resolve Cell instances.
     for (size_t i = 0; i < sequence_size; ++i) {
       auto res = ResolveCellWithAttr(manager, sequence[i], resolve_node, attr);
-      inputs.emplace_back(res);
+      (void)inputs.emplace_back(res);
     }
   } else if (count_msclass == sequence_size) {
     // Resolve MsClass instances.
