@@ -15,7 +15,6 @@
  */
 #include "ops/relu.h"
 #include <string>
-#include <algorithm>
 #include <map>
 #include <set>
 #include <vector>

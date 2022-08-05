@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(in_shape);

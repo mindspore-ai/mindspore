@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CORE_OPS_ELUGRAD_H_
 #define MINDSPORE_CORE_OPS_ELUGRAD_H_
 #include <map>
-#include <vector>
 #include <string>
 #include <memory>
 #include "ops/base_operator.h"

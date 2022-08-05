@@ -116,8 +116,8 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
 TypePtr DynamicResizeNearestNeighborInferType(const PrimitivePtr &prim,
                                               const std::vector<AbstractBasePtr> &input_args) {
   auto valid_types = common_valid_types;
-  valid_types.insert(kComplex128);
-  valid_types.insert(kComplex64);
+  (void)valid_types.insert(kComplex128);
+  (void)valid_types.insert(kComplex64);
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
 }
 }  // namespace

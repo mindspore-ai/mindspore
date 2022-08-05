@@ -62,7 +62,7 @@ void RMSPropCpuKernelMod::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, 
         }
       };
     }
-    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(input_elements_), this, &parallel_search_info_);
     variable = variable + input_elements_;
     mean_square = mean_square + input_elements_;
     moment = moment + input_elements_;

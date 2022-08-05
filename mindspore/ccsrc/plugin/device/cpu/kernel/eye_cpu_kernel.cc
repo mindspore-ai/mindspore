@@ -51,7 +51,7 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   size_t data_num = outputs[0]->size;
   size_t data_size = data_num * sizeof(T);
   auto ouput_ptr = outputs[0]->addr;
-  memset(ouput_ptr, 0.0, data_size);
+  (void)memset(ouput_ptr, 0, data_size);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   T num = static_cast<T>(1);
   for (int64_t i = 0; i < num_min; i++) {

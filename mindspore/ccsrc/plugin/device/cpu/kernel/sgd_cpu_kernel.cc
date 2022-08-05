@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sgd_cpu_kernel.h"
 #include <algorithm>
-#include <thread>
 #include <vector>
 #include <utility>
 

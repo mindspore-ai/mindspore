@@ -17,7 +17,6 @@
 #include <set>
 #include <map>
 #include <string>
-#include <vector>
 
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/op_utils.h"
