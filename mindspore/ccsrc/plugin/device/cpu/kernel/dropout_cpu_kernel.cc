@@ -72,9 +72,9 @@ void DropoutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   std::random_device rd;
   std::mt19937 gen(rd());
   std::bernoulli_distribution dis(keep_prob_);
-  T scale = (T)(1.f / keep_prob_);
+  T scale = static_cast<T>(1.f / keep_prob_);
   for (uint64_t i = 0; i < tensor_size_; ++i) {
-    mask_addr[i] = (T)dis(gen);
+    mask_addr[i] = static_cast<T>(dis(gen));
     output_addr[i] = mask_addr[i] * input_addr[i] * scale;
   }
 }
