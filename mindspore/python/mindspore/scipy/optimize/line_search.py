@@ -86,13 +86,13 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
     Tries cubic, quadratic, and bisection methods of zooming.
     """
     # Constant tensors which avoid loop unrolling
-    _FLOAT_ONE = _to_tensor(1., dtype=a_low.dtype)
-    _BOOL_FALSE = _to_tensor(False)
-    _INT_ZERO = _to_tensor(0)
+    const_float_one = _to_tensor(1., dtype=a_low.dtype)
+    const_bool_false = _to_tensor(False)
+    const_int_zero = _to_tensor(0)
     state = {
-        "done": _BOOL_FALSE,
-        "failed": _BOOL_FALSE,
-        "j": _INT_ZERO,
+        "done": const_bool_false,
+        "failed": const_bool_false,
+        "j": const_int_zero,
         "a_low": a_low,
         "phi_low": phi_low,
         "dphi_low": dphi_low,
@@ -101,12 +101,12 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
         "dphi_high": dphi_high,
         "a_rec": (a_low + a_high) / 2.,
         "phi_rec": (phi_low + phi_high) / 2.,
-        "a_star": _FLOAT_ONE,
+        "a_star": const_float_one,
         "phi_star": phi_low,
         "dphi_star": dphi_low,
         "g_star": g_0,
-        "nfev": _INT_ZERO,
-        "ngev": _INT_ZERO,
+        "nfev": const_int_zero,
+        "ngev": const_int_zero,
     }
 
     if mnp.logical_not(is_run):
@@ -195,41 +195,41 @@ class LineSearch(nn.Cell):
             return fkk, gkk, mnp.dot(gkk, pk)
 
         # Constant tensors which avoid loop unrolling
-        _FLOAT_ZERO = _to_tensor(0., dtype=xk.dtype)
-        _FLOAT_ONE = _to_tensor(1., dtype=xk.dtype)
-        _BOOL_FALSE = _to_tensor(False)
-        _INT_ZERO = _to_tensor(0)
-        _INT_ONE = _to_tensor(1)
+        const_float_zero = _to_tensor(0., dtype=xk.dtype)
+        const_float_one = _to_tensor(1., dtype=xk.dtype)
+        const_bool_false = _to_tensor(False)
+        const_int_zero = _to_tensor(0)
+        const_int_one = _to_tensor(1)
 
         if old_fval is None or gfk is None:
-            nfev, ngev = _INT_ONE, _INT_ONE
-            phi_0, g_0, dphi_0 = fval_and_grad(_FLOAT_ZERO)
+            nfev, ngev = const_int_one, const_int_one
+            phi_0, g_0, dphi_0 = fval_and_grad(const_float_zero)
         else:
-            nfev, ngev = _INT_ZERO, _INT_ZERO
+            nfev, ngev = const_int_zero, const_int_zero
             phi_0, g_0 = old_fval, gfk
             dphi_0 = mnp.dot(g_0, pk)
 
         if old_old_fval is None:
-            start_value = _FLOAT_ONE
+            start_value = const_float_one
         else:
             old_phi0 = old_old_fval
             candidate_start_value = 1.01 * 2 * (phi_0 - old_phi0) / dphi_0
             start_value = mnp.where(
                 mnp.isfinite(candidate_start_value),
-                mnp.minimum(candidate_start_value, _FLOAT_ONE),
-                _FLOAT_ONE
+                mnp.minimum(candidate_start_value, const_float_one),
+                const_float_one
             )
 
         state = {
-            "done": _BOOL_FALSE,
-            "failed": _BOOL_FALSE,
-            "i": _INT_ONE,
-            "a_i": _FLOAT_ZERO,
+            "done": const_bool_false,
+            "failed": const_bool_false,
+            "i": const_int_one,
+            "a_i": const_float_zero,
             "phi_i": phi_0,
             "dphi_i": dphi_0,
             "nfev": nfev,
             "ngev": ngev,
-            "a_star": _FLOAT_ZERO,
+            "a_star": const_float_zero,
             "phi_star": phi_0,
             "dphi_star": dphi_0,
             "g_star": g_0,

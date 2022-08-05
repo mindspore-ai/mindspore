@@ -78,19 +78,19 @@ def _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     It does not allow for early termination, but has much less overhead on GPUs.
     """
     # Constant tensor which avoids loop unrolling
-    _INT_ZERO = _to_tensor(0)
+    const_int_zero = _to_tensor(0)
     dtype = b.dtype
     _, b_norm = _safe_normalize(b)
     atol = mnp.maximum(tol * b_norm, _to_tensor(atol), dtype=dtype)
     residual = _matvec(M, b - _matvec(A, x0))
     unit_residual, residual_norm = _safe_normalize(residual)
-    k = _INT_ZERO
+    k = const_int_zero
     x = x0
     while k < maxiter and residual_norm > atol:
         pad_width = ((0, 0),) * unit_residual.ndim + ((0, restart),)
         V = mnp.pad(unit_residual[..., None], pad_width=pad_width)
         H = mnp.eye(restart, restart + 1, dtype=dtype)
-        k_iter = _INT_ZERO
+        k_iter = const_int_zero
         breakdown = _to_tensor(False)
         while k_iter < restart and mnp.logical_not(breakdown):
             V, H, breakdown = arnoldi_iteration(k_iter, A, M, V, H)
@@ -103,7 +103,7 @@ def _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol):
         residual = _matvec(M, b - _matvec(A, x))
         unit_residual, residual_norm = _safe_normalize(residual)
         k += 1
-    return x, F.select(residual_norm > atol, k, _INT_ZERO)
+    return x, F.select(residual_norm > atol, k, const_int_zero)
 
 
 def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
@@ -112,7 +112,7 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     the GMRES process using Givens rotations. This improves numerical stability and gives a free estimate of
     the residual norm that allows for early termination within a single "restart".
     """
-    _INT_ZERO = _to_tensor(0)
+    const_int_zero = _to_tensor(0)
     _, b_norm = _safe_normalize(b)
     atol = mnp.maximum(tol * b_norm, atol)
 
@@ -123,7 +123,7 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     r = _matvec(M, b - _matvec(A, x0))
     r, r_norm = _safe_normalize(r)
 
-    iters = _INT_ZERO
+    iters = const_int_zero
     while iters < maxiter and r_norm > atol:
         V = mnp.pad(r[..., None], ((0, 0),) * r.ndim + ((0, restart),))
         dtype = mnp.result_type(b)
@@ -134,13 +134,13 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
         beta_vec = mnp.zeros((restart + 1), dtype=dtype)
         beta_vec[0] = r_norm
 
-        k = _INT_ZERO
+        k = const_int_zero
         err = r_norm
         while mnp.logical_and(mnp.less(k, restart), mnp.less(ptol, err)):
             V, R, _ = arnoldi_iteration(k, A, M, V, R)
             # Givens rotation
             row_k = R[k, :]
-            i = _INT_ZERO
+            i = const_int_zero
             while i < k:
                 row_k = rotate_vectors(row_k, i, givens[i, 0], givens[i, 1])
                 i += 1
@@ -168,7 +168,7 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
         r, r_norm = _safe_normalize(r)
         x0 = x
         iters += 1
-    return x0, F.select(r_norm > atol, iters, _INT_ZERO)
+    return x0, F.select(r_norm > atol, iters, const_int_zero)
 
 
 class GMRES(nn.Cell):
@@ -360,13 +360,13 @@ def _cg(A, b, x0, tol, atol, maxiter, M):
     building blocks for iterative methods', 1994, pg. 12-14
     """
     # Constant tensor which avoids loop unrolling
-    _INT_ZERO = _to_tensor(0)
+    const_int_zero = _to_tensor(0)
     atol_ = mnp.maximum(atol, tol * _norm(b))
 
     r = b - _matvec(A, x0)
     z = p = _matvec(M, r)
     rho = mnp.dot(r, z)
-    k = _INT_ZERO
+    k = const_int_zero
     x = x0
     while k < maxiter and _norm(r) > atol_:
         q = _matvec(A, p)
@@ -382,7 +382,7 @@ def _cg(A, b, x0, tol, atol, maxiter, M):
 
         k += 1
 
-    return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
+    return x, F.select(_norm(r) > atol_, k, const_int_zero)
 
 
 class CG(nn.Cell):
@@ -535,20 +535,20 @@ class BiCGStab(nn.Cell):
 
     def construct(self, b, x0, tol, atol, maxiter):
         # Constant tensors which avoid loop unrolling
-        _INT_ZERO = _to_tensor(0)
-        _INT_NEG_ONE = _to_tensor(-1)
+        const_int_zero = _to_tensor(0)
+        const_int_neg_one = _to_tensor(-1)
 
-        _float_one = _to_tensor(1., dtype=b.dtype)
+        const_float_one = _to_tensor(1., dtype=b.dtype)
         atol_ = mnp.maximum(atol, tol * _norm(b))
 
         r = r_tilde = v = p = b - _matvec(self.A, x0)
-        rho = alpha = omega = _float_one
-        k = _INT_ZERO
+        rho = alpha = omega = const_float_one
+        k = const_int_zero
         x = x0
         while k < maxiter:
             rho_ = mnp.dot(r_tilde, r)
             if rho_ == 0. or omega == 0.:
-                k = _INT_NEG_ONE
+                k = const_int_neg_one
                 break
 
             beta = rho_ / rho * (alpha / omega)
@@ -572,7 +572,7 @@ class BiCGStab(nn.Cell):
             rho = rho_
             k += 1
 
-        return x, F.select(k == _INT_NEG_ONE or k >= maxiter, k, _INT_ZERO)
+        return x, F.select(k == const_int_neg_one or k >= maxiter, k, const_int_zero)
 
 
 def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
