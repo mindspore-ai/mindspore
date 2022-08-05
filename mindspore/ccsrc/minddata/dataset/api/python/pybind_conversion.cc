@@ -308,7 +308,15 @@ std::shared_ptr<TensorOp> toPyFuncOp(py::object func, DataType::Type data_type) 
 py::list shapesToListOfShape(std::vector<TensorShape> shapes) {
   py::list shape_list;
   for (const auto &shape : shapes) {
-    shape_list.append(shape.AsVector());
+    py::list per_col_shape;
+    for (auto &elem : shape.AsVector()) {
+      if (elem == -1) {
+        per_col_shape.append(py::none());
+      } else {
+        per_col_shape.append(elem);
+      }
+    }
+    shape_list.append(per_col_shape);
   }
   return shape_list;
 }
