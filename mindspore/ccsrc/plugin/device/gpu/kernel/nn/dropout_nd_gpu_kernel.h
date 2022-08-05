@@ -27,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<DropoutNDGpuKernelMod> {
  public:
-  DropoutNDGpuKernelMod() { ResetResource(); }
+  DropoutNDGpuKernelMod() = default;
   ~DropoutNDGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -50,8 +50,6 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void ResetResource() noexcept;
-
   bool CheckDropOutNdShape();
 
   template <typename T>
@@ -62,12 +60,10 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   bool states_init_{false};
   std::vector<size_t> input_shape_;
   size_t input_elements_{};
-  size_t batches_{1};
   size_t channels_{1};
   size_t num_per_channel_{1};
   float keep_prob_{0.5};
   void *cuda_stream_{nullptr};
-  cudnnHandle_t cudnn_handle_{};
   curandGenerator_t cu_rand_generator_{nullptr};
 };
 }  // namespace kernel

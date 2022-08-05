@@ -52,13 +52,9 @@ bool DropoutNDGpuKernelMod::CheckDropOutNdShape() {
                   << "D, but got  " << nd_dims << "D.";
     return false;
   }
-  // Flatten input shape to [batch, channels, XHW] for VMap.
-  batches_ = 1;
-  for (size_t i = 0; i < nd_dims - expected_dims; ++i) {
-    batches_ *= input_shape_.at(i);
-  }
+  // Flatten input shape to [channels, XHW] for VMap.
   channels_ = 1;
-  for (size_t i = nd_dims - expected_dims; i < nd_dims - last_remain_dim; ++i) {
+  for (size_t i = 0; i < nd_dims - last_remain_dim; ++i) {
     channels_ *= input_shape_.at(i);
   }
   return true;
@@ -98,14 +94,12 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  "Failed to SetPseudoRandomGeneratorSeed");
     states_init_ = true;
   }
-  cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
   return true;
 }
 
 int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -118,20 +112,10 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return KRET_RESIZE_FAILED;
   }
   // The number of elements per channel
-  num_per_channel_ = input_elements_ / channels_ / batches_;
+  num_per_channel_ = input_elements_ / channels_;
   size_t workspace_size = channels_ * sizeof(float);
   workspace_size_list_.emplace_back(workspace_size);
   return KRET_OK;
-}
-
-void DropoutNDGpuKernelMod::ResetResource() noexcept {
-  is_null_input_ = false;
-  input_elements_ = 0;
-  channels_ = 0;
-  num_per_channel_ = 0;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
 }
 
 template <typename T>
