@@ -1575,7 +1575,7 @@ class Dataset:
         Args:
             estimate (bool): If `estimate` is False, will return the shapes of first data row.
                 Otherwise, will iterate the whole dataset and return the estimated shapes of data row,
-                where dynamic shape is marked as -1 (used in dynamic data shapes scenario). Default: False.
+                where dynamic shape is marked as None (used in dynamic data shapes scenario). Default: False.
 
         Returns:
             list, list of shapes of each column.
