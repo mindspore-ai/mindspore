@@ -71,7 +71,7 @@ bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   std::unordered_set<T> y_set;
   y_set.reserve(y_size_);
   for (int64_t i = 0; i < y_size_; ++i) {
-    y_set.insert(y_addr[i]);
+    (void)y_set.insert(y_addr[i]);
   }
   // Compute the size of the output.
   out_size_ = 0;

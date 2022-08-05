@@ -6598,7 +6598,6 @@ class STFT(Primitive):
 
     input:
         - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
-          n_fft (int): The size of Fourier transform.
         - **window** (Tensor) - the optional window function.
 
 
