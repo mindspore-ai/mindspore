@@ -657,6 +657,9 @@ std::vector<MSTensor> ModelPool::GetInputs() {
       return {};
     }
     tensor->SetShape(model_pool_inputs_.at(i).Shape());
+    tensor->SetFormat(model_pool_inputs_.at(i).format());
+    tensor->SetAllocator(model_pool_inputs_.at(i).allocator());
+    tensor->SetQuantParams(model_pool_inputs_.at(i).QuantParams());
     inputs.push_back(*tensor);
     delete tensor;
   }
@@ -677,6 +680,9 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
       return {};
     }
     tensor->SetShape(model_pool_outputs_.at(i).Shape());
+    tensor->SetFormat(model_pool_outputs_.at(i).format());
+    tensor->SetAllocator(model_pool_outputs_.at(i).allocator());
+    tensor->SetQuantParams(model_pool_outputs_.at(i).QuantParams());
     outputs.push_back(*tensor);
     delete tensor;
   }
@@ -802,6 +808,20 @@ Status ModelPool::InitAdvancedStrategy(const char *model_buf, size_t size, int b
     return kSuccess;
   }
   auto advanced_thread_num = kDefaultThreadsNum;
+  if (numa_available_ && static_cast<size_t>(advanced_thread_num) > numa_physical_cores_.front().size()) {
+    MS_LOG(WARNING) << "not use advanced strategy | numa available: " << numa_available_ << " | "
+                    << " advanced thread num[" << advanced_thread_num << "] is more than one numa physical core num["
+                    << numa_physical_cores_.front().size() << "]";
+    use_advanced_strategy_ = false;
+    return kSuccess;
+  }
+  if (!numa_available_ && advanced_thread_num > lite::GetCoreNum()) {
+    MS_LOG(WARNING) << "not use advanced strategy | numa available: " << numa_available_ << " | "
+                    << " advanced thread num[" << advanced_thread_num << "] is more than all core num["
+                    << lite::GetCoreNum() << "]";
+    use_advanced_strategy_ = false;
+    return kSuccess;
+  }
   model_pool_info_[ADVANCED].use_numa = numa_available_;
   auto status = SetDefaultOptimalModelNum(advanced_thread_num, ADVANCED);
   if (status != kSuccess) {
