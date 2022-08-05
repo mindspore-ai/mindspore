@@ -109,8 +109,8 @@ float GetSparsity(const std::vector<T> &data_vector) {
 
 template <typename T>
 float GetClipRate(const T *origin, const T *compared, size_t size) {
-  MS_ASSERT(vector_a != nullptr);
-  MS_ASSERT(vector_b != nullptr);
+  MS_ASSERT(origin != nullptr);
+  MS_ASSERT(compared != nullptr);
   MS_ASSERT(size > 0);
   auto min = *std::min_element(compared, compared + size);
   auto max = *std::max_element(compared, compared + size);

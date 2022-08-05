@@ -225,8 +225,9 @@ class WeightDecoder {
 
   template <typename T>
   static int DecodeKMeansData(lite::Tensor *tensor, T **dequant_data) {
-    *dequant_data = static_cast<T *>(malloc(tensor->ElementsNum() * sizeof(T)));
     CHECK_NULL_RETURN(dequant_data);
+    *dequant_data = static_cast<T *>(malloc(tensor->ElementsNum() * sizeof(T)));
+    CHECK_NULL_RETURN(*dequant_data);
     for (int64_t i = 0; i < tensor->ElementsNum(); i++) {
       auto index = static_cast<int8_t *>(tensor->data())[i] - INT8_MIN;
       (*dequant_data)[i] = static_cast<T>(tensor->quant_clusters().at(index));
