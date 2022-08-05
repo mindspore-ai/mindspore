@@ -38,6 +38,8 @@ from ..operations.nn_ops import MultilabelMarginLoss
 from ..operations.nn_ops import NthElement
 from ..operations.nn_ops import UpsampleTrilinear3D
 from ..operations._grad_ops import UpsampleTrilinear3DGrad
+from ..operations.nn_ops import Pdist
+from ..operations._grad_ops import PdistGrad
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
 from ..operations.nn_ops import AvgPoolV1
@@ -143,6 +145,18 @@ def get_bprop_celu(self):
         greater = greater_equal(x, 0.0)
         lesser = less(x, 0.0)
         dx = dout * (greater * 1.0 + lesser * (out / alpha + 1.0))
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Pdist)
+def get_bprop_pdist(self):
+    """Generate bprop for Pdist"""
+    input_grad = PdistGrad(p=self.p)
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x, out)
         return (dx,)
 
     return bprop
