@@ -14,16 +14,17 @@
 # ============================================================================
 
 """bprop primitives"""
+from .._utils.utils import is_shape_unknown
+from .grad_base import bprops, bprop_getters
+from ..composite.multitype_ops._constexpr_utils import infer_out_shape
+from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ..operations._sparse_grad_ops import SparseAddGrad
 from ...common import dtype as mstype
 from .. import functional as F
 from .. import operations as P
 from ..operations import _csr_ops
-from ..operations.sparse_ops import SparseAdd
-from ..operations._sparse_grad_ops import SparseAddGrad
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..composite.multitype_ops._constexpr_utils import infer_out_shape
-from .grad_base import bprops, bprop_getters
-from .._utils.utils import is_shape_unknown
+from ..operations.sparse_ops import SparseAdd, CSRSparseMatrixToDense, CSRSparseMatrixToSparseTensor, \
+    DenseToCSRSparseMatrix
 
 # Unused parameters are placeholders.
 
@@ -99,6 +100,7 @@ def get_bprop_sparse_add(self):
     shape_op = P.Shape()
     dyn_shape_op = P.TensorShape()
     reshape = P.Reshape()
+
     def bprop(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape, thresh, out, dout):
         dx1, dx2 = sparse_add_grad(dout[1], x1_indices, x2_indices, out[0])
         shp = shape_op(x1_indices)
@@ -299,3 +301,10 @@ def get_bprop_coo2csr(self):
     def bprop(row_indices, height, out, dout):
         return zeros_like(row_indices), zeros_like(height)
     return bprop
+
+
+@bprops.register(CSRSparseMatrixToDense)
+def bprop_csr_sparse_matrix_to_dense(shape, batch, indptr, indices, values, out, dout):
+    """Backpropagator for primitive `CSRSparseMatrixToDense`."""
+    index, _, _ = CSRSparseMatrixToSparseTensor()(shape, batch, indptr, indices, values)
+    return DenseToCSRSparseMatrix()(dout, index)

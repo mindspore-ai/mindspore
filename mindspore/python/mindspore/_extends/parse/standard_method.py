@@ -2110,8 +2110,7 @@ def csr_to_coo(x):
 
 def csr_to_dense(x):
     """convert csr to dense."""
-    coo_tensor = x.to_coo()
-    return coo_tensor.to_dense()
+    return F.csr_to_dense(x)
 
 
 def random_categorical_(x, num_sample, seed=0, dtype=mstype.int64):

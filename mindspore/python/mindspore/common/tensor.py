@@ -1991,10 +1991,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -5373,8 +5373,7 @@ class CSRTensor(CSRTensor_):
         Supported Platforms:
             ``GPU``
         """
-        coo_tensor = self.to_coo()
-        return coo_tensor.to_dense()
+        return tensor_operator_registry.get("csr_to_dense")(self)
 
     def astype(self, dtype):
         """
@@ -5510,7 +5509,6 @@ class CSRTensor(CSRTensor_):
         """
         data = self.values.abs()
         return CSRTensor(self.indptr, self.indices, data, self.shape)
-
 
     def add(self, b, alpha, beta):
         """

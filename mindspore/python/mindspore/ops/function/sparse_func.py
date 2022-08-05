@@ -22,7 +22,8 @@ from ..operations.sparse_ops import (
     SparseConcat,
     SparseAdd,
     SparseMatrixAdd,
-    SparseMatrixSoftmax
+    SparseMatrixSoftmax,
+    CSRSparseMatrixToDense
 )
 from ..operations.array_ops import GatherNd, Coalesce
 from ..operations import _csr_ops
@@ -36,6 +37,7 @@ dense_to_csr = DenseToCSRSparseMatrix()
 csr_sparse_matrix_to_sparse_tensor = CSRSparseMatrixToSparseTensor()
 batch_csr_pointers_empty = Tensor([0, -1], dtype=mstype.int32)
 coalesce_op = Coalesce()
+csr_sparse_matrix_to_dense = CSRSparseMatrixToDense()
 
 
 @constexpr
@@ -252,6 +254,45 @@ def csr_to_coo(tensor):
     indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
                                                             tensor.indptr, tensor.indices, tensor.values)
     return COOTensor(indices, values, shape)
+
+
+def csr_to_dense(csr_tensor):
+    """
+    Converts a CSRTensor to its dense form.
+
+    Note:
+        Only 2-D CSRTensor is supported for now.
+
+    Args:
+        csr_tensor: A CSRTensor, must be 2-D.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If input is not a CSRTensor.
+        ValueError: If input CSRTensor is not 2-D.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> from mindspore import Tensor, CSRTensor, ops
+        >>> indptr = Tensor([0, 1, 2]).astype("int32")
+        >>> indices = Tensor([0, 1]).astype("int32")
+        >>> values = Tensor([2, 1]).astype("float32")
+        >>> shape = (2, 4)
+        >>> x = CSRTensor(indptr, indices, values, shape)
+        >>> output = ops.csr_to_dense(x)
+        >>> print(output)
+    """
+    if not isinstance(csr_tensor, CSRTensor):
+        raise_type_error("For functional operator csr_to_dense, input argument must be a CSRTensor.")
+    if len(csr_tensor.shape) != 2:
+        raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
+    shape = csr_tensor.shape
+    return csr_sparse_matrix_to_dense(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
+                                      csr_tensor.indptr, csr_tensor.indices, csr_tensor.values)
 
 
 # deprecated, will be removed once `csr_to_coo` supports all backends.
@@ -644,7 +685,8 @@ __all__ = [
     'sparse_add',
     'sparse_concat',
     'csr_add',
-    'csr_softmax'
+    'csr_softmax',
+    'csr_to_dense'
 ]
 
 __all__.sort()
