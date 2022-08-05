@@ -110,7 +110,7 @@ void ArgMinMaxDim0(const float *input, void *output, float *output_value, const 
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       int offset = param->in_strides_[0] * j + i;
-      param->arg_elements_[j].index_ = j;
+      param->arg_elements_[j].index_ = (uint32_t)j;
       param->arg_elements_[j].data_.f_data_ = input[offset];
     }
     qsort(param->arg_elements_, in_shape[0], sizeof(ArgElement), *compare_func);
@@ -175,7 +175,7 @@ void ArgMinMaxDim2(const float *input, void *output, float *output_value, const 
       for (int k = 0; k < param->in_strides_[2]; ++k) {
         for (int l = 0; l < in_shape2; ++l) {
           int offset = param->in_strides_[2] * l + k + in_dim1_offset;
-          param->arg_elements_[l].index_ = l;
+          param->arg_elements_[l].index_ = (uint32_t)l;
           param->arg_elements_[l].data_.f_data_ = input[offset];
         }
         qsort(param->arg_elements_, in_shape2, sizeof(ArgElement), *compare_func);
@@ -213,7 +213,7 @@ void ArgMinMaxDim3(const float *input, void *output, float *output_value, const 
         int out_dim2_offset = k * param->out_strides_[2] + out_dim1_offset;
         for (int l = 0; l < in_shape3; ++l) {
           int offset = l + in_dim2_offset;
-          param->arg_elements_[l].index_ = l;
+          param->arg_elements_[l].index_ = (uint32_t)l;
           param->arg_elements_[l].data_.f_data_ = input[offset];
         }
         qsort(param->arg_elements_, in_shape3, sizeof(ArgElement), *compare_func);
