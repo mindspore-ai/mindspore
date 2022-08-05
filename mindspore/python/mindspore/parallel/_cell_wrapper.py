@@ -31,6 +31,7 @@ class AllGatherCell(Cell):
         super(AllGatherCell, self).__init__(auto_prefix=False)
 
         self.allgather = AllGather(group)
+        self.add_flags(skip_auto_parallel_compile=True)
 
     @ms_function()
     def construct(self, x):
@@ -52,6 +53,7 @@ class SaveOptShardCkptCell(Cell):
         super(SaveOptShardCkptCell, self).__init__(auto_prefix=False)
         self.allgather1 = AllGather(group)
         self.allgather2 = AllGather()
+        self.add_flags(skip_auto_parallel_compile=True)
 
     def construct(self, x):
         x = self.allgather1(x)

@@ -818,7 +818,6 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
             allgather_net = get_allgather_cell(opt_shard_group, False)
         net.parallel_parameter_merge_net_dict[param_name] = allgather_net
     if allgather_net:
-        allgather_net.add_flags(stand_alone=True)
         param_data = allgather_net(param_data)
     if mp_weight and integrated_save:
         param_data = _reshape_param_data(param_data, dev_mat, tensor_map)

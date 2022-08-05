@@ -757,6 +757,7 @@ class _BroadCastCell(Cell):
             self.broadcast = P.Broadcast(0, group="BroadcastWorldGroup")
         else:
             self.broadcast = P.Broadcast(0)
+        self.add_flags(skip_auto_parallel_compile=True)
 
     def construct(self):
         datatypes = self.map_(F.partial(_get_datatype), self.params)

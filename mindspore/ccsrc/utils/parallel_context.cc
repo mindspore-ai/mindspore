@@ -312,7 +312,7 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
 
 bool ParallelContext::IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(kStandalone)) {
+  if (func_graph->has_flag(kSkipAutoParallelCompile)) {
     return false;
   }
 

@@ -60,7 +60,8 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
-static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
+static const std::set<std::string> COMMUNICATION_OPS = {
+  ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER, BROADCAST, NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM};
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
 const uint32_t MAX_BFS_DEPTH = 7;
@@ -514,7 +515,7 @@ bool IsCommunicationOp(const PrimitivePtr &prim) {
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
 }
 
-bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
+void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -531,12 +532,14 @@ bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
 
     if (IsCommunicationOp(prim) && cnode->in_forward_flag()) {
       MS_EXCEPTION_IF_NULL(prim_value_node->scope());
-      MS_LOG(INFO) << "The graph contain communication op: " << prim->name() << ", scope name is "
-                   << prim_value_node->scope()->name();
-      return true;
+      MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+      std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+      MS_LOG(EXCEPTION) << "If the parallel mode is semi_auto_parallel or auto_parallel, the graph can not contain "
+                           "communication op, the parallel mode is "
+                        << parallel_mode << ", and the graph has communication op : " << prim->name()
+                        << ", scope name is " << prim_value_node->scope()->name();
     }
   }
-  return false;
 }
 
 void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution) {
@@ -3233,9 +3236,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     // mark the forward cnodes, parallel only care these nodes
     MarkForwardCNode(root);
 
-    if (FindCommunicationOp(all_nodes)) {
-      MS_LOG(EXCEPTION) << "The graph contain communication op";
-    }
+    ExceptionIfHasCommunicationOp(all_nodes);
 
     if (IsInsertVirtualOutput(root)) {
       InsertVirtualOutput(root, all_nodes);

@@ -82,7 +82,8 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   bool changes = false;
   // control whether use model_parallel mode
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
-  if (root->has_flag(kStandalone) || parallel_mode != kAutoParallel || root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
+  if (root->has_flag(kSkipAutoParallelCompile) || parallel_mode != kAutoParallel ||
+      root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
     return changes;
   }
 
@@ -116,14 +117,14 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   }
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
+
+  ExceptionIfHasCommunicationOp(all_nodes);
+
   if (IsInsertVirtualOutput(root)) {
     InsertVirtualOutput(root, all_nodes);
     AnfNodePtr ret_after = root->get_return();
     MS_EXCEPTION_IF_NULL(ret_after);
     all_nodes = DeepScopedGraphSearch(ret_after);
-  }
-  if (FindCommunicationOp(all_nodes)) {
-    MS_LOG(EXCEPTION) << "The graph contain communication op";
   }
 
   // search parallelization strategy
