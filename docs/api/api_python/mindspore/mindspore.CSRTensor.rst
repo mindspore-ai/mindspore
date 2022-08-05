@@ -34,6 +34,18 @@ mindspore.CSRTensor
 
         返回：
             CSRTensor。
+        
+    .. py:method:: add(b, alpha, beta)
+
+        两个CSR张量求和：C = alpha * a + beta * b
+
+        参数：
+            - **b** (CSRTensor) - 稀疏CSR张量。
+            - **alpha** (Tensor) - 稠密张量，shape必须可以广播给self。
+            - **beta** (Tensor) - 稠密张量，shape必须可以广播给 `b` 。
+
+        返回：
+            CSRTensor，求和。
 
     .. py:method:: astype(dtype)
 
