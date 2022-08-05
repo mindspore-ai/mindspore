@@ -64,7 +64,7 @@ Status BiasAddInfo::InferTensorMap() {
   for (size_t i = 0; i < sub_a_strategy_size; ++i) {
     sub_a_tensor_map.push_back(static_cast<int64_t>(LAST_INDEX(sub_a_strategy_size) - i));
   }
-  sub_b_tensor_map.push_back(static_cast<int64_t>(LAST_INDEX(sub_a_strategy_size) - static_cast<size_t>(1)));
+  sub_b_tensor_map.push_back(static_cast<int64_t>(LAST_INDEX(sub_a_strategy_size) - static_cast<int64_t>(1)));
 
   inputs_tensor_map_.push_back(sub_a_tensor_map);
   inputs_tensor_map_.push_back(sub_b_tensor_map);

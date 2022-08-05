@@ -211,7 +211,7 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
   }
 }
 
-Status GroupManager::DestroyGroup(const std::string &group_name) {
+Status GroupManager::DestroyGroup(const std::string &group_name) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);

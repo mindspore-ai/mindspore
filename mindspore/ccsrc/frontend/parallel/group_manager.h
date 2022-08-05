@@ -70,7 +70,7 @@ class GroupManager {
   bool CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
                              const std::vector<uint32_t> ranks, uint32_t device_id) const;
   bool DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name, uint32_t device_id) const;
-  Status DestroyGroup(const std::string &group_name);
+  Status DestroyGroup(const std::string &group_name) const;
   // the key is group name (name_)
   std::map<std::string, Group> groups_;
   std::string world_group_;
