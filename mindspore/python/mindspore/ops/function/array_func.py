@@ -2689,8 +2689,8 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         >>> print(output)
         [[ 1  2  8  4  8]]
     """
-    tensor_scatter_elements_ = TensorScatterElements(axis, reduction)
-    return tensor_scatter_elements_(input_x, indices, updates)
+    _tensor_scatter_elements = _get_cache_prim(TensorScatterElements)(axis, reduction)
+    return _tensor_scatter_elements(input_x, indices, updates)
 
 
 def space_to_batch_nd(input_x, block_size, paddings):
