@@ -993,7 +993,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   int64_t rank_base = SizeToLong(shape_base.size());
   ShapeVector min_shape_base = tensor_base->shape()->min_shape();
   ShapeVector max_shape_base = tensor_base->shape()->max_shape();
-  CheckMinMaxShape(shape_base, &min_shape_base, &max_shape_base);
 
   primitive->set_attr("T", tensor_base->element()->BuildType());
   primitive->set_attr("inputNums", MakeValue(SizeToLong(tuple_len)));
@@ -1016,7 +1015,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
     int64_t rank_tensor = SizeToLong(shape_tensor.size());
     ShapeVector min_shape_tensor = tensor->shape()->min_shape();
     ShapeVector max_shape_tensor = tensor->shape()->max_shape();
-    CheckMinMaxShape(shape_tensor, &min_shape_tensor, &max_shape_tensor);
     (void)CheckDtypeSame(op_name, tensor_base, tensor);
     if (rank_tensor != rank_base) {
       MS_LOG(EXCEPTION) << op_name << " can not concat element " << i << " with the first element: Wrong Rank";
@@ -1040,7 +1038,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   auto shape = ret->shape()->shape();
   auto min_shape = ret->shape()->min_shape();
   auto max_shape = ret->shape()->max_shape();
-  CheckMinMaxShape(shape, &min_shape, &max_shape);
   shape[axis_value] = all_shp;
   min_shape[axis_value] = min_all_shp;
   max_shape[axis_value] = max_all_shp;

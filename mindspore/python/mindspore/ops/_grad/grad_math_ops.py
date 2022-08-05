@@ -180,7 +180,7 @@ def _dyn_reduced_shape(input_shape, axis):
         for i in axis:
             real_axis += ((i + input_rank) % input_rank,)
         axis_shape = (len(real_axis),)
-    return DynamicStitch()([to_array(range(input_rank)), to_array(axis)],
+    return DynamicStitch()([to_array(range(input_rank)), to_array(real_axis)],
                            [input_shape, P.Fill()(ms.int32, axis_shape, 1)])
 
 
