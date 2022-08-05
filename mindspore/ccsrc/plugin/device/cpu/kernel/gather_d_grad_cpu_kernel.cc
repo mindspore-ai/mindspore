@@ -160,7 +160,8 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   // grad_cargo_size
   std::vector<size_t> grad_cargo_size = std::vector<size_t>(grad_shape_.size(), 1);
   for (int i = static_cast<int>(grad_cargo_size.size()) - 2; i >= 0; --i) {
-    grad_cargo_size[i] = grad_shape_[i + 1] * grad_cargo_size[i + 1];
+    auto idx = IntToSize(i);
+    grad_cargo_size[idx] = grad_shape_[idx + 1] * grad_cargo_size[idx + 1];
   }
 
   // copy task
