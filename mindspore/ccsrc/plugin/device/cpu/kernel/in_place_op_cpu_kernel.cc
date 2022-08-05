@@ -40,10 +40,9 @@ struct Sub {
     return static_cast<T>(lhs - rhs);
   }
 };
-
 struct Update {
   template <typename T>
-  inline T operator()(const T &lhs, const T &rhs) const {
+  inline T operator()(const T &rhs) const {
     return rhs;
   }
 };
@@ -52,6 +51,13 @@ struct NoCheck {
   template <typename T>
   static inline void compute(T *x, const int64_t x_idx, const T *v, const int64_t v_idx) {
     x[x_idx] = Op()(x[x_idx], v[v_idx]);
+  }
+};
+template <typename Op>
+struct NoCheckUpdate {
+  template <typename T>
+  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+    x[x_idx] = Op()(v[v_idx]);
   }
 };
 template <typename Op>
@@ -91,7 +97,7 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     static std::unordered_map<std::string, TypeComputeFunc> inplaceOpFuncMap = {
       {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Add>>},
       {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Sub>>},
-      {prim::kPrimInplaceUpdate->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Update>>},
+      {prim::kPrimInplaceUpdate->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheckUpdate<Update>>},
     };
     static std::unordered_map<std::string, TypeComputeFunc> inplaceOpAtomicFuncMap = {
       {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Atomic<Add>>},

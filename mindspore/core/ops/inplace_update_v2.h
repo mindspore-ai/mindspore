@@ -35,7 +35,7 @@ class MIND_API InplaceUpdateV2 : public BaseOperator {
   /// \brief Constructor.
   InplaceUpdateV2() : BaseOperator(kNameInplaceUpdateV2) { InitIOName({"x", "indices", "v"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.InplaceUpdateV2 for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 abstract::AbstractBasePtr InplaceUpdateV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
