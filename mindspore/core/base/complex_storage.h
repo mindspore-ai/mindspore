@@ -17,6 +17,7 @@
 #define MINDSPORE_CORE_BASE_COMPLEX_STORAGE_H_
 
 #include "base/float16.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 
@@ -62,7 +63,12 @@ struct alignas(sizeof(T) * 2) ComplexStorage {
 
 template <typename T>
 inline bool operator==(const ComplexStorage<T> &lhs, const ComplexStorage<T> &rhs) {
-  return (lhs.real_ - rhs.real_ == 0) && (lhs.imag_ - rhs.imag_ == 0);
+  if constexpr (std::is_same_v<T, double>) {
+    return common::IsDoubleEqual(lhs.real_, rhs.real_) && common::IsDoubleEqual(lhs.imag_, rhs.imag_);
+  } else if constexpr (std::is_same_v<T, float>) {
+    return common::IsFloatEqual(lhs.real_, rhs.real_) && common::IsFloatEqual(lhs.imag_, rhs.imag_);
+  }
+  return (lhs.real_ == rhs.real_) && (lhs.imag_ == rhs.imag_);
 }
 
 template <typename T>
