@@ -59,31 +59,32 @@ class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  void ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count,
-                   const TransposeParameter *transpose_param);
+  void ParallelRun(const T *input_addr, T *output_addr, const std::vector<int> &output_shape, size_t count,
+                   const TransposeParameter *transpose_param) const;
   template <typename T>
-  int DoTranspose(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param);
+  ErrorCodeCommonEnum DoTranspose(const T *in_data, T *out_data, const std::vector<int> &output_shape,
+                                  const TransposeParameter *transpose_param) const;
   template <typename T>
   void TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *, const int *perm,
-                     const int *output_shape) const;
+                     const std::vector<int> &output_shape) const;
   template <typename T>
   void TransposeDim3(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape) const;
+                     const std::vector<int> &output_shape) const;
   template <typename T>
   void TransposeDim4(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+                     const std::vector<int> &output_shape) const;
   template <typename T>
   void TransposeDim5(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+                     const std::vector<int> &output_shape) const;
   template <typename T>
   void TransposeDim6(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+                     const std::vector<int> &output_shape) const;
   template <typename T>
   void TransposeDim7(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
-                     const int *output_shape);
+                     const std::vector<int> &output_shape) const;
   template <typename T>
-  void TransposeDims(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param,
-                     int task_id, int thread_num);
+  void TransposeDims(const T *in_data, T *out_data, const std::vector<int> &output_shape,
+                     const TransposeParameter *transpose_param, int task_id, int thread_num) const;
 
   TransposeParameter transpose_param_;
   std::vector<int64_t> input_shape_;
