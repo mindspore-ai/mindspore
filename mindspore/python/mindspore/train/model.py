@@ -714,7 +714,7 @@ class Model:
 
             dataset_helper.continue_send()
 
-            self._eval_durning_train(valid_infos, cb_params, list_callback)
+            self._eval_during_train(valid_infos, cb_params, list_callback)
 
             # In disaster recovery scenarios, need not to execute callbacks if this epoch executes failed.
             # Embedding cache server need not do epoch end callback, this process only run one step.
@@ -743,8 +743,8 @@ class Model:
 
         list_callback.on_train_end(run_context)
 
-    def _eval_durning_train(self, valid_infos, cb_params, list_callback):
-        """Exec eval durnning train process."""
+    def _eval_during_train(self, valid_infos, cb_params, list_callback):
+        """Exec eval during train process."""
         valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
         if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
             train_cur_step_num = cb_params.cur_step_num
@@ -922,7 +922,7 @@ class Model:
                 if should_stop:
                     break
 
-            self._eval_durning_train(valid_infos, cb_params, list_callback)
+            self._eval_during_train(valid_infos, cb_params, list_callback)
 
             train_dataset.reset()
 
