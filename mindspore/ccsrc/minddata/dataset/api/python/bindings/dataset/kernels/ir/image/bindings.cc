@@ -20,6 +20,7 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
+#include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
@@ -78,6 +79,16 @@
 
 namespace mindspore {
 namespace dataset {
+PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::AdjustBrightnessOperation, TensorOperation,
+                                   std::shared_ptr<vision::AdjustBrightnessOperation>>(*m, "AdjustBrightnessOperation")
+                    .def(py::init([](float brightness_factor) {
+                      auto adjust_brightness = std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor);
+                      THROW_IF_ERROR(adjust_brightness->ValidateParams());
+                      return adjust_brightness;
+                    }));
+                }));
+
 PYBIND_REGISTER(
   AdjustGammaOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AdjustGammaOperation, TensorOperation, std::shared_ptr<vision::AdjustGammaOperation>>(

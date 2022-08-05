@@ -995,6 +995,19 @@ def check_bounding_box_augment_cpp(method):
     return new_method
 
 
+def check_adjust_brightness(method):
+    """Wrapper method to check the parameters of AdjustBrightness ops (Python and C++)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [brightness_factor], _ = parse_user_args(method, *args, **kwargs)
+        type_check(brightness_factor, (float, int), "brightness_factor")
+        check_value(brightness_factor, (0, FLOAT_MAX_INTEGER), "brightness_factor")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_adjust_gamma(method):
     """Wrapper method to check the parameters of AdjustGamma ops (Python and C++)."""
 

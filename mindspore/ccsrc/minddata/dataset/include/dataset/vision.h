@@ -36,6 +36,36 @@ class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
+/// \brief Apply brightness adjustment on input image.
+class MS_API AdjustBrightness final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] brightness_factor Adjusts image brightness, non negative real number.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto adjust_brightness_op = vision::AdjustBrightness(2.0);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, adjust_brightness_op},  // operations
+  ///                            {"image"});                         // input columns
+  /// \endcode
+  explicit AdjustBrightness(float brightness_factor);
+
+  /// \brief Destructor.
+  ~AdjustBrightness() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief AdjustGamma TensorTransform.
 /// \note Apply gamma correction on input image.
 class MS_API AdjustGamma final : public TensorTransform {
