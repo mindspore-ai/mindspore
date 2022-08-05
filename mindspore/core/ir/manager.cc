@@ -298,7 +298,7 @@ bool FuncGraphManager::recursive(const FuncGraphPtr &fg) const {
 std::shared_ptr<std::list<FuncGraphPtr>> FuncGraphManager::recursive_graphs(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
   if (recursive(fg)) {
-    if (!recursive_->recursive_map().count(fg)) {
+    if (recursive_->recursive_map().count(fg) == 0) {
       auto trace = std::list<FuncGraphPtr>();
       recursive_->CheckRecursiveGraphs(fg, &trace);
     }
@@ -859,10 +859,9 @@ void FuncGraphTransaction::AddEdge(const AnfNodePtr &src_node, const AnfNodePtr 
 
 void FuncGraphTransaction::Commit() { manager_->CommitChanges(std::move(changes_)); }
 
-DepComputer::DepComputer(const FuncGraphManager *const manager) : manager_(manager) {
+DepComputer::DepComputer(const FuncGraphManager *const manager) : manager_(manager), validate_(false) {
   MS_EXCEPTION_IF_NULL(manager_);
   manager_->signals()->InvalidateComputer.connect(this, &DepComputer::OnInvalidateComputer);
-  validate_ = false;
 }
 
 void DepComputer::Recompute() {
@@ -947,7 +946,7 @@ void ParentComputer::RealRecompute(FuncGraphPtr fg) {
     for (auto &dep : deps) {
       auto parent_deps = this->manager_->func_graph_parents_total(dep);
       for (auto &p_d : parent_deps) {
-        if (deps_copy.count(p_d)) {
+        if (deps_copy.count(p_d) > 0) {
           (void)deps_copy.erase(p_d);
         }
       }
@@ -1093,7 +1092,7 @@ void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<F
       CheckRecursiveGraphs(iter->first, trace);
     }
     trace->pop_back();
-    if (!recursive_map_.count(fg)) {
+    if (recursive_map_.count(fg) == 0) {
       recursive_map_[fg] = nullptr;
     }
   }

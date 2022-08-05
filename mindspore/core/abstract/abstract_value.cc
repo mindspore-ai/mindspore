@@ -1441,7 +1441,6 @@ const TypeId AbstractSparseTensor::GetTypeIdAt(size_t index) const {
   }
   MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx + shape()->size() << "), but got " << index
                     << " for " << ToString();
-  return kTypeUnknown;
 }
 
 TypePtr AbstractSparseTensor::BuildType() const { return std::make_shared<SparseTensorType>(); }
