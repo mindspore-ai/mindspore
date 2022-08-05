@@ -112,6 +112,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_func_graph", &GraphExecutorPy::GetFuncGraph, py::arg("phase") = py::str(""), "Get graph pointer.")
     .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
+    .def("get_params", &GraphExecutorPy::GetParams, py::arg("phase") = py::str(""), "Get Parameters from graph")
     .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
          py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")
     .def("updata_param_node_default_input", &GraphExecutorPy::UpdataParamNodeDefaultInput, py::arg("phase"),

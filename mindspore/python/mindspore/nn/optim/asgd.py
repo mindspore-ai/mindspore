@@ -149,7 +149,7 @@ class ASGD(Optimizer):
     """
 
     @opt_init_args_register
-    def __init__(self, params, learning_rate=0.1, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0.):
+    def __init__(self, params, learning_rate=0.1, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0.0):
 
         super(ASGD, self).__init__(learning_rate, params, weight_decay)
 

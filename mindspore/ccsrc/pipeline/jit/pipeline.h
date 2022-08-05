@@ -97,11 +97,11 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;
 
-  FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
-                          const py::object &broadcast_params = {}) const;
-  void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
-                   const py::object encrypt = py::none(), char *key = nullptr);
+  FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase) const;
+  void ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt = py::none(),
+                   char *key = nullptr);
 
+  py::dict GetParams(const std::string &phase);
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params_value);
   void PyExePath(const py::object &py_exe_path) const;
