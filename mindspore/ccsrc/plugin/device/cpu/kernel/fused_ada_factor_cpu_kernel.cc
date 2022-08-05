@@ -91,7 +91,7 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) const {
+float FusedAdaFactorCpuKernelMod::CalcRMS(const T *input, size_t elem_num) const {
   if (elem_num == 0 || input == nullptr) {
     return 0.0f;
   }
@@ -203,7 +203,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
 template <typename T>
 void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspaces,
-                                              const std::vector<AddressPtr> &) {
+                                              const std::vector<AddressPtr> &) const {
   auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr);
   auto clip_threshold = reinterpret_cast<float *>(inputs[kClipThresholdIndex]->addr)[kScalarIndex];
   auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[kScalarIndex];
