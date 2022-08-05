@@ -46,9 +46,14 @@ std::vector<MSTensor> TensorUtils::TensorPtrToMSTensor(std::vector<mindspore::te
     std::string graph_tensor_name = tensor_names[i];
     auto type_id = graph_tensor->data_type_c();
     auto data_type = static_cast<mindspore::DataType>(type_id);
-    MSTensor ms_tensor(graph_tensor_name, data_type, graph_tensor->shape_c(), graph_tensor->data_c(),
-                       graph_tensor->Size());
-    ms_tensors.push_back(ms_tensor);
+    auto ms_tensor_ptr = MSTensor::CreateRefTensor(graph_tensor_name, data_type, graph_tensor->shape_c(),
+                                                   graph_tensor->data_c(), graph_tensor->Size());
+    if (ms_tensor_ptr == nullptr) {
+      MS_LOG_WARNING << "Failed to create input tensor ";
+      return {};
+    }
+    ms_tensors.push_back(*ms_tensor_ptr);
+    delete ms_tensor_ptr;
   }
 
   return ms_tensors;

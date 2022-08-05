@@ -131,7 +131,7 @@ class ModelPool {
   Strategy UpdateStrategy();
 
  private:
-  bool use_advanced_strategy_ = true;
+  bool use_advanced_strategy_ = false;
   bool use_gpu_ = false;
 
   // different workers get tasks from different task queues.

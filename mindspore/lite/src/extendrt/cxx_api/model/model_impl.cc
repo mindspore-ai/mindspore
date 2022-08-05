@@ -69,10 +69,15 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
     std::string graph_input_name = graph_input_names[i];
     auto type_id = graph_input->data_type_c();
     auto data_type = static_cast<mindspore::DataType>(type_id);
-    MSTensor ms_tensor(graph_input_name, data_type, graph_input->shape_c(), graph_input->data_c(), graph_input->Size());
-    inputs.push_back(ms_tensor);
+    auto ms_tensor_ptr = MSTensor::CreateRefTensor(graph_input_name, data_type, graph_input->shape_c(),
+                                                   graph_input->data_c(), graph_input->Size());
+    if (ms_tensor_ptr == nullptr) {
+      MS_LOG_WARNING << "Failed to create input tensor ";
+      return {};
+    }
+    inputs.push_back(*ms_tensor_ptr);
+    delete ms_tensor_ptr;
   }
-
   return inputs;
 }
 
@@ -88,11 +93,15 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
     std::string graph_output_name = graph_output_names[i];
     auto type_id = graph_output->data_type_c();
     auto data_type = static_cast<mindspore::DataType>(type_id);
-    MSTensor ms_tensor(graph_output_name, data_type, graph_output->shape_c(), graph_output->data_c(),
-                       graph_output->Size());
-    outputs.push_back(ms_tensor);
+    auto ms_tensor_ptr = MSTensor::CreateRefTensor(graph_output_name, data_type, graph_output->shape_c(),
+                                                   graph_output->data_c(), graph_output->Size());
+    if (ms_tensor_ptr == nullptr) {
+      MS_LOG_WARNING << "Failed to create output tensor ";
+      return {};
+    }
+    outputs.push_back(*ms_tensor_ptr);
+    delete ms_tensor_ptr;
   }
-
   return outputs;
 }
 

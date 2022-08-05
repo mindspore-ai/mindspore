@@ -97,7 +97,7 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
-  mindspore::ModelType model_type = kMindIR_Lite;
+  mindspore::ModelType model_type = kMindIR;
   for (auto &section : worker_config_->config_info) {
     for (auto &config : section.second) {
       auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));

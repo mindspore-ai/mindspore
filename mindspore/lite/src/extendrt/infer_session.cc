@@ -33,8 +33,8 @@ namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
-static bool is_infer_single_op = true;
-static bool is_use_lite_session = false;
+static bool is_infer_single_op = false;
+static bool is_use_lite_session = true;
 
 class DefaultInferSession : public InferSession {
  public:

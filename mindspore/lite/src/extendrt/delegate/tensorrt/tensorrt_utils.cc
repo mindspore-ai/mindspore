@@ -159,7 +159,7 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const TensorInfo 
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
   if (dims.nbDims == -1) {
-    MS_LOG(WARNING) << ms_tensor.Name() << " ConvertCudaDims failed, convert as scalar.";
+    MS_LOG(INFO) << ms_tensor.Name() << " ConvertCudaDims failed, convert as scalar.";
     dims.nbDims = 1;
     dims.d[0] = 1;
   }
