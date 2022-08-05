@@ -1,7 +1,7 @@
 mindspore.ops.log1p
 ===================
 
-.. py:function:: mindspore.ops.Log1p
+.. py:function:: mindspore.ops.log1p(x)
 
     对输入Tensor逐元素加一后计算自然对数。
 

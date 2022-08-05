@@ -382,7 +382,6 @@ Array操作
     mindspore.ops.rank
     mindspore.ops.repeat_elements
     mindspore.ops.reshape
-    mindspore.ops.reverse_sequence
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.sequence_mask
