@@ -97,7 +97,7 @@ TypePtr CumSumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   if (is_ascend) {
     valid_x_types = {kInt8, kUInt8, kInt32, kFloat16, kFloat32, kFloat64};
   } else {
-    valid_x_types = common_valid_types;
+    valid_x_types = common_valid_types_with_complex;
   }
   auto x_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_x_types, prim_name);

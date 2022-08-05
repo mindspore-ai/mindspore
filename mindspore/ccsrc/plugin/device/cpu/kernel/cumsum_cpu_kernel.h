@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUMSUM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUMSUM_CPU_KERNEL_H_
 
+#include <complex>
 #include <memory>
 #include <vector>
 #include <map>
