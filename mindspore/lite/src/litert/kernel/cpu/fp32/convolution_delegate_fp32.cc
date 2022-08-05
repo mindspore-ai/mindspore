@@ -35,7 +35,7 @@
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_indirect_fp32.h"
 #endif
 #ifdef ENABLE_AVX
-#include "src/litert/kernel/cpu/fp32/convolution_slidewindow_fp32.h"
+#include "src/litert/kernel/cpu/fp32/convolution_slidewindow_avx_fp32.h"
 #endif
 
 using mindspore::lite::KernelRegistrar;
@@ -246,11 +246,9 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {
   matmul_param_->b_transpose_ = true;
   matmul_param_->a_const_ = input_const_;
   matmul_param_->b_const_ = weight_const_;
-  matmul_param_->conv1x1_origin_weight = origin_weight_;
-  matmul_param_->conv1x1_origin_bias = origin_bias_;
-  auto kernel = new (std::nothrow)
-    kernel::ConvolutionSW1x1CPUKernel(reinterpret_cast<OpParameter *>(matmul_param_), in_tensors_, out_tensors_,
-                                      static_cast<const lite::InnerContext *>(this->ms_context_));
+  auto kernel = new (std::nothrow) kernel::ConvolutionSW1x1CPUKernel(
+    reinterpret_cast<OpParameter *>(matmul_param_), in_tensors_, out_tensors_,
+    static_cast<const lite::InnerContext *>(this->ms_context_), origin_weight_, origin_bias_);
   return kernel;
 }
 
@@ -271,7 +269,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
   }
 
   if (kernel == nullptr && CheckAvxUseSWConv(conv_param)) {
-    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+    kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
       op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
       origin_weight_, origin_bias_);
   }

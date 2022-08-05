@@ -233,8 +233,10 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
 }
 
 int MatmulFp32BaseCPUKernel::PackMatrixBImpl() {
-  auto src_ptr =
-    matrix_b_.has_origin ? matrix_b_.origin_ptr : reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());
+  auto src_ptr = matrix_b_.has_origin
+                   ? matrix_b_.origin_ptr
+                   : (conv1x1_origin_weight_ != nullptr ? conv1x1_origin_weight_
+                                                        : reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data()));
   MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-b source ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_b_pack_fun_ != nullptr, RET_ERROR, "matrix-b func is a nullptr.");
@@ -273,7 +275,10 @@ int MatmulFp32BaseCPUKernel::PackBiasMatrix() {
     MS_LOG(ERROR) << "bias_tensor invalid";
     return RET_ERROR;
   }
-  auto bias_src = matrix_c_.has_origin ? matrix_c_.origin_ptr : reinterpret_cast<float *>(bias_tensor->data());
+  auto bias_src =
+    matrix_c_.has_origin
+      ? matrix_c_.origin_ptr
+      : (conv1x1_origin_bias_ != nullptr ? conv1x1_origin_bias_ : reinterpret_cast<float *>(bias_tensor->data()));
   MS_CHECK_TRUE_MSG(bias_src != nullptr, RET_ERROR, "matrix-c is a nullptr.");
   auto bias_num = bias_tensor->ElementsNum();
   MS_CHECK_TRUE_MSG(bias_num > 0 && params_->col_align_ >= bias_num, RET_ERROR, "matrix-c is invalid.");
@@ -320,7 +325,8 @@ int MatmulFp32BaseCPUKernel::Prepare() {
   MS_CHECK_TRUE_MSG(in_tensors_[SECOND_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
                     "matrix-b's data type is invalid.");
   if (in_tensors_.size() == FOURTH_INPUT) {
-    MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst(), RET_ERROR, "matrix-c must be const when existing.");
+    MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst() || (conv1x1_origin_bias_ != nullptr), RET_ERROR,
+                      "matrix-c must be const when existing.");
     MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
                       "matrix-c's data type is invalid.");
   }
@@ -439,6 +445,41 @@ int MatmulFp32BaseCPUKernel::MatmulPrepare() {
   return MatmulReSize();
 }
 
+int MatmulFp32BaseCPUKernel::Conv1x1Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+
+  if (params_->a_const_ || InferShapeDone()) {
+    auto input = in_tensors_.at(0);
+    params_->row_ = in_tensors_.at(0)->Batch() * input->Height() * input->Width();
+    params_->deep_ = input->Channel();
+  }
+
+  if (params_->b_const_ || InferShapeDone()) {
+    auto weight = in_tensors_.at(1);
+    params_->col_ = weight->Batch();
+    params_->deep_ = weight->Channel();
+  }
+
+  params_->batch = 1;
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
+  a_batch_ = 1;
+  b_batch_ = 1;
+  params_->a_transpose_ = false;
+  params_->b_transpose_ = true;
+
+  auto ret = MatmulFp32BaseCPUKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return Conv1x1ReSize();
+}
+
 int MatmulFp32BaseCPUKernel::ReSize() {
   auto ret = InitParameter();
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Init parameters failed.");
@@ -547,6 +588,17 @@ int MatmulFp32BaseCPUKernel::FullConnectionReSize() {
   params_->row_ = row;
   params_->col_ = out_tensors_.at(0)->shape().back();
   params_->deep_ = (in_tensors_.at(1)->shape()).at(1);
+
+  return MatmulFp32BaseCPUKernel::ReSize();
+}
+
+int MatmulFp32BaseCPUKernel::Conv1x1ReSize() {
+  auto input = in_tensors_.at(0);
+  params_->row_ = in_tensors_.at(0)->Batch() * input->Height() * input->Width();
+  params_->deep_ = input->Channel();
+
+  auto weight = in_tensors_.at(1);
+  params_->col_ = weight->Batch();
 
   return MatmulFp32BaseCPUKernel::ReSize();
 }
