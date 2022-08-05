@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <algorithm>
 #include <set>
 
 #include "ops/base_operator.h"

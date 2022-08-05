@@ -43,7 +43,7 @@ bool LSTMGrad::get_has_bias() const {
   return GetValue<bool>(value_ptr);
 }
 void LSTMGrad::set_dropout(const float dropout) {
-  (void)CheckAndConvertUtils::CheckInRange<float>(kDropout, dropout, kIncludeBoth, {0.0, 1.0}, this->name());
+  CheckAndConvertUtils::CheckInRange<float>(kDropout, dropout, kIncludeBoth, {0.0, 1.0}, this->name());
   (void)AddAttr(kDropout, api::MakeValue(dropout));
 }
 float LSTMGrad::get_dropout() const {

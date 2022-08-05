@@ -142,8 +142,8 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   ShapeVector y_shape = {batch, channel};
   if (is_compile) {
     int64_t max_len = x_shape[kInputIndex2] * x_shape[kInputIndex3];
-    y_shape.emplace_back(abstract::Shape::SHP_ANY);
-    y_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)y_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)y_shape.emplace_back(abstract::Shape::SHP_ANY);
     ShapeVector y_shape_min = {batch, channel, 0, 0};
     ShapeVector y_shape_max = {batch, channel, max_len, max_len};
     return std::make_shared<abstract::Shape>(y_shape, y_shape_min, y_shape_max);
@@ -151,8 +151,8 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION_IF_NULL(output_size_value);
     auto output_size_tensor_ptr = output_size_value->cast<tensor::TensorPtr>();
     auto output_size = reinterpret_cast<int32_t *>(output_size_tensor_ptr->data_c());
-    y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex0]));
-    y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex1]));
+    (void)y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex0]));
+    (void)y_shape.emplace_back(static_cast<int64_t>(output_size[kInputIndex1]));
     Col2ImShapeCheck(x_shape, kernel_size, dilation, padding, stride, static_cast<int64_t>(output_size[kInputIndex0]),
                      static_cast<int64_t>(output_size[kInputIndex1]));
   }

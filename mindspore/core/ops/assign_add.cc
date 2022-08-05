@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = input_args[kInputIndex1]->BuildShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   auto output_shape = x_shape->cast<abstract::ShapePtr>();

@@ -107,8 +107,8 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   param_len += sizeof(uint32_t);
 
   AicpuParamHead aicpu_param_head{};
-  aicpu_param_head.length = param_len;
-  aicpu_param_head.ioAddrNum = io_addrs_num;
+  aicpu_param_head.length = SizeToUint(param_len);
+  aicpu_param_head.ioAddrNum = SizeToUint(io_addrs_num);
 
   if (ext_info_.empty()) {
     MS_LOG(INFO) << "Static Shape Kernel";
@@ -128,7 +128,7 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   }
 
   // size for node_def
-  args_.append(reinterpret_cast<const char *>(&node_def_len), sizeof(uint32_t));
+  (void)args_.append(reinterpret_cast<const char *>(&node_def_len), sizeof(uint32_t));
 
   // When it's aicpu customized ops, taskArgs should append customized attr
   if (node_def_len != 0) {

@@ -18,8 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNRAVEL_INDEX_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
-#include <string>
 #include <utility>
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
