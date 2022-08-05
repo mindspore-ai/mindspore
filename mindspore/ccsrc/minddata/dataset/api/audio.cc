@@ -676,6 +676,28 @@ std::shared_ptr<TensorOperation> MuLawEncoding::Parse() {
   return std::make_shared<MuLawEncodingOperation>(data_->quantization_channels_);
 }
 
+// LinearFbanks Function.
+Status LinearFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
+                    int32_t sample_rate) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(n_freqs > 0,
+                               "LinearFbanks: n_freqs must be greater than 0, got: " + std::to_string(n_freqs));
+
+  CHECK_FAIL_RETURN_UNEXPECTED(f_min >= 0, "LinearFbanks: f_min must be non negative, got: " + std::to_string(f_min));
+  CHECK_FAIL_RETURN_UNEXPECTED(f_max > 0, "LinearFbanks: f_max must be greater than 0, got: " + std::to_string(f_max));
+  CHECK_FAIL_RETURN_UNEXPECTED(n_filter > 0,
+                               "LinearFbanks: n_filter must be greater than 0, got: " + std::to_string(n_filter));
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_rate > 0,
+                               "LinearFbanks: sample_rate must be greater than 0, got: " + std::to_string(sample_rate));
+  CHECK_FAIL_RETURN_UNEXPECTED(f_max > f_min, "LinearFbanks: f_max must be greater than f_min, got: f_min = " +
+                                                std::to_string(f_min) + ", while f_max = " + std::to_string(f_max));
+  std::shared_ptr<dataset::Tensor> fb;
+  RETURN_IF_NOT_OK(CreateLinearFbanks(&fb, n_freqs, f_min, f_max, n_filter, sample_rate));
+  CHECK_FAIL_RETURN_UNEXPECTED(fb->HasData(), "LinearFbanks: get an empty tensor with shape " + fb->shape().ToString());
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(fb));
+  return Status::OK();
+}
+
 // Overdrive Transform Operation.
 struct Overdrive::Data {
   Data(float gain, float color) : gain_(gain), color_(color) {}

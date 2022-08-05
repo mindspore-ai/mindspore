@@ -1187,6 +1187,36 @@ TEST_F(MindDataTestPipeline, TestMelscaleFbanksNormal) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: LinearFbanks.
+/// Description: Test normal operation.
+/// Expectation: As expected.
+TEST_F(MindDataTestPipeline, TestLinearFbanksNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-LinearFbanksNormal.";
+  mindspore::MSTensor output;
+  Status s01 = audio::LinearFbanks(&output, 1024, 0, 1000, 40, 16000);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+/// Feature: LinearFbanks.
+/// Description: Test operation with invalid input.
+/// Expectation: Throw exception as expected.
+TEST_F(MindDataTestPipeline, TestLinearFbanksWithInvalidInput) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLinearFbanksWithInvalidInput.";
+  mindspore::MSTensor output;
+  MS_LOG(INFO) << "n_freqs is too low.";
+  Status s01 = audio::LinearFbanks(&output, 0, 50, 1000, 20, 16000);
+  EXPECT_FALSE(s01.IsOk());
+  MS_LOG(INFO) << "f_max is not greater than f_min.";
+  Status s02 = audio::LinearFbanks(&output, 1024, 1000, 50, 20, 16000);
+  EXPECT_FALSE(s02.IsOk());
+  MS_LOG(INFO) << "n_filter is too low.";
+  Status s03 = audio::LinearFbanks(&output, 1024, 50, 1000, 0, 16000);
+  EXPECT_FALSE(s03.IsOk());
+  MS_LOG(INFO) << "sample_rate is too low.";
+  Status s04 = audio::LinearFbanks(&output, 1024, 50, 1000, 20, 0);
+  EXPECT_FALSE(s04.IsOk());
+}
+
 /// Feature: MuLawDecoding op
 /// Description: Test MuLawDecoding op basic usage
 /// Expectation: The data is processed successfully
@@ -2542,8 +2572,7 @@ TEST_F(MindDataTestPipeline, TestMelScalePipeline) {
   ASSERT_OK(schema3->add_column("waveform", mindspore::DataType::kNumberTypeInt16, {8, 50}));
   ds = RandomData(10, schema3);
   EXPECT_NE(ds, nullptr);
-  auto mel_scale_op3 =
-    audio::MelScale(2, 100, 10, 100, 8, NormType::kSlaney, MelType::kHtk);
+  auto mel_scale_op3 = audio::MelScale(2, 100, 10, 100, 8, NormType::kSlaney, MelType::kHtk);
   ds = ds->Map({mel_scale_op3});
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
