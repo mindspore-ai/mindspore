@@ -105,8 +105,7 @@ def _get_reduce_out_dim(x_dim, x_ndim, batch_axis):
             break
         if i == batch_axis:
             continue
-        else:
-            out_dim += 1
+        out_dim += 1
     return out_dim
 
 
