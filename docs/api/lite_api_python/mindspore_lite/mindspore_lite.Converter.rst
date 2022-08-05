@@ -9,8 +9,8 @@ mindspore_lite.Converter
         参数默认值是None时表示不设置。
 
     参数：
-        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。
-        - **model_file** (str) - 输入模型文件路径。e.g. "/home/user/model.prototxt"。选项：TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" | PYTORCH "\*.pt" or "\*.pth"。
+        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE。
+        - **model_file** (str) - 输入模型文件路径。e.g. "/home/user/model.prototxt"。选项：TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite"。
         - **output_file** (str) - 输出模型文件路径。不需加后缀，可自动生成.ms后缀。e.g. "/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
         - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选。e.g. "/home/user/model.caffemodel"。默认值：""。
         - **config_file** (str，可选) - 作为训练后量化或离线拆分算子并行的配置文件路径，禁用算子融合功能并将插件设置为so路径。默认值：""。
@@ -66,11 +66,11 @@ mindspore_lite.Converter
 
     .. py:method:: get_config_info()
 
-        获取转换的配置信息。
+        获取转换的配置信息。配套set_config_info方法使用，用于在线推理场景。在get_config_info前，请先用set_config_info方法赋值。
 
     .. py:method:: set_config_info(section, config_info)
 
-        设置转换时的配置信息。
+        设置转换时的配置信息。配套get_config_info方法使用，用于在线推理场景。
 
         参数：
             - **section** (str) - 配置参数的类别。配合config_info一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。

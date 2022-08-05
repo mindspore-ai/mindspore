@@ -27,7 +27,7 @@ def check_isinstance(arg_name, arg_value, classes, enable_none=False):
     return arg_value
 
 
-def check_list_of_element(arg_name, arg_value, ele_classes, enable_none=True):
+def check_list_of_element(arg_name, arg_value, ele_classes, enable_none=False):
     """Check arg isinstance of classes"""
     if enable_none:
         if arg_value is None:
@@ -41,14 +41,16 @@ def check_list_of_element(arg_name, arg_value, ele_classes, enable_none=True):
     return arg_value
 
 
-def check_input_shape(input_shape_name, input_shape, enable_none=True):
-    """Check input_shape's type is dict{int: list[int]} or dict{str: list[int]}"""
+def check_input_shape(input_shape_name, input_shape, enable_none=False):
+    """Check input_shape's type is dict{str: list[int]}"""
     if enable_none:
         if input_shape is None:
             return input_shape
     if not isinstance(input_shape, dict):
         raise TypeError(f"{input_shape_name} must be dict, but got {format(type(input_shape))}.")
     for key in input_shape:
+        if not isinstance(key, str):
+            raise TypeError(f"{input_shape_name} key must be str, but got {format(type(input_shape))}.")
         if not isinstance(input_shape[key], list):
             raise TypeError(f"{input_shape_name} value must be list, but got "
                             f"{type(input_shape[key])} at key {key}.")
@@ -59,7 +61,7 @@ def check_input_shape(input_shape_name, input_shape, enable_none=True):
     return input_shape
 
 
-def check_config_info(config_info_name, config_info, enable_none=True):
+def check_config_info(config_info_name, config_info, enable_none=False):
     """Check config_info's type is dict{str: str}"""
     if enable_none:
         if config_info is None:

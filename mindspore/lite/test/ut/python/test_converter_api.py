@@ -184,7 +184,7 @@ def test_converter_26():
 def test_converter_27():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                  output_file="mobilenetv2.tflite", export_mindir=mslite.ModelType.MINDIR_LITE)
-    assert "export_mindir: ModelType.kMindIR_Lite" in str(converter)
+    assert "export_mindir: ModelType.MINDIR_LITE" in str(converter)
 
 
 def test_converter_28():

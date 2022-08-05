@@ -34,6 +34,17 @@ class ModelType(Enum):
     MINDIR_LITE = 4
 
 
+model_type_py_cxx_map = {
+    ModelType.MINDIR: _c_lite_wrapper.ModelType.kMindIR,
+    ModelType.MINDIR_LITE: _c_lite_wrapper.ModelType.kMindIR_Lite,
+}
+
+model_type_cxx_py_map = {
+    _c_lite_wrapper.ModelType.kMindIR: ModelType.MINDIR,
+    _c_lite_wrapper.ModelType.kMindIR_Lite: ModelType.MINDIR_LITE,
+}
+
+
 class Model:
     """
     The Model class is used to define a MindSpore model, facilitating computational graph management.
