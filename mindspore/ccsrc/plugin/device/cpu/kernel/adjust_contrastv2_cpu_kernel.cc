@@ -57,8 +57,8 @@ bool ParallelForAdjustContrastv2(std::int64_t total, std::int64_t per_unit_size,
 }
 
 template <typename T>
-std::uint32_t AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs,
-                                                                         const std::vector<AddressPtr> &outputs) {
+bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs,
+                                                                const std::vector<AddressPtr> &outputs) {
   T *input{static_cast<T *>(inputs[0]->addr)};
   std::float_t *contrast_factor{static_cast<std::float_t *>(inputs[1]->addr)};
   T *output{static_cast<T *>(outputs[0]->addr)};
