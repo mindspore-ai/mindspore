@@ -3542,7 +3542,7 @@ def population_count(input_x):
     Raises:
         TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is not int16, uint16 (Ascend).
-                   If dtype of `input_x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
+        TypeError: If dtype of `input_x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

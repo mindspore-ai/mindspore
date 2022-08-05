@@ -1420,3 +1420,32 @@ def get_bprop_conv2d_backprop_filter(self):
         return dw_dy, dw_dx, zeros_like(filter_size)
 
     return bprop
+
+
+@bprop_getters.register(nps.UpsampleNearest3D)
+def get_bprop_upsample_nearest_3d_grad(self):
+    """Grad definition for `UpsampleNearest3D` operation."""
+    get_shape = P.Shape()
+    output_size = self.output_size
+    scales = self.scales
+
+    def bprop(input_x, out, dout):
+        input_grad = G.UpsampleNearest3DGrad(get_shape(input_x), output_size, scales)
+        dx = input_grad(dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(nps.UpsampleTrilinear3D)
+def get_bprop_upsample_trilinear_3d_grad(self):
+    """Grad definition for `UpsampleTrilinear3D` operation."""
+    get_shape = P.Shape()
+    output_size = self.output_size
+    scales = self.scales
+    align_corners = self.align_corners
+
+    def bprop(input_x, out, dout):
+        input_grad = G.UpsampleTrilinear3DGrad(get_shape(input_x), output_size, scales, align_corners)
+        dx = input_grad(dout)
+        return (dx,)
+    return bprop

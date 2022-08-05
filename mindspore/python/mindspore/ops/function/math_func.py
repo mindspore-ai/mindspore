@@ -2310,6 +2310,13 @@ def truncate_mod(x, y):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+    .. warning::
+        - The input data does not support 0.
+        - When the elements of input exceed 2048 , the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+
     Args:
         x (Union[Tensor, numbers.Number, bool]): The first input is a number, or a bool,
             or a tensor whose data type is number or bool.
