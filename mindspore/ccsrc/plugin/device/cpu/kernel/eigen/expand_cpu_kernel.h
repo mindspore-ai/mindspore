@@ -35,7 +35,7 @@ class ExpandCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  size_t get_element_num(const std::vector<size_t> &shape);
+  size_t get_element_num(const std::vector<size_t> &shape) const;
 
   template <typename T>
   bool ExpandCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -46,7 +46,6 @@ class ExpandCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::string kernel_name_;
   std::vector<size_t> input_x_shape_;
   TypeId input_x_dtype_{kNumberTypeFloat32};
   std::vector<size_t> input_shape_;
