@@ -109,8 +109,9 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &config) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(config);
-                         MS_EXCEPTION_IF_NULL(config->ObtainEvalResult());
-                         return config->ObtainEvalResult()->abstract();
+                         const auto &eval_result = config->ObtainEvalResult();
+                         MS_EXCEPTION_IF_NULL(eval_result);
+                         return eval_result->abstract();
                        });
 
   // Do undetermined infer firstly.
@@ -211,8 +212,9 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(ref);
-                         MS_EXCEPTION_IF_NULL(ref->ObtainEvalResult());
-                         return ref->ObtainEvalResult()->abstract();
+                         const auto &eval_result = ref->ObtainEvalResult();
+                         MS_EXCEPTION_IF_NULL(eval_result);
+                         return eval_result->abstract();
                        });
   // get the forward graph
   if (args_spec_list.empty()) {
@@ -320,7 +322,12 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
                       << ", inputs size " << out_node_inputs.size();
   }
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(ref);
+                         const auto &eval_result = ref->ObtainEvalResult();
+                         MS_EXCEPTION_IF_NULL(eval_result);
+                         return eval_result->abstract();
+                       });
 
   ScopeGuard scope_guard(out_conf->node()->scope());
   TraceGuard trace_guard(std::make_shared<TraceMixedPrecision>(out_conf->node()->debug_info()));
@@ -1644,8 +1651,9 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
     }
     auto node_conf = dyn_cast_ptr<AnfNodeConfig>(args_conf_list[0]);
     MS_EXCEPTION_IF_NULL(node_conf);
-    MS_EXCEPTION_IF_NULL(node_conf->ObtainEvalResult());
-    AbstractBasePtr x = node_conf->ObtainEvalResult()->abstract();
+    const auto &eval_result = node_conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    AbstractBasePtr x = eval_result->abstract();
     x = SensitivityTransform(x);
     SymbolicKeyInstancePtr key = std::make_shared<SymbolicKeyInstance>(node_conf->node(), x);
     AbstractScalarPtr abs_scalar = std::make_shared<AbstractScalar>(key, std::make_shared<SymbolicKeyType>());
@@ -1685,8 +1693,9 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "Conf should be AnfNodeConfig";
       return nullptr;
     }
-    MS_EXCEPTION_IF_NULL(node_conf->ObtainEvalResult());
-    AbstractBasePtr abs = node_conf->ObtainEvalResult()->abstract();
+    const auto &eval_result = node_conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    AbstractBasePtr abs = eval_result->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto ref_abs = abs->cast_ptr<AbstractRefTensor>();
     if (ref_abs == nullptr) {
@@ -2121,8 +2130,9 @@ class PartialEvaluator : public Evaluator {
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
     MS_EXCEPTION_IF_NULL(args_conf_list[0]);
-    MS_EXCEPTION_IF_NULL(args_conf_list[0]->ObtainEvalResult());
-    auto arg0_value = args_conf_list[0]->ObtainEvalResult()->abstract();
+    const auto &arg0_eval_result = args_conf_list[0]->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(arg0_eval_result);
+    auto arg0_value = arg0_eval_result->abstract();
     MS_EXCEPTION_IF_NULL(arg0_value);
     AbstractBasePtrList args_spec_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
@@ -2146,9 +2156,13 @@ class PartialEvaluator : public Evaluator {
       }
     }
 
-    (void)std::transform(
-      args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
-      [](const ConfigPtr &config) -> AbstractBasePtr { return config->ObtainEvalResult()->abstract(); });
+    (void)std::transform(args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
+                         [](const ConfigPtr &config) -> AbstractBasePtr {
+                           MS_EXCEPTION_IF_NULL(config);
+                           const auto &eval_result = config->ObtainEvalResult();
+                           MS_EXCEPTION_IF_NULL(eval_result);
+                           return eval_result->abstract();
+                         });
     AbstractBasePtrList args(args_spec_list.begin() + 1, args_spec_list.end());
 
     auto cnode = out_conf->node()->cast<CNodePtr>();

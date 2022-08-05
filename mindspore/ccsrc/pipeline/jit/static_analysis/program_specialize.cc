@@ -35,8 +35,9 @@ namespace abstract {
 namespace {
 inline AbstractBasePtr GetEvaluatedValue(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
-  MS_EXCEPTION_IF_NULL(conf->ObtainEvalResult());
-  return conf->ObtainEvalResult()->abstract();
+  const auto &eval_result = conf->ObtainEvalResult();
+  MS_EXCEPTION_IF_NULL(eval_result);
+  return eval_result->abstract();
 }
 
 AnfNodePtr BuildValueNode(const ValuePtr &v, const AbstractBasePtr &abs_base) {
@@ -739,6 +740,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
   AnfNodeConfigPtr conf = MakeConfig(node);
+  MS_EXCEPTION_IF_NULL(conf);
   TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
   AnfNodePtr new_node = GetReplicatedNode(node);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -748,11 +750,9 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                       << (new_node->func_graph() ? new_node->func_graph()->ToString() : "FG(Null)")
                       << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
   }
-  try {
-    new_node->set_abstract(GetEvaluatedValue(conf));
-  } catch (const std::exception &) {
-    MS_LOG(EXCEPTION) << "Fail to get abstract value with " << conf->ToString() << ", for " << new_node->DebugString();
-  }
+  const auto &conf_eval_result = conf->ObtainEvalResult();
+  MS_EXCEPTION_IF_NULL(conf_eval_result);
+  new_node->set_abstract(conf_eval_result->abstract());
   if (new_node->isa<CNode>() && new_node->abstract()->isa<PartialAbstractClosure>()) {
     auto partial_abstract = dyn_cast_ptr<PartialAbstractClosure>(new_node->abstract());
     if (partial_abstract->node() == node) {
@@ -767,7 +767,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     return;
   }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-  auto attrs = conf->ObtainEvalResult()->attribute();
+  auto attrs = conf_eval_result->attribute();
   auto c_old = node->cast_ptr<CNode>();
   auto c_new = new_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_new);
