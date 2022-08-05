@@ -28,11 +28,31 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMedianGrad = "MedianGrad";
-class MedianGrad : public BaseOperator {
+class MIND_API MedianGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MedianGrad);
   /// \brief Constructor.
   MedianGrad() : BaseOperator(kNameMedianGrad) { InitIOName({"y_grad", "x", "y", "indices"}, {"x_grad"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Median for the inputs.
+  void Init(const bool global_median = false, const int64_t axis = 0, const bool keep_dims = false);
+  /// \brief Set global_median.
+  void set_global_median(const bool global_median);
+  /// \brief Set keep_dims.
+  void set_keep_dims(const bool keep_dims);
+  /// \brief Set axis.
+  void set_axis(const int64_t &axis);
+  /// \brief Get global_median.
+  ///
+  /// \return global_median.
+  bool get_global_median() const;
+  /// \brief Get keep_dims.
+  ///
+  /// \return keep_dims.
+  bool get_keep_dims() const;
+  /// \brief Get axis.
+  ///
+  /// \return axis.
+  int64_t get_axis() const;
 };
 
 abstract::AbstractBasePtr MedianGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

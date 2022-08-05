@@ -485,7 +485,7 @@ def get_median_vmap_rule(prim, axis_size):
             axis += rank - 1
         axis_new = axis + 1 if dim <= axis else axis
         if keep_dims:
-            dim_new = axis_new
+            dim_new = dim
         else:
             dim_new = dim - 1 if dim > axis_new else dim
         return axis_new, dim_new
@@ -553,6 +553,36 @@ def get_index_add_vmap_rule(prim, axis_size):
         out = op(x, indices, y, u_monad)
         return (out, x_dim)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.MedianGrad)
+def get_median_grad_vmap_rule(prim, axis_size):
+    """VmapRule for MedianGrad."""
+    global_median = prim.global_median
+    axis = prim.axis
+    keep_dims = prim.keep_dims
+
+    @constexpr
+    def trans_grad_axis(axis, rank, dim, keep_dims):
+        if axis < 0:
+            axis += rank - 1
+        axis_new = axis + 1 if dim <= axis else axis
+        if keep_dims:
+            dim_new = dim
+        else:
+            dim_new = dim - 1 if dim > axis_new else dim
+        return axis_new, dim_new
+
+    def vmap_rule(dy_bdim, x_bdim, y_bdim, indices_bdim):
+        dy, _ = dy_bdim
+        x, x_dim = x_bdim
+        y, _ = y_bdim
+        indices, _ = indices_bdim
+        rank = len(x.shape)
+        axis_new, dim_new = trans_grad_axis(axis, rank, x_dim, keep_dims)
+        x_grad = G.MedianGrad(global_median, axis_new, keep_dims)(dy, x, y, indices)
+        return (x_grad, dim_new)
     return vmap_rule
 
 
