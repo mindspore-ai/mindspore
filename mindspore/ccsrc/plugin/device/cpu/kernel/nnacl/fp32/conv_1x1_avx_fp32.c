@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,94 +14,12 @@
  * limitations under the License.
  */
 #ifdef ENABLE_AVX
-#include "nnacl/fp32/conv_1x1_x86_fp32.h"
-#ifdef _MSC_VER
-#include <immintrin.h>
-#else
-#include <x86intrin.h>
-#endif
+#include "nnacl/fp32/conv_1x1_avx_fp32.h"
+#include "nnacl/intrinsics/ms_simd_avx_instructions.h"
 
-// sliding window to compate 1x1 conv in x86
-void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
-                   int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
-  int ohw = output_h * output_w;
-  int ohw_step = UP_DIV(ohw, conv_param->thread_num_);
-  int ohw_start = ohw_step * task_id;
-  int ohw_end = MSMIN(ohw_start + ohw_step, ohw);
-  if (ohw_start >= ohw_end) {
-    return;
-  }
-  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
-  int act_type = 0;
-  if (conv_param->act_type_ == ActType_Relu6) {
-    act_type += 1;
-  }
-  if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
-    act_type += 2;
-  }
-  int pad_d = conv_param->pad_d_;
-  int pad_l = conv_param->pad_l_;
-  int pad_r = conv_param->pad_r_;
-  int pad_u = conv_param->pad_u_;
-  int oc_align = sw_param->block_channel_;
-  int oc_align_float = oc_align * sizeof(float);
-  int ic_align = sw_param->ic_align_;
-  int in_sw_step = sw_param->in_sw_step_;
-  int in_sw_step_float = sw_param->in_sw_step_ * sizeof(float);
-  int kernel_step = sw_param->kernel_step_;
-  int oc_num = sw_param->c_block_;
-  int in_step = sw_param->in_step_;
-  int out_step = sw_param->out_step_;
-  const int ow_block_num[4] = {12, 6, 4, 3};
-  const Conv1x1SWKernel kernel[4][2] = {{Conv1x1SW1x8Kernel, Conv1x1SW12x8Kernel},
-                                        {Conv1x1SW1x16Kernel, Conv1x1SW6x16Kernel},
-                                        {Conv1x1SW1x24Kernel, Conv1x1SW4x24Kernel},
-                                        {Conv1x1SW1x32Kernel, Conv1x1SW3x32Kernel}};
-  for (int b = 0; b < conv_param->output_batch_; b++) {
-    int ic_block = 128;
-    int dst_flag = 0;
-    for (int ic = 0; ic < ic_align; ic += ic_block) {
-      if (ic_align - ic <= ic_block) {
-        ic_block = ic_align - ic;
-        dst_flag = 3 - (ic == 0);
-      } else {
-        dst_flag = 1 - (ic == 0);
-      }
-      if (pad_d == 0 && pad_l == 0 && pad_r == 0 && pad_u == 0) {
-        const float *bias = bias_data;
-        int oc_block = 0;
-        for (int oc = 0; oc < oc_num; oc += oc_block) {
-          oc_block = MSMIN(C4NUM, oc_num - oc);  // 4 3 2 1
-          const float *weight = packed_weight + oc * kernel_step + ic * C8NUM * oc_block;
-          if (bias != NULL) {
-            bias = bias_data + oc * oc_tile_;
-          }
-          const float *src_w = input_data + ic + ohw_start * in_sw_step;
-          float *dst_oc = output_data + oc * oc_tile_;
-          int hw_block = ow_block_num[oc_block - 1];
-          for (int hw = ohw_start; hw < ohw_end; hw += hw_block) {
-            if (hw_block > ohw_end - hw) {  // ow is not enough and process one ow
-              hw_block = 1;
-            }
-            float *dst_w = dst_oc + hw * oc_align;
-            kernel[oc_block - 1][hw_block / ow_block_num[oc_block - 1]](dst_w, src_w, weight, bias, act_type, hw_block,
-                                                                        oc_block, oc_align_float, ic_block >> 3,
-                                                                        in_sw_step_float, dst_flag);
-            src_w += hw_block * in_sw_step;
-          }
-        }
-      }
-    }
-    input_data += in_step;
-    output_data += out_step;
-  }  // batch loop
-}
-
-void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW3x32AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -375,9 +293,9 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
-void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW1x32AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -522,9 +440,9 @@ void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, cons
       "%ymm14");
 }
 
-void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW4x24AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_align / sizeof(float);
   asm volatile(
@@ -800,9 +718,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
-void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW1x24AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -925,9 +843,9 @@ void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, cons
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm4", "%ymm5", "%ymm6", "%ymm12", "%ymm13", "%ymm14");
 }
 
-void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW6x16AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_align / sizeof(float);
   asm volatile(
@@ -1215,9 +1133,9 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
-void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW1x16AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -1318,9 +1236,9 @@ void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, cons
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm12", "%ymm13", "%ymm14");
 }
 
-void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                         size_t dst_flag) {
+void Conv1x1SW12x8AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                            size_t dst_flag) {
   ic_align <<= 3;
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_align / sizeof(float);
@@ -1472,9 +1390,9 @@ void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, cons
       "%ymm11", "%ymm12", "%ymm14");
 }
 
-void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                        size_t dst_flag) {
+void Conv1x1SW1x8AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                           size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                           size_t dst_flag) {
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -1552,17 +1470,95 @@ void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const
     : "%rax", "%ecx", "%ymm0", "%ymm12", "%ymm13");
 }
 
+// sliding window to compate 1x1 conv in x86
+void Conv1x1SWAVXFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
+                      int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
+  int output_w = conv_param->output_w_;
+  int output_h = conv_param->output_h_;
+  int ohw = output_h * output_w;
+  int ohw_step = UP_DIV(ohw, conv_param->thread_num_);
+  int ohw_start = ohw_step * task_id;
+  int ohw_end = MSMIN(ohw_start + ohw_step, ohw);
+  if (ohw_start >= ohw_end) {
+    return;
+  }
+  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
+  int act_type = C0NUM;
+  if (conv_param->act_type_ == ActType_Relu6) {
+    act_type += C1NUM;
+  }
+  if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
+    act_type += C2NUM;
+  }
+  int pad_d = conv_param->pad_d_;
+  int pad_l = conv_param->pad_l_;
+  int pad_r = conv_param->pad_r_;
+  int pad_u = conv_param->pad_u_;
+  int oc_align = sw_param->block_channel_;
+  int oc_align_float = oc_align * sizeof(float);
+  int ic_align = sw_param->ic_align_;
+  int in_sw_step = sw_param->in_sw_step_;
+  int in_sw_step_float = sw_param->in_sw_step_ * sizeof(float);
+  int kernel_step = sw_param->kernel_step_;
+  int oc_num = sw_param->c_block_;
+  int in_step = sw_param->in_step_;
+  int out_step = sw_param->out_step_;
+  const int ow_block_num[4] = {12, 6, 4, 3};
+  const Conv1x1SWAVXKernel kernel[4][2] = {{Conv1x1SW1x8AVXKernel, Conv1x1SW12x8AVXKernel},
+                                           {Conv1x1SW1x16AVXKernel, Conv1x1SW6x16AVXKernel},
+                                           {Conv1x1SW1x24AVXKernel, Conv1x1SW4x24AVXKernel},
+                                           {Conv1x1SW1x32AVXKernel, Conv1x1SW3x32AVXKernel}};
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    int ic_block = 128;
+    int dst_flag = 0;
+    for (int ic = 0; ic < ic_align; ic += ic_block) {
+      if (ic_align - ic <= ic_block) {
+        ic_block = ic_align - ic;
+        dst_flag = C3NUM - (ic == 0);
+      } else {
+        dst_flag = 1 - (ic == 0);
+      }
+      if (pad_d == 0 && pad_l == 0 && pad_r == 0 && pad_u == 0) {
+        const float *bias = bias_data;
+        int oc_block = 0;
+        for (int oc = 0; oc < oc_num; oc += oc_block) {
+          oc_block = MSMIN(C4NUM, oc_num - oc);  // 4 3 2 1
+          const float *weight = packed_weight + oc * kernel_step + ic * C8NUM * oc_block;
+          if (bias != NULL) {
+            bias = bias_data + oc * oc_tile_;
+          }
+          const float *src_w = input_data + ic + ohw_start * in_sw_step;
+          float *dst_oc = output_data + oc * oc_tile_;
+          int hw_block = ow_block_num[oc_block - 1];
+          for (int hw = ohw_start; hw < ohw_end; hw += hw_block) {
+            if (hw_block > ohw_end - hw) {  // ow is not enough and process one ow
+              hw_block = 1;
+            }
+            float *dst_w = dst_oc + hw * oc_align;
+            kernel[oc_block - 1][hw_block / ow_block_num[oc_block - 1]](dst_w, src_w, weight, bias, act_type, hw_block,
+                                                                        oc_block, oc_align_float, ic_block >> C3NUM,
+                                                                        in_sw_step_float, dst_flag);
+            src_w += hw_block * in_sw_step;
+          }
+        }
+      }
+    }
+    input_data += in_step;
+    output_data += out_step;
+  }  // batch loop
+}
+
 #ifdef ENABLE_DEBUG
-void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                          size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
-                          size_t dst_flag) {
+void Conv1x1SWOWxOCAVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                             size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
+                             size_t dst_flag) {
   oc_align /= sizeof(float);
   in_sw_step /= sizeof(float);
-  ic_align <<= 3;
+  ic_align <<= C3NUM;
   __m256 dst_data[12];
   const float *src_sw[12];
   __m256 weight_data[4];
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < C4NUM; ++i) {
     weight_data[i] = _mm256_set1_ps(0.0f);
   }
   for (int i = 0; i < ow_block; ++i) {
@@ -1573,7 +1569,7 @@ void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, con
     } else {
       if (bias != NULL) {
         for (int j = 0; j < oc_block; ++j) {
-          dst_data[i * oc_block + j] = _mm256_loadu_ps(bias + j * 8);
+          dst_data[i * oc_block + j] = _mm256_loadu_ps(bias + j * C8NUM);
         }
       } else {
         for (int j = 0; j < oc_block; ++j) {
