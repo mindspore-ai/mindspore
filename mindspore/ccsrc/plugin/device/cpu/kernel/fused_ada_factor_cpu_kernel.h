@@ -49,7 +49,7 @@ class FusedAdaFactorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                     const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  float CalcRMS(T *input, size_t elem_num) const;
+  float CalcRMS(const T *input, size_t elem_num) const;
 
   template <typename T>
   void FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
