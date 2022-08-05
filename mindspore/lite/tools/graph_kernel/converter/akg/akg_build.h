@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
 #include <string>
+#include <map>
+#include <vector>
 #include "utils/anf_utils.h"
 
 namespace mindspore::graphkernel {
@@ -30,5 +32,8 @@ class AkgKernelBuilder {
 
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list);
 };
+
+std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir,
+                          std::map<AnfNodePtr, std::string> *node_name, std::vector<std::string> *json_list);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_

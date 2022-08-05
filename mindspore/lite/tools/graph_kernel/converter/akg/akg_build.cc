@@ -20,11 +20,11 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <iostream>
-#include <vector>
-#include <string>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -131,30 +131,6 @@ bool SaveJsonInfo(const std::string &json_name, const std::string &info) {
   return true;
 }
 
-void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
-                         std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node_list);
-  MS_EXCEPTION_IF_NULL(input_list);
-  std::vector<AnfNodePtr> node_lists = TopoSort(func_graph->get_return());
-  for (auto const &node : node_lists) {
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || !AnfUtils::IsRealKernel(node)) {
-      continue;
-    }
-    node_list->push_back(node);
-  }
-  auto parameters = func_graph->parameters();
-  input_list->insert(input_list->begin(), parameters.begin(), parameters.end());
-  if (IsPrimitiveCNode(func_graph->output(), prim::kPrimMakeTuple)) {
-    auto fg_output = func_graph->output()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(fg_output);
-    output_list->assign(fg_output->inputs().begin() + 1, fg_output->inputs().end());
-  } else {
-    output_list->push_back(func_graph->output());
-  }
-}
-
 void CheckObjFiles(const std::string &dir_path, const std::vector<std::string> &json_list) {
   constexpr size_t try_times = 10;
   constexpr size_t wait_us = 100000;
@@ -175,15 +151,15 @@ void CheckObjFiles(const std::string &dir_path, const std::vector<std::string> &
   }
 }
 
-bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
-  auto dir_path = FileUtils::CreateNotExistDirs(std::string("./kernel_meta"));
+std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir,
+                          std::map<AnfNodePtr, std::string> *node_kernel, std::vector<std::string> *json_list) {
+  auto dir_path = FileUtils::CreateNotExistDirs(dir);
   if (!dir_path.has_value()) {
-    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: ./kernel_meta";
-    return false;
+    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: " << dir;
+    return "";
   }
-  std::vector<std::string> json_list;
-  std::string kernels_name = "";
-  for (const auto &node : node_list) {
+  std::vector<std::string> kernel_names;
+  for (const auto &node : nodes) {
     graphkernel::DumpOption option;
     option.get_target_info = true;
     graphkernel::AkgKernelJsonGenerator akg_kernel_json_generator(option);
@@ -195,23 +171,44 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
       fg->set_manager(mng);
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
-    GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
+    GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
     akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
     auto json_kernel_name = akg_kernel_json_generator.kernel_name();
-    AnfUtils::SetNodeAttr("kernel_name", MakeValue(json_kernel_name + "_kernel"), node->cast<CNodePtr>());
-    if (find(json_list.begin(), json_list.end(), json_kernel_name) != json_list.end()) {
+    if (node_kernel != nullptr) {
+      (*node_kernel)[node] = json_kernel_name;
+    }
+    if (find(kernel_names.cbegin(), kernel_names.cend(), json_kernel_name) != kernel_names.cend()) {
       continue;
     }
-    json_list.push_back(json_kernel_name);
-    kernels_name += dir_path.value() + "/" + json_kernel_name + ".o ";
+    kernel_names.push_back(json_kernel_name);
     if (!SaveJsonInfo(dir_path.value() + "/" + json_kernel_name, akg_kernel_json_generator.kernel_json_str())) {
-      return false;
+      return "";
     }
   }
-  auto res = CompileJsonsInList(dir_path.value(), json_list);
+  if (json_list != nullptr) {
+    *json_list = std::move(kernel_names);
+  }
+  return dir_path.value();
+}
+
+bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
+  std::map<AnfNodePtr, std::string> node_name;
+  std::vector<std::string> json_list;
+  auto dir_path = SaveNodesInfo(node_list, "./kernel_meta", &node_name, &json_list);
+  if (dir_path.empty()) {
+    return false;
+  }
+  auto res = CompileJsonsInList(dir_path, json_list);
   if (res) {
-    CheckObjFiles(dir_path.value(), json_list);
-    auto cmd = "g++ -fPIC -shared -o akgkernels.so " + kernels_name;
+    for (const auto &iter : node_name) {
+      AnfUtils::SetNodeAttr("kernel_name", MakeValue(iter.second + "_kernel"), iter.first);
+    }
+    std::ostringstream kernels_name;
+    for (const auto &json_kernel_name : json_list) {
+      kernels_name << dir_path << "/" << json_kernel_name << ".o ";
+    }
+    CheckObjFiles(dir_path, json_list);
+    auto cmd = "g++ -fPIC -shared -o akgkernels.so " + kernels_name.str();
     if (system(cmd.c_str()) == 0) {
       return true;
     }

@@ -31,28 +31,15 @@
 
 namespace mindspore {
 namespace graphkernel {
-class SafeSplitSchemer : public SplitSchemer {
+class SafeSplitSchemer : public CommonSplitSchemer {
  public:
   SafeSplitSchemer() = default;
   ~SafeSplitSchemer() = default;
   bool Split(const FuncGraphPtr &func_graph) override;
-  bool NeedInline(size_t group_id) const override {
-    if (group_id >= need_inline_.size()) {
-      MS_LOG(EXCEPTION) << "The group_id " << group_id << " should be less than the group num " << need_inline_.size();
-    }
-    return need_inline_[group_id] != 0;
-  }
 
  protected:
-  void Init();
-  void Run();
-  void SplitNodes();
-  // group the return node and last MakeTuple node (if exists).
-  void GroupReturnNode();
-
-  mindspore::HashMap<AnfNodePtr, size_t> node_group_;
-  FuncGraphPtr func_graph_{nullptr};
-  std::vector<int> need_inline_;
+  void Run(const FuncGraphPtr &func_graph);
+  void SplitNodes(const FuncGraphPtr &func_graph);
 };
 
 class SafeGraphKernelSplitter : public GraphKernelSplitter {

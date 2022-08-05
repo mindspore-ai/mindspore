@@ -99,6 +99,7 @@ class TargetInfoSetter {
 
 class AkgKernelJsonGenerator {
  public:
+  AkgKernelJsonGenerator() : cb_(Callback::Instance()) {}
   explicit AkgKernelJsonGenerator(DumpOption dump_option)
       : dump_option_(std::move(dump_option)), cb_(Callback::Instance()) {}
   AkgKernelJsonGenerator(DumpOption dump_option, const CallbackPtr &cb)

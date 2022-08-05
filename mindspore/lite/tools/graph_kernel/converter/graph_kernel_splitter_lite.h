@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_
-#include <memory>
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_SPLITTER_LITE_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_SPLITTER_LITE_H_
 #include <string>
-#include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
 #include "common/graph_kernel/core/split_schemer.h"
+#include "common/graph_kernel/core/graph_kernel_splitter.h"
 
 namespace mindspore::graphkernel {
-class GraphKernelSplitter : public opt::Pass {
+class GraphKernelSplitterWithTuning : public GraphKernelSplitter {
  public:
-  GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
-  ~GraphKernelSplitter() override = default;
+  GraphKernelSplitterWithTuning() = default;
+  ~GraphKernelSplitterWithTuning() = default;
   bool Run(const FuncGraphPtr &func_graph) override;
-  bool TrySplit(const CNodePtr &sub_root_cnode);
-  virtual SplitSchemerPtr GetSplitSchema(const std::string &processor);
+  SplitSchemerPtr GetSplitSchema(const std::string &processor) override;
+
+ protected:
+  bool StartTuning(const std::string &dir_path) const;
+
+  std::string tuning_path_;
+  bool tuning_flag_{true};
 };
-using GraphKernelSplitterPtr = std::shared_ptr<GraphKernelSplitter>;
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_SPLITTER_LITE_H_
