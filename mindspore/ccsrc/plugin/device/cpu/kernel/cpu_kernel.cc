@@ -429,12 +429,12 @@ void BroadcastIterator::GenNextPos() {
 void BroadcastIterator::BroadcastShape() {
   int input_dimension_a = input_shape_a_.size();
   if (input_dimension_a < output_dimension_) {
-    (void)input_shape_a_.insert(input_shape_a_.begin(), IntToLong(output_dimension_ - input_dimension_a), 1);
+    (void)input_shape_a_.insert(input_shape_a_.begin(), IntToSize(output_dimension_ - input_dimension_a), 1);
   }
 
   int input_dimension_b = input_shape_b_.size();
   if (input_dimension_b < output_dimension_) {
-    (void)input_shape_b_.insert(input_shape_b_.begin(), IntToLong(output_dimension_ - input_dimension_b), 1);
+    (void)input_shape_b_.insert(input_shape_b_.begin(), IntToSize(output_dimension_ - input_dimension_b), 1);
   }
 }
 
@@ -504,7 +504,7 @@ void MultipleBroadcastIterator::BroadcastShape() {
   for (auto &multi_input : multi_inputs_) {
     int input_dimension = SizeToInt(multi_input.size());
     if (input_dimension < output_dimension_) {
-      (void)multi_input.insert(multi_input.begin(), IntToLong(output_dimension_ - input_dimension), 1);
+      (void)multi_input.insert(multi_input.begin(), IntToSize(output_dimension_ - input_dimension), 1);
     }
   }
 }

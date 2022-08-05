@@ -684,21 +684,29 @@ class EinsumHelper {
     return true;
   }
 
+  inline bool SetValue(size_t cur_element, int64_t value) {
+    if (element_shape_map_.find(cur_element) != element_shape_map_.end()) {
+      if (element_shape_map_[cur_element][0] != value) {
+        MS_LOG(ERROR) << "For " << node_name_
+                      << ", the same label in equation can only represent the same dimension in inputs, but the "
+                      << static_cast<char>(cur_element + 'a') << " in equation not.";
+        return false;
+      }
+    } else {
+      element_shape_map_[cur_element] = {value};
+    }
+
+    return true;
+  }
+
   bool ElementMapShape(const std::vector<std::vector<int64_t>> &input_shapes) {
     for (size_t idx_input = 0; idx_input < input_shapes.size(); ++idx_input) {
       auto cur_shape = input_shapes[idx_input];
       size_t idx_left = 0;
       while (idx_left < left_elements_[idx_input].size() && left_elements_[idx_input][idx_left] != ELL_VAL) {
         auto cur_element = left_elements_[idx_input][idx_left];
-        if (element_shape_map_.find(cur_element) != element_shape_map_.end()) {
-          if (element_shape_map_[cur_element][0] != input_shapes[idx_input][idx_left]) {
-            MS_LOG(ERROR) << "For " << node_name_
-                          << ", the same label in equation can only represent the same dimension in inputs, but the "
-                          << static_cast<char>(cur_element + 'a') << " in equation not.";
-            return false;
-          }
-        } else {
-          element_shape_map_[cur_element] = {input_shapes[idx_input][idx_left]};
+        if (!SetValue(cur_element, input_shapes[idx_input][idx_left])) {
+          return false;
         }
         ++idx_left;
       }
@@ -708,15 +716,8 @@ class EinsumHelper {
         auto idx_shape_right = input_shapes[idx_input].size() - 1;
         while (idx_element_right > idx_left && left_elements_[idx_input][idx_element_right] != ELL_VAL) {
           auto cur_element = left_elements_[idx_input][idx_element_right];
-          if (element_shape_map_.find(cur_element) != element_shape_map_.end()) {
-            if (element_shape_map_[cur_element][0] != input_shapes[idx_input][idx_shape_right]) {
-              MS_LOG(ERROR) << "For " << node_name_
-                            << ", the same label in equation can only represent the same dimension in inputs, but the "
-                            << static_cast<char>(cur_element + 'a') << " in equation not.";
-              return false;
-            }
-          } else {
-            element_shape_map_[cur_element] = {input_shapes[idx_input][idx_shape_right]};
+          if (!SetValue(cur_element, input_shapes[idx_input][idx_shape_right])) {
+            return false;
           }
           --idx_shape_right;
           --idx_element_right;
