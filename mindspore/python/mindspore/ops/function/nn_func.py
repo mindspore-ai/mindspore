@@ -1534,8 +1534,8 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         >>> print(output)
         [0.  0.  0.5]
     """
-
-    return P.SmoothL1Loss(beta, reduction)(logits, labels)
+    _smooth_l1_loss = _get_cache_prim(P.SmoothL1Loss)(beta, reduction)
+    return _smooth_l1_loss(logits, labels)
 
 
 def intopk(x1, x2, k):
