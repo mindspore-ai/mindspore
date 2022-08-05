@@ -162,7 +162,7 @@ bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr
 
   if (data_num_ >= kParallelArrayNumSameShape) {
     auto task = [this, &output_data, &input_data, padding_value](size_t start, size_t end) {
-      int64_t out_begin_index = SizeToLong(start * output_elements_in_batch_);
+      int64_t out_begin_index = SizeToLong(start) * output_elements_in_batch_;
       for (size_t index_array = start; index_array < end; index_array++) {
         for (int64_t i = 0; i < num_diags_; i++) {
           int64_t offset = 0;
@@ -174,8 +174,9 @@ bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr
             ComputeTwo(diag_index, max_diag_len_, num_rows_, num_cols_, align_superdiag_, align_subdiag_);
 
           for (int64_t n = 0; n < diag_len; n++) {
-            output_data[LongToSize(out_begin_index + offset + n)] = input_data[LongToSize(
-              SizeToLong(index_array) * num_rows_ * num_cols_ + (n + col_offset) * num_cols_ + n + row_offset)];
+            output_data[LongToSize(out_begin_index + offset + n)] =
+              input_data[SizeToLong(index_array) * num_rows_ * num_cols_ + (n + col_offset) * num_cols_ + n +
+                         row_offset];
           }
           const bool left_align = (offset == 0);
           const int64_t padding_start = (left_align) ? diag_len : 0;
