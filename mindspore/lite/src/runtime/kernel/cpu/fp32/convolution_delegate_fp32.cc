@@ -34,7 +34,7 @@
 #include "src/runtime/kernel/cpu/fp32/convolution_depthwise_indirect_fp32.h"
 #endif
 #ifdef ENABLE_AVX
-#include "src/runtime/kernel/cpu/fp32/convolution_slidewindow_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/convolution_slidewindow_avx_fp32.h"
 #endif
 
 using mindspore::lite::KernelRegistrar;
@@ -215,7 +215,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
     if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
         conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
         (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
-      kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+      kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
     } else {
@@ -237,7 +237,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
     } else {
 #ifdef ENABLE_AVX
       if (CheckAvxUseSWConv(conv_param)) {
-        kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+        kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
           origin_weight_, origin_bias_);
       } else {
