@@ -144,7 +144,7 @@ void SparseApplyAdamCpuKernelMod::ResetResource() noexcept {
 int SparseApplyAdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
