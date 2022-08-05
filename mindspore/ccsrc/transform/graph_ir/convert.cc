@@ -938,7 +938,7 @@ void DfGraphConvertor::BuildWhileSubGraph() {
     graph_name += "_body_graph";
     graph_out = GetWhileBodyOutputs();
   }
-  if (error_ == 0) {
+  if (error_ == SUCCESS) {
     if (df_graph_->GetName() != graph_name) {
       MS_LOG(DEBUG) << "convert anf graph name : " << df_graph_->GetName() << " to df graph name: " << graph_name;
     }
