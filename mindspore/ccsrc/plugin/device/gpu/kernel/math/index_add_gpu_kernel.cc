@@ -232,7 +232,7 @@ std::vector<std::pair<KernelAttr, IndexAddGpuKernelMod::IndexAddFunc>> IndexAddG
    &IndexAddGpuKernelMod::LaunchKernel<uint8_t>}};
 
 std::vector<KernelAttr> IndexAddGpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list;
+  std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, IndexAddFunc> &pair) { return pair.first; });
   return support_list;
