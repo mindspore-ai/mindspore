@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/eigen/random_poisson_cpu_kernel.h"
-#include <ctime>
 #include <random>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
@@ -123,7 +122,7 @@ template <typename T>
 class PoissonRandomGenerator {
  public:
   // Uses the given "seed" if non-zero, otherwise uses a random seed.
-  PoissonRandomGenerator(double rate, uint64_t seed) : m_rate(rate) { m_state = PCG_XSH_RS_state(seed); }
+  PoissonRandomGenerator(double rate, uint64_t seed) : m_rate(rate), m_state(PCG_XSH_RS_state(seed)) {}
   void setRate(double rate) { m_rate = rate; }
   T gen() const {
     T result = RandomToTypePoisson<T>(&m_state, m_rate);
