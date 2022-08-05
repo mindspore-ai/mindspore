@@ -17,11 +17,11 @@
 
     .. note::
         - `clip_value_min` 必须小于或等于 `clip_value_max` ；
-        -  :math:`x` ， `clip_value_min` 和 `clip_value_max`的数据类型需支持隐式类型转换，且不能同时为布尔型。
+        -  :math:`x` ， `clip_value_min` 和 `clip_value_max` 的数据类型需支持隐式类型转换，且不能同时为布尔型。
         
 
     参数：
-        - **x** (Tensor) - clip_by_value的输入，任意维度的Tensor。
+        - **x** (Tensor) - `clip_by_value` 的输入，任意维度的Tensor。
         - **clip_value_min** (Tensor) - 指定最小值。
         - **clip_value_max** (Tensor) - 指定最大值。
 
