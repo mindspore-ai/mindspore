@@ -50,7 +50,7 @@ void AdjustContrastv2(T *image, T *image_out, std::float_t contrast_factor, std:
 bool ParallelForAdjustContrastv2(std::int64_t total, std::int64_t per_unit_size,
                                  const std::function<void(std::int64_t, std::int64_t)> work) {
   if (total > kAdjustContrastv2ParallelNum)
-    CPUKernelUtils::ParallelFor(work, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(work, static_cast<size_t>(total), static_cast<float>(per_unit_size));
   else
     work(0, total);
   return true;

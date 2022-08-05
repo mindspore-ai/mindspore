@@ -64,7 +64,7 @@ void AddcmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void AddcmulCpuKernelMod::AddcmulMul1(const T *input1, const T *input2, T *output) {
   if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_) == 0) {
-    output[0] = input1[0] * input2[0];
+    output[0] = static_cast<T>(input1[0] * input2[0]);
   } else {
     BroadcastIterator mul_iter(input_shape1_, input_shape2_, output_shape_);
     auto mul_task = [&input1, &input2, &output, &mul_iter](size_t mul_start, size_t mul_end) {
@@ -86,7 +86,7 @@ void AddcmulCpuKernelMod::AddcmulMul1(const T *input1, const T *input2, T *outpu
 template <typename T>
 void AddcmulCpuKernelMod::AddcmulMul2(const T *input1, const T *input2, T *output) {
   if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_) == 0) {
-    output[0] = input1[0] * input2[0];
+    output[0] = static_cast<T>(input1[0] * input2[0]);
   } else {
     BroadcastIterator base_iter(input_shape3_, output_shape_, output_shape_);
     auto task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
@@ -108,14 +108,14 @@ void AddcmulCpuKernelMod::AddcmulMul2(const T *input1, const T *input2, T *outpu
 template <typename T>
 void AddcmulCpuKernelMod::AddcmulAdd(const T *input1, const T *input2, T *output) {
   if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
-    output[0] = input1[0] + input2[0];
+    output[0] = static_cast<T>(input1[0] + input2[0]);
   } else {
     BroadcastIterator base_iter(input_shape0_, output_shape_, output_shape_);
     auto add_task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
       auto iter = base_iter;
       iter.SetPos(start);
       for (size_t i = start; i < end; i++) {
-        output[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+        output[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
         iter.GenNextPos();
       }
     };
