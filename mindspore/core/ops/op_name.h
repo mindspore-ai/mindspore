@@ -227,6 +227,7 @@ constexpr auto kUseNesterov = "use_nesterov";
 constexpr auto kUseNesteroy = "use_nesteroy";
 constexpr auto kUseRegularNms = "use_regular_nms";
 constexpr auto kValid = "valid";
+constexpr auto kValidateIndices = "validate_indices";
 constexpr auto kValue = "value";
 constexpr auto kVariances = "variances";
 constexpr auto kWeightDecay = "weight_decay";
