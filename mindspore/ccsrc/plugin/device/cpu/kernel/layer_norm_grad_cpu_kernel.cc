@@ -135,7 +135,7 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
         auto norm_shift = static_cast<int>(j / block_size_);
         auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
         auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
-        auto dx2 = sum1 * (T)2.0 / (T)(block_size_) * (x[j] - mean[norm_shift]);
+        auto dx2 = sum1 * static_cast<T>(2.0) / (static_cast<T>(block_size_)) * (x[j] - mean[norm_shift]);
         auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / (T)block_size_) * sum1 * sum3) * ((T)1.0 / (T)block_size_);
         dx[j] = dx1 + dx2 + dx3;
       }

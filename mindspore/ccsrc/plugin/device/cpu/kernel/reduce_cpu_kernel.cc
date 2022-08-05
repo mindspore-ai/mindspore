@@ -150,14 +150,14 @@ template <typename T>
 void ReduceAll(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
   if (iter != nullptr) {
     for (size_t i = start; i < end; i++) {
-      *out &= in[iter->GetPos()];
+      *out = *out && in[iter->GetPos()];
       iter->GenNextPos();
     }
     return;
   }
 
   for (size_t i = start; i < end; i++) {
-    *out &= in[i];
+    *out = *out && in[i];
   }
 }
 
@@ -165,14 +165,14 @@ template <typename T>
 void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
   if (iter != nullptr) {
     for (size_t i = start; i < end; i++) {
-      *out |= in[iter->GetPos()];
+      *out = *out || in[iter->GetPos()];
       iter->GenNextPos();
     }
     return;
   }
 
   for (size_t i = start; i < end; i++) {
-    *out |= in[i];
+    *out = *out || in[i];
   }
 }
 
