@@ -161,7 +161,7 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                          "the specified d_lower, d_upper, and diagonal.";
   }
   diag_elements_in_batch_ = num_diags * max_diag_len_;
-  diag_batch_base_index_ = 0 * diag_elements_in_batch_;
+  diag_batch_base_index_ = 0;
   size_t num_element = static_cast<size_t>(outputs[0]->size / sizeof(T));
   num_batches_ = (SizeToLong(num_element)) / (num_rows_ * num_cols_);
 
@@ -305,8 +305,8 @@ std::vector<std::pair<KernelAttr, MatrixDiagV3CpuKernelMod::MatrixDiagV3Func>> M
 
 std::vector<KernelAttr> MatrixDiagV3CpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MatrixDiagV3Func> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixDiagV3Func> &pair) { return pair.first; });
   return support_list;
 }
 
