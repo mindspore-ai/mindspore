@@ -28,14 +28,19 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionSWCPUKernel::Prepare() {
-  oc_tile_ = C8NUM;
+void ConvolutionSWCPUKernel::InitGlobalVariable() {
+  oc_tile_ = C1NUM;
   oc_res_ = conv_param_->output_channel_ % oc_tile_;
   if (conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1) {
-    // 1x1 conv is aligned to C8NUM
-    in_tile_ = C8NUM;
+    // 1x1 conv is aligned to C1NUM
+    in_tile_ = C1NUM;
     ic_res_ = conv_param_->input_channel_ % in_tile_;
   }
+}
+
+int ConvolutionSWCPUKernel::Prepare() {
+  InitGlobalVariable();
+
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(filter_tensor);
@@ -91,14 +96,8 @@ int ConvolutionSWCPUKernel::ReSize() {
 }
 
 int ConvolutionSWCPUKernel::RunImpl(int task_id) {
-  if (conv_param_->kernel_w_ == 1 && conv_param_->kernel_h_ == 1) {
-    Conv1x1SWAVXFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-                     output_data_, task_id, conv_param_, slidingWindow_param_);
-  } else {
-    ConvSWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-               output_data_, task_id, conv_param_, slidingWindow_param_);
-  }
-  return RET_OK;
+  MS_LOG(ERROR) << "new SlidingWindow run fail, do not support slidewindows fp32 implement!";
+  return RET_ERROR;
 }
 
 int ConvolutionSWImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -127,8 +126,8 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
       MS_LOG(ERROR) << "malloc tmp input_data_ failed.";
       return RET_NULL_PTR;
     }
-    PackNHWCToNHWC8Fp32(input_data, input_data_, conv_param_->input_batch_,
-                        conv_param_->input_w_ * conv_param_->input_h_, conv_param_->input_channel_);
+    PackNHWCToNHWCXFp32(input_data, input_data_, conv_param_->input_batch_,
+                        conv_param_->input_w_ * conv_param_->input_h_, conv_param_->input_channel_, oc_tile_);
   } else {
     input_data_ = input_data;
   }

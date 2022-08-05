@@ -36,10 +36,11 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
     }
   }
 
+  virtual void InitGlobalVariable();
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
+  virtual int RunImpl(int task_id);
   int InitTmpBuffer();
 
  private:
@@ -55,6 +56,8 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
       input_data_ = nullptr;
     }
   }
+
+ protected:
   int oc_tile_ = C8NUM;  // oc tile is C8NUM in avx
   int in_tile_ = 0;      // input channel algin
   int oc_res_ = 0;
