@@ -31,7 +31,7 @@ T GetDivZeroVal(const T &v) {
 }
 
 template <>
-complex128 GetDivZeroVal(const complex128 &v) {
+complex128 GetDivZeroVal(const complex128 &) {
   return std::numeric_limits<complex128>::quiet_NaN();
 }
 
@@ -41,17 +41,17 @@ complex64 GetDivZeroVal(const complex64 &) {
 }
 
 template <class T>
-bool isZero(T val) {
+bool isZero(const T &val) {
   return val == T(0.0f);
 }
 
 template <>
-bool isZero(float val) {
+bool isZero(const float &val) {
   return std::fpclassify(val) == FP_ZERO;
 }
 
 template <>
-bool isZero(double val) {
+bool isZero(const double &val) {
   return std::fpclassify(val) == FP_ZERO;
 }
 
