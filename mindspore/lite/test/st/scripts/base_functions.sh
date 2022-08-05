@@ -84,6 +84,9 @@ function Convert() {
           fi
           export_mindir="MINDIR"
           target_device="Ascend310"
+          if [ ${model_fmk} != "TF" ]; then
+            input_format="NHWC"
+          fi
         elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
@@ -120,7 +123,7 @@ function Convert() {
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
               --configFile=${config_file} --trainModel=${train_model} --exportMindIR=${export_mindir} --device=${target_device}\
-              --encryption=${encryption_flag} >> "$4"
+              --encryption=${encryption_flag} --inputDataFormat=${input_format} >> "$4"
         else
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\

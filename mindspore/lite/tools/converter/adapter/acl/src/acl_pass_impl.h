@@ -77,6 +77,7 @@ class AclPassImpl {
 
  private:
   FmkType fmk_type_;
+  ModelType export_mindir_;
   lite::acl::AclModelOptionCfg user_options_cfg_;
   ParameterPtr om_parameter_;
   CNodePtr custom_node_;
