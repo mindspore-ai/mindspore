@@ -46,38 +46,38 @@ bool TraceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     case kNumberTypeInt8:
       LaunchKernel<int8_t>(inputs, outputs);
       break;
-    case kNumberTypeInt16:
-      LaunchKernel<int16_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt32:
-      LaunchKernel<int32_t>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      LaunchKernel<int64_t>(inputs, outputs);
-      break;
     case kNumberTypeUInt8:
       LaunchKernel<uint8_t>(inputs, outputs);
+      break;
+    case kNumberTypeInt16:
+      LaunchKernel<int16_t>(inputs, outputs);
       break;
     case kNumberTypeUInt16:
       LaunchKernel<uint16_t>(inputs, outputs);
       break;
-    case kNumberTypeUInt32:
-      LaunchKernel<uint32_t>(inputs, outputs);
-      break;
-    case kNumberTypeUInt64:
-      LaunchKernel<uint64_t>(inputs, outputs);
-      break;
     case kNumberTypeFloat16:
       LaunchKernel<float16>(inputs, outputs);
       break;
+    case kNumberTypeInt32:
+      LaunchKernel<int32_t>(inputs, outputs);
+      break;
+    case kNumberTypeUInt32:
+      LaunchKernel<uint32_t>(inputs, outputs);
+      break;
     case kNumberTypeFloat32:
       LaunchKernel<float>(inputs, outputs);
+      break;
+    case kNumberTypeInt64:
+      LaunchKernel<int64_t>(inputs, outputs);
+      break;
+    case kNumberTypeUInt64:
+      LaunchKernel<uint64_t>(inputs, outputs);
       break;
     case kNumberTypeFloat64:
       LaunchKernel<double>(inputs, outputs);
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unsupported input data type.";
+      MS_LOG(EXCEPTION) << "Trace Grad Unsupported input data type.";
   }
   return true;
 }
@@ -85,12 +85,13 @@ bool TraceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 template <typename T>
 void TraceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  auto grad = reinterpret_cast<T *>(inputs[0]->addr);
-  auto shape = reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *grad = GetDeviceAddress<T>(inputs, kIndex0);
+  auto shape = GetDeviceAddress<int64_t>(inputs, kIndex1);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+
   (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
-  size_t min_size = std::min(shape[0], shape[1]);
-  for (size_t i = 0; i < min_size; ++i) {
+  int64_t min_size = std::min(shape[0], shape[1]);
+  for (int64_t i = 0; i < min_size; ++i) {
     *(output_addr + i * shape[1] + i) = *grad;
   }
 }
