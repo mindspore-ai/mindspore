@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COMPLEX_CPU_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COMPLEX_CPU_KERNEL_H
 
-#include <cmath>
 #include <vector>
 #include <tuple>
 #include <map>
@@ -35,7 +34,7 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
   ~ComplexCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+            const std::vector<KernelTensorPtr> & /* outputs */) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -45,7 +44,6 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  string kernel_name_;
   TypeId input1_dtype_{kTypeUnknown};
   TypeId input2_dtype_{kTypeUnknown};
 };
