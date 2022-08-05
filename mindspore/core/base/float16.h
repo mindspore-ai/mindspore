@@ -100,7 +100,9 @@ class Float16 {
   }
 
   static float ToFloat32(const Float16 &f16) {
-    constexpr Union32 magic = {.u = 113 << 23};
+    constexpr uint32_t mu_value = 113 << 23;
+    Union32 magic;
+    magic.u = mu_value;
     constexpr uint32_t exponent_adjust = ((127 - 15) << 23);
     constexpr uint32_t inf_extra_exp_adjust = ((128 - 16) << 23);
     constexpr uint32_t zero_extra_exp_adjust = (1 << 23);
@@ -131,9 +133,15 @@ class Float16 {
  private:
   static uint16_t FromFloat32(float f32) {
     constexpr uint32_t magic = {113 << 23};
-    constexpr Union32 f32infty = {.u = 255 << 23};
-    constexpr Union32 f16max = {.u = (127 + 16) << 23};
-    constexpr Union32 denorm_magic = {.u = ((127 - 15) + (23 - 10) + 1) << 23};
+    constexpr uint32_t f32infty_value = 255 << 23;
+    Union32 f32infty;
+    f32infty.u = f32infty_value;
+    constexpr uint32_t f16max_value = (127 + 16) << 23;
+    Union32 f16max;
+    f16max.u = f16max_value;
+    constexpr uint32_t denorm_magic_value = ((127 - 15) + (23 - 10) + 1) << 23;
+    Union32 denorm_magic;
+    denorm_magic.u = denorm_magic_value;
     constexpr unsigned int exponent_bits = 13;
     constexpr unsigned int sign_bit_shift = 16;
     constexpr unsigned int sign_mask = 0x80000000u;
