@@ -103,6 +103,8 @@ constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
 constexpr auto kUniqueConsecutive = "UniqueConsecutive";
+constexpr auto kRandomShuffle = "RandomShuffle";
+
 const std::set<std::string> kCpuKernelOps{kIdentity,           kMaskedSelect,          kMaskedSelectGrad,
                                           kDynamicStitch,      kSearchSorted,          kResizeBilinear,
                                           kResizeBilinearGrad, kTensorScatterElements, kUniqueConsecutive};
@@ -118,7 +120,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kPriorityReplayBufferSample,
                                               kPriorityReplayBufferUpdate,
                                               kPriorityReplayBufferDestroy,
-                                              kGatherDGradV2};
+                                              kGatherDGradV2,
+                                              kRandomShuffle};
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
