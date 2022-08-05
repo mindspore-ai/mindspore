@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Vmap operations."""
-from ..._c_expression import VmapGeneralPreprocess_, VmapGeneralRulePyAdapter_
+from mindspore._c_expression import VmapGeneralPreprocess_, VmapGeneralRulePyAdapter_
 
 
 class _VmapGeneralPreprocess(VmapGeneralPreprocess_):
