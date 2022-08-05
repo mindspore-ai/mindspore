@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/grad/kl_div_loss_grad.h"
+#include "mindspore/core/ops/op_name.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "plugin/device/cpu/kernel/kl_div_loss_grad_cpu_kernel.h"
@@ -144,9 +145,9 @@ bool KLDivLossGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
   float coefficient = -1.0;
   if (reductionMode_ == ops::kMean) {
-    coefficient /= input_x_shape_size_;
+    coefficient /= SizeToFloat(input_x_shape_size_);
   } else if (reductionMode_ == ops::kBatchMean) {
-    coefficient /= batch_size_;
+    coefficient /= LongToFloat(batch_size_);
   }
 
   double bcast = 1.0;
