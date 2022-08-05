@@ -34,7 +34,7 @@
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_indirect_fp32.h"
 #endif
 #ifdef ENABLE_AVX
-#include "src/litert/kernel/cpu/fp32/convolution_slidewindow_fp32.h"
+#include "src/litert/kernel/cpu/fp32/convolution_slidewindow_avx_fp32.h"
 #endif
 
 using mindspore::lite::KernelRegistrar;
@@ -227,7 +227,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
 
 #ifdef ENABLE_AVX
   if (kernel == nullptr && CheckAvxUseSWConv(conv_param)) {
-    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+    kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
       op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
       origin_weight_, origin_bias_);
   }
