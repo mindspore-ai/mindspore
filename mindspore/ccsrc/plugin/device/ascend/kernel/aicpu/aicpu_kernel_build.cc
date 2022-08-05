@@ -344,7 +344,7 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
   // deal2:input ShapeAndType
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = static_cast<int32_t>(FWK_ADPT_EXT_INPUT_SHAPE);
-  info->infoLen = SizeToInt(input_num * sizeof(ShapeAndType));
+  info->infoLen = SizeToUint(input_num * sizeof(ShapeAndType));
   ext_info_offset += kExtInfoHeadSize;
 
   auto *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
@@ -384,7 +384,7 @@ uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
   // deal3:output ShapeAndType
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = static_cast<int32_t>(FWK_ADPT_EXT_OUTPUT_SHAPE);
-  info->infoLen = SizeToInt(output_num * sizeof(ShapeAndType));
+  info->infoLen = SizeToUint(output_num * sizeof(ShapeAndType));
   ext_info_offset += kExtInfoHeadSize;
 
   auto *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
