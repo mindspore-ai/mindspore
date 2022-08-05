@@ -34,7 +34,7 @@ namespace device {
 namespace cpu {
 class TopologyNode {
  public:
-  TopologyNode(size_t total_node_num, std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> cgn)
+  TopologyNode(size_t total_node_num, const std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> cgn)
       : rank_id_(-1), total_node_num_(total_node_num), cgn_(cgn), initialized_(false) {}
   ~TopologyNode() = default;
 
