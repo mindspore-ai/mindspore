@@ -733,10 +733,13 @@ class EinsumHelper {
   }
 
   bool AdjustElementMapShape(const ShapeVector &temp_vec) {
-    if (element_shape_map_.find(ELL_VAL) != element_shape_map_.end()) {
-      if (element_shape_map_[ELL_VAL] != temp_vec) {
-        if (temp_vec.size() == 0 || element_shape_map_[ELL_VAL].size() == 0) {
-          element_shape_map_[ELL_VAL] = temp_vec.size() == 0 ? element_shape_map_[ELL_VAL] : temp_vec;
+    const size_t ellipsis_val_num = 52;
+    auto iter = element_shape_map_.find(ellipsis_val_num);
+    if (iter != element_shape_map_.end()) {
+      ShapeVector cur_vec = iter->second;
+      if (cur_vec != temp_vec) {
+        if (temp_vec.empty() || cur_vec.empty()) {
+          element_shape_map_[ellipsis_val_num] = temp_vec.empty() ? cur_vec : temp_vec;
         } else {
           MS_LOG(ERROR)
             << "For " << node_name_
@@ -745,7 +748,7 @@ class EinsumHelper {
         }
       }
     } else {
-      element_shape_map_[ELL_VAL] = temp_vec;
+      element_shape_map_[ellipsis_val_num] = temp_vec;
     }
     return true;
   }

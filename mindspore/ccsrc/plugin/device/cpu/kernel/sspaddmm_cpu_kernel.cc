@@ -26,6 +26,15 @@ namespace {
 constexpr size_t kInputsNum = 9;
 constexpr size_t kOutputsNum = 3;
 constexpr char kKernelName[] = "Sspaddmm";
+
+constexpr size_t kOutputShapeIndex = 2;
+constexpr size_t kInputShapeIndex = 2;
+constexpr size_t kMat1IndiceIndex = 3;
+constexpr size_t kMat1ValueIndex = 4;
+constexpr size_t kMat1ShapeIndex = 5;
+constexpr size_t kMat2Index = 6;
+constexpr size_t kAlphaIndex = 7;
+constexpr size_t kBetaIndex = 8;
 }  // namespace
 
 void SspaddmmCPUKernelMod::CheckSparseIndices(const TypeId &indices_dtype, void *indices_addr, void *shape_addr,
@@ -109,19 +118,22 @@ bool SspaddmmCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
 template <typename T>
 void SspaddmmCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto input_indices_addr = inputs[0]->addr;
-  auto input_values_addr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto input_shape_addr = inputs[2]->addr;
-  auto mat1_indices_addr = inputs[3]->addr;
-  auto mat1_values_addr = GetDeviceAddress<T>(inputs, kIndex4);
-  auto mat1_shape_addr = inputs[5]->addr;
-  auto mat2_addr = GetDeviceAddress<T>(inputs, kIndex6);
-  auto alpha_val_addr = inputs[7]->addr;
-  auto beta_val_addr = inputs[8]->addr;
-  auto y_indices_addr = GetDeviceAddress<int64_t>(outputs, kIndex0);
-  auto y_values_addr = GetDeviceAddress<T>(outputs, kIndex1);
-  auto y_shape_addr = GetDeviceAddress<int64_t>(outputs, kIndex2);
-  CheckSparseIndices(input_indices_dtype_, input_indices_addr, input_shape_addr, input_values_num_, "x1");
-  CheckSparseIndices(mat1_indices_dtype_, mat1_indices_addr, mat1_shape_addr, mat1_values_num_, "x2");
+  auto input_values_addr = GetDeviceAddress<T>(inputs, 1);
+  auto input_shape_addr = inputs[kInputShapeIndex]->addr;
+  auto mat1_indices_addr = inputs[kMat1IndiceIndex]->addr;
+  auto mat1_values_addr = GetDeviceAddress<T>(inputs, kMat1ValueIndex);
+  auto mat1_shape_addr = inputs[kMat1ShapeIndex]->addr;
+  auto mat2_addr = GetDeviceAddress<T>(inputs, kMat2Index);
+  auto alpha_val_addr = inputs[kAlphaIndex]->addr;
+  auto beta_val_addr = inputs[kBetaIndex]->addr;
+  auto y_indices_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  auto y_values_addr = GetDeviceAddress<T>(outputs, 1);
+  auto y_shape_addr = GetDeviceAddress<int64_t>(outputs, kOutputShapeIndex);
+
+  const std::string x1_name = "x1";
+  const std::string x2_name = "x2";
+  CheckSparseIndices(input_indices_dtype_, input_indices_addr, input_shape_addr, input_values_num_, x1_name);
+  CheckSparseIndices(mat1_indices_dtype_, mat1_indices_addr, mat1_shape_addr, mat1_values_num_, x2_name);
 
   int64_t mat1_row, mat1_col, input_row, input_col;
   if (mat1_shape_dtype_ == kNumberTypeInt32) {
