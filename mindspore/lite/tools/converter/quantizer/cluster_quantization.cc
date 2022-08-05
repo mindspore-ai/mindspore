@@ -29,6 +29,41 @@ constexpr int kPowExponent = 2;
 constexpr int kMinSize = 2;
 constexpr int kAverage = 2;
 }  // namespace
+std::vector<float> ClusterQuantization::KMeansPlusPlusInit(const float *data, size_t elem_count, size_t k) {
+  std::vector<float> data_vector(data, data + elem_count);
+  std::sort(data_vector.begin(), data_vector.end());
+  data_vector.erase(std::unique(data_vector.begin(), data_vector.end()), data_vector.end());
+
+  if (data_vector.size() < k) {
+    return {};
+  }
+
+  std::vector<float> clusters{};
+  auto min_max = GetMinMaxValue(data_vector.data(), data_vector.size());
+  auto mean = (min_max.second - min_max.first) / 2;
+  clusters.push_back(mean);
+
+  for (size_t i = 1; i < k; i++) {
+    auto max_distance = -1;
+    auto max_index = 0;
+    for (size_t j = 0; j < data_vector.size(); j++) {
+      float distance = 0;
+      for (auto cluster : clusters) {
+        auto cur_distance = std::pow(data_vector[j] - cluster, kPowExponent);
+        distance += cur_distance;
+      }
+      if (distance > max_distance) {
+        max_distance = distance;
+        max_index = j;
+      }
+    }
+    clusters.push_back(data_vector[max_index]);
+    data_vector.erase(data_vector.begin() + max_index);
+  }
+  std::sort(clusters.begin(), clusters.end());
+  return clusters;
+}
+
 std::vector<float> ClusterQuantization::LinearInit(const float *data, size_t elem_count, size_t k) {
   MS_ASSERT(data != nullptr);
   std::set<float> set_unique{};
