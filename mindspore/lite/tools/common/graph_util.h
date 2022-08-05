@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <utility>
 #include <memory>
 #include <vector>
 #include <map>
@@ -85,6 +86,11 @@ TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor);
 TypeId GetParameterDtype(const ParameterPtr &param_node);
 
 STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph);
+
+STATUS GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, int64_t>> *outputs,
+                               std::vector<std::string> *output_names, std::vector<std::vector<int64_t>> *output_dims);
+
+STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph);
 
 STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph);
 
