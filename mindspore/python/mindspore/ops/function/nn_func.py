@@ -790,12 +790,13 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         ValueError: If `mode` is not in the support list.
 
     Examples:
+        >>> # case 1: linear mode
         >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
         >>> output = ops.interpolate(x, None, None, (6,), "align_corners")
         >>> print(output)
         [[[1. 1.4 1.8 2.2 2.6 3.]
           [4. 4.4 4.8 5.2 5.6 6.]]]
-        >>>
+        >>> # case 2: bilinear mode
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> output = ops.interpolate(x, None, None, (5, 5), "asymmetric", "bilinear")
         >>> print(output)
