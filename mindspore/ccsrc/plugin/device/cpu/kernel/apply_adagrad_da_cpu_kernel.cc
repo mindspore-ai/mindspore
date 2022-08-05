@@ -49,8 +49,7 @@ bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-void ApplyAdagradDACpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) const {
+void ApplyAdagradDACpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &inputs) const {
   auto LRDtype = inputs[kLRIndex]->GetDtype();
   auto L1Dtype = inputs[kL1Index]->GetDtype();
   auto L2Dtype = inputs[kL2Index]->GetDtype();
@@ -78,7 +77,7 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != 0) {
     return ret;
   }
-  CheckDType(inputs, outputs);
+  CheckDType(inputs);
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
 
