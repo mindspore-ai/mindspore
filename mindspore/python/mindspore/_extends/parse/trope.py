@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ from operator import (  # noqa
 # support system function call
 from builtins import (  # noqa
     bool, getattr, setattr, len, iter, next, pow, range, map, zip,
-    print, enumerate, isinstance, filter, abs, all, any, round,
+    print, enumerate, isinstance, filter, abs, all, any, round, max, min
 )
 
 # support functools
@@ -47,7 +47,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
            'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs', 'all', 'any', 'round',
-           'exp', 'log', 'sin', 'cos', 'tan']
+           'exp', 'log', 'sin', 'cos', 'tan', 'max', 'min']
 
 
 def MakeTuple(*elts):  # pragma: no cover

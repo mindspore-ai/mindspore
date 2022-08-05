@@ -1776,6 +1776,78 @@ def ms_round(*data):
     return constant_round(*data)
 
 
+def max_tensor(*data):
+    """Get the max of tensor inputs."""
+    max_tensor_data = data[0]
+    for input_data in data:
+        max_tensor_data = P.Maximum()(max_tensor_data, input_data)
+    return max_tensor_data
+
+
+def ms_max(*data):
+    """Implementation of `max`."""
+    len_data = 0
+    if isinstance(data, (dict, list, str, tuple)):
+        len_data = len(data)
+    else:
+        const_utils.raise_type_error("max() does not support the data type.")
+    if len_data <= 0:
+        const_utils.raise_type_error("max() requires 1 argument at least.")
+    elif len_data == 1:
+        x = data[0]
+        if isinstance(x, Tensor):
+            return x.max()
+        if isinstance(x, dict):
+            return max_(x.keys())
+        return max_(x)
+    elif len_data >= 2:
+        tensor_num = 0
+        for input_data in data:
+            if isinstance(input_data, Tensor):
+                tensor_num = tensor_num + 1
+        if tensor_num == len_data:
+            return max_tensor(*data)
+        if tensor_num != 0:
+            const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+    return max_(*data)
+
+
+def min_tensor(*data):
+    """Get the min of tensor inputs."""
+    min_tensor_data = data[0]
+    for input_data in data:
+        min_tensor_data = P.Minimum()(min_tensor_data, input_data)
+    return min_tensor_data
+
+
+def ms_min(*data):
+    """Implementation of `min`."""
+    len_data = 0
+    if isinstance(data, (dict, list, str, tuple)):
+        len_data = len(data)
+    else:
+        const_utils.raise_type_error("min() does not support the data type.")
+    if len_data <= 0:
+        const_utils.raise_type_error("min() requires 1 argument at least.")
+    elif len_data == 1:
+        x = data[0]
+        if isinstance(x, Tensor):
+            return x.min()
+        if isinstance(x, dict):
+            return min_(x.keys())
+        return min_(x)
+    elif len_data >= 2:
+        tensor_num = 0
+        for input_data in data:
+            if isinstance(input_data, Tensor):
+                tensor_num = tensor_num + 1
+        if tensor_num == len_data:
+            return min_tensor(*data)
+        if tensor_num != 0:
+            const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+    return min_(*data)
+
+
 def ms_len(data):
     """Implementation of `len`."""
     return data.__len__()
