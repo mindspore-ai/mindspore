@@ -200,6 +200,7 @@ void CPUProfiler::ClearInst() {
   all_step_start_end_info_.clear();
   step_start_end_info_vector_.clear();
   all_kernel_info_.clear();
+  is_dynamic_shape_net_ = 0;
   init_flag_ = false;
   enable_flag_ = false;
   has_find = false;

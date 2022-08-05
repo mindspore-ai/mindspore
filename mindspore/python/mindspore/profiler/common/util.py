@@ -39,8 +39,8 @@ def to_int(param, param_name):
     """
     try:
         param = int(param)
-    except ValueError:
-        raise TypeError('Must be Integer: ' + param_name)
+    except ValueError as err:
+        raise TypeError('Must be Integer: ' + param_name) from err
     return param
 
 

@@ -510,6 +510,8 @@ class GpuFrameWorkParser:
                                                round(op_total_time / op_occurrences, 4), op_side]
                 else:
                     self.op_detail.get(op_name)[1] += op_total_time
+                    if self.op_detail.get(op_name)[0] == 0:
+                        raise ValueError("The number of op_occurrences can not be 0.")
                     self.op_detail.get(op_name)[2] = self.op_detail.get(op_name)[1] / self.op_detail.get(op_name)[0]
                     self.op_detail[op_name] = [self.op_detail.get(op_name)[0],
                                                round(self.op_detail.get(op_name)[1], 4),
@@ -535,7 +537,10 @@ class GpuFrameWorkParser:
                     # Classify according to the operator information of the same shape.
                     op_shape_dict.get(op_shape)[0] += op_occurrences
                     op_shape_dict.get(op_shape)[1] += op_total_time
-                    op_shape_dict.get(op_shape)[2] = op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
+                    if op_shape_dict.get(op_shape)[0] != 0:
+                        op_shape_dict.get(op_shape)[2] = op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
+                    else:
+                        raise ValueError("The number of op_occurrences can not be 0.")
                     op_shape_dict[op_shape] = [op_shape_dict.get(op_shape)[0], round(op_shape_dict.get(op_shape)[1], 4),
                                                round(op_shape_dict.get(op_shape)[2], 4), op_side]
                 else:

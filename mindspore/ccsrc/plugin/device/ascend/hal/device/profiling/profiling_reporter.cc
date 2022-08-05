@@ -150,7 +150,8 @@ uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
   return task_ids_[static_cast<uint32_t>(index)];
 }
 
-void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const string &tag_name) {
+void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size,
+                                   const string &tag_name) const {
   ReporterData report_data{};
   report_data.deviceId = static_cast<uint32_t>(device_id);
   report_data.data = data;
@@ -248,7 +249,7 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
 }
 
 void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, const uint32_t stream_id,
-                                                  const uint32_t task_id) {
+                                                  const uint32_t task_id) const {
   MS_EXCEPTION_IF_NULL(tensor_info);
   tensor_info->modelId = rt_model_id_;
   tensor_info->streamId = stream_id;
@@ -258,7 +259,7 @@ void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor
 }
 
 void ProfilingReporter::BuildTensorData(MsprofGeTensorData *tensor_data, const CNodePtr &node, size_t index,
-                                        uint32_t tensor_type) {
+                                        uint32_t tensor_type) const {
   MS_EXCEPTION_IF_NULL(tensor_data);
   tensor_data->tensorType = tensor_type;
   std::vector<int64_t> shape;

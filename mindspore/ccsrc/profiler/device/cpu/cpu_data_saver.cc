@@ -16,7 +16,6 @@
 #include "profiler/device/cpu/cpu_data_saver.h"
 #include <fstream>
 #include <numeric>
-#include "sys/stat.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
