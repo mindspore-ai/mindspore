@@ -22,16 +22,38 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = __complex__ float;
+using complex128 = __complex__ double;
 constexpr size_t kBroadcastToOutputsNum = 1;
 }  // namespace
 
 std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod::BroadcastToFunc>>>
   BroadcastToCpuKernelMod::func_list_ = {
     {kBroadcastTo,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<int8_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+       &BroadcastToCpuKernelMod::LaunchKernel<int16_t>},
       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+       &BroadcastToCpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<uint8_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+       &BroadcastToCpuKernelMod::LaunchKernel<uint16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+       &BroadcastToCpuKernelMod::LaunchKernel<uint32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<uint64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &BroadcastToCpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &BroadcastToCpuKernelMod::LaunchKernel<complex64>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &BroadcastToCpuKernelMod::LaunchKernel<complex128>},
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
     {kDynamicBroadcastTo,
@@ -127,13 +149,33 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
     status = BroadcastToSize8(input_addr, &shape_info_, output_addr);
-  } else if constexpr (std::is_same_v<T, int>) {
+  } else if constexpr (std::is_same_v<T, int8_t>) {
+    status = BroadcastToSize8(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, int16_t>) {
+    status = BroadcastToSize16(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, int32_t>) {
     status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, int64_t>) {
+    status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, uint8_t>) {
+    status = BroadcastToSize8(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, uint16_t>) {
+    status = BroadcastToSize16(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, uint32_t>) {
+    status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, uint64_t>) {
+    status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, float>) {
     status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, double>) {
+    status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, complex64>) {
+    status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, complex128>) {
+    status = BroadcastToSize128(input_addr, &shape_info_, output_addr);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', not supported data type, the dtype of input must be bool, int, or float.";
+                      << "', not supported data type, the dtype of input must be bool, int, complex, float or double";
   }
 
   if (status != static_cast<int>(NNACL_OK)) {

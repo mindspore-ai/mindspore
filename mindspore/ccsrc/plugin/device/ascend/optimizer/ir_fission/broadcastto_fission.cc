@@ -61,6 +61,10 @@ const AnfNodePtr BroadcasttoFission::Process(const FuncGraphPtr &graph, const An
   auto broad_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrShape);
   auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
   auto broadcastto_node = AddBroadCastToNode(graph, cast_to_node, broad_shape);
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue<std::string>(prim::kPrimBroadcastTo->name()),
+                                 broadcastto_node);
+  }
   auto out_node = AddCastNode(graph, kNumberTypeBool, broadcastto_node, false);
   return out_node;
 }
