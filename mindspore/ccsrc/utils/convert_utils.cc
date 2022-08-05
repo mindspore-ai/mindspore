@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <utility>
 #include <cfloat>
+#include <cmath>
 
 #include "ir/value.h"
 #include "ir/tensor.h"
@@ -39,9 +40,9 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
   } else if (v->isa<UInt32Imm>()) {
     *value = v->cast<UInt32ImmPtr>()->value() != 0;
   } else if (v->isa<FP32Imm>()) {
-    *value = v->cast<FP32ImmPtr>()->value() != 0;
+    *value = fabs(v->cast<FP32ImmPtr>()->value()) > FLT_EPSILON;
   } else if (v->isa<FP64Imm>()) {
-    *value = v->cast<FP64ImmPtr>()->value() != 0;
+    *value = fabs(v->cast<FP64ImmPtr>()->value()) > DBL_EPSILON;
   } else if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);

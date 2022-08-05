@@ -234,7 +234,7 @@ class Parser {
                         const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) const;
   // Set the interpret flag for the node calling the interpret node.
   void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const;
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes);
+  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) const;
   // Make interpret node.
   AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
   // Convert interpret iter node to list.
@@ -243,7 +243,8 @@ class Parser {
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);
-  bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node, const string &script_text);
+  bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
+                                 const string &script_text) const;
   // Handle interpret for augassign expression.
   AnfNodePtr HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
                                          const py::object &op_object, const py::object &target_object,
