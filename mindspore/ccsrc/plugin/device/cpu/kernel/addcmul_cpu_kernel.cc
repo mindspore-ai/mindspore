@@ -170,7 +170,7 @@ bool AddcmulCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 std::vector<KernelAttr> AddcmulCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
+  static const std::vector<KernelAttr> kernel_attr_list = {
     KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(F16).AddOutputAttr(F32),
     KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(F32).AddOutputAttr(F32),
     KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(I8).AddOutputAttr(F32),

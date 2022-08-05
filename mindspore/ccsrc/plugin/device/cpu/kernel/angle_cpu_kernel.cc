@@ -70,7 +70,7 @@ bool AngleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
 }
 
 std::vector<KernelAttr> AngleCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
 
     KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64)};

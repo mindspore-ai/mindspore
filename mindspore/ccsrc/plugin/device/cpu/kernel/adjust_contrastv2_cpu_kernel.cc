@@ -30,7 +30,7 @@ const int64_t kAdjustContrastv2ParallelNum = 64 * 1024;
 }  // namespace
 
 template <typename T>
-void AdjustContrastv2(T *image, T *image_out, std::float_t contrast_factor, std::int64_t channel_count,
+void AdjustContrastv2(const T *image, T *image_out, std::float_t contrast_factor, std::int64_t channel_count,
                       std::int64_t per_batch_elements) {
   if (channel_count == 0) {
     return;
@@ -108,7 +108,7 @@ bool AdjustContrastv2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
 }
 
 std::vector<KernelAttr> AdjustContrastv2CpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }

@@ -19,6 +19,7 @@
 #include <limits>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
@@ -160,11 +161,21 @@ void AddcdivCpuKernelMod::AddcdivAdd(const T *input1, const T *input2, T *output
 }
 
 template <typename T>
+T abs(T num) {
+  if (num >= static_cast<T>(0.0)) {
+    return num;
+  } else {
+    return -num;
+  }
+}
+
+template <typename T>
 void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output) {
   if (inputx_shape_size_ == 0 && inputy_shape_size_ == 0) {
-    auto zero = (T)0;
-    if (input2[0] == zero) {
-      if (input1[0] == zero) {
+    const auto eps_if_zero = static_cast<T>(1e-6);
+    auto zero = static_cast<T>(0);
+    if (abs(input2[0] - zero) <= eps_if_zero) {
+      if (abs(input1[0] - zero) <= eps_if_zero) {
         output[0] = std::numeric_limits<T>::quiet_NaN();
         return;
       }
@@ -177,14 +188,15 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
   } else {
     BroadcastIterator div_iter(output_shape_, input_shape2_, output_shape_);
     auto div_task = [&input1, &input2, &output, &div_iter](int64_t div_start, int64_t div_end) {
+      const auto eps_if_zero = static_cast<T>(1e-6);
       auto iter = div_iter;
       iter.SetPos(div_start);
       for (int64_t i = div_start; i < div_end; i++) {
-        auto zero = (T)0;
+        auto zero = static_cast<T>(0);
         auto addcdiv_dividend = input1[iter.GetInputPosA()];
         auto addcdiv_divisor = input2[iter.GetInputPosB()];
-        if (addcdiv_divisor == zero) {
-          if (addcdiv_dividend == zero) {
+        if (abs(addcdiv_divisor - zero) <= eps_if_zero) {
+          if (abs(addcdiv_dividend - zero) <= eps_if_zero) {
             output[i] = std::numeric_limits<T>::quiet_NaN();
             continue;
           }
@@ -209,7 +221,7 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
 }
 
 std::vector<KernelAttr> AddcdivCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
+  static const std::vector<KernelAttr> kernel_attr_list = {
     ADD_KERNEL(Float32, Float32, Float32, Float16, Float32), ADD_KERNEL(Float32, Float32, Float32, Float32, Float32),
     ADD_KERNEL(Float32, Float32, Float32, Float64, Float32), ADD_KERNEL(Float32, Float32, Float32, Int32, Float32),
     ADD_KERNEL(Float32, Float32, Float32, Int64, Float32),   ADD_KERNEL(Float64, Float64, Float64, Float16, Float64),

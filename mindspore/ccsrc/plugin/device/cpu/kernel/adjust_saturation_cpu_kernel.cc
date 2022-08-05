@@ -18,6 +18,7 @@
 #include <Eigen/Dense>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -38,6 +39,7 @@ namespace detail {
 static void rgb_to_hsv(float r, float g, float b, float *h, float *s, float *v) {
   float vv = std::max(r, std::max(g, b));
   float range = vv - std::min(r, std::min(g, b));
+  const float eps = 1e-6;
   if (vv > 0) {
     *s = range / vv;
   } else {
@@ -45,9 +47,9 @@ static void rgb_to_hsv(float r, float g, float b, float *h, float *s, float *v) 
   }
   float norm = kAdjustSaturationOne / (kAdjustSaturationSix * range);
   float hh;
-  if (r == vv) {
+  if (std::fabs(r - vv) <= eps) {
     hh = norm * (g - b);
-  } else if (g == vv) {
+  } else if (std::fabs(g - vv) <= eps) {
     hh = norm * (b - r) + kAdjustSaturationTwo / kAdjustSaturationSix;
   } else {
     hh = norm * (r - g) + kAdjustSaturationFour / kAdjustSaturationSix;
@@ -170,7 +172,7 @@ bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
   }
 }
 std::vector<KernelAttr> AdjustSaturationCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }
