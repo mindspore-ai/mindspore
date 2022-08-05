@@ -95,8 +95,8 @@ bool SmoothL1LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
 
   beta_ = kernel_ptr->get_beta();
-  if (beta_ == 0.0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
+  if (beta_ < 0.0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be less than 0.";
     return false;
   }
 
