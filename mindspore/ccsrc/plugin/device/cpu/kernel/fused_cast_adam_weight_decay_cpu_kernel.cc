@@ -179,7 +179,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'var' should not be zero.";
   }
-  if (var_dtype_ != kNumberTypeFloat32 && gradient_dtype_ != kNumberTypeFloat16) {
+  if (gradient_dtype_ != kNumberTypeFloat32 && gradient_dtype_ != kNumberTypeFloat16) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'gradient' should be float16 or float32, but got "
                       << TypeIdToType(gradient_dtype_)->ToString();
   }
