@@ -810,8 +810,6 @@ class TensorShape(Primitive):
     """
     Returns the shape of the input tensor.
 
-    Refer to :func:`mindspore.ops.dyn_shape` for more detail.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
