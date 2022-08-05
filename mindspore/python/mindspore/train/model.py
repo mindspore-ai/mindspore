@@ -147,6 +147,7 @@ class Model:
             training. Supports ["O0", "O1", "O2"]. Default: "O0".
 
             - "O0": Do not change.
+            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O1": Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
             - "O2": Enable the boost mode, the performance is improved by about 30%, and
