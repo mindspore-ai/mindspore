@@ -31,7 +31,7 @@ abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vect
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   std::vector<int64_t> out_shape;
 
-  size_t batch_rank = 0;
+  int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
