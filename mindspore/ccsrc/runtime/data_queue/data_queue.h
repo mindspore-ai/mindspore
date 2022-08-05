@@ -34,8 +34,8 @@ class DataQueue {
 
   virtual void RegisterRelease(const std::function<void(void *, int32_t)> &func) { host_release_ = func; }
 
-  virtual inline bool IsEmpty() const { return size_ == 0; }
-  virtual inline bool IsFull() const { return size_ == capacity_; }
+  virtual bool IsEmpty() const { return size_ == 0; }
+  virtual bool IsFull() const { return size_ == capacity_; }
 
   virtual BlockQueueStatus_T Push(std::vector<DataQueueItem> data) = 0;
   virtual BlockQueueStatus_T Front(std::vector<DataQueueItem> *data) const = 0;

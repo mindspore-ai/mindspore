@@ -30,7 +30,7 @@ BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataQueueItem> &data, u
     }
   }
   auto ret = queue_->Push(data);
-  if (ret) {
+  if (ret != SUCCESS) {
     return ret;
   }
   not_empty_cond_.notify_one();
@@ -50,7 +50,7 @@ BlockQueueStatus_T BlockingQueue::Pop() {
   std::unique_lock<std::mutex> locker(mutex_);
   not_empty_cond_.wait(locker, [this] { return !queue_->IsEmpty(); });
   auto ret = queue_->Pop();
-  if (ret) {
+  if (ret != SUCCESS) {
     return ret;
   }
   not_full_cond_.notify_one();
@@ -67,11 +67,11 @@ BlockQueueStatus_T BlockingQueue::Clear() {
   while (Size() > 0) {
     std::vector<DataQueueItem> data;
     auto ret = queue_->Front(&data);
-    if (ret) {
+    if (ret != SUCCESS) {
       return ret;
     }
     ret = queue_->Pop();
-    if (ret) {
+    if (ret != SUCCESS) {
       return ret;
     }
   }
