@@ -81,7 +81,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
       axis[0] += input_rank;
     }
     if (!keep_dims) {
-      (void)output_shape.erase(output_shape.begin() + LongToSize(axis[0]));
+      (void)output_shape.erase(output_shape.begin() + axis[0]);
     } else {
       output_shape[LongToSize(axis[0])] = 1;
     }

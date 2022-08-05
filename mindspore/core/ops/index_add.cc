@@ -71,7 +71,7 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   }
   for (int dim = 0; dim < x_rank; dim = dim + 1) {
     if (dim != axis_rank) {
-      CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, y_shape[dim], prim_name);
+      CheckAndConvertUtils::Check("x dim", x_shape[IntToSize(dim)], kEqual, y_shape[IntToSize(dim)], prim_name);
     }
   }
   return x_shape_ptr;

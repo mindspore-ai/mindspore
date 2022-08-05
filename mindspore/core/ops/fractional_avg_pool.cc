@@ -61,7 +61,7 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
   }
   std::vector<int64_t> out_shape(x_rank);
   for (int i = 0; i < x_rank; ++i) {
-    out_shape[i] = static_cast<int64_t>(std::floor(in_shape[i] / pooling_ratio[i]));
+    out_shape[IntToSize(i)] = static_cast<int64_t>(std::floor(in_shape[IntToSize(i)] / pooling_ratio[IntToSize(i)]));
   }
 
   int64_t row = out_shape[kInputIndex1] + 1;

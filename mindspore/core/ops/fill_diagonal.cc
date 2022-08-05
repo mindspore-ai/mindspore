@@ -36,7 +36,7 @@ abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &primitive,
   }
   if (x_size > kDimSize2) {
     for (int64_t i = 1; i < x_size; i++) {
-      if (x_shape[i] != x_shape[i - 1]) {
+      if (x_shape[i] != x_shape[LongToSize(i - 1)]) {
         MS_EXCEPTION(ValueError) << "The primitive[FillDiagonal] argument [input_x] must be a Tensor with the same "
                                     "size in all dimensions when its dimension is greater than 2";
       }

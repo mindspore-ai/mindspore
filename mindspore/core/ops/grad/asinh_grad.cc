@@ -48,7 +48,7 @@ AbstractBasePtr AsinhGradInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t InputNum = 2;
+  const int64_t InputNum = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, InputNum, prim_name);
   auto types = AsinhGradInferType(primitive, input_args);
   auto shapes = AsinhGradInferShape(primitive, input_args);

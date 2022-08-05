@@ -60,9 +60,9 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 0; i < axis.size(); ++i) {
     if (!keep_dims) {
-      temp_shape[axis[i]] = -1;
+      temp_shape[LongToSize(axis[i])] = -1;
     } else {
-      temp_shape[axis[i]] = 1;
+      temp_shape[LongToSize(axis[i])] = 1;
     }
   }
   if (!keep_dims) {

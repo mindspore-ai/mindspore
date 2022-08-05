@@ -28,7 +28,7 @@
 
 #define LuSolve_pop()                \
   do {                               \
-    for (size_t i = 0; i < 2; i++) { \
+    for (size_t j = 0; j < 2; j++) { \
       x_shape.pop_back();            \
       lu_data_shape.pop_back();      \
     }                                \

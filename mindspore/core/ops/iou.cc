@@ -43,8 +43,9 @@ abstract::ShapePtr IOUInferShape(const PrimitivePtr &primitive, const std::vecto
       << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
       << x_shp.size() << ", y size = " << y_shp.size() << ".";
   }
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[1]), kGreaterEqual, 4, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[1]), kGreaterEqual, 4, prim_name);
+  const int64_t input_num = 4;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", x_shp[1], kGreaterEqual, input_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", y_shp[1], kGreaterEqual, input_num, prim_name);
   ShapeVector x_min_shape = x_shape_map[kMinShape];
   ShapeVector x_max_shape = x_shape_map[kMaxShape];
   ShapeVector y_min_shape = y_shape_map[kMinShape];

@@ -39,7 +39,6 @@ class AdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
-  enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD };
 };
 }  // namespace kernel
 }  // namespace mindspore

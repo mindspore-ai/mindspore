@@ -30,7 +30,7 @@ abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &, const std::vector<Ab
   const int64_t kNumDims = 4;
   const int64_t kLastDim = 3;
   const int64_t input_dims = SizeToLong(input_shape.size());
-  const int64_t input_last_dims = SizeToLong(input_shape.cend()[-1]);
+  const int64_t input_last_dims = input_shape.cend()[-1];
   (void)CheckAndConvertUtils::CheckInteger("the dimension of [x]", input_dims, kEqual, kNumDims, kNameHSVToRGB);
   (void)CheckAndConvertUtils::CheckInteger("the last dimension of the shape of [x]", input_last_dims, kEqual, kLastDim,
                                            kNameHSVToRGB);

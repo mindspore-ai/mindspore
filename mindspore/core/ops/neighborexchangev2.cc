@@ -69,17 +69,19 @@ void CheckRecvCorner(const PrimitivePtr &primitive, std::vector<int64_t> recv_ra
       recv_rank_ids[idx_corner] == kNeighborExchangeV2InvalidIds) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', recv_rank_ids[" << idx1 << "] or recv_rank_ids["
                              << idx2 << "] must be -1, or recv_rank_ids[" << idx_corner
-                             << "] can not be -1. But got recv_rank_ids[" << idx1 << "]: " << recv_rank_ids[idx1]
-                             << ", recv_rank_ids[" << idx2 << "]: " << recv_rank_ids[idx2] << ", and recv_rank_ids["
-                             << idx_corner << "]: " << recv_rank_ids[idx_corner] << ".";
+                             << "] can not be -1. But got recv_rank_ids[" << idx1
+                             << "]: " << recv_rank_ids[LongToSize(idx1)] << ", recv_rank_ids[" << idx2
+                             << "]: " << recv_rank_ids[LongToSize(idx2)] << ", and recv_rank_ids[" << idx_corner
+                             << "]: " << recv_rank_ids[LongToSize(idx_corner)] << ".";
   }
   if ((recv_rank_ids[idx1] == kNeighborExchangeV2InvalidIds || recv_rank_ids[idx2] == kNeighborExchangeV2InvalidIds) &&
       recv_rank_ids[idx_corner] != kNeighborExchangeV2InvalidIds) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', recv_rank_ids[" << idx1 << "] and recv_rank_ids["
                              << idx2 << "] can not be -1, or recv_rank_ids[" << idx_corner
-                             << "] must be -1. But got recv_rank_ids[" << idx1 << "]: " << recv_rank_ids[idx1]
-                             << ", recv_rank_ids[" << idx2 << "]: " << recv_rank_ids[idx2] << ", and recv_rank_ids["
-                             << idx_corner << "]: " << recv_rank_ids[idx_corner] << ".";
+                             << "] must be -1. But got recv_rank_ids[" << idx1
+                             << "]: " << recv_rank_ids[LongToSize(idx1)] << ", recv_rank_ids[" << idx2
+                             << "]: " << recv_rank_ids[LongToSize(idx2)] << ", and recv_rank_ids[" << idx_corner
+                             << "]: " << recv_rank_ids[LongToSize(idx_corner)] << ".";
   }
 }
 

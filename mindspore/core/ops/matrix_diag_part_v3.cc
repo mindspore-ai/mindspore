@@ -36,7 +36,7 @@ int64_t TrueValueCal(const std::vector<AbstractBasePtr> &input_args) {
   int64_t true_value = 1;
   const int64_t number_two = 2;
   for (int64_t i = 0; i < rank - number_two; i++) {
-    true_value *= x_shape[i];
+    true_value *= x_shape[LongToSize(i)];
   }
   return true_value;
 }
@@ -58,8 +58,8 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  int64_t row = x_shape[rank - kNumber2];
-  int64_t col = x_shape[rank - 1];
+  int64_t row = x_shape[LongToSize(rank - kNumber2)];
+  int64_t col = x_shape[LongToSize(rank - 1)];
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
     auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
@@ -129,7 +129,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
     ShapeVector infer_shape_min = {0};
     int64_t max_value = (row + col) * std::max(row, col);
     for (int64_t i = 0; i < rank - kNumber2; i++) {
-      max_value *= x_shape[i];
+      max_value *= x_shape[LongToSize(i)];
     }
     ShapeVector infer_shape_max = {max_value};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);

@@ -45,7 +45,7 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   auto global_step_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  size_t batch_rank = 0;
+  int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
