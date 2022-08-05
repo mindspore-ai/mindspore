@@ -86,6 +86,7 @@ Reduction方法
     mindspore.Tensor.argmin_with_value
     mindspore.Tensor.max
     mindspore.Tensor.mean
+    mindspore.Tensor.median
     mindspore.Tensor.min
     mindspore.Tensor.norm
     mindspore.Tensor.prod
@@ -103,6 +104,7 @@ Reduction方法
     mindspore.Tensor.approximate_equal
     mindspore.Tensor.has_init
     mindspore.Tensor.isclose
+    mindspore.Tensor.isfinite
     mindspore.Tensor.top_k
 
 线性代数方法
