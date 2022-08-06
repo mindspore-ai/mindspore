@@ -18,14 +18,11 @@
 #include <cstdint>
 
 namespace aicpu {
-enum AicpuKernelErrCode : uint32_t {
-  // 0-3 is fixed error code, runtime need interpret 0-3 error codes
-  AICPU_KERNEL_STATE_SUCCESS = 0,
-  AICPU_KERNEL_STATE_PARAM_INVALID = 1,
-  AICPU_KERNEL_STATE_FAILED = 2,
-  AICPU_KERNEL_STATE_EXECUTE_TIMEOUT = 3,
-  AICPU_KERNEL_STATE_INTERNAL_ERROR = 4,
-  AICPU_KERNEL_STATE_END_OF_SEQUENCE = 201,
-};
+constexpr uint32_t kAicpuKernelStateSucess = 0;
+constexpr uint32_t kAicpuKernelStateInvalid = 1;
+constexpr uint32_t kAicpuKernelStateFailed = 2;
+constexpr uint32_t kAicpuKernelStateExecuteTimeout = 3;
+constexpr uint32_t kAicpuKernelStateInternalError = 4;
+constexpr uint32_t kAicpuKernelStateEndOfSequence = 201;
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_KENERL_ERRCODE_H_

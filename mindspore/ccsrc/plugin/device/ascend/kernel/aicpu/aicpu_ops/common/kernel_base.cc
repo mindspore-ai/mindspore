@@ -17,7 +17,6 @@
 #include "common/kernel_base.h"
 #include "common/kernel_errcode.h"
 #include "common/tensor.h"
-#include "utils/convert_utils_base.h"
 
 namespace aicpu {
 namespace {
@@ -26,6 +25,7 @@ constexpr uint32_t MAX_PARAM_LEN = 10240;
 // max io address num limit 1024
 constexpr uint32_t MAX_IO_ADDR_NUMPARAM_LEN = 1024;
 }  // namespace
+
 static const std::map<const ::aicpuops::DataType, size_t> kKernelBaseDataTypeSize = {
   {aicpuops::MS_BOOL, sizeof(bool)},       {aicpuops::MS_INT8, sizeof(int8_t)},
   {aicpuops::MS_UINT8, sizeof(uint8_t)},   {aicpuops::MS_INT16, sizeof(int16_t)},
@@ -44,7 +44,7 @@ KernelBase::KernelBase(const std::string &kernel_name)
 uint32_t KernelBase::ParseParam(void *param) {
   if (param == nullptr) {
     AICPU_LOGE("Kernel:%s ParseParam param is null.", kernel_name_.c_str());
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
 
   // parse param_len
@@ -52,7 +52,7 @@ uint32_t KernelBase::ParseParam(void *param) {
   if (param_head_->length < sizeof(AicpuParamHead) || param_head_->length > MAX_PARAM_LEN) {
     AICPU_LOGE("Kernel:%s param length=%u not in [%zu, %u].", kernel_name_.c_str(), param_head_->length,
                sizeof(AicpuParamHead), MAX_PARAM_LEN);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
 
   auto param_base = static_cast<uint8_t *>(param);
@@ -63,13 +63,13 @@ uint32_t KernelBase::ParseParam(void *param) {
     if (param_head_->ioAddrNum > MAX_IO_ADDR_NUMPARAM_LEN) {
       AICPU_LOGE("Kernel:%s param ioAddrNum=%u is over %u.", kernel_name_.c_str(), param_head_->ioAddrNum,
                  MAX_IO_ADDR_NUMPARAM_LEN);
-      return AICPU_KERNEL_STATE_PARAM_INVALID;
+      return kAicpuKernelStateInvalid;
     }
     uint32_t addr_len = static_cast<uint32_t>(param_head_->ioAddrNum * sizeof(uint64_t));
     if (extend_param_len_ < addr_len) {
       AICPU_LOGE("Kernel:%s extend param is not enough for io addr, ioAddrNum=%u, extendParamLen=%u.",
                  kernel_name_.c_str(), param_head_->ioAddrNum, extend_param_len_);
-      return AICPU_KERNEL_STATE_PARAM_INVALID;
+      return kAicpuKernelStateInvalid;
     }
     auto io_addr_base = reinterpret_cast<uint64_t *>(extend_param_base_);
     for (uint32_t i = 0; i < param_head_->ioAddrNum; ++i) {
@@ -90,7 +90,7 @@ uint32_t KernelBase::ParseParam(void *param) {
 
 uint32_t KernelBase::Compute(void *param) {
   uint32_t ret = ParseParam(param);
-  if (ret != AICPU_KERNEL_STATE_SUCCESS) {
+  if (ret != kAicpuKernelStateSucess) {
     AICPU_LOGE("Kernel:%s ParseParam failed, ret=%u.", kernel_name_.c_str(), ret);
     return ret;
   }
@@ -111,17 +111,17 @@ uint32_t KernelBase::ParseExtendParam(T *param_var, const std::string &param_nam
   if (extend_param_len_ < sizeof(T)) {
     AICPU_LOGE("Kernel:%s extend param is not enough for [%s] addr, need_len=%u, extendParamLen=%u.",
                kernel_name_.c_str(), param_name.c_str(), sizeof(T), extend_param_len_);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   T *param = reinterpret_cast<T *>(extend_param_base_);
   if (param != nullptr) {
     *param_var = *param;
     extend_param_base_ += sizeof(T);
     extend_param_len_ -= sizeof(T);
-    return AICPU_KERNEL_STATE_SUCCESS;
+    return kAicpuKernelStateSucess;
   }
   AICPU_LOGE("Kernel:%s extend param for [%s] addr is invalid.", kernel_name_.c_str(), param_name.c_str());
-  return AICPU_KERNEL_STATE_PARAM_INVALID;
+  return kAicpuKernelStateInvalid;
 }
 
 uint32_t KernelBase::ParseNodeDef() {
@@ -131,26 +131,26 @@ uint32_t KernelBase::ParseNodeDef() {
   if (extend_param_len_ < node_def_len) {
     AICPU_LOGE("Kernel:%s extend param is not enough for customizeAttr addr, node_def_len=%u, extendParamLen=%u.",
                kernel_name_.c_str(), node_def_len, extend_param_len_);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   std::string std_data(reinterpret_cast<char *>(extend_param_base_), node_def_len);
   if (!node_def_.ParseFromString(std_data)) {
     AICPU_LOGE("parse %s KernelBase proto failed, nodeDef=%s.", kernel_name_.c_str(), std_data.c_str());
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   extend_param_base_ += node_def_len;
   extend_param_len_ -= node_def_len;
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t KernelBase::ParseExtShapeType(FWKAdapter::ExtInfo *ext_info) {
   if (ext_info->infoLen != sizeof(int32_t)) {
     AICPU_LOGE("Kernel:%s parse ext shape type failed as infoLen must be %zu but %u.", kernel_name_.c_str(),
                sizeof(int32_t), ext_info->infoLen);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   unknow_shape_ = true;
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t KernelBase::ParseExtInputShape(FWKAdapter::ExtInfo *ext_info) {
@@ -161,14 +161,14 @@ uint32_t KernelBase::ParseExtInputShape(FWKAdapter::ExtInfo *ext_info) {
       "Kernel:%s parse ext input shape failed as infoLen must be "
       "input_num[%d]*sizeof(ShapeAndType)[%zu], but %u.",
       kernel_name_.c_str(), node_def_.inputs_size(), sizeof(FWKAdapter::ShapeAndType), ext_info->infoLen);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   input_shape_and_type_.clear();
   auto input = reinterpret_cast<FWKAdapter::ShapeAndType *>(ext_info->infoMsg);
   for (int index = 0; index < node_def_.inputs_size(); ++index) {
     (void)input_shape_and_type_.emplace_back(&input[index]);
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t KernelBase::ParseExtOutputShape(FWKAdapter::ExtInfo *ext_info) {
@@ -179,14 +179,14 @@ uint32_t KernelBase::ParseExtOutputShape(FWKAdapter::ExtInfo *ext_info) {
       "Kernel:%s parse ext output shape failed as infoLen must be "
       "output_num[%d]*sizeof(ShapeAndType)[%zu], but %u.",
       kernel_name_.c_str(), node_def_.outputs_size(), sizeof(FWKAdapter::ShapeAndType), ext_info->infoLen);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   output_shape_and_type_.clear();
   auto output = reinterpret_cast<FWKAdapter::ShapeAndType *>(ext_info->infoMsg);
   for (int index = 0; index < node_def_.outputs_size(); ++index) {
     (void)output_shape_and_type_.emplace_back(&output[index]);
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t KernelBase::ParseExtInfo() {
@@ -198,7 +198,7 @@ uint32_t KernelBase::ParseExtInfo() {
     if (ext_info_ptr == nullptr) {
       AICPU_LOGE("Kernel:%s ext_info is nullptr, extInfoLength=%u, extInfoAddr=%p, offset=%zu.", kernel_name_.c_str(),
                  param_head_->extInfoLength, param_head_->extInfoAddr, offset);
-      return AICPU_KERNEL_STATE_PARAM_INVALID;
+      return kAicpuKernelStateInvalid;
     }
     switch (ext_info_ptr->infoType) {
       case FWKAdapter::FWK_ADPT_EXT_SHAPE_TYPE:
@@ -219,7 +219,7 @@ uint32_t KernelBase::ParseExtInfo() {
     offset += FWKAdapter::kExtInfoHeadSize;
     offset += ext_info_ptr->infoLen;
   }
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 void KernelBase::UpdateInputShape() {
@@ -232,7 +232,7 @@ void KernelBase::UpdateInputShape() {
       if (input_shape_and_type_[i]->dims[index] == LLONG_MIN) {
         break;
       }
-      input_tensor_shape->add_dim()->set_size(input_shape_and_type_[i]->dims[index]);
+      input_tensor_shape->add_dim()->set_size(input_shape_and_type_[IntToSize(i)]->dims[index]);
     }
   }
 }
