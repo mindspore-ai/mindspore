@@ -116,7 +116,7 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
 
 ge::Operator *PadNPUOp::GetNPUOp() { return this->pad_; }
 
-int PadNPUOp::HandleAxis() {
+int PadNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   if (paddings_vec_.size() != PAD_SIZE) {
     return RET_ERROR;
   }

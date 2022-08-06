@@ -77,7 +77,7 @@ class NPUOp {
 
   virtual ge::Operator *GetNPUOp() { return nullptr; }
 
-  virtual int HandleAxis() { return RET_OK; }
+  virtual int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) { return RET_OK; }
 
   void set_inputs(const std::vector<mindspore::MSTensor> &in_tensors) { this->inputs_ = in_tensors; }
 

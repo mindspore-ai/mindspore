@@ -49,7 +49,7 @@ class StridedSliceNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis() override;
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
 
  private:
   hiai::op::StridedSlice *strided_slice_ = nullptr;

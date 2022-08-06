@@ -88,7 +88,7 @@ int ReduceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
 
 ge::Operator *ReduceNPUOp::GetNPUOp() { return this->reduce_; }
 
-int ReduceNPUOp::HandleAxis() {
+int ReduceNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   auto reduce_axes = inputs_.at(1);
   int num_axes = reduce_axes.Shape().at(0);
   MS_CHECK_TRUE_RET(reduce_axes.MutableData() != nullptr, RET_ERROR);

@@ -250,6 +250,8 @@ int ConverterToNPUActivationMode(schema::ActivationType type) {
       return RELU6;
     case schema::ActivationType_ELU:
       return ELU;
+    case schema::ActivationType_GELU:
+      return GELU;
     default:
       return ACTIVATION_INVALID;
   }
