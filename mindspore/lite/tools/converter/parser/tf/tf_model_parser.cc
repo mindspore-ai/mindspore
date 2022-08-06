@@ -1035,11 +1035,6 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return status;
   }
 
-  status = ConvertQuantParams(inputs.size() - 1, output_size, primitive_c);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Convert quant params for " << anf_node->fullname_with_scope() << " failed.";
-    return status;
-  }
   return status;
 }
 
@@ -1074,18 +1069,6 @@ STATUS TFModelParser::ProcessControlFlowOp(const CNodePtr &anf_node, const strin
       MS_LOG(DEBUG) << "parse else name:" << else_name;
     }
   }
-  return RET_OK;
-}
-
-STATUS TFModelParser::ConvertQuantParams(const size_t &input_size, const size_t &output_size,
-                                         PrimitiveCPtr primitive_c) {
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
-    return RET_NULL_PTR;
-  }
-  auto quant_params_holder = std::make_shared<QuantParamHolder>(input_size, output_size);
-  CHECK_NULL_RETURN(quant_params_holder);
-  primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 
