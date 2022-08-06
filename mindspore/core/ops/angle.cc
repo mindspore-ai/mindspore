@@ -54,7 +54,7 @@ AbstractBasePtr AngleInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto primitive_name = primitive->name();
   const size_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_type = AngleInferType(primitive, input_args);
   auto infer_shape = AngleInferShape(primitive, input_args);

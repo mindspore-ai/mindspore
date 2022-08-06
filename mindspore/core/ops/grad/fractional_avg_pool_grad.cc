@@ -55,7 +55,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   auto shape_ptr = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
-  if (shape_v[kInputIndex0] != kInpuSizes) {
+  if (shape_v[kInputIndex0] != SizeToLong(kInpuSizes)) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the input 'orig_input_tensor_shape' tensor shape must = 4.";
   }
   if (shape_v.size() > kInpuDims) {

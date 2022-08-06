@@ -27,7 +27,7 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
   auto op_name = primitive->name();
   MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t input_num = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack());
   auto gradient_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
   auto norm_weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack());
@@ -83,7 +83,7 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
 TypePtr LARSUpdateInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 6;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("Weight dtype", input_args[0]->BuildType());
   (void)types.emplace("gradient dtype", input_args[1]->BuildType());

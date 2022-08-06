@@ -28,7 +28,7 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t kInputNum = 9;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
   auto var_shape = input_args[0]->BuildShape();
   auto mg_shape = input_args[1]->BuildShape();
   auto ms_shape = input_args[2]->BuildShape();
@@ -79,7 +79,7 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
 TypePtr ApplyCenteredRMSPropInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 9;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto var_dtype = input_args[0]->BuildType();
   auto mean_gradient_dtype = input_args[1]->BuildType();
   auto mean_square_dtype = input_args[2]->BuildType();

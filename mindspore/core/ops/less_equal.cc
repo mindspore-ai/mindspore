@@ -35,7 +35,7 @@ abstract::ShapePtr LessEqualInferShape(const PrimitivePtr &primitive, const std:
 TypePtr LessEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());

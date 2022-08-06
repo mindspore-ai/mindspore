@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kDimSize1 = 1;
-constexpr size_t kDimSize2 = 2;
+constexpr int64_t kDimSize2 = 2;
 constexpr size_t kDimSize3 = 3;
 constexpr size_t kDimSize4 = 4;
 constexpr size_t kDimSize5 = 5;

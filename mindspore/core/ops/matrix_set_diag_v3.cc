@@ -112,7 +112,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
       }
       max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
       int64_t in_row_diagonal = diagonal_shape[LongToSize(diagonal_rank - kNumber2)];
-      int64_t num_diags = k_val[1] - k_val[0] + 1;
+      int64_t num_diags = IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1;
       if (num_diags != in_row_diagonal) {
         MS_EXCEPTION(ValueError) << "For " << prim_name
                                  << ", diagonal.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1, "

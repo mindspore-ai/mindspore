@@ -44,10 +44,10 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
                                << ", 'x2' shape: " << x2_shape << ".";
     }
   }
-  if (x1_shape.size() <= 0 || x2_shape.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs data dim must be greater than 0, but got "
-                             << x1_shape.size() << ".";
-  }
+  (void)CheckAndConvertUtils::CheckInteger("dim of x1", SizeToLong(x1_shape.size()), kGreaterThan, 0,
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("dim of x2", SizeToLong(x2_shape.size()), kGreaterThan, 0,
+                                           primitive->name());
   int64_t default_dim = -65530;
   if (dim == default_dim) {
     int64_t dim_size_value = 3;

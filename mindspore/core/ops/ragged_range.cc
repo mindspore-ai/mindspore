@@ -118,8 +118,8 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
     }
     ShapeVector rt_dense_values_shape_vec = {};
     ShapeVector rt_nested_splits_shape_vec = {};
-    (void)rt_dense_values_shape_vec.push_back(shape_size);
-    (void)rt_nested_splits_shape_vec.push_back(nrows + 1);
+    rt_dense_values_shape_vec.push_back(shape_size);
+    rt_nested_splits_shape_vec.push_back(nrows + 1);
     if (rt_dense_values_shape_vec[0] > max_length) {
       MS_EXCEPTION(ValueError) << "For RaggedRange"
                                << ", the number of elements of output must be less than max length: " << max_length

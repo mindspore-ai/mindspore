@@ -71,7 +71,7 @@ bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
           low = mid + 1;
         }
       }
-      output_data_addr[i] = static_cast<O>(low - seq_row * sorted_x_data_column);
+      output_data_addr[i] = static_cast<O>(low - SizeToLong(seq_row) * SizeToLong(sorted_x_data_column));
     }
   };
 

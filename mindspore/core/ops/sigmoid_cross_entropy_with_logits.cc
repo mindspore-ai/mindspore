@@ -28,7 +28,7 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsInferShape(const PrimitivePtr &p
   auto op_name = primitive->name();
   MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
   auto logits_shape = input_args[0]->BuildShape();
   auto label_shape = input_args[1]->BuildShape();
   auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
@@ -51,7 +51,7 @@ TypePtr SigmoidCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto logits_type = input_args[kInputIndex0]->BuildType();
   auto label_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,

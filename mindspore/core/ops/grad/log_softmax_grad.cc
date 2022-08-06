@@ -32,7 +32,7 @@ abstract::ShapePtr LogSoftmaxGradInferShape(const PrimitivePtr &primitive,
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
   auto rank = SizeToLong(in_shape.size());
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-rank, rank}, primitive->name());
+  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-rank, rank}, primitive->name());
   if (min_shape.size() != 0 && max_shape.size() != 0) {
     return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
   }
@@ -67,7 +67,7 @@ AbstractBasePtr LogSoftmaxGradInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto type = LogSoftmaxGradInferType(primitive, input_args);
   auto shape = LogSoftmaxGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

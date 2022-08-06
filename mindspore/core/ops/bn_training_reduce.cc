@@ -86,7 +86,7 @@ AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = BNTrainingReduceInferType(primitive, input_args);
   auto infer_shape = BNTrainingReduceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

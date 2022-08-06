@@ -49,7 +49,7 @@ AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t InputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, InputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, InputNum, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto types = AsinInferType(primitive, input_args);
   auto shapes = AsinInferShape(primitive, input_args);

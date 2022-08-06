@@ -47,7 +47,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis_temp, kIncludeBoth,
                                               {-SizeToLong(element0_rank), SizeToLong(element0_rank) - kOneNum},
                                               prim_name);
-  auto axis = axis_temp < 0 ? LongToSize(axis_temp + element0_rank) : LongToSize(axis_temp);
+  auto axis = axis_temp < 0 ? LongToSize(axis_temp + SizeToLong(element0_rank)) : LongToSize(axis_temp);
   int64_t all_shp = element0_shape[axis];
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);

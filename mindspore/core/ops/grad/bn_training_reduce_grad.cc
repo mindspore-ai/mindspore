@@ -60,7 +60,7 @@ AbstractBasePtr BNTrainingReduceGradInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 7;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto type = BNTrainingReduceGradInferType(primitive, input_args);
   auto shape = BNTrainingReduceGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

@@ -113,7 +113,7 @@ AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEngin
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 5;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = CSRSparseMatrixToSparseTensorInferType(primitive, input_args);
   auto infer_shape = CSRSparseMatrixToSparseTensorInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

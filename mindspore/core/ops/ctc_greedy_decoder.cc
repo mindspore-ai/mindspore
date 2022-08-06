@@ -43,7 +43,7 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
   const int64_t kInputNum = 2;
   const int64_t kInputsRank = 3;
   const int64_t kSeqLenRank = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto inputs_x_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto inputs_x_dtype = input_args[kInputIndex0]->BuildType();
   auto sequence_length_dtype = input_args[kInputIndex1]->BuildType();
