@@ -20,7 +20,7 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 
 namespace mindspore::lite {
-constexpr char *CAST_PLUGIN_NAME{"CastPluginCreater"};
+constexpr auto CAST_PLUGIN_NAME{"CastPluginCreater"};
 class CastPlugin : public TensorRTPlugin {
  public:
   CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype,

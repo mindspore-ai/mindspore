@@ -16,10 +16,11 @@
 
 #include "src/extendrt/delegate/tensorrt/op/lstm_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
+#include "ops/lstm.h"
 
 namespace mindspore::lite {
-int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                            const std::vector<mindspore::MSTensor> &out_tensors) {
+int LSTMTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                            const std::vector<TensorInfo> &out_tensors) {
 #if TRT_VERSION_GE(7, 0)
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
@@ -33,9 +34,9 @@ int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+  TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
   hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
-  mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+  TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
   cell_init_name_ = cell_in_init.Name() + "_cell_init";
 
   dynamic_shape_params_.support_dynamic_ = false;
@@ -83,7 +84,7 @@ int LSTMTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
-  auto ms_input_shape = in_tensors_[0].Shape();
+  auto ms_input_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
   params_.sequence_size_ = ms_input_shape[0];
   params_.batch_size_ = ms_input_shape[1];
   params_.input_data_size_ = ms_input_shape[INPUT_SIZE_INDEX];
@@ -102,17 +103,17 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
   input_data_ = transpose_in_layer->getOutput(0);
   MS_LOG(DEBUG) << "lstm input " << GetTensorFormat(input_data_);
 
-  auto lstm_op = op_primitive_->value_as_LSTM();
-  params_.layer_count_ = lstm_op->num_layers() == 0 ? 1 : lstm_op->num_layers();
-  params_.hidden_size_ = lstm_op->hidden_size();
-  params_.directional_cnt_ = lstm_op->bidirectional() ? BIDIRECTIONAL : 1;
+  auto lstm_op = AsOps<ops::LSTM>();
+  params_.layer_count_ = lstm_op->get_num_layers() == 0 ? 1 : lstm_op->get_num_layers();
+  params_.hidden_size_ = lstm_op->get_hidden_size();
+  params_.directional_cnt_ = lstm_op->get_bidirectional() ? BIDIRECTIONAL : 1;
   params_.data_type_ = ConvertDataType(in_tensors_[1].DataType());
   return RET_OK;
 }
 
 int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
-  mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
-  mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+  auto &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+  auto &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
 
   nvinfer1::ITensor *data_out{nullptr};
   nvinfer1::ITensor *hidden_init = ctx->network()->addInput(
@@ -122,8 +123,8 @@ int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "add hidden_init input tensor failed for " << op_name_;
     return RET_ERROR;
   }
-  op_binding_tensor_.push_back(BindingHelper{hidden_init_name_, hidden_in_init.MutableData(),
-                                             nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
+  op_binding_tensor_.push_back(
+    BindingHelper{hidden_init_name_, hidden_in_init.Data(), nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
   nvinfer1::ITensor *cell_init = ctx->network()->addInput(
     cell_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
     nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
@@ -132,7 +133,7 @@ int LSTMTensorRT::AddLSTMLayers(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   op_binding_tensor_.push_back(
-    BindingHelper{cell_init_name_, cell_in_init.MutableData(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
+    BindingHelper{cell_init_name_, cell_in_init.Data(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
 
   sequence_size_input_ =
     ctx->network()->addInput((op_name_ + "_seq_input").c_str(), nvinfer1::DataType::kINT32, nvinfer1::Dims{});
@@ -202,9 +203,9 @@ int LSTMTensorRT::ParseLSTMCellInputs(TensorRTContext *ctx, int layer_index, nvi
   nvinfer1::Dims2 dim_state_weight(LSTM_GATE_NUM * params_.hidden_size_, params_.hidden_size_);
   nvinfer1::Dims dim_bias{1, {LSTM_GATE_NUM * params_.hidden_size_}};
 
-  mindspore::MSTensor &input_weight = in_tensors_[INPUT_WEIGHT];
-  mindspore::MSTensor &state_weight = in_tensors_[STATE_WEIGHT];
-  mindspore::MSTensor &bias = in_tensors_[BIAS];
+  TensorInfo &input_weight = in_tensors_[INPUT_WEIGHT];
+  TensorInfo &state_weight = in_tensors_[STATE_WEIGHT];
+  TensorInfo &bias = in_tensors_[BIAS];
 
   nvinfer1::Dims dimW = layer_index == 0 ? dim_input_weight : dim_state_weight;
 
@@ -227,9 +228,9 @@ int LSTMTensorRT::ParseLSTMCellInputs(TensorRTContext *ctx, int layer_index, nvi
       MS_LOG(WARNING) << "more data type need to be done";
       return RET_ERROR;
     }
-    const float *input_weight_ptr = static_cast<const float *>(input_weight.Data().get());
-    const float *state_weight_ptr = static_cast<const float *>(state_weight.Data().get());
-    const float *bias_ptr = static_cast<const float *>(bias.Data().get());
+    const float *input_weight_ptr = static_cast<const float *>(input_weight.Data());
+    const float *state_weight_ptr = static_cast<const float *>(state_weight.Data());
+    const float *bias_ptr = static_cast<const float *>(bias.Data());
     nvinfer1::Weights slice_input_weight{params_.data_type_, input_weight_ptr + *input_weight_offset,
                                          GetDimsVolume(dimW)};
     (*input_weight_offset) += slice_input_weight.count;
@@ -470,13 +471,13 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(TensorRTContext *ctx, const Lstm
 int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() == 0) {
     MS_LOG(DEBUG) << "unsing serialized engine, add input tensor for " << op_name_;
-    mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
-    mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+    TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+    TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
 
-    op_binding_tensor_.push_back(BindingHelper{hidden_init_name_, hidden_in_init.MutableData(),
-                                               nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
     op_binding_tensor_.push_back(
-      BindingHelper{cell_init_name_, cell_in_init.MutableData(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
+      BindingHelper{hidden_init_name_, hidden_in_init.Data(), nvinfer1::DataType::kFLOAT, hidden_in_init.DataSize()});
+    op_binding_tensor_.push_back(
+      BindingHelper{cell_init_name_, cell_in_init.Data(), nvinfer1::DataType::kFLOAT, cell_in_init.DataSize()});
     params_.sequence_size_ = in_tensors_[0].Shape()[0];
     op_binding_tensor_.push_back(
       BindingHelper{(op_name_ + "_seq_input"), &params_.sequence_size_, nvinfer1::DataType::kINT32, sizeof(int)});
@@ -489,10 +490,11 @@ int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine 
     }
     int index = engine->getBindingIndex(tensor.name_.c_str());
     network_tensor_bindings[index] = device_ptr;
-    runtime_->GetAllocator()->SyncMemInHostAndDevice(tensor.data_, tensor.name_, tensor.size_, true);
+    runtime_->GetAllocator()->SyncMemInHostAndDevice(const_cast<void *>(tensor.data_), tensor.name_, tensor.size_,
+                                                     true);
     runtime_->GetAllocator()->MarkMemValid(tensor.name_, true);
   }
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LSTM, LSTMTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLSTM, LSTMTensorRT)
 }  // namespace mindspore::lite

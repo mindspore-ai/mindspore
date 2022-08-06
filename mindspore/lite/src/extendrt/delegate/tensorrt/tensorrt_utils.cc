@@ -151,7 +151,7 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(TensorRTContext *ctx, const nvinfer1::ITensor
   return SetTranspose(ctx, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                          const std::string &op_name) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is null for ConvertConstantTensor";
@@ -164,11 +164,11 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::
     dims.d[0] = 1;
   }
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-  if (ms_tensor.Data() == nullptr) {
+  if (!ms_tensor.IsConst()) {
     MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data: " << ms_tensor.Name();
     return nullptr;
   }
-  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
+  nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -176,7 +176,6 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   auto tensor_ptr = constant_tensor->getOutput(0);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
@@ -197,32 +196,30 @@ nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_siz
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const TensorInfo &ms_tensor,
                                           const DataType data_type, const std::string &op_name) {
-  const void *value = ms_tensor.Data().get();
+  const void *value = ms_tensor.Data();
   auto tensor_ptr = ConvertScalarToITensor(ctx, shape_size, value, data_type, op_name);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
-std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type) {
-  std::map<schema::ActivationType, ActivationParams> action_map = {
-    {schema::ActivationType_RELU, ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0}},
-    {schema::ActivationType_SIGMOID, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
-    {schema::ActivationType_TANH, ActivationParams{nvinfer1::ActivationType::kTANH, false, 0, false, 0}},
-    {schema::ActivationType_LEAKY_RELU, ActivationParams{nvinfer1::ActivationType::kLEAKY_RELU, true, 0, false, 0}},
-    {schema::ActivationType_ELU, ActivationParams{nvinfer1::ActivationType::kELU, true, 0, false, 0}},
-    {schema::ActivationType_SELU, ActivationParams{nvinfer1::ActivationType::kSELU, true, 0, true, 0}},
-    {schema::ActivationType_SOFTSIGN, ActivationParams{nvinfer1::ActivationType::kSOFTSIGN, false, 0, false, 0}},
-    {schema::ActivationType_SOFTPLUS, ActivationParams{nvinfer1::ActivationType::kSOFTPLUS, true, 0, true, 0}},
-    {schema::ActivationType_THRESHOLDRELU,
-     ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
-    {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
-    {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
-    {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-    {schema::ActivationType_SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
+std::experimental::optional<ActivationParams> TryConvertActivationType(ActivationType activation_type) {
+  std::map<ActivationType, ActivationParams> action_map = {
+    {ActivationType::RELU, ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0}},
+    {ActivationType::SIGMOID, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
+    {ActivationType::TANH, ActivationParams{nvinfer1::ActivationType::kTANH, false, 0, false, 0}},
+    {ActivationType::LEAKY_RELU, ActivationParams{nvinfer1::ActivationType::kLEAKY_RELU, true, 0, false, 0}},
+    {ActivationType::ELU, ActivationParams{nvinfer1::ActivationType::kELU, true, 0, false, 0}},
+    {ActivationType::SELU, ActivationParams{nvinfer1::ActivationType::kSELU, true, 0, true, 0}},
+    {ActivationType::SOFTSIGN, ActivationParams{nvinfer1::ActivationType::kSOFTSIGN, false, 0, false, 0}},
+    {ActivationType::SOFTPLUS, ActivationParams{nvinfer1::ActivationType::kSOFTPLUS, true, 0, true, 0}},
+    {ActivationType::THRESHOLDRELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
+    {ActivationType::RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
+    {ActivationType::RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
+    {ActivationType::HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
+    {ActivationType::SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
     // using plugin
-    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
+    {ActivationType::GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
   return action_map.find(activation_type) != action_map.end()
            ? std::experimental::optional<ActivationParams>(action_map[activation_type])
            : std::experimental::nullopt;
@@ -244,7 +241,7 @@ void AlignShapeRank(std::vector<int64_t> *in_shape_ptr, const std::vector<int64_
   }
 }
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                                const std::vector<int64_t> &expect_shape, const std::string &op_name) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertTensorWithExpandDims";
@@ -275,11 +272,11 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
     return nullptr;
   }
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-  if (ms_tensor.Data() == nullptr) {
+  if (!ms_tensor.IsConst()) {
     MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";
     return nullptr;
   }
-  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
+  nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -287,11 +284,24 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   auto tensor_ptr = constant_tensor->getOutput(0);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
-nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensor1D(TensorRTContext *ctx, int *weights_vec, nvinfer1::DataType data_type) {
+  constexpr int nchw_dims_count = 4;
+  nvinfer1::Weights weights{data_type, weights_vec, nchw_dims_count};
+  nvinfer1::Dims dims;
+  dims.nbDims = 1;
+  dims.d[0] = nchw_dims_count;
+  nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
+  if (constant_tensor == nullptr) {
+    MS_LOG(ERROR) << "create constant_tensor failed.";
+    return nullptr;
+  }
+  return constant_tensor->getOutput(0);
+}
+
+nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                                  const std::vector<int64_t> &expect_shape, const std::string &op_name) {
   nvinfer1::ITensor *constant_input{nullptr};
   std::string tensor_name = op_name + "_" + ms_tensor.Name();
@@ -320,49 +330,7 @@ nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const min
   return constant_input;
 }
 
-nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
-  // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
-  nvinfer1::Weights weights{};
-  weights.count = ms_tensor.ElementNum();
-  auto weight_shape = ms_tensor.Shape();
-  if (weight_shape.size() != DIMENSION_4D) {
-    MS_LOG(ERROR) << ms_tensor.Name() << " dims is " << weight_shape.size();
-    return weights;
-  }
-  if (ms_tensor.Data() == nullptr) {
-    MS_LOG(ERROR) << ms_tensor.Name() << " has null data";
-    return weights;
-  }
-  void *pack_weight_tmp = malloc(ms_tensor.DataSize());
-  if (pack_weight_tmp == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return weights;
-  }
-  *pack_weight = pack_weight_tmp;
-  weights.values = pack_weight_tmp;
-
-  switch (ms_tensor.DataType()) {
-    case DataType::kNumberTypeFloat16: {
-      weights.type = nvinfer1::DataType::kHALF;
-      PackNHWCToNCHWFp16(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
-                         weight_shape[3], 0, 0);
-      break;
-    }
-    case DataType::kNumberTypeFloat32: {
-      weights.type = nvinfer1::DataType::kFLOAT;
-      PackNHWCToNCHWFp32(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
-                         weight_shape[3], 0, 0);
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << ms_tensor.Name() << " has unsupported tensor datatype for transpose data : "
-                    << static_cast<int>(ms_tensor.DataType());
-    }
-  }
-  return weights;
-}
-
-nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
+nvinfer1::Weights TransposeWeight2D(const TensorInfo &ms_tensor, void **pack_weight) {
   // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
   nvinfer1::Weights weights{};
   weights.count = ms_tensor.ElementNum();
@@ -371,7 +339,7 @@ nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void *
     MS_LOG(ERROR) << ms_tensor.Name() << " dims is " << weight_shape.size();
     return weights;
   }
-  if (ms_tensor.Data() == nullptr) {
+  if (!ms_tensor.IsConst()) {
     MS_LOG(ERROR) << ms_tensor.Name() << " has null data";
     return weights;
   }
@@ -389,7 +357,7 @@ nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void *
   switch (ms_tensor.DataType()) {
     case DataType::kNumberTypeFloat16: {
       weights.type = nvinfer1::DataType::kHALF;
-      auto src = static_cast<const uint16_t *>(ms_tensor.Data().get());
+      auto src = static_cast<const uint16_t *>(ms_tensor.Data());
       auto dst = static_cast<uint16_t *>(pack_weight_tmp);
       for (int r = 0; r < row; ++r) {
         for (int c = 0; c < col; ++c) {
@@ -401,7 +369,7 @@ nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void *
     case DataType::kNumberTypeFloat32: {
       weights.type = nvinfer1::DataType::kFLOAT;
       auto dst = static_cast<float *>(pack_weight_tmp);
-      auto src = static_cast<const float *>(ms_tensor.Data().get());
+      auto src = static_cast<const float *>(ms_tensor.Data());
       for (int r = 0; r < row; ++r) {
         for (int c = 0; c < col; ++c) {
           dst[c * row + r] = src[r * col + c];
@@ -417,10 +385,10 @@ nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void *
   return weights;
 }
 
-nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
+nvinfer1::Weights ConvertWeight(const TensorInfo &ms_tensor) {
   nvinfer1::Weights weights{};
   weights.type = ConvertDataType(ms_tensor.DataType());
-  weights.values = ms_tensor.Data().get();
+  weights.values = ms_tensor.Data();
   weights.count = ms_tensor.ElementNum();
   if (weights.values == nullptr) {
     MS_LOG(ERROR) << "ConvertWeight from a MSTensor with nullptr data";
@@ -431,7 +399,7 @@ nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
 nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *trt_tensor, nvinfer1::DataType data_type,
                                  const std::string &name) {
 #if TRT_VERSION_GE(7, 2)
-  data_type == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : data_type;
+  data_type = data_type == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : data_type;
   auto cast_layer = ctx->network()->addIdentity(*trt_tensor);
 #else
   auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);
@@ -506,6 +474,7 @@ Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm) {
   return input_format;
 }
 int ConvertAxisFromNHWC2NCHW(int nhwc_axis) {
+  return nhwc_axis;
   // N0H1W2C3->N0C1H2W3
   if (nhwc_axis > kNHWC_C) {
     return nhwc_axis;
@@ -599,14 +568,14 @@ std::string GetTensorFormat(ITensorHelper tensor_helper) {
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor) { return GetTensorFormat(trt_tensor, Format::NHWC, true); }
 
-std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode) {
-  std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
-    {schema::ReduceMode::ReduceMode_ReduceMean, nvinfer1::ReduceOperation::kAVG},
-    {schema::ReduceMode::ReduceMode_ReduceMax, nvinfer1::ReduceOperation::kMAX},
-    {schema::ReduceMode::ReduceMode_ReduceMin, nvinfer1::ReduceOperation::kMIN},
-    {schema::ReduceMode::ReduceMode_ReduceProd, nvinfer1::ReduceOperation::kPROD},
-    {schema::ReduceMode::ReduceMode_ReduceL2, nvinfer1::ReduceOperation::kSUM},
-    {schema::ReduceMode::ReduceMode_ReduceSum, nvinfer1::ReduceOperation::kSUM},
+std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(ReduceMode mode) {
+  std::map<ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
+    {ReduceMode::Reduce_Mean, nvinfer1::ReduceOperation::kAVG},
+    {ReduceMode::Reduce_Max, nvinfer1::ReduceOperation::kMAX},
+    {ReduceMode::Reduce_Min, nvinfer1::ReduceOperation::kMIN},
+    {ReduceMode::Reduce_Prod, nvinfer1::ReduceOperation::kPROD},
+    {ReduceMode::Reduce_L2, nvinfer1::ReduceOperation::kSUM},
+    {ReduceMode::Reduce_Sum, nvinfer1::ReduceOperation::kSUM},
   };
   return reduce_ops_.find(mode) != reduce_ops_.end()
            ? std::experimental::optional<nvinfer1::ReduceOperation>(reduce_ops_[mode])
@@ -676,7 +645,7 @@ std::experimental::optional<nvinfer1::Dims> SqueezeDims(const nvinfer1::Dims &in
 }
 
 std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val) {
-  if (in_dims.nbDims >= static_cast<size_t>(in_dims.MAX_DIMS)) {
+  if (in_dims.nbDims >= in_dims.MAX_DIMS) {
     MS_LOG(ERROR) << "invalid shape size: " << in_dims.nbDims << "for unsqueeze.";
     return {};
   }
@@ -693,8 +662,8 @@ std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &
   return std::experimental::optional<nvinfer1::Dims>(out_dims);
 }
 
-int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst) {
-  if (ms_tensor.Data() == nullptr) {
+int ParseData2Vector(const TensorInfo &ms_tensor, std::vector<float> *dst) {
+  if (!ms_tensor.IsConst()) {
     MS_LOG(ERROR) << "ignore tensor: " << ms_tensor.Name();
     return RET_ERROR;
   }
@@ -702,11 +671,11 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
   dst->resize(ms_tensor.ElementNum());
   switch (ms_tensor.DataType()) {
     case DataType::kNumberTypeInt64: {
-      Data2Vector<int64_t>(dst, ms_tensor.Data().get());
+      Data2Vector<int64_t>(dst, ms_tensor.Data());
       break;
     }
     case DataType::kNumberTypeInt32: {
-      Data2Vector<int>(dst, ms_tensor.Data().get());
+      Data2Vector<int>(dst, ms_tensor.Data());
       break;
     }
     default: {

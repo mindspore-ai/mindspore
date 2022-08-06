@@ -18,6 +18,7 @@
 #include <numeric>
 #include <thread>
 #include "NvInferRuntimeCommon.h"
+#include "ops/reduce_scatter.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(ReduceScatterPluginCreater);
@@ -27,9 +28,8 @@ nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
 template <class T>
 std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
-int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
-                                     const std::vector<mindspore::MSTensor> &in_tensors,
-                                     const std::vector<mindspore::MSTensor> &out_tensors) {
+int ReduceScatterTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                     const std::vector<TensorInfo> &out_tensors) {
 #ifndef LITE_CUDA_DISTRIBUTION
   MS_LOG(ERROR)
     << "Unsupported package for gpu distribution feature, please recompile with MS_ENABLE_CUDA_DISTRIBUTION set to on.";
@@ -54,12 +54,12 @@ int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
 
 int ReduceScatterTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_};
-  auto reduce_op = op_primitive_->value_as_ReduceScatter();
+  auto reduce_op = AsOps<ops::ReduceScatter>();
   if (reduce_op == nullptr) {
     MS_LOG(ERROR) << "convert failed for " << op_name_;
     return RET_ERROR;
   }
-  auto reduce_mode = reduce_op->mode();
+  auto reduce_mode = reduce_op->get_mode();
   auto rank = GetGPUGroupSize();
   auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank, device_id_);
   MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
@@ -115,11 +115,11 @@ nvinfer1::DimsExprs ReduceScatterPlugin::getOutputDimensions(int outputIndex, co
   return out_dims;
 }
 
-size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeof(schema::ReduceMode); }
+size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeof(ReduceMode); }
 
 void ReduceScatterPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &red_mode_, sizeof(schema::ReduceMode));
+  SerializeValue(&buffer, &red_mode_, sizeof(ReduceMode));
 }
 
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ReduceScatter, ReduceScatterTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameReduceScatter, ReduceScatterTensorRT)
 }  // namespace mindspore::lite

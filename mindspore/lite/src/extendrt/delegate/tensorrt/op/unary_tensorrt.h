@@ -20,34 +20,44 @@
 #include <map>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 
+#include "ops/fusion/exp_fusion.h"
+#include "ops/sqrt.h"
+#include "ops/abs.h"
+#include "ops/log.h"
+#include "ops/neg.h"
+#include "ops/sin.h"
+#include "ops/cos.h"
+#include "ops/ceil.h"
+#include "ops/floor.h"
+#include "ops/logical_not.h"
+
 namespace mindspore::lite {
 class UnaryTensorRT : public TensorRTOp {
  public:
-  UnaryTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  UnaryTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~UnaryTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  std::map<schema::PrimitiveType, nvinfer1::UnaryOperation> unary_ops_ = {
-    {schema::PrimitiveType_Sqrt, nvinfer1::UnaryOperation::kSQRT},
-    {schema::PrimitiveType_Abs, nvinfer1::UnaryOperation::kABS},
-    {schema::PrimitiveType_Neg, nvinfer1::UnaryOperation::kNEG},
-    {schema::PrimitiveType_Log, nvinfer1::UnaryOperation::kLOG},
-    {schema::PrimitiveType_Sin, nvinfer1::UnaryOperation::kSIN},
-    {schema::PrimitiveType_Cos, nvinfer1::UnaryOperation::kCOS},
-    {schema::PrimitiveType_Ceil, nvinfer1::UnaryOperation::kCEIL},
-    {schema::PrimitiveType_Floor, nvinfer1::UnaryOperation::kFLOOR},
-    {schema::PrimitiveType_ExpFusion, nvinfer1::UnaryOperation::kEXP},
+  std::map<std::string, nvinfer1::UnaryOperation> unary_ops_ = {
+    {ops::kNameSqrt, nvinfer1::UnaryOperation::kSQRT},
+    {ops::kNameAbs, nvinfer1::UnaryOperation::kABS},
+    {ops::kNameNeg, nvinfer1::UnaryOperation::kNEG},
+    {ops::kNameLog, nvinfer1::UnaryOperation::kLOG},
+    {ops::kNameSin, nvinfer1::UnaryOperation::kSIN},
+    {ops::kNameCos, nvinfer1::UnaryOperation::kCOS},
+    {ops::kNameCeil, nvinfer1::UnaryOperation::kCEIL},
+    {ops::kNameFloor, nvinfer1::UnaryOperation::kFLOOR},
+    {ops::kNameExpFusion, nvinfer1::UnaryOperation::kEXP},
 #if TRT_VERSION_GE(7, 2)
-    {schema::PrimitiveType_LogicalNot, nvinfer1::UnaryOperation::kNOT},
+    {ops::kNameLogicalNot, nvinfer1::UnaryOperation::kNOT},
 #endif
   };
   nvinfer1::UnaryOperation unary_op_;

@@ -34,7 +34,7 @@ DistributionCollective &DistributionCollective::instance() {
 }
 
 int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count,
-                                                 nvinfer1::DataType data_type, schema::ReduceMode reduce_type,
+                                                 nvinfer1::DataType data_type, ReduceMode reduce_type,
                                                  cudaStream_t stream, const std::string &group) {
   int rank_id = GetRankID();
   MS_LOG(DEBUG) << "ReduceScatter on rank: " << rank_id;

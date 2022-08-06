@@ -79,17 +79,17 @@ int ActivationOptPlugin::RunCuDNNActivation(const nvinfer1::PluginTensorDesc *in
 int ActivationOptPlugin::RunCudaActivation(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                            void *const *outputs, cudaStream_t stream) {
   switch (activation_type_) {
-    case (schema::ActivationType::ActivationType_SIGMOID): {
+    case (ActivationType::SIGMOID): {
       Sigmoid(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
               stream);
       break;
     }
-    case (schema::ActivationType::ActivationType_GELU): {
+    case (ActivationType::GELU): {
       Gelu(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
            stream);
       break;
     }
-    case (schema::ActivationType::ActivationType_SWISH): {
+    case (ActivationType::SWISH): {
       CalSwish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]),
                static_cast<float *>(outputs[0]), stream, device_id_);
       break;
@@ -108,9 +108,9 @@ nvinfer1::IPluginV2DynamicExt *ActivationOptPlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t ActivationOptPlugin::getSerializationSize() const noexcept { return sizeof(schema::ActivationType); }
+size_t ActivationOptPlugin::getSerializationSize() const noexcept { return sizeof(ActivationType); }
 
 void ActivationOptPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &activation_type_, sizeof(schema::ActivationType));
+  SerializeValue(&buffer, &activation_type_, sizeof(ActivationType));
 }
 }  // namespace mindspore::lite

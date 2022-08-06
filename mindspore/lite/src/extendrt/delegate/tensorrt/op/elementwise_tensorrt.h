@@ -23,24 +23,23 @@
 namespace mindspore::lite {
 class ElementWiseTensorRT : public TensorRTOp {
  public:
-  ElementWiseTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                      const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                      const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  ElementWiseTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                      const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~ElementWiseTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   nvinfer1::ITensor *AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor);
 
   int AddConstTensor(TensorRTContext *ctx);
 
-  bool SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor);
+  bool SameTensor(nvinfer1::ITensor *trt_tensor, TensorInfo *ms_tensor);
 
   int PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);
 

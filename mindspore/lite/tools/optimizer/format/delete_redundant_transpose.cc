@@ -116,8 +116,11 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       }
       continue;
     }
-    if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) ||
-        !CheckPrimitiveType(cnode->input(1), prim::kPrimTranspose)) {
+    MS_ASSERT(cnode->input(1));
+    auto pre_cnode = cnode->input(1)->cast<CNodePtr>();
+    MS_ASSERT(pre_cnode != nullptr);
+    if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) || !CheckPrimitiveType(pre_cnode, prim::kPrimTranspose) ||
+        IsMultiOutputTensors(func_graph, pre_cnode)) {
       continue;
     }
     std::vector<int> post_perm;
@@ -126,8 +129,6 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       return lite::RET_ERROR;
     }
     std::vector<int> pre_perm;
-    auto pre_cnode = cnode->input(1)->cast<CNodePtr>();
-    MS_ASSERT(pre_cnode != nullptr);
     if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
       MS_LOG(ERROR) << "transpose rm cannot be obtained, " << pre_cnode->fullname_with_scope();
       return lite::RET_ERROR;

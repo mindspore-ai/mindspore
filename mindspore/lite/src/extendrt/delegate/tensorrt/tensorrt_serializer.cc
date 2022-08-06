@@ -20,10 +20,10 @@
 
 namespace mindspore::lite {
 nvinfer1::ICudaEngine *TensorRTSerializer::GetSerializedEngine() {
-  if (serialize_file_path_.size() == 0) {
+  if (serialize_file_path_.empty()) {
     return nullptr;
   }
-  void *trt_model_stream{nullptr};
+  char *trt_model_stream{nullptr};
   size_t size{0};
   trt_model_stream = ReadFile(serialize_file_path_.c_str(), &size);
   if (trt_model_stream == nullptr || size == 0) {

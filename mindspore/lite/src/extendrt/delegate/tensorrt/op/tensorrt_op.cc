@@ -15,17 +15,29 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
-#include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
 #include <unordered_map>
+#include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
 
 namespace mindspore::lite {
-const schema::Primitive *TensorRTOp::GetPrimitive() { return this->op_primitive_; }
+TensorRTOp::TensorRTOp(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                       const std::vector<TensorInfo> &out_tensors, std::string name)
+    : base_operator_(base_operator), in_tensors_(in_tensors), out_tensors_(out_tensors), op_name_(std::move(name)) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+
+  this->type_ = base_operator->name();
+  auto primitive_c = base_operator->GetPrim();
+  if (primitive_c != nullptr) {
+    return;
+  }
+}
+
+const BaseOperatorPtr &TensorRTOp::GetBaseOperator() { return this->base_operator_; }
 
 std::string TensorRTOp::GetOpName() { return this->op_name_; }
 
-std::vector<mindspore::MSTensor> &TensorRTOp::inputs() { return this->in_tensors_; }
+std::vector<TensorInfo> &TensorRTOp::inputs() { return this->in_tensors_; }
 
-std::vector<mindspore::MSTensor> &TensorRTOp::outputs() { return this->out_tensors_; }
+std::vector<TensorInfo> &TensorRTOp::outputs() { return this->out_tensors_; }
 
 ITensorHelper TensorRTOp::input(TensorRTContext *ctx, size_t i) {
   auto in_ms_tensor = in_tensors_[i];
@@ -46,7 +58,7 @@ ITensorHelper TensorRTOp::input(TensorRTContext *ctx, size_t i) {
 
 ITensorHelper TensorRTOp::output(TensorRTContext *ctx, size_t i) { return ctx->MsName2Tensor(out_tensors_[i].Name()); }
 
-schema::PrimitiveType TensorRTOp::type() const { return this->type_; }
+const std::string &TensorRTOp::type() const { return this->type_; }
 
 schema::QuantType TensorRTOp::GetQuantType() const { return this->quant_type_; }
 
@@ -65,20 +77,15 @@ void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) {
 
 bool TensorRTOp::HasConst() const {
   return std::any_of(in_tensors_.begin(), in_tensors_.end(),
-                     [](const mindspore::MSTensor &tensor) { return tensor.Data() != nullptr && tensor.IsConst(); });
+                     [](const TensorInfo &tensor) { return tensor.Data() != nullptr && tensor.IsConst(); });
 }
 
 int TensorRTOp::ReadyInputsNumber(TensorRTContext *ctx) const {
   return std::count_if(in_tensors_.begin(), in_tensors_.end(),
-                       [&](const mindspore::MSTensor &tensor) { return ctx->HasTensor(tensor.Name()); });
+                       [&](const TensorInfo &tensor) { return ctx->HasTensor(tensor.Name()); });
 }
 
-bool TensorRTOp::IsShapeKnown() {
-  if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {
-    return false;
-  }
-  return true;
-}
+bool TensorRTOp::IsShapeKnown() { return true; }
 
 int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() != 0) {
@@ -100,51 +107,13 @@ int TensorRTOp::SetInt8DynamicRange(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "input or output tensor empty.";
     return RET_ERROR;
   }
-  if (quant_type_ != schema::QuantType_QUANT_ALL) {
-    MS_LOG(DEBUG) << "op " << op_name_ << " not quantized.";
-    return RET_OK;
-  }
-
-  if (in_tensors_[0].QuantParams().empty() || out_tensors_[0].QuantParams().empty()) {
-    MS_LOG(WARNING) << op_name_ << " quant param is empty.";
-    MS_LOG(WARNING) << "in_tensor quant param size: " << in_tensors_[0].QuantParams().size()
-                    << " ,out_tensor quant param size: " << out_tensors_[0].QuantParams().size();
-  }
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
-    auto tensor = in_tensors_.at(i);
-    if (!tensor.IsConst()) {
-      input(ctx, i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min, tensor.QuantParams().at(0).max);
-      // Don't set the presion on non-computation layers as they don't support int8.
-      if (this->layer_->getType() != nvinfer1::LayerType::kCONSTANT &&
-          this->layer_->getType() != nvinfer1::LayerType::kCONCATENATION &&
-          this->layer_->getType() != nvinfer1::LayerType::kSHAPE) {
-        this->layer_->setPrecision(nvinfer1::DataType::kINT8);
-      }
-    }
-  }
-  for (size_t i = 0; i < out_tensors_.size(); i++) {
-    auto tensor = out_tensors_.at(0);
-    output(ctx, i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min, tensor.QuantParams().at(0).max);
-    // set output type of execution tensors.
-    if (this->layer_->getOutput(i)->isExecutionTensor()) {
-      this->layer_->setOutputType(i, nvinfer1::DataType::kINT8);
-    }
-  }
-  return SetTransposeDynamicRange();
+  return RET_OK;
 }
 
 int TensorRTOp::SetTransposeDynamicRange() {
   if (this->transpose_layer_ == nullptr) {
     MS_LOG(INFO) << op_name_ << " transpose_layer is nullptr.";
     return RET_OK;
-  }
-  if (!in_tensors_[0].QuantParams().empty() && !out_tensors_[0].QuantParams().empty()) {
-    this->transpose_layer_->getInput(0)->setDynamicRange(in_tensors_.front().QuantParams().at(0).min,
-                                                         in_tensors_.front().QuantParams().at(0).max);
-    this->transpose_layer_->getOutput(0)->setDynamicRange(in_tensors_.front().QuantParams().at(0).min,
-                                                          in_tensors_.front().QuantParams().at(0).max);
-    this->transpose_layer_->setOutputType(0, nvinfer1::DataType::kINT8);
-    this->transpose_layer_->setPrecision(nvinfer1::DataType::kINT8);
   }
   return RET_OK;
 }

@@ -24,22 +24,23 @@
 namespace mindspore::lite {
 class FullyConnectedTensorRT : public TensorRTOp {
  public:
-  FullyConnectedTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                         const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                         const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  FullyConnectedTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                         const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~FullyConnectedTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  bool IsWeightInputHanledInner() const override { return true; }
+
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   int PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input);
 
-  schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
+  ActivationType activation_{ActivationType::NO_ACTIVATION};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_FULLYCONNECTED_TENSORRT_H_

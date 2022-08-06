@@ -17,8 +17,8 @@
 #include "src/extendrt/delegate/tensorrt/op/unary_tensorrt.h"
 
 namespace mindspore::lite {
-int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                             const std::vector<mindspore::MSTensor> &out_tensors) {
+int UnaryTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                             const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -29,11 +29,11 @@ int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
   if (out_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
   }
-  auto it = unary_ops_.find(primitive->value_type());
+  auto it = unary_ops_.find(type_);
   if (it != unary_ops_.end()) {
     unary_op_ = it->second;
   } else {
-    MS_LOG(ERROR) << "unsupported unary ops type: " << schema::EnumNamePrimitiveType(primitive->value_type());
+    MS_LOG(ERROR) << "unsupported unary ops type: " << type_;
     return RET_ERROR;
   }
   return RET_OK;
@@ -51,33 +51,32 @@ int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   cal_layer->setName(op_name_.c_str());
   this->layer_ = cal_layer;
-  if (type_ == schema::PrimitiveType_ExpFusion) {
-    auto exp_op = op_primitive_->value_as_ExpFusion();
+  if (type_ == ops::kNameExpFusion) {
+    auto exp_op = AsOps<ops::ExpFusion>();
     CHECK_NULL_RETURN(exp_op);
-    float scale = exp_op->scale();
-    float shift = exp_op->shift();
-    float base = exp_op->base();
+    float scale = exp_op->get_scale();
+    float shift = exp_op->get_shift();
+    float base = exp_op->get_base();
     if (scale != 1.0f || shift != 0.0f || base != -1.0f) {
       MS_LOG(ERROR) << op_name_ << " has fusion to calculate.";
       return RET_ERROR;
     }
   }
-
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   ctx->RegisterTensor(ITensorHelper{op_out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
                       out_tensors_[0].Name());
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sqrt, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Abs, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Neg, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Log, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sin, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cos, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Ceil, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Floor, UnaryTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ExpFusion, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameSqrt, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameAbs, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameNeg, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLog, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameSin, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameCos, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameCeil, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameFloor, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameExpFusion, UnaryTensorRT)
 #if TRT_VERSION_GE(7, 2)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalNot, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLogicalNot, UnaryTensorRT)
 #endif
 }  // namespace mindspore::lite

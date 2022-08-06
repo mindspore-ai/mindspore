@@ -20,13 +20,20 @@
 #include <NvInfer.h>
 #include <string>
 #include <vector>
+#include <memory>
 #include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/litert/delegate/auto_registration_factory.h"
+#include "src/extendrt/delegate/tensorrt/tensor_info.h"
 #include "src/common/log_util.h"
+#include "ops/base_operator.h"
+#include "ops/op_name.h"
+#include "kernel/kernel.h"
+#include "include/api/types.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
@@ -35,7 +42,7 @@ constexpr int INPUT_SIZE4 = 4;
 
 struct BindingHelper {
   std::string name_;
-  void *data_{nullptr};
+  const void *data_{nullptr};
   nvinfer1::DataType data_type_;
   size_t size_;
   bool is_input_binding_{false};
@@ -48,24 +55,21 @@ struct DynamicShapeParams {
 
 class TensorRTRuntime;
 
+using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
+
 class TensorRTOp {
  public:
-  explicit TensorRTOp(const schema::Primitive *primitive, std::vector<mindspore::MSTensor> in_tensors,
-                      std::vector<mindspore::MSTensor> out_tensors, std::string name, schema::QuantType quant_type)
-      : op_primitive_(primitive),
-        in_tensors_(std::move(in_tensors)),
-        out_tensors_(std::move(out_tensors)),
-        op_name_(std::move(name)),
-        quant_type_(quant_type) {
-    if (primitive != nullptr) {
-      this->type_ = primitive->value_type();
-    }
-  }
+  TensorRTOp(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+             const std::vector<TensorInfo> &out_tensors, std::string name);
 
   virtual ~TensorRTOp() = default;
 
-  virtual int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                        const std::vector<mindspore::MSTensor> &out_tensors) = 0;
+  virtual int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                        const std::vector<TensorInfo> &out_tensors) = 0;
+
+  // The weight input has been processed internally by the operator. The framework does not
+  // need to process the weight input.
+  virtual bool IsWeightInputHanledInner() const { return false; }
 
   virtual int AddInnerOp(TensorRTContext *ctx) = 0;
 
@@ -73,7 +77,7 @@ class TensorRTOp {
 
   virtual int Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine);
 
-  const schema::Primitive *GetPrimitive();
+  const BaseOperatorPtr &GetBaseOperator();
 
   bool HasConst() const;
 
@@ -81,15 +85,15 @@ class TensorRTOp {
 
   std::string GetOpName();
 
-  std::vector<mindspore::MSTensor> &inputs();
+  std::vector<TensorInfo> &inputs();
 
   ITensorHelper input(TensorRTContext *ctx, size_t i);
 
-  std::vector<mindspore::MSTensor> &outputs();
-
   ITensorHelper output(TensorRTContext *ctx, size_t i);
 
-  schema::PrimitiveType type() const;
+  std::vector<TensorInfo> &outputs();
+
+  const std::string &type() const;
 
   schema::QuantType GetQuantType() const;
 
@@ -110,6 +114,15 @@ class TensorRTOp {
   bool GetSupportInputBool();
 
   void SetSupportInputBool(bool support_input_bool);
+  template <class OpsT>
+  std::shared_ptr<OpsT> AsOps() {
+    return std::make_shared<OpsT>(base_operator_->GetPrim());
+  }
+
+  template <class OpsT>
+  static std::shared_ptr<OpsT> AsOps(const BaseOperatorPtr &base_operator) {
+    return std::make_shared<OpsT>(base_operator->GetPrim());
+  }
 
  private:
   int SetTransposeDynamicRange();
@@ -121,11 +134,9 @@ class TensorRTOp {
 
   nvinfer1::IShuffleLayer *transpose_layer_ = nullptr;
 
-  const schema::Primitive *op_primitive_{nullptr};
-
-  std::vector<mindspore::MSTensor> in_tensors_;
-
-  std::vector<mindspore::MSTensor> out_tensors_;
+  BaseOperatorPtr base_operator_ = nullptr;
+  std::vector<TensorInfo> in_tensors_;
+  std::vector<TensorInfo> out_tensors_;
 
   std::vector<TensorRTOp *> in_ops_;
 
@@ -133,7 +144,7 @@ class TensorRTOp {
 
   std::string op_name_;
 
-  schema::PrimitiveType type_ = schema::PrimitiveType_NONE;
+  std::string type_;
 
   schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 
@@ -149,16 +160,15 @@ class TensorRTOp {
 };
 
 template <class T>
-TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                          const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                          const schema::QuantType &quant_type) {
-  auto *op = new (std::nothrow) T(primitive, in_tensors, out_tensors, name, quant_type);
+TensorRTOp *GetTensorRTOp(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &inputs,
+                          const std::vector<TensorInfo> &outputs, const std::string &name) {
+  auto *op = new (std::nothrow) T(base_operator, inputs, outputs, name);
   if (op == nullptr) {
     MS_LOG(WARNING) << "TensorRT is nullptr.";
     return nullptr;
   }
 
-  auto ret = op->IsSupport(primitive, in_tensors, out_tensors);
+  auto ret = op->IsSupport(base_operator, inputs, outputs);
   if (ret != RET_OK) {
     MS_LOG(WARNING) << "TensorRT op is not supported: " << name;
     delete op;
@@ -166,12 +176,12 @@ TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<
   }
   return op;
 }
-typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
-                                     const std::vector<mindspore::MSTensor> &in_tensors,
-                                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                                     const schema::QuantType &quant_type);
+typedef TensorRTOp *(*TensorRTGetOp)(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &inputs,
+                                     const std::vector<TensorInfo> &outputs, const std::string &name);
 
 #define REGISTER_TENSORRT_CREATOR(KEY, TENSORRT_OP) \
-  REGISTER_CLASS_CREATOR(schema::PrimitiveType, KEY, TensorRTGetOp, GetTensorRTOp<TENSORRT_OP>);
+  REGISTER_CLASS_CREATOR(std::string, KEY, TensorRTGetOp, GetTensorRTOp<TENSORRT_OP>);
+
+using TensorRTRegistrationFactory = AutoRegistrationFactory<std::string, TensorRTGetOp>;
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TENSORRT_OP_H_

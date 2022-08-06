@@ -21,7 +21,7 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 
 namespace mindspore::lite {
-constexpr char *NORMALIZE_OPT_PLUGIN_NAME{"NormalizeOptPlugin"};
+constexpr auto NORMALIZE_OPT_PLUGIN_NAME{"NormalizeOptPlugin"};
 class NormalizeOptPlugin : public TensorRTPlugin {
  public:
   NormalizeOptPlugin(const std::string name, size_t axis, float epsilion, uint32_t device_id)

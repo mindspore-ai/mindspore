@@ -46,6 +46,7 @@ struct ConverterPara {
   bool weight_fp16 = false;
   std::map<std::string, std::vector<int64_t>> input_shape;
   Format input_format = NHWC;
+  Format spec_input_format = DEFAULT_FORMAT;
   DataType input_data_type = DataType::kNumberTypeFloat32;
   DataType output_data_type = DataType::kNumberTypeFloat32;
   ModelType export_mindir = kMindIR_Lite;

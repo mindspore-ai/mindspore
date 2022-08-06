@@ -23,17 +23,15 @@
 namespace mindspore::lite {
 class ShuffleTensorRT : public TensorRTOp {
  public:
-  ShuffleTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                  const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
-
+  ShuffleTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                  const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
   ~ShuffleTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   int InputTensorPreprocess(TensorRTContext *ctx);
@@ -48,11 +46,11 @@ class ShuffleTensorRT : public TensorRTOp {
   nvinfer1::Dims InferReshapeDims(const nvinfer1::Dims &input_dims, const std::vector<int64_t> &ms_input_shape,
                                   const std::vector<int64_t> &ms_output_shape);
 
-  Format out_format_ = Format::NHWC;
+  Format out_format_ = Format::NCHW;
   nvinfer1::ITensor *shuffler_input_{nullptr};
   nvinfer1::ITensor *shuffler_output_{nullptr};
   TensorRTContext *ctx_{nullptr};
-  const flatbuffers::Vector<int64_t> *param_axis_{nullptr};
+  std::vector<int64_t> param_axis_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_SHUFFLE_TENSORRT_H_

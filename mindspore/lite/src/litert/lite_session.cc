@@ -50,7 +50,7 @@
 #include "src/litert/kernel/opencl/opencl_subgraph.h"
 #endif
 #if GPU_TENSORRT
-#include "src/extendrt/delegate/tensorrt/tensorrt_delegate.h"
+#include "src/litert/delegate/tensorrt/tensorrt_delegate.h"
 #endif
 #include "src/litert/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"

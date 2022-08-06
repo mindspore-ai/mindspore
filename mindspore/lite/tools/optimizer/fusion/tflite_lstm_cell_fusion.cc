@@ -669,7 +669,9 @@ STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph,
       MS_LOG(ERROR) << "cast to ValueNode failed";
       return RET_ERROR;
     }
-    auto origin_index = GetValue<int>(value_node->value());
+    auto origin_index = value_node->value()->type()->number_type() == kNumberTypeInt64
+                          ? GetValue<int64_t>(value_node->value())
+                          : GetValue<int>(value_node->value());
     int new_index = origin_index == 4 ? 2 : 1;
     auto new_index_vnode = NewValueNode(MakeValue<int>(new_index));
     MS_CHECK_TRUE_RET(new_index_vnode != nullptr, RET_ERROR);

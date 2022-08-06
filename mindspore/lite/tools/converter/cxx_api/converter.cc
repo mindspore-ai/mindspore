@@ -111,7 +111,10 @@ std::map<std::string, std::vector<int64_t>> Converter::GetInputShape() const {
 
 void Converter::SetInputFormat(Format format) {
   if (data_ != nullptr) {
-    data_->input_format = format;
+    if (format != DEFAULT_FORMAT) {
+      data_->input_format = format;
+    }
+    data_->spec_input_format = format;
   }
 }
 

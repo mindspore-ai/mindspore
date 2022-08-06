@@ -23,6 +23,9 @@
 #include "src/extendrt/utils/kernel_build_utils.h"
 
 namespace mindspore {
+namespace {
+constexpr auto kAttrGraphOutputNames = "graph_output_names";
+}
 Status GraphExecutorSession::Init(const std::shared_ptr<Context> context) {
   MS_LOG(INFO) << "GraphExecutorSession::Init";
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
@@ -41,6 +44,13 @@ Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   if (graph_executor_->CompileGraph(kernel_graph_, options_)) {
     kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &inputs_, &input_names_);
     kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &outputs_, &output_names_);
+
+    if (graph->has_attr(kAttrGraphOutputNames)) {
+      auto names_attr = graph->get_attr(kAttrGraphOutputNames);
+      MS_EXCEPTION_IF_NULL(names_attr);
+      output_names_ = GetValue<std::vector<std::string>>(names_attr);
+      MS_LOG_INFO << "get output names from graph attr, output names: " << output_names_;
+    }
     return kSuccess;
   }
   return kCoreFailed;
@@ -70,6 +80,20 @@ std::vector<tensor::TensorPtr> GraphExecutorSession::GetOutputs() { return outpu
 std::vector<tensor::TensorPtr> GraphExecutorSession::GetInputs() { return inputs_; }
 std::vector<std::string> GraphExecutorSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> GraphExecutorSession::GetInputNames() { return input_names_; }
-tensor::TensorPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-tensor::TensorPtr GraphExecutorSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+tensor::TensorPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) {
+  for (size_t i = 0; i < output_names_.size(); i++) {
+    if (output_names_[i] == tensorName) {
+      return outputs_[i];
+    }
+  }
+  return nullptr;
+}
+tensor::TensorPtr GraphExecutorSession::GetInputByTensorName(const std::string &name) {
+  for (size_t i = 0; i < input_names_.size(); i++) {
+    if (input_names_[i] == name) {
+      return outputs_[i];
+    }
+  }
+  return nullptr;
+}
 }  // namespace mindspore

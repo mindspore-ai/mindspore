@@ -20,6 +20,7 @@
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
+#include "ops/equal.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(EqualPluginCreater);
@@ -29,8 +30,8 @@ nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
 template <class T>
 std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
-int EqualTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                             const std::vector<mindspore::MSTensor> &out_tensors) {
+int EqualTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                             const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -90,6 +91,6 @@ nvinfer1::IPluginV2DynamicExt *EqualPlugin::clone() const noexcept {
   return plugin;
 }
 #if TRT_VERSION_LS(7, 2)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, EqualTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameEqual, EqualTensorRT)
 #endif
 }  // namespace mindspore::lite

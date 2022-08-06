@@ -15,15 +15,16 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/softmax_tensorrt.h"
+#include "ops/softmax.h"
 
 namespace mindspore::lite {
-int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                               const std::vector<mindspore::MSTensor> &out_tensors) {
+int SoftMaxTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                               const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  softmax_op_ = primitive->value_as_Softmax();
+  softmax_op_ = AsOps<ops::Softmax>();
   if (softmax_op_ == nullptr) {
     MS_LOG(ERROR) << "convert failed";
     return RET_ERROR;
@@ -68,18 +69,18 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;
   }
-  auto axis = softmax_op_->axis();
-  if (axis == nullptr || axis->size() != 1) {
+  auto axis = softmax_op_->get_axis();
+  if (axis.size() != 1) {
     MS_LOG(ERROR) << "axis needs check";
     return nullptr;
   }
-  auto axis_val = std::vector<int64_t>(axis->begin(), axis->end());
+  auto axis_val = std::vector<int64_t>(axis.begin(), axis.end());
   if (axis_val[0] >= input(ctx, 0).trt_tensor_->getDimensions().nbDims) {
     MS_LOG(ERROR) << "axis is larger than input tensor dims.";
     return nullptr;
   }
   int64_t axis_format_value = (axis_val[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NCHW) {
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
     // transpose axis to NCHW
     axis_format_value = ConvertAxisFromNHWC2NCHW(axis_format_value);
   }
@@ -88,5 +89,5 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
   current_layer_->setAxes(axis_bit);
   return current_layer_;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Softmax, SoftMaxTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameSoftmax, SoftMaxTensorRT)
 }  // namespace mindspore::lite

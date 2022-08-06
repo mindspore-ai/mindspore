@@ -37,13 +37,13 @@ ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id) {
   return data_type;
 }
 
-ncclRedOp_t ConvertNCCLReduceMode(schema::ReduceMode mode) {
-  std::unordered_map<schema::ReduceMode, ncclRedOp_t> reduce_ops_ = {
+ncclRedOp_t ConvertNCCLReduceMode(ReduceMode mode) {
+  std::unordered_map<ReduceMode, ncclRedOp_t> reduce_ops_ = {
     // higher version support mean {schema::ReduceMode::ReduceMode_ReduceMean, ncclAvg},
-    {schema::ReduceMode::ReduceMode_ReduceMax, ncclMax},
-    {schema::ReduceMode::ReduceMode_ReduceMin, ncclMin},
-    {schema::ReduceMode::ReduceMode_ReduceProd, ncclProd},
-    {schema::ReduceMode::ReduceMode_ReduceSum, ncclSum},
+    {ReduceMode::ReduceMax, ncclMax},
+    {ReduceMode::ReduceMin, ncclMin},
+    {ReduceMode::ReduceProd, ncclProd},
+    {ReduceMode::ReduceSum, ncclSum},
   };
   auto iter = reduce_ops_.find(mode);
   ncclRedOp_t nccl_mode;

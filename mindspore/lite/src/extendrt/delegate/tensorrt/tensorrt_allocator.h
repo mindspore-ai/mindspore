@@ -21,6 +21,8 @@
 #include <string>
 #include <NvInfer.h>
 #include "include/api/types.h"
+#include "ir/tensor.h"
+#include "src/extendrt/delegate/tensorrt/tensor_info.h"
 
 namespace mindspore::lite {
 struct CudaTensorParam {
@@ -34,7 +36,7 @@ class TensorRTAllocator {
 
   ~TensorRTAllocator() = default;
 
-  void *MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size);
+  void *MallocDeviceMem(const TensorInfo &host_tensor, size_t size);
 
   void *MallocDeviceMem(const std::string &name, size_t size, nvinfer1::DataType data_type);
 
@@ -44,11 +46,14 @@ class TensorRTAllocator {
 
   std::map<std::string, CudaTensorParam> GetAllDevicePtr();
 
-  int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
-                             bool is_host2device, bool sync = true);
+  int SyncMemInHostAndDevice(tensor::Tensor *host_tensor, const std::string &device_tensor_name, bool is_host2device,
+                             bool sync = true);
 
   int SyncMemInHostAndDevice(void *host_data, const std::string &device_tensor_name, size_t data_size,
                              bool is_host2device, bool sync = true);
+
+  int SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name, bool sync = true);
+  int SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name, bool sync = true);
 
   int ClearDeviceMem();
 

@@ -450,6 +450,21 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_pt
   return RET_OK;
 }
 
+int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (param->export_mindir == kMindIR) {
+    MS_LOG(INFO) << "export MindIR, run pass ToNCHWFormat";
+    if (!RunOptimizerPass(old_graph, {"ToNCHWFormat", "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
+      return RET_ERROR;
+    }
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormatMindIR"})) {
+      MS_LOG(ERROR) << "Run SpecifyGraphInputFormatMindIR pass failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model);
   MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
@@ -558,7 +573,10 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     MS_LOG(ERROR) << "Do Quantize failed.";
     return nullptr;
   }
-
+  status = DoFormatForMindIR(old_graph, param);
+  if (status != RET_OK) {
+    return nullptr;
+  }
   return old_graph;
 }
 
@@ -569,6 +587,18 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   }
   auto fmk = param->fmk_type;
   auto is_train = param->train_model;
+  auto spec_input_format = param->spec_input_format;
+  if (spec_input_format == Format::DEFAULT_FORMAT) {
+    if (param->export_mindir == kMindIR) {
+      if (fmk == converter::FmkType::kFmkTypeTf || fmk == converter::FmkType::kFmkTypeTflite) {
+        spec_input_format = Format::NHWC;
+      } else {
+        spec_input_format = Format::NCHW;
+      }
+    } else {
+      spec_input_format = Format::NHWC;
+    }
+  }
   // pass_name, pass and boolean value to indicate whether can be called by external extension,
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
@@ -580,7 +610,9 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
-    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(param->input_format), false}};
+    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(param->input_format), false},
+    {"SpecifyGraphInputFormatMindIR", std::make_shared<opt::SpecifyGraphInputFormat>(spec_input_format, Format::NCHW),
+     false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));

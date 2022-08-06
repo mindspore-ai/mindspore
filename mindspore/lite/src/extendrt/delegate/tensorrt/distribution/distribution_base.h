@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
-constexpr char NCCL_WORLD_GROUP[] = "nccl_world_group";
+const char NCCL_WORLD_GROUP[] = "nccl_world_group";
 
 int GetGPUGroupSize();
 

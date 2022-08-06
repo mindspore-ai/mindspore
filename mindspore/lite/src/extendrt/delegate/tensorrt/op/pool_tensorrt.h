@@ -22,20 +22,19 @@
 namespace mindspore::lite {
 class PoolTensorRT : public TensorRTOp {
  public:
-  PoolTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-               const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  PoolTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+               const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~PoolTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  int ParseParams();
+  int ParseParams(TensorRTContext *ctx);
 
   void AddParams(nvinfer1::IPoolingLayer *pooling_layer);
 
@@ -47,9 +46,9 @@ class PoolTensorRT : public TensorRTOp {
 
   nvinfer1::PoolingType pooling_type_;
 
-  schema::PadMode pad_mode_;
+  PadMode pad_mode_ = PadMode::PAD;
 
-  schema::ActivationType activation_type_;
+  ActivationType activation_type_ = ActivationType::NO_ACTIVATION;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_POOL_TENSORRT_H_

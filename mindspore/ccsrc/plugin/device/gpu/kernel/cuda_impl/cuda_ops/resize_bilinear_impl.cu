@@ -220,49 +220,52 @@ __global__ void ResizeBilinearGradPost(const int nchw, half *output, float *inte
 template <typename T>
 void CalResizeBilinear(const T *input, const int n, const int c, const int input_h, const int input_w,
                        const int output_h, const int output_w, const float h_scale, const float w_scale,
-                       const bool half_pixel_centers, T *output, cudaStream_t cuda_stream) {
+                       const bool half_pixel_centers, T *output, const uint32_t& device_id, cudaStream_t cuda_stream) {
   const int nchw = n * c * output_h * output_w;
   const int chw = c * output_h * output_w;
   const int hw = output_h * output_w;
   if (half_pixel_centers) {
-    ResizeBilinear_HPC<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(
+    ResizeBilinear_HPC<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
   } else {
-    ResizeBilinear<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(input, n, c, input_h, input_w, output_h, output_w,
-                                                                      nchw, chw, hw, h_scale, w_scale, output);
+    ResizeBilinear<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output);
   }
   return;
 }
 
 void CalResizeBilinearGrad(const half *input, const int n, const int c, const int input_h, const int input_w,
                            const int output_h, const int output_w, const float h_scale, const float w_scale,
-                           const bool half_pixel_centers, half *output, float *interim, cudaStream_t cuda_stream) {
+                           const bool half_pixel_centers, half *output, float *interim, const uint32_t& device_id,
+                           cudaStream_t cuda_stream) {
   const int hw = input_h * input_w;
   const int chw = c * hw;
   const int nchw = n * chw;
   const int output_num = n * c * output_h * output_w;
   if (half_pixel_centers) {
-    ResizeBilinearGrad_HPC<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(
+    ResizeBilinearGrad_HPC<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   } else {
-    ResizeBilinearGrad<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(
+    ResizeBilinearGrad<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   }
-  ResizeBilinearGradPost<<<GET_BLOCKS(output_num), GET_THREADS, 0, cuda_stream>>>(output_num, output, interim);
+  ResizeBilinearGradPost<<<CUDA_BLOCKS(device_id, output_num), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    output_num, output, interim);
   return;
 }
 
 void CalResizeBilinearGrad(const float *input, const int n, const int c, const int input_h, const int input_w,
                            const int output_h, const int output_w, const float h_scale, const float w_scale,
-                           const bool half_pixel_centers, float *output, float *interim, cudaStream_t cuda_stream) {
+                           const bool half_pixel_centers, float *output, float *interim, const uint32_t& device_id,
+                           cudaStream_t cuda_stream) {
   const int hw = input_h * input_w;
   const int chw = c * hw;
   const int nchw = n * chw;
   if (half_pixel_centers) {
-    ResizeBilinearGrad_HPC<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(
+    ResizeBilinearGrad_HPC<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   } else {
-    ResizeBilinearGrad<<<GET_BLOCKS(nchw), GET_THREADS, 0, cuda_stream>>>(
+    ResizeBilinearGrad<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   }
   return;
@@ -272,9 +275,9 @@ template CUDA_LIB_EXPORT void CalResizeBilinear<float>(const float *input, const
                                                        const int input_w, const int output_h, const int output_w,
                                                        const float h_scale, const float w_scale,
                                                        const bool half_pixel_centers, float *output,
-                                                       cudaStream_t cuda_stream);
+                                                       const uint32_t& device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeBilinear<half>(const half *input, const int n, const int c, const int input_h,
                                                       const int input_w, const int output_h, const int output_w,
                                                       const float h_scale, const float w_scale,
                                                       const bool half_pixel_centers, half *output,
-                                                      cudaStream_t cuda_stream);
+                                                      const uint32_t& device_id, cudaStream_t cuda_stream);

@@ -60,6 +60,8 @@ set(VERSION_STR "1.8.0" CACHE STRING "get from version")
 
 add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
 
+string(REPLACE "/mindspore/lite" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 if(MACHINE_LINUX_ARM64)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+fp16")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a+fp16")
@@ -212,6 +214,11 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_CLOUD_FUSION_INFERENCE})
     set(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE $ENV{MSLITE_ENABLE_CLOUD_FUSION_INFERENCE})
+endif()
+
+if(DEFINED ENV{ENABLE_FAST_HASH_TABLE})
+    add_compile_definitions(ENABLE_FAST_HASH_TABLE)
+    include_directories(${TOP_DIR}/third_party/robin_hood/include)
 endif()
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -568,7 +575,6 @@ else()
     endif()
 endif()
 
-string(REPLACE "/mindspore/lite" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CORE_DIR ${TOP_DIR}/mindspore/core)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
@@ -753,10 +759,6 @@ ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_inne
         "inner")
 
 if(MSLITE_ENABLE_CONVERTER)
-    if(ENABLE_FAST_HASH_TABLE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_FAST_HASH_TABLE=1")
-        include_directories(${TOP_DIR}/third_party/robin_hood/include)
-    endif()
     # find_required_package(Patch)
     # include_directories(${PYTHON_INCLUDE_DIRS})
     # if(NOT ENABLE_CLOUD_AND_LITE)

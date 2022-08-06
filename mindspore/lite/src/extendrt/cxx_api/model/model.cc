@@ -18,9 +18,26 @@
 #include "extendrt/cxx_api/model/model_impl.h"
 
 namespace mindspore {
+namespace {
+#ifdef USE_GLOG
+extern "C" {
+extern void mindspore_log_init();
+}
+#endif
+}  // namespace
 std::mutex g_impl_init_lock;
 
-Model::Model() : impl_(nullptr) {}
+Model::Model() : impl_(nullptr) {
+#ifdef USE_GLOG
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+#ifdef _MSC_VER
+  mindspore::mindspore_log_init();
+#endif
+#else
+  mindspore::mindspore_log_init();
+#endif
+#endif
+}
 
 Model::~Model() {}
 

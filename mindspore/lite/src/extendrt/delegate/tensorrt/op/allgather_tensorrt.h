@@ -24,20 +24,19 @@
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
-constexpr char *ALLGATHER_PLUGIN_NAME{"AllGatherPlugin"};
+constexpr auto ALLGATHER_PLUGIN_NAME{"AllGatherPlugin"};
 class AllGatherTensorRT : public TensorRTOp {
  public:
-  AllGatherTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                    const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                    const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  AllGatherTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                    const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~AllGatherTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 };
 
 class AllGatherPlugin : public TensorRTPlugin {
