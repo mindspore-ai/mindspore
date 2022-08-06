@@ -33,8 +33,8 @@ class RandomShuffleKernel : public KernelBase {
   template <typename Scalar>
   void IndexShuffle(const size_t &size, void *data);
   template <typename Scalar>
-  AicpuKernelErrCode ScalarShuffle();
-  AicpuKernelErrCode TensorShuffle();
+  uint32_t ScalarShuffle();
+  uint32_t TensorShuffle();
 
   size_t block_num_{1};
   size_t block_size_{1};
