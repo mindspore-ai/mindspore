@@ -18,14 +18,12 @@
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_GE_H_
 
 #include <vector>
-#include <utility>
 #include <string>
 #include <memory>
 #include <map>
 #include <mutex>
 
 #include "utils/hash_map.h"
-#include "pybind11/pybind11.h"
 #include "pipeline/jit/base.h"
 #include "frontend/operator/ops.h"
 

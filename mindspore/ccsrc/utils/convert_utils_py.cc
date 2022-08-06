@@ -74,47 +74,47 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
     case kNumberTypeUInt8:
       MS_LOG(DEBUG) << "uint8";
       int_v = value->cast<UInt8ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeUInt16:
       MS_LOG(DEBUG) << "uint16";
       int_v = value->cast<UInt16ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeUInt32:
       MS_LOG(DEBUG) << "uint32";
       int_v = value->cast<UInt32ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeUInt64:
       MS_LOG(DEBUG) << "uint64";
       int_v = value->cast<UInt64ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeInt8:
       MS_LOG(DEBUG) << "int8";
       int_v = value->cast<Int8ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeInt16:
       MS_LOG(DEBUG) << "int16";
       int_v = value->cast<Int16ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeInt32:
       MS_LOG(DEBUG) << "int32";
       int_v = value->cast<Int32ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeInt64:
       MS_LOG(DEBUG) << "int64";
       int_v = value->cast<Int64ImmPtr>()->value();
-      return std::move(int_v);
+      return int_v;
     case kNumberTypeFloat32:
       MS_LOG(DEBUG) << "float";
       float_v = value->cast<FP32ImmPtr>()->value();
-      return std::move(float_v);
+      return float_v;
     case kNumberTypeFloat64:
       MS_LOG(DEBUG) << "double";
       float_v = value->cast<FP64ImmPtr>()->value();
-      return std::move(float_v);
+      return float_v;
     case kNumberTypeBool:
       MS_LOG(DEBUG) << "bool";
       bool_v = value->cast<BoolImmPtr>()->value();
-      return std::move(bool_v);
+      return bool_v;
     default:
       MS_EXCEPTION(TypeError) << "Unsupported scalar converted to py data: " << value->ToString();
   }
@@ -355,19 +355,19 @@ py::object BuiltinsToPyData(const Any &value) {
   if (value.is<int>()) {
     MS_LOG(DEBUG) << "int";
     py::int_ ret = value.cast<int>();
-    return std::move(ret);
+    return ret;
   } else if (value.is<float>()) {
     MS_LOG(DEBUG) << "float";
     py::float_ ret = value.cast<float>();
-    return std::move(ret);
+    return ret;
   } else if (value.is<double>()) {
     MS_LOG(DEBUG) << "double";
     py::float_ ret = value.cast<double>();
-    return std::move(ret);
+    return ret;
   } else {
     MS_LOG(DEBUG) << "bool";
     py::bool_ ret = value.cast<bool>();
-    return std::move(ret);
+    return ret;
   }
 }
 
@@ -375,19 +375,19 @@ py::object BuiltinsToPyData(const BaseRef &value) {
   if (utils::isa<int>(value)) {
     MS_LOG(DEBUG) << "int";
     py::int_ ret = utils::cast<int>(value);
-    return std::move(ret);
+    return ret;
   } else if (utils::isa<float>(value)) {
     MS_LOG(DEBUG) << "float";
     py::float_ ret = utils::cast<float>(value);
-    return std::move(ret);
+    return ret;
   } else if (utils::isa<double>(value)) {
     MS_LOG(DEBUG) << "double";
     py::float_ ret = utils::cast<double>(value);
-    return std::move(ret);
+    return ret;
   } else {
     MS_LOG(DEBUG) << "bool";
     py::bool_ ret = utils::cast<bool>(value);
-    return std::move(ret);
+    return ret;
   }
 }
 
@@ -562,12 +562,11 @@ ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t index) {
   ShapeVector shape;
   if (index >= value_list.size()) {
     MS_LOG(EXCEPTION) << "Index " << index << " is out of range of " << value_list.size();
-    return shape;
   }
   BaseRef ref = value_list[index];
   MS_EXCEPTION_IF_NULL(ref);
 
-  auto converter = [](BaseRef ref) {
+  auto converter = [](const BaseRef &ref) {
     auto tensorptr = utils::cast<tensor::TensorPtr>(ref);
     MS_EXCEPTION_IF_NULL(tensorptr);
     if (tensorptr->DataDim() != 0) {
@@ -578,10 +577,10 @@ ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t index) {
   };
 
   if (utils::isa<tensor::Tensor>(ref)) {
-    std::transform(value_list.begin() + index, value_list.end(), std::back_inserter(shape), converter);
+    (void)std::transform(value_list.begin() + index, value_list.end(), std::back_inserter(shape), converter);
   } else if (utils::isa<VectorRef>(ref)) {
     VectorRef shape_ref = utils::cast<VectorRef>(ref);
-    std::transform(shape_ref.begin(), shape_ref.end(), std::back_inserter(shape), converter);
+    (void)std::transform(shape_ref.begin(), shape_ref.end(), std::back_inserter(shape), converter);
   } else if (utils::isa<ValueTuple>(ref)) {
     ValueTuplePtr shape_tuple = utils::cast<ValueTuplePtr>(ref);
     shape = ConvertShapeTupleToShapeVector(shape_tuple);

@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_AUTO_MONAD_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_AUTO_MONAD_H_
 
-#include <string>
-
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 
