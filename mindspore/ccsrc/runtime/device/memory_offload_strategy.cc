@@ -273,7 +273,7 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
 }
 
 size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
-                                                      const std::vector<size_t> &mem_used) {
+                                                      const std::vector<size_t> &mem_used) const {
   const size_t continuous_mem_used_index = continuous_mem_info->compute_index_;
   size_t earliest_malloc_index = GetFirstMallocIndex(continuous_mem_info);
   size_t max_span_mem_in_device = GetSpanBetweenMemEvents(earliest_malloc_index, continuous_mem_used_index);
