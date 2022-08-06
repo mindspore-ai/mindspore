@@ -18,8 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_ASCEND_AKG_ASCEND_KERNEL_BUILD_H_
 
 #include <string>
-#include <utility>
-#include <vector>
 #include <map>
 #include "ir/anf.h"
 #include "kernel/akg/akg_kernel_build.h"
