@@ -71,6 +71,7 @@ add_library(kernels-image OBJECT
     random_color_op.cc
     rotate_op.cc
     resize_cubic_op.cc
+    trivial_augment_wide_op.cc
     vertical_flip_op.cc
     to_tensor_op.cc
     )

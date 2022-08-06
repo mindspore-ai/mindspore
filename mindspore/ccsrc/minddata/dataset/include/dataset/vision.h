@@ -1726,6 +1726,43 @@ class MS_API ToTensor final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Dataset-independent data-augmentation with TrivialAugment Wide.
+class MS_API TrivialAugmentWide final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] num_magnitude_bins The number of different magnitude values. Default: 31.
+  /// \param[in] interpolation An enum for the mode of interpolation. Default: InterpolationMode::kNearestNeighbour.
+  ///     - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
+  ///     - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///     - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Default: {0, 0, 0}.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto trivial_augment_wide_op = vision::TrivialAugmentWide();
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, trivial_augment_wide_op}, // operations
+  ///                            {"image"});                           // input columns
+  /// \endcode
+  explicit TrivialAugmentWide(int32_t num_magnitude_bins = 31,
+                              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                              const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  /// \brief Destructor.
+  ~TrivialAugmentWide() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Randomly perform transformations, as selected from input transform list, on the input tensor.
 class MS_API UniformAugment final : public TensorTransform {
  public:

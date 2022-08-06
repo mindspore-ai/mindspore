@@ -71,7 +71,8 @@ from .validators import check_adjust_brightness, check_adjust_gamma, check_alpha
     check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
     check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
     check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, check_rotate, \
-    check_slice_patches, check_solarize, check_ten_crop, check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
+    check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, \
+    check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -3630,6 +3631,68 @@ class ToType(TypeCast):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
+
+
+class TrivialAugmentWide(ImageTensorOperation):
+    """
+    Apply TrivialAugmentWide data augmentation method based on
+    `TrivialAugmentWide: Tuning-free Yet State-of-the-Art Data Augmentation <https://arxiv.org/abs/2103.10158>`_.
+    This operation works only with 3-channel RGB images.
+
+    Args:
+        num_magnitude_bins (int, optional): The number of different magnitude values,
+            must be greater than or equal to 2. Default: 31.
+        interpolation (Inter, optional): Image interpolation mode for Resize operator. Default: Inter.NEAREST.
+            It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
+
+            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+
+            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+
+            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+
+            - Inter.AREA: means the interpolation method is area interpolation.
+
+        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside
+            the transformed image.
+            It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255]
+            Default: 0.
+
+    Raises:
+        TypeError: If `num_magnitude_bins` is not of type int.
+        ValueError: If `num_magnitude_bins` is less than 2.
+        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `fill_value` is not an integer or a tuple of length 3.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
+        >>>
+        >>> transforms_list = [vision.Decode(),
+        ...                    vision.TrivialAugmentWide(num_magnitude_bins=31,
+        ...                                              interpolation=Inter.NEAREST,
+        ...                                              fill_value=0)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_trivial_augment_wide
+    def __init__(self, num_magnitude_bins=31, interpolation=Inter.NEAREST, fill_value=0):
+        super().__init__()
+        self.num_magnitude_bins = num_magnitude_bins
+        self.interpolation = interpolation
+        if isinstance(fill_value, int):
+            fill_value = tuple([fill_value] * 3)
+        self.fill_value = fill_value
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.TrivialAugmentWideOperation(self.num_magnitude_bins, Inter.to_c_type(self.interpolation),
+                                               self.fill_value)
 
 
 class UniformAugment(CompoundOperation):

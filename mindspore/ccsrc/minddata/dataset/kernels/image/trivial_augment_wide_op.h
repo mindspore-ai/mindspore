@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_AUGMENT_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_AUGMENT_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TRIVIAL_AUGMENT_WIDE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TRIVIAL_AUGMENT_WIDE_OP_H_
 
 #include <map>
 #include <memory>
@@ -33,34 +33,33 @@
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/status.h"
 
-typedef std::vector<std::vector<std::tuple<std::string, float, int32_t>>> Transforms;
 typedef std::map<std::string, std::tuple<std::vector<float>, bool>> Space;
 
 namespace mindspore {
 namespace dataset {
-class AutoAugmentOp : public TensorOp {
+constexpr char kTrivialAugmentWideOp[] = "TrivialAugmentWideOp";
+
+class TrivialAugmentWideOp : public TensorOp {
  public:
-  AutoAugmentOp(AutoAugmentPolicy policy, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
+  TrivialAugmentWideOp(int32_t num_magnitude_bins, InterpolationMode interpolation,
+                       const std::vector<uint8_t> &fill_value);
 
-  ~AutoAugmentOp() override = default;
+  ~TrivialAugmentWideOp() override = default;
 
-  std::string Name() const override { return kAutoAugmentOp; }
+  std::string Name() const override { return kTrivialAugmentWideOp; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  private:
-  void GetParams(int transform_num, int *transform_id, std::vector<float> *probs, std::vector<int32_t> *signs);
+  Space GetSpace(int32_t num_bins);
 
-  Transforms GetTransforms(AutoAugmentPolicy policy);
+  int32_t RandInt(int32_t low, int32_t high);
 
-  Space GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size);
-
-  AutoAugmentPolicy policy_;
+  int32_t num_magnitude_bins_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
   std::mt19937 rnd_;
-  Transforms transforms_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_AUTO_AUGMENT_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TRIVIAL_AUGMENT_WIDE_OP_H_
