@@ -18,6 +18,7 @@
 #include <list>
 #include <vector>
 #include <stack>
+#include <string>
 #include <utility>
 #include <memory>
 #include <algorithm>
@@ -369,7 +370,7 @@ class SideEffectFinder {
   }
 
   // Gets branch graphs from a switch cnode.
-  std::vector<FuncGraphPtr> GetSwitchBranches(const CNodePtr &cnode) {
+  std::vector<FuncGraphPtr> GetSwitchBranches(const CNodePtr &cnode) const {
     MS_EXCEPTION_IF_NULL(cnode);
     constexpr size_t switch_cnode_size = 4;
     constexpr size_t true_index = 2;
@@ -1152,7 +1153,7 @@ class SideEffectFinder {
     }
   }
 
-  void AddMonadForCaller(const CNodePtr &caller, const EffectInfo &info) {
+  void AddMonadForCaller(const CNodePtr &caller, const EffectInfo &info) const {
     if (info.memory || info.load) {
       // Add u monad argument to caller if need.
       AddMonadArgument(caller, kUMonad);
