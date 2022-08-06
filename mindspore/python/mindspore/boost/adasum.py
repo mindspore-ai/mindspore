@@ -283,7 +283,7 @@ class AdaSum(Cell):
                     allreduce_node_num += (2 ** (step + 1),)
             self.allreduce_node_num_list.append(allreduce_node_num)
 
-        broadcast_group = [x for x in range(group_start_rank, group_start_rank + self.device_number)]
+        broadcast_group = list(range(group_start_rank, group_start_rank + self.device_number))
         broadcast_group_name = "broadcast_group_" + str(group_start_rank)
         create_group(broadcast_group_name, broadcast_group)
         for b_rank in range(len(broadcast_group)):

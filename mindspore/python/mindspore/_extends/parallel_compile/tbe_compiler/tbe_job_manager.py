@@ -112,8 +112,9 @@ class TbeJobManager:
             source_id = job_json["source_id"]
             job_type = job_json["job_type"]
             sys_info = self._get_job_sys_info()
-            fusion_op_name = "NA" if "fusion_op_name" not in job_json["job_content"] else job_json["job_content"][
-                "fusion_op_name"]
+            fusion_op_name = "NA"
+            if "fusion_op_name" in job_json["job_content"]:
+                fusion_op_name = job_json["job_content"]["fusion_op_name"]
             job = TbeJob(source_id, job_id, job_type, job_json["job_content"], fusion_op_name, job_str, sys_info)
             post_job(self._all_jobs, job)
             if not self.tbe_initialize and job.type != JobType.INITIALIZE_JOB:
@@ -310,89 +311,6 @@ class TbeJobManager:
         query_job.result = ""
         return self.add_to_finished_jobs(query_job, JobStatus.JOB_FAILED)
 
-    def _get_job_sys_info(self):
-        """
-        Get job manager system info
-        :return: system info
-        """
-        sys_info = dict()
-        sys_info["logger"] = DummyLogger
-        sys_info["para_debug_path"] = self.para_debug_path
-        sys_info["tune_dump_path"] = self.tune_dump_path
-        sys_info["offline_tune"] = self.offline_tune
-        # license info
-        sys_info["rl_tune_switch"] = self.rl_tune_switch
-        sys_info["rl_tune_list"] = self.rl_tune_list
-        sys_info["op_tune_switch"] = self.op_tune_switch
-        sys_info["op_tune_list"] = self.op_tune_list
-        sys_info["pass_list"] = self.pass_list
-        # soc
-        sys_info["socVersion"] = self.soc_version
-        sys_info["coreNum"] = self.core_num
-        sys_info["op_bank_path"] = self.op_bank_path
-        return sys_info
-
-    def _init_sys_info(self, initialize_job):
-        """
-        Initialize job manager system info from INITIALIZE JOB
-        :param initialize_job: initialize job
-        :return: None
-        """
-        # auto tune info
-        self.auto_tiling_mode = initialize_job.content["SocInfo"]["autoTilingMode"]
-        self.offline_tune = initialize_job.content["SocInfo"]["offlineTune"]
-        self.tune_op_list = initialize_job.content["TuneInfo"]["tune_op_list"]
-        self.tune_dump_path = initialize_job.content["TuneInfo"]["tune_dump_path"]
-        self.tune_bank_path = initialize_job.content["TuneInfo"]["tune_bank_path"]
-        self.para_debug_path = initialize_job.content["para_debug_path"]
-        # license info
-        self.rl_tune_switch = initialize_job.content["LicInfo"]["rl_tune_switch"]
-        self.rl_tune_list = initialize_job.content["LicInfo"]["rl_tune_list"]
-        self.op_tune_switch = initialize_job.content["LicInfo"]["op_tune_switch"]
-        self.op_tune_list = initialize_job.content["LicInfo"]["op_tune_list"]
-        self.pass_list = initialize_job.content["LicInfo"]["pass_list"]
-        # soc
-        self.soc_version = initialize_job.content["SocInfo"]["socVersion"]
-        self.core_num = int(initialize_job.content["SocInfo"]["coreNum"]) if (
-            initialize_job.content["SocInfo"]["coreNum"].isdigit()) else self.core_num
-        self.op_bank_path = initialize_job.content["SocInfo"]["op_bank_path"]
-
-    def _update_imported_op_module(self, job):
-        """
-        update imported op module info according to new job
-        :param job:
-        :return:
-        """
-        compute_op_info = get_compute_op_list(job.content)[0]
-        op_module_name = compute_op_info["module_name"]
-        if op_module_name in self.imported_module.keys():
-            self.imported_module[op_module_name] = self.imported_module[op_module_name] + 1
-        else:
-            self.imported_module[op_module_name] = 1
-        self.fusion_need_sync = self.fusion_need_sync + 1
-
-    def _select_tune_mode(self, job):
-        """
-        Select the corresponding tune mode according to op job content and job manager system info
-        :param job: tbe tune job
-        :return: NO_TUNE RL_TUNE or GA_TUNE
-        """
-        auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
-        offline_tune = job.content["SocInfo"]["offlineTune"]
-        full_name = job.content["full_name"]
-        func_names = get_func_names(job.content)
-        if self.tune_op_list and full_name not in self.tune_op_list:
-            return TuneMode.NO_TUNE
-        if offline_tune:
-            return TuneMode.RL_TUNE
-        if TuneMode.GA_TUNE.value in auto_tiling_mode:
-            for func_name in func_names:
-                if func_name.lower() in self.auto_tune_op_list:
-                    return TuneMode.GA_TUNE
-        if TuneMode.RL_TUNE.value in auto_tiling_mode:
-            return TuneMode.RL_TUNE
-        return TuneMode.NO_TUNE
-
     def update_raw_finished_jobs(self, query_job: TbeJob):
         """
         Get new finished jobs from tbe parallel compilation and add them to raw_finished_jobs
@@ -453,6 +371,89 @@ class TbeJobManager:
         job.status = JobStatus.JOB_RUNNING
         post_job(self._running_jobs, job)
         return job.get_result()
+
+    def _get_job_sys_info(self):
+        """
+        Get job manager system info
+        :return: system info
+        """
+        sys_info = dict()
+        sys_info["logger"] = DummyLogger
+        sys_info["para_debug_path"] = self.para_debug_path
+        sys_info["tune_dump_path"] = self.tune_dump_path
+        sys_info["offline_tune"] = self.offline_tune
+        # license info
+        sys_info["rl_tune_switch"] = self.rl_tune_switch
+        sys_info["rl_tune_list"] = self.rl_tune_list
+        sys_info["op_tune_switch"] = self.op_tune_switch
+        sys_info["op_tune_list"] = self.op_tune_list
+        sys_info["pass_list"] = self.pass_list
+        # soc
+        sys_info["socVersion"] = self.soc_version
+        sys_info["coreNum"] = self.core_num
+        sys_info["op_bank_path"] = self.op_bank_path
+        return sys_info
+
+    def _init_sys_info(self, initialize_job):
+        """
+        Initialize job manager system info from INITIALIZE JOB
+        :param initialize_job: initialize job
+        :return: None
+        """
+        # auto tune info
+        self.auto_tiling_mode = initialize_job.content["SocInfo"]["autoTilingMode"]
+        self.offline_tune = initialize_job.content["SocInfo"]["offlineTune"]
+        self.tune_op_list = initialize_job.content["TuneInfo"]["tune_op_list"]
+        self.tune_dump_path = initialize_job.content["TuneInfo"]["tune_dump_path"]
+        self.tune_bank_path = initialize_job.content["TuneInfo"]["tune_bank_path"]
+        self.para_debug_path = initialize_job.content["para_debug_path"]
+        # license info
+        self.rl_tune_switch = initialize_job.content["LicInfo"]["rl_tune_switch"]
+        self.rl_tune_list = initialize_job.content["LicInfo"]["rl_tune_list"]
+        self.op_tune_switch = initialize_job.content["LicInfo"]["op_tune_switch"]
+        self.op_tune_list = initialize_job.content["LicInfo"]["op_tune_list"]
+        self.pass_list = initialize_job.content["LicInfo"]["pass_list"]
+        # soc
+        self.soc_version = initialize_job.content["SocInfo"]["socVersion"]
+        if initialize_job.content["SocInfo"]["coreNum"].isdigit():
+            self.core_num = int(initialize_job.content["SocInfo"]["coreNum"])
+        self.op_bank_path = initialize_job.content["SocInfo"]["op_bank_path"]
+
+    def _update_imported_op_module(self, job):
+        """
+        update imported op module info according to new job
+        :param job:
+        :return:
+        """
+        compute_op_info = get_compute_op_list(job.content)[0]
+        op_module_name = compute_op_info["module_name"]
+        if op_module_name in self.imported_module.keys():
+            self.imported_module[op_module_name] = self.imported_module[op_module_name] + 1
+        else:
+            self.imported_module[op_module_name] = 1
+        self.fusion_need_sync = self.fusion_need_sync + 1
+
+    def _select_tune_mode(self, job):
+        """
+        Select the corresponding tune mode according to op job content and job manager system info
+        :param job: tbe tune job
+        :return: NO_TUNE RL_TUNE or GA_TUNE
+        """
+        auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+        offline_tune = job.content["SocInfo"]["offlineTune"]
+        full_name = job.content["full_name"]
+        func_names = get_func_names(job.content)
+        if self.tune_op_list and full_name not in self.tune_op_list:
+            return TuneMode.NO_TUNE
+        if offline_tune:
+            return TuneMode.RL_TUNE
+        if TuneMode.GA_TUNE.value in auto_tiling_mode:
+            for func_name in func_names:
+                if func_name.lower() in self.auto_tune_op_list:
+                    return TuneMode.GA_TUNE
+        if TuneMode.RL_TUNE.value in auto_tiling_mode:
+            return TuneMode.RL_TUNE
+        return TuneMode.NO_TUNE
 
 
 class TuneMode(Enum):

@@ -164,6 +164,38 @@ class DimReduce(Cell):
         self.mul = P.Mul()
         self.add = P.Add()
 
+    def construct(self, loss, old_grad, loss_scale, weight, weight_clone, *inputs):
+        gk, old_loss, gk_local = self._generate_gk(weight, loss, old_grad, loss_scale)
+
+        _save_weight(self.gk_last_back, self.gk_last)
+        _save_weight(self.bk_back, self.bk)
+
+        dk = self._apply_quasi_newton_update(gk)
+        if self.dk_pad_flag:
+            dk_pad = self.concat((dk, self.dk_pad_part))
+        else:
+            dk_pad = dk
+        dk_local = dk_pad[self.start_index: self.end_index, :]
+
+        dn_local = self.hyper_map(F.partial(_pca_back_projection, dk_local), self.pca_list_local, old_grad)
+        grad_proj_local = self.hyper_map(F.partial(_pca_back_projection, gk_local), self.pca_list_local, old_grad)
+        dn = self.dn_init if self.rank_size > 1 else dn_local
+        grad_proj = self.grad_proj_init if self.rank_size > 1 else grad_proj_local
+        if self.rank_size > 1:
+            for broadcast in self.broadcast_list:
+                dn_part = broadcast(dn_local)
+                dn = self.hyper_map(self.add, dn, dn_part)
+                grad_proj_part = broadcast(grad_proj_local)
+                grad_proj = self.hyper_map(self.add, grad_proj, grad_proj_part)
+
+        rho, find = self._line_search(gk, dk, dn, old_loss, weight, weight_clone, *inputs)
+        if not find:
+            _save_weight(self.gk_last, self.gk_last_back)
+            _save_weight(self.bk, self.bk_back)
+
+        clone = self._res_loss(old_grad, grad_proj, weight, weight_clone, rho, dn)
+        return F.depend(loss, clone)
+
     def _set_rho_list(self, rho):
         """set rho list info."""
         self.max_search_time = 2
@@ -217,38 +249,6 @@ class DimReduce(Cell):
         self.bk_back = Parameter(Tensor(np.eye(self.n_components), dtype=self.float_type), name="bk_back")
         self.grad_proj_init = ParameterTuple(parameter_tuple).clone(prefix="grad_proj_init", init="zeros")
         self.dn_init = ParameterTuple(parameter_tuple).clone(prefix="dn_init", init="zeros")
-
-    def construct(self, loss, old_grad, loss_scale, weight, weight_clone, *inputs):
-        gk, old_loss, gk_local = self._generate_gk(weight, loss, old_grad, loss_scale)
-
-        _save_weight(self.gk_last_back, self.gk_last)
-        _save_weight(self.bk_back, self.bk)
-
-        dk = self._apply_quasi_newton_update(gk)
-        if self.dk_pad_flag:
-            dk_pad = self.concat((dk, self.dk_pad_part))
-        else:
-            dk_pad = dk
-        dk_local = dk_pad[self.start_index: self.end_index, :]
-
-        dn_local = self.hyper_map(F.partial(_pca_back_projection, dk_local), self.pca_list_local, old_grad)
-        grad_proj_local = self.hyper_map(F.partial(_pca_back_projection, gk_local), self.pca_list_local, old_grad)
-        dn = self.dn_init if self.rank_size > 1 else dn_local
-        grad_proj = self.grad_proj_init if self.rank_size > 1 else grad_proj_local
-        if self.rank_size > 1:
-            for broadcast in self.broadcast_list:
-                dn_part = broadcast(dn_local)
-                dn = self.hyper_map(self.add, dn, dn_part)
-                grad_proj_part = broadcast(grad_proj_local)
-                grad_proj = self.hyper_map(self.add, grad_proj, grad_proj_part)
-
-        rho, find = self._line_search(gk, dk, dn, old_loss, weight, weight_clone, *inputs)
-        if not find:
-            _save_weight(self.gk_last, self.gk_last_back)
-            _save_weight(self.bk, self.bk_back)
-
-        clone = self._res_loss(old_grad, grad_proj, weight, weight_clone, rho, dn)
-        return F.depend(loss, clone)
 
     def _res_loss(self, old_grad, grad_proj, weight, weight_clone, rho, dn):
         """update loss"""
