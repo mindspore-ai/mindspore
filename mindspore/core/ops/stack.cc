@@ -56,7 +56,9 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   bool isDynamic = true;
-  if (find(shape_v.begin(), shape_v.end(), -1) == shape_v.end()) isDynamic = false;
+  if (find(shape_v.begin(), shape_v.end(), -1) == shape_v.end()) {
+    isDynamic = false;
+  }
   if (!isDynamic) {
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
     for (size_t i = 1; i < elements.size(); ++i) {
@@ -65,8 +67,9 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
         MS_EXCEPTION(ValueError) << "All input shape size must be the same!";
       }
       for (size_t j = 0; j < input_shape.size(); ++j) {
-        if (input_shape_tmp.at(j) != input_shape.at(j))
+        if (input_shape_tmp.at(j) != input_shape.at(j)) {
           MS_EXCEPTION(ValueError) << "All input shape must be the same! " << input_shape_tmp << " And " << input_shape;
+        }
       }
     }
     std::vector<int64_t> infer_shape = input_shape;
@@ -84,7 +87,7 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   }
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMinShape];
   auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMaxShape];
-  if (!min_shape.size() || !min_shape.size()) {
+  if (min_shape.empty() || max_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For Stack, inputs['shape'] min or max value is empty.";
   }
   return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);

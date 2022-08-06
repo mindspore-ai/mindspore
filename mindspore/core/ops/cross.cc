@@ -53,7 +53,7 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
     int64_t dim_size_value = 3;
     for (size_t i = 0; i < x1_shape.size(); i++) {
       if (x1_shape[i] == dim_size_value) {
-        dim = i;
+        dim = SizeToLong(i);
         break;
       }
       if (i == x1_shape.size() - 1 && x1_shape[i] != dim_size_value) {

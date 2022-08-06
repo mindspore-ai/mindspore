@@ -56,13 +56,13 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   TypePtr x1_type = input_args[kInputIndex0]->BuildType();
   TypePtr x2_type = input_args[kInputIndex1]->BuildType();
   std::set<TypePtr> complex_valid_types = {kComplex64, kComplex128};
-  if (complex_valid_types.count(x1_type) || complex_valid_types.count(x2_type)) {
+  if (complex_valid_types.count(x1_type) > 0 || complex_valid_types.count(x2_type) > 0) {
     std::map<std::pair<TypePtr, TypePtr>, TypePtr> type_infer_dict;
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex64), kComplex64);
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex128), kComplex128);
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex64), kComplex128);
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex128), kComplex128);
-    if (!type_infer_dict.count(std::make_pair(x1_type, x2_type))) {
+    if (type_infer_dict.count(std::make_pair(x1_type, x2_type)) == 0) {
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', complex math binary op expecting Tensor [complex64, complex64],"
                               << "[complex64, float32], [float32, complex64], [complex128, complex128],"

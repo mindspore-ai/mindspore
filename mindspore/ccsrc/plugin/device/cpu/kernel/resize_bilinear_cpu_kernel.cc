@@ -78,13 +78,13 @@ template <typename T1, typename T2>
 bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &outputs) const {
   auto *output_addr_T2 = reinterpret_cast<T2 *>(outputs[0]->addr);
-  float *float_input_addr = NULL;
-  float *float_output_addr = NULL;
+  float *float_input_addr = nullptr;
+  float *float_output_addr = nullptr;
   if (dtype_ == kNumberTypeFloat16) {
     auto *input_addr_T1 = reinterpret_cast<T1 *>(inputs[0]->addr);
     size_t input_mem_size = inputs[0]->size / sizeof(T1) * sizeof(float);
     float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
-    if (float_input_addr == NULL) {
+    if (float_input_addr == nullptr) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
@@ -94,7 +94,7 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 
     size_t output_mem_size = outputs[0]->size / sizeof(T2) * sizeof(float);
     float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
-    if (float_output_addr == NULL) {
+    if (float_output_addr == nullptr) {
       free(float_input_addr);
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;

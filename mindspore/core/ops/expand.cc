@@ -87,7 +87,7 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
   if (shape_v.size() != shape_dim) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input tensor 'shape' must be a 1-D tensor.";
   }
-  const int64_t x_shape_size = x_shape.size();
+  const int64_t x_shape_size = SizeToLong(x_shape.size());
   const int64_t shape_size = shape_v[0];
   auto shape_type = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(shape_type);
