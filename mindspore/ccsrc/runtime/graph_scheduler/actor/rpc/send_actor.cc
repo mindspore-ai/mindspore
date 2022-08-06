@@ -225,6 +225,14 @@ void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel:
       offset += serialized_data_size;
     }
   }
+
+  if (!common::GetEnv("use_void").empty()) {
+    if (workspace_addr->size != offset) {
+      MS_LOG(EXCEPTION) << "Send void data size is not the same as workspace size.";
+    }
+    message->data = workspace_addr->addr;
+    message->size = workspace_addr->size;
+  }
 }
 
 void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
