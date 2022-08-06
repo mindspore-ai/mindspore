@@ -35,21 +35,21 @@ void RandomShuffleKernel::IndexShuffle(const size_t &size, void *data) {
 }
 
 template <typename Scalar>
-AicpuKernelErrCode RandomShuffleKernel::ScalarShuffle() {
+uint32_t RandomShuffleKernel::ScalarShuffle() {
   // Copy input to output, then shuffle output.
   const size_t &input_size = block_num_ * block_size_ * sizeof(Scalar);
   auto ret =
     memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), input_size, reinterpret_cast<void *>(io_addrs_[0]), input_size);
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
 
   IndexShuffle<Scalar>(block_num_, reinterpret_cast<void *>(io_addrs_[1]));
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
-AicpuKernelErrCode RandomShuffleKernel::TensorShuffle() {
+uint32_t RandomShuffleKernel::TensorShuffle() {
   std::vector<size_t> permutation(block_num_);
   for (size_t i = 0; i < block_num_; i++) {
     permutation[i] = i;
@@ -64,11 +64,11 @@ AicpuKernelErrCode RandomShuffleKernel::TensorShuffle() {
     auto ret = memcpy_s(reinterpret_cast<void *>(output_offset), size, reinterpret_cast<void *>(input_offset), size);
     if (ret != EOK) {
       AICPU_LOGE("memcpy_s() failed: %d.", ret);
-      return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+      return kAicpuKernelStateInternalError;
     }
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t RandomShuffleKernel::ParseKernelParam() {
@@ -82,7 +82,7 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
   const size_t &num_input = node_def_.inputs_size();
   if (num_input != 1) {
     AICPU_LOGE("For RandomShuffle: input num should be 1.");
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
 
   ::aicpuops::Tensor input = node_def_.inputs(static_cast<int>(0));
@@ -95,14 +95,14 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
   size_t dim = static_cast<size_t>(shape.dim_size());
   if (dim == 0) {
     // Input is a scalar: keep block number to be 1.
-    return AICPU_KERNEL_STATE_SUCCESS;
+    return kAicpuKernelStateSucess;
   }
 
   for (size_t i = 1; i < dim; i++) {
     block_size_ *= static_cast<size_t>(shape.dim(i).size());
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t RandomShuffleKernel::DoCompute() {
@@ -112,7 +112,7 @@ uint32_t RandomShuffleKernel::DoCompute() {
                         size_in_bytes);
     if (ret != EOK) {
       AICPU_LOGE("memcpy_s() failed: %d.", ret);
-      return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+      return kAicpuKernelStateInternalError;
     }
   }
 
