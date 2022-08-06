@@ -205,7 +205,7 @@ AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &
       while (concat_input_num - cur_input_index >= static_cast<size_t>(inputs_divisor_)) {
         concat = CreateNewConcat(func_graph, concat_input_nodes, concat_input_info, cur_input_index, inputs_divisor_);
         output_nodes.push_back(concat);
-        cur_input_index += inputs_divisor_;
+        cur_input_index += LongToSize(inputs_divisor_);
       }
       size_t rest_num = concat_input_num - cur_input_index;
       if (rest_num == 1) {

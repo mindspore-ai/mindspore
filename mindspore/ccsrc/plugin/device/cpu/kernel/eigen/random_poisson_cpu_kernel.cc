@@ -34,7 +34,7 @@ using KernelRunFunc = RandomPoissonCpuKernelMod::KernelRunFunc;
       &RandomPoissonCpuKernelMod::LaunchKernel<rate_type, output_type>            \
   }
 
-static unsigned int s_seed = LongToUint(time(nullptr));
+static unsigned int s_seed = static_cast<unsigned int>(time(nullptr));
 EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
   auto rnd = rand_r(&s_seed);
   return IntToSize(rnd);
