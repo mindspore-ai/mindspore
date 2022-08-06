@@ -53,7 +53,7 @@ struct CommunicationGroupInfo {
 // supported for the elastic scaling feature of the server.
 class MSCollectiveOpsImpl {
  public:
-  explicit MSCollectiveOpsImpl(const std::shared_ptr<TopologyNode> topo_node)
+  explicit MSCollectiveOpsImpl(const std::shared_ptr<TopologyNode> &topo_node)
       : rank_id_(0), rank_size_(0), topo_node_(topo_node) {}
   ~MSCollectiveOpsImpl() = default;
 

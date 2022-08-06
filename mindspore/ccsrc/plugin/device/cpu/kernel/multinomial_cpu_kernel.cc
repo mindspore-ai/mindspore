@@ -83,6 +83,9 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     num_row = input_shape_[0];
   }
   int num_col = input_shape_[input_shape_.size() - 1];
+  if (num_row <= 0 || num_col <= 0) {
+    return false;
+  }
 
   for (int i = 0; i < num_row; ++i) {
     // Compute the cumulative array.
