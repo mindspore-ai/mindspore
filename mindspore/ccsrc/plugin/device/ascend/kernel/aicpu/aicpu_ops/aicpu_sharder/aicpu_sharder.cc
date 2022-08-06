@@ -115,12 +115,12 @@ void SharderNonBlock::ParallelFor(int64_t total, int64_t per_unit_size, const Sh
   for (int64_t start = 0; start < total; start += block_size) {
     auto limit = std::min(start + block_size, total);
     Closure closure = [&sem, &work, &count, start, limit]() {
-      count--;
+      --count;
       // In order to ensure that user's work function exception does not affect multithread services,
       // exception capture is needed. Exception type is not cared here, and error log is printed.
       try {
         work(start, limit);
-      } catch (...) {
+      } catch (std::exception &) {
         AICPU_LOGE("exception occurred in work function with start: %lld, limit: %lld", start, limit);
       }
 
@@ -176,7 +176,7 @@ void SharderNonBlock::ParallelForHash(int64_t total, int64_t cpu_nums, const Sha
   for (int64_t cur = 0; cur < cpu_nums; cur++) {
     Closure closure = [&sem, &work, &count, total, cur]() {
       work(total, cur);
-      count--;
+      --count;
       int32_t sem_post_ret = sem_post(&sem);
       AICPU_SHARDER_IF_TRUE_RUN(sem_post_ret == -1, AICPU_LOGE("sem_post error with message: %s", strerror(errno)));
     };

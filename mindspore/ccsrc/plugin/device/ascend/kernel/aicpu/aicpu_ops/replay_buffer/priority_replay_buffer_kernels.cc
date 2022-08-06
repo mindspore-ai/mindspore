@@ -46,7 +46,7 @@ uint32_t PriorityReplayBufferCreate::ParseKernelParam() {
     schema_.push_back(shape.i(i));
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferCreate::DoCompute() {
@@ -59,7 +59,7 @@ uint32_t PriorityReplayBufferCreate::DoCompute() {
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[0]);
   output_data[0] = handle;
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferPush::ParseKernelParam() {
@@ -80,7 +80,7 @@ uint32_t PriorityReplayBufferPush::ParseKernelParam() {
     (void)inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferPush::DoCompute() {
@@ -93,7 +93,7 @@ uint32_t PriorityReplayBufferPush::DoCompute() {
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[num_input]);
   output_data[0] = handle_;
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferSample::ParseKernelParam() {
@@ -106,7 +106,7 @@ uint32_t PriorityReplayBufferSample::ParseKernelParam() {
     schema_.push_back(shape.i(i));
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferSample::DoCompute() {
@@ -120,14 +120,14 @@ uint32_t PriorityReplayBufferSample::DoCompute() {
   auto ret = memcpy_s(indices_data, batch_size_ * sizeof(int64_t), indices.data(), batch_size_ * sizeof(int64_t));
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
 
   auto *weights_data = reinterpret_cast<void *>(io_addrs_[1]);
   ret = memcpy_s(weights_data, batch_size_ * sizeof(float), weights.data(), batch_size_ * sizeof(float));
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
 
   for (size_t transition_index = 0; transition_index < samples.size(); transition_index++) {
@@ -138,12 +138,12 @@ uint32_t PriorityReplayBufferSample::DoCompute() {
       ret = memcpy_s(offset, transition[item_index]->size, transition[item_index]->addr, transition[item_index]->size);
       if (ret != EOK) {
         AICPU_LOGE("memcpy_s() failed: %d.", ret);
-        return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+        return kAicpuKernelStateInternalError;
       }
     }
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferUpdate::ParseKernelParam() {
@@ -153,7 +153,7 @@ uint32_t PriorityReplayBufferUpdate::ParseKernelParam() {
   const size_t &num_input = node_def_.inputs_size();
   if (num_input != kUpdateOpInputNum) {
     AICPU_LOGE("The input num should be 2, get: %d.", num_input);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
   for (size_t i = 0; i < num_input; i++) {
     ::aicpuops::Tensor input = node_def_.inputs(static_cast<int>(i));
@@ -166,7 +166,7 @@ uint32_t PriorityReplayBufferUpdate::ParseKernelParam() {
     (void)inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
   }
 
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferUpdate::DoCompute() {
@@ -178,14 +178,14 @@ uint32_t PriorityReplayBufferUpdate::DoCompute() {
   auto ret = memcpy_s(indices.data(), inputs_[0]->size, indices_data, inputs_[0]->size);
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
 
   void *priorities_data = reinterpret_cast<void *>(io_addrs_[1]);
   ret = memcpy_s(priorities.data(), inputs_[1]->size, priorities_data, inputs_[1]->size);
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
-    return AICPU_KERNEL_STATE_INTERNAL_ERROR;
+    return kAicpuKernelStateInternalError;
   }
 
   auto prioriory_replay_buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
@@ -194,18 +194,18 @@ uint32_t PriorityReplayBufferUpdate::DoCompute() {
   // Return a placeholder in case of dead code eliminate optimization.
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[inputs_.size()]);
   output_data[0] = handle_;
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferDestroy::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
   handle_ = attrs["handle"].i();
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t PriorityReplayBufferDestroy::DoCompute() {
   PriorityReplayBufferFactory::GetInstance().Delete(handle_);
-  return AICPU_KERNEL_STATE_SUCCESS;
+  return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu
 

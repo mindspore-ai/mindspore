@@ -1,5 +1,5 @@
 if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-    set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/toolkit/toolchain)
+    set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/latest/toolkit/toolchain)
 elseif(EXISTS /usr/local/Ascend/latest/toolkit/toolchain)
     set(TOOLCHAIN_PATH /usr/local/Ascend/latest/toolkit/toolchain)
 elseif(EXISTS /usr/local/Ascend/ascend-toolkit/latest/toolkit/toolchain)
