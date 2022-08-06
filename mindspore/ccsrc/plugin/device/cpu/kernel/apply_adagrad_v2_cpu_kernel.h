@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_APPLY_ADAGRAD_V2_CPU_KERNEL_H_
 
 #include <map>
-#include <thread>
 #include <vector>
 #include <utility>
 
