@@ -121,7 +121,9 @@ void SharderNonBlock::ParallelFor(int64_t total, int64_t per_unit_size, const Sh
       try {
         work(start, limit);
       } catch (std::exception &) {
-        AICPU_LOGE("exception occurred in work function with start: %lld, limit: %lld", start, limit);
+        AICPU_LOGE("Exception occurred in work function with start: %lld, limit: %lld", start, limit);
+      } catch (...) {
+        AICPU_LOGE("Exception occurred in work function.");
       }
 
       int32_t sem_post_ret = sem_post(&sem);

@@ -233,6 +233,17 @@ class ParameterProcess:
             group_params = [{"params": parameters}]
             return group_params
 
+        return ParameterProcess._generate_new_group_params(parameters, origin_params_copy)
+
+    @staticmethod
+    def _generate_new_group_params(parameters, origin_params_copy):
+        r"""
+        Generate new group parameters.
+
+        Args:
+            parameters (list): The network's parameter list.
+            origin_params_copy (list): Copy from origin parameter list.
+        """
         group_params = []
         params_name = [param.name for param in parameters]
         new_params_count = copy.deepcopy(params_name)
