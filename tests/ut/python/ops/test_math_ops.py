@@ -447,6 +447,16 @@ class LogAddExp2Func(nn.Cell):
         return y
 
 
+class AddmvFunc(nn.Cell):
+    def __init__(self):
+        super(AddmvFunc, self).__init__()
+        self.addmv = ops.addmv
+
+    def construct(self, x, mat, vec, beta=1, alpha=1):
+        y = self.addmv(x, mat, vec, beta, alpha)
+        return y
+
+
 class MvFunc(nn.Cell):
     def __init__(self):
         super(MvFunc, self).__init__()
@@ -673,6 +683,15 @@ test_case_math_ops = [
         'desc_bprop': [Tensor(np.array([1., 2., 3.])),
                        Tensor(np.array([1., 2., 3.]))],
         'skip': ['backward']
+    }),
+    ('Addmv', {
+        'block': AddmvFunc(),
+        'desc_inputs': [Tensor(np.array([1, 1])),
+                        Tensor(np.array([[1, 2, 1], [1, 1, 1]])),
+                        Tensor(np.array([1, 1, 1]))],
+        'desc_bprop': [Tensor(np.array([1, 1])),
+                       Tensor(np.array([[1, 2, 1], [1, 1, 1]])),
+                       Tensor(np.array([1, 1, 1]))],
     }),
     ('Exp2', {
         'block': Exp2Func(),
