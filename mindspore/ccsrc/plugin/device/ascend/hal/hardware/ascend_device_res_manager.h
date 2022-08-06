@@ -61,10 +61,10 @@ class AscendDeviceResManager : public DeviceResManager {
   // Devices that do not need stream could ignore the implementation of this function.
   bool SyncStream(size_t stream_id) const override;
 
-  // Really create an ascend stream.
-  bool CreateStream(void **stream) const;
-
  protected:
+  // Really create an ascend stream.
+  bool CreateStream(void **stream) const override;
+
   // Really destroy an ascend stream.
   bool DestroyStream(void *stream) const override;
 
