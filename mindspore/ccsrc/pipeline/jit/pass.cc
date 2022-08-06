@@ -226,7 +226,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
     {"zeros_like", fill_zeros_like},
   });
 
-  if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
+  if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
     (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
     opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
     (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));

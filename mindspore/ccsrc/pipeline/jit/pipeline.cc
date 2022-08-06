@@ -1698,7 +1698,7 @@ void MemoryRecycle() {
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
   trace::ClearTraceStack();
-  pynative::PynativeExecutor::GetInstance()->ClearRes();
+  pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();
   FuncGraphLoopBreaker::Inst().BreakLoop();
@@ -1755,9 +1755,9 @@ void ClearResAtexit() {
   pipeline::GraphExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
 
-  MS_LOG(INFO) << "Start clear PynativeExecutor...";
-  pynative::PynativeExecutor::GetInstance()->ClearRes();
-  MS_LOG(INFO) << "End clear PynativeExecutor.";
+  MS_LOG(INFO) << "Start clear PyNativeExecutor...";
+  pynative::PyNativeExecutor::GetInstance()->ClearRes();
+  MS_LOG(INFO) << "End clear PyNativeExecutor.";
 
   MS_LOG(INFO) << "Start clear PyPassManager...";
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();

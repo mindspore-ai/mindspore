@@ -360,15 +360,15 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
   }
 }
 
-void SetGraphInputNodeActualAbstract(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) {
+void SetGraphInputNodeActualAbstract(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (!op_run_info.output_is_dynamic_shape && !op_run_info.input_is_dynamic_shape) {
+  if (!op_run_info->base_op_run_info.has_dynamic_output && !op_run_info->base_op_run_info.has_dynamic_input) {
     return;
   }
-  const auto &tensor_mask = op_run_info.tensor_mask;
-  const auto &input_tensors = op_run_info.input_tensors;
+  const auto &tensor_mask = op_run_info->base_op_run_info.input_mask;
+  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
   auto &graph_inputs = graph->inputs();
-  for (size_t i = 0, j = 0; i < op_run_info.input_tensors.size() && j < graph_inputs.size(); ++i) {
+  for (size_t i = 0, j = 0; i < op_run_info->base_op_run_info.input_tensor.size() && j < graph_inputs.size(); ++i) {
     if (tensor_mask[i] == kValueNodeTensorMask) {
       continue;
     }
@@ -803,10 +803,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   return graph->graph_id();
 }
 
-GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool *single_op_cache_hit,
+GraphId GraphCompiler::CompileGraph(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                                     const DeviceContext *device_context) {
   // Check if the graph cache exists.
-  auto iter = run_op_graphs_.find(op_run_info.graph_info);
+  auto iter = run_op_graphs_.find(op_run_info->base_op_run_info.graph_info);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != run_op_graphs_.end() && op_executor.BuildQueueEmpty()) {
     const auto &graph = iter->second;
@@ -818,9 +818,9 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   *single_op_cache_hit = false;
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
-  KernelGraphPtr graph =
-    session_->ConstructSingleOpGraph(op_run_info, op_run_info.input_tensors, op_run_info.tensor_mask,
-                                     device_context->GetDeviceType() == device::DeviceType::kAscend);
+  KernelGraphPtr graph = session_->ConstructSingleOpGraph(
+    op_run_info, op_run_info->base_op_run_info.input_tensor, op_run_info->base_op_run_info.input_mask,
+    device_context->GetDeviceType() == device::DeviceType::kAscend);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
 
@@ -844,9 +844,9 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   SetGraphInputNodeActualAbstract(op_run_info, graph);
 
   // Create device address for all anf nodes of graph.
-  CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info.is_gradient_out);
+  CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info->is_gradient_out);
 
-  run_op_graphs_[op_run_info.graph_info] = graph;
+  run_op_graphs_[op_run_info->base_op_run_info.graph_info] = graph;
 
   auto output_nodes = graph->outputs();
   auto &outputs_with_index = run_op_graph_output_nodes_[graph->graph_id()];
@@ -859,11 +859,12 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   return graph->graph_id();
 }
 
-void GraphCompiler::UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info,
+void GraphCompiler::UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info,
                                                     const KernelGraphPtr &graph) const {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
   // So need to get ref info to generate output addr, before create kernel.
-  if (op_run_info.device_target != kCPUDevice && op_run_info.device_target != kGPUDevice) {
+  if (op_run_info->base_op_run_info.device_target != kCPUDevice &&
+      op_run_info->base_op_run_info.device_target != kGPUDevice) {
     // just ascend ref mode is diff with cpu and gpu
     return;
   }
@@ -977,12 +978,12 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
 }
 
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
-                                                   OpRunInfo *run_info, GraphInfo *graph_info,
+                                                   session::BackendOpRunInfoPtr *op_run_info, GraphInfo *graph_info,
                                                    GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(graph_info);
   session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info);
-  *run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
+  *op_run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
 }
 
 void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const {

@@ -415,11 +415,9 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   RunTask(task, false);
 }
 
-void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                     std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                     const std::vector<int64_t> &tensors_mask) {
+void Executor::RunOp(const SessionPtr &session, const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
+                     vector<TensorPtr> *input_tensors, VectorRef *outputs, const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(session);
-  MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(op_run_info);
   auto ms_context = MsContext::GetInstance();

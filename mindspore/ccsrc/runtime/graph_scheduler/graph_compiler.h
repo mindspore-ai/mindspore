@@ -33,12 +33,12 @@
 
 namespace mindspore {
 using device::DeviceContext;
+using session::BackendOpRunInfo;
 using session::CallBackFunc;
 using session::GraphOutputInfo;
 using session::InputTensorInfo;
 using session::KernelGraph;
 using session::KernelWithIndex;
-using session::OpRunInfo;
 using tensor::TensorPtr;
 
 namespace runtime {
@@ -106,7 +106,7 @@ class GraphCompiler {
   GraphId CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph, const DeviceContext *device_context);
 
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
-  GraphId CompileGraph(const session::OpRunInfo &op_run_info, bool *single_op_cache_hit,
+  GraphId CompileGraph(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                        const DeviceContext *device_context);
 
   // Create kernel and Create workspace for graphs in PyNative mode.
@@ -139,8 +139,9 @@ class GraphCompiler {
                                           InputTensorInfo *const input_tensor_info, size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
-  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, OpRunInfo *run_info,
-                                      GraphInfo *graph_info, GraphOutputInfo *const graph_output_info);
+  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+                                      session::BackendOpRunInfoPtr *op_run_info, GraphInfo *graph_info,
+                                      GraphOutputInfo *const graph_output_info);
 
   // Calculate ref count of PyNative back propagation operators.
   void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
@@ -198,7 +199,8 @@ class GraphCompiler {
   void AddOutInRefToGraph(const KernelGraphPtr &graph) const;
 
   // Update ref info of graph, before create kernel.
-  void UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) const;
+  void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info,
+                                       const KernelGraphPtr &graph) const;
 
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;

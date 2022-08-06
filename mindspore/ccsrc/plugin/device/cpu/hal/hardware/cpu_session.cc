@@ -217,7 +217,7 @@ void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
   }
 }
 
-KernelGraphPtr CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+KernelGraphPtr CPUSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
                                        const std::vector<tensor::TensorPtr> &input_tensors,
                                        const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
@@ -264,19 +264,19 @@ void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, Kern
   }
 }
 
-void CPUSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void CPUSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                                  std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                                  const std::vector<int64_t> &tensors_mask) {
   RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
 }
 
-void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void CPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                            std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
   ProcessInputTensorsForHeterogeneous("CPU", *input_tensors);
-  const auto &kernel_graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  const auto &kernel_graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
@@ -299,7 +299,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   }
   UpdateDynamicOutputShape(tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->output_is_dynamic_shape) {
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   SetOutputFlags(*outputs);
