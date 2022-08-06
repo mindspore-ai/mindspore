@@ -106,7 +106,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
   int64_t running_flat_group_index = flat_group_index;
   for (int64_t group_dim_index = SizeToLong(group_shape.size()) - 1; group_dim_index >= 0; --group_dim_index) {
     const auto group_dim = group_shape[group_dim_index];
-    group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
+    (void)group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
     running_flat_group_index /= group_dim;
   }
 }
@@ -125,7 +125,7 @@ void GetGroupSet(kernel::AddressPtr input, const size_t last_dim, const std::vec
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0UL);
   const auto end = start + last_dim;
   for (size_t i = start; i < end; ++i) {
-    result->insert(data_ptr[i]);
+    (void)result->insert(data_ptr[i]);
   }
 }
 
@@ -134,7 +134,7 @@ void DenseToDenseSetOperationCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_ptr_ = kernel_node;
   std::string set_operation_str = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "set_operation");
-  std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
+  (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   if (set_operation_str == "a-b") {
     set_operation_ = A_MINUS_B;
   } else if (set_operation_str == "b-a") {
@@ -177,17 +177,19 @@ void DenseToDenseSetOperationCpuKernelMod::SetCompute(const std::set<T> &set1, c
                                                       std::set<T> *result) {
   switch (set_operation_) {
     case A_MINUS_B:
-      std::set_difference(set1.begin(), set1.end(), set2.begin(), set2.end(), std::inserter(*result, result->begin()));
+      (void)std::set_difference(set1.begin(), set1.end(), set2.begin(), set2.end(),
+                                std::inserter(*result, result->begin()));
       break;
     case B_MINUS_A:
-      std::set_difference(set2.begin(), set2.end(), set1.begin(), set1.end(), std::inserter(*result, result->begin()));
+      (void)std::set_difference(set2.begin(), set2.end(), set1.begin(), set1.end(),
+                                std::inserter(*result, result->begin()));
       break;
     case INTERSECTION:
-      std::set_intersection(set1.begin(), set1.end(), set2.begin(), set2.end(),
-                            std::inserter(*result, result->begin()));
+      (void)std::set_intersection(set1.begin(), set1.end(), set2.begin(), set2.end(),
+                                  std::inserter(*result, result->begin()));
       break;
     case UNION:
-      std::set_union(set1.begin(), set1.end(), set2.begin(), set2.end(), std::inserter(*result, result->begin()));
+      (void)std::set_union(set1.begin(), set1.end(), set2.begin(), set2.end(), std::inserter(*result, result->begin()));
       break;
   }
 }
@@ -258,8 +260,8 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   std::vector<size_t> group_idxs;
   for (int64_t group_idx = 0; group_idx < num_elements; ++group_idx) {
     GetGroupIdx(group_idx, group_shape, &group_idxs);
-    GetGroupSet<T>(inputs[kInputX1], x1_shape.back(), x1_strides, group_idxs, &x1_set);
-    GetGroupSet<T>(inputs[kInputX2], x2_shape.back(), x2_strides, group_idxs, &x2_set);
+    GetGroupSet<T>(inputs[kInputX1], LongToSize(x1_shape.back()), x1_strides, group_idxs, &x1_set);
+    GetGroupSet<T>(inputs[kInputX2], LongToSize(x2_shape.back()), x2_strides, group_idxs, &x2_set);
     std::set<T> res_set;
     SetCompute(x1_set, x2_set, &res_set);
     if (!res_set.empty()) {
@@ -276,42 +278,42 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
 }
 
 std::vector<KernelAttr> DenseToDenseSetOperationCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt8)
-                                                       .AddInputAttr(kNumberTypeInt8)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt8)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt16)
-                                                       .AddInputAttr(kNumberTypeInt16)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt16)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt32)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt8)
-                                                       .AddInputAttr(kNumberTypeUInt8)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt8)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt16)
-                                                       .AddInputAttr(kNumberTypeUInt16)
-                                                       .AddOutputAttr(kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt16)
-                                                       .AddOutputAttr(kNumberTypeInt64)};
+  static const std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                             .AddInputAttr(kNumberTypeInt8)
+                                                             .AddInputAttr(kNumberTypeInt8)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt8)
+                                                             .AddOutputAttr(kNumberTypeInt64),
+                                                           KernelAttr()
+                                                             .AddInputAttr(kNumberTypeInt16)
+                                                             .AddInputAttr(kNumberTypeInt16)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt16)
+                                                             .AddOutputAttr(kNumberTypeInt64),
+                                                           KernelAttr()
+                                                             .AddInputAttr(kNumberTypeInt32)
+                                                             .AddInputAttr(kNumberTypeInt32)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt32)
+                                                             .AddOutputAttr(kNumberTypeInt64),
+                                                           KernelAttr()
+                                                             .AddInputAttr(kNumberTypeInt64)
+                                                             .AddInputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeInt64),
+                                                           KernelAttr()
+                                                             .AddInputAttr(kNumberTypeUInt8)
+                                                             .AddInputAttr(kNumberTypeUInt8)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeUInt8)
+                                                             .AddOutputAttr(kNumberTypeInt64),
+                                                           KernelAttr()
+                                                             .AddInputAttr(kNumberTypeUInt16)
+                                                             .AddInputAttr(kNumberTypeUInt16)
+                                                             .AddOutputAttr(kNumberTypeInt64)
+                                                             .AddOutputAttr(kNumberTypeUInt16)
+                                                             .AddOutputAttr(kNumberTypeInt64)};
   return kernel_attr_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DenseToDenseSetOperation, DenseToDenseSetOperationCpuKernelMod);
