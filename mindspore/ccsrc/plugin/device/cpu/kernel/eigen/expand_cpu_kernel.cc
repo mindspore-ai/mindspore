@@ -76,7 +76,7 @@ bool ExpandCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   }
 }
 
-size_t ExpandCpuKernelMod::get_element_num(const std::vector<size_t> &shape) {
+size_t ExpandCpuKernelMod::get_element_num(const std::vector<size_t> &shape) const {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
     size *= shape[i];
@@ -121,10 +121,9 @@ template <size_t RANK, typename T>
 bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   size_t input_x_element_num = get_element_num(input_x_shape_);
-  size_t input_shape_element_num = get_element_num(input_shape_);
   size_t output_y_element_num = get_element_num(output_y_shape_);
 
-  input_x_shape_.insert(input_x_shape_.begin(), IntToSize(RANK - input_x_shape_.size()), 1);
+  (void)input_x_shape_.insert(input_x_shape_.begin(), IntToSize(RANK - input_x_shape_.size()), 1);
   input_x_bcast_.resize(RANK, kNoBroadcastValue);
   for (size_t i = 0; i < RANK; i++) {
     if (input_x_shape_[i] == input_shape_[i]) {
@@ -141,8 +140,6 @@ bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
   }
 
   Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input_x(static_cast<T *>(inputs[0]->addr), input_x_element_num);
-  Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> input_shape(static_cast<T *>(inputs[1]->addr),
-                                                                    input_shape_element_num);
   Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> output_y(static_cast<T *>(outputs[0]->addr),
                                                                  output_y_element_num);
 
@@ -161,7 +158,7 @@ bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<KernelAttr> ExpandCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
+  static const std::vector<KernelAttr> kernel_attr_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt8),
