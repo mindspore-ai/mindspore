@@ -87,6 +87,7 @@ from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
 from mindspore.ops.operations._grad_ops import ResizeNearestNeighborV2Grad
+from mindspore.ops.operations.array_ops import MaskedScatter
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
@@ -3899,6 +3900,13 @@ test_case_array_ops = [
                         Tensor(np.array([0, 2]), mstype.int32),
                         Tensor(4.0, mstype.float32)],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32)],
+    }),
+    ('MaskedScatter', {
+        'block': MaskedScatter(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0]]), mstype.float32),
+                        Tensor(np.array([[True, True, False]]), mstype.bool_),
+                        Tensor(np.array([[4.0, 5.0]]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[4.0, 5.0, 3.0]]), mstype.float32)],
     }),
     ('MaskedFill', {
         'block': P.MaskedFill(),
