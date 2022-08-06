@@ -1196,6 +1196,10 @@ def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', la
 
     if weight is None:
         weight = _ones_like(inputs)
+    else:
+        broadcast_shape = [1 for _ in range(inputs.ndim)]
+        broadcast_shape[1] = weight.shape[0]
+        weight = weight.reshape(broadcast_shape)
 
     if reduction == 'mean':
         return -(inputs * target * weight).sum() / (inputs.size / n_classes)
@@ -1263,6 +1267,8 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 4:
         ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
+    elif ndim == 1:
+        ret = _nll_loss(inputs, target, 0, weight, ignore_index, reduction, label_smoothing)
     else:
         n = inputs.shape[0]
         c = inputs.shape[1]
