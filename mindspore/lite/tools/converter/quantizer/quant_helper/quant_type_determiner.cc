@@ -21,33 +21,15 @@
 #include "src/litert/kernel_exec.h"
 #include "src/litert/kernel_registry.h"
 #include "src/common/ops/anf_utils.h"
+#include "tools/optimizer/common/format_utils.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
-std::pair<size_t, size_t> QuantTypeDeterminer::GetQuantParamsNum(const QuantParamHolderPtr &quant_holder) {
-  // update input quant params num
-  auto input_inited_quant_params = 0;
-  auto input_tensors = quant_holder->get_input_quant_params();
-  for (auto input : input_tensors) {
-    bool is_quant_params_inited = std::all_of(
-      input.begin(), input.end(), [](const schema::QuantParamT &quant_param) { return quant_param.inited; });
-    if (is_quant_params_inited) {
-      input_inited_quant_params++;
-    }
-  }
-  auto output_inited_quant_params = 0;
-  auto output_tensors = quant_holder->get_output_quant_params();
-  for (auto output : output_tensors) {
-    bool is_quant_params_inited = !std::any_of(
-      output.begin(), output.end(), [](const schema::QuantParamT &quant_param) { return !quant_param.inited; });
-    if (is_quant_params_inited) {
-      output_inited_quant_params++;
-    }
-  }
-  return {input_inited_quant_params, output_inited_quant_params};
-}
-
 bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
-  MS_ASSERT(node != nullptr);
+  MS_ASSERT(cnode != nullptr);
+  if (opt::IsSpecialType(cnode)) {
+    return false;
+  }
   auto primT = GetPrimitiveT(cnode->input(kPrimIndex));
   if (primT == nullptr) {
     MS_LOG(WARNING) << cnode->fullname_with_scope() << " primitive is nullptr.";
@@ -66,51 +48,23 @@ bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
     return false;
   }
 
-  // GetCNodeQuantType
+  // Get CNode QuantType directly.
   if (quant_holder->quant_type() != schema::QuantType_QUANT_NONE) {
     return quant_holder->quant_type() == schema::QuantType_QUANT_ALL;
   }
+  // All output need init.
   if (!quant_holder->IsOutputQuantParamsInited()) {
     return false;
   }
-  if (CheckNodeInSet(cnode, bias_ops_)) {
-    auto input_quant_params = quant_holder->get_input_quant_params();
-    MS_CHECK_TRUE_RET(!input_quant_params.empty(), false);
-    bool input_params_inited =
-      (!input_quant_params.at(kInputIndex).empty() && input_quant_params.at(kInputIndex).front().inited) &&
-      (!input_quant_params.at(kWeightIndex).empty() && input_quant_params.at(kWeightIndex).front().inited);
-    if (!input_params_inited || !quant_holder->IsOutputQuantParamsInited()) {
+
+  // Quantization parameters exist for all activations.
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto input = cnode->input(i);
+    if (input->isa<CNode>() && !quant_holder->CheckInit(i - kPrimOffset, true)) {
       return false;
     }
   }
-
-  auto in_out_quant_params = GetQuantParamsNum(quant_holder);
-  // Check quant param size is same as tensor size.
-  auto input_size = (cnode->size() - kPrimOffset);
-  if (CheckNodeInSet(cnode, bias_ops_)) {
-    input_size -= kPrimOffset;
-  }
-  // exclude input(not fp32)
-  for (size_t index = 1; index < cnode->size(); ++index) {
-    CHECK_NULL_RETURN(cnode->input(index));
-    auto abstract_base = cnode->input(index)->abstract();
-    if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " index: " << index << " should be AbstractTensorPtr.";
-      return RET_ERROR;
-    }
-    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-    CHECK_NULL_RETURN(abstract_tensor);
-    CHECK_NULL_RETURN(abstract_tensor->element());
-    if (abstract_tensor->element()->GetTypeTrack()->type_id() != kNumberTypeFloat32) {
-      input_size -= kPrimOffset;
-    }
-  }
-  auto output_size = opt::GetOutputSize(cnode);
-  if (in_out_quant_params.first == input_size && in_out_quant_params.second == output_size) {
-    quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
-    return true;
-  }
-  return false;
+  return true;
 }
 
 bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
@@ -120,7 +74,7 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
     return false;
   }
 
-  // GetCNodeQuantType
+  // Get CNode QuantType directly.
   if (quant_holder->quant_type() != schema::QuantType_QUANT_NONE) {
     return quant_holder->quant_type() == schema::QuantType_QUANT_WEIGHT;
   }
@@ -130,8 +84,12 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
     return false;
   }
 
+  bool quant_flag = false;
   for (size_t i = 1; i < cnode->size(); i++) {
     auto input = cnode->input(i);
+    if (IsGraphInput(input)) {
+      continue;
+    }
     // non-constants(CNode) don't include quantization parameters
     if (input->isa<mindspore::CNode>()) {
       if (quant_holder->CheckInit(i - kPrimOffset, true)) {
@@ -140,11 +98,12 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const CNodePtr &cnode) {
     } else {
       // Constants have quantization parameters
       if (quant_holder->CheckInit(i - kPrimOffset, true)) {
-        return true;
+        quant_flag = true;
+        continue;
       }
     }
   }
-  return false;
+  return quant_flag;
 }
 
 int QuantTypeDeterminer::Determine() {
@@ -156,15 +115,18 @@ int QuantTypeDeterminer::Determine() {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " quant holder is nullptr.";
       continue;
     }
-    if (DetermineQuantWeight(cnode)) {
+    if (!quant_holder->IsInputQuantParamsInited() && !quant_holder->IsOutputQuantParamsInited()) {  // Check FP32.
+      if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+        continue;
+      }
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " Remove unused quant info";
+      quant_holder->ClearQuantParams();
+    } else if (DetermineQuantWeight(cnode)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " set QuantType_QUANT_WEIGHT";
       quant_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
     } else if (DetermineQuantAll(cnode)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " set QuantType_QUANT_ALL";
       quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
-    } else {
-      MS_LOG(INFO) << cnode->fullname_with_scope() << " Remove unused quant info";
-      quant_holder->ClearQuantParams();
     }
   }
   return RET_OK;

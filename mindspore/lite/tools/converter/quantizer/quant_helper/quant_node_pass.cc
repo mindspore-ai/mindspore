@@ -188,6 +188,10 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
       MS_LOG(ERROR) << input_node->fullname_with_scope() << " can not get value";
       return RET_NULL_PTR;
     }
+    if (tensor_info->data_type() != kNumberTypeFloat32) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+      return RET_OK;
+    }
     int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     MS_CHECK_GT(static_cast<int>(quant_param_holder->get_input_quant_params().size()),
                 static_cast<int>(input_index) - 1, RET_ERROR);
@@ -215,6 +219,10 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << input_node->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
+  }
+  if (tensor_info->data_type() != kNumberTypeFloat32) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+    return RET_OK;
   }
   int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
   MS_CHECK_GT(static_cast<int>(quant_param_holder->get_input_quant_params().size()), static_cast<int>(input_index) - 1,

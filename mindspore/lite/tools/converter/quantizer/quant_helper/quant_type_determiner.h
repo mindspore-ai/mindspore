@@ -35,8 +35,6 @@ class QuantTypeDeterminer {
  private:
   bool DetermineQuantAll(const CNodePtr &cnode);
 
-  std::pair<size_t, size_t> GetQuantParamsNum(const QuantParamHolderPtr &quant_holder);
-
   bool DetermineQuantWeight(const CNodePtr &cnode);
 
  private:
