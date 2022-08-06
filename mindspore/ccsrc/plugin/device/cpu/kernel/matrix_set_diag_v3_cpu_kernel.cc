@@ -130,6 +130,50 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 }
 
 template <typename T>
+void MatrixSetDiagV3CpuKernelMod::LaunchFuncA(T *output_data, const T *diagonal_data, const T *input_data, size_t start,
+                                              size_t end) {
+  for (size_t elem = start; elem < end; ++elem) {
+    int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
+    int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
+    int64_t m = t / SizeToLong(input_columns_);
+    int64_t n = t % SizeToLong(input_columns_);
+    int64_t x = n - std::max(k_upper_, ZERO);
+    if (n - m == k_upper_) {
+      output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
+    } else {
+      output_data[elem] = input_data[elem];
+    }
+  }
+}
+
+template <typename T>
+void MatrixSetDiagV3CpuKernelMod::LaunchFuncB(T *output_data, const T *diagonal_data, const T *input_data, size_t start,
+                                              size_t end) {
+  for (size_t elem = start; elem < end; ++elem) {
+    int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
+    int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
+    int64_t m = t / SizeToLong(input_columns_);
+    int64_t n = t % SizeToLong(input_columns_);
+    int64_t d = n - m;
+    if (d >= k_lower_ && d <= k_upper_) {
+      int64_t x = k_upper_ - d;
+      int64_t offset = 0;
+      if (((align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT") && d >= 0) ||
+          ((align_ == "LEFT_RIGHT" || align_ == "RIGHT_RIGHT") && d <= 0)) {
+        offset = max_diag_len_ -
+                 std::min(SizeToLong(input_columns_) - std::max(d, ZERO), SizeToLong(input_rows_) + std::min(d, ZERO));
+      }
+      int64_t y = n - std::max(d, ZERO) + offset;
+      size_t position =
+        LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) + x * SizeToLong(diagonal_columns_) + y);
+      output_data[elem] = diagonal_data[position];
+    } else {
+      output_data[elem] = input_data[elem];
+    }
+  }
+}
+
+template <typename T>
 void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
@@ -139,41 +183,9 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
   auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_data);
   if (k_len_ == 1 || (k_len_ == kKLengthMax && k_lower_ == k_upper_)) {
-    for (size_t elem = 0; elem < input_numelements_; ++elem) {
-      int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
-      int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-      int64_t m = t / SizeToLong(input_columns_);
-      int64_t n = t % SizeToLong(input_columns_);
-      int64_t x = n - std::max(k_upper_, ZERO);
-      if (n - m == k_upper_) {
-        output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
-      } else {
-        output_data[elem] = input_data[elem];
-      }
-    }
+    LaunchFuncA(output_data, diagonal_data, input_data, 0, input_numelements_);
   } else {
-    for (size_t elem = 0; elem < input_numelements_; ++elem) {
-      int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
-      int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-      int64_t m = t / SizeToLong(input_columns_);
-      int64_t n = t % SizeToLong(input_columns_);
-      int64_t d = n - m;
-      if (d >= k_lower_ && d <= k_upper_) {
-        int64_t x = k_upper_ - d;
-        int64_t offset = 0;
-        if (((align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT") && d >= 0) ||
-            ((align_ == "LEFT_RIGHT" || align_ == "RIGHT_RIGHT") && d <= 0)) {
-          offset = max_diag_len_ - std::min(SizeToLong(input_columns_) - std::max(d, ZERO),
-                                            SizeToLong(input_rows_) + std::min(d, ZERO));
-        }
-        int64_t y = n - std::max(d, ZERO) + offset;
-        size_t position =
-          LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) + x * SizeToLong(diagonal_columns_) + y);
-        output_data[elem] = diagonal_data[position];
-      } else {
-        output_data[elem] = input_data[elem];
-      }
-    }
+    LaunchFuncB(output_data, diagonal_data, input_data, 0, input_numelements_);
   }
 }
 
@@ -191,48 +203,16 @@ bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr>
   size_t input_size = inputs[0]->size;
   if (input_size < kParallelDataNum) {
     singleCal<T>(inputs, outputs);
-  } else {
-    auto task = [this, &diagonal_data, &output_data, &input_data](size_t start, size_t end) {
-      if (k_len_ == 1 || (k_len_ == kKLengthMax && k_lower_ == k_upper_)) {
-        for (size_t elem = start; elem < end; ++elem) {
-          int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
-          int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-          int64_t m = t / SizeToLong(input_columns_);
-          int64_t n = t % SizeToLong(input_columns_);
-          int64_t x = n - std::max(k_upper_, ZERO);
-          if (n - m == k_upper_) {
-            output_data[elem] = diagonal_data[LongToSize(index * SizeToLong(diagonal_columns_) + x)];
-          } else {
-            output_data[elem] = input_data[elem];
-          }
-        }
-      } else {
-        for (size_t elem = start; elem < end; ++elem) {
-          int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
-          int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
-          int64_t m = t / SizeToLong(input_columns_);
-          int64_t n = t % SizeToLong(input_columns_);
-          int64_t d = n - m;
-          if (d >= k_lower_ && d <= k_upper_) {
-            int64_t x = k_upper_ - d;
-            int64_t offset = 0;
-            if (((align_ == "RIGHT_LEFT" || align_ == "RIGHT_RIGHT") && d >= 0) ||
-                ((align_ == "LEFT_RIGHT" || align_ == "RIGHT_RIGHT") && d <= 0)) {
-              offset = max_diag_len_ - std::min(SizeToLong(input_columns_) - std::max(d, ZERO),
-                                                SizeToLong(input_rows_) + std::min(d, ZERO));
-            }
-            int64_t y = n - std::max(d, ZERO) + offset;
-            size_t position = LongToSize(index * SizeToLong(diagonal_rows_ * diagonal_columns_) +
-                                         x * SizeToLong(diagonal_columns_) + y);
-            output_data[elem] = diagonal_data[position];
-          } else {
-            output_data[elem] = input_data[elem];
-          }
-        }
-      }
-    };
-    CPUKernelUtils::ParallelFor(task, input_numelements_);
+    return true;
   }
+  auto task = [this, &diagonal_data, &output_data, &input_data](size_t start, size_t end) {
+    if (k_len_ == 1 || (k_len_ == kKLengthMax && k_lower_ == k_upper_)) {
+      LaunchFuncA(output_data, diagonal_data, input_data, start, end);
+    } else {
+      LaunchFuncB(output_data, diagonal_data, input_data, start, end);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, input_numelements_);
   return true;
 }
 

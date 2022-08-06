@@ -53,6 +53,11 @@ class MatrixSetDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void singleCal(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  template <typename T>
+  void LaunchFuncA(T *output_data, const T *diagonal_data, const T *input_data, size_t start, size_t end);
+  template <typename T>
+  void LaunchFuncB(T *output_data, const T *diagonal_data, const T *input_data, size_t start, size_t end);
+
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;
   std::vector<int64_t> x_shape_;
