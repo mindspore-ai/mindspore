@@ -85,7 +85,7 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       for (size_t j = start; j < end; j++) {
         T Quotient = IndicesData[j];
         for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-          OutputData[i + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
+          OutputData[IntToSize(i) + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
           Quotient = (Quotient / DimsData[i]);
         }
       }

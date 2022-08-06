@@ -50,7 +50,7 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
                              << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
   }
-  int64_t rank = x1_shape.size();
+  int64_t rank = SizeToLong(x1_shape.size());
   if (rank == kDefalutRank) {
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"

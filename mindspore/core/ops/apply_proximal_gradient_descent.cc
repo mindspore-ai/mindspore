@@ -35,21 +35,21 @@ abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  int64_t shp_len = alpha_shape.size();
+  int64_t shp_len = SizeToLong(alpha_shape.size());
   std::string para_name = input_args[kInputIndex1]->ToString();
   (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, alpha_shape[kInputIndex0], kEqual, 1, primitive->name());
   }
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  shp_len = l1_shape.size();
+  shp_len = SizeToLong(l1_shape.size());
   para_name = input_args[kInputIndex2]->ToString();
   (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, l1_shape[kInputIndex0], kEqual, 1, primitive->name());
   }
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  shp_len = l2_shape.size();
+  shp_len = SizeToLong(l2_shape.size());
   para_name = input_args[kInputIndex3]->ToString();
   (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {

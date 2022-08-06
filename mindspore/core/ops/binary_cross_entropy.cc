@@ -45,11 +45,13 @@ abstract::ShapePtr BinaryCrossEntropyInferShape(const PrimitivePtr &primitive,
   auto x_shape_ptr = x_shape_BaseShapePtr->cast<abstract::ShapePtr>();
   auto y_shape_ptr = y_shape_BaseShapePtr->cast<abstract::ShapePtr>();
   auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
-  if (!x_shape_ptr->IsDynamic() && !y_shape_ptr->IsDynamic())
+  if (!x_shape_ptr->IsDynamic() && !y_shape_ptr->IsDynamic()) {
     CheckAndConvertUtils::Check("x shape", x_shape, kEqual, y_shape, prim_name, ValueError);
+  }
   if (weight_shape.size() > 0) {
-    if (!y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic())
+    if (!y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic()) {
       CheckAndConvertUtils::Check("y shape", y_shape, kEqual, weight_shape, prim_name, ValueError);
+    }
   }
   auto out_shape = x_shape;
   int64_t reduction;

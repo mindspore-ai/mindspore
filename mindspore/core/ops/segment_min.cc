@@ -65,7 +65,7 @@ abstract::ShapePtr SegmentMinInferShape(const PrimitivePtr &primitive, const std
           MS_EXCEPTION(ValueError) << "segment_ids must be a tensor with element values sorted in ascending order.";
         }
       }
-      out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);
+      out_shape[0] = segment_ids_data[data_size - 1] + 1;
     } else if (segment_ids_type_id == kNumberTypeInt32) {
       int32_t *segment_ids_data = reinterpret_cast<int32_t *>(segment_ids_tensor->data_c());
       if (segment_ids_data[0] < 0) {
