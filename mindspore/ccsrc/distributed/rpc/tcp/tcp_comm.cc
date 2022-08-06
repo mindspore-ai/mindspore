@@ -437,7 +437,7 @@ bool TCPComm::Disconnect(const std::string &dst_url) {
   unsigned int interval = 100000;
   size_t retry = 30;
   while (recv_event_loop_->RemainingTaskNum() != 0 && send_event_loop_->RemainingTaskNum() != 0 && retry > 0) {
-    usleep(interval);
+    (void)usleep(interval);
     retry--;
   }
   if (recv_event_loop_->RemainingTaskNum() > 0 || send_event_loop_->RemainingTaskNum() > 0) {
