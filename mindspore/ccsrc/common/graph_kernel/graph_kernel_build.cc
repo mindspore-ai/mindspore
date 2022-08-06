@@ -56,36 +56,28 @@ bool IsAkgOp(const AnfNodePtr &node) {
 
 bool SafeSplitSchemer::Split(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  func_graph_ = func_graph;
-  Init();
-  Run();
+  Run(func_graph);
   return !split_plan_.empty();
 }
 
-void SafeSplitSchemer::Run() {
-  auto mng = func_graph_->manager();
+void SafeSplitSchemer::Run(const FuncGraphPtr &func_graph) {
+  auto mng = func_graph->manager();
   if (mng == nullptr) {
-    mng = Manage(func_graph_, true);
-    func_graph_->set_manager(mng);
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
   }
-  SplitNodes();
+  SplitNodes(func_graph);
   if (split_plan_.size() != need_inline_.size() || split_plan_.empty() || (split_plan_.size() == 1 && !NeedInline(0))) {
     split_plan_.clear();
     need_inline_.clear();
     return;
   }
-  GroupReturnNode();
+  GroupReturnNode(func_graph);
 }
 
-void SafeSplitSchemer::Init() {
-  split_plan_.clear();
-  need_inline_.clear();
-  node_group_.clear();
-}
-
-void SafeSplitSchemer::SplitNodes() {
+void SafeSplitSchemer::SplitNodes(const FuncGraphPtr &func_graph) {
   CNodePtrList topo_valid_nodes;
-  GetTopoValidNodes(func_graph_, &topo_valid_nodes);
+  GetTopoValidNodes(func_graph, &topo_valid_nodes);
   for (size_t i = 0; i < topo_valid_nodes.size(); ++i) {
     const auto &node = topo_valid_nodes[i];
     node_group_[node] = i;
@@ -115,25 +107,6 @@ void SafeSplitSchemer::SplitNodes() {
     } else {
       need_inline_.push_back(1);
     }
-  }
-}
-
-void SafeSplitSchemer::GroupReturnNode() {
-  auto ret_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(ret_node);
-  auto output = func_graph_->output();
-  MS_EXCEPTION_IF_NULL(output);
-  if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
-    // set the make_tuple node to a new group.
-    auto group_id = split_plan_.size();
-    need_inline_.push_back(1);
-    (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
-    node_group_[output] = group_id;
-    node_group_[ret_node] = group_id;
-  } else {
-    auto group_id = node_group_[output];
-    node_group_[ret_node] = group_id;
-    (void)split_plan_[group_id].emplace_back(ret_node);
   }
 }
 

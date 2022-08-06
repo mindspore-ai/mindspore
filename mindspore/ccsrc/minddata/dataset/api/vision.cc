@@ -20,6 +20,7 @@
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #endif
 
+#include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
@@ -123,6 +124,18 @@ std::shared_ptr<TensorOperation> Affine::Parse() {
 }
 
 #ifndef ENABLE_ANDROID
+// AdjustBrightness Transform Operation.
+struct AdjustBrightness::Data {
+  explicit Data(float brightness_factor) : brightness_factor_(brightness_factor) {}
+  float brightness_factor_;
+};
+
+AdjustBrightness::AdjustBrightness(float brightness_factor) : data_(std::make_shared<Data>(brightness_factor)) {}
+
+std::shared_ptr<TensorOperation> AdjustBrightness::Parse() {
+  return std::make_shared<AdjustBrightnessOperation>(data_->brightness_factor_);
+}
+
 // AdjustGamma Transform Operation.
 struct AdjustGamma::Data {
   Data(float gamma, float gain) : gamma_(gamma), gain_(gain) {}

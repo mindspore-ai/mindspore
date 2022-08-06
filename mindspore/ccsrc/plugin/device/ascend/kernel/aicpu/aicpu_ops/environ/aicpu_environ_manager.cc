@@ -26,11 +26,11 @@ int64_t EnvironMgr::Create() {
   std::unique_lock<std::mutex> lock(mutex);
   if (env_handles_count_ >= INT64_MAX) {
     AICPU_LOGE(" The handles number:%d is out of range: ", env_handles_count_);
-    return AICPU_KERNEL_STATE_PARAM_INVALID;
+    return kAicpuKernelStateInvalid;
   }
   int64_t ret_handle = ++env_handles_count_;
   auto env = std::make_shared<Environ>(ret_handle);
-  AICPU_CHECK_NULLPTR(env, AICPU_KERNEL_STATE_PARAM_INVALID, "env is null.");
+  AICPU_CHECK_NULLPTR(env, kAicpuKernelStateInvalid, "env is null.");
   envs_[ret_handle] = env;
 
   return ret_handle;

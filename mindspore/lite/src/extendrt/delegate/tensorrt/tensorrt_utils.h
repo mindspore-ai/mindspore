@@ -22,11 +22,13 @@
 #include <memory>
 #include <string>
 #include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
+#include "src/extendrt/delegate/tensorrt/tensor_info.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cublas_utils.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
 #include "include/api/context.h"
+#include "mindapi/base/types.h"
 
 #define kNCHW_N 0
 #define kNCHW_C 1
@@ -74,28 +76,25 @@ nvinfer1::IShuffleLayer *NHWC2NCHW(TensorRTContext *ctx, const nvinfer1::ITensor
 
 nvinfer1::IShuffleLayer *NCHW2NHWC(TensorRTContext *ctx, const nvinfer1::ITensor &input);
 
-std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type);
+std::experimental::optional<ActivationParams> TryConvertActivationType(ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
-                                         const std::string &op_name);
+nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                                const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
 nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name);
 
-nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const TensorInfo &ms_tensor,
                                           const DataType data_type, const std::string &op_name);
 
-nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                                  const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
-nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
+nvinfer1::Weights TransposeWeight2D(const TensorInfo &ms_tensor, void **pack_weight);
 
-nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
-
-nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
+nvinfer1::Weights ConvertWeight(const TensorInfo &ms_tensor);
 
 nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *tensor, nvinfer1::DataType data_type,
                                  const std::string &name);
@@ -117,7 +116,7 @@ std::string GetTensorFormat(ITensorHelper tensor_helper);
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
-std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode);
+std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(ReduceMode mode);
 
 int PreprocessInputs2SameDim(TensorRTContext *ctx, ITensorHelper input_tensor_helper, ITensorHelper *out_tensor_helper);
 
@@ -133,7 +132,9 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
 
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const nvinfer1::Dims &shape);
 
-int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
+nvinfer1::ITensor *ConvertConstantTensor1D(TensorRTContext *ctx, int *weights_vec, nvinfer1::DataType data_type);
+
+int ParseData2Vector(const TensorInfo &ms_tensor, std::vector<float> *dst);
 
 void DebugDims(const nvinfer1::Dims &dims);
 
@@ -175,7 +176,7 @@ inline size_t IntToSize(int u) {
 template <typename T>
 void Data2Vector(std::vector<float> *dst, const void *src) {
   auto src_ptr = static_cast<const T *>(src);
-  for (int i = 0; i < dst->size(); i++) {
+  for (size_t i = 0; i < dst->size(); i++) {
     dst->at(i) = static_cast<float>(src_ptr[i]);
   }
 }

@@ -55,13 +55,22 @@ MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
 void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) {
   MS_EXCEPTION_IF_NULL(msg);
   MS_EXCEPTION_IF_NULL(need_finalize);
-  const std::string &msg_body = msg->body;
-  size_t msg_len = msg_body.length();
-  if (data_len == msg_len) {
+
+  size_t req_data_size = 0;
+  RpcDataPtr finaliz_req_data;
+  if (common::GetEnv("use_void").empty()) {
+    req_data_size = msg->body.size();
+    finaliz_req_data = const_cast<RpcDataPtr>(msg->body.c_str());
+  } else {
+    MS_EXCEPTION_IF_NULL(msg->data);
+    req_data_size = msg->size;
+    finaliz_req_data = static_cast<RpcDataPtr>(msg->data);
+  }
+  if (data_len == req_data_size) {
     return;
   }
 
-  size_t remainder_len = msg_len - data_len;
+  size_t remainder_len = req_data_size - data_len;
   size_t finalize_header_size = strlen(kFinalizeMuxRecvActor);
   if (remainder_len <= finalize_header_size) {
     MS_LOG(EXCEPTION) << "Not found msg header[" << kFinalizeMuxRecvActor << "] in received message";
@@ -71,7 +80,7 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
     MS_LOG(EXCEPTION) << "Invalid finalize request message";
   }
 
-  const void *need_finalize_actor_data = msg_body.c_str() + data_len + finalize_header_size;
+  const void *need_finalize_actor_data = finaliz_req_data + data_len + finalize_header_size;
   MS_EXCEPTION_IF_NULL(need_finalize_actor_data);
   bool finalize_in_msg = *(static_cast<const bool *>(need_finalize_actor_data));
   MS_LOG(INFO) << "Received a message which contains finalize command: " << finalize_in_msg;

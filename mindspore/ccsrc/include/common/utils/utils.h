@@ -404,6 +404,7 @@ constexpr auto kCSRDivOpName = "CSRDiv";
 constexpr auto kCSRGatherOpName = "CSRGather";
 constexpr auto kCSR2COOOpName = "CSR2COO";
 constexpr auto kCOO2CSROpName = "COO2CSR";
+constexpr auto kRandomShuffle = "RandomShuffle";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
@@ -901,7 +902,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentMeanOpName,
                                               kSegmentProdOpName,
                                               kNonZeroOpName,
-                                              kSparseSparseMinimumOpName};
+                                              kSparseSparseMinimumOpName,
+                                              kRpcRecvOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

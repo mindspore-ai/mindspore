@@ -19,8 +19,6 @@
 #include <string>
 #include <utility>
 #include <queue>
-#include <set>
-#include <map>
 #include "ir/anf.h"
 #include "utils/anf_utils.h"
 #include "utils/hash_map.h"
@@ -32,146 +30,6 @@
 #include "common/graph_kernel/split_model/split_model_factory.h"
 
 namespace mindspore::graphkernel {
-namespace {
-StitchInfo GetStitchInfo(const nlohmann::json &kernel_json) {
-  StitchInfo info;
-  if (kernel_json.find(kJsonKeyBufferStitch) != kernel_json.end()) {
-    nlohmann::json buffer_stitch = kernel_json[kJsonKeyBufferStitch];
-    if (buffer_stitch.find(kJsonKeyStitchOp) != buffer_stitch.end()) {
-      std::vector<std::string> stitch_ops = buffer_stitch[kJsonKeyStitchOp];
-      info.stitch_ops = stitch_ops;
-    }
-    if (buffer_stitch.find(kJsonKeyStitchAtomicOp) != buffer_stitch.end()) {
-      std::vector<std::string> stitch_atomic_ops = buffer_stitch[kJsonKeyStitchAtomicOp];
-      info.stitch_atomic_ops = stitch_atomic_ops;
-    }
-  }
-  return info;
-}
-
-std::set<std::string> GetRecomputeOps(const nlohmann::json &kernel_json) {
-  if (kernel_json.find(kJsonKeyRecomputeOps) != kernel_json.end()) {
-    std::vector<std::string> recompute_ops = kernel_json[kJsonKeyRecomputeOps];
-    return std::set<std::string>(recompute_ops.begin(), recompute_ops.end());
-  }
-  return std::set<std::string>();
-}
-
-bool IsRecomputeOp(const nlohmann::json &op_desc, const std::set<std::string> &recompute_ops) {
-  std::vector<nlohmann::json> output_descs = op_desc[kJsonKeyOutputDesc];
-  if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) {
-    return false;
-  }
-  std::string tensor_name = output_descs[0][kJsonKeyTensorName];
-  return recompute_ops.count(tensor_name) > 0;
-}
-
-CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfNodePtr> *node_map) {
-  auto func_graph = orig_node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto cnode = orig_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  TraceGuard guard(std::make_shared<TraceOpt>(cnode->debug_info()));
-  auto orig_inputs = cnode->inputs();
-  std::vector<AnfNodePtr> inputs;
-  for (auto inp : orig_inputs) {
-    if (node_map->find(inp) == node_map->end()) {
-      inputs.push_back(inp);
-      continue;
-    }
-    inputs.push_back((*node_map)[inp]);
-  }
-  CNodePtr cp_node = func_graph->NewCNode(inputs);
-  func_graph->AddNode(cp_node);
-  ScopePtr scope = (orig_node->scope() != kDefaultScope) ? orig_node->scope() : kDefaultScope;
-  cp_node->set_scope(scope);
-  cp_node->CloneCNodeInfo(cnode);
-  (*node_map)[orig_node] = cp_node;
-  return cp_node->cast<CNodePtr>();
-}
-
-void SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info, const CNodePtr &node) {
-  std::vector<nlohmann::json> output_descs = op_desc[kJsonKeyOutputDesc];
-  if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) {
-    return;
-  }
-  std::string tensor_name = output_descs[0][kJsonKeyTensorName];
-  if (std::find(info.stitch_ops.begin(), info.stitch_ops.end(), tensor_name) != info.stitch_ops.end()) {
-    AnfUtils::SetNodeAttr(kAttrStitch, MakeValue("common"), node);
-    MS_LOG(INFO) << "Enable common stitch fusion by " << node->fullname_with_scope();
-  }
-  if (std::find(info.stitch_atomic_ops.begin(), info.stitch_atomic_ops.end(), tensor_name) !=
-      info.stitch_atomic_ops.end()) {
-    AnfUtils::SetNodeAttr(kAttrStitch, MakeValue("atomic"), node);
-    MS_LOG(INFO) << "Enable atomic add stitch fusion by " << node->fullname_with_scope();
-  }
-}
-
-// replace original region root op by its copy in this res_graphs
-void ConnectRecomputeOps(AnfNodePtrList *res_graphs, const AnfNodePtr &orig_region_root,
-                         const AnfNodePtr &cp_region_root) {
-  for (auto &node : *res_graphs) {
-    auto cnode = node->cast<CNodePtr>();
-    auto inputs = cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (inputs[i] != orig_region_root) {
-        continue;
-      }
-      cnode->set_input(i, cp_region_root);
-    }
-  }
-}
-}  // namespace
-
-bool SplitNodesDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
-                                         const std::map<std::string, AnfNodePtr> &address_node_map,
-                                         AnfNodePtrList *res_graphs) {
-  MS_EXCEPTION_IF_NULL(res_graphs);
-  MS_LOG(DEBUG) << "start decode, " << kernel_json;
-  // decode cnodes in graph.
-  std::vector<nlohmann::json> op_node_descs = kernel_json[kJsonKeyOpDesc];
-  if (op_node_descs.empty()) {
-    MS_LOG(ERROR) << "Error decode, no cnodes for graph: " << kernel_json;
-    return false;
-  }
-  StitchInfo info = GetStitchInfo(kernel_json);
-  auto recompute_ops = GetRecomputeOps(kernel_json);
-  // key_value: original_copied
-  std::map<AnfNodePtr, AnfNodePtr> node_map;
-  // nodes would be copied
-  AnfNodePtrList orig_region_nodes;
-  // nodes would not be copied
-  AnfNodePtrList no_cp_nodes;
-  for (const auto &op_desc : op_node_descs) {
-    if (op_desc.find(kJsonKeyPtrAddress) == op_desc.end() || op_desc[kJsonKeyPtrAddress].is_null()) {
-      MS_LOG(ERROR) << "Decode failed, key: " << kJsonKeyPtrAddress << " not found in: " << op_desc;
-      return false;
-    }
-
-    std::string ptr_address = op_desc[kJsonKeyPtrAddress];
-    if (address_node_map.count(ptr_address) == 0) {
-      MS_LOG(ERROR) << "Decode failed, ptr_address not found in map.";
-      return false;
-    }
-    auto node = address_node_map.at(ptr_address)->cast<CNodePtr>();
-    if (IsRecomputeOp(op_desc, recompute_ops)) {
-      auto cp_node = NewRecomputeNode(node, &node_map);
-      orig_region_nodes.push_back(node);
-      SetStitchAttr(op_desc, info, cp_node);
-      res_graphs->push_back(cp_node);
-      continue;
-    }
-    SetStitchAttr(op_desc, info, node);
-    res_graphs->push_back(node);
-    no_cp_nodes.push_back(node);
-  }
-  for (auto orig_node : orig_region_nodes) {
-    ConnectRecomputeOps(&no_cp_nodes, orig_node, node_map[orig_node]);
-  }
-  MS_LOG(DEBUG) << "decode cnodes success, size: " << res_graphs->size();
-  return true;
-}
-
 namespace {
 void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(AnfNodePtr &)> &callback) {
   mindspore::HashSet<AnfNodePtr> visited;
@@ -471,7 +329,6 @@ class AreaGraph {
 
 class Splitter {
  public:
-  using SplitSchemerPtr = std::shared_ptr<SplitSchemer>;
   using SplitterPtr = std::shared_ptr<Splitter>;
 
   bool Split() {
@@ -701,31 +558,22 @@ class Splitter {
   mindspore::HashMap<ParameterPtr, AnfNodePtr> param_to_main_graph_node_map_;
 };
 
-class CppCostModelSplitSchemer : public SplitSchemer {
+class CppCostModelSplitSchemer : public CommonSplitSchemer {
  public:
   explicit CppCostModelSplitSchemer(const std::string &processor) : processor_(processor) {}
   ~CppCostModelSplitSchemer() = default;
   bool Split(const FuncGraphPtr &func_graph) override {
-    func_graph_ = func_graph;
-    Init();
-    if (!SplitByCostModel()) {
+    if (!SplitByCostModel(func_graph)) {
       return false;
     }
-    GroupReturnNode();
+    GroupReturnNode(func_graph);
     return true;
   }
-  bool NeedInline(size_t group_id) const override { return need_inline_[group_id] == 1; }
 
  protected:
-  void Init() {
-    split_plan_.clear();
-    need_inline_.clear();
-    node_group_.clear();
-  }
-
-  bool SplitByCostModel() {
+  bool SplitByCostModel(const FuncGraphPtr &func_graph) {
     mindspore::HashMap<inner::NodePtr, AnfNodePtr> op_node_map;
-    auto lg = GkUtils::AnfGraph2LiteGraph(func_graph_, &op_node_map);
+    auto lg = GkUtils::AnfGraph2LiteGraph(func_graph, &op_node_map);
     MS_LOG(DEBUG) << "Litegraph: " << lg->ToString();
     // use the original node index to sort the split_plan's nodes.
     mindspore::HashMap<AnfNodePtr, size_t> node_idx_map;
@@ -751,30 +599,7 @@ class CppCostModelSplitSchemer : public SplitSchemer {
     return split_plan_.size() > 1 || (split_plan_.size() == 1 && NeedInline(0));
   }
 
-  // group the return node and last MakeTuple node (if exists).
-  void GroupReturnNode() {
-    auto ret_node = func_graph_->get_return();
-    MS_EXCEPTION_IF_NULL(ret_node);
-    auto output = func_graph_->output();
-    MS_EXCEPTION_IF_NULL(output);
-    // set the make_tuple node to a new group.
-    if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
-      auto group_id = split_plan_.size();
-      (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
-      need_inline_.push_back(1);
-      node_group_[output] = group_id;
-      node_group_[ret_node] = group_id;
-    } else {
-      auto group_id = node_group_[output];
-      node_group_[ret_node] = group_id;
-      (void)split_plan_[group_id].emplace_back(ret_node);
-    }
-  }
-
-  mindspore::HashMap<AnfNodePtr, size_t> node_group_;
-  FuncGraphPtr func_graph_{nullptr};
   std::string processor_;
-  std::vector<int> need_inline_;
 };
 }  // namespace
 

@@ -15,10 +15,11 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/shape_tensorrt.h"
+#include "ops/shape.h"
 
 namespace mindspore::lite {
-int ShapeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                             const std::vector<mindspore::MSTensor> &out_tensors) {
+int ShapeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                             const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -59,9 +60,9 @@ int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   shape_layer->setName(op_name_.c_str());
-  ctx->RegisterTensor(ITensorHelper{shape_layer->getOutput(0), Format::NHWC, true}, out_tensors_[0].Name());
+  ctx->RegisterTensor(ITensorHelper{shape_layer->getOutput(0), Format::NCHW, true}, out_tensors_[0].Name());
   this->layer_ = shape_layer;
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Shape, ShapeTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameShape, ShapeTensorRT)
 }  // namespace mindspore::lite

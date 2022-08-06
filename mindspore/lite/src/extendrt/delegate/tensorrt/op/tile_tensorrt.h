@@ -22,20 +22,21 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tile_impl.cuh"
 
 namespace mindspore::lite {
-constexpr char *TILE_PLUGIN_NAME{"TilePluginCreater"};
+constexpr auto TILE_PLUGIN_NAME{"TilePluginCreater"};
 class TileTensorRT : public TensorRTOp {
  public:
-  TileTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-               const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  TileTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+               const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~TileTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  bool IsWeightInputHanledInner() const override { return true; }
+
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   int RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input);

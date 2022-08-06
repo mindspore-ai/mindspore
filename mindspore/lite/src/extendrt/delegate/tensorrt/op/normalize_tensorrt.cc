@@ -19,10 +19,11 @@
 #include <numeric>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/op/normalize_opt_plugin.h"
+#include "ops/fusion/layer_norm_fusion.h"
 
 namespace mindspore::lite {
-int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                                 const std::vector<mindspore::MSTensor> &out_tensors) {
+int NormalizeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                 const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -35,24 +36,26 @@ int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
-  auto norm_op = primitive->value_as_LayerNormFusion();
-  CHECK_NULL_RETURN(norm_op);
-  int being_norm_axis = norm_op->begin_norm_axis();
-  being_norm_axis = being_norm_axis >= 0 ? being_norm_axis : in_tensors[0].Shape().size() + being_norm_axis;
-  int begin_params_axis = norm_op->begin_params_axis();
-  begin_params_axis = begin_params_axis >= 0 ? begin_params_axis : in_tensors[0].Shape().size() + begin_params_axis;
-  if (begin_params_axis != being_norm_axis || begin_params_axis != in_tensors[0].Shape().size() - 1) {
-    MS_LOG(ERROR) << "only support normalize on last one dim, being_norm_axis is " << being_norm_axis << " for "
-                  << op_name_;
-    return RET_ERROR;
-  }
-  axis_ = begin_params_axis;
-  epsilon_ = norm_op->epsilon();
+
   return RET_OK;
 }
 
 int NormalizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   CHECK_NULL_RETURN(ctx->network());
+  auto norm_op = AsOps<ops::LayerNormFusion>();
+  CHECK_NULL_RETURN(norm_op);
+  int input_nbdims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  int being_norm_axis = norm_op->get_begin_norm_axis();
+  being_norm_axis = being_norm_axis >= 0 ? being_norm_axis : input_nbdims + being_norm_axis;
+  int begin_params_axis = norm_op->get_begin_params_axis();
+  begin_params_axis = begin_params_axis >= 0 ? begin_params_axis : input_nbdims + begin_params_axis;
+  if (begin_params_axis != being_norm_axis || begin_params_axis != input_nbdims - 1) {
+    MS_LOG(ERROR) << "only support normalize on last one dim, being_norm_axis is " << being_norm_axis << " for "
+                  << op_name_;
+    return RET_ERROR;
+  }
+  axis_ = begin_params_axis;
+  epsilon_ = norm_op->get_epsilon();
   int ret = PreprocessInputs(ctx);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "preprocess input failed for " << op_name_;
@@ -68,9 +71,10 @@ int NormalizeTensorRT::PreprocessInputs(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   if (in_tensors_.size() == BETA_INDEX + 1) {
-    gamma_ = ConvertTensorWithExpandDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + in_tensors_[1].Name());
+    auto expect_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
+    gamma_ = ConvertTensorWithExpandDims(ctx, in_tensors_[1], expect_shape, op_name_ + in_tensors_[1].Name());
     CHECK_NULL_RETURN(gamma_);
-    beta_ = ConvertTensorWithExpandDims(ctx, in_tensors_[BETA_INDEX], in_tensors_[0].Shape(),
+    beta_ = ConvertTensorWithExpandDims(ctx, in_tensors_[BETA_INDEX], expect_shape,
                                         op_name_ + in_tensors_[BETA_INDEX].Name());
     CHECK_NULL_RETURN(beta_);
   }
@@ -110,8 +114,8 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
                     ->getOutput(0);
   CHECK_NULL_RETURN(sub_mean);
   // (x - mean)^2
-  auto const_two =
-    ConvertScalarToITensor(ctx, in_tensors_[0].Shape().size(), &two_, DataType::kNumberTypeFloat32, op_name_ + "_two");
+  auto const_two = ConvertScalarToITensor(ctx, input(ctx, 0).trt_tensor_->getDimensions().nbDims, &two_,
+                                          DataType::kNumberTypeFloat32, op_name_ + "_two");
   CHECK_NULL_RETURN(const_two);
   auto pow = ctx->network()->addElementWise(*sub_mean, *const_two, nvinfer1::ElementWiseOperation::kPOW)->getOutput(0);
   CHECK_NULL_RETURN(pow);
@@ -120,7 +124,7 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   CHECK_NULL_RETURN(var);
 
   // var + min epsilon
-  auto const_epsilon = ConvertScalarToITensor(ctx, in_tensors_[0].Shape().size(), &epsilon_,
+  auto const_epsilon = ConvertScalarToITensor(ctx, input(ctx, 0).trt_tensor_->getDimensions().nbDims, &epsilon_,
                                               DataType::kNumberTypeFloat32, op_name_ + "_epsilion");
   CHECK_NULL_RETURN(const_epsilon);
   auto var_epsilon =
@@ -155,22 +159,6 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-bool NormalizeTensorRT::RunOptPlugin() {
-  auto precision_mode = runtime_->GetRuntimePrecisionMode();
-  if (precision_mode == RuntimePrecisionMode::RuntimePrecisionMode_FP32 && out_tensors_.size() == 1 &&
-      in_tensors_.size() == INPUT_SIZE3 && axis_ == in_tensors_[0].Shape().size() - 1 &&
-      in_tensors_[0].Shape()[axis_] < GET_THREADS) {
-    // insufficient shared memory
-    int dim_sum = std::accumulate(in_tensors_[0].Shape().begin(), in_tensors_[0].Shape().begin() + axis_, 1,
-                                  std::multiplies<int>());
-    const int kSharedMemoryThreshold = 2048;
-    if (dim_sum > kSharedMemoryThreshold) {
-      return false;
-    }
-    MS_LOG(INFO) << op_name_ << " use opt plugin";
-    return true;
-  }
-  return false;
-}
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LayerNormFusion, NormalizeTensorRT)
+bool NormalizeTensorRT::RunOptPlugin() { return false; }
+REGISTER_TENSORRT_CREATOR(ops::kNameLayerNormFusion, NormalizeTensorRT)
 }  // namespace mindspore::lite

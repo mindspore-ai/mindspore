@@ -19,33 +19,47 @@
 #include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
+#include "ops/fusion/sub_fusion.h"
+#include "ops/fusion/div_fusion.h"
+#include "ops/fusion/reduce_fusion.h"
+#include "ops/fusion/pow_fusion.h"
+#include "ops/fusion/add_fusion.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/real_div.h"
+#include "ops/floor_div.h"
+#include "ops/eltwise.h"
+#include "ops/minimum.h"
+#include "ops/maximum.h"
+#include "ops/bias_add.h"
+#include "ops/equal.h"
+#include "ops/less.h"
+#include "ops/greater.h"
 
 namespace mindspore::lite {
 namespace {
-std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV_ELEM_OP = {
+std::unordered_map<std::string, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV_ELEM_OP = {
 #if TRT_VERSION_GE(7, 2)
-  {schema::PrimitiveType_Less, nvinfer1::ElementWiseOperation::kLESS},
-  {schema::PrimitiveType_Greater, nvinfer1::ElementWiseOperation::kGREATER},
+  {ops::kNameLess, nvinfer1::ElementWiseOperation::kLESS},
+  {ops::kNameGreater, nvinfer1::ElementWiseOperation::kGREATER},
 #endif
-  {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
-  {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
-  {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
-  {schema::PrimitiveType_RealDiv, nvinfer1::ElementWiseOperation::kDIV},
-  {schema::PrimitiveType_FloorDiv, nvinfer1::ElementWiseOperation::kFLOOR_DIV},
-  {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
-  {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
-  {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
-  {schema::PrimitiveType_Maximum, nvinfer1::ElementWiseOperation::kMAX},
-  {schema::PrimitiveType_BiasAdd, nvinfer1::ElementWiseOperation::kSUM},
+  {ops::kNameAddFusion, nvinfer1::ElementWiseOperation::kSUM},
+  {ops::kNamePowFusion, nvinfer1::ElementWiseOperation::kPOW},
+  {ops::kNameDivFusion, nvinfer1::ElementWiseOperation::kDIV},
+  {ops::kNameRealDiv, nvinfer1::ElementWiseOperation::kDIV},
+  {ops::kNameFloorDiv, nvinfer1::ElementWiseOperation::kFLOOR_DIV},
+  {ops::kNameSubFusion, nvinfer1::ElementWiseOperation::kSUB},
+  {ops::kNameMulFusion, nvinfer1::ElementWiseOperation::kPROD},
+  {ops::kNameMinimum, nvinfer1::ElementWiseOperation::kMIN},
+  {ops::kNameMaximum, nvinfer1::ElementWiseOperation::kMAX},
+  {ops::kNameBiasAdd, nvinfer1::ElementWiseOperation::kSUM},
 #if TRT_VERSION_GE(7, 2)
-  {schema::PrimitiveType_Equal, nvinfer1::ElementWiseOperation::kEQUAL},
+  {ops::kNameEqual, nvinfer1::ElementWiseOperation::kEQUAL},
 #endif
 };
 }  // namespace
 
-int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
-                                   const std::vector<mindspore::MSTensor> &in_tensors,
-                                   const std::vector<mindspore::MSTensor> &out_tensors) {
+int ElementWiseTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                   const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -59,17 +73,10 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     return RET_ERROR;
   }
 
-  // if constant tensor is scalar, it needs to know another input tensor's shape to broadcast
-  if ((in_tensors[0].Shape().size() > 0 && in_tensors[0].Shape()[0] == -1 && in_tensors[1].Shape().size() == 0) ||
-      (in_tensors[1].Shape().size() > 0 && in_tensors[1].Shape()[0] == -1 && in_tensors[0].Shape().size() == 0)) {
-    MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
-    return RET_ERROR;
-  }
-
   bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
   if (is_not_bool_arith) {
     if (std::any_of(in_tensors.begin(), in_tensors.end(),
-                    [](const mindspore::MSTensor &tensor) { return tensor.DataType() == DataType::kNumberTypeBool; })) {
+                    [](const TensorInfo &tensor) { return tensor.DataType() == DataType::kNumberTypeBool; })) {
       MS_LOG(ERROR) << "invalid input type for : " << op_name_;
       return RET_ERROR;
     }
@@ -77,16 +84,16 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
   }
   if (!is_not_bool_arith) {
     // PrimitiveType_Eltwise
-    auto eltwise_op = op_primitive_->value_as_Eltwise();
+    auto eltwise_op = AsOps<ops::Eltwise>();
     if (eltwise_op == nullptr) {
       MS_LOG(ERROR) << "convert to Eltwise failed: " << op_name_;
       return RET_ERROR;
     }
-    schema::EltwiseMode eltwiseMode = eltwise_op->mode();
-    std::map<schema::EltwiseMode, nvinfer1::ElementWiseOperation> eltwise_modes = {
-      {schema::EltwiseMode::EltwiseMode_SUM, nvinfer1::ElementWiseOperation::kSUM},
-      {schema::EltwiseMode::EltwiseMode_PROD, nvinfer1::ElementWiseOperation::kPROD},
-      {schema::EltwiseMode::EltwiseMode_MAXIMUM, nvinfer1::ElementWiseOperation::kMAX},
+    EltwiseMode eltwiseMode = eltwise_op->get_mode();
+    std::map<EltwiseMode, nvinfer1::ElementWiseOperation> eltwise_modes = {
+      {EltwiseMode::SUM, nvinfer1::ElementWiseOperation::kSUM},
+      {EltwiseMode::PROD, nvinfer1::ElementWiseOperation::kPROD},
+      {EltwiseMode::MAXIMUM, nvinfer1::ElementWiseOperation::kMAX},
     };
     auto iter_mode = eltwise_modes.find(eltwiseMode);
     if (iter_mode != eltwise_modes.end()) {
@@ -132,21 +139,20 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   op_out_tensor = (activation_out_tensor == nullptr) ? op_out_tensor : activation_out_tensor;
 
   // scale and shift
-  if (type_ == schema::PrimitiveType_PowFusion) {
-    auto pow_op = op_primitive_->value_as_PowFusion();
+  if (type_ == ops::kNamePowFusion) {
+    auto pow_op = AsOps<ops::PowFusion>();
     if (pow_op == nullptr) {
       MS_LOG(ERROR) << "PowFusion convert failed.";
       return RET_ERROR;
     }
-    float scale = pow_op->scale();
-    float shift = pow_op->shift();
+    float scale = pow_op->get_scale();
+    float shift = pow_op->get_shift();
     if (abs(scale - 1) >= 1.0e-05 || abs(shift - 0) >= 1.0e-05) {
       MS_LOG(WARNING) << "deal with scale and shift for pow op";
     }
   }
 #if TRT_VERSION_GE(7, 2)
-  std::unordered_set<schema::PrimitiveType> bool_producer_ops = {
-    schema::PrimitiveType_Equal, schema::PrimitiveType_Greater, schema::PrimitiveType_Less};
+  std::unordered_set<std::string> bool_producer_ops = {ops::kNameEqual, ops::kNameGreater, ops::kNameLess};
   if (bool_producer_ops.find(type_) != bool_producer_ops.end()) {
     auto cast_layer = ctx->network()->addIdentity(*op_out_tensor);
     if (cast_layer == nullptr) {
@@ -212,49 +218,48 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
 }
 
 nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor) {
-  schema::ActivationType activation = schema::ActivationType::ActivationType_NO_ACTIVATION;
-  switch (type_) {
-    case schema::PrimitiveType_AddFusion: {
-      auto sum_op = op_primitive_->value_as_AddFusion();
-      if (sum_op == nullptr) {
-        MS_LOG(ERROR) << "AddFusion convert failed.";
-        return nullptr;
-      }
-      activation = sum_op->activation_type();
-      break;
+  ActivationType activation = ActivationType::NO_ACTIVATION;
+  if (type_ == ops::kNameAddFusion) {
+    auto sum_op = AsOps<ops::AddFusion>();
+    if (sum_op == nullptr) {
+      MS_LOG(ERROR) << "AddFusion convert failed.";
+      return nullptr;
     }
-    case schema::PrimitiveType_DivFusion: {
-      auto div_op = op_primitive_->value_as_DivFusion();
-      if (div_op == nullptr) {
-        MS_LOG(ERROR) << "DivFusion convert failed.";
-        return nullptr;
-      }
-      activation = div_op->activation_type();
-      break;
+    if (sum_op->HasAttr(ops::kActivationType)) {
+      activation = sum_op->get_activation_type();
     }
-    case schema::PrimitiveType_SubFusion: {
-      auto sub_op = op_primitive_->value_as_SubFusion();
-      if (sub_op == nullptr) {
-        MS_LOG(ERROR) << "SubFusion convert failed.";
-        return nullptr;
-      }
-      activation = sub_op->activation_type();
-      break;
+  } else if (type_ == ops::kNameDivFusion) {
+    auto div_op = AsOps<ops::DivFusion>();
+    if (div_op == nullptr) {
+      MS_LOG(ERROR) << "DivFusion convert failed.";
+      return nullptr;
     }
-    case schema::PrimitiveType_MulFusion: {
-      auto mul_op = op_primitive_->value_as_MulFusion();
-      if (mul_op == nullptr) {
-        MS_LOG(ERROR) << "MulFusion convert failed.";
-        return nullptr;
-      }
-      activation = mul_op->activation_type();
-      break;
+    if (div_op->HasAttr(ops::kActivationType)) {
+      activation = div_op->get_activation_type();
     }
-    default:
-      MS_LOG(DEBUG) << "no activation need for: " << op_name_;
+  } else if (type_ == ops::kNameSubFusion) {
+    auto sub_op = AsOps<ops::SubFusion>();
+    if (sub_op == nullptr) {
+      MS_LOG(ERROR) << "SubFusion convert failed.";
+      return nullptr;
+    }
+    if (sub_op->HasAttr(ops::kActivationType)) {
+      activation = sub_op->get_activation_type();
+    }
+  } else if (type_ == ops::kNameMulFusion) {
+    auto mul_op = AsOps<ops::MulFusion>();
+    if (mul_op == nullptr) {
+      MS_LOG(ERROR) << "MulFusion convert failed.";
+      return nullptr;
+    }
+    if (mul_op->HasAttr(ops::kActivationType)) {
+      activation = mul_op->get_activation_type();
+    }
+  } else {
+    MS_LOG(DEBUG) << "no activation need for: " << op_name_;
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
-  if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {
+  if (activation != ActivationType::NO_ACTIVATION) {
     auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for element wise failed";
@@ -268,48 +273,28 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
-  nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(
-    ctx, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
+  auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
+  nvinfer1::ITensor *constant_input =
+    ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
   auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
   ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
   return RET_OK;
 }
 
-bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor) {
-  if (SameDims(trt_tensor->getDimensions(), ms_tensor->Shape())) {
-    return true;
-  }
-  if (ms_tensor->Shape().size() == DIMENSION_4D) {
-    // nhwc nchw
-    auto nchw_shape = NHWC2NCHW(ms_tensor->Shape());
-    if (SameDims(trt_tensor->getDimensions(), nchw_shape)) {
-      return true;
-    }
-  }
-  auto str_name = strstr(trt_tensor->getName(), ms_tensor->Name().c_str());
-  if (str_name != nullptr) {
-    return true;
-  }
-  str_name = strstr(ms_tensor->Name().c_str(), trt_tensor->getName());
-  if (str_name != nullptr) {
-    return true;
-  }
-  return false;
-}
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_SubFusion, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_DivFusion, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_RealDiv, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PowFusion, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AddFusion, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_MulFusion, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Eltwise, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameSubFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameDivFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameRealDiv, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNamePowFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameAddFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameMulFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameEltwise, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameMinimum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameMaximum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameBiasAdd, ElementWiseTensorRT)
 #if TRT_VERSION_GE(7, 2)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Less, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Greater, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameEqual, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLess, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameGreater, ElementWiseTensorRT)
 #endif
 }  // namespace mindspore::lite

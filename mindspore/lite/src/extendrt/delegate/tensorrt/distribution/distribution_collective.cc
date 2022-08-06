@@ -25,7 +25,7 @@ DistributionCollective &DistributionCollective::instance() {
 }
 
 int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count,
-                                                 nvinfer1::DataType data_type, schema::ReduceMode reduce_type,
+                                                 nvinfer1::DataType data_type, ReduceMode reduce_type,
                                                  cudaStream_t stream, const std::string &group) {
   return RET_OK;
 }

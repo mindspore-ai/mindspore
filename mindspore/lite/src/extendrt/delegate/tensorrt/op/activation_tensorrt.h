@@ -22,20 +22,19 @@
 namespace mindspore::lite {
 class ActivationTensorRT : public TensorRTOp {
  public:
-  ActivationTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                     const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  ActivationTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                     const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~ActivationTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
   static nvinfer1::ILayer *AddActivation(
-    TensorRTContext *ctx, schema::ActivationType activation_type, float alpha, float min_value, float max_value,
+    TensorRTContext *ctx, ActivationType activation_type, float alpha, float min_value, float max_value,
     nvinfer1::ITensor *trt_in_tensor, uint32_t device_id = 0,
     schema::QuantType quant_type = schema::QuantType_QUANT_NONE,
     RuntimePrecisionMode runtime_precision_mode = RuntimePrecisionMode::RuntimePrecisionMode_FP32);

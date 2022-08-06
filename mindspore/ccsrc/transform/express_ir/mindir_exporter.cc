@@ -402,7 +402,7 @@ bool IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::Gr
 bool IrExportBuilder::BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_proto);
-  for (auto attr : func_graph->attrs()) {
+  for (const auto &attr : func_graph->attrs()) {
     MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
     auto iter = g_export_attr_blacklist.find(attr.first);
     if (iter != g_export_attr_blacklist.end()) {
@@ -598,6 +598,9 @@ bool IrExportBuilder::SetTensorProto(const AbstractBasePtr &abstract, mind_ir::T
     for (auto item : max_shape) {
       tensor_proto->add_max_dims(item);
     }
+  }
+  if (!abstract->name().empty()) {
+    tensor_proto->set_name(abstract->name());
   }
   // Deal Ref
   if (!type->isa<RefType>()) {

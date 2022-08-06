@@ -3455,6 +3455,71 @@ def mv(mat, vec):
     return out
 
 
+def addmv(x, mat, vec, beta=1, alpha=1):
+    """
+    Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
+
+    If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
+    with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
+
+    The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
+    factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+
+    .. math::
+        output = β x + α (mat @ vec)
+
+    Args:
+        x (Tensor): Vector to be added. The shape of the tensor is :math:`(N,)`.
+        mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
+        vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
+        beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
+            float or bool, Default: 1.
+        alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
+            be int or float or bool, Default: 1.
+
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If `mat`, `vec`, `x` is not a Tensor.
+        TypeError: If inputs `x`, `mat`, 'vec' are not the same dtype.
+        ValueError: If `mat` is not a 2-D Tensor.
+            If `x`, `vec` is not a 1-D Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2., 3.]).astype(np.float32))
+        >>> mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(np.float32))
+        >>> vec = Tensor(np.array([3., 2., 4.]).astype(np.float32))
+        >>> output = addmv(x, mat, vec)
+        >>> print(output)
+        [30. 27.]
+    """
+
+    dtypeop = P.DType()
+    input_dtype = dtypeop(x)
+    if not (isinstance(x, Tensor) and isinstance(mat, Tensor) and isinstance(vec, Tensor)):
+        raise TypeError("For Addmv, inputs must be all tensors.")
+    if not (input_dtype == dtypeop(mat) and input_dtype == dtypeop(vec)):
+        raise TypeError("For Addmv, the inputs should be the same dtype.")
+    _check_input_1d(x.shape, "x", "Addmv")
+    _check_input_1d(vec.shape, "vec", "Addmv")
+    _check_input_2d(mat.shape, "mat", "Addmv")
+    _check_input_dtype("x", input_dtype,
+                       [mstype.float16, mstype.float32, mstype.float64,
+                        mstype.int16, mstype.int32, mstype.int64], "Addmv")
+    _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
+    _check_attr_dtype("beta", beta, [int, float, bool], "Addmv")
+    if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        scalar_cast = P.ScalarCast()
+        alpha = scalar_cast(alpha, mstype.int32)
+        beta = scalar_cast(beta, mstype.int32)
+    out = beta * x + alpha * mv(mat, vec)
+    return out
+
+
 def lcm(x1, x2):
     """
     Computes least common multiplier of input tensors element-wise.
@@ -4737,6 +4802,20 @@ def _check_need_broadcast(shape1, shape2):
     return shape1[:-2] != shape2[:-2]
 
 
+@constexpr
+def _check_input_1d(input_shape, param_name, func_name):
+    if len(input_shape) != 1:
+        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
+    return True
+
+
+@constexpr
+def _check_input_2d(input_shape, param_name, func_name):
+    if len(input_shape) != 2:
+        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+    return True
+
+
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     rank_op = _get_cache_prim(P.Rank)()
@@ -5426,6 +5505,7 @@ __all__ = [
     'tensor_gt',
     'logaddexp',
     'mv',
+    'addmv',
     'outer',
     'gt',
     'tensor_ge',

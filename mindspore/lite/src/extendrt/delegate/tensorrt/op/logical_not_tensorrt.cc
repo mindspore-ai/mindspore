@@ -24,11 +24,11 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/logical_not_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/logical.cuh"
+#include "ops/logical_not.h"
 
 namespace mindspore::lite {
-int LogicalNotTensorRT::IsSupport(const schema::Primitive *primitive,
-                                  const std::vector<mindspore::MSTensor> &in_tensors,
-                                  const std::vector<mindspore::MSTensor> &out_tensors) {
+int LogicalNotTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                  const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -57,7 +57,7 @@ int LogicalNotTensorRT::AddInnerOp(TensorRTContext *ctx) {
     cast_layer->setOutputType(0, nvinfer1::DataType::kINT32);
     input_helper.trt_tensor_ = cast_layer->getOutput(0);
   }
-  auto plugin = std::make_shared<LogicalNotPlugin>(op_name_, op_primitive_->value_type());
+  auto plugin = std::make_shared<LogicalNotPlugin>(op_name_, schema::PrimitiveType_LogicalNot);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << op_name_;
     return RET_ERROR;
@@ -115,5 +115,5 @@ size_t LogicalNotPlugin::getSerializationSize() const noexcept { return sizeof(s
 void LogicalNotPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &primitive_type_, sizeof(schema::PrimitiveType));
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalNot, LogicalNotTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLogicalNot, LogicalNotTensorRT)
 }  // namespace mindspore::lite

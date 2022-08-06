@@ -61,6 +61,9 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x
             broadcast_shape_back.append(x_shape[i])
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
+        elif (x_shape[i] == -1 and y_shape[i] != -1 and y_shape[i] != 1) or \
+             (y_shape[i] == -1 and x_shape[i] != -1 and x_shape[i] != 1):
+            broadcast_shape_back.append(max(x_shape[i], y_shape[i]))
         elif x_shape[i] == -1 or y_shape[i] == -1:
             broadcast_shape_back.append(-1)
         else:

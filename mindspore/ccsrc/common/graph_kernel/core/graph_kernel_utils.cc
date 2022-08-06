@@ -364,4 +364,26 @@ PrimitivePtr GkUtils::GetOpsPrim(const std::string &name) {
   }
   return iter->second();
 }
+
+void GkUtils::GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList *node_list, AnfNodePtrList *input_list,
+                                  AnfNodePtrList *output_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node_list);
+  AnfNodePtrList todos = TopoSort(func_graph->output());
+  (void)std::copy_if(todos.cbegin(), todos.cend(), std::back_inserter(*node_list), AnfUtils::IsRealCNodeKernel);
+
+  if (input_list != nullptr) {
+    const auto &parameters = func_graph->parameters();
+    (void)input_list->insert(input_list->cend(), parameters.cbegin(), parameters.cend());
+  }
+  if (output_list != nullptr) {
+    if (IsPrimitiveCNode(todos.back(), prim::kPrimMakeTuple)) {
+      auto fg_output = todos.back()->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(fg_output);
+      (void)output_list->insert(output_list->cend(), fg_output->inputs().cbegin() + 1, fg_output->inputs().cend());
+    } else {
+      (void)output_list->emplace_back(func_graph->output());
+    }
+  }
+}
 }  // namespace mindspore::graphkernel

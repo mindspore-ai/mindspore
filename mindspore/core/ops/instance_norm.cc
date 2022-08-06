@@ -134,7 +134,7 @@ AbstractBasePtr InstanceNormInfer(const abstract::AnalysisEnginePtr &, const Pri
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 5;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto type = InstanceNormInferType(primitive, input_args);
   auto shape = InstanceNormInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

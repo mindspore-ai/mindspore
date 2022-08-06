@@ -44,7 +44,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
     for (; hw < plane; hw++) {
       const float *src_ptr = src_batch + hw * channel;
       float *dst_ptr = dst_batch + hw;
-      for (size_t i = 0; i < channel; i++) {
+      for (int i = 0; i < channel; i++) {
         dst_ptr[i * plane] = src_ptr[i];
       }
     }

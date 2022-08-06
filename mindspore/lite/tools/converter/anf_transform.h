@@ -51,6 +51,8 @@ class AnfTransform {
 
   static int DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
+  static int DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
 
   static STATUS MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

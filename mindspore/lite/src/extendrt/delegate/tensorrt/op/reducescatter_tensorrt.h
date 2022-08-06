@@ -25,37 +25,36 @@
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
-constexpr char *REDUCESCATTER_PLUGIN_NAME{"ReduceScatterPlugin"};
+constexpr auto REDUCESCATTER_PLUGIN_NAME{"ReduceScatterPlugin"};
 class ReduceScatterTensorRT : public TensorRTOp {
  public:
-  ReduceScatterTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                        const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                        const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  ReduceScatterTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                        const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~ReduceScatterTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 };
 
 class ReduceScatterPlugin : public TensorRTPlugin {
  public:
-  ReduceScatterPlugin(const std::string name, schema::ReduceMode red_mode, int rank, uint32_t device_id)
+  ReduceScatterPlugin(const std::string name, ReduceMode red_mode, int rank, uint32_t device_id)
       : TensorRTPlugin(name, std::string(REDUCESCATTER_PLUGIN_NAME), device_id), red_mode_(red_mode), rank_(rank) {}
 
   ReduceScatterPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(REDUCESCATTER_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
-    red_mode_ = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
+    red_mode_ = static_cast<const ReduceMode *>(fields[0].data)[0];
     rank_ = static_cast<const int *>(fields[1].data)[0];
   }
 
   ReduceScatterPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(REDUCESCATTER_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &red_mode_, sizeof(schema::ReduceMode));
+    DeserializeValue(&serialData, &serialLength, &red_mode_, sizeof(ReduceMode));
     DeserializeValue(&serialData, &serialLength, &rank_, sizeof(int));
   }
 
@@ -72,8 +71,8 @@ class ReduceScatterPlugin : public TensorRTPlugin {
   void serialize(void *buffer) const noexcept override;
 
  private:
+  ReduceMode red_mode_;
   int rank_{0};
-  schema::ReduceMode red_mode_;
 };
 class ReduceScatterPluginCreater : public TensorRTPluginCreater<ReduceScatterPlugin> {
  public:

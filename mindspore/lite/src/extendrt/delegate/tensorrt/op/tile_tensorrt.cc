@@ -20,6 +20,7 @@
 #include <memory>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(TilePluginCreater);
@@ -29,8 +30,8 @@ nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
 template <class T>
 std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
-int TileTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                            const std::vector<mindspore::MSTensor> &out_tensors) {
+int TileTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                            const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -72,7 +73,7 @@ int TileTensorRT::AddInnerOp(TensorRTContext *ctx) {
 int TileTensorRT::RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input) {
   int axis = -1;
   float tile_times = 0.0f;
-  for (int i = 0; i < repeats_.size(); i++) {
+  for (size_t i = 0; i < repeats_.size(); i++) {
     if (repeats_[i] > 1) {
       if (axis != -1) {
         MS_LOG(ERROR) << op_name_ << " has more than one axis to tile";
@@ -177,5 +178,5 @@ void TilePlugin::serialize(void *buffer) const noexcept {
     SerializeValue(&buffer, &one_repeat, sizeof(float));
   }
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_TileFusion, TileTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameTileFusion, TileTensorRT)
 }  // namespace mindspore::lite

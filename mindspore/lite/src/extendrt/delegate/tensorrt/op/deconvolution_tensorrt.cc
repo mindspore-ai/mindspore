@@ -15,13 +15,14 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/deconvolution_tensorrt.h"
+#include <memory>
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 #include "nnacl/pack.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
 
 namespace mindspore::lite {
-int DeconvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
-                                     const std::vector<mindspore::MSTensor> &in_tensors,
-                                     const std::vector<mindspore::MSTensor> &out_tensors) {
+int DeconvolutionTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                     const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -45,7 +46,7 @@ int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  const schema::Conv2dTransposeFusion *deconv_op = this->op_primitive_->value_as_Conv2dTransposeFusion();
+  auto deconv_op = AsOps<ops::Conv2dTransposeFusion>();
   if (deconv_op == nullptr) {
     MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
@@ -64,8 +65,8 @@ int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   // transpose weight
-  const mindspore::MSTensor &weight_tensor = in_tensors_[1];
-  nvinfer1::Weights kernelWeights = lite::TransposeWeight4D(weight_tensor, &pack_weight_);
+  const auto &weight_tensor = in_tensors_[1];
+  nvinfer1::Weights kernelWeights = lite::ConvertWeight(weight_tensor);
 
   // deconv basic params
   int nbOutputMaps = weight_tensor.Shape()[0];
@@ -74,12 +75,12 @@ int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
 
-  auto kernel_size = deconv_op->kernel_size();
-  if (kernel_size == nullptr) {
+  auto kernel_size = deconv_op->get_kernel_size();
+  if (kernel_size.empty()) {
     MS_LOG(ERROR) << "kernel_size is null";
     return RET_ERROR;
   }
-  nvinfer1::Dims kernelSize = lite::ConvertCudaDims(std::vector<int64_t>(kernel_size->begin(), kernel_size->end()));
+  nvinfer1::Dims kernelSize = lite::ConvertCudaDims(std::vector<int64_t>(kernel_size.begin(), kernel_size.end()));
   if (kernelSize.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
     return RET_ERROR;
@@ -108,11 +109,15 @@ int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   // add activation
   nvinfer1::ILayer *activation_layer = nullptr;
-  if (deconv_op->activation_type() == schema::ActivationType::ActivationType_NO_ACTIVATION) {
+  ActivationType activation_type = ActivationType::NO_ACTIVATION;
+  if (deconv_op->HasAttr(ops::kActivationType)) {
+    activation_type = deconv_op->get_activation_type();
+  }
+  if (activation_type == ActivationType::NO_ACTIVATION) {
     activation_layer = deconv_layer;
   } else {
-    activation_layer = ActivationTensorRT::AddActivation(ctx, deconv_op->activation_type(), 0, 0, 0,
-                                                         deconv_layer->getOutput(0), device_id_);
+    activation_layer =
+      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, deconv_layer->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";
       return RET_ERROR;
@@ -120,16 +125,16 @@ int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
   nvinfer1::ITensor *out_tensor = activation_layer->getOutput(0);
-  ctx->RegisterTensor(ITensorHelper{out_tensor, Format::NCHW, false}, out_tensors_[0].Name());
+  ctx->RegisterTensor(ITensorHelper{out_tensor, Format::NCHW, true}, out_tensors_[0].Name());
   return RET_OK;
 }
 
-void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *ms_op,
+void DeconvolutionTensorRT::SetAttributes(const std::shared_ptr<ops::Conv2dTransposeFusion> &ms_op,
                                           nvinfer1::IDeconvolutionLayer *decon_layer) {
   // kernel_size
-  auto kernel_size = ms_op->kernel_size();
-  if (kernel_size != nullptr) {
-    auto kernel_size_val = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
+  auto kernel_size = ms_op->get_kernel_size();
+  if (!kernel_size.empty()) {
+    auto kernel_size_val = std::vector<int64_t>(kernel_size.begin(), kernel_size.end());
     nvinfer1::Dims kernel_size_dims = lite::ConvertCudaDims(kernel_size_val);
     if (kernel_size_dims.nbDims == -1) {
       MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
@@ -139,13 +144,13 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
   }
 
   // nbOutputMaps
-  int32_t nbOutputMaps = static_cast<int32_t>(ms_op->out_channel());
+  int32_t nbOutputMaps = static_cast<int32_t>(ms_op->get_out_channel());
   decon_layer->setNbOutputMaps(nbOutputMaps);
 
   // stride
-  auto stride = ms_op->stride();
-  if (stride != nullptr) {
-    auto stride_val = std::vector<int64_t>(stride->begin(), stride->end());
+  auto stride = ms_op->get_stride();
+  if (!stride.empty()) {
+    auto stride_val = std::vector<int64_t>(stride.begin(), stride.end());
     nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride_val);
     if (stride_dims.nbDims == -1) {
       MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
@@ -155,22 +160,22 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
   }
 
   // nbGroups
-  int32_t nbGroups = static_cast<int32_t>(ms_op->group());
+  int32_t nbGroups = static_cast<int32_t>(ms_op->get_group());
   decon_layer->setNbGroups(nbGroups);
 
   // padding
-  schema::PadMode pad_mode = ms_op->pad_mode();
-  if (pad_mode == schema::PadMode::PadMode_SAME) {
+  PadMode pad_mode = ms_op->get_pad_mode();
+  if (pad_mode == PadMode::SAME) {
     decon_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   } else {
-    auto padding = ms_op->pad_list();
-    auto out_pad = ms_op->output_paddings();
-    if (padding == nullptr || out_pad == nullptr) {
+    auto padding = ms_op->get_pad_list();
+    auto out_pad = ms_op->get_output_paddings();
+    if (padding.empty() || out_pad.empty()) {
       MS_LOG(WARNING) << "on pad value of " << op_name_;
       return;
     }
-    auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
-    auto out_pad_val = std::vector<int64_t>(out_pad->begin(), out_pad->end());  // h, w
+    auto padding_val = std::vector<int64_t>(padding.begin(), padding.end());
+    auto out_pad_val = std::vector<int64_t>(out_pad.begin(), out_pad.end());  // h, w
     if (out_pad_val.size() != DIMENSION_2D || padding_val.size() != DIMENSION_4D) {
       MS_LOG(ERROR) << "invalid size of pad " << op_name_;
       return;
@@ -194,5 +199,5 @@ DeconvolutionTensorRT::~DeconvolutionTensorRT() {
     pack_weight_ = nullptr;
   }
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Conv2dTransposeFusion, DeconvolutionTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameConv2dTransposeFusion, DeconvolutionTensorRT)
 }  // namespace mindspore::lite

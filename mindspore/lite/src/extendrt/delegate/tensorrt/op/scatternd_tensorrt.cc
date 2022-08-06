@@ -17,11 +17,11 @@
 #include <numeric>
 #include "src/extendrt/delegate/tensorrt/op/scatternd_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/scatter_nd_update.h"
 
 namespace mindspore::lite {
-int ScatterNdTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
-                                 const std::vector<mindspore::MSTensor> &in_tensors,
-                                 const std::vector<mindspore::MSTensor> &out_tensors) {
+int ScatterNdTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                 const std::vector<TensorInfo> &out_tensors) {
 #if TRT_VERSION_GE(8, 2)
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
@@ -81,5 +81,5 @@ int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_ERROR;
 #endif
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ScatterNdUpdate, ScatterNdTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameScatterNdUpdate, ScatterNdTensorRT)
 }  // namespace mindspore::lite

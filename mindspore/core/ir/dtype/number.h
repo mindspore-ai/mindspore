@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_NUMBER_H_
 #define MINDSPORE_CORE_IR_DTYPE_NUMBER_H_
 
-#include <iostream>
 #include <map>
 #include <memory>
 #include <sstream>

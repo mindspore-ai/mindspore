@@ -19,6 +19,7 @@
 #include <string>
 #include "NvInfer.h"
 #include "schema/ops_types_generated.h"
+#include "mindapi/base/types.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
 
 namespace mindspore::lite {
@@ -31,7 +32,7 @@ class DistributionCollective {
   static DistributionCollective &instance();
 
   int ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
-                           schema::ReduceMode reduce_type, cudaStream_t stream, const std::string &group);
+                           ReduceMode reduce_type, cudaStream_t stream, const std::string &group);
 
   int AllGatherWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
                        cudaStream_t stream, const std::string &group_name);

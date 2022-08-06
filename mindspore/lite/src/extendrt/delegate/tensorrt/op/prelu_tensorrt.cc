@@ -17,11 +17,11 @@
 #include <numeric>
 #include "src/extendrt/delegate/tensorrt/op/prelu_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/fusion/prelu_fusion.h"
 
 namespace mindspore::lite {
-int PReluTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
-                             const std::vector<mindspore::MSTensor> &in_tensors,
-                             const std::vector<mindspore::MSTensor> &out_tensors) {
+int PReluTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                             const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -49,8 +49,8 @@ int PReluTensorRT::AddInnerOp(TensorRTContext *ctx) {
   int slope_nbdims = in_tensors_[1].Shape().size();
   ITensorHelper slope_helper;
   if (input_nbdims != slope_nbdims) {
-    slope_helper.trt_tensor_ =
-      ConvertTensorWithExpandDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + "_slope");
+    auto expect_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
+    slope_helper.trt_tensor_ = ConvertTensorWithExpandDims(ctx, in_tensors_[1], expect_shape, op_name_ + "_slope");
   }
   if (slope_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
@@ -73,5 +73,5 @@ int PReluTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = prelu_layer;
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PReLUFusion, PReluTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNamePReLUFusion, PReluTensorRT)
 }  // namespace mindspore::lite

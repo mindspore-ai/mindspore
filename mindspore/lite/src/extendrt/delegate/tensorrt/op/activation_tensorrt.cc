@@ -20,20 +20,19 @@
 #include <unordered_set>
 #include "src/extendrt/delegate/tensorrt/op/cast_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_opt_plugin.h"
+#include "ops/fusion/activation.h"
 
 namespace mindspore::lite {
 namespace {
-bool HasCustomActivationPlugin(schema::ActivationType type) {
-  std::unordered_set<schema::ActivationType> plugin_activation = {schema::ActivationType::ActivationType_SIGMOID,
-                                                                  schema::ActivationType::ActivationType_GELU,
-                                                                  schema::ActivationType::ActivationType_SWISH};
+bool HasCustomActivationPlugin(ActivationType type) {
+  std::unordered_set<ActivationType> plugin_activation = {ActivationType::SIGMOID, ActivationType::GELU,
+                                                          ActivationType::SWISH};
   return plugin_activation.find(type) != plugin_activation.end();
 }
 }  // namespace
 
-int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
-                                  const std::vector<mindspore::MSTensor> &in_tensors,
-                                  const std::vector<mindspore::MSTensor> &out_tensors) {
+int ActivationTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                  const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -46,15 +45,19 @@ int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  auto activation_op = this->op_primitive_->value_as_Activation();
+  auto activation_op = AsOps<ops::Activation>();
   if (activation_op == nullptr) {
     MS_LOG(ERROR) << "op convert failed";
     return RET_ERROR;
   }
-  auto activation_params_opt = TryConvertActivationType(activation_op->activation_type());
-  bool has_custom_plugin = HasCustomActivationPlugin(activation_op->activation_type());
+  ActivationType activation_type = ActivationType::NO_ACTIVATION;
+  if (activation_op->HasAttr(ops::kActivationType)) {
+    activation_type = activation_op->get_activation_type();
+  }
+  auto activation_params_opt = TryConvertActivationType(activation_type);
+  bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
   if (!activation_params_opt && !has_custom_plugin) {
-    MS_LOG(ERROR) << "Unsupported op action type for TensorRT: " << activation_op->activation_type();
+    MS_LOG(ERROR) << "Unsupported op action type for TensorRT: " << activation_type;
     return RET_ERROR;
   }
   return RET_OK;
@@ -64,23 +67,26 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  auto activation_op = this->op_primitive_->value_as_Activation();
+  auto activation_op = AsOps<ops::Activation>();
   if (activation_op == nullptr) {
     MS_LOG(ERROR) << "op convert failed";
     return RET_ERROR;
   }
-  float alpha = activation_op->alpha();
+  float alpha = activation_op->get_alpha();
   nvinfer1::ITensor *activation_input = input(ctx, 0).trt_tensor_;
   if (input(ctx, 0).trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
     activation_input = TRTTensorCast(ctx, input(ctx, 0).trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
   }
 
   auto runtime_precision_mode = runtime_->GetRuntimePrecisionMode();
-  auto activation_layer =
-    ActivationTensorRT::AddActivation(ctx, activation_op->activation_type(), alpha,
-                                      std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
-                                      std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX,
-                                      activation_input, device_id_, quant_type_, runtime_precision_mode);
+  ActivationType activation_type = ActivationType::NO_ACTIVATION;
+  if (activation_op->HasAttr(ops::kActivationType)) {
+    activation_type = activation_op->get_activation_type();
+  }
+  auto activation_layer = ActivationTensorRT::AddActivation(
+    ctx, activation_type, alpha, std::isfinite(activation_op->get_min_val()) ? activation_op->get_min_val() : FLT_MIN,
+    std::isfinite(activation_op->get_max_val()) ? activation_op->get_max_val() : FLT_MAX, activation_input, device_id_,
+    quant_type_, runtime_precision_mode);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -98,28 +104,10 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = activation_layer;
   return RET_OK;
 }
-nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema::ActivationType activation_type,
-                                                    float alpha, float min_value, float max_value,
-                                                    nvinfer1::ITensor *trt_in_tensor, uint32_t device_id,
-                                                    schema::QuantType quant_type,
+nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, ActivationType activation_type, float alpha,
+                                                    float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
+                                                    uint32_t device_id, schema::QuantType quant_type,
                                                     RuntimePrecisionMode runtime_precision_mode) {
-  bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
-  // sigmoid precision is wrong for trt
-  if (runtime_precision_mode == RuntimePrecisionMode::RuntimePrecisionMode_FP32 &&
-      quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
-    std::string layer_name = std::string(trt_in_tensor->getName()) + "_activation";
-    auto plugin = std::make_shared<ActivationOptPlugin>(layer_name.c_str(), activation_type, device_id);
-    MS_LOG(INFO) << "using opt plugin for " << layer_name;
-    if (plugin == nullptr) {
-      MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << layer_name;
-      return nullptr;
-    }
-    nvinfer1::ITensor *inputTensors[] = {trt_in_tensor};
-    nvinfer1::IPluginV2Layer *activation_opt_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
-    activation_opt_layer->setName(layer_name.c_str());
-    return activation_opt_layer;
-  }
-
   // Just some action_code correct, unfind code is set to default relu. need double check.
   auto action_param_opt = TryConvertActivationType(activation_type);
   if (!action_param_opt) {
@@ -134,13 +122,13 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema
     return nullptr;
   }
 
-  if (activation_type == schema::ActivationType_HARD_TANH) {
+  if (activation_type == ActivationType::HARD_TANH) {
     activation_layer->setAlpha(min_value);
     activation_layer->setBeta(max_value);
     return activation_layer;
   }
 
-  if (activation_type == schema::ActivationType_SWISH) {
+  if (activation_type == ActivationType::SWISH) {
     auto sigmoid_tensor = activation_layer->getOutput(0);
     nvinfer1::ElementWiseOperation element_wise_op_ = nvinfer1::ElementWiseOperation::kPROD;
     nvinfer1::IElementWiseLayer *swish_layer =
@@ -162,5 +150,5 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema
 
   return activation_layer;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Activation, ActivationTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameActivation, ActivationTensorRT)
 }  // namespace mindspore::lite

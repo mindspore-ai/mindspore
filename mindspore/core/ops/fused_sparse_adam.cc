@@ -64,14 +64,14 @@ abstract::TupleShapePtr FusedSparseAdamInferShape(const PrimitivePtr &primitive,
 
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "m_shape", m_shape, prim_name);
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "v_shape", v_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("indices rank", indices_shape.size(), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("grad rank", grad_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad rank", SizeToLong(grad_shape.size()), kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue("grad_shape[0]", grad_shape[0], kEqual, "indices_shape[0]", indices_shape[0],
                                          prim_name);
   // grad_shape[1:] == var_shape[1:] while grad_shape[0] == indices_shape[0]
   if (var_shape.size() > 1) {
     auto expect_shape = indices_shape;
-    std::copy(var_shape.begin() + 1, var_shape.end(), std::back_inserter(expect_shape));
+    (void)std::copy(var_shape.begin() + 1, var_shape.end(), std::back_inserter(expect_shape));
     if (grad_shape != expect_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of updates must be [] or "
                                << "grad_shape = indices_shape + var_shape[1:], but got var_shape: " << var_shape
@@ -139,7 +139,7 @@ AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &, const 
   }
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
-                                           fused_sparse_adam::kFusedSparseAdamInputsNum, op_name);
+                                           SizeToLong(fused_sparse_adam::kFusedSparseAdamInputsNum), op_name);
   auto types = fused_sparse_adam::FusedSparseAdamInferType(primitive, input_args);
   auto shapes = fused_sparse_adam::FusedSparseAdamInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

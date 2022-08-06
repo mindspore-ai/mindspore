@@ -24,10 +24,12 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/logical_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/logical.cuh"
+#include "ops/logical_and.h"
+#include "ops/logical_or.h"
 
 namespace mindspore::lite {
-int LogicalTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                               const std::vector<mindspore::MSTensor> &out_tensors) {
+int LogicalTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                               const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -49,7 +51,7 @@ int LogicalTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 1).trt_tensor_};
-  for (int i = 0; i != in_tensors_.size(); ++i) {
+  for (size_t i = 0; i != in_tensors_.size(); ++i) {
     ITensorHelper input_helper = input(ctx, i);
     if (input_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
       auto cast_layer = ctx->network()->addIdentity(*input_helper.trt_tensor_);
@@ -61,7 +63,14 @@ int LogicalTensorRT::AddInnerOp(TensorRTContext *ctx) {
       inputTensors[i] = cast_layer->getOutput(0);
     }
   }
-  auto plugin = std::make_shared<LogicalPlugin>(op_name_, op_primitive_->value_type());
+  schema::PrimitiveType schema_type = schema::PrimitiveType_NONE;
+  if (type_ == ops::kNameLogicalAnd) {
+    schema_type = schema::PrimitiveType_LogicalAnd;
+  } else if (type_ == ops::kNameLogicalOr) {
+    schema_type = schema::PrimitiveType_LogicalOr;
+  }
+
+  auto plugin = std::make_shared<LogicalPlugin>(op_name_, schema_type);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << op_name_;
     return RET_ERROR;
@@ -124,6 +133,6 @@ void LogicalPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &primitive_type_, sizeof(schema::PrimitiveType));
 }
 
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalOr, LogicalTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalAnd, LogicalTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLogicalOr, LogicalTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLogicalAnd, LogicalTensorRT)
 }  // namespace mindspore::lite

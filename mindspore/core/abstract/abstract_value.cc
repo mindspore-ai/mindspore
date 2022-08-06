@@ -1444,7 +1444,6 @@ const TypeId AbstractSparseTensor::GetTensorTypeIdAt(size_t index) const {
   if (index >= shape_idx || index < 0) {
     MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx << "), but got " << index << " for "
                       << ToString();
-    return kTypeUnknown;
   }
   auto abs_tensor = GetAbsPtrAt<abstract::AbstractTensorPtr>(index);
   MS_EXCEPTION_IF_NULL(abs_tensor);
@@ -1455,7 +1454,6 @@ const TypeId AbstractSparseTensor::GetShapeTypeIdAt(size_t index) const {
   if (index >= shape()->size() || index < 0) {
     MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape()->size() << "), but got " << index << " for "
                       << ToString();
-    return kTypeUnknown;
   }
   return shape()->elements()[index]->BuildType()->type_id();
 }

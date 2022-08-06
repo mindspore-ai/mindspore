@@ -148,10 +148,6 @@ class GPUEnvChecker(EnvChecker):
                            "does not match, please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install")
         cudnn_version = self._get_cudnn_version()
-        if not cudnn_version:
-            logger.error(f"Can not find libcudnn.so, please check whether it is installed correctly "
-                         "or set the libpath to environment. "
-                         "See more detals in : https://www.mindspore.cn/install")
         if cudnn_version and int(cudnn_version) < 760:
             logger.warning(f"MindSpore version {__version__} and cudDNN version {cudnn_version} "
                            "does not match, please refer to the installation guide for version matching "
@@ -191,9 +187,11 @@ class GPUEnvChecker(EnvChecker):
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
                 if path.lower().find("not found") > 0:
-                    logger.warning(f"Cuda {self.version} version(need by mindspore-gpu) is not found, please confirm "
-                                   "that the path of cuda is set to the env LD_LIBRARY_PATH, please refer to the "
-                                   "installation guidelines: https://www.mindspore.cn/install")
+                    logger.error(f"Cuda {self.version} version({lib_name}*.so need by mindspore-gpu) is not found, "
+                                 "please confirm that the path of cuda is set to the env LD_LIBRARY_PATH, or check "
+                                 "whether the CUDA version in wheel package and the CUDA runtime in current device "
+                                 "matches, please refer to the installation guidelines: "
+                                 "https://www.mindspore.cn/install")
                     continue
                 path = path.partition(lib_name)[0]
                 if path:

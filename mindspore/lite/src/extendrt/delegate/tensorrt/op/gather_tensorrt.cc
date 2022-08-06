@@ -16,12 +16,13 @@
 
 #include "src/extendrt/delegate/tensorrt/op/gather_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/gather.h"
 
 namespace mindspore::lite {
 constexpr int AXIS_INDEX = 2;
 
-int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                              const std::vector<mindspore::MSTensor> &out_tensors) {
+int GatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                              const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -39,8 +40,8 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     return RET_ERROR;
   }
   if (in_tensors[AXIS_INDEX].ElementNum() == 1) {
-    MS_ASSERT(in_tensors[AXIS_INDEX].Data().get());
-    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data().get())[0];
+    MS_ASSERT(in_tensors[AXIS_INDEX].IsConst());
+    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data())[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;
@@ -82,23 +83,26 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = gather_layer;
   gather_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
+  auto old_shape = ConvertMSShape(op_output->getDimensions());
   // keep shape
-  if (in_tensors_[1].Shape().empty()) {
+  if (in_tensors_[1].Shape().empty() && old_shape.size() > 1) {
     auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;
       return RET_ERROR;
     }
     squeeze->setName((op_name_ + "_squeeze_out").c_str());
-    auto old_shape = ConvertMSShape(op_output->getDimensions());
     old_shape.erase(old_shape.begin() + axis_);
     squeeze->setReshapeDimensions(ConvertCudaDims(old_shape));
     op_output = squeeze->getOutput(0);
   }
 
-  ctx->RegisterTensor(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_},
-                      out_tensors_[0].Name());
+  auto out_helper = ITensorHelper{op_output, gather_input.format_, gather_input.same_format_};
+  if (old_shape.size() == 1) {
+    out_helper.is_tensor = false;
+  }
+  ctx->RegisterTensor(out_helper, out_tensors_[0].Name());
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Gather, GatherTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameGather, GatherTensorRT)
 }  // namespace mindspore::lite

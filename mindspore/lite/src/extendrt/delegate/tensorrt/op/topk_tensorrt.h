@@ -23,17 +23,16 @@
 namespace mindspore::lite {
 class TopKTensorRT : public TensorRTOp {
  public:
-  TopKTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-               const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  TopKTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+               const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~TopKTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &inputs,
+                const std::vector<TensorInfo> &outputs) override;
 
  private:
   int ParseParams(TensorRTContext *ctx);

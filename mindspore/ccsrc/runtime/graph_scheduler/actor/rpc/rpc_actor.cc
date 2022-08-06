@@ -25,5 +25,18 @@ void RpcActor::set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy)
 void RpcActor::set_inter_process_edge_names(const std::vector<std::string> &edge_names) {
   inter_process_edge_names_ = edge_names;
 }
+
+bool RpcActor::CopyRpcDataWithOffset(RpcDataPtr *rpc_data, const void *src_data, size_t src_data_size) const {
+  MS_EXCEPTION_IF_NULL(rpc_data);
+  MS_EXCEPTION_IF_NULL(*rpc_data);
+
+  int ret = memcpy_s(*rpc_data, src_data_size, src_data, src_data_size);
+  if (EOK != ret) {
+    MS_LOG(ERROR) << "Failed to memcpy_s for rpc data. Error number: " << ret;
+    return false;
+  }
+  *rpc_data += src_data_size;
+  return true;
+}
 }  // namespace runtime
 }  // namespace mindspore

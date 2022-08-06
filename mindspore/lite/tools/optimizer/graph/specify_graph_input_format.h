@@ -25,14 +25,18 @@ namespace mindspore {
 namespace opt {
 class SpecifyGraphInputFormat : public Pass {
  public:
-  explicit SpecifyGraphInputFormat(mindspore::Format format = mindspore::NHWC)
-      : Pass("SpecifyGraphInputFormat"), format_(format) {}
+  explicit SpecifyGraphInputFormat(mindspore::Format exp_graph_input_format = mindspore::NHWC,
+                                   mindspore::Format cur_graph_input_format = mindspore::NHWC)
+      : Pass("SpecifyGraphInputFormat"),
+        exp_graph_input_format_(exp_graph_input_format),
+        cur_graph_input_format_(cur_graph_input_format) {}
   ~SpecifyGraphInputFormat() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
   STATUS HandleGraphInput(const FuncGraphPtr &graph);
-  mindspore::Format format_;
+  mindspore::Format exp_graph_input_format_;
+  mindspore::Format cur_graph_input_format_;
 };
 }  // namespace opt
 }  // namespace mindspore

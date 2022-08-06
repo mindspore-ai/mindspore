@@ -49,7 +49,7 @@ class ApplyAdagradDACpuKernelMod : public NativeCpuKernelMod {
 
   void CheckShapeAndDtypeEqual(int64_t size_a, int64_t size_b, const char *name_a, const char *name_b);
 
-  void CheckDType(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
+  void CheckDType(const std::vector<KernelTensorPtr> &inputs) const;
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

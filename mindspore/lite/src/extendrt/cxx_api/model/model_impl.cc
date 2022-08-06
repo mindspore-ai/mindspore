@@ -20,6 +20,7 @@
 #include "extendrt/cxx_api/dlutils.h"
 #include "extendrt/cxx_api/file_utils.h"
 #include "extendrt/utils/tensor_utils.h"
+#include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -34,6 +35,12 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     return kLiteNullptr;
   }
   session_->Init(model_context);
+  if (MsContext::GetInstance() == nullptr) {
+    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
+    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
+      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
+    });
+  }
   return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_data, data_size);
 }
 

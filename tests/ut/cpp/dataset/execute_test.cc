@@ -2834,3 +2834,20 @@ TEST_F(MindDataTestExecute, TestEraseEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: Execute Transform op
+/// Description: Test executing AdjustBrightness op in eager mode 
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAdjustBrightness) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustBrightness.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto adjust_brightness_op = vision::AdjustBrightness(1);
+
+  auto transform = Execute({decode, adjust_brightness_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

@@ -63,9 +63,8 @@ class SendActor : public RpcActor {
    */
   virtual bool FreeMessage(void *data);
 
+  // The tcp client connection to multiple servers.
   std::unique_ptr<TCPClient> client_;
-
-  OpContext<DeviceTensor> *context_;
 
  private:
   /**
@@ -82,7 +81,45 @@ class SendActor : public RpcActor {
   void SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec, const TypeId &data_type,
                                     const kernel::AddressPtr &addr) const;
 
+  /**
+   * @description: Serialize one dynamic shape input data to a piece of memory and returns the serialized data
+   * size for accessing memory by offset.
+   * The format is shown below:
+   * |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
+   * |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
+   * @param {RpcDataPtr} &rpc_data: A piece of memory which is allocated by the caller for serialized data to copy to.
+   * @param {ShapeVector} &shape_vec: Input data's shape vector.
+   * @param {TypeId} &data_type: Input data's type.
+   * @param {AddressPtr} &addr: Input data's address and size.
+   * @return {size_t}: Size of the serialized data.
+   */
+  size_t SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const ShapeVector &shape_vec, const TypeId &data_type,
+                                          const kernel::AddressPtr &addr) const;
+
+  /**
+   * @description: Serialize message with dynamic shape data. For each input in dynamic shape scenario, extra meta info
+   * like data shape, data type will be serialized as protobuffer and copied to message.
+   * @param {MessageBase} *message: MessageBase object.
+   * @param {AddressPtrList} &data_list: The inputs data of rpc send kernel.
+   * @return {void}
+   */
+  void SerializeDynamicShapeMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                                    const kernel::AddressPtr &workspace_addr) const;
+
+  /**
+   * @description: Serialize common message without extra info, which means: the data of raw pointer will be directly
+   * copied to the message.
+   * @param {MessageBase} *message: MessageBase object.
+   * @param {AddressPtrList} &data_list: The inputs data of rpc send kernel.
+   * @return {void}
+   */
+  void SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                              const kernel::AddressPtr &workspace_addr) const;
+
   friend class GraphScheduler;
+
+  // OpC ontext passed by graph scheduler.
+  OpContext<DeviceTensor> *context_;
 
   // This send actor's destination peers' actor ids and route table.
   std::vector<std::string> peer_actor_ids_;

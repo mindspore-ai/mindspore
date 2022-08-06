@@ -22,20 +22,19 @@
 #include "src/extendrt/delegate/tensorrt/cuda_impl/equal.cuh"
 
 namespace mindspore::lite {
-constexpr char *EQUAL_PLUGIN_NAME{"EqualPlugin"};
+constexpr auto EQUAL_PLUGIN_NAME{"EqualPlugin"};
 class EqualTensorRT : public TensorRTOp {
  public:
-  EqualTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  EqualTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~EqualTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 };
 
 class EqualPlugin : public TensorRTPlugin {

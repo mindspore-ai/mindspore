@@ -27,11 +27,12 @@ namespace mindspore {
 namespace opt {
 bool SpecifyGraphInputFormat::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
-  if (format_ == mindspore::NHWC) {
+  if (exp_graph_input_format_ == cur_graph_input_format_) {
     return true;
   }
-  if (format_ != mindspore::NCHW) {
-    MS_LOG(ERROR) << "this pass only support to transfer graph input format from nhwc to nchw.";
+  if ((exp_graph_input_format_ != mindspore::NHWC && exp_graph_input_format_ != mindspore::NCHW) ||
+      (cur_graph_input_format_ != mindspore::NHWC && cur_graph_input_format_ != mindspore::NCHW)) {
+    MS_LOG(ERROR) << "this pass only support to transfer graph input format between nhwc with nchw.";
     return false;
   }
   auto manager = Manage(graph, true);
@@ -66,13 +67,13 @@ STATUS SpecifyGraphInputFormat::HandleGraphInput(const FuncGraphPtr &graph) {
       continue;
     }
     ShapeVector transfer_shape;
-    if (format_ == mindspore::NCHW) {
+    if (exp_graph_input_format_ == mindspore::NCHW) {
       transfer_shape = {shape[0], shape[kInputIndexThree], shape[1], shape[kInputIndexTwo]};
     } else {
       transfer_shape = {shape[0], shape[kInputIndexTwo], shape[kInputIndexThree], shape[1]};
     }
     CNodePtr trans_cnode;
-    if (format_ == mindspore::NCHW) {
+    if (exp_graph_input_format_ == mindspore::NCHW) {
       trans_cnode = opt::GenTransposeNode(graph, input, kNC2NH, input->fullname_with_scope() + "_nc2nh");
     } else {
       trans_cnode = opt::GenTransposeNode(graph, input, kNH2NC, input->fullname_with_scope() + "_nh2nc");
@@ -83,7 +84,7 @@ STATUS SpecifyGraphInputFormat::HandleGraphInput(const FuncGraphPtr &graph) {
     }
     auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
     MS_CHECK_TRUE_MSG(trans_prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
-    if (format_ == mindspore::NCHW) {
+    if (exp_graph_input_format_ == mindspore::NCHW) {
       trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
     } else {
       trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));

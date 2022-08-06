@@ -21,23 +21,24 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
+#include "ops/fusion/activation.h"
 
 namespace mindspore::lite {
-constexpr char *ACTIVATION_OPT_PLUGIN_NAME{"ActivationOptPlugin"};
+constexpr auto ACTIVATION_OPT_PLUGIN_NAME{"ActivationOptPlugin"};
 class ActivationOptPlugin : public TensorRTPlugin {
  public:
-  ActivationOptPlugin(const std::string name, schema::ActivationType activation_type, uint32_t device_id)
+  ActivationOptPlugin(const std::string name, ActivationType activation_type, uint32_t device_id)
       : TensorRTPlugin(name, std::string(ACTIVATION_OPT_PLUGIN_NAME), device_id), activation_type_(activation_type) {}
 
   ActivationOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ACTIVATION_OPT_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
-    activation_type_ = static_cast<const schema::ActivationType *>(fields[0].data)[0];
+    activation_type_ = static_cast<const ActivationType *>(fields[0].data)[0];
   }
 
   ActivationOptPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(ACTIVATION_OPT_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &activation_type_, sizeof(schema::ActivationType));
+    DeserializeValue(&serialData, &serialLength, &activation_type_, sizeof(ActivationType));
   }
 
   ActivationOptPlugin() = delete;
@@ -56,7 +57,7 @@ class ActivationOptPlugin : public TensorRTPlugin {
                          cudaStream_t stream);
   const std::string layer_name_;
   std::string name_space_;
-  schema::ActivationType activation_type_;
+  ActivationType activation_type_;
   cudnnHandle_t cudnn_handle_{nullptr};
   cudnnActivationDescriptor_t activation_desc_{nullptr};
   cudnnTensorDescriptor_t input_desc_{nullptr};

@@ -1,5 +1,5 @@
 if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-    set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/toolkit/toolchain)
+    set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/latest/toolkit/toolchain)
 elseif(EXISTS /usr/local/Ascend/latest/toolkit/toolchain)
     set(TOOLCHAIN_PATH /usr/local/Ascend/latest/toolkit/toolchain)
 elseif(EXISTS /usr/local/Ascend/ascend-toolkit/latest/toolkit/toolchain)
@@ -38,6 +38,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/fifo_replay_buffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/random_shuffle_kernel.cc
     )
 
     add_library(mindspore_aicpu_kernels SHARED
