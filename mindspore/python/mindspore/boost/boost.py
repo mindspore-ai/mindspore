@@ -208,6 +208,16 @@ class AutoBoost:
     _instance_lock = threading.Lock()
     _instance = None
 
+    # pylint: disable=unused-argument
+    def __new__(cls, *args, **kwargs):
+        if AutoBoost._instance is None:
+            with AutoBoost._instance_lock:
+                if AutoBoost._instance is None:
+                    AutoBoost._instance = object.__new__(cls)
+                    AutoBoost._instance.level = None
+                    AutoBoost._instance.boost_config_dict = None
+        return AutoBoost._instance
+
     def __init__(self, level="O0", boost_config_dict=""):
         if level not in _boost_config_level.keys():
             level = "O0"
@@ -234,16 +244,6 @@ class AutoBoost:
             self.timeout = 1800
             self.boost_config = self._get_configuration(level, self.boost_config_dict)
             self._param_processer = ParameterProcess()
-
-    # pylint: disable=unused-argument
-    def __new__(cls, *args, **kwargs):
-        if AutoBoost._instance is None:
-            with AutoBoost._instance_lock:
-                if AutoBoost._instance is None:
-                    AutoBoost._instance = object.__new__(cls)
-                    AutoBoost._instance.level = None
-                    AutoBoost._instance.boost_config_dict = None
-        return AutoBoost._instance
 
     def network_auto_process_train(self, network, optimizer):
         r"""
@@ -370,6 +370,10 @@ class AutoBoost:
         elif mode == "disable_all":
             level_config = {key: False for key in level_config}
 
+        self._do_new_config_func(boost_config_dict, level_config)
+        return level_config
+
+    def _do_new_config_func(self, boost_config_dict, level_config):
         valid_boost_each_mode_config = []
         for key, boost_each_mode_config in boost_config_dict.items():
             if key in level_config.keys() and level_config[key] or key == "common":
@@ -379,8 +383,6 @@ class AutoBoost:
             for key_s in boost_each_mode_config.keys():
                 if key_s in self._boost_config_func_map:
                     self._boost_config_func_map[key_s](self, boost_each_mode_config[key_s])
-
-        return level_config
 
     _boost_config_func_map = {
         "fn_flag": _set_fn_flag,

@@ -14,7 +14,7 @@
 # ============================================================================
 """tbe compile job definition"""
 from __future__ import absolute_import
-import datetime
+from datetime import datetime, timezone
 import json
 from enum import Enum
 
@@ -68,7 +68,7 @@ def _get_message(msg, args):
     msg = str(msg)
     if args:
         msg = msg % args
-    return str(datetime.datetime.now()) + ": " + msg
+    return str(datetime.now(tz=timezone.utc)) + ": " + msg
 
 
 class TbeJob:

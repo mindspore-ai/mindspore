@@ -121,6 +121,9 @@ class LessBN(Cell):
 
         return new_subcell
 
+    def construct(self, *inputs):
+        return self.network(*inputs)
+
     def _convert_to_less_bn_net(self, net):
         """
         convert network to less_bn network
@@ -132,7 +135,7 @@ class LessBN(Cell):
             subcell = cells[name]
             if subcell == net:
                 continue
-            elif isinstance(subcell, (Dense)):
+            if isinstance(subcell, (Dense)):
                 dense_name.append(name)
                 dense_list.append(subcell)
             else:
@@ -141,6 +144,3 @@ class LessBN(Cell):
         if dense_list:
             new_subcell = LessBN._convert_dense(dense_list[-1])
             net.insert_child_to_cell(dense_name[-1], new_subcell)
-
-    def construct(self, *inputs):
-        return self.network(*inputs)
