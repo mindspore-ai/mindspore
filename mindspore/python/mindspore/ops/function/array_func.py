@@ -1298,6 +1298,7 @@ def squeeze(input_x, axis=()):
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
 
     Raises:
+        TypeError: If `input_x` is not a tensor.
         TypeError: If `axis` is neither an int nor tuple.
         TypeError: If `axis` is a tuple whose elements are not all int.
         ValueError: If the corresponding dimension of the specified axis isn't equal to 1.

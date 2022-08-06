@@ -6091,9 +6091,9 @@ class IdentityN(Primitive):
 class Range(PrimitiveWithCheck):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
-    `delta` up to but not including `limit`.
+    `delta` up to but not including `limit`. Length of the created sequence can not exceed 1000000.
 
-    Refer to :func:`mindspore.ops.range` for more detailed.
+    Refer to :func:`mindspore.ops.range` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
