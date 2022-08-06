@@ -801,4 +801,10 @@ MS_CORE_API void mindspore_log_init(void) {
 #endif
   common_log_init();
 }
+
+#ifdef _MSC_VER
+typedef void(__cdecl *PF)(void);
+#pragma section(".CRT$XCG", read)
+__declspec(allocate(".CRT$XCG")) PF f[] = {mindspore_log_init};
+#endif
 }
