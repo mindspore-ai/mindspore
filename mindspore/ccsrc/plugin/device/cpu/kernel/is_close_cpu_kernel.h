@@ -55,8 +55,8 @@ class IsCloseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   bool equal_nan_{true};
 
   // Broadcast related.
-  std::vector<int64_t> index_list1_{};
-  std::vector<int64_t> index_list2_{};
+  std::vector<size_t> index_list1_{};
+  std::vector<size_t> index_list2_{};
   bool is_need_broadcast_{false};
 };
 }  // namespace kernel

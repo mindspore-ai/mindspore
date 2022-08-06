@@ -47,15 +47,15 @@ int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto y_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  auto indices_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  auto y_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
   batch_rank_ = LongToSize(base_operator->get_batch_rank());
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
-  outer_size_ = LongToSize(x_shape.at(batch_rank_));
+  outer_size_ = x_shape.at(batch_rank_);
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});
   x_size_ = inner_size_ * outer_size_;
-  indices_size_ = LongToSize(indices_shape.at(batch_rank_));
+  indices_size_ = indices_shape.at(batch_rank_);
   y_size_ = std::accumulate(y_shape.begin() + batch_rank_, y_shape.end(), size_t(1), std::multiplies{});
   return ret;
 }
@@ -107,11 +107,11 @@ bool SparseSegmentMeanCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       IndexType pre_segment_id = -1;
       for (size_t k = 0; k < indices_size_; ++k) {
         auto i = index_batch_offset + k;
-        auto x_offset = x_batch_offset + indices_ptr[i] * inner_size_;
-        auto y_offset = y_batch_offset + segment_ids_ptr[i] * inner_size_;
+        auto x_offset = x_batch_offset + static_cast<size_t>(indices_ptr[i]) * inner_size_;
+        auto y_offset = y_batch_offset + static_cast<size_t>(segment_ids_ptr[i]) * inner_size_;
         // Reset the empty segments by setting output[i] = 0.
         for (auto sid = pre_segment_id + 1; sid <= segment_ids_ptr[i]; sid++) {
-          auto reset_y_ptr = y_ptr + (y_batch_offset + sid * inner_size_);
+          auto reset_y_ptr = y_ptr + (y_batch_offset + static_cast<size_t>(sid) * inner_size_);
           std::fill(reset_y_ptr + start, reset_y_ptr + end, DataType(0));
         }
         pre_segment_id = segment_ids_ptr[i];

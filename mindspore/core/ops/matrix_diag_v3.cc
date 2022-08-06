@@ -60,7 +60,7 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1], but got k[0] is "
                                << lower_diag_index << ", k[1] is " << upper_diag_index << ".";
     }
-    CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
     auto num_diags = upper_diag_index - lower_diag_index + 1;
     if (x_shape[x_rank - number_two] != num_diags) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
@@ -214,8 +214,8 @@ AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const Pri
   auto align_ptr = primitive->GetAttr(kAlign);
   MS_EXCEPTION_IF_NULL(align_ptr);
   auto align = GetValue<std::string>(align_ptr);
-  CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
-                                    primitive->name());
+  (void)CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                          primitive->name());
   auto infer_type = MatrixDiagV3InferType(primitive, input_args);
   auto infer_shape = MatrixDiagV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
