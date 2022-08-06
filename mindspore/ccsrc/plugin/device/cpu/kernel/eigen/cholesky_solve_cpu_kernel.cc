@@ -94,7 +94,7 @@ void CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
 }
 
 std::vector<KernelAttr> CholeskySolveCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
