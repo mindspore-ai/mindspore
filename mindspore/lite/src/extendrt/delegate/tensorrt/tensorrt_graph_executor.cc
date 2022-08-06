@@ -24,7 +24,6 @@
 #include <utility>
 #include "ccsrc/kernel/kernel.h"
 #include "src/extendrt/delegate/delegate_utils.h"
-#include "src/litert/delegate/auto_registration_factory.h"
 #include "src/extendrt/delegate/graph_executor/factory.h"
 #include "ccsrc/kernel/common_utils.h"
 

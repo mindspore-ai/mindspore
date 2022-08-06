@@ -152,6 +152,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/pack_weight_manager.cc
         ${SRC_DIR}/litert/huffman_decode.cc
         ${SRC_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
+        ${SRC_DIR}/extendrt/delegate/plugin/tensorrt_executor_plugin.cc
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc

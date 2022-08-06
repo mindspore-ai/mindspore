@@ -27,6 +27,7 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/delegate/graph_executor/factory.h"
 #include "extendrt/session/factory.h"
+#include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 
 namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -85,8 +86,34 @@ std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vect
 tensor::TensorPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
 tensor::TensorPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> context) {
+  HandleGPUContext(context);
   auto config = SelectSessionArg(context);
-  return SessionRegistry::GetInstance()->GetSession(config.type_, config);
+  return SessionRegistry::GetInstance().GetSession(config.type_, config);
+}
+
+void InferSession::HandleGPUContext(const std::shared_ptr<Context> &context) {
+  if (!context) {
+    return;
+  }
+  constexpr auto default_gpu_provider = "tensorrt";
+  auto device_infos = context->MutableDeviceInfo();
+  for (auto &device_info : device_infos) {
+    if (!device_info || device_info->GetDeviceType() != kGPU) {
+      continue;
+    }
+    auto gpu_device = device_info->Cast<GPUDeviceInfo>();
+    if (!gpu_device) {
+      continue;
+    }
+    auto provider = gpu_device->GetProvider();
+    if (provider.empty() || provider == default_gpu_provider) {
+      if (!lite::TensorRTPlugin::GetInstance().Register()) {
+        MS_LOG_WARNING << "Failed to register TensorRT plugin";
+        return;
+      }
+      gpu_device->SetProvider(default_gpu_provider);
+    }
+  }
 }
 
 SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> &context) {
@@ -102,7 +129,7 @@ SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> &con
       // delegate init
       MS_EXCEPTION_IF_NULL(device_context);
       // get graph executor delegate
-      auto delegate = mindspore::DelegateRegistry::GetInstance()->GetDelegate(
+      auto delegate = mindspore::DelegateRegistry::GetInstance().GetDelegate(
         device_context->GetDeviceType(), device_context->GetProvider(), delegate_config);
       if (delegate == nullptr) {
         continue;

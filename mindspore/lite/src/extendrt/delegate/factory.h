@@ -28,15 +28,12 @@
 
 namespace mindspore {
 typedef std::shared_ptr<Delegate> (*DelegateCreator)(const std::shared_ptr<mindspore::DelegateConfig> &config);
-class DelegateRegistry {
+class MS_API DelegateRegistry {
  public:
   DelegateRegistry() = default;
   virtual ~DelegateRegistry() = default;
 
-  static DelegateRegistry *GetInstance() {
-    static DelegateRegistry instance;
-    return &instance;
-  }
+  static DelegateRegistry &GetInstance();
 
   void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator) {
     auto it = creator_map_.find(device_type);
@@ -52,7 +49,7 @@ class DelegateRegistry {
   std::shared_ptr<Delegate> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
                                         const std::shared_ptr<mindspore::DelegateConfig> &config) {
     // first find graph executor delegate
-    auto graph_executor_delegate = GraphExecutorRegistry::GetInstance()->GetDelegate(device_type, provider, config);
+    auto graph_executor_delegate = GraphExecutorRegistry::GetInstance().GetDelegate(device_type, provider, config);
     if (graph_executor_delegate != nullptr) {
       return graph_executor_delegate;
     }
@@ -76,7 +73,7 @@ class DelegateRegistry {
 class DelegateRegistrar {
  public:
   DelegateRegistrar(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator creator) {
-    DelegateRegistry::GetInstance()->RegDelegate(device_type, provider, creator);
+    DelegateRegistry::GetInstance().RegDelegate(device_type, provider, creator);
   }
   ~DelegateRegistrar() = default;
 };
