@@ -30,10 +30,7 @@ using mindspore::profiler::ascend::MemoryProfiling;
 namespace mindspore {
 namespace device {
 namespace ascend {
-void AscendMemoryManager::Initialize() {
-  (void)AscendMemAdapter::GetInstance().Initialize();
-  AscendMemoryPool::GetInstance().Init();
-}
+void AscendMemoryManager::Initialize() { (void)AscendMemAdapter::GetInstance().Initialize(); }
 
 void AscendMemoryManager::Finalize() {
   AscendMemoryPool::GetInstance().ReleaseDeviceRes();
