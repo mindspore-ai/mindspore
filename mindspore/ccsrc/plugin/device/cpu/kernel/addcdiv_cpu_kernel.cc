@@ -58,10 +58,10 @@ void AddcdivCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape2_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputX2);
   input_shape3_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputValue);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputData);
-  data_shape_size_ = input_shape0_.size();
-  inputx_shape_size_ = input_shape1_.size();
-  inputy_shape_size_ = input_shape2_.size();
-  value_shape_size_ = input_shape3_.size();
+  data_shape_size_ = SizeToLong(input_shape0_.size());
+  inputx_shape_size_ = SizeToLong(input_shape1_.size());
+  inputy_shape_size_ = SizeToLong(input_shape2_.size());
+  value_shape_size_ = SizeToLong(input_shape3_.size());
 }
 
 bool AddcdivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,

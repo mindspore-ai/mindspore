@@ -201,7 +201,7 @@ bool LaunchAdjustHueKernel(const std::vector<kernel::AddressPtr> &inputs,
   auto input_data = static_cast<T *>(inputs[0]->addr);
   auto output_data = static_cast<T *>(outputs[0]->addr);
   auto delta_h = static_cast<std::float_t *>(inputs[1]->addr)[0];
-  std::int64_t num_elements = inputs[0]->size / sizeof(T);
+  std::int64_t num_elements = SizeToLong(inputs[0]->size / sizeof(T));
   constexpr int64_t kChannelSize = 3;
   auto sharder_adjusthue = [input_data, delta_h, output_data, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
@@ -242,7 +242,7 @@ bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
   auto input_data = static_cast<T *>(inputs[0]->addr);
   auto output_data = static_cast<T *>(outputs[0]->addr);
   auto delta_h = static_cast<std::float_t *>(inputs[1]->addr)[0];
-  std::int64_t num_elements = inputs[0]->size / sizeof(T);
+  std::int64_t num_elements = SizeToLong(inputs[0]->size / sizeof(T));
   constexpr int64_t kChannelSize = 3;
   auto sharder_adjusthue = [input_data, delta_h, output_data, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
