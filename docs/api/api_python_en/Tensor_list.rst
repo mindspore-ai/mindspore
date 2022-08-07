@@ -46,7 +46,7 @@ Element-wise Methods
 .. msplatformautosummary::
     :toctree: Tensor
     :nosignatures:
-    
+
     mindspore.Tensor.abs
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
@@ -80,6 +80,8 @@ Reduction Methods
     :toctree: Tensor
     :nosignatures:
 
+    mindspore.Tensor.amax
+    mindspore.Tensor.amin
     mindspore.Tensor.argmax
     mindspore.Tensor.argmin
     mindspore.Tensor.argmin_with_value
