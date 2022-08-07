@@ -27,15 +27,12 @@
 namespace mindspore {
 typedef std::shared_ptr<device::GraphExecutor> (*GraphExecutorCreator)(
   const std::shared_ptr<mindspore::DelegateConfig> &config);
-class GraphExecutorRegistry {
+class MS_API GraphExecutorRegistry {
  public:
   GraphExecutorRegistry() = default;
   virtual ~GraphExecutorRegistry() = default;
 
-  static GraphExecutorRegistry *GetInstance() {
-    static GraphExecutorRegistry instance;
-    return &instance;
-  }
+  static GraphExecutorRegistry &GetInstance();
 
   void RegGraphExecutor(const mindspore::DeviceType &device_type, const std::string &provider,
                         GraphExecutorCreator creator) {
@@ -84,7 +81,7 @@ class GraphExecutorRegistrar {
  public:
   GraphExecutorRegistrar(const mindspore::DeviceType &device_type, const std::string &provider,
                          GraphExecutorCreator creator) {
-    GraphExecutorRegistry::GetInstance()->RegGraphExecutor(device_type, provider, creator);
+    GraphExecutorRegistry::GetInstance().RegGraphExecutor(device_type, provider, creator);
   }
   ~GraphExecutorRegistrar() = default;
 };

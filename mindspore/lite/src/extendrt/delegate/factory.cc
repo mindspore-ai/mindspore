@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "extendrt/delegate/factory.h"
 
-#include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
-#include <unistd.h>
-#include <thread>
-#include <string>
-#include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-
-namespace mindspore::lite {
-int GetGPUGroupSize() { return GetGroupSize(NCCL_WORLD_GROUP); }
-
-int GetRankID() { return GetRankIDByGroup(NCCL_WORLD_GROUP); }
-}  // namespace mindspore::lite
+namespace mindspore {
+DelegateRegistry &DelegateRegistry::GetInstance() {
+  static DelegateRegistry instance;
+  return instance;
+}
+}  // namespace mindspore

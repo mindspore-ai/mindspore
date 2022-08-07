@@ -34,7 +34,10 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
   if (session_ == nullptr) {
     return kLiteNullptr;
   }
-  session_->Init(model_context);
+  ret = session_->Init(model_context);
+  if (ret != kSuccess) {
+    return ret;
+  }
   if (MsContext::GetInstance() == nullptr) {
     MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
     MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {

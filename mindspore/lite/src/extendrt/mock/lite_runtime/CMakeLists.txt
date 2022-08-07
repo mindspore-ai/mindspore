@@ -301,12 +301,6 @@ if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(mindspore-infer-lite mindrt_mid)
 endif()
 
-if(SUPPORT_TENSORRT)
-    target_link_libraries(mindspore-infer-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
-else()
-    target_link_libraries(mindspore-infer-lite tensorrt_stub)
-endif()
-
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     target_link_libraries(mindspore-infer-lite opencl_kernel_mid)
 endif()

@@ -1,6 +1,16 @@
-include_directories(${TENSORRT_PATH}/include)
-include_directories(${CUDA_PATH}/include)
+set(CUDA_PATH $ENV{CUDA_HOME})
+include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel)
+set(CUDA_VERSION 11.1)
+set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
 include_directories(${CUDA_PATH})
+include_directories(${CUDA_PATH}/include)
+find_package(CUDA)
+
+add_compile_definitions(GPU_TENSORRT)
+set(TENSORRT_PATH $ENV{TENSORRT_PATH})
+set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
+include_directories(${TENSORRT_PATH}/include)
+
 include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 include_directories(${CCSRC_DIR}/../)
 include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops)
@@ -46,6 +56,8 @@ file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../extendrt/delegate/delegate_utils.cc
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.cc
+    ${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl/nnacl_common.c
+    ${TOP_DIR}/mindspore/lite/src/common/file_utils.cc
     )
 
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache)
@@ -71,15 +83,18 @@ set_target_properties(libnvinfer PROPERTIES IMPORTED_LOCATION ${TENSORRT_LIB_PAT
 
 add_library(libcublas SHARED IMPORTED)
 set_target_properties(libcublas PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/libcublas.so)
-add_library(tensorrt_kernel_mid OBJECT ${TENSORRT_RUNTIME_SRC})
+add_library(tensorrt_plugin SHARED ${TENSORRT_RUNTIME_SRC})
 
-add_dependencies(tensorrt_kernel_mid fbs_src)
+add_dependencies(tensorrt_plugin fbs_src)
 
 target_link_libraries(
-    tensorrt_kernel_mid
+    tensorrt_plugin
     libcudart
     libcublas
     libnvinfer
 )
 
 add_subdirectory(cuda_impl)
+
+target_link_libraries(tensorrt_plugin cuda_kernel_mid gpu_distribution_collective)
+target_link_libraries(tensorrt_plugin mindspore-extendrt mindspore_core)
