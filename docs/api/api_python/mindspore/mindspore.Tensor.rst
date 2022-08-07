@@ -81,7 +81,7 @@ mindspore.Tensor
     .. py:method:: approximate_equal(y, tolerance=1e-5)
 
         逐元素计算abs(x-y)，如果小于tolerance则为True，否则为False。
-        
+
         .. math::
             out_i = \begin{cases}
             & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
@@ -1043,12 +1043,56 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int), list(int)]) - 计算mean的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。
         - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
+        - **TypeError** - 如果 `keep_dims` 不是bool类型。
+        - **ValueError** - 如果 `axis` 超出范围。
+
+    .. py:method:: amin(axis=(), keep_dims=False)
+
+        默认情况下，使用指定维度的最小值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+
+        **参数：**
+
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。
+        - **keep_dims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
+
+        **返回：**
+
+        与输入的张量具有相同的数据类型的Tensor。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
+        - **TypeError** - 如果 `keep_dims` 不是bool类型。
+        - **ValueError** - 如果 `axis` 超出范围。
+
+    .. py:method:: amax(axis=(), keep_dims=False)
+
+        默认情况下，使用指定维度的最大值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+
+        **参数：**
+
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。
+        - **keep_dims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
+
+        **返回：**
+
+        与输入的张量具有相同的数据类型的Tensor。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
+        - **TypeError** - 如果 `keep_dims` 不是bool类型。
+        - **ValueError** - 如果 `axis` 超出范围。
 
     .. py:method:: prod(axis=(), keep_dims=False)
 
@@ -1066,7 +1110,8 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
-        - **TypeError** - 如果 `keep_dims` 不是bool类型
+        - **TypeError** - 如果 `keep_dims` 不是bool类型。
+        - **ValueError** - 如果 `axis` 超出范围。
 
     .. py:method:: min(axis=None, keepdims=False, initial=None, where=True)
 

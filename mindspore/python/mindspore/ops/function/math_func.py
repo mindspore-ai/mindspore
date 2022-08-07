@@ -3690,14 +3690,18 @@ def amin(x, axis=(), keep_dims=False):
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        Tensor, has the same data type as input tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3755,14 +3759,18 @@ def amax(x, axis=(), keep_dims=False):
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        Tensor, has the same data type as input tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3820,14 +3828,18 @@ def mean(x, axis=(), keep_dims=False):
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        Tensor, has the same data type as input tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3887,14 +3899,18 @@ def prod(x, axis=(), keep_dims=False):
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
+
+    Returns:
+        Tensor, has the same data type as input tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

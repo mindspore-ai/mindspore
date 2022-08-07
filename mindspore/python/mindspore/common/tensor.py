@@ -1418,6 +1418,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input tensor.
 
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
@@ -1457,6 +1462,7 @@ class Tensor(Tensor_):
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1490,6 +1496,7 @@ class Tensor(Tensor_):
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1521,6 +1528,7 @@ class Tensor(Tensor_):
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2459,7 +2467,7 @@ class Tensor(Tensor_):
         Return the maximum of a tensor or maximum along an axis.
 
         Args:
-            axis (Union[None, int, tuple of ints], optional): Axis or
+            axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the maximum is selected over multiple axes,
                 instead of a single axis or all the axes as before. Default: None.
@@ -2511,7 +2519,7 @@ class Tensor(Tensor_):
         Return the minimum of a tensor or minimum along an axis.
 
         Args:
-            axis (Union[None, int, tuple of ints], optional): Axis or
+            axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the minimum is selected over multiple axes,
                 instead of a single axis or all the axes as before. Default: None.
