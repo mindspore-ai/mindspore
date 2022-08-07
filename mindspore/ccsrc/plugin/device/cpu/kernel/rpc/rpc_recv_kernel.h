@@ -50,8 +50,7 @@ class RpcRecvKernelMod : public RpcKernelMod {
       }
       for (size_t i = 0; i < inputs.size(); i++) {
         MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + real_data_offset_[i],
-                           inputs[i]->size);
+        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + real_data_offset_[i], inputs[i]->size);
         if (ret != 0) {
           MS_LOG(EXCEPTION) << "memcpy_s for recv output " << i << " failed, ret code: " << ret;
         }
