@@ -351,6 +351,27 @@ class Cell(Cell_):
             object.__delattr__(self, name)
         self._attr_synced = False
 
+    def set_data_parallel(self):
+        """
+        For all primitive ops in this cell(including ops of cells that wrapped by this cell),
+        if parallel strategy is not specified, then instead of auto-searching, data parallel
+        strategy will be generated for those primitive ops.
+
+        Note:
+            Only effective while using auto_parallel_context = ParallelMode.AUTO_PARALLEL under graph mode.
+
+        Examples:
+            >>> import mindspore.nn as nn
+            >>> net = nn.Dense(3, 4)
+            >>> net.set_data_parallel()
+        """
+        if context._get_mode() == context.PYNATIVE_MODE:
+            raise ValueError("set_data_parallel: does not support PyNative mode.")
+
+        all_prims = self._get_prims_recursively()
+        for prim in all_prims:
+            prim.add_prim_attr("strategy_gen_mode", "data_parallel")
+
     def _cast_mixed_precision_inputs(self, inputs, dst_type):
         """Cast input for mixed precision"""
         res = list()
@@ -467,27 +488,6 @@ class Cell(Cell_):
             all_prims.extend(cell._get_prims_recursively())
 
         return all_prims
-
-    def set_data_parallel(self):
-        """
-        For all primitive ops in this cell(including ops of cells that wrapped by this cell),
-        if parallel strategy is not specified, then instead of auto-searching, data parallel
-        strategy will be generated for those primitive ops.
-
-        Note:
-            Only effective while using auto_parallel_context = ParallelMode.AUTO_PARALLEL under graph mode.
-
-        Examples:
-            >>> import mindspore.nn as nn
-            >>> net = nn.Dense(3, 4)
-            >>> net.set_data_parallel()
-        """
-        if context._get_mode() == context.PYNATIVE_MODE:
-            raise ValueError("set_data_parallel: does not support PyNative mode.")
-
-        all_prims = self._get_prims_recursively()
-        for prim in all_prims:
-            prim.add_prim_attr("strategy_gen_mode", "data_parallel")
 
     def shard(self, in_strategy, out_strategy, device="Ascend", level=0):
         """
