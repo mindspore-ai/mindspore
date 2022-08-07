@@ -54,6 +54,18 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
                                              op_name);
   }
 
+  int64_t num_true = GetValue<int64_t>(primitive->GetAttr("num_true"));
+  int64_t seed = GetValue<int64_t>(primitive->GetAttr("seed"));
+  bool unique = GetValue<bool>(primitive->GetAttr("unique"));
+  int64_t num_sampled = GetValue<int64_t>(primitive->GetAttr("num_sampled"));
+  int64_t range_max = GetValue<int64_t>(primitive->GetAttr("range_max"));
+  (void)CheckAndConvertUtils::CheckInteger("num_true", num_true, kGreaterThan, 0, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("seed", seed, kGreaterEqual, 0, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("num_true", num_true, kEqual, input_shape[input_shape.size() - 1], op_name);
+  if (unique) {
+    (void)CheckAndConvertUtils::CheckInteger("num_sampled", num_sampled, kLessEqual, range_max, op_name);
+  }
+
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   auto true_expected_count_shape = input_shape_ptr;
@@ -61,7 +73,6 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
     true_expected_count_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   }
 
-  auto num_sampled = GetValue<int64_t>(primitive->GetAttr("num_sampled"));
   std::vector<int64_t> batch_lists;
   for (int64_t i = 0; i < batch_rank; i++) {
     (void)batch_lists.emplace_back(input_shape[i]);

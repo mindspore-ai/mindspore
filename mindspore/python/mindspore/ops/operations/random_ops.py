@@ -800,6 +800,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         Validator.check_value_type("range_max", range_max, [int], self.name)
         Validator.check_value_type("seed", seed, [int], self.name)
         Validator.check_value_type("remove_accidental_hits", remove_accidental_hits, [bool], self.name)
+        Validator.check("value of num_true", num_true, '', 0, Rel.GT, self.name)
         Validator.check("value of num_sampled", num_sampled, '', 0, Rel.GT, self.name)
         Validator.check("value of range_max", range_max, '', 0, Rel.GT, self.name)
         self.num_true = num_true
