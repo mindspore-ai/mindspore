@@ -348,8 +348,8 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     return FAILED;
   }
 
-  if (output_size != tuple_shp->shape().size()) {
-    MS_LOG(ERROR) << "output_map is not equal tuple_shape size";
+  if (output_size < tuple_shp->shape().size()) {
+    MS_LOG(ERROR) << "output_map is smaller than tuple_shape size";
     return FAILED;
   }
 
