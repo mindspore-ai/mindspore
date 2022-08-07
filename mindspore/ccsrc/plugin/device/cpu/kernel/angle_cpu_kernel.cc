@@ -21,12 +21,6 @@
 namespace {
 const size_t kOutputsNum = 1;
 const size_t kInputsNum = 1;
-
-#define Angle_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE)     \
-  case (IN_DTYPE): {                                         \
-    ret = LaunchKernel<IN_TYPE, OUT_DTYPE>(inputs, outputs); \
-    break;                                                   \
-  }
 }  // namespace
 
 namespace mindspore {
@@ -45,9 +39,18 @@ bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   bool ret = true;
   switch (input_dtype_) {
-    Angle_COMPUTE_CASE(kNumberTypeComplex64, std::complex<float>, float)
-      Angle_COMPUTE_CASE(kNumberTypeComplex128, std::complex<double>, double) default : ret = false;
-    MS_EXCEPTION(TypeError) << "For 'Angle', unsupported input data type: " << TypeIdToString(input_dtype_);
+    case (kNumberTypeComplex64): {
+      ret = LaunchKernel<std::complex<float>, float>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeComplex128): {
+      ret = LaunchKernel<std::complex<double>, double>(inputs, outputs);
+      break;
+    }
+    default: {
+      ret = false;
+      MS_EXCEPTION(TypeError) << "For 'Angle', unsupported input data type: " << TypeIdToString(input_dtype_);
+    }
   }
   return ret;
 }
