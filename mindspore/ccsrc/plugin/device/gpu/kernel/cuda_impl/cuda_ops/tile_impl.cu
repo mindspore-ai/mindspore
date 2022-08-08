@@ -16,11 +16,6 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tile_impl.cuh"
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
-
 template <typename T>
 __global__ void Tile(const size_t output_size, const size_t input_size, const size_t shape_size,
                      const size_t *input_shape, const size_t *output_shape, const T *input, T *output) {
@@ -59,14 +54,6 @@ void CalTile(const size_t output_size, const size_t input_size, const size_t sha
   return;
 }
 
-template CUDA_LIB_EXPORT void CalTile<Complex<float>>(const size_t output_size, const size_t input_size,
-                                                      const size_t shape_size, const size_t *input_shape,
-                                                      const size_t *output_shape, const Complex<float> *input,
-                                                      Complex<float> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTile<Complex<double>>(const size_t output_size, const size_t input_size,
-                                                      const size_t shape_size, const size_t *input_shape,
-                                                      const size_t *output_shape, const Complex<double> *input,
-                                                      Complex<double> *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTile<double>(const size_t output_size, const size_t input_size,
                                               const size_t shape_size, const size_t *input_shape,
                                               const size_t *output_shape, const double *input, double *output,

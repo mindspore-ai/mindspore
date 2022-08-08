@@ -21,10 +21,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void Slice1D(const size_t s1, const size_t l1, const size_t d1, const T *input, T *output) {
@@ -329,12 +325,6 @@ void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int
     dy, dx);
 }
 
-template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
-                                            const Complex<float> *input, Complex<float> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
-                                            const Complex<double> *input, Complex<double> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const double *input,
                                             double *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const float *input,
@@ -362,12 +352,6 @@ template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, co
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const bool *input,
                                             bool *output, const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
-                                            const size_t d1, const size_t d2, const Complex<float> *input,
-                                            Complex<float> *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
-                                            const size_t d1, const size_t d2, const Complex<double> *input,
-                                            Complex<double> *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
                                             const size_t d1, const size_t d2, const double *input, double *output,
                                             const uint32_t &device_id, cudaStream_t stream);
@@ -405,14 +389,6 @@ template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, co
                                             const size_t d1, const size_t d2, const bool *input, bool *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
-                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
-                                            const size_t d3, const Complex<float> *input, Complex<float> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
-                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
-                                            const size_t d3, const Complex<double> *input, Complex<double> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
                                             const size_t l2, const size_t l3, const size_t d1, const size_t d2,
                                             const size_t d3, const double *input, double *output,
@@ -462,16 +438,6 @@ template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, co
                                             const size_t d3, const bool *input, bool *output, const uint32_t &device_id,
                                             cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
-                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                            const Complex<float> *input, Complex<float> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
-                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                            const Complex<double> *input, Complex<double> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                             const size_t d1, const size_t d2, const size_t d3, const size_t d4,
@@ -536,18 +502,6 @@ template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, co
 template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t l1, const size_t l2, const size_t l3,
                                             const size_t l4, const size_t l5, const size_t d1, const size_t d2,
-                                            const size_t d3, const size_t d4, const size_t d5,
-                                            const Complex<float> *input, Complex<float> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
-                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
-                                            const size_t d3, const size_t d4, const size_t d5,
-                                            const Complex<double> *input, Complex<double> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
-                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
                                             const size_t d3, const size_t d4, const size_t d5, const double *input,
                                             double *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
@@ -608,18 +562,6 @@ template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, co
                                             const size_t d3, const size_t d4, const size_t d5, const bool *input,
                                             bool *output, const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
-                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
-                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                            const size_t d5, const size_t d6, const Complex<float> *input,
-                                            Complex<float> *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
-                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
-                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                            const size_t d5, const size_t d6, const Complex<double> *input,
-                                            Complex<double> *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t s6, const size_t l1, const size_t l2,
                                             const size_t l3, const size_t l4, const size_t l5, const size_t l6,
@@ -694,20 +636,6 @@ template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, co
                                             const size_t d5, const size_t d6, const bool *input, bool *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
-                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
-                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
-                                            const size_t d7, const Complex<float> *input, Complex<float> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
-                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
-                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
-                                            const size_t d7, const Complex<double> *input, Complex<double> *output,
-                                            const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t s6, const size_t s7, const size_t l1,
                                             const size_t l2, const size_t l3, const size_t l4, const size_t l5,
@@ -793,18 +721,6 @@ template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, co
                                             const size_t d7, const bool *input, bool *output, const uint32_t &device_id,
                                             cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void CalSlice4DGrad<Complex<float>>(const size_t s1, const size_t s2, const size_t s3,
-                                                             const size_t s4, const size_t l1, const size_t l2,
-                                                             const size_t l3, const size_t l4, const size_t d1,
-                                                             const size_t d2, const size_t d3, const size_t d4,
-                                                             const Complex<float> *dy, Complex<float> *dx,
-                                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalSlice4DGrad<Complex<double>>(const size_t s1, const size_t s2, const size_t s3,
-                                                             const size_t s4, const size_t l1, const size_t l2,
-                                                             const size_t l3, const size_t l4, const size_t d1,
-                                                             const size_t d2, const size_t d3, const size_t d4,
-                                                             const Complex<double> *dy, Complex<double> *dx,
-                                                             cudaStream_t stream);
 template CUDA_LIB_EXPORT void CalSlice4DGrad<double>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                                      const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                                      const size_t d1, const size_t d2, const size_t d3, const size_t d4,
@@ -915,19 +831,7 @@ template CUDA_LIB_EXPORT void FillDeviceArray<float>(const size_t input_size, fl
                                                      cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void FillDeviceArray<double>(const size_t input_size, double *addr, const float value,
                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FillDeviceArray<Complex<float>>(const size_t input_size, Complex<float> *addr,
-                                                              const float value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void FillDeviceArray<Complex<double>>(const size_t input_size, Complex<double> *addr,
-                                                              const float value, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
-                                           const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape,
-                                           const Complex<float> *input, Complex<float> *output,
-                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
-                                           const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape,
-                                           const Complex<double> *input, Complex<double> *output,
-                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                                            const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape,
                                            const bool *input, bool *output, cudaStream_t cuda_stream);
@@ -965,13 +869,6 @@ template CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shap
                                            const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape,
                                            const unsigned char *input, unsigned char *output, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int64_t> &begin,
-                                               const std::vector<int64_t> &strides, const std::vector<size_t> &dx_shape,
-                                               const Complex<float> *dy, Complex<float> *dx, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int64_t> &begin,
-                                               const std::vector<int64_t> &strides, const std::vector<size_t> &dx_shape,
-                                               const Complex<double> *dy, Complex<double> *dx,
-                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int64_t> &begin,
                                                const std::vector<int64_t> &strides, const std::vector<size_t> &dx_shape,
                                                const bool *dy, bool *dx, cudaStream_t cuda_stream);
