@@ -27,7 +27,7 @@ from .. import boost
 from .. import context
 
 
-amp_white_list = (
+AMP_WHITE_LIST = (
     nn.Dense,
     nn.Conv1d,
     nn.Conv2d,
@@ -37,7 +37,7 @@ amp_white_list = (
     nn.Conv3dTranspose
 )
 
-amp_black_list = (
+AMP_BLACK_LIST = (
     nn.BatchNorm1d,
     nn.BatchNorm2d,
     nn.BatchNorm3d,
@@ -70,7 +70,7 @@ class _OutputTo32(nn.Cell):
 def _auto_white_list(network, white_list=None):
     """process the white list of network."""
     if white_list is None:
-        white_list = amp_white_list
+        white_list = AMP_WHITE_LIST
     cells = network.name_cells()
     change = False
     for name in cells:
@@ -86,10 +86,10 @@ def _auto_white_list(network, white_list=None):
         network.cell_list = list(network.cells())
 
 
-def _auto_black_list(network, black_list=None, keep_norm_fp32=False):
+def _auto_black_list(network, black_list=None):
     """process the black list of network."""
     if black_list is None:
-        black_list = amp_black_list
+        black_list = AMP_BLACK_LIST
     network.to_float(mstype.float16)
     cells = network.name_cells()
     change = False
@@ -97,27 +97,38 @@ def _auto_black_list(network, black_list=None, keep_norm_fp32=False):
         subcell = cells[name]
         if subcell == network:
             continue
-        elif isinstance(subcell, black_list) and keep_norm_fp32:
+        elif isinstance(subcell, black_list):
             network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
             change = True
         else:
-            _auto_black_list(subcell, black_list, keep_norm_fp32)
+            _auto_black_list(subcell, black_list)
     if isinstance(network, nn.SequentialCell) and change:
         network.cell_list = list(network.cells())
 
 
-def auto_mixed_precision(network, amp_level="O0", keep_norm_fp32=False):
-    """auto mixed precision function."""
+def auto_mixed_precision(network, amp_level="O0"):
+    """
+    auto mixed precision function.
+    Args:
+        network (Cell): Definition of the network.
+        amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: "O0".
+
+            - "O0": Do not change.
+            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
+            - "O2": Cast network to float16, keep operators in black_list run in float32,
+            - "O3": Cast network to float16.
+
+    Raises:
+        ValueError: If amp level is not supported.
+    """
     if amp_level == "O0":
         pass
     elif amp_level == "O1":
         _auto_white_list(network)
     elif amp_level == "O2":
-        _auto_black_list(network, keep_norm_fp32=keep_norm_fp32)
+        _auto_black_list(network)
     elif amp_level == "O3":
         network.to_float(mstype.float16)
-        if keep_norm_fp32:
-            _do_keep_batchnorm_fp32(network)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
 
@@ -130,7 +141,7 @@ def _do_keep_batchnorm_fp32(network):
         subcell = cells[name]
         if subcell == network:
             continue
-        elif isinstance(subcell, amp_black_list):
+        elif isinstance(subcell, AMP_BLACK_LIST):
             network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
             change = True
         else:
@@ -276,7 +287,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     _check_kwargs(kwargs)
     config = dict(_config_level.get(level), **kwargs)
 
-    auto_mixed_precision(network, level, config["keep_batchnorm_fp32"])
+    auto_mixed_precision(network, level)
+
+    if config["keep_batchnorm_fp32"] and level == "O3":
+        _do_keep_batchnorm_fp32(network)
+    elif not config["keep_batchnorm_fp32"] and level == "O2":
+        network.to_float(mstype.float16)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
