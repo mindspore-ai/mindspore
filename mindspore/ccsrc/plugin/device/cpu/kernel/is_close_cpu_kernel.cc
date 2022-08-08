@@ -43,7 +43,7 @@ inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
   return std::isfinite(left_side) && left_side <= right_side;
 }
 
-void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVector &output_shape,
+void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const std::vector<size_t> &output_shape,
                        std::vector<size_t> *index_list) {
   // Given unaligned input shape and output shape, this function returns the mapping
   // from indices of output (logical) to corespondingly real input indices (physical).
@@ -52,7 +52,7 @@ void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVect
   size_t physical_shape[kIsCloseMaxDim];
   size_t size = 0, output_size = 1;
   // Align input shape to output shape by filling one into the outermost dimension.
-  ShapeVector input_shape(output_shape.size());
+  std::vector<size_t> input_shape(output_shape.size());
   for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
     input_shape[i] = i < j ? 1 : unaligned_input_shape[i - j];
   }
@@ -125,9 +125,9 @@ int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto other_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  auto other_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  auto output_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
   is_need_broadcast_ = input_shape != other_shape;
   if (is_need_broadcast_) {
     GetBroadCastIndex(input_shape, output_shape, &index_list1_);

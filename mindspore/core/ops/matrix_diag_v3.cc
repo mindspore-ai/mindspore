@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t GetTensorValue(AbstractBasePtr arg, const std::string &prim_name, const std::string &arg_name) {
+int64_t GetTensorValue(const AbstractBasePtr &arg, const std::string &prim_name, const std::string &arg_name) {
   if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
@@ -62,7 +62,7 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
     }
     (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
     auto num_diags = upper_diag_index - lower_diag_index + 1;
-    if (x_shape[x_rank - number_two] != num_diags) {
+    if (x_shape[LongToSize(x_rank - number_two)] != num_diags) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
     }
     (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - number_two);

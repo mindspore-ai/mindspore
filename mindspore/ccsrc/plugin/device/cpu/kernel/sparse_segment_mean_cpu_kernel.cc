@@ -42,7 +42,7 @@ bool SparseSegmentMeanCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -50,13 +50,13 @@ int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto indices_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   auto y_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
-  batch_rank_ = LongToSize(base_operator->get_batch_rank());
-  batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
-  outer_size_ = x_shape.at(batch_rank_);
-  inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});
+  auto batch_rank = base_operator->get_batch_rank();
+  batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank, size_t(1), std::multiplies{});
+  outer_size_ = x_shape.at(LongToSize(batch_rank));
+  inner_size_ = std::accumulate(x_shape.begin() + batch_rank + 1, x_shape.end(), size_t(1), std::multiplies{});
   x_size_ = inner_size_ * outer_size_;
-  indices_size_ = indices_shape.at(batch_rank_);
-  y_size_ = std::accumulate(y_shape.begin() + batch_rank_, y_shape.end(), size_t(1), std::multiplies{});
+  indices_size_ = indices_shape.at(batch_rank);
+  y_size_ = std::accumulate(y_shape.begin() + batch_rank, y_shape.end(), size_t(1), std::multiplies{});
   return ret;
 }
 
@@ -107,11 +107,11 @@ bool SparseSegmentMeanCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       IndexType pre_segment_id = -1;
       for (size_t k = 0; k < indices_size_; ++k) {
         auto i = index_batch_offset + k;
-        auto x_offset = x_batch_offset + static_cast<size_t>(indices_ptr[i]) * inner_size_;
-        auto y_offset = y_batch_offset + static_cast<size_t>(segment_ids_ptr[i]) * inner_size_;
+        auto x_offset = x_batch_offset + LongToSize(indices_ptr[i]) * inner_size_;
+        auto y_offset = y_batch_offset + LongToSize(segment_ids_ptr[i]) * inner_size_;
         // Reset the empty segments by setting output[i] = 0.
         for (auto sid = pre_segment_id + 1; sid <= segment_ids_ptr[i]; sid++) {
-          auto reset_y_ptr = y_ptr + (y_batch_offset + static_cast<size_t>(sid) * inner_size_);
+          auto reset_y_ptr = y_ptr + (y_batch_offset + LongToSize(sid) * inner_size_);
           std::fill(reset_y_ptr + start, reset_y_ptr + end, DataType(0));
         }
         pre_segment_id = segment_ids_ptr[i];
