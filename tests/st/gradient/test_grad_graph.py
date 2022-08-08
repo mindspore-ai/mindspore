@@ -44,6 +44,17 @@ class MultipleInputsMultipleOutputsNet(nn.Cell):
         return x**2 + y**2 + z**2, x*y*z
 
 
+class ParamNet(nn.Cell):
+    def __init__(self):
+        super(ParamNet, self).__init__()
+        self.w = Parameter(Tensor([2., 2.]), name="w")
+        self.z = Parameter(Tensor([3., 3.]), name="z")
+
+    def construct(self, x):
+        res = x * self.w * self.z
+        return res
+
+
 def function(x, y, z):
     return x**2 + y**2 + z**2, x*y*z
 
@@ -211,6 +222,28 @@ def test_grad_with_grad_position_twice_graph():
     out2 = grad(net, grad_position=(0, 1))(x, y, z)
     assert isinstance(out1, Tensor)
     assert isinstance(out2, tuple)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_weights_twice_graph():
+    """
+    Features: GradOperation and grad.
+    Description: Test F.grad with different weights twice in graph mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNet()
+    grad_fn = C.GradOperation(get_by_list=True)
+    weights1 = ParameterTuple(net.trainable_params()[:1])
+    weights2 = ParameterTuple(net.trainable_params()[1:])
+    expect1 = np.array([3, 6]).astype(np.float32)
+    expect2 = np.array([2, 4]).astype(np.float32)
+    out1 = grad_fn(net, weights1)(x)
+    out2 = grad_fn(net, weights2)(x)
+    assert np.allclose(out1[0].asnumpy(), expect1)
+    assert np.allclose(out2[0].asnumpy(), expect2)
 
 
 @pytest.mark.level0

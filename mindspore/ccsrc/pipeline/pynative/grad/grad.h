@@ -131,6 +131,10 @@ class GradExecutor {
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
 
+  // grad graph id to identify grad graph cache
+  std::string grad_position_;
+  std::string grad_weights_id_;
+
   // Higher derivative
   inline bool IsNestedGrad() const;
   void SwitchTopcell();

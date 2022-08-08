@@ -71,8 +71,8 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::object &grad_position, const py::args &args) const;
   py::object GradMsFunction(const py::object &out, const py::args &args) const;
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                             const py::object &grad_position, const py::args &args) const;
+  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &grad_hash_id,
+                             const py::args &args) const;
   py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const;
 
   // Used by graph clean
