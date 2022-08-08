@@ -352,7 +352,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
 #ifdef WITH_BACKEND
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
-  void InitPsWorker(const KernelGraphPtr &kernel_graph);
+  void InitPsWorker(const KernelGraphPtr &kernel_graph) const;
 #endif
   // TODO(caifubi): refactor and remove bucket.
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
