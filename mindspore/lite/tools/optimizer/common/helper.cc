@@ -270,7 +270,7 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
   }
   auto value_node = CreateValueNodeWithSexp(sexp);
   if (value_node == nullptr) {
-    MS_LOG(ERROR) << "sexp cannot converted. sexp: " << sexp.ToString();
+    MS_LOG(WARNING) << "sexp cannot converted. sexp: " << sexp.ToString();
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }

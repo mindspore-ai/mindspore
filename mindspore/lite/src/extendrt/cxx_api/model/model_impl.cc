@@ -143,6 +143,8 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(outputs);
+  outputs->clear();
   std::vector<mindspore::tensor::TensorPtr> graph_inputs = TensorUtils::MSTensorToTensorPtr(inputs);
   std::vector<mindspore::tensor::TensorPtr> graph_outputs;
   auto ret = session_->RunGraph(graph_inputs, &graph_outputs);

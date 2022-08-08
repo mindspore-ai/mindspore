@@ -21,6 +21,7 @@
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -73,18 +74,19 @@ PrimitiveCPtr TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->AddAttr(ops::kOriginalOpName, api::MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
-#ifdef ENABLE_LITE_ACL
-  if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
-      AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
-    MS_LOG(ERROR) << "add op input failed";
-    return nullptr;
+  auto target_device = ConverterInnerContext::GetInstance()->GetTargetDevice();
+  if (target_device.find("Ascend") != std::string::npos) {
+    if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
+        AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "add op input failed";
+      return nullptr;
+    }
+  } else {
+    if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "add op input failed";
+      return nullptr;
+    }
   }
-#else
-  if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK) {
-    MS_LOG(ERROR) << "add op input failed";
-    return nullptr;
-  }
-#endif
   return prim->GetPrim();
 }
 TFNodeRegistrar g_tf_deconv_parser("Conv2DBackpropInput", new TFDeconvParser());

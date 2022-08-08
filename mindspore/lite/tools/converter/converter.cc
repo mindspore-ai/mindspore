@@ -73,6 +73,7 @@ FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
 
 FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> &param) {
   api::FuncGraphPtr func_graph_base = nullptr;
+  ConverterInnerContext::GetInstance()->SetTargetDevice(param->device);
   if (param->fmk_type == converter::FmkType::kFmkTypeMs) {
 #ifdef SUPPORT_TRAIN
     kernel::PopulateTrainParameters();
