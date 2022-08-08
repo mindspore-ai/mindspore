@@ -22,6 +22,7 @@ mindspore.ops.squeeze
         Tensor，shape为 :math:`(x_1, x_2, ..., x_S)` 。
 
     异常：
+        - **TypeError** - `input_x` 不是tensor。
         - **TypeError** - `axis` 既不是int也不是tuple。
         - **TypeError** - `axis` 是tuple，其元素并非全部是int。
         - **ValueError** - 指定 `axis` 的对应维度不等于1。
