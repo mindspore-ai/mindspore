@@ -86,19 +86,19 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
   constexpr size_t left_index = 2;
   constexpr size_t right_index = 3;
   if (x_h != abstract::Shape::SHP_ANY) {
-    out_h = static_cast<int64_t>(
-      std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
-                      static_cast<double>((int64_t)LongToInt(kernel_size[0] - 1) * LongToInt(dilations[h_axis] - 1))) /
-                       strides[h_axis]));
+    out_h =
+      static_cast<int64_t>(std::floor(1.0 + LongToDouble(x_h + pads[top_index] + pads[bottom_index] - kernel_size[0] -
+                                                         (kernel_size[0] - 1) * (dilations[h_axis] - 1)) /
+                                              LongToDouble(strides[h_axis])));
     if (is_min_shape && out_h < 1) {
       out_h = 1L;
     }
   }
   if (x_w != abstract::Shape::SHP_ANY) {
-    out_w = static_cast<int64_t>(
-      std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
-                      static_cast<double>((int64_t)LongToInt(kernel_size[1] - 1) * LongToInt(dilations[w_axis] - 1))) /
-                       strides[w_axis]));
+    out_w =
+      static_cast<int64_t>(std::floor(1.0 + LongToDouble(x_w + pads[left_index] + pads[right_index] - kernel_size[1] -
+                                                         (kernel_size[1] - 1) * (dilations[w_axis] - 1)) /
+                                              LongToDouble(strides[w_axis])));
     if (is_min_shape && out_w < 1) {
       out_w = 1L;
     }

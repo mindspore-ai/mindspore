@@ -56,13 +56,13 @@ class AnalysisSchedule {
   void Stop();
   void Wait();
   void Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr);
-  void WaitForRun();
+  void WaitForRun() const;
   void Yield(AsyncInferTask *asyncTask);
 
   void EnterWaiting() {
     {
       std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
-      activate_threads_.erase(AnalysisSchedule::thread_id());
+      (void)activate_threads_.erase(AnalysisSchedule::thread_id());
       MS_LOG(DEBUG) << "Infer return to main thread.";
     }
     activate_thread_cv_.notify_one();
@@ -84,7 +84,7 @@ class AnalysisSchedule {
 
     {
       std::lock_guard<std::mutex> active_lock(activate_thread_lock_);
-      activate_threads_.erase(AnalysisSchedule::thread_id());
+      (void)activate_threads_.erase(AnalysisSchedule::thread_id());
       MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size()
                     << " The infer_thread_count: " << infer_thread_count_
                     << " schedule list size: " << schedule_list_.size() << " thread: " << thread_id() + " "

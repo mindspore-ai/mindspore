@@ -223,14 +223,14 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
     TypeId arg_type_id = kTypeUnknown;
     auto arg_value = input_types[i];
     (void)GetTensorOrScalarTypeInfo(arg_value, &arg_type_id);
-    auto it_map = type_name_map.find(arg_type_id);
-    if (it_map == type_name_map.end()) {
+    auto it_map = type_name_map().find(arg_type_id);
+    if (it_map == type_name_map().cend()) {
       continue;
     }
     if (is_write) {
       if (arg_type_id != it->second) {
-        auto it_name_map = type_name_map.find(it->second);
-        if (it_name_map == type_name_map.end()) {
+        auto it_name_map = type_name_map().find(it->second);
+        if (it_name_map == type_name_map().cend()) {
           continue;
         }
         RaiseExceptionForConvertRefDtype(func, it_map->second, it_name_map->second, i);

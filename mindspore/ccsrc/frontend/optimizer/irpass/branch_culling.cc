@@ -230,7 +230,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
       }
     }
     if (should_replace) {
-      auto new_node = graph->NewCNode();
+      auto new_node = graph->NewCNode({});
       repl_node[node] = new_node;
       nodes_changed.emplace_back(node->cast<CNodePtr>(), new_node);
     }

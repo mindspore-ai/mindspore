@@ -23,6 +23,7 @@
 #include "pipeline/jit/pass.h"
 #include "runtime/pynative/op_executor.h"
 #include "ir/cell.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore::pynative {
 PyNativeExecutorPtr PyNativeExecutor::executor_ = nullptr;

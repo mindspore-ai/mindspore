@@ -18,6 +18,7 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace pynative {

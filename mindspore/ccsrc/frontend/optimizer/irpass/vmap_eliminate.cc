@@ -15,8 +15,10 @@
  */
 
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
+
 #include <string>
 #include <vector>
+#include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/operator/composite/vmap.h"

@@ -149,8 +149,7 @@ void FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradCompute(
     for (int64_t h = row_start; h <= row_end; ++h) {
       for (int64_t w = col_start; w <= col_end; ++w) {
         const int64_t input_index =
-          (SizeToLong(b) * tensor_in_shape_[kInputShapeIndexH] + SizeToLong(h)) * tensor_in_shape_[kInputShapeIndexW] +
-          SizeToLong(w);
+          SizeToLong(b) * tensor_in_shape_[kInputShapeIndexH] + h * tensor_in_shape_[kInputShapeIndexW] + w;
         // Walk through each channel (depth).
         for (size_t d = 0; d < LongToSize(tensor_in_shape_[kInputShapeIndexC]); ++d) {
           const T &input_ref = tensor_in_mat.coeffRef(SizeToLong(d), input_index);

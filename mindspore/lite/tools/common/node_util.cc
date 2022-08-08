@@ -26,6 +26,7 @@
 #include "src/litert/infer_manager.h"
 #include "mindspore/core/ops/switch.h"
 #include "mindspore/core/ops/call.h"
+#include "ops/core_ops.h"
 #include "mindspore/core/ops/fusion/partial_fusion.h"
 #include "nnacl/op_base.h"
 

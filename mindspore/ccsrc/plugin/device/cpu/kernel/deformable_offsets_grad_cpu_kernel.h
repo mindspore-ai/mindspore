@@ -74,7 +74,7 @@ class DeformableOffsetsGradCpuKernelMod : public NativeCpuKernelMod,
  private:
   void ResetResource() noexcept;
 
-  void CheckInOutNum(size_t inputs_num, size_t outputs_num);
+  void CheckInOutNum(size_t inputs_num, size_t outputs_num) const;
 
   void GetDataFormat();
 
@@ -85,11 +85,13 @@ class DeformableOffsetsGradCpuKernelMod : public NativeCpuKernelMod,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
-  void DeformableOffsetGradNHWCKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, T *input_x,
-                                      T *input_offset, T *input_grad, T *output_grad_x, T *output_grad_offset);
+  void DeformableOffsetGradNHWCKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
+                                      const T *input_offset, const T *input_grad, T *output_grad_x,
+                                      T *output_grad_offset);
   template <typename T>
-  void DeformableOffsetGradNCHWKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, T *input_x,
-                                      T *input_offset, T *input_grad, T *output_grad_x, T *output_grad_offset);
+  void DeformableOffsetGradNCHWKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
+                                      const T *input_offset, const T *input_grad, T *output_grad_x,
+                                      T *output_grad_offset);
   OpsDeformableOffsetsGradPtr deformable_kernel_operator_;
   std::string data_format_ = kOpFormat_NCHW;
   DeformableOffsetGradDims dims_;

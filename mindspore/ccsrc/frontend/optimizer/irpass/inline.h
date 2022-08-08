@@ -177,7 +177,7 @@ class InlinerBase : public AnfVisitor {
   }
 
   AnfNodePtr InlineMove(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
-                        const std::vector<AnfNodePtr> &inputs) {
+                        const std::vector<AnfNodePtr> &inputs) const {
     auto mng = fg->manager();
     MS_EXCEPTION_IF_NULL(mng);
     ReplaceParams(mng, args, fg);

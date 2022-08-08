@@ -92,7 +92,7 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
     double alpha = static_cast<double>(input_length) / output_length;
     int k = SizeToInt(input_length / output_length);
     double u_max1 = (k + 2) / alpha - 1;
-    if (common::IsDoubleEqual(alpha, LongToDouble(output_length - 1))) {
+    if (common::IsDoubleEqual(alpha, LongToDouble(SizeToLong(output_length - 1)))) {
       MS_EXCEPTION(ValueError) << "For FractionalAvgPool, the input_length and output_length is wrong, please check "
                                   "the parameter 'pooling ratio'.";
     } else {

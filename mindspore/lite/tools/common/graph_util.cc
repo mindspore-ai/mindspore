@@ -29,6 +29,7 @@
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
 #include "ops/make_tuple.h"
+#include "ops/core_ops.h"
 #include "tools/converter/converter_context.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
