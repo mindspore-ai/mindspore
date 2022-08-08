@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Writes events to disk in a logdir."""
+from __future__ import absolute_import
+
 import os
 import stat
 from urllib.parse import quote
@@ -23,11 +25,11 @@ import numpy as np
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 from mindspore import log as logger
 
-from .._utils import _make_directory
-from ._summary_adapter import package_init_event
-from ..._c_expression import security
+from mindspore.train._utils import _make_directory
+from mindspore.train.summary._summary_adapter import package_init_event
+from mindspore._c_expression import security
 if not security.enable_security():
-    from ..._c_expression import EventWriter_
+    from mindspore._c_expression import EventWriter_
 
 
 FREE_DISK_SPACE_TIMES = 32

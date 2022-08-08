@@ -15,7 +15,7 @@
 """Loss for evaluation"""
 from __future__ import absolute_import
 
-from .metric import Metric, rearrange_inputs
+from mindspore.nn.metrics.metric import Metric, rearrange_inputs
 
 
 class Loss(Metric):

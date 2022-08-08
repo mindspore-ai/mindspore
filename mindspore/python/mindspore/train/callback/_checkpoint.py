@@ -29,9 +29,9 @@ from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank, _enable_distributed_mindrt
 from mindspore.parallel._cell_wrapper import destroy_allgather_cell
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
-from ._callback import Callback, set_cur_net
-from ...common.tensor import Tensor
-from ...common.parameter import Parameter
+from mindspore.train.callback._callback import Callback, set_cur_net
+from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir

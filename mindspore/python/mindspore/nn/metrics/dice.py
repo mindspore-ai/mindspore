@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import numpy as np
 
 from mindspore._checkparam import Validator as validator
-from .metric import Metric, rearrange_inputs
+from mindspore.nn.metrics.metric import Metric, rearrange_inputs
 
 
 class Dice(Metric):

@@ -272,8 +272,8 @@ class FederatedLearningManager(Callback):
         """
         Set the value of last parameters for adaptive synchronization.
         """
-        self._last_param = {_.name: deepcopy(_.asnumpy()) for _ in self._model.trainable_params()
-                            if self._as_prefix not in _.name}
+        self._last_param = {_.name: deepcopy(_.asnumpy())
+                            for _ in self._model.trainable_params() if self._as_prefix not in _.name}
 
     def step_end(self, run_context):
         """

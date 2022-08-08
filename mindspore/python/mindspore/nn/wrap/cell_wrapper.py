@@ -24,15 +24,15 @@ from mindspore.parallel._utils import _get_device_num, _get_gradients_mean,\
 from mindspore.context import ParallelMode
 from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
-from ...common import dtype as mstype
-from ...common.parameter import Parameter, ParameterTuple
-from ...ops.primitive import constexpr
-from ...ops import composite as C
-from ...ops import functional as F
-from ...ops import operations as P
-from ...ops.operations.comm_ops import _VirtualDataset
-from ..cell import Cell
-from .grad_reducer import DistributedGradReducer
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.ops.primitive import constexpr
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.operations.comm_ops import _VirtualDataset
+from mindspore.nn.cell import Cell
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 _get_datatype = C.MultitypeFuncGraph("_get_datatype")
 
@@ -478,6 +478,7 @@ class _MicroBatch(Cell):
         self.strided_slice = P.StridedSlice()
 
     def construct(self, i, *inputs):
+        """construct for _MicroBatch."""
         micro_inputs = ()
         for each_input in inputs:
             input_shape = self.shape(each_input)

@@ -21,10 +21,10 @@ import math
 from functools import reduce
 import numpy as np
 from scipy.stats import truncnorm
-from .seed import get_seed, _get_graph_seed
-from . import dtype as mstype
-from .tensor import Tensor
-from .._c_expression import random_normal
+from mindspore.common.seed import get_seed, _get_graph_seed
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
 

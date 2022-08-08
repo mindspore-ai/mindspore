@@ -19,9 +19,9 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.api import ms_function
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
-from ._dist_optimizer_registry import _register_dist_optimizer
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
+from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
 
 _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 

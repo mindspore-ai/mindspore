@@ -27,7 +27,7 @@ from mindspore import nn, ops
 from mindspore.communication import get_group_size
 from mindspore.context import ParallelMode
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from ._callback import Callback, _handle_loss
+from mindspore.train.callback._callback import Callback, _handle_loss
 
 
 _smaller_better_metrics = ['hausdorff_distance', 'mae', 'mse', 'loss', 'perplexity',
@@ -129,7 +129,7 @@ class ReduceLROnPlateau(Callback):
         self.cooldown_counter = 0
         self.wait = 0
         self.best = np.Inf if self.mode == 'min' or \
-            (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
+                              (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
 
     def on_train_epoch_end(self, run_context):
         """

@@ -15,12 +15,12 @@
 """cell grad"""
 from __future__ import absolute_import
 
-from ..cell import Cell
-from ...ops import composite as C
-from ...ops import operations as P
-from ...ops.primitive import Primitive
-from ...common import dtype as mstype
-from ...common.api import ms_function
+from mindspore.nn.cell import Cell
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from mindspore.ops.primitive import Primitive
+from mindspore.common import dtype as mstype
+from mindspore.common.api import ms_function
 
 
 class _FirstGrad(Cell):
@@ -115,6 +115,7 @@ class Jvp(Cell):
 
     @ms_function
     def construct(self, *args):
+        """construct for jvp."""
         jvp_input = args[0:-1]
         v = args[-1]
         output = self.fn(*jvp_input)
@@ -155,9 +156,7 @@ class _JvpInner(Cell):
         self.tuple_len = Primitive("tuple_len")
 
     def compute_jvp(self, fn, v, jvp_input, output):
-        """
-        Compute the jacobian-vector-product of the given fn, vector, inputs and outputs.
-        """
+        """Compute the jacobian-vector-product of the given fn, vector, inputs and outputs."""
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
             for i in range(self.tuple_len(output)):

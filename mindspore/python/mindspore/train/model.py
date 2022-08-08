@@ -24,29 +24,29 @@ import copy
 import numpy as np
 
 from mindspore import log as logger
-from .serialization import save_checkpoint, load_checkpoint
-from .callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
-from ..common.tensor import Tensor
-from ..nn.metrics import get_metrics, get_metric_fn
-from .._checkparam import check_input_data, check_output_data, Validator
-from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
-from .callback import __all__ as internal_cb_names
-from .. import context
-from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
+from mindspore.train.serialization import save_checkpoint, load_checkpoint
+from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
+from mindspore.common.tensor import Tensor
+from mindspore.nn.metrics import get_metrics, get_metric_fn
+from mindspore._checkparam import check_input_data, check_output_data, Validator
+from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
+from mindspore.train.callback import __all__ as internal_cb_names
+from mindspore import context
+from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
     _reset_op_id_with_offset
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, _cache_enable, \
-                                   _enable_distributed_mindrt
-from ..nn.metrics import Loss
-from .. import nn
-from ..boost import AutoBoost
-from ..context import ParallelMode
-from ..parallel._cost_model_context import _set_multi_subgraphs
-from ..parallel._recovery_context import _set_recovery_context, _get_recovery_context
-from .dataset_helper import DatasetHelper, connect_network_with_dataset
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
+    _cache_enable, _enable_distributed_mindrt
+from mindspore.nn.metrics import Loss
+from mindspore import nn
+from mindspore.boost import AutoBoost
+from mindspore.context import ParallelMode
+from mindspore.parallel._cost_model_context import _set_multi_subgraphs
+from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
+from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
+from mindspore.common.api import _pynative_executor
+from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from . import amp
-from ..common.api import _pynative_executor
-from ..dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 
 
 def _transfer_tensor_to_tuple(inputs):

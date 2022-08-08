@@ -20,8 +20,8 @@ from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.common.api import ms_function
 from mindspore._checkparam import Validator as validator
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
 
 _proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
 

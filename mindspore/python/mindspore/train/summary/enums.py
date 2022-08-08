@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Summary's enumeration file."""
+from __future__ import absolute_import
+
 from enum import Enum
 
 

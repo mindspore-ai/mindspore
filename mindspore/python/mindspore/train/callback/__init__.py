@@ -13,27 +13,27 @@
 # limitations under the License.
 # ============================================================================
 """Callback related classes and functions."""
-
 from __future__ import absolute_import
-from ._callback import Callback
-from ._callback import CallbackManager as _CallbackManager
-from ._callback import InternalCallbackParam as _InternalCallbackParam
-from ._callback import RunContext
-from ._callback import checkpoint_cb_for_save_op as _checkpoint_cb_for_save_op
-from ._callback import set_cur_net as _set_cur_net
-from ._checkpoint import CheckpointConfig
-from ._checkpoint import CheckpointManager as _CheckpointManager
-from ._checkpoint import ModelCheckpoint
-from ._loss_monitor import LossMonitor
-from ._time_monitor import TimeMonitor
-from ._summary_collector import SummaryCollector
-from ._lr_scheduler_callback import LearningRateScheduler
-from ._landscape import SummaryLandscape
-from ._fl_manager import FederatedLearningManager
-from ._history import History
-from ._lambda_callback import LambdaCallback
-from ._early_stop import EarlyStopping
-from ._reduce_lr_on_plateau import ReduceLROnPlateau
+
+from mindspore.train.callback._callback import Callback
+from mindspore.train.callback._callback import CallbackManager as _CallbackManager
+from mindspore.train.callback._callback import InternalCallbackParam as _InternalCallbackParam
+from mindspore.train.callback._callback import RunContext
+from mindspore.train.callback._callback import checkpoint_cb_for_save_op as _checkpoint_cb_for_save_op
+from mindspore.train.callback._callback import set_cur_net as _set_cur_net
+from mindspore.train.callback._checkpoint import CheckpointConfig
+from mindspore.train.callback._checkpoint import CheckpointManager as _CheckpointManager
+from mindspore.train.callback._checkpoint import ModelCheckpoint
+from mindspore.train.callback._loss_monitor import LossMonitor
+from mindspore.train.callback._time_monitor import TimeMonitor
+from mindspore.train.callback._summary_collector import SummaryCollector
+from mindspore.train.callback._lr_scheduler_callback import LearningRateScheduler
+from mindspore.train.callback._landscape import SummaryLandscape
+from mindspore.train.callback._fl_manager import FederatedLearningManager
+from mindspore.train.callback._history import History
+from mindspore.train.callback._lambda_callback import LambdaCallback
+from mindspore.train.callback._early_stop import EarlyStopping
+from mindspore.train.callback._reduce_lr_on_plateau import ReduceLROnPlateau
 
 
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",

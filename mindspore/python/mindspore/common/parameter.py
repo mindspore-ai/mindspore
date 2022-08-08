@@ -22,21 +22,21 @@ import numbers
 import numpy as np
 from mindspore import log as logger
 from mindspore.log import _LogActionOnce
-from .._c_expression import ParamInfo
-from . import dtype as mstype
-from .. import context
-from ..parallel._utils import _get_parallel_mode
-from .initializer import initializer
-from .tensor import Tensor
-from .._checkparam import Validator
-from .._c_expression import Tensor as Tensor_
-from ..parallel._tensor import _get_slice_index
-from ..parallel._auto_parallel_context import auto_parallel_context
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table,\
-                                   _is_fl_mode, _enable_distributed_mindrt
-from ..parallel._ps_context import _reinsert_hash_table_size
-from ..parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
-from .seed import _get_global_and_op_seed
+from mindspore._c_expression import ParamInfo
+from mindspore.common import dtype as mstype
+from mindspore import context
+from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.common.initializer import initializer
+from mindspore.common.tensor import Tensor
+from mindspore._checkparam import Validator
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore.parallel._tensor import _get_slice_index
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, \
+    _is_fl_mode, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _reinsert_hash_table_size
+from mindspore.parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
+from mindspore.common.seed import _get_global_and_op_seed
 
 __all__ = ['Parameter', 'ParameterTuple']
 

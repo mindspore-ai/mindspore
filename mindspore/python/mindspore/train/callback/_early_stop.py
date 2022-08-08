@@ -29,7 +29,7 @@ from mindspore.ops import ReduceOp
 from mindspore.communication import get_group_size
 from mindspore.context import ParallelMode
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from ._callback import Callback, _handle_loss
+from mindspore.train.callback._callback import Callback, _handle_loss
 
 
 _smaller_better_metrics = ['hausdorff_distance', 'mae', 'mse', 'loss', 'perplexity',
@@ -133,7 +133,7 @@ class EarlyStopping(Callback):
         self.wait = 0
         self.stopped_epoch = 0
         self.best = np.Inf if self.mode == 'min' or \
-            (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
+                              (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
         self.best_weights_param_dict = None
 
     def on_train_epoch_end(self, run_context):
@@ -152,8 +152,8 @@ class EarlyStopping(Callback):
 
         parallel_mode = auto_parallel_context().get_parallel_mode()
         rank_size = 1 if parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-        current = current_value if rank_size == 1 else \
-            self._reduce(Tensor(current_value.astype(np.float32))) / rank_size
+        current = current_value if \
+            rank_size == 1 else self._reduce(Tensor(current_value.astype(np.float32))) / rank_size
 
         if current is None:
             return

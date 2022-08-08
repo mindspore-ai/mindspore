@@ -15,7 +15,7 @@
 """mutable function for setting constants mutable."""
 from __future__ import absolute_import
 
-from ..common.tensor import Tensor
+from mindspore.common.tensor import Tensor
 
 
 class _Tuple(tuple):

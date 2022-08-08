@@ -14,20 +14,20 @@
 # ============================================================================
 """Top-level reference to dtype of common module."""
 from __future__ import absolute_import
-from . import dtype
-from .api import ms_function, ms_memory_recycle, ms_class, _convert_python_data
-from .dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
+from mindspore.common import dtype
+from mindspore.common.api import ms_function, ms_memory_recycle, ms_class, _convert_python_data
+from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
     float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
     uint, number, tensor, string, type_none, tensor_type, Int, \
     complex64, complex128, dtype_to_nptype, issubclass_, \
     dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype
-from .dump import set_dump
-from .parameter import Parameter, ParameterTuple
-from .seed import set_seed, get_seed
-from .tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
-from .mutable import mutable
-from .jit_config import JitConfig
+from mindspore.common.dump import set_dump
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.seed import set_seed, get_seed
+from mindspore.common.tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
+from mindspore.common.mutable import mutable
+from mindspore.common.jit_config import JitConfig
 
 # symbols from dtype
 __all__ = [

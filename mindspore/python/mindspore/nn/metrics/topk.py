@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .metric import Metric, rearrange_inputs, _check_onehot_data
+from mindspore.nn.metrics.metric import Metric, rearrange_inputs, _check_onehot_data
 
 
 class TopKCategoricalAccuracy(Metric):

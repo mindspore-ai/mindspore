@@ -23,14 +23,14 @@ from mindspore.common._utils import is_shape_unknown
 from mindspore import context
 
 from mindspore import log as logger
-from . import dtype as mstype
-from ._register_for_tensor import tensor_operator_registry
-from .._c_expression import COOTensor as COOTensor_
-from .._c_expression import CSRTensor as CSRTensor_
-from .._c_expression import RowTensor as RowTensor_
-from .._c_expression import Tensor as Tensor_
-from .._checkparam import Rel
-from .._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore._c_expression import COOTensor as COOTensor_
+from mindspore._c_expression import CSRTensor as CSRTensor_
+from mindspore._c_expression import RowTensor as RowTensor_
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,

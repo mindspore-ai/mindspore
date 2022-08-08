@@ -28,9 +28,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
-from ._dist_optimizer_registry import _register_dist_optimizer
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
+from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
 _fused_adam_weight_decay = C.MultitypeFuncGraph("fused_adam_weight_decay")

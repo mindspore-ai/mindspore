@@ -15,6 +15,6 @@
 """convert to second order related classes and functions."""
 from __future__ import absolute_import
 
-from .convert_utils import ConvertNetUtils, ConvertModelUtils
+from mindspore.train.train_thor.convert_utils import ConvertNetUtils, ConvertModelUtils
 
 __all__ = ["ConvertNetUtils", "ConvertModelUtils"]

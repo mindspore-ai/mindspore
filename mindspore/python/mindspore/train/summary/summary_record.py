@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Record the summary event."""
+from __future__ import absolute_import
+
 import atexit
 import os
 import re
@@ -23,13 +25,13 @@ from collections import defaultdict
 from mindspore import log as logger
 from mindspore.nn import Cell
 
-from ..._c_expression import Tensor, security
-from ..._checkparam import Validator
-from ...common.api import _cell_graph_executor
-from .._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
-from ._summary_adapter import get_event_file_name, package_graph_event
-from ._writer_pool import WriterPool
-from .enums import PluginEnum
+from mindspore._c_expression import Tensor, security
+from mindspore._checkparam import Validator
+from mindspore.common.api import _cell_graph_executor
+from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
+from mindspore.train.summary._summary_adapter import get_event_file_name, package_graph_event
+from mindspore.train.summary._writer_pool import WriterPool
+from mindspore.train.summary.enums import PluginEnum
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
