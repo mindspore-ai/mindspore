@@ -43,6 +43,7 @@
 #include "frontend/optimizer/irpass/tile_eliminate.h"
 #include "frontend/optimizer/irpass/transpose_eliminate.h"
 #include "frontend/optimizer/irpass/value_based_eliminate.h"
+#include "frontend/optimizer/irpass/pynative_no_grad_eliminate.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
@@ -75,6 +76,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "ad_related_special_op_eliminate",
                      {prim::kPrimMirror, prim::kPrimVirtualDiv});
   pynative_eliminate_ = MakeSubstitution(std::make_shared<PynativeEliminater>(), "pynative_eliminate", IsCNodeDup);
+  pynative_no_grad_eliminate_ =
+    MakeSubstitution(std::make_shared<PynativeNoGradEliminater>(), "pynative_no_grad_eliminate", prim::kPrimMakeTuple);
   zero_like_fill_zero_ =
     MakeSubstitution(std::make_shared<ZeroLikeFillZero>(), "zero_like_fill_zero", prim::kPrimZerosLike);
   adjust_all_reduce_mul_add_ =

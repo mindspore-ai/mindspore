@@ -374,6 +374,25 @@ def test_cse(tag):
     return fns[tag]
 
 
+def test_no_grad(tag):
+    """
+    Feature: test no grad input net.
+    Description: test no grad input net.
+    Expectation: No exception.
+    """
+    fns = FnDict()
+    mul = Primitive('Mul')
+    make_tuple = Primitive('MakeTuple')
+
+    @fns
+    def test_f1(x, y):
+        x1 = mul(x, 2)
+        y1 = mul(y, 2)
+        return make_tuple(x1, y1)
+
+    return fns[tag]
+
+
 def test_arithmetic(tag):
     """ test_arithmetic """
     fns = FnDict()

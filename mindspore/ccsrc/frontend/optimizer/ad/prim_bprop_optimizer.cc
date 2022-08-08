@@ -200,11 +200,17 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
     return GenSpecOptBprop(bprop_fg, op_args, out, prim, hookback_flg);
   }
 
-  return GetOptBpropFromCache(bprop_fg, op_args, out, prim);
+  std::vector<bool> need_grad_flags;
+  if (c_node->HasAttr(kAttrNeedGradFlagOfInputs)) {
+    need_grad_flags = GetValue<std::vector<bool>>(c_node->GetAttr(kAttrNeedGradFlagOfInputs));
+  }
+
+  return GetOptBpropFromCache(bprop_fg, op_args, out, prim, need_grad_flags);
 }
 
 FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
-                                                      const ValuePtr &out, const PrimitivePtr &prim) {
+                                                      const ValuePtr &out, const PrimitivePtr &prim,
+                                                      const std::vector<bool> &need_grad_flags) {
   MS_EXCEPTION_IF_NULL(bprop_fg);
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, &abs_list);
@@ -217,7 +223,12 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   if (cache_res == E_LEVEL_2) {
     MS_LOG(DEBUG) << "Level 2 cache matched, prim: " << prim->ToString();
     level_2_graph_info->TryFreeArgsValue(op_args, out);
-    return BasicClone(level_2_graph_info->opt_func_graph());
+    auto level2_graph_clone = BasicClone(level_2_graph_info->opt_func_graph());
+    if (!need_grad_flags.empty()) {
+      return GetBpropGrahWithNoGradInput(level_2_graph_info, AddOutToAbsList(out, abs_list), need_grad_flags, op_args,
+                                         out);
+    }
+    return level2_graph_clone;
   }
 
   // do step1 opt
@@ -235,6 +246,12 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
     level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
+  }
+
+  if (!need_grad_flags.empty()) {
+    return GetBpropGrahWithNoGradInput(level_2_graph_info, new_abs_list, need_grad_flags, op_args, out);
+  }
+  if (enable_grad_cache) {
     return BasicClone(level_2_graph_info->opt_func_graph());
   }
   return level_2_graph_info->opt_func_graph();
@@ -294,7 +311,8 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
 }
 
 PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
-  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const {
+  const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input,
+  const std::vector<bool> &need_grad_flags) const {
   opt::irpass::OptimizeIRPassLib irpass;
   BindAbsToParameters(bprop_fg, abs_list_input);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
@@ -307,10 +325,21 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
     }
   }
   manager->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
+  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource, need_grad_flags);
   auto level_2_graph_info = std::make_shared<PrimBpropOptGraphLevel2Info>(opt_bprop_fg);
   level_2_graph_info->AnalysisArgUsingInfo(manager);
   return level_2_graph_info;
+}
+
+FuncGraphPtr PrimBpropOptimizer::GetBpropGrahWithNoGradInput(const PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
+                                                             const abstract::AbstractBasePtrList &abs_list,
+                                                             const std::vector<bool> &need_grad_flags,
+                                                             const ValuePtrList &op_args, const ValuePtr &out) {
+  auto level2_graph_clone = BasicClone(level_2_graph_info->opt_func_graph());
+  level2_graph_clone->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
+  auto no_grad_graph_info = PrimBpropOptStep2(level2_graph_clone, abs_list, need_grad_flags);
+  no_grad_graph_info->TryFreeArgsValue(op_args, out);
+  return no_grad_graph_info->opt_func_graph();
 }
 
 FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const pipeline::ResourcePtr &res) const {

@@ -164,28 +164,40 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
   return func_graph;
 }
 
-FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource) {
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
+                                const std::vector<bool> &need_grad_flags) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
-  opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
-    irpass.switch_simplify_,
-    irpass.reduce_eliminate_,
-    irpass.tile_eliminate_,
-    irpass.arithmetic_simplify_,
-    irpass.make_sparse_tensor_to_make_tuple_,
-  });
+  OptPassGroupMap map;
+  if (need_grad_flags.empty()) {
+    opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
+      irpass.switch_simplify_,
+      irpass.reduce_eliminate_,
+      irpass.tile_eliminate_,
+      irpass.arithmetic_simplify_,
+      irpass.make_sparse_tensor_to_make_tuple_,
+    });
 
-  opt::OptPassConfig inline_opt = opt::OptPassConfig({
-    irpass.inline_,
-  });
+    opt::OptPassConfig inline_opt = opt::OptPassConfig({
+      irpass.inline_,
+    });
 
-  auto re_auto_monadwrapper = [](const FuncGraphPtr &root, const opt::OptimizerPtr &) -> bool {
-    return ReAutoMonad(root);
-  };
-  OptPassGroupMap map({{"ad_renormalize", opt::OptPassConfig::Renormalize()},
-                       {"ad_inline", inline_opt},
-                       {"ad_special_op_simplify", special_op_simplify},
-                       {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
+    auto re_auto_monadwrapper = [](const FuncGraphPtr &root, const opt::OptimizerPtr &) -> bool {
+      return ReAutoMonad(root);
+    };
+
+    map.push_back({"ad_renormalize", opt::OptPassConfig::Renormalize()});
+    map.push_back({"ad_inline", inline_opt});
+    map.push_back({"ad_special_op_simplify", special_op_simplify});
+    map.push_back({"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)});
+  } else {
+    // If func graph has not need_grad_flag_of_inputs attr, this graph has no need do this pass.
+    opt::OptPassConfig pynative_no_grad_eliminate = opt::OptPassConfig({
+      irpass.pynative_no_grad_eliminate_,
+    });
+
+    map.push_back({"pynative_no_grad_eliminate", pynative_no_grad_eliminate});
+  }
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", resource, map);
   FuncGraphPtr func_graph = resource->func_graph();

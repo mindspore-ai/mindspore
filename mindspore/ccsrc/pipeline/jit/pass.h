@@ -52,7 +52,8 @@ bool PynativeOptPass(const ResourcePtr &resource);
 bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource);
 bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
-FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
+                                const std::vector<bool> &need_grad_flags);
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore

@@ -27,6 +27,7 @@
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
+#include "frontend/optimizer/irpass/pynative_no_grad_eliminate.h"
 #include "pipeline/jit/action.h"
 
 #include "include/common/debug/draw.h"
@@ -85,22 +86,37 @@ class TestOptOpt : public UT::Common {
     elim_R = MakeSubstitution(std::make_shared<irpass::PrimEliminater>(R), "elim_R", R);
     idempotent_P = MakeSubstitution(std::make_shared<IdempotentEliminater>(), "idempotent_P", P);
     Qct_to_P = MakeSubstitution(std::make_shared<QctToP>(), "Qct_to_P", Q);
+    pynative_no_grad_elim = MakeSubstitution(std::make_shared<irpass::PynativeNoGradEliminater>(),
+                                             "pynative_no_grad_eliminate", prim::kPrimMakeTuple);
   }
 
   bool CheckTransform(FuncGraphPtr gbefore, FuncGraphPtr gafter, const SubstitutionList &transform) {
-    equiv_node.clear();
-    equiv_graph.clear();
+    FuncGraphPtr graph_after_trans = TransformGraph(gbefore, transform);
 
-    FuncGraphPtr gbefore_clone = BasicClone(gbefore);
-    OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", std::make_shared<pipeline::Resource>());
-    transform(gbefore_clone, optimizer);
-
-    return Isomorphic(gbefore_clone, gafter, &equiv_graph, &equiv_node);
+    return Isomorphic(graph_after_trans, gafter, &equiv_graph, &equiv_node);
   }
 
   bool CheckOpt(FuncGraphPtr before, FuncGraphPtr after, std::vector<SubstitutionPtr> opts = {}) {
     SubstitutionList eq(opts);
     return CheckTransform(before, after, eq);
+  }
+
+  FuncGraphPtr TransformGraph(FuncGraphPtr gbefore, const SubstitutionList &transform) {
+    equiv_node.clear();
+    equiv_graph.clear();
+
+    FuncGraphPtr gbefore_clone = BasicClone(gbefore);
+    pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+    MS_EXCEPTION_IF_NULL(resource);
+    resource->set_func_graph(gbefore_clone);
+    auto manager = resource->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(gbefore_clone, true);
+
+    OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", resource);
+    transform(gbefore_clone, optimizer);
+
+    return gbefore_clone;
   }
 
  public:
@@ -119,6 +135,7 @@ class TestOptOpt : public UT::Common {
   SubstitutionPtr elim_R;
   SubstitutionPtr idempotent_P;
   SubstitutionPtr Qct_to_P;
+  SubstitutionPtr pynative_no_grad_elim;
   SubstitutionPtr tuple_flatten = irpass_lib.call_graph_tuple_transform_;
 };
 
@@ -211,6 +228,46 @@ TEST_F(TestOptOpt, CSE) {
   is_changed = cse->Cse(test_graph2, manager2);
   ASSERT_TRUE(is_changed);
   ASSERT_EQ(manager2->all_nodes().size(), 12);
+}
+
+/// Feature: test no grad input net.
+/// Description: test no grad input net.
+/// Expectation: No exception.
+TEST_F(TestOptOpt, PynativeNoGradElim) {
+  FuncGraphPtr test_graph1 = getPyFun.CallAndParseRet("test_no_grad", "test_f1");
+
+  ASSERT_TRUE(nullptr != test_graph1);
+
+  auto all_nodes1 = TopoSort(test_graph1->return_node(), SuccDeeperSimple, AlwaysInclude);
+  auto mul_node_num1 = std::count_if(all_nodes1.begin(), all_nodes1.end(),
+                                     [](AnfNodePtr node) { return IsPrimitiveCNode(node, prim::kPrimMul); });
+
+  ASSERT_EQ(mul_node_num1, 2);
+
+  FuncGraphPtr test_graph2 = getPyFun.CallAndParseRet("test_no_grad", "test_f1");
+
+  ASSERT_TRUE(nullptr != test_graph2);
+
+  std::vector<bool> need_grad_flags{true, false};
+  test_graph2->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
+
+  auto tmp_substitution = std::vector<SubstitutionPtr>({pynative_no_grad_elim});
+  SubstitutionList substitution_list(tmp_substitution);
+
+  std::vector<int64_t> shape_vec = {1};
+  AbstractBasePtr abs = std::make_shared<abstract::AbstractTensor>(kTensorType, shape_vec);
+  auto graph_params = test_graph2->parameters();
+  for (auto graph_input : graph_params) {
+    graph_input->set_abstract(abs);
+  }
+
+  auto test_graph2_after_optmiz = TransformGraph(test_graph2, substitution_list);
+  ASSERT_TRUE(nullptr != test_graph2_after_optmiz);
+  auto all_nodes2 = TopoSort(test_graph2_after_optmiz->return_node(), SuccDeeperSimple, AlwaysInclude);
+  auto mul_node_num2 = std::count_if(all_nodes2.begin(), all_nodes2.end(),
+                                     [](AnfNodePtr node) { return IsPrimitiveCNode(node, prim::kPrimMul); });
+
+  ASSERT_EQ(mul_node_num2, 1);
 }
 
 size_t TupleArgAndParamSum(const FuncGraphPtr &func_graph) {
