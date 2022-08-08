@@ -66,6 +66,36 @@ class MS_API AdjustBrightness final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply contrast adjustment on input image.
+class MS_API AdjustContrast final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] contrast_factor Adjusts image contrast, non negative real number.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto adjust_contrast_op = vision::AdjustContrast(10.0);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, adjust_contrast_op},  // operations
+  ///                            {"image"});                       // input columns
+  /// \endcode
+  explicit AdjustContrast(float contrast_factor);
+
+  /// \brief Destructor.
+  ~AdjustContrast() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief AdjustGamma TensorTransform.
 /// \note Apply gamma correction on input image.
 class MS_API AdjustGamma final : public TensorTransform {

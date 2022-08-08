@@ -54,6 +54,7 @@ constexpr char kTensorOp[] = "TensorOp";
 
 // image
 constexpr char kAdjustBrightnessOp[] = "AdjustBrightnessOp";
+constexpr char kAdjustContrastOp[] = "AdjustContrastOp";
 constexpr char kAdjustGammaOp[] = "AdjustGammaOp";
 constexpr char kAdjustHueOp[] = "AdjustHueOp";
 constexpr char kAdjustSaturationOp[] = "AdjustSaturationOp";

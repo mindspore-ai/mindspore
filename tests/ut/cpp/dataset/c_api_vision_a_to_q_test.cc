@@ -2608,3 +2608,55 @@ TEST_F(MindDataTestPipeline, TestAdjustHueParamCheck) {
   // Expect failure: invalid value of AdjustHue
   EXPECT_EQ(iter1, nullptr);
 }
+
+/// Feature: AdjustContrast op
+/// Description: Test AdjustContrast C implementation Pipeline
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestAdjustContrast) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustContrast.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto adjustcontrast_op = vision::AdjustContrast(2.0);
+
+  ds = ds->Map({adjustcontrast_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: AdjustContrast op
+/// Description: Test improper parameters for AdjustContrast C implementation
+/// Expectation: Throw ValueError exception
+TEST_F(MindDataTestPipeline, TestAdjustContrastParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustContrastParamCheck.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Negative contrast_factor
+  // Create objects for the tensor ops
+  auto adjustcontrast_op = vision::AdjustContrast(-1);
+  auto ds1 = ds->Map({adjustcontrast_op});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid value of AdjustContrast
+  EXPECT_EQ(iter1, nullptr);
+}

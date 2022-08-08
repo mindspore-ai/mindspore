@@ -62,17 +62,18 @@ from mindspore._c_expression import typing
 from . import py_transforms_util as util
 from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
-from .validators import check_adjust_brightness, check_adjust_gamma, check_adjust_hue, check_adjust_saturation, \
-    check_adjust_sharpness, check_alpha, check_auto_augment, check_auto_contrast, check_bounding_box_augment_cpp, \
-    check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, check_cutout_new, check_decode, \
-    check_erase, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, check_mix_up, \
-    check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, check_pad_to_size, \
-    check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, check_random_affine, \
-    check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
-    check_random_perspective, check_random_posterize, check_random_resize_crop, check_random_rotation, \
-    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
-    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, \
-    check_trivial_augment_wide, check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
+from .validators import check_adjust_brightness, check_adjust_contrast, check_adjust_gamma, check_adjust_hue, \
+    check_adjust_saturation, check_adjust_sharpness, check_alpha, check_auto_augment, check_auto_contrast, \
+    check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, \
+    check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, \
+    check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, check_normalizepad, \
+    check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, check_prob, \
+    check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, check_random_color_adjust, \
+    check_random_crop, check_random_erasing, check_random_perspective, check_random_posterize, \
+    check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
+    check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, check_rotate, \
+    check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, \
+    check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -101,8 +102,8 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
     Args:
         brightness_factor (float): How much to adjust the brightness. Can be any non negative number.
-            Non negative real number. 0 gives a black image, 1 gives the
-            original image while 2 increases the brightness by a factor of 2.
+            0 gives a black image, 1 gives the original image,
+            while 2 increases the brightness by a factor of 2.
 
     Raises:
         TypeError: If `brightness_factor` is not of type float.
@@ -117,6 +118,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     @check_adjust_brightness
     def __init__(self, brightness_factor):
         super().__init__()
@@ -136,6 +138,50 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
             PIL Image, brightness adjusted image.
         """
         return util.adjust_brightness(img, self.brightness_factor)
+
+
+class AdjustContrast(ImageTensorOperation, PyTensorOperation):
+    r"""
+    Adjust contrast of input image. Input image is expected to be in [H, W, C] format.
+
+    Args:
+        contrast_factor (float): How much to adjust the contrast. Can be any non negative number.
+            0 gives a solid gray image, 1 gives the original image,
+            while 2 increases the contrast by a factor of 2.
+
+    Raises:
+        TypeError: If `contrast_factor` is not of type float.
+        ValueError: If `contrast_factor` is less than 0.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.AdjustContrast(contrast_factor=2.0)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_adjust_contrast
+    def __init__(self, contrast_factor):
+        super().__init__()
+        self.contrast_factor = contrast_factor
+
+    def parse(self):
+        return cde.AdjustContrastOperation(self.contrast_factor)
+
+    def execute_py(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be contrast adjusted.
+
+        Returns:
+            PIL Image, contrast adjusted image.
+        """
+        return util.adjust_contrast(img, self.contrast_factor)
 
 
 class AdjustGamma(ImageTensorOperation, PyTensorOperation):

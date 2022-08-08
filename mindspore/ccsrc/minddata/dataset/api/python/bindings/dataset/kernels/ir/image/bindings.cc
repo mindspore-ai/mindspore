@@ -21,6 +21,7 @@
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_hue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_saturation_ir.h"
@@ -91,6 +92,16 @@ PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
                       auto adjust_brightness = std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor);
                       THROW_IF_ERROR(adjust_brightness->ValidateParams());
                       return adjust_brightness;
+                    }));
+                }));
+
+PYBIND_REGISTER(AdjustContrastOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::AdjustContrastOperation, TensorOperation,
+                                   std::shared_ptr<vision::AdjustContrastOperation>>(*m, "AdjustContrastOperation")
+                    .def(py::init([](float contrast_factor) {
+                      auto adjust_contrast = std::make_shared<vision::AdjustContrastOperation>(contrast_factor);
+                      THROW_IF_ERROR(adjust_contrast->ValidateParams());
+                      return adjust_contrast;
                     }));
                 }));
 

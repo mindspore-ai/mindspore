@@ -6,6 +6,7 @@ if(ENABLE_ACL)
 endif()
 add_library(kernels-image OBJECT
     adjust_brightness_op.cc
+    adjust_contrast_op.cc
     adjust_gamma_op.cc
     adjust_hue_op.cc
     adjust_saturation_op.cc

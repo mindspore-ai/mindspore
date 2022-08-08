@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 
 set(DATASET_KERNELS_IR_VISION_SRC_FILES
         adjust_brightness_ir.cc
+        adjust_contrast_ir.cc
         adjust_gamma_ir.cc
         adjust_hue_ir.cc
         adjust_saturation_ir.cc

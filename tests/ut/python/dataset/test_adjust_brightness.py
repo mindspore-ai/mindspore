@@ -17,10 +17,10 @@ Testing AdjustBrightness op in DE
 """
 import numpy as np
 from numpy.testing import assert_allclose
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms
 import mindspore.dataset.vision as vision
-from mindspore.dataset.vision import Decode
 from mindspore import log as logger
 from util import diff_mse
 
@@ -51,7 +51,7 @@ def test_adjust_brightness_eager(plot=False):
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    img = Decode()(img)
+    img = vision.Decode()(img)
     img_adjustbrightness = vision.AdjustBrightness(1)(img)
     if plot:
         visualize_image(img, img_adjustbrightness)
@@ -64,7 +64,6 @@ def test_adjust_brightness_eager(plot=False):
 
 def test_adjust_brightness_invalid_brightness_factor_param():
     """
-    Test AdjustBrightness implementation with invalid ignore parameter
     Feature: AdjustBrightness op
     Description: Test improper parameters for AdjustBrightness implementation
     Expectation: Throw ValueError exception and TypeError exception
@@ -140,6 +139,7 @@ def test_adjust_brightness_pipeline():
         mse = diff_mse(ori_img, cvt_img)
         logger.info("MSE= {}".format(str(mse)))
         assert mse == 0
+
 
 if __name__ == "__main__":
     test_adjust_brightness_eager()
