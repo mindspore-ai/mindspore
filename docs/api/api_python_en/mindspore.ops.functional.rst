@@ -393,7 +393,6 @@ Array Functions
     mindspore.ops.squeeze
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul
