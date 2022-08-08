@@ -225,7 +225,7 @@ bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<Ad
 }
 
 template <typename T>
-bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolDoCompute(T *input_ptr, T *output_ptr, size_t b, size_t hs,
+bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolDoCompute(const T *input_ptr, T *output_ptr, size_t b, size_t hs,
                                                                const int64_t height_start, int64_t height_end,
                                                                std::vector<int64_t> width_cum_seq) {
   const int64_t width_max = input_shape_[kInputShapeIndexW] - 1;
