@@ -93,10 +93,10 @@ def test_maxpool_with_argmax_same():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_maxpool_with_argmax_pytorch():
+def test_maxpool_with_argmax_tensorflow():
     """
     Feature: test maxPoolWithArgmax op.
-    Description: comparing to pytorch's maxpool2d with 'VALID' padding
+    Description: comparing to tensorflow's MaxPoolWithArgmax with 'VALID' padding
     Expectation: expect correct result.
     """
     x = Tensor(np.array([[[[80., 70., -19.],
@@ -123,12 +123,12 @@ def test_maxpool_with_argmax_pytorch():
                                 [-20., -27.]]]])
     expect_argmax = np.array([[[[0, 1],
                                 [4, 4]],
-                               [[1, 2],
-                                [6, 7]]],
+                               [[10, 11],
+                                [15, 16]]],
                               [[[1, 1],
                                 [4, 4]],
-                               [[0, 2],
-                                [3, 7]]]])
+                               [[9, 11],
+                                [12, 16]]]])
     assert (actual_output.asnumpy() == expect_output).all()
     assert (argmax.asnumpy() == expect_argmax).all()
     assert np.allclose(actual_output.asnumpy(), expect_output)
@@ -169,11 +169,11 @@ def test_maxpool_with_argmax_dynamic_shape():
                                 [-20., -27.]]]])
     expect_argmax = np.array([[[[0, 1],
                                 [4, 4]],
-                               [[1, 2],
-                                [6, 7]]],
+                               [[10, 11],
+                                [15, 16]]],
                               [[[1, 1],
                                 [4, 4]],
-                               [[0, 2],
-                                [3, 7]]]])
+                               [[9, 11],
+                                [12, 16]]]])
     assert (actual_output.asnumpy() == expect_output).all()
     assert (argmax.asnumpy() == expect_argmax).all()
