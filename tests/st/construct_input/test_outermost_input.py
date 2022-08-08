@@ -162,7 +162,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -188,7 +188,7 @@ def test_grad_parameter_input(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -215,10 +215,9 @@ def test_grad_parameter_as_input_and_fv(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+# Support Ascend BE later.
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
@@ -263,7 +262,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
