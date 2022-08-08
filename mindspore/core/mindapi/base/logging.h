@@ -22,6 +22,7 @@
 #include <sstream>
 #include <utility>
 #include "mindapi/base/macros.h"
+#include "utils/macros.h"
 
 namespace mindspore::api {
 enum class LogLevel : uint8_t { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
@@ -69,7 +70,7 @@ class MIND_API LogWriter {
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
-  void operator^(const LogStream &stream) const __attribute__((noreturn));
+  void operator^(const LogStream &stream) const NO_RETURN;
 
   /// \brief Check whether the given log level is enabled or not.
   ///

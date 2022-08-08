@@ -20,7 +20,7 @@
 #include <memory>
 #include <stack>
 #include "utils/hash_map.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 class Value;

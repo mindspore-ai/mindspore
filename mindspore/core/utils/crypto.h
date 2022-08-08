@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 typedef unsigned char Byte;
 namespace mindspore {

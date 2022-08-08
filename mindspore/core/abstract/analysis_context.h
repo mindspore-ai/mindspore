@@ -27,7 +27,7 @@
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/meta_func_graph.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 namespace abstract {

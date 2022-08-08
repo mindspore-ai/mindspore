@@ -26,7 +26,7 @@
 #include <vector>
 #include <thread>
 #include <functional>
-#include "utils/visible.h"
+#include "utils/macros.h"
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
@@ -259,7 +259,7 @@ class MS_CORE_API LogWriter {
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
-  void operator^(const LogStream &stream) const __attribute__((noreturn));
+  void operator^(const LogStream &stream) const NO_RETURN;
 #endif
 
   static void set_exception_handler(const ExceptionHandler &exception_handler);

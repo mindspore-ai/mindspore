@@ -20,7 +20,7 @@
 #include <string>
 
 #include "actor/log.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 constexpr auto MINDRT_TCP = "tcp";

@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include <stack>
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 class Scope;

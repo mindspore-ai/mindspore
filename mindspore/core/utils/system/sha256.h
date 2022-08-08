@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_
 
 #include <string>
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 namespace system {

@@ -141,7 +141,7 @@ std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const min
   str = replace("Tuple", "");
   // remove "List"
   str = replace("List", "");
-  auto result = ParserAttr<T>(str, kv);
+  auto result = ParserAttr<T, ValuePtr>(str, kv);
   return result;
 }
 
@@ -162,7 +162,7 @@ std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
   // remove "List"
   str = replace("List", "");
 
-  auto result = ParserAttr<abstract::AbstractTuple>(str, kv);
+  auto result = ParserAttr<abstract::AbstractTuple, abstract::AbstractBasePtr>(str, kv);
   return result;
 }
 
