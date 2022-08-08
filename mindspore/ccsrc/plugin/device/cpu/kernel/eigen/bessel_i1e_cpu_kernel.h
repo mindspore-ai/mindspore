@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I1_CPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I1_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_I1e_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_I1e_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -25,40 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-class BesselI1CpuKernelMod : public NativeCpuKernelMod {
- public:
-  BesselI1CpuKernelMod() = default;
-  ~BesselI1CpuKernelMod() override = default;
-
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
-  }
-  static double chbevl(double x, const double array[], int n);
-  static double bessel_i1_func(double x);
-  template <typename T>
-  static void BesselI1Func(const T *input, T *output, size_t start, size_t end);
-
-  std::vector<KernelAttr> GetOpSupport() override;
-
- private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselI1CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &)>;
-  BesselKernel kernel_func_;
-
-  size_t input_size_;
-  std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
-  TypeId input_dtype_;
-};
-
 class BesselI1eCpuKernelMod : public NativeCpuKernelMod {
  public:
   BesselI1eCpuKernelMod() = default;
@@ -73,9 +39,6 @@ class BesselI1eCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double bessel_i1e_func(double x);
-  template <typename T>
-  static void BesselI1eFunc(const T *input, T *output, size_t start, size_t end);
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -93,5 +56,4 @@ class BesselI1eCpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I1_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_I1e_CPU_KERNEL_H_
