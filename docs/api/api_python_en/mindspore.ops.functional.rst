@@ -52,11 +52,12 @@ Neural Network
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
+    mindspore.ops.interpolate
+    mindspore.ops.kl_div
+    mindspore.ops.lrn
     mindspore.ops.max_pool3d
     mindspore.ops.pad
     mindspore.ops.padding
-    mindspore.ops.interpolate
-    mindspore.ops.lrn
 
 Loss Functions
 ^^^^^^^^^^^^^^

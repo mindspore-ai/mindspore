@@ -493,6 +493,63 @@ def fast_gelu(x):
     return fast_gelu_(x)
 
 
+def kl_div(logits, labels, reduction='mean'):
+    r"""
+    Computes the Kullback-Leibler divergence between the logits and the labels.
+
+    The updating formulas of KLDivLoss algorithm are as follows,
+
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = target_n \cdot (\log target_n - x_n)
+
+    Then,
+
+    .. math::
+        \ell(x, target) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    where :math:`x` represents `logits`.
+    :math:`target` represents `labels`.
+    :math:`\ell(x, target)` represents `output`.
+
+    Args:
+        logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
+        labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
+        reduction (str): Specifies the reduction to be applied to the output.
+            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
+
+    Returns:
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Otherwise it is a scalar.
+
+    Supported Platforms:
+        ``Ascend`` `CPU`` ``GPU``
+
+    Raises:
+        TypeError: If `reduction` is not a str.
+        TypeError: If neither `logits` nor `labels` is a Tensor.
+        TypeError: If dtype of `logits` or `labels` is not float32.
+
+    Examples:
+        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> output = mindspore.ops.functional.kl_div(logits, labels, 'mean')
+        >>> print(output)
+        -0.23333333
+    """
+    if reduction == 'batchmean':
+        kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
+        batch_size = logits.shape[0]
+        return kl_div_sum / batch_size
+
+    return P.KLDivLoss(reduction=reduction)(logits, labels)
+
+
 def hardshrink(x, lambd=0.5):
     r"""
     Hard Shrink activation function. Calculates the output according to the input elements.
@@ -1753,6 +1810,7 @@ __all__ = [
     'dropout2d',
     'dropout3d',
     'fast_gelu',
+    'kl_div',
     'hardshrink',
     'soft_shrink',
     'intopk',
