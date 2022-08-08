@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -3159,6 +3159,15 @@ class PSROIPoolingGrad(Primitive):
         self.add_prim_attr('spatial_scale', self.spatial_scale)
         self.add_prim_attr('group_size', self.group_size)
         self.add_prim_attr('output_dim', self.output_dim)
+
+
+class AdaptiveMaxPool3DGrad(Primitive):
+    """Computes gradients for AdaptiveMaxPool3D operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AdaptiveMaxPool3DGrad"""
+        self.add_prim_attr("cust_aicpu", self.name)
 
 
 class TraceGrad(Primitive):

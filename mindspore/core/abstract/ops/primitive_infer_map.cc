@@ -63,6 +63,8 @@ PrimShapeDependMap &GetHostDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
   // should be registered by the REGISTER_HOST_DEPENDS
   using ShapeSet = std::set<int64_t>;
+  using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
+  static const auto &kAdaptiveMaxPool3DGrad = prim::kPrimAdaptiveMaxPool3DGrad->name();
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
@@ -184,7 +186,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kResizeNearestNeighborGrad, ShapeSet{1}},
                                          {kStandardNormal, ShapeSet{0}},
                                          {kStandardLaplace, ShapeSet{0}},
-                                         {kCropAndResizeGradImage, ShapeSet{3}}};
+                                         {kCropAndResizeGradImage, ShapeSet{3}},
+                                         {kAdaptiveMaxPool3DGrad, ShapeSet{1}}};
   return host_depends;
 }
 
