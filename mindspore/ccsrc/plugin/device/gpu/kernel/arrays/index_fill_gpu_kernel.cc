@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/index_fill_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -22,6 +23,9 @@ namespace {
 constexpr size_t kIndexFillInputsNum = 4;
 constexpr size_t kIndexFillOutputsNum = 1;
 }  // namespace
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 bool IndexFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
@@ -232,6 +236,20 @@ std::vector<std::pair<KernelAttr, IndexFillGpuKernelMod::IndexFillLaunchFunc>> I
      .AddInputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),
    &IndexFillGpuKernelMod::LaunchKernel<double, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &IndexFillGpuKernelMod::LaunchKernel<Complex<float>, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &IndexFillGpuKernelMod::LaunchKernel<Complex<double>, int>},
 };
 
 std::vector<KernelAttr> IndexFillGpuKernelMod::GetOpSupport() {

@@ -3523,10 +3523,8 @@ def _create_cummin_perm(axis, x_shape):
 
 def cummin(x, axis):
     r"""
-    Computation of the cumulative minimum of elements of 'x' in the dimension axis,
-    and the index location of each maximum value found in the dimension 'axis'.
-
-    It returns the cumulative minimum of elements and the index.
+    Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `x`
+    along the dimension `axis`, and `indices` is the index location of each minimum value.
 
     .. math::
         \begin{array}{ll} \\
@@ -3534,20 +3532,18 @@ def cummin(x, axis):
         \end{array}
 
     Args:
-        x (Tensor): The input tensor, rank of `input_x` > 0.
-        axis (Int): The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
-          to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
-          from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
-          from the last dimension. For example, -1 means the last dimension.
+        x (Tensor): The input Tensor, rank of `x` > 0.
+        axis (int): The dimension to do the operation over. The value of `axis` must be in the range
+            `[-x.ndim, x.ndim - 1]`.
 
-    Outputs:
-        - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
-        - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
+    Returns:
+        tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
+        The shape of each output tensor is the same as input `x`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If 'axis' is not an int.
-        ValueError:If 'axis' is out the range of [-len(`input_x`.shape) to len(`input_x`.shape) - 1]
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3578,10 +3574,49 @@ def cummin(x, axis):
 
 
 def cummax(x, axis):
-    """
-    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-    each maximum value.
+    r"""
+    Returns a tuple (values,indices) where 'values' is the cumulative maximum value of input Tensor `x`
+    along the dimension `axis`, and `indices` is the index location of each maximum value.
+
+    .. math::
+        \begin{array}{ll} \\
+            y{i} = max(x{1}, x{2}, ... , x{i})
+        \end{array}
+
+    Args:
+        x (Tensor): The input Tensor, rank of `x` > 0.
+        axis (int): The dimension to do the operation over. The value of `axis` must be in the range
+            `[-x.ndim, x.ndim - 1]`.
+
+    Returns:
+        tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index,
+        The shape of each output tensor is the same as input `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
+        >>> output = ops.cummax(x, axis=0)
+        >>> print(output[0])
+        [[ 3.  4.  6. 10.]
+         [ 3.  6.  7. 10.]
+         [ 4.  6.  8. 10.]
+         [ 4.  6.  8. 10.]]
+        >>> print(output[1])
+        [[0 0 0 0]
+         [0 1 1 0]
+         [2 1 2 0]
+         [2 1 2 0]]
     """
     _cummax = _get_cache_prim(ops.Cummax)(axis=axis)
     return _cummax(x)

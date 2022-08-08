@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/index_fill_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename DataType, typename Int>
 __global__ void IndexFillKernel(const int *__restrict__ index_ptr, const DataType *__restrict__ value_ptr,
@@ -109,3 +110,13 @@ template CUDA_LIB_EXPORT void IndexFill<double>(double *out_ptr, const int *inde
                                                 int64_t outer_size, int64_t dim_size, int64_t inner_size,
                                                 const double *value_ptr, bool *out_bound_ptr, const uint32_t &device_id,
                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<Complex<float>>(Complex<float> *out_ptr, const int *index_ptr,
+                                                        int64_t index_size, int64_t outer_size, int64_t dim_size,
+                                                        int64_t inner_size, const Complex<float> *value_ptr,
+                                                        bool *out_bound_ptr, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<Complex<double>>(Complex<double> *out_ptr, const int *index_ptr,
+                                                         int64_t index_size, int64_t outer_size, int64_t dim_size,
+                                                         int64_t inner_size, const Complex<double> *value_ptr,
+                                                         bool *out_bound_ptr, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
