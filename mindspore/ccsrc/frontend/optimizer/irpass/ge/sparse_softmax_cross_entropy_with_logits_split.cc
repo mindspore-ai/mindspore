@@ -556,7 +556,7 @@ void SparseSoftmaxCrossEntropyWithLogitsSplit::Visit(const AnfNodePtr &node) {
   is_match_ = true;
 }
 
-AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsSplit::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
+AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsSplit::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   MS_LOG(INFO) << "SparseSoftmaxCrossEntropyWithLogits split start.";
   auto IsSparseSoftmaxNode = [](const AnfNodePtr &node) -> bool {
     return IsPrimitiveCNode(node, prim::kPrimSparseSoftmaxCrossEntropyWithLogits) &&

@@ -784,7 +784,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
         ++back_index;
       }
     }
-    if (args_tuple_num) {
+    if (args_tuple_num != 0) {
       (void)args_tuple.emplace_back(value);
       if (args_tuple.size() == args_tuple_num) {
         value = std::make_shared<ValueTuple>(args_tuple);

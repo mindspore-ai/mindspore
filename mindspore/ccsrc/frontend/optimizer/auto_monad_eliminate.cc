@@ -355,7 +355,7 @@ bool AutoMonadEliminator::ReplaceAutoMonadNode(const FuncGraphManagerPtr &manage
       auto &group = load_group.second;
       const auto &param_user_indexes = param_users[ref_key];
       auto groups = SplitGroup(group, param_user_indexes, special_op_indexes);
-      need_merge_loads.insert(need_merge_loads.cend(), groups.cbegin(), groups.cend());
+      (void)need_merge_loads.insert(need_merge_loads.cend(), groups.cbegin(), groups.cend());
     }
     for (auto &group : need_merge_loads) {
       bool replaced = ReplaceSameGroupLoad(manager, fg, toposet, group);
