@@ -729,8 +729,8 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
   return reshape_layer->getOutput(0);
 }
 
-void DebugDims(const nvinfer1::Dims &dims) {
-  MS_LOG(DEBUG) << "nbdim : " << dims.nbDims;
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims) {
+  MS_LOG(DEBUG) << key << ":" << dims.nbDims;
   for (int i = 0; i != dims.nbDims; ++i) {
     MS_LOG(DEBUG) << dims.d[i];
   }

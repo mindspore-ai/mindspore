@@ -186,9 +186,11 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
 nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const mindspore::MSTensor &in_tensor, size_t index) {
   nvinfer1::Dims input_dims;
   input_dims.nbDims = min_dims_[index].nbDims;
+  DebugDims("input min dims", min_dims_[index]);
   for (int i = 0; i != input_dims.nbDims; ++i) {
     input_dims.d[i] = (max_dims_[index].d[i] != min_dims_[index].d[i]) ? -1 : min_dims_[index].d[i];
   }
+  DebugDims("input dims", input_dims);
   if (profile_ == nullptr) {
     MS_LOG(ERROR) << "profile is null.";
     return input_dims;
@@ -205,9 +207,9 @@ nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const mindspore::MSTensor &
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return input_dims;
   }
-  DebugDims(min_dims_[index]);
-  DebugDims(opt_dims_[index]);
-  DebugDims(max_dims_[index]);
+  DebugDims("min dims", min_dims_[index]);
+  DebugDims("opt dims", opt_dims_[index]);
+  DebugDims("max dims", max_dims_[index]);
   return input_dims;
 }
 
@@ -268,9 +270,9 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return input_dims;
   }
-  DebugDims(input_dims_min);
-  DebugDims(input_dims_opt);
-  DebugDims(input_dims_max);
+  DebugDims("input min dims", input_dims_min);
+  DebugDims("input opt dims", input_dims_opt);
+  DebugDims("input max dims", input_dims_max);
   return input_dims;
 }
 
@@ -286,6 +288,15 @@ int TensorRTSubGraph::ParseInputsProfile() {
   return RET_OK;
 }
 
+int TensorRTSubGraph::GetInputIndexByName(const std::string &name) {
+  for (int i = 0; i != inputs().size(); ++i) {
+    if (inputs()[i].Name() == name) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 int TensorRTSubGraph::BuildTensorRTGraph() {
   MS_ASSERT(!all_ops_.empty());
   int ret;
@@ -299,7 +310,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       // Data From CPU
       auto in_tensor = cur_op->inputs()[i];
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
-        nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(in_tensor, i);
+        nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(in_tensor, GetInputIndexByName(in_tensor.Name()));
         if (trt_tensor == nullptr) {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
@@ -477,7 +488,7 @@ int TensorRTSubGraph::Prepare() {
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     auto out_dims = trt_context_->getBindingDimensions(index);
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
-    DebugDims(out_dims);
+    DebugDims("out dims", out_dims);
     std::map<enum DataType, size_t> TypeByte = {
       {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
       {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},

@@ -135,7 +135,7 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
 
 int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
 
-void DebugDims(const nvinfer1::Dims &dims);
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
