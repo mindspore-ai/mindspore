@@ -41,7 +41,8 @@ void GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abstra
     if (n_value_ptr->isa<tensor::Tensor>()) {
       auto n_tensor_ptr = n_value_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(n_tensor_ptr);
-      num_segments_v = *static_cast<int64_t *>(n_tensor_ptr->data_c());
+      num_segments_v = n_tensor_ptr->data_type() == kNumberTypeInt32 ? *static_cast<int32_t *>(n_tensor_ptr->data_c())
+                                                                     : *static_cast<int64_t *>(n_tensor_ptr->data_c());
       (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
       num_vec->push_back(num_segments_v);
       num_min_vec->push_back(num_segments_v);
@@ -58,7 +59,19 @@ void GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abstra
       }
     }
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
+    auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
+    if (num_segments_input_type->type_id() == kNumberTypeInt64) {
+      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
+      MS_EXCEPTION_IF_NULL(num_sample_ptr);
+      num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
+    } else if (num_segments_input_type->type_id() == kNumberTypeInt32) {
+      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
+      MS_EXCEPTION_IF_NULL(num_sample_ptr);
+      num_segments_v = GetValue<int32_t>(input_args[kInputIndex2]->BuildValue());
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << op_name << "' the third input build type is invalid:"
+                              << TypeIdToString(num_segments_input_type->type_id()) << ".";
+    }
     (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
     num_vec->push_back(num_segments_v);
     num_min_vec->push_back(num_segments_v);
