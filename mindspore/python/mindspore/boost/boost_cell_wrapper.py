@@ -449,7 +449,6 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         self.gpu_target = (context.get_context("device_target") == "GPU")
         self.loss_scaling_manager = None
 
-        print(self.auto_boost.boost_config, flush=True)
         if self.auto_boost.boost_config.get("loss_scale_group", False):
             self.enable_enhanced_amp = True
             if not isinstance(scale_sense, Cell) or not hasattr(scale_sense, "set_loss_scale_status"):
@@ -728,7 +727,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             subcell = cells[name]
             if subcell == network:
                 continue
-            elif "GroupLossScaleManager" in subcell.cls_name:
+            if "GroupLossScaleManager" in subcell.cls_name:
                 network._cells[name] = _OutputToFloat16(subcell.to_float(mstype.float32))  # pylint: disable=W0212
                 change = True
             else:

@@ -303,13 +303,15 @@ def get_fuzz_build_info(job_content):
     """
     op_compute_info = get_compute_op_list(job_content)[0]
     fuzz_build_info = dict()
-    fuzz_build_info["compile_type"] = "fuzzily_build" if op_compute_info["build_type"] == BuildType.FUZZILY.value \
-        else "accurately_build"
+    fuzz_build_info["compile_type"] = "accurately_build"
+    if op_compute_info["build_type"] == BuildType.FUZZILY.value:
+        fuzz_build_info["compile_type"] = "fuzzily_build"
     fuzz_build_info["miss_support_info"] = op_compute_info["miss_support_info"]
     fuzz_build_info["max_kernel_id"] = op_compute_info["max_kernel_id"]
     json_path = os.path.join(job_content["SocInfo"]["op_debug_dir"], "kernel_meta", op_compute_info["name"] + ".json")
-    fuzz_build_info["incremental_link"] = os.path.realpath(json_path) if \
-        op_compute_info["build_type"] == BuildType.FUZZILY.value else ""
+    fuzz_build_info["incremental_link"] = ""
+    if op_compute_info["build_type"] == BuildType.FUZZILY.value:
+        fuzz_build_info["incremental_link"] = os.path.realpath(json_path)
     return fuzz_build_info
 
 
