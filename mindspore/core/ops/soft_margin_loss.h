@@ -35,6 +35,15 @@ class MIND_API SoftMarginLoss : public BaseOperator {
   MIND_API_BASE_MEMBER(SoftMarginLoss);
   /// \brief Constructor.
   SoftMarginLoss() : BaseOperator(kNameSoftMarginLoss) { InitIOName({"predict", "label"}, {"loss"}); }
+
+  void Init(const std::string &reduction = "mean");
+  /// \brief Set reduction.
+  void set_reduction(const std::string &reduction);
+
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
+  std::string get_reduction() const;
 };
 
 abstract::AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

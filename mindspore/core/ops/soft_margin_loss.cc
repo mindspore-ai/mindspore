@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string>
 #include "ops/soft_margin_loss.h"
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
@@ -47,7 +47,7 @@ TypePtr SoftMarginLossInferType(const PrimitivePtr &primitive, const std::vector
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSoftMarginLossInputSize, op_name);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("logits", input_args[0]->BuildType());
   (void)types.emplace("labels", input_args[1]->BuildType());
@@ -56,12 +56,25 @@ TypePtr SoftMarginLossInferType(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
+void SoftMarginLoss::set_reduction(const std::string &reduction) {
+  CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+
+std::string SoftMarginLoss::get_reduction() const {
+  auto value_ptr = GetAttr(kReduction);
+  return GetValue<std::string>(value_ptr);
+}
+
+void SoftMarginLoss::Init(const std::string &reduction) { this->set_reduction(reduction); }
+
 MIND_API_OPERATOR_IMPL(SoftMarginLoss, BaseOperator);
 AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SoftMarginLossInferShape(primitive, input_args),
                                 SoftMarginLossInferType(primitive, input_args));
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(SoftMarginLoss, prim::kPrimSoftMarginLoss, SoftMarginLossInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

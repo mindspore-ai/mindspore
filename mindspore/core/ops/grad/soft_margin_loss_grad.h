@@ -33,6 +33,15 @@ class MIND_API SoftMarginLossGrad : public BaseOperator {
   SoftMarginLossGrad() : BaseOperator(kNameSoftMarginLossGrad) {
     InitIOName({"predict", "label", "dout"}, {"gradient"});
   }
+
+  void Init(const std::string &reduction = "mean");
+  /// \brief Set reduction.
+  void set_reduction(const std::string &reduction);
+
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
+  std::string get_reduction() const;
 };
 
 abstract::AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
