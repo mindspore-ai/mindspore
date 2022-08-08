@@ -94,7 +94,7 @@ abstract::ShapePtr SegmentMinInferShape(const PrimitivePtr &primitive, const std
     for (size_t i = 1; i < x_shape.size(); ++i) {
       length *= static_cast<int64_t>(x_shape[i]);
     }
-    const uint32_t max_shape_value = static_cast<uint32_t>(max_length) / length;
+    const uint32_t max_shape_value = LongToUint(max_length / length);
     ShapeVector min_shape(x_shape);
     ShapeVector max_shape(x_shape);
     out_shape[0] = abstract::Shape::SHP_ANY;

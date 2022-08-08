@@ -48,7 +48,7 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
   if (default_idx == size_splits.end()) {
     int64_t sum_of_size_splits = 0;
     for (int64_t i = 0; i < num_split; i++) {
-      CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
+      CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[LongToSize(i)], kIncludeBoth,
                                          {0, shape_of_split_dim}, prim_name);
       sum_of_size_splits += size_splits[LongToSize(i)];
     }
@@ -62,7 +62,7 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
     } else {
       int64_t sum_of_size_splits = 0;
       for (int64_t i = 0; i < num_split - 1; i++) {
-        CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
+        CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[LongToSize(i)], kIncludeBoth,
                                            {0, shape_of_split_dim}, prim_name);
         sum_of_size_splits += size_splits[LongToSize(i)];
       }
