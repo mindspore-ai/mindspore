@@ -185,6 +185,18 @@ STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodeP
     MS_LOG(ERROR) << "new Return failed";
     return RET_NULL_PTR;
   }
+  if (return_inputs.empty()) {
+    MS_LOG(ERROR) << "return input is empty";
+    return RET_ERROR;
+  }
+  auto input = return_inputs[0];
+  MS_EXCEPTION_IF_NULL(input);
+  auto abstract = input->abstract();
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Input node abstract is null, node: " << input->fullname_with_scope();
+    return RET_ERROR;
+  }
+
   auto return_prim_c = return_prim->GetPrim();
   MS_ASSERT(return_prim_c != nullptr);
   auto return_cnode = anf_graph->NewCNode(return_prim_c, return_inputs);
@@ -193,6 +205,7 @@ STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodeP
     return RET_ERROR;
   }
   return_cnode->set_fullname_with_scope("Return");
+  return_cnode->set_abstract(abstract);
   anf_graph->set_return(return_cnode);
   return RET_OK;
 }
@@ -359,6 +372,7 @@ STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPt
   if (onnx_graph.output_size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
+    AbstractBasePtrList elem;
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
@@ -373,6 +387,7 @@ STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPt
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_NOT_FIND_OP;
       }
+      elem.emplace_back(cnode->abstract());
       make_tuple_inputs.emplace_back(cnode);
     }
     auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
@@ -382,7 +397,9 @@ STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPt
       MS_LOG(ERROR) << "new cnode error";
       return RET_ERROR;
     }
+
     make_tuple_cnode->set_fullname_with_scope("return tuple");
+    make_tuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     return_inputs.emplace_back(make_tuple_cnode);
   } else {
     const auto &graph_out = onnx_graph.output(0);
