@@ -43,7 +43,7 @@ class NodeInferShape {
   std::vector<int> GetInputShape(const CNodePtr &cnode, size_t index);
   std::vector<int> GetIntVecInput(const CNodePtr &cnode, size_t index);
 
- private:
+ protected:
   STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs, int status);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);

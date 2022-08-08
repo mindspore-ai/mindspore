@@ -43,6 +43,9 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &n : todos) {
     auto node = n->cast<CNodePtr>();
+    if (node != nullptr) {
+      PreProcessAllNode(node);
+    }
     if (node == nullptr || AnfUtils::IsGraphKernel(node) || GkUtils::IsKeepBasicNode(node) ||
         !AnfUtils::IsRealKernel(node) || !CanExpand(node)) {
       continue;

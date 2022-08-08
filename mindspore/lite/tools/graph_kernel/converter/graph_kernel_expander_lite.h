@@ -97,6 +97,7 @@ class GraphKernelExpanderLite : public GraphKernelExpander {
   std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr InitExpander(const AnfNodePtr &node) override;
   bool CanExpand(const CNodePtr &node) const override;
+  void PreProcessAllNode(const CNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_

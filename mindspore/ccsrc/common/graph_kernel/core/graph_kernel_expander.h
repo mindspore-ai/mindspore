@@ -40,6 +40,7 @@ class GraphKernelExpander : public opt::Pass {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),
                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   }
+  virtual void PreProcessAllNode(const CNodePtr &node) {}
 
  private:
   std::vector<PrimitivePtr> expand_ops_;

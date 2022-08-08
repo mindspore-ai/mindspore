@@ -56,7 +56,7 @@ bool OpDesc::CheckOutputs() {
     return false;
   }
   for (size_t i = 0; i < outputs.size(); i++) {
-    if (outputs[i]->shape != outputs_info_[i].shape && !outputs_info_[i].shape.empty()) {
+    if (outputs[i]->shape != outputs_info_[i].shape) {
       std::ostringstream oss;
       oss << "Op " << this->name_ << "'s output shape [";
       for (auto s : outputs[i]->shape) {
