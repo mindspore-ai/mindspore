@@ -3035,7 +3035,7 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
 void SessionBasic::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }
 
 #ifdef WITH_BACKEND
-void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
+void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) const {
   if (!ps::PSContext::instance()->is_worker()) {
     return;
   }
