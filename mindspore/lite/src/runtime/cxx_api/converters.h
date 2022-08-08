@@ -48,6 +48,7 @@ class ContextUtils {
   static bool IsAffinityModeValid(int affinity_mode) {
     return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
   }
+  static void ResetContextDefaultParam(Context *context);
 };
 
 inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {

@@ -46,6 +46,8 @@ bool IsSupportSDot();
 
 size_t GetMaxMallocSize();
 
+int GetCoreNum();
+
 #ifdef __ANDROID__
 uint32_t getHwCap(int hwcap_type);
 #endif

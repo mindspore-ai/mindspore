@@ -15,9 +15,14 @@
  */
 #include "src/runtime/cxx_api/converters.h"
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 constexpr static int kMaxNumOfDevices = 3;
+constexpr static int kDefaultThreadNumTwo = 2;
+constexpr static int kDefaultThreadNumFour = 4;
+constexpr static int kDefaultInterOpParallelNum = 1;
+constexpr static int kCoreNumThreshold = 32;
 
 void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
                                   const std::vector<int32_t> &affinity_core_list,
@@ -72,19 +77,45 @@ Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceIn
   return kSuccess;
 }
 
+void ContextUtils::ResetContextDefaultParam(Context *context) {
+  if (context->GetInterOpParallelNum() == 0) {
+    context->SetInterOpParallelNum(kDefaultInterOpParallelNum);
+  }
+  if (context->GetThreadNum() != 0) {
+    return;
+  }
+  MS_LOG(INFO) << "thread num is 0, will set the optimal number of threads";
+#if defined(__ANDROID__) || defined(MS_COMPILE_IOS)
+  context->SetThreadNum(kDefaultThreadNumTwo);
+  MS_LOG(INFO) << "Set the number of threads to " << kDefaultThreadNumTwo;
+  return;
+#endif
+  auto core_num = lite::GetCoreNum();
+  if (core_num <= kCoreNumThreshold) {
+    context->SetThreadNum(kDefaultThreadNumTwo);
+    MS_LOG(INFO) << "Set the number of threads to " << kDefaultThreadNumTwo;
+  } else {
+    context->SetThreadNum(kDefaultThreadNumFour);
+    MS_LOG(INFO) << "Set the number of threads to " << kDefaultThreadNumFour;
+  }
+  return;
+}
+
 lite::InnerContext *ContextUtils::Convert(Context *context) {
   auto inner_context = std::make_unique<lite::InnerContext>();
   if ((context == nullptr) || (inner_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return nullptr;
   }
+  ResetContextDefaultParam(context);
   auto device_list = context->MutableDeviceInfo();
   if (device_list.size() == 0 || device_list.size() > kMaxNumOfDevices) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
     return nullptr;
   }
-  if (context->GetInterOpParallelNum() <= 0) {
-    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum();
+  if (context->GetInterOpParallelNum() <= 0 || context->GetInterOpParallelNum() > context->GetThreadNum()) {
+    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum()
+                  << " | thread num: " << context->GetThreadNum();
     return nullptr;
   }
   SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
