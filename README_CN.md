@@ -296,4 +296,4 @@ MindSpore的版本分支有以下几种维护阶段：
 
 ## 许可证
 
-[Apache License 2.0](https://gitee.com/mindspore/mindspore#/mindspore/mindspore/blob/master/LICENSE)
+[Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)

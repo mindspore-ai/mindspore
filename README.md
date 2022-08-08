@@ -303,4 +303,4 @@ The release notes, see our [RELEASE](https://gitee.com/mindspore/mindspore/blob/
 
 ## License
 
-[Apache License 2.0](https://gitee.com/mindspore/mindspore#/mindspore/mindspore/blob/master/LICENSE)
+[Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
