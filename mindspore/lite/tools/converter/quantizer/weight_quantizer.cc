@@ -25,6 +25,7 @@
 #include "tools/converter/quantizer/fse_encoder.h"
 #include "tools/converter/quantizer/tensor_compressor.h"
 #include "tools/converter/quantizer/cluster_quantization.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 
 namespace mindspore::lite::quant {
 static const float kScaleFactor = (0.01 * 0.01 * 0.01 * 24.0);
@@ -147,9 +148,9 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
                                    WeightQuantType weight_quant_type, bool symmetric) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
-  auto status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
-                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
-                                    preferred_dim, symmetric, is_auto_tune_);
+  auto mixed_bit_quantization = MixedBitWeightQuantization(mixed_bit_init_scale_);
+  auto status = mixed_bit_quantization.QuantFilter(primitive, parameter, tensor_info, idx - 1,
+                                                   param_->commonQuantParam.quant_type, is_auto_tune_);
   if (status == RET_OK) {
     FSEEncoder fse_encoder;
     auto quant_param_holder = GetCNodeQuantHolder(primitive);

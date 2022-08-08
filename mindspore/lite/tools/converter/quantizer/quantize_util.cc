@@ -490,56 +490,6 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                        const PrimitivePtr &primitive, schema::QuantType quant_type, WeightQuantType weight_quant_type,
-                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetric,
-                        bool use_auto_tune_alg) {
-  MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
-  MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
-  auto dims = weight->shape();
-  if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-    if (dims.size() <= 1) {
-      MS_LOG(WARNING) << "dims is " << dims.size() << " can not per_channel";
-      weight_quant_type = FIXED_BIT_PER_LAYER;
-    }
-  }
-  std::vector<schema::QuantParamT> quant_params;
-  int elem_count = weight->DataSize();
-  auto *raw_data = static_cast<float *>(weight->data_c());
-  if (raw_data == nullptr) {
-    MS_LOG(ERROR) << "rawDatas is nullptr";
-    return RET_ERROR;
-  }
-
-  std::vector<int16_t> quant_data(elem_count);
-  if (weight_quant_type != MIXED_BIT_PER_LAYER) {
-    MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
-    return RET_ERROR;
-  }
-  MixedBitWeightQuantizer quantizer(init_scale);
-  auto ret = quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params,
-                                      &quant_data, parameter_node->fullname_with_scope(), use_auto_tune_alg);
-  if (ret != RET_OK) {
-    return ret;
-  }
-
-  auto status = UpdateTensorDataAndSize(parameter_node, weight, quant_data.data(), quant_data.size() * sizeof(int16_t),
-                                        quant_data_type);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-    return RET_ERROR;
-  }
-
-  if (quant_params.empty()) {
-    MS_LOG(ERROR) << "quant_params empty";
-    return RET_ERROR;
-  }
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  quant_param_holder->set_input_quant_param(index, quant_params);
-  quant_param_holder->set_quant_type(quant_type);
-  return ret;
-}
-
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types) {
   for (const auto &type : support_primitive_types) {
     if (opt::CheckPrimitiveType(cnode, type)) {
