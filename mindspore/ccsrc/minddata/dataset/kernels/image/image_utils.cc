@@ -143,8 +143,8 @@ Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op
     }
   }
   // Validate image rank
+  auto rank = image->Rank();
   if (!valid_rank.empty()) {
-    auto rank = image->Rank();
     if (valid_rank.find(rank) == valid_rank.end()) {
       std::string err_msg = op_name + ": the dimension of image tensor does not match the requirement of operator.";
       err_msg += " Expecting tensor in dimension of " + NumberSetToString(valid_rank);
@@ -159,6 +159,12 @@ Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op
       if (rank == 1) {
         err_msg += " You may need to perform Decode first.";
       }
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    if (rank < kMinImageRank) {
+      std::string err_msg =
+        op_name + ": the image tensor should have at least two dimensions. You may need to perform Decode first.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
