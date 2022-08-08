@@ -25,6 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, _bdim_at_any, \
     _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
+from .._vmap.vmap_array_ops import _get_reduce_batch_axis
 from ..primitive import Primitive
 
 
@@ -591,6 +592,26 @@ def get_matmul_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         out = F.reshape(out, batch_origin_shape[:(nchw_size + 1 - chw_size)] + out_shape[chw_reverse_index:])
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Softmax)
+def get_softmax_vmap_rule(prim, axis_size):
+    """VmapRule for `Softmax`"""
+    axis = prim.axis[0]
+    if isinstance(axis, tuple):
+        axis = axis[0]
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+        out = P.Softmax(batch_axis)(x)
+        return out, x_dim
 
     return vmap_rule
 

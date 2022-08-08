@@ -395,32 +395,9 @@ class AdaptiveMaxPool3D(Primitive):
 
 class Softmax(Primitive):
     r"""
-    Softmax operation.
-
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
-    the Softmax function is shown as follows:
 
-    .. math::
-        \text{output}(x_i) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},
-
-    where :math:`N` is the length of the tensor.
-
-    Args:
-        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: -1.
-
-    Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the logits.
-
-    Raises:
-        TypeError: If `axis` is neither an int nor a tuple.
-        TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape)).
+    Refer to :func:`mindspore.ops.softmax` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

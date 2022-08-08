@@ -283,6 +283,7 @@ from .nn_func import (
     hardswish,
     softsign,
     selu,
+    softmax,
     pdist,
     pad,
     mirror_pad,

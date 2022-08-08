@@ -91,6 +91,7 @@ Activation Functions
     mindspore.ops.selu
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
+    mindspore.ops.softmax
     mindspore.ops.tanh
 
 Sampling Functions

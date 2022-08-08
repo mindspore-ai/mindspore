@@ -136,6 +136,10 @@ class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
                           << axis.size();
       }
+      if (axis.size() > 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
+                          << axis.size();
+      }
       InitSizeByAxis(input_shape, axis[0]);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(

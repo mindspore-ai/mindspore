@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class NetSoftmax(nn.Cell):
@@ -47,22 +48,22 @@ def test_softmax():
     error2 = expect2 * 1.0e-6
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    Softmax = NetSoftmax()
-    output = Softmax(x)
-    outputSum1 = output[0].asnumpy().sum(axis=1)
-    outputSum2 = output[1].asnumpy().sum(axis=0)
-    diff1 = np.abs(outputSum1 - expect1)
-    diff2 = np.abs(outputSum2 - expect2)
+    softmax = NetSoftmax()
+    output = softmax(x)
+    output_sum1 = output[0].asnumpy().sum(axis=1)
+    output_sum2 = output[1].asnumpy().sum(axis=0)
+    diff1 = np.abs(output_sum1 - expect1)
+    diff2 = np.abs(output_sum2 - expect2)
     assert np.all(diff1 < error1)
     assert np.all(diff2 < error2)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    Softmax = NetSoftmax()
-    output = Softmax(x)
-    outputSum1 = output[0].asnumpy().sum(axis=1)
-    outputSum2 = output[1].asnumpy().sum(axis=0)
-    diff1 = np.abs(outputSum1 - expect1)
-    diff2 = np.abs(outputSum2 - expect2)
+    softmax = NetSoftmax()
+    output = softmax(x)
+    output_sum1 = output[0].asnumpy().sum(axis=1)
+    output_sum2 = output[1].asnumpy().sum(axis=0)
+    diff1 = np.abs(output_sum1 - expect1)
+    diff2 = np.abs(output_sum2 - expect2)
     assert np.all(diff1 < error1)
     assert np.all(diff2 < error2)
 
@@ -198,3 +199,43 @@ def test_softmax_4d():
 
     dx = Grad(Net())(Tensor(x), Tensor(dy))
     assert np.allclose(dx[0].asnumpy(), expect_dx)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_softmax_functional():
+    """
+    Feature: softmax function
+    Description: test the functional api of softmax
+    Expectation: run success
+    """
+    x = Tensor(np.array([[0.1, 0.3, 0.6, -0.3],
+                         [0.2, -0.6, 0.8, 0.6],
+                         [0.6, -1.2, 0.4, 0.6]]).astype(np.float32))
+    expect1 = np.ones(3)
+    expect2 = np.ones(4)
+    error1 = expect1 * 1.0e-6
+    error2 = expect2 * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    softmax = F.softmax
+    output_0 = softmax(x)
+    output_1 = softmax(x, axis=-2)
+    output_sum1 = output_0.asnumpy().sum(axis=1)
+    output_sum2 = output_1.asnumpy().sum(axis=0)
+    diff1 = np.abs(output_sum1 - expect1)
+    diff2 = np.abs(output_sum2 - expect2)
+    assert np.all(diff1 < error1)
+    assert np.all(diff2 < error2)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    softmax = F.softmax
+    output_0 = softmax(x)
+    output_1 = softmax(x, axis=-2)
+    output_sum1 = output_0.asnumpy().sum(axis=1)
+    output_sum2 = output_1.asnumpy().sum(axis=0)
+    diff1 = np.abs(output_sum1 - expect1)
+    diff2 = np.abs(output_sum2 - expect2)
+    assert np.all(diff1 < error1)
+    assert np.all(diff2 < error2)
