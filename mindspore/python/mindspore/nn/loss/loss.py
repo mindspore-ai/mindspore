@@ -1560,7 +1560,7 @@ class FocalLoss(LossBase):
     Supported Platforms:
         ``Ascend``
 
-    Example:
+    Examples:
         >>> logits = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
         >>> labels = Tensor([[1], [1], [0]], mstype.int32)
         >>> focalloss = nn.FocalLoss(weight=Tensor([1, 2]), gamma=2.0, reduction='mean')
