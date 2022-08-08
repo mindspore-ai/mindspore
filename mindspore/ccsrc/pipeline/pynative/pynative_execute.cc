@@ -85,6 +85,12 @@ py::object RealRunOp(const py::args &args) {
   return ret;
 }
 
+py::object GetDynShape(const py::args &args) {
+  const auto &executor = PyNativeExecutor::GetInstance();
+  MS_EXCEPTION_IF_NULL(executor);
+  return executor->forward_executor()->dynamic_shape()->GetDynShape(args);
+}
+
 void PyNativeExecutor::set_py_exe_path(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";

@@ -1304,6 +1304,7 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicQuant, std::make_shared<Primitive>("DynamicQu
 
 // Type introspection
 GVAR_DEF(PrimitivePtr, kPrimTypeOf, std::make_shared<Primitive>("typeof"));
+GVAR_DEF(PrimitivePtr, kPrimTopTypeOf, std::make_shared<Primitive>("TopTypeof"));
 GVAR_DEF(PrimitivePtr, kPrimHasType, std::make_shared<Primitive>("hastype"));
 GVAR_DEF(PrimitivePtr, kPrimIsInstance, std::make_shared<Primitive>("isinstance"));
 
