@@ -22,6 +22,17 @@ namespace kernel {
 namespace {
 constexpr size_t kRangeInputsNum = 3;
 constexpr size_t kRangeOutputsNum = 1;
+
+template <typename T>
+T Sign(T num) {
+  if (num > static_cast<T>(0.0)) {
+    return static_cast<T>(1.0);
+  } else if (num == static_cast<T>(0.0)) {
+    return static_cast<T>(0.0);
+  } else {
+    return static_cast<T>(-1.0);
+  }
+}
 }  // namespace
 
 void RangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -40,6 +51,10 @@ bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     LaunchKernel<int32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    LaunchKernel<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int or float, but got "
                       << TypeIdLabel(dtype_);
@@ -66,17 +81,16 @@ void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   }
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t max_index = outputs[0]->size / sizeof(T) - 1;
-  size_t index = 0;
-  while ((delta > 0 && start < limit) || (delta < 0 && start > limit)) {
-    if (index > max_index) {
+  size_t max_size = outputs[0]->size / sizeof(T);
+  if (Sign(delta) * Sign(limit - start) > 0) {
+    output_size_ = static_cast<size_t>(std::ceil(static_cast<double>(limit - start) / static_cast<double>(delta)));
+    if (output_size_ > max_size) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the output element number exceeds the maximum number.";
     }
-    output[index] = start;
-    start += delta;
-    index++;
+    for (size_t index = 0; index < output_size_; index++, start += delta) {
+      output[index] = start;
+    }
   }
-  output_size_ = index;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);

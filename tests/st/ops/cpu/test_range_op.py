@@ -91,6 +91,36 @@ def test_range_op_float():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_range_op_int64():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is int64.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(2, ms.int64), ms.Tensor(5, ms.int64), ms.Tensor(2, ms.int64))
+    expect = np.array([2, 4], np.int64)
+    assert np.array_equal(result.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_range_op_float64():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is float64.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(2, ms.float64), ms.Tensor(5, ms.float64), ms.Tensor(1, ms.float64))
+    expect = np.array([2, 3, 4], np.float64)
+    assert np.array_equal(result.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_range_op_int_reserve():
     """
     Feature: test Range op on CPU.
