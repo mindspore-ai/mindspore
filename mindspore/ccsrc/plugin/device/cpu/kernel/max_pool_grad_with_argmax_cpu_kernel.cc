@@ -45,7 +45,6 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operato
                              << "', expected strides to be Union[int, tuple[int]] with value no less than 1 "
                                 "but got the window height: "
                              << stride_height_ << ", and the window width: " << stride_height_;
-    return false;
   }
   pad_mode_ = kernel_ptr->get_pad_mode();
   // pair = [is_match, index]
@@ -59,11 +58,10 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-bool MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+void MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
   auto x_shape = inputs[kDim0]->GetShapeVector();
   if (x_shape.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
-    return false;
   }
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] <= 0) {
@@ -71,7 +69,6 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<Kerne
                                << "', expected input 'x' has non-empty spatial dimensions, "
                                   "but 'x' has sizes "
                                << x_shape[i] << " wit the dimension " << i << " being empty.";
-      return false;
     }
   }
   batch_ = LongToInt(x_shape[kDim0]);
@@ -87,7 +84,6 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<Kerne
                                << "', expected input 'dy' has non-empty spatial dimensions, "
                                   "but 'dy' has sizes "
                                << dy_shape[i] << " wit the dimension " << i << " being empty.";
-      return false;
     }
   }
   dy_height_ = LongToInt(dy_shape[kDim2]);
@@ -99,16 +95,13 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<Kerne
                                << "', expected input 'index' has non-empty spatial dimensions, "
                                   "but 'index' has sizes "
                                << index_shape[i] << " wit the dimension " << i << " being empty.";
-      return false;
     }
   }
 
   if (x_shape.size() < kDimLowerLimit || dy_shape.size() < kDimLowerLimit) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' and 'dy' cannot be less than 4, but got "
                       << "the dimension of 'x': " << x_shape.size() << ", the dimension of 'dy': " << dy_shape.size();
-    return false;
   }
-  return true;
 }
 
 int MaxPoolGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
@@ -125,9 +118,7 @@ int MaxPoolGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
     return KRET_RESIZE_FAILED;
   }
-  if (!ResizedInputSize(inputs)) {
-    return KRET_RESIZE_FAILED;
-  }
+  ResizedInputSize(inputs);
   return KRET_OK;
 }
 
@@ -142,10 +133,10 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   MS_EXCEPTION_IF_NULL(index);
   auto *output = reinterpret_cast<T *>(outputs.at(kDim0)->addr);
   MS_EXCEPTION_IF_NULL(output);
-  const int c = this->channel_;
-  const int xCHW = c * this->x_height_ * this->x_width_;
-  const int dyCHW = c * this->dy_height_ * this->dy_width_;
-  const int outputLength = this->batch_ * xCHW;
+  const int c = channel_;
+  const int xCHW = c * x_height_ * x_width_;
+  const int dyCHW = c * dy_height_ * dy_width_;
+  const size_t outputLength = IntToSize(batch_ * xCHW);
   auto init = [output](size_t start, size_t end) {
     const T zero = static_cast<T>(0);
     for (size_t i = start; i < end; ++i) {
@@ -153,12 +144,12 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     }
   };
   ParallelLaunchAutoSearch(init, outputLength, this, &parallel_search_info_);
-  const int length = this->batch_ * dyCHW;
+  const size_t length = IntToSize(batch_ * dyCHW);
   auto task = [input, output, grad, index, &xCHW, &dyCHW](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
       const int idx = static_cast<int>(index[i]);
       const int posn = i / dyCHW;
-      *(output + posn * xCHW + idx) += grad[i];
+      output[posn * xCHW + idx] += grad[i];
     }
   };
   ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
@@ -183,8 +174,8 @@ std::vector<std::pair<KernelAttr, MaxPoolGradWithArgmaxCpuKernelMod::MaxPoolGrad
 
 std::vector<KernelAttr> MaxPoolGradWithArgmaxCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MaxPoolGradWithArgmaxFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaxPoolGradWithArgmaxFunc> &pair) { return pair.first; });
   return support_list;
 }
 

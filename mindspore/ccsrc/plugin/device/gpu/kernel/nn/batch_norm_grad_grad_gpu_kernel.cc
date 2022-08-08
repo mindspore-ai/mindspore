@@ -25,19 +25,8 @@ constexpr size_t kBatchNormGradGradInputsNum = 8;
 constexpr size_t kBatchNormGradGradTrainingWorkSpacesNum = 7;
 constexpr size_t kBatchNormGradGradInferenceWorkSpacesNum = 2;
 constexpr size_t kBatchNormGradGradOutputsNum = 3;
-
-using ShapeArray = std::vector<ShapeVector>;
-
-bool CheckShapesEqual(const ShapeArray &shape_array) {
-  auto first_shape = shape_array[0];
-  return std::all_of(shape_array.begin() + 1, shape_array.end(), [&first_shape](const ShapeVector &shape) {
-    if (shape.size() != first_shape.size()) {
-      return false;
-    }
-    return std::equal(shape.begin(), shape.end(), first_shape.begin());
-  });
-}
 }  // namespace
+
 bool BatchNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
@@ -115,6 +104,10 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
+  if (x_shape.size() != kDim2 && x_shape.size() != kDim4) {
+    MS_EXCEPTION(ValueError) << "For BatchNormGradGrad, x should be a 2-D or 4-D tensor, but got x shape: "
+                             << Vector2Str(x_shape);
+  }
   auto dy_shape = inputs[kIndex1]->GetShapeVector();
   auto scale_shape = inputs[kIndex2]->GetShapeVector();
   auto mean_shape = inputs[kIndex3]->GetShapeVector();
@@ -122,21 +115,24 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto dout_dx_shape = inputs[kIndex5]->GetShapeVector();
   auto dout_dscale_shape = inputs[kIndex6]->GetShapeVector();
   auto dout_dbias_shape = inputs[kIndex7]->GetShapeVector();
-  ShapeArray shape_array_1{dy_shape, x_shape, dout_dx_shape};
-  ShapeArray shape_array_2{scale_shape, mean_shape, variance_shape, dout_dscale_shape, dout_dbias_shape};
-  if (!CheckShapesEqual(shape_array_1) || !CheckShapesEqual(shape_array_2)) {
-    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the input shapes are invalid!";
-  }
-  if (x_shape.size() != kDim2 && x_shape.size() != kDim4) {
-    MS_EXCEPTION(ValueError) << "BatchNormGradGrad only support 2-D or 4-D input tensor, but got " << x_shape.size();
-  }
-  if (scale_shape.size() != kDim1) {
-    MS_EXCEPTION(ValueError) << "BatchNormGradGrad requires scale should be a 1-D tensor, but got "
-                             << scale_shape.size();
-  }
   auto c = format_ == DataFormat::NCHW ? x_shape[kIndex1] : x_shape[kIndex3];
-  if (scale_shape[kIndex0] != c) {
-    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the scale shape is not equal to the channel of x!";
+  ShapeArray shape_array_1{x_shape, dy_shape, dout_dx_shape};
+  ShapeArray shape_array_2{std::vector<int64_t>{c}, scale_shape,       mean_shape,
+                           variance_shape,          dout_dscale_shape, dout_dbias_shape};
+  if (!CheckShapesSame(shape_array_1)) {
+    MS_LOG(EXCEPTION)
+      << "For BatchNormGradGrad, dy shape and dout_dx shape should be same to x shape, but got x shape: "
+      << Vector2Str(x_shape) << ", dy shape: " << Vector2Str(dy_shape)
+      << ", dout_dx shape: " << Vector2Str(dout_dx_shape);
+  }
+  if (!CheckShapesSame(shape_array_2)) {
+    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, scale shape, mean shape, variance shape, dout_dscale shape and "
+                         "dout_dbias shape should be "
+                      << Vector2Str(std::vector<int64_t>{c}) << ", but got scale shape: " << Vector2Str(scale_shape)
+                      << ", mean shape: " << Vector2Str(mean_shape)
+                      << ", variance shape: " << Vector2Str(variance_shape)
+                      << ", dout_dsacle shape: " << Vector2Str(dout_dscale_shape) << ", dout_dbias shape"
+                      << Vector2Str(dout_dbias_shape);
   }
 
   if (x_shape.size() == kDim2) {
@@ -153,11 +149,8 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   workspace_size_list_.push_back(scale_size);
   workspace_size_list_.push_back(x_size);
   if (is_training_) {
-    workspace_size_list_.push_back(scale_size);
-    workspace_size_list_.push_back(scale_size);
-    workspace_size_list_.push_back(scale_size);
-    workspace_size_list_.push_back(scale_size);
-    workspace_size_list_.push_back(scale_size);
+    const size_t workspace_num = 5;
+    workspace_size_list_.insert(workspace_size_list_.end(), workspace_num, scale_size);
   }
   return KRET_OK;
 }

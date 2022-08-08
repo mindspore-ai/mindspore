@@ -31,7 +31,7 @@ constexpr auto kNameApplyRMSProp = "ApplyRMSProp";
 class MIND_API ApplyRMSProp : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyRMSProp);
-  double get_attr(const char *attr) const;
+  float get_attr(const char *attr) const;
   ApplyRMSProp() : BaseOperator(kNameApplyRMSProp) {
     InitIOName({"var", "mean_square", "moment", "learning_rate", "grad", "decay", "momentum", "epsilon"},
                {"var", "mean_square", "moment"});

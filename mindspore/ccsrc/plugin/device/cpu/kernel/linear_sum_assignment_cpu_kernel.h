@@ -18,8 +18,8 @@
 
 #include <vector>
 #include <complex>
-#include <utility>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -56,20 +56,21 @@ class LinearSumAssignmentCpuKernelMod : public NativeCpuKernelMod,
   template <typename T>
   int64_t AugmentingPath(int64_t nc, T *cost, std::vector<T> *u, std::vector<T> *v, std::vector<int64_t> *path,
                          std::vector<int64_t> *row4col, std::vector<T> *shortest_path_costs, int64_t i,
-                         std::vector<bool> *SR, std::vector<bool> *SC, std::vector<int64_t> *remaining, T *p_min_val);
+                         std::vector<bool> *SR, std::vector<bool> *SC, std::vector<int64_t> *remaining,
+                         T *p_min_val) const;
 
   template <typename T>
-  bool Solve(int64_t nr, int64_t nc, int64_t raw_rc, T *cost, bool maximize, int64_t *a, int64_t *b);
+  bool Solve(int64_t nr, int64_t nc, int64_t raw_rc, T *cost, bool maximize, int64_t *a, int64_t *b) const;
 
   template <typename T>
   void ReArrange(int64_t *origin_nr, int64_t *origin_nc, int64_t raw_nc, std::vector<T> *temp, T *cost, bool transpose,
-                 bool maximize);
+                 bool maximize) const;
 
-  void PostProcess(int64_t *a, int64_t *b, const std::vector<int64_t> &col4row, bool transpose, int nr, int nc,
-                   int element_num);
+  void PostProcess(int64_t *a, int64_t *b, const std::vector<int64_t> &col4row, bool transpose, int64_t nr, int64_t nc,
+                   int64_t element_num) const;
 
   void AugmentPreviousSolution(int64_t j, int64_t cur_row, std::vector<int64_t> *path, std::vector<int64_t> *row4col,
-                               std::vector<int64_t> *col4row);
+                               std::vector<int64_t> *col4row) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

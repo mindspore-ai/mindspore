@@ -52,7 +52,6 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                 "less than 1 "
                                 "but got the window height: "
                              << window_height_ << ", and the window width: " << window_width_;
-    return false;
   }
   pad_mode_ = kernel_ptr->get_pad_mode();
   if (pad_mode_ == PadMode::SAME) {
@@ -77,11 +76,10 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-bool MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+void MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   if (x_shape.size() != kInputRank) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
-    return false;
   }
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] <= 0) {
@@ -89,7 +87,6 @@ bool MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTen
                                << "', expected input have non-empty spatial dimensions, "
                                   "but input has sizes "
                                << x_shape[i] << " wit h dimension " << i << " being empty.";
-      return false;
     }
   }
   batch_ = LongToInt(x_shape[kDim0]);
@@ -103,10 +100,9 @@ bool MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTen
     input_height_ = LongToInt(x_shape[kDim2]);
     input_width_ = LongToInt(x_shape[kDim3]);
   }
-  return true;
 }
 
-bool MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+void MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   output_height_ = LongToInt(output_shape[kDim2]);
   output_width_ = LongToInt(output_shape[kDim3]);
@@ -116,9 +112,7 @@ bool MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTe
                              << "', expected output and mask have the same shape "
                                 "but output has shape "
                              << output_shape << ", and mask shape: " << mask_shape;
-    return false;
   }
-  return true;
 }
 
 int MaxPoolWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
@@ -135,12 +129,8 @@ int MaxPoolWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolWithArgmax failed.";
     return KRET_RESIZE_FAILED;
   }
-  if (!ResizedInputSize(inputs)) {
-    return KRET_RESIZE_FAILED;
-  }
-  if (!ResizedOutputSize(outputs)) {
-    return KRET_RESIZE_FAILED;
-  }
+  ResizedInputSize(inputs);
+  ResizedOutputSize(outputs);
   return KRET_OK;
 }
 
@@ -176,11 +166,11 @@ bool MaxPoolWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   const int pad_left = this->pad_left_;
   const int o_h = this->output_height_;
   const int o_w = this->output_width_;
-  const size_t length = batch * channel * o_h * o_w;
+  const size_t length = IntToSize(batch * channel * o_h * o_w);
 
   auto task = [x, output, mask, &batch, &channel, &i_h, &i_w, &s_h, &s_w, &w_h, &w_w, &pad_top, &pad_left, &o_h, &o_w,
                &wWeight, &hWeight, &cWeight](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
       const int posn = i / (channel * o_h * o_w);
       const int posc = i / (o_h * o_w) % channel;
       const int posh = i / o_w % o_h;
@@ -220,8 +210,8 @@ std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxCpuKernelMod::MaxPoolWithArgm
 
 std::vector<KernelAttr> MaxPoolWithArgmaxCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MaxPoolWithArgmaxFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaxPoolWithArgmaxFunc> &pair) { return pair.first; });
   return support_list;
 }
 

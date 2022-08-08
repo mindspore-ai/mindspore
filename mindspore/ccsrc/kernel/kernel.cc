@@ -48,7 +48,7 @@ TypeId KernelTensor::GetDtype() const {
   return elem->type_id();
 }
 
-std::vector<int64_t> KernelTensor::GetShapeVector() const {
+ShapeVector KernelTensor::GetShapeVector() const {
   auto base_shape_ptr = GetBaseShape();
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
     return {};
@@ -85,7 +85,7 @@ std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
   return types;
 }
 
-std::vector<std::vector<int64_t>> KernelTensor::GetListOrTupleShapeVector() const {
+ShapeArray KernelTensor::GetListOrTupleShapeVector() const {
   auto base_shape_ptr = GetBaseShape();
   // ListShape or TupleShape is inherited from SequenceShape.
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::SequenceShape>()) {

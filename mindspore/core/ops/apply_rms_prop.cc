@@ -108,7 +108,7 @@ AbstractBasePtr ApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const Pri
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-double ApplyRMSProp::get_attr(const char *attr) const {
+float ApplyRMSProp::get_attr(const char *attr) const {
   auto attr_ptr = GetAttr(attr);
   return GetValue<float>(attr_ptr);
 }
