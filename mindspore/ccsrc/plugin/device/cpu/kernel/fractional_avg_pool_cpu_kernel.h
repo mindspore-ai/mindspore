@@ -34,7 +34,7 @@ class FractionalAvgPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~FractionalAvgPoolCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -45,7 +45,7 @@ class FractionalAvgPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool FractionalAvgPoolLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool FractionalAvgPoolDoCompute(T *input_ptr, T *output_ptr, size_t b, size_t hs, const int64_t height_start,
+  bool FractionalAvgPoolDoCompute(const T *input_ptr, T *output_ptr, size_t b, size_t hs, const int64_t height_start,
                                   int64_t height_end, std::vector<int64_t> width_cum_seq);
   using FractionalAvgPoolFunc = std::function<bool(
     FractionalAvgPoolCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
