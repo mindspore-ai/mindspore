@@ -564,16 +564,12 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
   return device;
 }
 
-bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b) {
-  if (shape_a.size() != shape_b.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < shape_a.size(); ++i) {
-    if (shape_a[i] != shape_b[i]) {
-      return false;
-    }
-  }
-  return true;
+bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b) { return shape_a == shape_b; }
+
+bool CheckShapesSame(const ShapeArray &shape_array) {
+  auto first_shape = shape_array[0];
+  return std::all_of(shape_array.begin() + 1, shape_array.end(),
+                     [&first_shape](const ShapeVector &shape) { return IsSameShape(shape, first_shape); });
 }
 
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,

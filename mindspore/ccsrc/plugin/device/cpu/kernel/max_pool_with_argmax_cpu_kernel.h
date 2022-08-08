@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAX_POOL_WITH_ARGMAX_CPU_KERNEL_H_
 
 #include <map>
-#include <utility>
 #include <vector>
+#include <utility>
 #include "mindspore/core/ops/max_pool_with_argmax.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -31,7 +31,7 @@ class MaxPoolWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   MaxPoolWithArgmaxCpuKernelMod() {}
   ~MaxPoolWithArgmaxCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -42,10 +42,8 @@ class MaxPoolWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
-  bool ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
-  bool ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
-
- protected:
+  void ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
+  void ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

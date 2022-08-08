@@ -22,5 +22,6 @@
 
 using ShapeValueDType = int64_t;
 using ShapeVector = std::vector<ShapeValueDType>;
+using ShapeArray = std::vector<ShapeVector>;
 
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_SHAPE_VECTOR_H_

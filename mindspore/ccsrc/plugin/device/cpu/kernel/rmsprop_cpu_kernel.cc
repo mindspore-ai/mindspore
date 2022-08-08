@@ -15,14 +15,15 @@
  */
 
 #include "plugin/device/cpu/kernel/rmsprop_cpu_kernel.h"
+
 #include <algorithm>
-#include <utility>
 #include <memory>
 #include <functional>
+
 #include "nnacl/errorcode.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "utils/ms_utils.h"
-#include "mindspore/core/ops/apply_rms_prop.h"
+#include "ops/apply_rms_prop.h"
 
 namespace mindspore {
 namespace kernel {
@@ -62,7 +63,7 @@ void RMSPropCpuKernelMod::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, 
         }
       };
     }
-    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(input_elements_), this, &parallel_search_info_);
     variable = variable + input_elements_;
     mean_square = mean_square + input_elements_;
     moment = moment + input_elements_;
@@ -137,84 +138,71 @@ bool RMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int RMSPropCpuKernelMod::CheckShapeEqual(std::vector<int64_t> size_a, std::vector<int64_t> size_b, const char *name_a,
-                                         const char *name_b) {
-  if (!IsSameShape(size_a, size_b)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of '" << name_a << "' must be the same as the shape of '"
-                  << name_b << "', but got the shape of '" << name_b << "': " << Vector2Str(size_b)
-                  << " and the shape of '" << name_a << "': " << Vector2Str(size_a);
+int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape, int ret) {
+  if (batch_rank_ == 0 && lr_shape.size() != 0 && lr_shape.size() != 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << Vector2Str(lr_shape)
+                  << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
-  return KRET_OK;
-}
-
-int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape, int ret) {
-  if (batch_rank_ == 0) {
-    if (lr_shape.size() != 0 && lr_shape.size() != 1) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << Vector2Str(lr_shape)
-                    << " and 'batch_rank': " << batch_rank_;
-    }
-  } else {
-    if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'lr' must be equal to 'batch_rank', "
-                       "but got the shape of 'lr': "
-                    << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
-      return KRET_RESIZE_FAILED;
-    }
+  if (batch_rank_ < 0 || lr_shape.size() != LongToSize(batch_rank_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+    return KRET_RESIZE_FAILED;
   }
 
   if (!lr_shape.empty()) {
     batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), int64_t(1), std::multiplies<int64_t>());
   }
-
-  if (batch_size_ > 0) {
-    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
-    input_elements_ = input_elements_ / batch_size_;
-    return ret;
-  } else {
+  if (batch_size_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
     return KRET_RESIZE_FAILED;
   }
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  input_elements_ = input_elements_ / batch_size_;
+  return ret;
 }
 
 int RMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  if (ret != 0) {
+  if (ret != KRET_OK) {
     return ret;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), use_center_ ? kCenteredRMSPropInputsNum : kRMSPropInputsNum, kernel_name_);
+  auto var_shape = inputs[kNumberZero]->GetShapeVector();
+  auto grad_shape = inputs[kNumberFour]->GetShapeVector();
+  auto mean_square_shape = inputs[use_center_ ? kNumberTwo : kNumberOne]->GetShapeVector();
+  auto moment_shape = inputs[use_center_ ? kNumberThree : kNumberTwo]->GetShapeVector();
+  auto lr_shape = inputs[use_center_ ? kNumberFive : kNumberThree]->GetShapeVector();
+  ShapeArray shapes{var_shape, mean_square_shape, moment_shape, grad_shape};
 
-  if (!use_center_) {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
-    std::vector<int64_t> var_shape = inputs[kNumberZero]->GetShapeVector();
-    std::vector<int64_t> mean_square_shape = inputs[kNumberOne]->GetShapeVector();
-    std::vector<int64_t> moment_shape = inputs[kNumberTwo]->GetShapeVector();
-    std::vector<int64_t> lr_shape = inputs[kNumberThree]->GetShapeVector();
-    std::vector<int64_t> grad_shape = inputs[kNumberFour]->GetShapeVector();
-
-    CheckShapeEqual(var_shape, mean_square_shape, "var", "mean_square");
-    CheckShapeEqual(var_shape, moment_shape, "var", "moment");
-    CheckShapeEqual(var_shape, grad_shape, "var", "grad");
-    return CalElements(var_shape, lr_shape, ret);
+  if (use_center_) {
+    auto mean_gradients_shape = inputs[kNumberOne]->GetShapeVector();
+    shapes.push_back(mean_gradients_shape);
+    if (!CheckShapesSame(shapes)) {
+      MS_LOG(EXCEPTION)
+        << "For " << kernel_name_
+        << ", the var shape, mean_gradients shape, mean_square shape, moment shape, and grad shape should "
+        << "be same, but got var shape: " << Vector2Str(var_shape)
+        << " mean_gradients shape: " << Vector2Str(mean_gradients_shape)
+        << " mean_square shape: " << Vector2Str(mean_square_shape) << ", moment shape: " << Vector2Str(moment_shape)
+        << ", grad shape: " << Vector2Str(grad_shape);
+    }
   } else {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
-    std::vector<int64_t> var_shape = inputs[kNumberZero]->GetShapeVector();
-    std::vector<int64_t> mean_gradients_shape = inputs[kNumberOne]->GetShapeVector();
-    std::vector<int64_t> mean_square_shape = inputs[kNumberTwo]->GetShapeVector();
-    std::vector<int64_t> moment_shape = inputs[kNumberThree]->GetShapeVector();
-    std::vector<int64_t> grad_shape = inputs[kNumberFour]->GetShapeVector();
-    std::vector<int64_t> lr_shape = inputs[kNumberFive]->GetShapeVector();
-
-    CheckShapeEqual(var_shape, mean_gradients_shape, "var", "mean_gradients");
-    CheckShapeEqual(var_shape, mean_square_shape, "var", "mean_square");
-    CheckShapeEqual(var_shape, moment_shape, "var", "moment");
-    CheckShapeEqual(var_shape, grad_shape, "var", "grad");
-    return CalElements(var_shape, lr_shape, ret);
+    if (!CheckShapesSame(shapes)) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_
+                        << ", the var shape, mean_square shape, moment shape, and grad shape should "
+                        << "be same, but got var shape: " << Vector2Str(var_shape)
+                        << " mean_square shape: " << Vector2Str(mean_square_shape)
+                        << ", moment shape: " << Vector2Str(moment_shape) << ", grad shape: " << Vector2Str(grad_shape);
+    }
   }
+  return CalElements(var_shape, lr_shape, ret);
 }
 
 template <typename T>

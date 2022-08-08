@@ -55,7 +55,6 @@ class RMSPropCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  int CheckShapeEqual(std::vector<int64_t> size_a, std::vector<int64_t> size_b, const char *name_a, const char *name_b);
   int CalElements(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape, int ret);
   using RMSPropFunc =
     std::function<bool(RMSPropCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
