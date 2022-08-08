@@ -30,7 +30,7 @@ class Uniform(Distribution):
     and the probability density function:
 
     .. math::
-        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x),
+        f(x, a, b) = 1 / (b - a),
 
     where a and b are the lower and upper bound respectively.
 
