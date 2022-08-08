@@ -41,7 +41,7 @@ class BiasCorrectionStrategy {
  public:
   BiasCorrectionStrategy(const std::shared_ptr<ConverterPara> &param, const std::shared_ptr<Calibrator> &calibrator,
                          const std::shared_ptr<QuantStrategy> &quant_strategy,
-                         const std::shared_ptr<mindspore::Model> fp32_ms_model, int activation_q_min,
+                         const std::shared_ptr<mindspore::Model> &fp32_ms_model, int activation_q_min,
                          int activation_q_max)
       : param_(param),
         calibrator_(calibrator),
@@ -50,7 +50,7 @@ class BiasCorrectionStrategy {
         activation_q_min_(activation_q_min),
         activation_q_max_(activation_q_max) {}
 
-  ~BiasCorrectionStrategy() {}
+  ~BiasCorrectionStrategy() = default;
 
   int DoBiasCorrection(const FuncGraphPtr &quant_func_graph);
 

@@ -26,6 +26,7 @@
 #include "tools/converter/graphdef_transform.h"
 #include "nnacl/op_base.h"
 #include "tools/common/statistic_utils.h"
+#include "src/litert/lite_model.h"
 #include "src/tensor.h"
 
 namespace mindspore::lite {

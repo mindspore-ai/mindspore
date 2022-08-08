@@ -34,6 +34,7 @@
 #include "tools/converter/quantizer/data_distribution.h"
 #include "src/common/quant_utils.h"
 #include "tools/converter/quantizer/quant_strategy.h"
+#include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
 
 namespace mindspore::lite::quant {
 struct FullQuantInitParam {
@@ -78,11 +79,14 @@ class FullQuantQuantizer : public Quantizer {
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, size_t index, bool is_input = true) const;
 
+  int QuantWeight(const CNodePtr &cnode, const PrimitivePtr &primitive, const AnfNodePtr &weight, int input_index,
+                  const tensor::TensorPtr &tensor_info, bool per_channel = true);
+
   int DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight, const PrimitivePtr &primitive,
-                             int input_index, bool per_channel = true) const;
+                             int input_index, bool per_channel = true);
 
   int DoValueNodeWeightQuant(const CNodePtr &cnode, const ValueNodePtr &weight, const PrimitivePtr &primitive,
-                             int input_index, bool per_channel = true) const;
+                             int input_index, bool per_channel = true);
 
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
 
@@ -105,7 +109,6 @@ class FullQuantQuantizer : public Quantizer {
   int QuantWithKL();
 
  private:
-  //  size_t bit_num_{k8Bit};
   FullQuantInitParam init_param_;
 
   std::set<PrimitivePtr> support_int8_ops_;
@@ -119,6 +122,7 @@ class FullQuantQuantizer : public Quantizer {
 
   // key is tensor_name
   std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak_;
+  FixedBitWeightQuantization fixed_bit_quant_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H_

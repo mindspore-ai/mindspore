@@ -79,53 +79,41 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
   return RET_OK;
 }
 
+int FullQuantQuantizer::QuantWeight(const CNodePtr &cnode, const PrimitivePtr &primitive, const AnfNodePtr &weight,
+                                    int input_index, const tensor::TensorPtr &tensor_info, bool per_channel) {
+  int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+  auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
+  auto weight_q_min = per_channel ? init_param_.weight_channel_q_min_ : init_param_.weight_layer_q_min_;
+  auto weight_q_max = per_channel ? init_param_.weight_channel_q_max_ : init_param_.weight_layer_q_max_;
+  auto symmetric = per_channel ? init_param_.weight_channel_symmetric_ : init_param_.weight_layer_symmetric_;
+  return fixed_bit_quant_.QuantFilter(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
+                                      weight_q_min, init_param_.bit_num_, weight_quant_type, kNumberTypeInt8,
+                                      input_index - 1, preferred_dim, symmetric);
+}
+
 int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight,
-                                               const PrimitivePtr &primitive, int input_index, bool per_channel) const {
+                                               const PrimitivePtr &primitive, int input_index, bool per_channel) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(primitive);
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " can't get value";
     return RET_NULL_PTR;
   }
-  int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
-  auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto weight_q_min = per_channel ? init_param_.weight_channel_q_min_ : init_param_.weight_layer_q_min_;
-  auto weight_q_max = per_channel ? init_param_.weight_channel_q_max_ : init_param_.weight_layer_q_max_;
-  auto symmetric = per_channel ? init_param_.weight_channel_symmetric_ : init_param_.weight_layer_symmetric_;
-  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
-                                            weight_q_min, init_param_.bit_num_, weight_quant_type, kNumberTypeInt8,
-                                            input_index - 1, preferred_dim, symmetric);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "QuantFilter failed: " << status;
-    return status;
-  }
-  return RET_OK;
+  return QuantWeight(cnode, primitive, weight, input_index, tensor_info, per_channel);
 }
 
 int FullQuantQuantizer::DoValueNodeWeightQuant(const CNodePtr &cnode, const ValueNodePtr &weight,
-                                               const PrimitivePtr &primitive, int input_index, bool per_channel) const {
+                                               const PrimitivePtr &primitive, int input_index, bool per_channel) {
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(primitive);
   auto tensor_info = weight->value()->cast<tensor::TensorPtr>();
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
+    MS_LOG(ERROR) << weight->fullname_with_scope() << " can't get value";
     return RET_NULL_PTR;
   }
-  int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
-  auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto weight_q_min = per_channel ? init_param_.weight_channel_q_min_ : init_param_.weight_layer_q_min_;
-  auto weight_q_max = per_channel ? init_param_.weight_channel_q_max_ : init_param_.weight_layer_q_max_;
-  auto symmetric = per_channel ? init_param_.weight_channel_symmetric_ : init_param_.weight_layer_symmetric_;
-  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, schema::QuantType_QUANT_ALL, weight_q_max,
-                                            weight_q_min, init_param_.bit_num_, weight_quant_type, kNumberTypeInt8,
-                                            input_index - 1, preferred_dim, symmetric);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "QuantFilter failed: " << status;
-    return status;
-  }
-  return RET_OK;
+  return QuantWeight(cnode, primitive, weight, input_index, tensor_info, per_channel);
 }
 
 int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
@@ -173,7 +161,7 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
-    ret = DoParameterBiasQuant(input_node, primitive);
+    ret = fixed_bit_quant_.QuantBias(input_node, primitive);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;

@@ -52,14 +52,15 @@ class ParameterOptimizer {
                      FuncGraphPtr *func_graph_bak);
 
   int WeightQuantModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
-                                std::shared_ptr<mindspore::Model> origin_model, size_t origin_model_size,
+                                const std::shared_ptr<mindspore::Model> &origin_model, size_t origin_model_size,
                                 SearchParams *s_param, int *ret_scale, float *best_compress_ratio,
                                 bool *found_valid_scale);
 
   int OriginModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                            const std::shared_ptr<mindspore::Model> &origin_model, size_t *origin_model_size);
 
-  int CopyDataAndRun(std::shared_ptr<mindspore::Model> origin_model, std::shared_ptr<mindspore::Model> quant_model);
+  int CopyDataAndRun(const std::shared_ptr<mindspore::Model> &origin_model,
+                     const std::shared_ptr<mindspore::Model> &quant_model);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H_

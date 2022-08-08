@@ -32,6 +32,7 @@
 #include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore::lite::quant {
+namespace {
 static const int kOneChannel = 1;
 static const int kThreeChannels = 3;
 static const int kSixChannels = 6;
@@ -44,8 +45,18 @@ static const int kMaxFineSearchIterations = 3;
 static const int kFinestGranularity = 2;
 static const int kCompressToInt8Ratio = 4.0;
 static const int kTwo = 2;
+static const float kScaleFactor = (0.01 * 0.01 * 0.01 * 24.0);
+}  // namespace
+float GetMinScale(const std::set<tensor::TensorPtr> &weight_quantized_tensors) {
+  size_t max_tensor_size = 1;
+  for (const auto &tensor : weight_quantized_tensors) {
+    max_tensor_size = std::max(max_tensor_size, tensor->DataSize());
+  }
+  return (max_tensor_size > 0) ? std::sqrt(kScaleFactor / max_tensor_size) : kScaleFactor;
+}
 
-static Status ExtendBatchSize(std::shared_ptr<mindspore::Model> model, std::vector<MSTensor> *inputs, int batch) {
+static Status ExtendBatchSize(const std::shared_ptr<mindspore::Model> &model, std::vector<MSTensor> *inputs,
+                              int batch) {
   std::vector<std::vector<int64_t>> dims(inputs->size());
   int i = 0;
   for (auto input : *inputs) {
@@ -73,8 +84,8 @@ int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, const std
   return RET_OK;
 }
 
-int ParameterOptimizer::CopyDataAndRun(std::shared_ptr<mindspore::Model> origin_model,
-                                       std::shared_ptr<mindspore::Model> quant_model) {
+int ParameterOptimizer::CopyDataAndRun(const std::shared_ptr<mindspore::Model> &origin_model,
+                                       const std::shared_ptr<mindspore::Model> &quant_model) {
   auto weight_quant_inputs = quant_model->GetInputs();
   for (auto input : weight_quant_inputs) {
     auto origin_tensor = origin_model->GetInputByTensorName(input.Name());
@@ -97,7 +108,7 @@ int ParameterOptimizer::CopyDataAndRun(std::shared_ptr<mindspore::Model> origin_
 
 int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph,
                                                   const std::shared_ptr<ConverterPara> &param,
-                                                  std::shared_ptr<mindspore::Model> origin_model,
+                                                  const std::shared_ptr<mindspore::Model> &origin_model,
                                                   size_t origin_model_size, SearchParams *s_param, int *ret_scale,
                                                   float *best_compress_ratio, bool *found_valid_scale) {
   CHECK_NULL_RETURN(param);
@@ -128,7 +139,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     }
 
     if (scale == 1) {
-      float inv_min_scale = quantizer->GetMinScale();
+      float inv_min_scale = GetMinScale(quantizer->GetWeightQuantizedTensors());
       if (inv_min_scale != 0) {
         if ((1.0 / inv_min_scale) > s_param->range_end) {
           // extend scale end

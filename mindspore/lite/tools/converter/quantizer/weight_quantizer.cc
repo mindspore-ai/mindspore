@@ -26,19 +26,9 @@
 #include "tools/converter/quantizer/tensor_compressor.h"
 #include "tools/converter/quantizer/cluster_quantization.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
+#include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
 
 namespace mindspore::lite::quant {
-static const float kScaleFactor = (0.01 * 0.01 * 0.01 * 24.0);
-float WeightQuantizer::GetMinScale() const {
-  size_t max_tensor_size = 1;
-  for (auto tensor : weight_quantized_tensors_) {
-    if (tensor->DataSize() > max_tensor_size) {
-      max_tensor_size = tensor->DataSize();
-    }
-  }
-  return (max_tensor_size > 0) ? std::sqrt(kScaleFactor / max_tensor_size) : kScaleFactor;
-}
-
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
                                  const std::set<PrimitivePtr> &per_layer_types,
@@ -73,7 +63,7 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
       }
     }
 
-    if (linear_quant) {
+    if (linear_quant_) {
       auto ret = LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, compression);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute linear weight quantize error.";
@@ -169,9 +159,10 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     MS_LOG(WARNING)
       << parameter->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
-    status =
-      FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type, quant_max,
-                                  quant_min, bit_num_, weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
+    FixedBitWeightQuantization fixed_bit_quant;
+    status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
+                                         quant_max, quant_min, bit_num_, weight_quant_type, kNumberTypeInt8, idx - 1,
+                                         preferred_dim, symmetric);
   }
   return status;
 }
@@ -214,14 +205,11 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
       status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
-    } else if (type_id_ == kNumberTypeInt8) {
-      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
+    } else {
+      FixedBitWeightQuantization fixed_bit_quant;
+      status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                            q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
                                            preferred_dim, symmetric);
-    } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
-                                            q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
-                                            preferred_dim, symmetric);
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -241,7 +229,7 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
   return RET_OK;
 }
 
-int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
+int WeightQuantizer::MarkCnodeWeightQuantType(const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
@@ -273,7 +261,7 @@ int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-int WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_graph) {
+int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
@@ -281,9 +269,9 @@ int WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_grap
       MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
       continue;
     }
-    auto status = DoMarkWeightQuantizeIfQuantized(cnode);
+    auto status = MarkCnodeWeightQuantType(cnode);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "MarkWeightQuantizationInNodes error marking " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "MarkGraphWeightQuantType error marking " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
   }
@@ -305,7 +293,7 @@ int WeightQuantizer::DoQuantize(const FuncGraphPtr &func_graph, double init_scal
     MS_LOG(ERROR) << "Weight Quant failed.";
     return ret;
   }
-  return MarkWeightQuantizationInNodes(func_graph);
+  return MarkGraphWeightQuantType(func_graph);
 }
 
 int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) { return DoQuantize(func_graph, mixed_bit_init_scale_); }
