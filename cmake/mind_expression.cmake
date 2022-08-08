@@ -49,6 +49,7 @@ endif()
 
 if(ENABLE_GPU)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cub.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/fast_transformers.cmake)
     if(ENABLE_MPI)
         include(${CMAKE_SOURCE_DIR}/cmake/external_libs/nccl.cmake)
     endif()

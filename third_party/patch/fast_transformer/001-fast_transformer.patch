@@ -1,0 +1,3172 @@
+diff --git a/.github/ISSUE_TEMPLATE/bug_report.yml b/.github/ISSUE_TEMPLATE/bug_report.yml
+new file mode 100644
+index 0000000..18054db
+--- /dev/null
++++ b/.github/ISSUE_TEMPLATE/bug_report.yml
+@@ -0,0 +1,32 @@
++name: "Bug Report"
++description: Submit a bug report
++labels: [ "bug" ]
++body:
++  - type: textarea
++    id: description
++    attributes:
++      label: Description
++      description: Please share your system info with us.
++      render: shell
++      placeholder: branch, docker version, GPU type
++    validations:
++      required: true
++      
++  - type: textarea
++    id: reproduced-steps
++    attributes:
++      label: Reproduced Steps
++      description: Please provide the step to reproduce the bugs
++      render: shell
++      placeholder: |
++        Steps to reproduce your bugs:
++        
++        1. docker run -ti --gpus all nvcr.io/nvidia/pytorch:22.03-py3 bash
++        2. git clone https://github.com/NVIDIA/FasterTransformer.git
++        3. cd FasterTransformer mkdir build && cd build
++        4. cmake -DSM=80 -DCMAKE_BUILD_TYPE=Release .. && make -j12
++        5. ./bin/bert_example 32 12 32 12 64 0 0
++        6. What error you see.
++  
++    validations:
++      required: true
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+deleted file mode 100644
+index 6f535da..0000000
+--- a/.vscode/settings.json
++++ /dev/null
+@@ -1,72 +0,0 @@
+-{
+-    "files.associations": {
+-        "*.cuh": "cpp",
+-        "stdexcept": "cpp",
+-        "chrono": "cpp",
+-        "cmath": "cpp",
+-        "type_traits": "cpp",
+-        "cctype": "cpp",
+-        "clocale": "cpp",
+-        "cstdarg": "cpp",
+-        "cstddef": "cpp",
+-        "cstdio": "cpp",
+-        "cstdlib": "cpp",
+-        "cstring": "cpp",
+-        "ctime": "cpp",
+-        "cwchar": "cpp",
+-        "cwctype": "cpp",
+-        "array": "cpp",
+-        "atomic": "cpp",
+-        "*.tcc": "cpp",
+-        "condition_variable": "cpp",
+-        "cstdint": "cpp",
+-        "deque": "cpp",
+-        "unordered_map": "cpp",
+-        "vector": "cpp",
+-        "exception": "cpp",
+-        "algorithm": "cpp",
+-        "functional": "cpp",
+-        "iterator": "cpp",
+-        "map": "cpp",
+-        "memory": "cpp",
+-        "memory_resource": "cpp",
+-        "numeric": "cpp",
+-        "optional": "cpp",
+-        "random": "cpp",
+-        "ratio": "cpp",
+-        "set": "cpp",
+-        "string": "cpp",
+-        "string_view": "cpp",
+-        "system_error": "cpp",
+-        "tuple": "cpp",
+-        "utility": "cpp",
+-        "fstream": "cpp",
+-        "initializer_list": "cpp",
+-        "iomanip": "cpp",
+-        "iosfwd": "cpp",
+-        "iostream": "cpp",
+-        "istream": "cpp",
+-        "limits": "cpp",
+-        "mutex": "cpp",
+-        "new": "cpp",
+-        "ostream": "cpp",
+-        "sstream": "cpp",
+-        "streambuf": "cpp",
+-        "thread": "cpp",
+-        "cinttypes": "cpp",
+-        "typeinfo": "cpp",
+-        "bitset": "cpp",
+-        "hash_map": "cpp",
+-        "hash_set": "cpp",
+-        "slist": "cpp",
+-        "regex": "cpp",
+-        "strstream": "cpp",
+-        "complex": "cpp",
+-        "forward_list": "cpp",
+-        "list": "cpp",
+-        "unordered_set": "cpp",
+-        "future": "cpp",
+-        "cfenv": "cpp",
+-        "typeindex": "cpp"
+-    }
+-}
+\ No newline at end of file
+diff --git a/3rdparty/trt_fused_multihead_attention/CMakeLists.txt b/3rdparty/trt_fused_multihead_attention/CMakeLists.txt
+index 8707220..aea35e6 100644
+--- a/3rdparty/trt_fused_multihead_attention/CMakeLists.txt
++++ b/3rdparty/trt_fused_multihead_attention/CMakeLists.txt
+@@ -21,7 +21,6 @@ set(trt_fused_multi_head_attention_files
+ )
+ 
+ file(GLOB trt_fused_multi_head_attention_files ${trt_fused_multi_head_attention_files} *.sm*.cpp)
+-
+ add_library(trt_fused_multi_head_attention STATIC ${trt_fused_multi_head_attention_files})
+ target_link_libraries(trt_fused_multi_head_attention PUBLIC -lcublas -lcudart)
+ set_property(TARGET trt_fused_multi_head_attention PROPERTY POSITION_INDEPENDENT_CODE  ON)
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ea21014..3098d8a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,7 +14,9 @@
+ cmake_minimum_required(VERSION 3.8 FATAL_ERROR) # for PyTorch extensions, version should be greater than 3.13
+ project(FasterTransformer LANGUAGES CXX CUDA)
+ 
+-find_package(CUDA 10.2 REQUIRED)
++find_package(CUDA 10.1 REQUIRED)
++
++option(EXAMPLES "build examples" on)
+ 
+ if(${CUDA_VERSION_MAJOR} VERSION_GREATER_EQUAL "11")
+   add_definitions("-DENABLE_BF16")
+@@ -125,8 +127,6 @@ if(NOT (FIND_SM STREQUAL True))
+   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}  \
+                         -gencode=arch=compute_70,code=\\\"sm_70,compute_70\\\" \
+                         -gencode=arch=compute_75,code=\\\"sm_75,compute_75\\\" \
+-                        -gencode=arch=compute_80,code=\\\"sm_80,compute_80\\\" \
+-                        -gencode=arch=compute_86,code=\\\"sm_86,compute_86\\\" \
+                         ")
+   #                      -rdc=true")
+   set(CMAKE_C_FLAGS    "${CMAKE_C_FLAGS}    -DWMMA")
+@@ -136,7 +136,11 @@ if(NOT (FIND_SM STREQUAL True))
+     set(ENV{TORCH_CUDA_ARCH_LIST} "7.0;7.5;8.0;8.6")
+   endif()
+   set(CMAKE_CUDA_ARCHITECTURES 70 75 80 86)
+-  message("-- Assign GPU architecture (sm=70,75,80,86)")
++if(${CUDA_VERSION_STRING}  VERSION_LESS_EQUAL "10.1" )
++  message("${CUDA_VERSION_STRING} removing unsupported sm 80 & 86")
++  list(REMOVE_ITEM CMAKE_CUDA_ARCHITECTURES 80 86)
++endif()
++  message("-- Assign GPU architecture (sm=${CMAKE_CUDA_ARCHITECTURES})")
+ endif()
+ 
+ if(BUILD_PYT)
+@@ -152,8 +156,9 @@ set(CMAKE_CXX_STANDARD "${CXX_STD}")
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
+ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
+-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++${CXX_STD}")
+-
++if(${CUDA_VERSION_STRING}  VERSION_GREATER "10.1.105" )
++  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++${CXX_STD}")
++endif()
+ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+ # set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -Xcompiler -O3 --ptxas-options=--verbose")
+ set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -Xcompiler -O3")
+@@ -230,8 +235,10 @@ link_directories(
+ 
+ add_subdirectory(3rdparty)
+ add_subdirectory(src)
+-add_subdirectory(examples)
+-add_subdirectory(tests)
++if(EXAMPLES)
++  add_subdirectory(examples)
++  add_subdirectory(tests)
++endif()
+ 
+ ########################################
+ 
+@@ -313,6 +320,7 @@ add_library(transformer-static STATIC
+ set_property(TARGET transformer-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+ set_property(TARGET transformer-static PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+ target_link_libraries(transformer-static PUBLIC -lcudart -lnccl -lmpi -lcublas -lcublasLt -lcurand)
++endif()
+ 
+ add_library(transformer-shared SHARED
+   $<TARGET_OBJECTS:BaseBeamSearchLayer>
+@@ -324,29 +332,9 @@ add_library(transformer-shared SHARED
+   $<TARGET_OBJECTS:FfnLayer>
+   $<TARGET_OBJECTS:FusedAttentionLayer>
+   $<TARGET_OBJECTS:GptContextAttentionLayer>
+-  $<TARGET_OBJECTS:GptJ>
+-  $<TARGET_OBJECTS:GptJContextDecoder>
+-  $<TARGET_OBJECTS:GptJDecoder>
+   $<TARGET_OBJECTS:GptJDecoderLayerWeight>
+-  $<TARGET_OBJECTS:GptJTritonBackend>
+   $<TARGET_OBJECTS:GptJWeight>
+   $<TARGET_OBJECTS:OnlineBeamSearchLayer>
+-  $<TARGET_OBJECTS:ParallelGpt>
+-  $<TARGET_OBJECTS:ParallelGptContextDecoder>
+-  $<TARGET_OBJECTS:ParallelGptDecoder>
+-  $<TARGET_OBJECTS:ParallelGptDecoderLayerWeight>
+-  $<TARGET_OBJECTS:ParallelGptTritonBackend>
+-  $<TARGET_OBJECTS:ParallelGptWeight>
+-  $<TARGET_OBJECTS:T5Decoder>
+-  $<TARGET_OBJECTS:T5Decoding>
+-  $<TARGET_OBJECTS:T5Encoder>
+-  $<TARGET_OBJECTS:T5TritonBackend>
+-  $<TARGET_OBJECTS:TensorParallelDecoderCrossAttentionLayer>
+-  $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionLayer>
+-  $<TARGET_OBJECTS:TensorParallelGeluFfnLayer>
+-  $<TARGET_OBJECTS:TensorParallelGptContextAttentionLayer>
+-  $<TARGET_OBJECTS:TensorParallelReluFfnLayer>
+-  $<TARGET_OBJECTS:TensorParallelUnfusedAttentionLayer>
+   $<TARGET_OBJECTS:TopKSamplingLayer>
+   $<TARGET_OBJECTS:TopKTopPSamplingLayer>
+   $<TARGET_OBJECTS:TopPSamplingLayer>
+@@ -373,7 +361,6 @@ add_library(transformer-shared SHARED
+   $<TARGET_OBJECTS:matrix_transpose_kernels>
+   $<TARGET_OBJECTS:matrix_vector_multiplication>
+   $<TARGET_OBJECTS:memory_utils>
+-  $<TARGET_OBJECTS:nccl_utils>
+   $<TARGET_OBJECTS:custom_ar_comm>
+   $<TARGET_OBJECTS:custom_ar_kernels>
+   $<TARGET_OBJECTS:word_list>
+@@ -387,14 +374,17 @@ add_library(transformer-shared SHARED
+   $<TARGET_OBJECTS:trt_fused_multi_head_attention>
+   $<TARGET_OBJECTS:unfused_attention_kernels>
+   $<TARGET_OBJECTS:logprob_kernels>)
++
+ set_target_properties(transformer-shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
+ set_target_properties(transformer-shared PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+ set_target_properties(transformer-shared PROPERTIES LINKER_LANGUAGE CXX)
+-target_link_libraries(transformer-shared PUBLIC -lcudart -lnccl -lmpi -lcublas -lcublasLt -lcurand)
++target_link_libraries(transformer-shared PUBLIC -lcudart -lcublas -lcublasLt -lcurand)
+ 
+-include(GNUInstallDirs)
++#include(GNUInstallDirs)
+ set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/FasterTransformer)
+ 
++
++
+ include(CMakePackageConfigHelpers)
+ configure_package_config_file(
+   ${CMAKE_CURRENT_LIST_DIR}/cmake/FasterTransformerConfig.cmake.in
+@@ -402,52 +392,23 @@ configure_package_config_file(
+   INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
+ )
+ 
+-install(
+-  FILES
+-  ${CMAKE_CURRENT_BINARY_DIR}/FasterTransformerConfig.cmake
+-  DESTINATION ${INSTALL_CONFIGDIR}
+-)
+ 
+ install(
+   TARGETS
+     transformer-shared
+   EXPORT
+     transformer-shared-targets
+-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/backends/fastertransformer
+-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/backends/fastertransformer
+-)
+-
+-install(
+-  EXPORT
+-    transformer-shared-targets
+-  FILE
+-    FasterTransformerTargets.cmake
+-  DESTINATION
+-    ${INSTALL_CONFIGDIR}
++  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/output/lib
++  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/output/lib
+ )
+ 
+ file(GLOB_RECURSE HEADER_FILES "*.h" "*.hpp" "*.cuh")
+ foreach ( file ${HEADER_FILES} )
+     file( RELATIVE_PATH rfile ${CMAKE_CURRENT_SOURCE_DIR} ${file} )
+     get_filename_component( dir ${rfile} DIRECTORY )
+-    install( FILES ${file} DESTINATION  ${CMAKE_INSTALL_PREFIX}/include/${dir} )
++    install( FILES ${file} DESTINATION  ${CMAKE_CURRENT_SOURCE_DIR}/output/include )
+ endforeach()
+ 
+ 
+-################################################################################
+-# add_executable(gpt sample/cpp/gpt_sample.cc )
+-# target_link_libraries(gpt PUBLIC -lcublas -lcublasLt -lcudart -lcurand -lnccl -lmpi transformer-static)
+-# target_link_libraries(gpt PUBLIC -lcublas -lcublasLt -lcudart -lcurand -lnccl -lmpi decoder decoding)
+-
+-export(
+-  EXPORT
+-    transformer-shared-targets
+-  FILE
+-    ${CMAKE_CURRENT_BINARY_DIR}/FasterTransformerTargets.cmake
+-  NAMESPACE
+-    TritonCore::
+-)
+ 
+-export(PACKAGE FasterTransformer)
+ 
+-endif() # BUILD_MULTI_GPU
+diff --git a/README.md b/README.md
+index a60983c..45b5374 100644
+--- a/README.md
++++ b/README.md
+@@ -52,7 +52,7 @@ FasterTransformer is built on top of CUDA, cuBLAS, cuBLASLt and C++. We provide
+ | Swin Transformer | PyTorch        | Yes  | Yes                 | -                       | -               | -                 |
+ | Swin Transformer | TensorRT       | Yes  | Yes                 | -                       | -               | -                 |
+ | ViT              | PyTorch        | Yes  | Yes                 | -                       | -               | -                 |
+-| ViT              | TensorRT       | Yes  | Yes                 | -                       | -               | -                 |
++| ViT              | TensorRT       | Yes  | -                   | -                       | -               | -                 |
+ 
+ * Note that the FasterTransformer supports the models above on C++ because all source codes are built on C++.
+ 
+diff --git a/deploy.sh b/deploy.sh
+new file mode 100755
+index 0000000..ba7f644
+--- /dev/null
++++ b/deploy.sh
+@@ -0,0 +1,25 @@
++#copy cuda folder (once)
++base=`git rev-parse --show-toplevel`
++server=10.10.10.174
++while getopts "d" opt
++do
++case "${opt}" in 
++  "d" ) 
++   debug=1
++   shift
++   ;;
++esac
++done
++file=`realpath $1`
++shift
++rsync -v ${file} ${server}:${file}
++echo "file=${file}"
++rsync -v ${base}/../mindspore/trc/transformer/*.fp32 ${server}:${base}/build/bin
++# echo "cd ${base}/build/bin/"
++command=$(cat <<-ENDM
++  CUDA_VISIBLE_DEVICES=0 \
++  ${file} $@ 
++ENDM
++)
++echo "command=${command}"
++ssh ${server} "cd ${base}/build/bin ;${command}"
+diff --git a/docs/gpt_guide.md b/docs/gpt_guide.md
+index afcba9a..71c4fab 100644
+--- a/docs/gpt_guide.md
++++ b/docs/gpt_guide.md
+@@ -312,7 +312,7 @@ python tools/checkpoint_util.py --model-type GPT --loader megatron --saver faste
+ To convert the Megatron GPT model to binary, FasterTransformer provides a tool `examples/onnx/multi_gpu_gpt/onnx_ckpt_convert.py` to convert the checkpoint.
+ 
+ ```bash
+-wget https://github.com/onnx/models/raw/master/text/machine_comprehension/gpt-2/model/gpt2-10.onnx
++wget https://github.com/onnx/models/raw/main/text/machine_comprehension/gpt-2/model/gpt2-10.onnx
+ python ../examples/onnx/multi_gpu_gpt/onnx_ckpt_convert.py -i gpt2-10.onnx -o ../models/onnx-models/c-model/124m/ -i_g 1
+ python ../examples/onnx/multi_gpu_gpt/onnx_ckpt_convert.py -i gpt2-10.onnx -o ../models/onnx-models/c-model/124m/ -i_g 4
+ ```
+diff --git a/examples/cpp/CMakeLists.txt b/examples/cpp/CMakeLists.txt
+index b67cd01..3cc4155 100644
+--- a/examples/cpp/CMakeLists.txt
++++ b/examples/cpp/CMakeLists.txt
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ 
+ add_subdirectory(bert)
++add_subdirectory(ms)
+ add_subdirectory(bert_int8)
+ add_subdirectory(decoding)
+ add_subdirectory(gpt)
+diff --git a/examples/cpp/ms/CMakeLists.txt b/examples/cpp/ms/CMakeLists.txt
+new file mode 100644
+index 0000000..09920ff
+--- /dev/null
++++ b/examples/cpp/ms/CMakeLists.txt
+@@ -0,0 +1,20 @@
++# Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++add_executable(ms_benchmark ms.cc)
++if (SPARSITY_SUPPORT)
++target_link_libraries(ms_benchmark PUBLIC -lcublas -lcublasLt -lcudart -lcusparse -lcusparseLt transformer-shared)
++else()
++target_link_libraries(ms_benchmark PUBLIC -lcublas -lcublasLt -lcudart transformer-shared)
++endif()
+diff --git a/examples/cpp/ms/initialize.h b/examples/cpp/ms/initialize.h
+new file mode 100644
+index 0000000..b607656
+--- /dev/null
++++ b/examples/cpp/ms/initialize.h
+@@ -0,0 +1,275 @@
++#pragma once
++
++#include "src/fastertransformer/layers/attention_layers/AttentionWeight.h"
++#include "src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h"
++
++using namespace fastertransformer;
++struct opt_arg {
++        size_t batch_size;
++        size_t num_layers;
++        size_t seq_len;     // source seq len
++        size_t tgt_seq_len;
++        size_t head_num;
++        size_t hidden_size;
++        size_t size_per_head;
++        bool is_remove_padding;
++        std::string model_name;
++        std::string compute_type;
++        std::string w_compute_type;
++        std::string s_compute_type;
++};
++template<typename T, typename U=T, typename S=T>
++struct DecriptorTest{
++    std::vector<Tensor> input_tensors;
++    std::vector<Tensor> output_tensors;
++    std::vector<Tensor> output_python_tensors;
++    std::vector<Tensor> w_tensors;
++    BaseAttentionLayer<T, U, S>* Attn;
++};
++
++typedef enum {
++    MHA_X1 = 1,         // AttnIn + AttnMask
++    MHA_X2,             // AttnIn + EncOut -- same seq size + AttnMask
++    MHA_CROSS,          // AttnIn + EncOut + AttnMAsk
++}MODEL_TEST_ID_E;
++
++int ModelNum(std::string model_name) {
++    if (model_name == "mha_x1") {
++        return MHA_X1;
++    } else if (model_name == "mha_x2") {
++        return MHA_X2;
++    } else if (model_name == "mha_cross") {
++        return MHA_CROSS;
++    } else {
++        return -1;
++    }
++}
++
++template<typename T, typename U=T, typename S=T>
++void InitializeAttn(opt_arg* opt_a,
++                    DecriptorTest<T, U, S> &desc,
++                    cudaStream_t stream,
++                    cublasMMWrapper* cublas_wrapper,
++                    Allocator<AllocatorType::CUDA>* allocator) {
++    const size_t hidden_units = opt_a->head_num * opt_a->size_per_head;
++
++    desc.Attn = new MSMHALayer<T, U, S>(opt_a->batch_size,
++                                    opt_a->seq_len,
++                                    opt_a->tgt_seq_len,
++                                    opt_a->head_num,
++                                    opt_a->size_per_head,
++                                    stream,
++                                    cublas_wrapper,
++                                    allocator,
++                                    false,   // free buffer after fwd
++                                    true,    // is_qk_buf_float_
++                                    false);  // sparse
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size * opt_a->seq_len,hidden_units},
++                                    0});
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<U>(),
++                                    std::vector<size_t>{opt_a->batch_size, 1, opt_a->seq_len, opt_a->seq_len},
++                                    0});
++    // GPU RESULTS
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, 3 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{3 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units}, 0});    
++}
++template<typename T, typename U=T, typename S=T>
++void InitializeAttnX2(opt_arg* opt_a,
++                    DecriptorTest<T, U, S> &desc,
++                    cudaStream_t stream,
++                    cublasMMWrapper* cublas_wrapper,
++                    Allocator<AllocatorType::CUDA>* allocator) {
++    const size_t hidden_units = opt_a->head_num * opt_a->size_per_head;
++
++    desc.Attn = new MSMHALayer<T, U, S>(opt_a->batch_size,
++                                    opt_a->seq_len,
++                                    opt_a->tgt_seq_len,
++                                    opt_a->head_num,
++                                    opt_a->size_per_head,
++                                    stream,
++                                    cublas_wrapper,
++                                    allocator,
++                                    false,   // free buffer after fwd
++                                    true,    // is_qk_buf_float_
++                                    false);  // sparse
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size * opt_a->seq_len, hidden_units},
++                                    0});
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size * opt_a->seq_len, hidden_units},
++                                    0});
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size, 1, opt_a->seq_len, (size_t)(opt_a->seq_len)},
++                                    0});
++
++    // GPU RESULTS
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->seq_len, opt_a->size_per_head}, 0});
++
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, hidden_units}, 0});
++    desc.w_tensors.push_back(Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{3 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, 2 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units}, 0});
++}
++
++template<typename T, typename U=T, typename S=T>
++void InitializeAttnCross(opt_arg* opt_a,
++                    DecriptorTest<T, U, S> &desc,
++                    cudaStream_t stream,
++                    cublasMMWrapper* cublas_wrapper,
++                    Allocator<AllocatorType::CUDA>* allocator) {
++    const size_t hidden_units = opt_a->head_num * opt_a->size_per_head;
++
++    desc.Attn = new MSMHALayer<T, U, S>(opt_a->batch_size,
++                                    opt_a->seq_len,
++                                    opt_a->tgt_seq_len,
++                                    opt_a->head_num,
++                                    opt_a->size_per_head,
++                                    stream,
++                                    cublas_wrapper,
++                                    allocator,
++                                    false,   // free buffer after fwd
++                                    true,    // is_qk_buf_float_
++                                    false);  // sparse
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size * opt_a->seq_len, hidden_units},
++                                    0});
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size * opt_a->tgt_seq_len, hidden_units},
++                                    0});
++
++    desc.input_tensors.push_back(Tensor{MEMORY_GPU,
++                                    getTensorType<T>(),
++                                    std::vector<size_t>{opt_a->batch_size, 1, opt_a->seq_len, opt_a->tgt_seq_len},
++                                    0});
++
++    // GPU RESULTS
++
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->tgt_seq_len, opt_a->size_per_head}, 0});
++    desc.output_tensors.push_back(Tensor{
++        MEMORY_GPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->tgt_seq_len, opt_a->size_per_head}, 0});
++
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->seq_len, hidden_units}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->tgt_seq_len, opt_a->size_per_head}, 0});
++    desc.output_python_tensors.push_back(Tensor{
++        MEMORY_CPU, getTensorType<T>(), std::vector<size_t>{opt_a->batch_size, opt_a->head_num, opt_a->tgt_seq_len, opt_a->size_per_head}, 0});
++
++
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, hidden_units}, 0});
++    desc.w_tensors.push_back(Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{3 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, 2 * hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units, hidden_units}, 0});
++    desc.w_tensors.push_back(
++        Tensor{MEMORY_GPU, getTensorType<U>(), std::vector<size_t>{hidden_units}, 0});
++}
++
++template<typename T, typename U = T, typename S=T>
++void Init(opt_arg* opt_a,
++          DecriptorTest<T, U, S> &desc,
++          cudaStream_t stream,
++          cublasMMWrapper* cublas_wrapper,
++          Allocator<AllocatorType::CUDA>* allocator)
++{
++    int model_num = ModelNum(opt_a->model_name);
++    switch (model_num) {
++        case MHA_X1:
++            InitializeAttn<T, U, S>(opt_a,
++                            desc,
++                            stream,
++                            cublas_wrapper,
++                            allocator);
++            break;
++        case MHA_X2:
++           InitializeAttnX2<T, U, S>(opt_a,
++                              desc,
++                              stream,
++                              cublas_wrapper,
++                              allocator);
++            break;
++        case MHA_CROSS:
++           InitializeAttnCross<T, U, S>(opt_a,
++                              desc,
++                              stream,
++                              cublas_wrapper,
++                              allocator);
++            break;
++        default:
++            break;
++    }
++}
++template<typename T>
++void InitWeight(opt_arg *opt_a, AttentionWeight<T> &attn_weights, std::vector<Tensor> w_tensors) {
++    int modelId = ModelNum(opt_a->model_name);
++    if (modelId == MHA_X1) {
++        attn_weights.query_weight.kernel = (const T*)w_tensors[0].data;
++        attn_weights.query_weight.bias = (const T*)w_tensors[1].data;
++        attn_weights.attention_output_weight.kernel = (const T*)w_tensors[2].data;
++        attn_weights.attention_output_weight.bias = (const T*)w_tensors[3].data;
++    } else if (modelId == MHA_X2 || modelId == MHA_CROSS) {
++        attn_weights.query_weight.kernel = (const T*)w_tensors[0].data;
++        attn_weights.query_weight.bias = (const T*)w_tensors[1].data;
++        attn_weights.key_weight.kernel = (const T*)w_tensors[2].data;
++        attn_weights.attention_output_weight.kernel = (const T*)w_tensors[3].data;
++        attn_weights.attention_output_weight.bias = (const T*)w_tensors[4].data;
++    } else {
++        // return ERROR illegal model !
++    }
++}
+diff --git a/examples/cpp/ms/ms.cc b/examples/cpp/ms/ms.cc
+new file mode 100644
+index 0000000..3121200
+--- /dev/null
++++ b/examples/cpp/ms/ms.cc
+@@ -0,0 +1,434 @@
++/*
++ * Copyright (c) 2019-2022, NVIDIA CORPORATION.  All rights reserved.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#include "src/fastertransformer/layers/attention_layers/AttentionWeight.h"
++#include "src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h"
++#include "src/fastertransformer/utils/logger.h"
++#include "examples/cpp/ms/initialize.h"
++#include <cfloat>
++#include <getopt.h>
++#include <vector>
++using namespace fastertransformer;
++
++template<typename T, typename U=T, typename S=T>
++int MsExample(opt_arg* opt_a);
++void usage() {
++  std::cout << "Usage: ms_benchmark -b<batch_size> -l <num_layers>"
++            << "-s <seq_len> -H <head_num> -S <hidden_size> -p <is_remove_padding>"
++            << "-T <compute_type> -W <weights_compute_type> -F <softmax_compute_type>"
++            << "-m <model_name>  \n";
++}
++
++bool read_args(int argc, char* argv[], opt_arg* opt_a) {
++    int opt;
++    while ((opt = getopt(argc, argv, "b:l:s:t:H:S:p:m:T:W:F:i:w:")) != -1) {
++        switch (opt) {
++            case 'b':
++                opt_a->batch_size = atoi(optarg);
++                break;
++            case 'l':
++                opt_a->num_layers = atoi(optarg);
++                break;
++            case 's':
++                opt_a->seq_len = atoi(optarg);
++                break;
++            case 't':
++                opt_a->tgt_seq_len = atoi(optarg);
++                break;
++            case 'H':
++                opt_a->head_num = atoi(optarg);
++                break;
++            case 'S':
++                opt_a->hidden_size = atoi(optarg);
++                break;
++            case 'p':
++                opt_a->is_remove_padding = static_cast<bool>(atoi(optarg));
++                break;
++            case 'm':
++                opt_a->model_name = std::string(optarg);
++                break;
++            case 'T':
++                opt_a->compute_type = std::string(optarg);
++                break;
++            case 'W':
++                opt_a->w_compute_type = std::string(optarg);
++                break;
++            case 'F':
++                opt_a->s_compute_type = std::string(optarg);
++                break;
++            case 'i':
++            case 'w':    
++                break;    
++            case 'h':
++            default:
++                usage();
++                return false;
++        }
++    }
++    opt_a->size_per_head = opt_a->hidden_size / opt_a->head_num;
++    opt_a->tgt_seq_len = (opt_a->tgt_seq_len == -1) ? opt_a->seq_len : opt_a->tgt_seq_len;
++    return true;
++}
++
++
++
++int main(int argc, char** argv) {
++    opt_arg opt_a;
++    opt_a.batch_size = 1;
++    opt_a.num_layers = 1;
++    opt_a.seq_len = 1;
++    opt_a.tgt_seq_len = -1;
++    opt_a.head_num = 1;
++    opt_a.hidden_size = 1;
++    opt_a.size_per_head = 1;
++    opt_a.is_remove_padding = false;
++    opt_a.model_name = "";
++    opt_a.compute_type = "fp32";
++    opt_a.w_compute_type = "fp32";
++    opt_a.s_compute_type = "fp32";
++
++
++    if (read_args(argc, argv, &opt_a)) {
++        bool c_type_fp32 =  (opt_a.compute_type.compare("fp32") == 0);
++        bool w_type_fp32 =  (opt_a.w_compute_type.compare("fp32") == 0);
++        bool s_type_fp32 =  (opt_a.s_compute_type.compare("fp32") == 0);
++
++        s_type_fp32 = c_type_fp32; // Do softmax compute type as compute type
++        if (c_type_fp32 && w_type_fp32 && s_type_fp32) {
++            return MsExample<float, float, float>(&opt_a);
++        } else if (c_type_fp32 && w_type_fp32 && !s_type_fp32) {
++            return MsExample<float, float, half>(&opt_a);            
++        } else if (c_type_fp32 && !w_type_fp32 && s_type_fp32) {
++            return MsExample<float, half, float>(&opt_a);
++        } else if (c_type_fp32 && !w_type_fp32 && !s_type_fp32) {
++            return MsExample<float, half, half>(&opt_a);
++        } else if (!c_type_fp32 && w_type_fp32 && s_type_fp32) {
++            return MsExample<half, float, float>(&opt_a);
++        } else if (!c_type_fp32 && w_type_fp32 && !s_type_fp32) {
++            return MsExample<half, float, half>(&opt_a);
++        } else if (!c_type_fp32 && !w_type_fp32 && s_type_fp32) {
++            return MsExample<half, half, float>(&opt_a);
++        } else  {  // (!c_type_fp32 && !w_type_fp32 && !s_type_fp32)
++            return MsExample<half, half, half>(&opt_a);
++        }
++    }
++}
++
++template<typename T>
++int ReadFileBuf(const std::string file, T* buf, size_t size_buff) {
++    if (file.empty()) {
++        FT_LOG_ERROR("file is nullptr\n");
++        return -1;
++    }
++
++    std::ifstream ifs(file);
++    if (!ifs.good()) {
++        FT_LOG_ERROR("file: %s does not exist\n", file.c_str());
++        return -1;
++    }
++
++    if (!ifs.is_open()) {
++        FT_LOG_ERROR("file: open failed\n");
++        return -1;
++    }
++
++    ifs.seekg(0, std::ios::end);
++    size_t file_size = ifs.tellg();
++    if (file_size != size_buff) {
++        ifs.close();
++        FT_LOG_ERROR("file: %s size is %d desc size is %d\n", file.c_str(), file_size, size_buff);
++        return -1;
++    }
++    // return 0;
++    ifs.seekg(0, std::ios::beg);
++    ifs.read(reinterpret_cast<char*>(buf), size_buff);
++    ifs.close();
++    return 0;
++}
++
++template<typename T>
++int CalcTensorsSize(std::vector<Tensor>& tensors) {
++    int total = 0;
++    for (size_t i = 0; i < tensors.size(); i++) {
++        float size = 1;
++        for (size_t j = 0; j < tensors[i].shape.size(); j++) {
++            size *= tensors[i].shape[j];
++        }
++        total += size;
++    }
++
++    return total * sizeof(T);
++}
++
++template<typename T>
++int ReadTensors(std::vector<Tensor>& tensors, std::string post, opt_arg* opt_a, bool cpy = true) {
++    for (size_t i = 0; i < tensors.size(); i++) {
++        // if (tensors[i].type != TYPE_FP32) {
++        //     FT_LOG_ERROR("Type not supported, exiting ");
++        //     return -1;
++        // }
++        float size = 1;
++        for (size_t j = 0; j < tensors[i].shape.size(); j++) {
++            size *= tensors[i].shape[j];
++        }
++        std::string suffix = post.compare("weight") == 0 ? opt_a->w_compute_type : opt_a->compute_type;
++        std::string fn = opt_a->model_name + "_" + post + std::to_string(i + 1) + "." + suffix;
++        T* input;
++        T* input_host = (T*)malloc(size * sizeof(T));
++        int res = ReadFileBuf(fn, input_host, size * sizeof(T));
++        FT_CHECK(!res);
++        if (tensors[i].where == MEMORY_GPU) {
++            deviceMalloc(&input, size, false);
++            if (cpy)
++                cudaH2Dcpy(input, input_host, size);
++            else
++                deviceMemSetZero<T>(input, size);
++            tensors[i].data = input;
++            free(input_host);
++            input_host = 0;
++        }
++        else if (tensors[i].where == MEMORY_CPU) {
++            tensors[i].data = input_host;
++        }
++    }
++    return 0;
++}
++template<typename T>
++static float CompareData(const T* refOutput, int size, const T* msTensorData) {
++    constexpr float relativeTolerance = 1e-5;
++    constexpr float absoluteTolerance = 1e-8;
++    size_t errorCount = 0;
++    float meanError = 0;
++    std::cout << "Out tensor size is: " << size << std::endl;
++    std::cout << "Data of model output: ";
++    for (int j = 0; j < std::min(50, size); j++) {
++        std::cout << static_cast<float>(msTensorData[j]) << " ";
++    }
++    std::cout << std::endl;
++    std::cout << "Data of Ref output  : ";
++    for (int j = 0; j < std::min(50, size); j++) {
++        std::cout << static_cast<float>(refOutput[j]) << " ";
++    }
++    std::cout << std::endl;
++    for (int j = 0; j < size; j++) {
++        if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
++            std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
++            FT_LOG_ERROR("Output tensor has nan or inf data, compare fail\n");
++            // return RET_ERROR;
++            return -1;
++        }
++
++        auto tolerance = absoluteTolerance + relativeTolerance * fabs(refOutput[j]);
++        auto absoluteError = std::fabs(static_cast<float>(msTensorData[j]) - static_cast<float>(refOutput[j]));
++        if (absoluteError > tolerance) {
++            if (fabs(refOutput[j]) == 0) {
++                if (absoluteError > 1e-5) {
++                    meanError += absoluteError;
++                    errorCount++;
++                }
++                else {
++                    continue;
++                }
++            }
++            else {
++                // just assume that atol = rtol
++                meanError += absoluteError / (fabs(refOutput[j]) + FLT_MIN);
++                errorCount++;
++            }
++        }
++    }
++    if (meanError > 0.0f) {
++        meanError /= errorCount;
++    }
++    if (meanError <= 0.0000001) {
++        std::cout << "Mean bias of tensor: 0%" << std::endl;
++    }
++    else {
++        std::cout << "Mean bias of tensor: " << meanError * 100 << "%" << std::endl;
++    }
++    std::cout << std::endl;
++    return meanError;
++}
++template<typename T>
++int CompareOutput(std::vector<Tensor> output_python_tensors, std::vector<Tensor> output_tensors) {
++    float total_bias = 0;
++    int total_size = 0;
++    float accuracy_threshold_ = 0.5f;
++    bool has_error = false;
++    for (size_t i = 0; i < output_tensors.size(); i++) {
++        float size = 1;
++        for (size_t j = 0; j < output_tensors[i].shape.size(); j++) {
++            size *= output_tensors[i].shape[j];
++        }
++        T* output_device = (T*)output_tensors[i].data;
++        T* output_host = (T*)malloc(size * sizeof(T));
++        cudaD2Hcpy(output_host, output_device, size);
++        float bias = CompareData((T*)output_python_tensors[i].data, size, output_host);
++        free(output_host);
++        if (bias >= 0) {
++            total_bias += bias;
++            total_size++;
++        } else {
++            has_error = true;
++            break;
++        }
++    }
++    if (!has_error) {
++    float mean_bias;
++    if (total_size != 0) {
++      mean_bias = total_bias / total_size * 100;
++    } else {
++      mean_bias = 0;
++    }
++
++    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%"
++              << " threshold is:" <<accuracy_threshold_ << std::endl;
++    std::cout << "=======================================================" << std::endl << std::endl;
++
++    if (mean_bias >accuracy_threshold_) {
++      FT_LOG_INFO("Mean bias of all nodes/tensors is too big: %f %",mean_bias);
++      std::cout << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
++      return -9;
++    } else {
++      return 0;
++    }
++  } else {
++    FT_LOG_ERROR("Error in CompareData");
++    std::cerr << "Error in CompareData" << std::endl;
++    std::cout << "=======================================================" << std::endl << std::endl;
++    return -1;
++  }
++}
++
++void FreeDesc(std::vector<Tensor> &desc){
++    for (size_t i = 0; i < desc.size(); i++)
++    {
++        if (desc[i].where == MEMORY_GPU) {
++            cudaFree((float*)desc[i].data);
++            }
++        else if(desc[i].where == MEMORY_CPU){
++        free((float*)desc[i].data);
++        }
++    }
++}
++
++
++template<typename T, typename U=T, typename S=T>
++int MsExample(opt_arg* opt_a) {
++    printf("[INFO] Device: %s \n", getDeviceName().c_str());
++
++    cudaStream_t stream;
++    cublasHandle_t cublas_handle;
++    cublasLtHandle_t cublaslt_handle;
++    cudaStreamCreate(&stream);
++    cublasCreate(&cublas_handle);
++    cublasLtCreate(&cublaslt_handle);
++#ifdef SPARSITY_ENABLED
++    cusparseLtHandle_t cusparselt_handle;
++    CHECK_CUSPARSE(cusparseLtInit(&cusparselt_handle));
++#endif
++    cublasSetStream(cublas_handle, stream);
++    cublasAlgoMap* cublas_algo_map = new cublasAlgoMap("gemm_config.in", "");
++
++    Allocator<AllocatorType::CUDA> allocator(getDevice());
++
++    std::mutex* cublas_wrapper_mutex = new std::mutex();
++#ifdef SPARSITY_ENABLED
++    cublasMMWrapper cublas_wrapper = cublasMMWrapper(
++        cublas_handle, cublaslt_handle, cusparselt_handle, stream, cublas_algo_map, cublas_wrapper_mutex, &allocator);
++#else
++    cublasMMWrapper cublas_wrapper =
++        cublasMMWrapper(cublas_handle, cublaslt_handle, stream, cublas_algo_map, cublas_wrapper_mutex, &allocator);
++#endif
++    if (std::is_same<T, half>::value) {
++        if (std::is_same<U, float>::value) {
++            cublas_wrapper.setFP16MixedGemmConfig();
++        } else {
++            cublas_wrapper.setFP16GemmConfig();
++        }
++    } else if (std::is_same<T, float>::value) {
++        if (std::is_same<U, half>::value) {
++            cublas_wrapper.setFP32MixedGemmConfig();
++        } else {
++            cublas_wrapper.setFP32GemmConfig();
++        }
++    }
++
++    DecriptorTest <T, U, S> desc;
++    Init<T,U, S>(opt_a,
++    desc,
++    stream,
++    &cublas_wrapper,
++    &allocator);
++    int res = ReadTensors<T>(desc.input_tensors, std::string("input"), opt_a);
++    FT_CHECK(!res);
++
++    res = ReadTensors<T>(desc.output_tensors, std::string("output"), opt_a, false);
++    FT_CHECK(!res);
++
++    res = ReadTensors<T>(desc.output_python_tensors, std::string("output"), opt_a);
++    FT_CHECK(!res);
++
++    res = ReadTensors<U>(desc.w_tensors, std::string("weight"), opt_a);
++    FT_CHECK(!res);
++
++    std::cout << "inputs size: " << CalcTensorsSize<T>(desc.input_tensors) << std::endl;
++    std::cout << "weights size: " << CalcTensorsSize<T>(desc.w_tensors) << std::endl;
++    std::cout << "ouputs size: " << CalcTensorsSize<T>(desc.output_tensors) << std::endl;
++
++    AttentionWeight<U> attn_weights;
++    InitWeight<U>(opt_a, attn_weights, desc.w_tensors);
++    
++    // test for BE !!
++    desc.Attn->forward(&desc.output_tensors, &desc.input_tensors, &attn_weights);
++    CompareOutput<T>(desc.output_python_tensors, desc.output_tensors);
++
++#define DO_TIME
++#ifdef DO_TIME
++    // warmup
++    for (int i = 0; i < 10; i++) {
++        desc.Attn->forward(&desc.output_tensors, &desc.input_tensors, &attn_weights);
++    }
++
++    // profile time
++    const int ite = 1000;
++    CudaTimer cuda_timer(stream);
++    cuda_timer.start();
++    for (int i = 0; i < ite; i++) {
++        desc.Attn->forward(&desc.output_tensors, &desc.input_tensors, &attn_weights);
++    }
++    float total_time = cuda_timer.stop();
++
++    printf("batch_size %ld seq_len %ld layer %ld "
++           "AVG FT-CPP-time %.2f ms (%d iterations) "
++            "Total Time %.2f ms\n",
++                opt_a->batch_size,
++                opt_a->seq_len,
++                opt_a->num_layers,
++                total_time / ite,
++                ite, total_time);
++#endif
++
++#ifdef SPARSITY_ENABLED
++    cusparseLtDestroy(&cusparselt_handle);
++#endif
++    delete cublas_algo_map;
++    delete cublas_wrapper_mutex;
++    FreeDesc(desc.output_tensors); 
++    FreeDesc(desc.input_tensors);
++    FreeDesc(desc.output_python_tensors);
++    FreeDesc(desc.w_tensors);
++    return 0;
++}
+diff --git a/examples/pytorch/swin/Swin-Transformer-Quantization/SwinTransformer b/examples/pytorch/swin/Swin-Transformer-Quantization/SwinTransformer
+new file mode 160000
+index 0000000..cbaa0d8
+--- /dev/null
++++ b/examples/pytorch/swin/Swin-Transformer-Quantization/SwinTransformer
+@@ -0,0 +1 @@
++Subproject commit cbaa0d8707db403d85ad0e13c59f2f71cd6db425
+diff --git a/examples/pytorch/vit/ViT-quantization/ViT-pytorch b/examples/pytorch/vit/ViT-quantization/ViT-pytorch
+new file mode 160000
+index 0000000..460a162
+--- /dev/null
++++ b/examples/pytorch/vit/ViT-quantization/ViT-pytorch
+@@ -0,0 +1 @@
++Subproject commit 460a162767de1722a014ed2261463dbbc01196b6
+diff --git a/path.sh b/path.sh
+new file mode 100755
+index 0000000..53f5ca6
+--- /dev/null
++++ b/path.sh
+@@ -0,0 +1 @@
++export PATH=/usr/local/cuda-11/bin:/home/yoni/.vscode-server/bin/4af164ea3a06f701fe3e89a2bcbb421d2026b68f/bin/remote-cli:/home/yoni/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+diff --git a/src/fastertransformer/kernels/activation_kernels.cu b/src/fastertransformer/kernels/activation_kernels.cu
+index 7ff8e0f..e1be64c 100644
+--- a/src/fastertransformer/kernels/activation_kernels.cu
++++ b/src/fastertransformer/kernels/activation_kernels.cu
+@@ -201,12 +201,21 @@ __global__ void add_bias(H_T* out, const B_T* __restrict bias, int m, int n)
+     }
+ }
+ 
++template<typename H_T, typename B_T>
++__global__ void add_bias_basic(H_T* out, const B_T* __restrict bias, int m, int n)
++{
++    for (int id = blockIdx.x * blockDim.x + threadIdx.x; id < m * n; id += blockDim.x * gridDim.x) {
++        out[id] = out[id] + (H_T)ldg(&bias[id % n]);
++    }
++}
++
+ template<>
+ __global__ void add_bias(half* out, const half* __restrict bias, int m, int n)
+ {
+     half2* out_ptr = (half2*)out;
+     const half2* bias_ptr = (half2*)bias;
+-    for (int id = blockIdx.x * blockDim.x + threadIdx.x; id < m * n; id += blockDim.x * gridDim.x) {
++    int id = blockIdx.x * blockDim.x + threadIdx.x;
++    for (; id < m * n; id += blockDim.x * gridDim.x) {
+         out_ptr[id] = out_ptr[id] + __ldg(&bias_ptr[id % n]);
+     }
+ }
+@@ -228,15 +237,29 @@ void invokeAddBias(H_T* out, const B_T* bias, const int m, const int n, cudaStre
+ {
+     const int data_type_factor = 4 / sizeof(H_T);  // 1 for fp32, 2 for fp16 and bf16
+     dim3 block, grid;
+-    if (n / 4 / data_type_factor <= 1024) {
+-        block.x = n / 4 / data_type_factor;
+-        grid.x = m;
+-    }
+-    else {
+-        block.x = 1024;
+-        grid.x = ceil(m * n / 1024.);
++
++    bool reminder = (data_type_factor != 1) ? (n % data_type_factor) : false;
++    if (reminder) {
++        if (n / 4 <= 1024) {
++            block.x = n / 4;
++            grid.x = m;
++        }
++        else {
++            block.x = 1024;
++            grid.x = ceil(m * n / 1024.);
++        }
++        add_bias_basic<<<grid, block, 0, stream>>>(out, bias, m, n);
++    } else {
++        if (n / 4 / data_type_factor <= 1024) {
++            block.x = n / 4 / data_type_factor;
++            grid.x = m;
++        }
++        else {
++            block.x = 1024;
++            grid.x = ceil(m * n / 1024.);
++        }
++        add_bias<<<grid, block, 0, stream>>>(out, bias, m, (n / data_type_factor));
+     }
+-    add_bias<<<grid, block, 0, stream>>>(out, bias, m, n / data_type_factor);
+ }
+ 
+ template void invokeAddBias(float* out, const float* bias, const int m, const int n, cudaStream_t stream);
+diff --git a/src/fastertransformer/kernels/unfused_attention_kernels.cu b/src/fastertransformer/kernels/unfused_attention_kernels.cu
+index f951e71..4455879 100644
+--- a/src/fastertransformer/kernels/unfused_attention_kernels.cu
++++ b/src/fastertransformer/kernels/unfused_attention_kernels.cu
+@@ -243,6 +243,116 @@ __global__ void softmax_kernel_v4(T* qk_buf_,
+     }
+ }
+ 
++template<int ITEMS_PER_THREAD, typename T, typename T_IN>
++__global__ void softmax_cross_kernel_v4(T* qk_buf_,
++                                  const T_IN* qk_buf_src,
++                                  const T* attr_mask,
++                                  const int batch_size,
++                                  const int head_num,
++                                  const int seq_len,
++                                  const int trgt_seq_len,
++                                  const T scalar)
++{
++    for (int seq_id = blockIdx.x; seq_id < seq_len; seq_id += gridDim.x) {
++        float data[ITEMS_PER_THREAD];
++        int qk_offset;
++        __shared__ float s_mean, s_max;
++        float local_max = -1e20f;
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            qk_offset =
++                ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++            int mask_offset = (blockIdx.y * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++
++            float qk = static_cast<float>(qk_buf_src[qk_offset]);
++            float mask_val = static_cast<float>(ldg(&attr_mask[mask_offset]));
++
++            mask_val = (1.0f - mask_val) * -10000.0f;
++
++            data[i] = qk * static_cast<float>(scalar) + mask_val;
++            local_max = fmax(local_max, data[i]);
++        }
++
++        float max_val = blockDim.x <= 32 ? warpReduceMax(local_max) : blockReduceMax<float>(local_max);
++        if (threadIdx.x == 0) {
++            s_max = max_val;
++        }
++        __syncthreads();
++
++        float local_sum = 0;
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            data[i] = __expf(data[i] - s_max);
++            local_sum += data[i];
++        }
++        float sum_val = blockDim.x <= 32 ? warpReduceSum(local_sum) : blockReduceSum<float>(local_sum);
++        if (threadIdx.x == 0) {
++            s_mean = sum_val + 1e-6f;
++            s_mean = __fdividef(1.0f, s_mean);
++        }
++        __syncthreads();
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            qk_offset =
++                ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++            qk_buf_[qk_offset] = (T)(data[i] * s_mean);
++        }
++    }
++}
++
++template<int ITEMS_PER_THREAD, typename T, typename T_M>
++__global__ void softmax_mix_kernel_v4(T* qk_buf_,
++                                  const T_M* attr_mask,
++                                  const int batch_size,
++                                  const int head_num,
++                                  const int seq_len,
++                                  const int trgt_seq_len,
++                                  const T scalar)
++{
++    T* qk_buf_src = qk_buf_;
++    for (int seq_id = blockIdx.x; seq_id < seq_len; seq_id += gridDim.x) {
++        float data[ITEMS_PER_THREAD];
++        int qk_offset;
++        __shared__ float s_mean, s_max;
++        float local_max = -1e20f;
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            qk_offset =
++                ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++            int mask_offset = (blockIdx.y * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++
++            float qk = static_cast<float>(qk_buf_src[qk_offset]);
++            float mask_val = static_cast<float>(ldg(&attr_mask[mask_offset]));
++
++            mask_val = (1.0f - mask_val) * -10000.0f;
++
++            data[i] = qk * static_cast<float>(scalar) + mask_val;
++            local_max = fmax(local_max, data[i]);
++        }
++
++        float max_val = blockDim.x <= 32 ? warpReduceMax(local_max) : blockReduceMax<float>(local_max);
++        if (threadIdx.x == 0) {
++            s_max = max_val;
++        }
++        __syncthreads();
++
++        float local_sum = 0;
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            data[i] = __expf(data[i] - s_max);
++            local_sum += data[i];
++        }
++        float sum_val = blockDim.x <= 32 ? warpReduceSum(local_sum) : blockReduceSum<float>(local_sum);
++        if (threadIdx.x == 0) {
++            s_mean = sum_val + 1e-6f;
++            s_mean = __fdividef(1.0f, s_mean);
++        }
++        __syncthreads();
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < trgt_seq_len; i++) {
++            qk_offset =
++                ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * trgt_seq_len + blockDim.x * i + threadIdx.x;
++            qk_buf_[qk_offset] = (T)(data[i] * s_mean);
++        }
++    }
++}
++
+ template<typename T, int ITEMS_PER_THREAD>
+ __global__ void softmax_kernel_v4_half2(
+     T* qk_buf_, const T* attr_mask, const int batch_size, const int head_num, const int seq_len, const T scalar)
+@@ -298,6 +408,61 @@ __global__ void softmax_kernel_v4_half2(
+     }
+ }
+ 
++template<typename T, int ITEMS_PER_THREAD>
++__global__ void softmax_cross_kernel_v4_half2(
++    T* qk_buf_, const T* attr_mask, const int batch_size, const int head_num, const int seq_len, const int trgt_seq_len, const T scalar)
++{
++    using T2 = typename TypeConverter<T>::Type;
++    T2* qk_buf_half2 = (T2*)qk_buf_;
++    const T2* attr_mask_half2 = (const T2*)attr_mask;
++
++    for (int seq_id = blockIdx.x; seq_id < seq_len; seq_id += gridDim.x) {
++        T2 data[ITEMS_PER_THREAD];
++        int qk_offset;
++        __shared__ float s_mean, s_max;
++        float local_max = -1e20f;
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++            qk_offset = ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * (trgt_seq_len / 2) + blockDim.x * i
++                        + threadIdx.x;
++            int mask_offset = (blockIdx.y * seq_len + seq_id) * (trgt_seq_len / 2) + blockDim.x * i + threadIdx.x;
++
++            T2 qk = qk_buf_half2[qk_offset];
++            T2 mask_val = ldg(&attr_mask_half2[mask_offset]);
++            mask_val = hmul2<T2>(hsub2<T2>(float2type2<T2>(1.0f), mask_val), float2type2<T2>(-10000.0f));
++
++            data[i] = hadd2<T2>(hmul2<T2>(qk, type2type2<T, T2>(scalar)), mask_val);
++
++            local_max = fmax(local_max, fmax((float)data[i].x, (float)data[i].y));
++        }
++
++        float max_val = blockDim.x <= 32 ? warpReduceMax(local_max) : blockReduceMax<float>(local_max);
++        if (threadIdx.x == 0) {
++            s_max = max_val;
++        }
++        __syncthreads();
++
++        float local_sum = 0;
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++            data[i] = hexp2<T2>(hsub2<T2>(data[i], float2type2<T2>(s_max)));
++            local_sum += (float)(data[i].x + data[i].y);
++        }
++
++        float sum_val = blockDim.x <= 32 ? warpReduceSum(local_sum) : blockReduceSum<float>(local_sum);
++
++        if (threadIdx.x == 0) {
++            s_mean = sum_val + 1e-6f;
++            s_mean = __fdividef(1.0f, s_mean);
++        }
++        __syncthreads();
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++            qk_offset = ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id) * (trgt_seq_len / 2) + blockDim.x * i
++                        + threadIdx.x;
++            qk_buf_half2[qk_offset] = hmul2<T2>(data[i], float2type2<T2>(s_mean));
++        }
++    }
++}
++
+ template<typename T, int ITEMS_PER_THREAD, int NUM>
+ __global__ void softmax_kernel_v5_half2(
+     T* qk_buf_, const T* attr_mask, const int batch_size, const int head_num, const int seq_len, const T scalar)
+@@ -415,6 +580,123 @@ __global__ void softmax_kernel_v5_half2(
+     }
+ }
+ 
++template<typename T, int ITEMS_PER_THREAD, int NUM>
++__global__ void softmax_cross_kernel_v5_half2(
++    T* qk_buf_, const T* attr_mask, const int batch_size, const int head_num, const int seq_len, const int trgt_seq_len, const T scalar)
++{
++    using T2 = typename TypeConverter<T>::Type;
++    T2* qk_buf_half2 = (T2*)qk_buf_;
++    const T2* attr_mask_half2 = (const T2*)attr_mask;
++
++    for (int seq_id = blockIdx.x; seq_id < seq_len; seq_id += gridDim.x * NUM) {
++        T2 data[NUM][ITEMS_PER_THREAD];
++
++        int qk_offset[NUM];
++
++        __shared__ float s_sum[NUM], s_max[NUM];
++        float local_max[NUM];
++#pragma unroll
++        for (int j = 0; j < NUM; j++) {
++            local_max[j] = -1e20f;
++        }
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++            int mask_offset[NUM];
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                qk_offset[j] = ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id + j * gridDim.x) * (trgt_seq_len / 2)
++                               + blockDim.x * i + threadIdx.x;
++                mask_offset[j] =
++                    (blockIdx.y * seq_len + seq_id + j * gridDim.x) * (trgt_seq_len / 2) + blockDim.x * i + threadIdx.x;
++            }
++
++            T2 mask_val[NUM];
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                mask_val[j] = ldg(&attr_mask_half2[mask_offset[j]]);
++            }
++
++            T2 qk[NUM];
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                qk[j] = qk_buf_half2[qk_offset[j]];
++            }
++
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                mask_val[j] = hmul2<T2>(hsub2<T2>(float2type2<T2>(1.0f), mask_val[j]), float2type2<T2>(-10000.0f));
++            }
++
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                data[j][i] = hadd2<T2>(hmul2<T2>(qk[j], type2type2<T, T2>(scalar)), mask_val[j]);
++                local_max[j] = fmax(local_max[j], fmax((float)data[j][i].x, (float)data[j][i].y));
++            }
++        }
++
++        if (blockDim.x <= 32) {
++            warpReduceMaxV2<float, NUM>(local_max);
++        }
++        else {
++            blockReduceMaxV2<float, NUM>(local_max);
++        }
++
++        if (threadIdx.x == 0) {
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                s_max[j] = local_max[j];
++            }
++        }
++        __syncthreads();
++
++        float local_sum[NUM];
++#pragma unroll
++        for (int j = 0; j < NUM; j++) {
++            local_sum[j] = {0.f};
++        }
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                data[j][i] = hexp2<T2>(hsub2<T2>(data[j][i], float2type2<T2>(s_max[j])));
++            }
++
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                local_sum[j] += (float)(data[j][i].x + data[j][i].y);
++            }
++        }
++
++        if (blockDim.x <= 32) {
++            warpReduceSumV2<float, NUM>(local_sum);
++        }
++        else {
++            blockReduceSumV2<float, NUM>(local_sum);
++        }
++
++        if (threadIdx.x == 0) {
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                s_sum[j] = __fdividef(1.0f, local_sum[j] + 1e-6f);
++            }
++        }
++        __syncthreads();
++
++        for (int i = 0; blockDim.x * i + threadIdx.x < (trgt_seq_len / 2) && i < ITEMS_PER_THREAD; i++) {
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                qk_offset[j] = ((blockIdx.y * head_num + blockIdx.z) * seq_len + seq_id + j * gridDim.x) * (trgt_seq_len / 2)
++                               + blockDim.x * i + threadIdx.x;
++            }
++
++#pragma unroll
++            for (int j = 0; j < NUM; j++) {
++                qk_buf_half2[qk_offset[j]] = hmul2<T2>(data[j][i], float2type2<T2>(s_sum[j]));
++            }
++        }
++    }
++}
++
+ #define SOFTMAX_KERNEL(ITEMS_PER_THREAD)                                                                               \
+     block.x /= ITEMS_PER_THREAD;                                                                                       \
+     assert(block.x <= 1024);                                                                                           \
+@@ -434,6 +716,50 @@ __global__ void softmax_kernel_v5_half2(
+             <<<grid, block, 0, stream>>>(buffer, buffer_src, attr_mask, batch_size, head_num, seq_len, scalar);        \
+     }
+ 
++#define SOFTMAX_CROSS_KERNEL(ITEMS_PER_THREAD)                                                                               \
++    block.x /= ITEMS_PER_THREAD;                                                                                       \
++    assert(block.x <= 1024);                                                                                           \
++    if (is_half2) {                                                                                                    \
++        if (grid.x % 4 == 0) {                                                                                         \
++            grid.x /= 4;                                                                                               \
++            softmax_cross_kernel_v5_half2<half, ITEMS_PER_THREAD, 4><<<grid, block, 0, stream>>>(                      \
++                (half*)buffer, (const half*)attr_mask, batch_size, head_num, seq_len, trgt_seq_len,                    \
++                (const half)scalar);                                                                                   \
++        }                                                                                                              \
++        else {                                                                                                         \
++            softmax_cross_kernel_v4_half2<half, ITEMS_PER_THREAD><<<grid, block, 0, stream>>>(                         \
++                (half*)buffer, (const half*)attr_mask, batch_size, head_num, seq_len, trgt_seq_len,                    \
++                 (const half)scalar);                                                                                  \
++        }                                                                                                              \
++    }                                                                                                                  \
++    else {                                                                                                             \
++        softmax_cross_kernel_v4<ITEMS_PER_THREAD, T, T_IN>                                                             \
++        <<<grid, block, 0, stream>>>(buffer, buffer_src, attr_mask, batch_size, head_num, seq_len,                     \
++        trgt_seq_len, scalar);                                                                                         \
++    }
++
++#define SOFTMAX_MIX_KERNEL(ITEMS_PER_THREAD)                                                                               \
++    block.x /= ITEMS_PER_THREAD;                                                                                       \
++    assert(block.x <= 1024);                                                                                           \
++    if (is_half2) {                                                                                                    \
++        if (grid.x % 4 == 0) {                                                                                         \
++            grid.x /= 4;                                                                                               \
++            softmax_cross_kernel_v5_half2<half, ITEMS_PER_THREAD, 4><<<grid, block, 0, stream>>>(                      \
++                (half*)io_buffer, (const half*)attr_mask, batch_size, head_num, seq_len, trgt_seq_len,                    \
++                (const half)scalar);                                                                                   \
++        }                                                                                                              \
++        else {                                                                                                         \
++            softmax_cross_kernel_v4_half2<half, ITEMS_PER_THREAD><<<grid, block, 0, stream>>>(                         \
++                (half*)io_buffer, (const half*)attr_mask, batch_size, head_num, seq_len, trgt_seq_len,                    \
++                 (const half)scalar);                                                                                  \
++        }                                                                                                              \
++    }                                                                                                                  \
++    else {                                                                                                             \
++        softmax_mix_kernel_v4<ITEMS_PER_THREAD, T, T_M>                                                             \
++        <<<grid, block, 0, stream>>>(io_buffer, attr_mask, batch_size, head_num, seq_len,                     \
++        trgt_seq_len, scalar);                                                                                         \
++    }
++
+ #ifdef ENABLE_BF16
+ #define SOFTMAX_KERNEL_BF16(ITEMS_PER_THREAD)                                                                          \
+     block.x /= ITEMS_PER_THREAD;                                                                                       \
+@@ -501,6 +827,80 @@ void invokeMaskedSoftMax(T* buffer,
+     }
+ }
+ 
++template<typename T, typename T_IN>
++void invokeCrossMaskedSoftMax(T* buffer,
++                         const T_IN* buffer_src,
++                         const T* attr_mask,
++                         const int batch_size,
++                         const int seq_len,
++                         const int trgt_seq_len,
++                         const int head_num,
++                         const T scalar,
++                         cudaStream_t stream)
++{
++
++    dim3 grid(seq_len, batch_size, head_num);
++    if (batch_size * head_num > 360) {
++        grid.x = ceil(float(seq_len) / 32.0f);
++    }
++
++    bool is_half2 = sizeof(T) == 2 && sizeof(T_IN) == 2 && trgt_seq_len % 2 == 0;
++    dim3 block((trgt_seq_len / (is_half2 ? 2 : 1) + 31) / 32 * 32);
++
++    if (block.x > 3072 && block.x <= 4096) {
++        SOFTMAX_CROSS_KERNEL(4)
++    }
++    if (block.x > 2048) {
++        SOFTMAX_CROSS_KERNEL(3)
++    }
++    else if (block.x > 1024) {
++        SOFTMAX_CROSS_KERNEL(2)
++    }
++    else if (block.x > 0) {
++        SOFTMAX_CROSS_KERNEL(1)
++    }
++    else {
++        FT_CHECK(trgt_seq_len <= 4096 || seq_len <= 4096);
++    }
++}
++
++
++template<typename T, typename T_M>
++void invokeMixMaskedSoftMax(T* io_buffer,
++                         const T_M* attr_mask,
++                         const int batch_size,
++                         const int seq_len,
++                         const int trgt_seq_len,
++                         const int head_num,
++                         const T scalar,
++                         cudaStream_t stream)
++{
++
++    dim3 grid(seq_len, batch_size, head_num);
++    if (batch_size * head_num > 360) {
++        grid.x = ceil(float(seq_len) / 32.0f);
++    }
++
++    bool is_half2 = sizeof(T) == 2 && sizeof(T_M) == 2 && trgt_seq_len % 2 == 0;
++    dim3 block((trgt_seq_len / (is_half2 ? 2 : 1) + 31) / 32 * 32);
++
++    if (block.x > 3072 && block.x <= 4096) {
++        SOFTMAX_MIX_KERNEL(4)
++    }
++    if (block.x > 2048) {
++        SOFTMAX_MIX_KERNEL(3)
++    }
++    else if (block.x > 1024) {
++        SOFTMAX_MIX_KERNEL(2)
++    }
++    else if (block.x > 0) {
++        SOFTMAX_MIX_KERNEL(1)
++    }
++    else {
++        FT_CHECK(trgt_seq_len <= 4096 || seq_len <= 4096);
++    }
++}
++
+ #ifdef ENABLE_BF16
+ template<>
+ void invokeMaskedSoftMax(__nv_bfloat16* buffer,
+@@ -574,13 +974,78 @@ void invokeMaskedSoftMax(__nv_bfloat16* buffer,
+         FT_CHECK(seq_len <= 4096);
+     }
+ }
++
++template<>
++void invokeCrossMaskedSoftMax(__nv_bfloat16* buffer,
++                         const __nv_bfloat16* buffer_src,
++                         const __nv_bfloat16* attr_mask,
++                         const int batch_size,
++                         const int seq_len, const int trgt_seq_len,
++                         const int head_num,
++                         const __nv_bfloat16 scalar,
++                         cudaStream_t stream) {;}
++
++template<>
++void invokeCrossMaskedSoftMax(__nv_bfloat16* buffer,
++                         const float* buffer_src,
++                         const __nv_bfloat16* attr_mask,
++                         const int batch_size,
++                         const int seq_len, const int trgt_seq_len,
++                         const int head_num,
++                         const __nv_bfloat16 scalar,
++                         cudaStream_t stream) {;}
+ #endif  // ENABLE_BF16
+ 
+-template void invokeMaskedSoftMax(float* buffer,
++template void invokeMixMaskedSoftMax(float* io_buffer,
++                            const float* attr_mask,
++                            const int batch_size,
++                            const int seq_len,
++                            const int tgt_seq_len,
++                            const int head_num,
++                            const float scalar,
++                            cudaStream_t stream);
++
++template void invokeMixMaskedSoftMax(half* io_buffer,
++                            const half* attr_mask,
++                            const int batch_size,
++                            const int seq_len,
++                            const int tgt_seq_len,
++                            const int head_num,
++                            const half scalar,
++                            cudaStream_t stream);
++
++template void invokeMixMaskedSoftMax(float* io_buffer,
++                            const half* attr_mask,
++                            const int batch_size,
++                            const int seq_len,
++                            const int tgt_seq_len,
++                            const int head_num,
++                            const float scalar,
++                            cudaStream_t stream);
++
++template void invokeMixMaskedSoftMax(half* io_buffer,
++                            const float* attr_mask,
++                            const int batch_size,
++                            const int seq_len,
++                            const int tgt_seq_len,
++                            const int head_num,
++                            const half scalar,
++                            cudaStream_t stream);
++
++    template void invokeMaskedSoftMax(float* buffer,
++                                      const float* buffer_src,
++                                      const float* attr_mask,
++                                      const int batch_size,
++                                      const int seq_len,
++                                      const int head_num,
++                                      const float scalar,
++                                      cudaStream_t stream);
++
++template void invokeCrossMaskedSoftMax(float* buffer,
+                                   const float* buffer_src,
+                                   const float* attr_mask,
+                                   const int batch_size,
+-                                  const int seq_len,
++                                  const int seq_len, const int trgt_seq_len,
+                                   const int head_num,
+                                   const float scalar,
+                                   cudaStream_t stream);
+@@ -594,6 +1059,15 @@ template void invokeMaskedSoftMax(half* buffer,
+                                   const half scalar,
+                                   cudaStream_t stream);
+ 
++template void invokeCrossMaskedSoftMax(half* buffer,
++                                  const float* buffer_src,
++                                  const half* attr_mask,
++                                  const int batch_size,
++                                  const int seq_len, const int trgt_seq_len,
++                                  const int head_num,
++                                  const half scalar,
++                                  cudaStream_t stream);
++
+ template void invokeMaskedSoftMax(half* buffer,
+                                   const half* buffer_src,
+                                   const half* attr_mask,
+@@ -603,6 +1077,15 @@ template void invokeMaskedSoftMax(half* buffer,
+                                   const half scalar,
+                                   cudaStream_t stream);
+ 
++template void invokeCrossMaskedSoftMax(half* buffer,
++                                  const half* buffer_src,
++                                  const half* attr_mask,
++                                  const int batch_size,
++                                  const int seq_len, const int trgt_seq_len,
++                                  const int head_num,
++                                  const half scalar,
++                                  cudaStream_t stream);
++
+ #ifdef ENABLE_BF16
+ template void invokeMaskedSoftMax(__nv_bfloat16* buffer,
+                                   const __nv_bfloat16* buffer_src,
+@@ -621,6 +1104,25 @@ template void invokeMaskedSoftMax(__nv_bfloat16* buffer,
+                                   const int head_num,
+                                   const __nv_bfloat16 scalar,
+                                   cudaStream_t stream);
++
++template void invokeCrossMaskedSoftMax(__nv_bfloat16* buffer,
++                                  const __nv_bfloat16* buffer_src,
++                                  const __nv_bfloat16* attr_mask,
++                                  const int batch_size,
++                                  const int seq_len,  const int trgt_seq_len,
++                                  const int head_num,
++                                  const __nv_bfloat16 scalar,
++                                  cudaStream_t stream);
++
++template void invokeCrossMaskedSoftMax(__nv_bfloat16* buffer,
++                                  const float* buffer_src,
++                                  const __nv_bfloat16* attr_mask,
++                                  const int batch_size,
++                                  const int seq_len,  const int trgt_seq_len,
++                                  const int head_num,
++                                  const __nv_bfloat16 scalar,
++                                  cudaStream_t stream);
++
+ #endif  // ENABLE_BF16
+ 
+ template<typename T>
+@@ -726,9 +1228,10 @@ void invokeTransposeQKV(T* dst,
+             seq_per_block *= 2;
+         }
+ 
+-        FT_CHECK(grid.x * seq_per_block == batch_size * head_num * seq_len);
++        FT_CHECK((int)(grid.x * seq_per_block) == batch_size * head_num * seq_len);
+ 
+-        if (seq_per_block * size_per_head % 2 == 0) {
++        // if (seq_per_block * size_per_head % 2 == 0) {
++        if (size_per_head % 2 == 0) {            
+             block.x = seq_per_block * size_per_head / 2;
+             if (std::is_same<T, half>::value) {
+                 transpose<half2><<<grid, block, 0, stream>>>(
+@@ -1061,12 +1564,12 @@ template void invokeTransposeAttentionOutRemovePadding(half* src,
+                                                        const int* mask_offset,
+                                                        cudaStream_t stream);
+ 
+-template<typename T>
++template<typename T, typename U=T>
+ __global__ void add_fusedQKV_bias_transpose_kernel(T* q_buf,
+                                                    T* k_buf,
+                                                    T* v_buf,
+                                                    const T* __restrict QKV,
+-                                                   const T* __restrict qkv_bias,
++                                                   const U* __restrict qkv_bias,
+                                                    const int batch_size,
+                                                    const int seq_len,
+                                                    const int head_num,
+@@ -1081,7 +1584,7 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T* q_buf,
+     for (int index = blockDim.x * blockIdx.x + threadIdx.x; index < batch_size * seq_len * 3 * n;
+          index += gridDim.x * blockDim.x) {
+         int bias_id = index % (3 * n);
+-        T val = ldg(&QKV[index]) + ldg(&qkv_bias[bias_id]);
++        T val = ldg(&QKV[index]) + (T)ldg(&qkv_bias[bias_id]);
+ 
+         int tmp_index = index;
+         const int target_batch_id = tmp_index / (seq_len * 3 * n);
+@@ -1116,12 +1619,12 @@ struct Vec_t<__nv_bfloat16> {
+ };
+ #endif
+ 
+-template<typename T>
++template<typename T,typename U=T>
+ __global__ void add_fusedQKV_bias_transpose_kernel(T* q_buf,
+                                                    T* k_buf,
+                                                    T* v_buf,
+                                                    const T* __restrict QKV,
+-                                                   const T* __restrict qkv_bias,
++                                                   const U* __restrict qkv_bias,
+                                                    const int batch_size,
+                                                    const int seq_len,
+                                                    const int head_num,
+@@ -1170,12 +1673,12 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T* q_buf,
+     *reinterpret_cast<Vec_t*>(&v_buf[dest_idx]) = v;
+ }
+ 
+-template<typename T>
++template<typename T, typename U>
+ void invokeAddFusedQKVBiasTranspose(T* q_buf,
+                                     T* k_buf,
+                                     T* v_buf,
+                                     T* QKV,
+-                                    const T* qkv_bias,
++                                    const U* qkv_bias,
+                                     const int batch_size,
+                                     const int seq_len,
+                                     const int head_num,
+@@ -1200,6 +1703,155 @@ void invokeAddFusedQKVBiasTranspose(T* q_buf,
+     }
+ }
+ 
++
++template<typename T, typename U=T>
++__global__ void invokeCrossAddFusedQKVBiasTransposeQ(T* q_buf,                                            
++                                                   const T* __restrict QKV,
++                                                   const U* __restrict qkv_bias,
++                                                   const int batch_size,
++                                                   const int seq_len,
++                                                   const int head_num,
++                                                   const int size_per_head)
++{
++    // QKV: [m, 1, n]
++    // qkv_bias: [1, n]
++    // q_buf: [batch, head_num, seq_len, size_per_head]
++
++    T* qkv_ptr[1] = {q_buf};
++    const int n = head_num * size_per_head;
++    for (int index = blockDim.x * blockIdx.x + threadIdx.x; index < batch_size * seq_len * 1 * n;
++         index += gridDim.x * blockDim.x) {
++        int bias_id = index % (1 * n);
++        T val = ldg(&QKV[index]) + (T)ldg(&qkv_bias[bias_id]);
++
++        int tmp_index = index;
++        const int target_batch_id = tmp_index / (seq_len * 1 * n);
++        tmp_index -= target_batch_id * seq_len * 1 * n;
++        const int seq_id = tmp_index / (1 * n);
++        tmp_index -= seq_id * 1 * n;
++        const int qkv_id = tmp_index / n;
++        tmp_index -= qkv_id * n;
++        const int head_id = tmp_index / size_per_head;
++        const int size_id = tmp_index - head_id * size_per_head;
++
++        qkv_ptr[qkv_id][target_batch_id * head_num * seq_len * size_per_head + head_id * seq_len * size_per_head
++                        + seq_id * size_per_head + size_id] = val;
++    }
++}
++
++template<typename T, typename U=T>
++__global__ void invokeCrossAddFusedQKVBiasTransposeKV(T* k_buf, T* v_buf,                                            
++                                                   const T* __restrict QKV,
++                                                   const U* __restrict qkv_bias,
++                                                   const int batch_size,
++                                                   const int seq_len,
++                                                   const int head_num,
++                                                   const int size_per_head)
++{
++    // QKV: [m, 2, n]
++    // qkv_bias: [2, n]
++    // k_buf, v_buf: [batch, head_num, seq_len, size_per_head]
++
++    T* qkv_ptr[2] = {k_buf, v_buf};
++    const int n = head_num * size_per_head;
++    for (int index = blockDim.x * blockIdx.x + threadIdx.x; index < batch_size * seq_len * 2 * n;
++         index += gridDim.x * blockDim.x) {
++        int bias_id = index % (2 * n);
++        T val = ldg(&QKV[index]) + (T)ldg(&qkv_bias[bias_id]);
++
++        int tmp_index = index;
++        const int target_batch_id = tmp_index / (seq_len * 2 * n);
++        tmp_index -= target_batch_id * seq_len * 2 * n;
++        const int seq_id = tmp_index / (2 * n);
++        tmp_index -= seq_id * 2 * n;
++        const int qkv_id = tmp_index / n;
++        tmp_index -= qkv_id * n;
++        const int head_id = tmp_index / size_per_head;
++        const int size_id = tmp_index - head_id * size_per_head;
++        //printf("%d %d\n", head_id, size_id);
++        qkv_ptr[qkv_id][target_batch_id * head_num * seq_len * size_per_head + head_id * seq_len * size_per_head
++                        + seq_id * size_per_head + size_id] = val;
++    }
++}
++
++template<typename T, typename U>
++void invokeCrossAddFusedQKVBiasTranspose(T* q_buf,
++                                    T* k_buf,
++                                    T* v_buf,
++                                    T* QKV,
++                                    const U* qkv_bias,
++                                    const int batch_size,
++                                    const int seq_len,
++                                    const int tgt_seq_len,
++                                    const int head_num,
++                                    const int size_per_head,
++                                    cudaStream_t stream)
++{
++    
++    const int m = batch_size * seq_len;
++    const int n = head_num * size_per_head;
++    dim3 block(384);
++    dim3 grid((int)(ceil(1.0 * m * n / 384)));
++    invokeCrossAddFusedQKVBiasTransposeQ<<<grid, block, 0, stream>>>(
++    q_buf, QKV, qkv_bias, batch_size, seq_len, head_num, size_per_head);
++    
++    const int m2 = batch_size * tgt_seq_len;
++    const int n2 = head_num * size_per_head;
++    dim3 block2(384);
++    dim3 grid2((int)(ceil(1.0 * m2 * n2 / 384)));
++    invokeCrossAddFusedQKVBiasTransposeKV<<<grid2, block2, 0, stream>>>(
++    k_buf, v_buf, QKV + m * n, qkv_bias + n2, batch_size, tgt_seq_len, head_num, size_per_head);
++    
++}
++
++template void invokeCrossAddFusedQKVBiasTranspose(float* q_buf,
++                                             float* k_buf,
++                                             float* v_buf,
++                                             float* QKV,
++                                             const float* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int tgt_seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             cudaStream_t stream);
++
++template void invokeCrossAddFusedQKVBiasTranspose(half* q_buf,
++                                             half* k_buf,
++                                             half* v_buf,
++                                             half* QKV,
++                                             const half* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int tgt_seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             cudaStream_t stream);
++
++template void invokeCrossAddFusedQKVBiasTranspose(float* q_buf,
++                                             float* k_buf,
++                                             float* v_buf,
++                                             float* QKV,
++                                             const half* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int tgt_seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             cudaStream_t stream);
++
++template void invokeCrossAddFusedQKVBiasTranspose(half* q_buf,
++                                             half* k_buf,
++                                             half* v_buf,
++                                             half* QKV,
++                                             const float* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int tgt_seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             cudaStream_t stream);
++
+ template void invokeAddFusedQKVBiasTranspose(float* q_buf,
+                                              float* k_buf,
+                                              float* v_buf,
+@@ -1224,6 +1876,30 @@ template void invokeAddFusedQKVBiasTranspose(half* q_buf,
+                                              const int rotary_embedding_dim,
+                                              cudaStream_t stream);
+ 
++template void invokeAddFusedQKVBiasTranspose(float* q_buf,
++                                             float* k_buf,
++                                             float* v_buf,
++                                             float* QKV,
++                                             const half* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             const int rotary_embedding_dim,
++                                             cudaStream_t stream);
++
++template void invokeAddFusedQKVBiasTranspose(half* q_buf,
++                                             half* k_buf,
++                                             half* v_buf,
++                                             half* QKV,
++                                             const float* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             const int rotary_embedding_dim,
++                                             cudaStream_t stream);
++
+ #ifdef ENABLE_BF16
+ template void invokeAddFusedQKVBiasTranspose(__nv_bfloat16* q_buf,
+                                              __nv_bfloat16* k_buf,
+@@ -1236,6 +1912,19 @@ template void invokeAddFusedQKVBiasTranspose(__nv_bfloat16* q_buf,
+                                              const int size_per_head,
+                                              const int rotary_embedding_dim,
+                                              cudaStream_t stream);
++
++template void invokeCrossAddFusedQKVBiasTranspose(__nv_bfloat16* q_buf,
++                                             __nv_bfloat16* k_buf,
++                                             __nv_bfloat16* v_buf,
++                                             __nv_bfloat16* QKV,
++                                             const __nv_bfloat16* qkv_bias,
++                                             const int batch_size,
++                                             const int seq_len,
++                                             const int tgt_seq_len,
++                                             const int head_num,
++                                             const int size_per_head,
++                                             cudaStream_t stream);
++
+ #endif
+ 
+ template<typename T>
+diff --git a/src/fastertransformer/kernels/unfused_attention_kernels.h b/src/fastertransformer/kernels/unfused_attention_kernels.h
+index be8b178..21d9a62 100644
+--- a/src/fastertransformer/kernels/unfused_attention_kernels.h
++++ b/src/fastertransformer/kernels/unfused_attention_kernels.h
+@@ -42,6 +42,26 @@ void invokeMaskedSoftMax(T* buffer,
+                          const int head_num,
+                          const T scalar,
+                          cudaStream_t stream);
++template<typename T, typename T_IN>
++void invokeCrossMaskedSoftMax(T* buffer,
++                         const T_IN* buffer_src,
++                         const T* attr_mask,
++                         const int batch_size,
++                         const int seq_len,
++                         const int tgt_seq_len,
++                         const int head_num,
++                         const T scalar,
++                         cudaStream_t stream);
++
++template<typename T, typename T_M>
++void invokeMixMaskedSoftMax(T* io_buffer,
++                         const T_M* attr_mask,
++                         const int batch_size,
++                         const int seq_len,
++                         const int tgt_seq_len,
++                         const int head_num,
++                         const T scalar,
++                         cudaStream_t stream);
+ 
+ template<typename T>
+ void invokeTransposeQKV(T* dst,
+@@ -81,12 +101,12 @@ void invokeTransposeAttentionOutRemovePadding(T* src,
+                                               const int* mask_offset,
+                                               cudaStream_t stream);
+ 
+-template<typename T>
++template<typename T, typename U=T>
+ void invokeAddFusedQKVBiasTranspose(T* q_buf,
+                                     T* k_buf,
+                                     T* v_buf,
+                                     T* QKV,
+-                                    const T* qkv_bias,
++                                    const U* qkv_bias,
+                                     const int batch_size,
+                                     const int seq_len,
+                                     const int head_num,
+@@ -97,12 +117,29 @@ void invokeAddFusedQKVBiasTranspose(T* q_buf,
+         q_buf, k_buf, v_buf, QKV, qkv_bias, batch_size, seq_len, head_num, size_per_head, 0, stream);
+ }
+ 
+-template<typename T>
++template<typename T, typename U=T>
++void invokeCrossAddFusedQKVBiasTranspose(T* q_buf,
++                                    T* k_buf,
++                                    T* v_buf,
++                                    T* QKV,
++                                    const U* qkv_bias,
++                                    const int batch_size,
++                                    const int seq_len,
++                                    const int tgt_seq_len,
++                                    const int head_num,
++                                    const int size_per_head,
++                                    cudaStream_t stream);
++// {
++//     invokeCrossAddFusedQKVBiasTranspose(
++//         q_buf, k_buf, v_buf, QKV, qkv_bias, batch_size, seq_len, tgt_seq_len, head_num, size_per_head, stream);
++// }
++
++template<typename T, typename U>
+ void invokeAddFusedQKVBiasTranspose(T* q_buf,
+                                     T* k_buf,
+                                     T* v_buf,
+                                     T* QKV,
+-                                    const T* qkv_bias,
++                                    const U* qkv_bias,
+                                     const int batch_size,
+                                     const int seq_len,
+                                     const int head_num,
+diff --git a/src/fastertransformer/layers/CMakeLists.txt b/src/fastertransformer/layers/CMakeLists.txt
+index cbaf4fa..2ab5320 100644
+--- a/src/fastertransformer/layers/CMakeLists.txt
++++ b/src/fastertransformer/layers/CMakeLists.txt
+@@ -30,15 +30,18 @@ set_property(TARGET FfnLayerINT8 PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET FfnLayerINT8 PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(FfnLayerINT8 PUBLIC -lcublasLt -lcublas -lcudart cublasMMWrapper cublasINT8MMWrapper activation_int8_kernels memory_utils)
+ 
++if(EXAMPLES)
+ add_library(TensorParallelGeluFfnLayer STATIC TensorParallelGeluFfnLayer.cc)
+ set_property(TARGET TensorParallelGeluFfnLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET TensorParallelGeluFfnLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(TensorParallelGeluFfnLayer PUBLIC -lcudart FfnLayer nccl_utils)
+ 
++
+ add_library(TensorParallelReluFfnLayer STATIC TensorParallelReluFfnLayer.cc)
+ set_property(TARGET TensorParallelReluFfnLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET TensorParallelReluFfnLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(TensorParallelReluFfnLayer PUBLIC -lcudart FfnLayer nccl_utils)
++endif()
+ 
+ add_library(DynamicDecodeLayer STATIC DynamicDecodeLayer.cc)
+ set_property(TARGET DynamicDecodeLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+diff --git a/src/fastertransformer/layers/attention_layers/BaseAttentionLayer.h b/src/fastertransformer/layers/attention_layers/BaseAttentionLayer.h
+index b21e3a7..746cb71 100644
+--- a/src/fastertransformer/layers/attention_layers/BaseAttentionLayer.h
++++ b/src/fastertransformer/layers/attention_layers/BaseAttentionLayer.h
+@@ -62,13 +62,13 @@ AttentionType getAttentionTypeINT8(
+     }
+ }
+ 
+-template<typename T>
++template<typename T, typename U=T, typename S=T>
+ class BaseAttentionLayer: public BaseLayer {
+ 
+ public:
+     virtual void forward(std::vector<fastertransformer::Tensor>* output_tensors,
+                          const std::vector<fastertransformer::Tensor>* input_tensors,
+-                         const AttentionWeight<T>* attention_weights) = 0;
++                         const AttentionWeight<U>* attention_weights) = 0;
+     BaseAttentionLayer(cudaStream_t stream,
+                        cublasMMWrapper* cublas_wrapper,
+                        IAllocator* allocator,
+diff --git a/src/fastertransformer/layers/attention_layers/CMakeLists.txt b/src/fastertransformer/layers/attention_layers/CMakeLists.txt
+index 9cef315..7170af4 100644
+--- a/src/fastertransformer/layers/attention_layers/CMakeLists.txt
++++ b/src/fastertransformer/layers/attention_layers/CMakeLists.txt
+@@ -42,8 +42,8 @@ target_link_libraries(DecoderSelfAttentionLayer PUBLIC -lcublas -lcudart cublasM
+ add_library(GptContextAttentionLayer STATIC GptContextAttentionLayer.cc)
+ set_property(TARGET GptContextAttentionLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET GptContextAttentionLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+-target_link_libraries(GptContextAttentionLayer PUBLIC -lcublas -lcudart cublasMMWrapper memory_utils unfused_attention_kernels)
+-
++target_link_libraries(GptContextAttentionLayer PUBLIC -lcublas -lcudart cublasMMWrapper memory_utils unfused_attention_kernels activation_kernels)
++if(EXAMPLES)
+ add_library(TensorParallelDecoderSelfAttentionLayer STATIC TensorParallelDecoderSelfAttentionLayer.cc)
+ set_property(TARGET TensorParallelDecoderSelfAttentionLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET TensorParallelDecoderSelfAttentionLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -63,6 +63,7 @@ add_library(TensorParallelUnfusedAttentionLayer STATIC TensorParallelUnfusedAtte
+ set_property(TARGET TensorParallelUnfusedAttentionLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET TensorParallelUnfusedAttentionLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(TensorParallelUnfusedAttentionLayer PUBLIC -lcudart UnfusedAttentionLayer nccl_utils)
++endif()
+ 
+ add_library(WindowAttention STATIC WindowAttention.cc)
+ set_property(TARGET WindowAttention PROPERTY POSITION_INDEPENDENT_CODE  ON)
+diff --git a/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.cc b/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.cc
+index bada640..e606bc2 100644
+--- a/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.cc
++++ b/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.cc
+@@ -17,6 +17,7 @@
+ 
+ #include "src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h"
+ #include "src/fastertransformer/kernels/unfused_attention_kernels.h"
++#include "src/fastertransformer/kernels/activation_kernels.h"
+ 
+ namespace fastertransformer {
+ 
+@@ -49,7 +50,7 @@ void GptContextAttentionLayer<T>::forward(std::vector<fastertransformer::Tensor>
+     T* attention_out = (T*)output_tensors->at(0).data;
+     const T* attention_input = (const T*)input_tensors->at(0).data;
+     const T* attention_mask = (const T*)input_tensors->at(1).data;
+-    const bool is_final = *((bool*)(input_tensors->at(2).data));
++    const bool is_final = false; // *((bool*)(input_tensors->at(2).data));
+ 
+     const int m = input_tensors->at(0).shape[0];
+ 
+@@ -428,4 +429,503 @@ template class GptContextAttentionLayer<half>;
+ template class GptContextAttentionLayer<__nv_bfloat16>;
+ #endif
+ 
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++template<typename T, typename U, typename S>
++MSMHALayer<T, U, S>::MSMHALayer(size_t max_batch_size,
++                          size_t max_src_seq_len,
++                          size_t max_tgt_seq_len,
++                          size_t head_num,
++                          size_t size_per_head,
++                          cudaStream_t stream,
++                          cublasMMWrapper* cublas_wrapper,
++                          IAllocator* allocator,
++                          bool is_free_buffer_after_forward,
++                          bool is_qk_buf_float,
++                          bool sparse):
++    BaseAttentionLayer<T, U, S>(stream, cublas_wrapper, allocator, is_free_buffer_after_forward, sparse),
++    max_batch_size_(max_batch_size),
++    max_src_seq_len_(max_src_seq_len),
++    max_tgt_seq_len_(max_tgt_seq_len),
++    head_num_(head_num),
++    size_per_head_(size_per_head),
++    hidden_size_(head_num * size_per_head),
++    is_qk_buf_float_(false), // for now set to false
++    optimized_offset_(0)
++{
++}
++
++template<typename T, typename U, typename S>
++void MSMHALayer<T,U,S>::forward(std::vector<fastertransformer::Tensor>* output_tensors,
++                                          const std::vector<fastertransformer::Tensor>* input_tensors,
++                                          const AttentionWeight<U>* attention_weights)
++{
++    // input_tensors: use 1 gemm -- multi head attention
++    //      input_query [batch_size * seq_len, hidden_dimension]
++    //      attention_mask [batch_size, 1, seq_len, seq_len]
++    
++    // input_tensors: use 2 gemm -- cross attention
++    //      input_query [batch_size * seq_len, hidden_dimension]
++    //      enc_output [batch_size * tgt_len, hidden_dimension]
++    //      attention_mask [batch_size, 1, seq_len, seq_len]
++
++    // output_tensors:
++    //      attention_out [batch_size * seq_len, hidden_dimension]
++    //      key_cache [batch, local_head_num, size_per_head // x, max_seq_len, x]
++    //      value_cache [batch, local_head_num, max_seq_len, size_per_head]
++
++
++    // validate in / out tensors
++    int in_tensor_number = input_tensors->size();
++    FT_CHECK(in_tensor_number == 2 || in_tensor_number == 3);
++    FT_CHECK(output_tensors->size() == 3);
++    // FT_CHECK(isValidBatchSize(request_batch_size);
++    // FT_CHECK(isValidSrcSeqLen(request_src_seq_len);
++    // FT_CHECK(isValidTgtSeqLen(request_tgt_seq_len);
++
++    // setup in tensors id
++    int attn_input_tensor_id = 0;
++    int encoder_out_tensor_id = (in_tensor_number == 3) ? 1 : 0;
++    int attn_mask_tensor_id = in_tensor_number - 1;  //  always last tensor
++
++    const int request_batch_size = input_tensors->at(attn_mask_tensor_id).shape[0];
++    const int request_src_seq_len = input_tensors->at(attn_mask_tensor_id).shape[2];
++    const int request_tgt_seq_len = input_tensors->at(attn_mask_tensor_id).shape[3];
++
++    // alloc buffer according to current in size
++    allocateBuffer(request_batch_size, request_src_seq_len, request_tgt_seq_len);
++    sync_check_cuda_error();
++
++    const T* attention_input = (const T*)input_tensors->at(attn_input_tensor_id).data;
++    const T* attention_mask = (const T*)input_tensors->at(attn_mask_tensor_id).data;
++    const bool is_final = false;
++
++    const cudaDataType_t gemm_data_type = (std::is_same<T, float>::value) ? CUDA_R_32F : CUDA_R_16F;
++    const cudaDataType_t softmax_data_type = (std::is_same<S, float>::value) ? CUDA_R_32F : CUDA_R_16F;
++
++    const int m = input_tensors->at(attn_input_tensor_id).shape[0];
++    if (input_tensors->size() == 3) {
++        // cross attention
++        Tensor encoder_output_tensor = input_tensors->at(encoder_out_tensor_id);
++        if (request_src_seq_len == request_tgt_seq_len) {
++            // if source and target seq are the same we can boost performance
++            cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                                CUBLAS_OP_N,
++                                hidden_size_,  // n
++                                m,
++                                hidden_size_,  // k
++                                attention_weights->query_weight.kernel,
++                                hidden_size_,  // n
++                                attention_input,
++                                hidden_size_,  // k
++                                qkv_buf_,
++                                3 * hidden_size_ /* n */);
++
++            cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                                CUBLAS_OP_N,
++                                2 * hidden_size_,  // n
++                                encoder_output_tensor.shape[0],
++                                hidden_size_,  // k
++                                attention_weights->key_weight.kernel,
++                                2 * hidden_size_,  // n
++                                encoder_output_tensor.data,
++                                hidden_size_,  // k
++                                qkv_buf_ + hidden_size_,
++                                3 * hidden_size_ /* n */);
++        } else {
++            cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                            CUBLAS_OP_N,
++                            hidden_size_,  // n
++                            m,
++                            hidden_size_,  // k
++                            attention_weights->query_weight.kernel,
++                            hidden_size_,  // n
++                            attention_input,
++                            hidden_size_,  // k
++                            qkv_buf_,
++                            hidden_size_ /* n */);
++
++            cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                            CUBLAS_OP_N,
++                            2 * hidden_size_,  // n
++                            encoder_output_tensor.shape[0],
++                            hidden_size_,  // k
++                            attention_weights->key_weight.kernel,
++                            2 * hidden_size_,  // n
++                            encoder_output_tensor.data,
++                            hidden_size_,  // k
++                            qkv_buf_ + m * hidden_size_,
++                            2 * hidden_size_ /* n */);
++        }
++    } else {
++        cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                            CUBLAS_OP_N,
++                            3 * hidden_size_,  // n
++                            m,
++                            hidden_size_,  // k
++                            attention_weights->query_weight.kernel,
++                            3 * hidden_size_,  // n
++                            attention_input,
++                            hidden_size_,  // k
++                            qkv_buf_,
++                            3 * hidden_size_ /* n */);
++    }
++    sync_check_cuda_error();
++
++    if (request_src_seq_len == request_tgt_seq_len) {
++        invokeAddFusedQKVBiasTranspose(
++            (T*)q_buf_2_,
++            (T*)output_tensors->at(1).data, //k_buf_2_,
++            (T*)output_tensors->at(2).data, //v_buf_2_,
++            (T*)qkv_buf_,
++            (U*)attention_weights->query_weight.bias,
++            request_batch_size,
++            request_src_seq_len,
++            head_num_,
++            size_per_head_,
++            0,
++            stream_);
++    } else {
++        invokeCrossAddFusedQKVBiasTranspose(
++            (T*)q_buf_2_,
++            (T*)output_tensors->at(1).data, //k_buf_2_,
++            (T*)output_tensors->at(2).data, //v_buf_2_,
++            qkv_buf_,
++            attention_weights->query_weight.bias,
++            request_batch_size,
++            request_src_seq_len,
++            request_tgt_seq_len,
++            head_num_,
++            size_per_head_,
++            stream_);
++    }
++    sync_check_cuda_error();
++    // Use batch major
++    // put k/v_buf from shape [B, H, L, Dh]
++    // to cache [B, H, Dh/x, L, x]  and [B, H, L, Dh/x, x]
++    // invokeTranspose4dBatchMajor((T*)output_tensors->at(1).data, //k_buf_2_,
++    //                             (T*)output_tensors->at(2).data, //v_buf_2_,
++    //                             (T*)output_tensors->at(1).data, //k_buf_2_,
++    //                             (T*)output_tensors->at(2).data, //v_buf_2_,
++    //                             request_batch_size,
++    //                             request_tgt_seq_len, //request_seq_len,
++    //                             request_tgt_seq_len, //max_seq_len,
++    //                             size_per_head_,
++    //                             head_num_,
++    //                             stream_);
++    // sync_check_cuda_error();
++
++    if (is_final == false) {
++        const cudaDataType_t gemm_data_type = getCudaDataType<T>();
++        if (is_qk_buf_float_ == true && gemm_data_type != CUDA_R_32F) {
++            // cublas_wrapper_->stridedBatchedGemm(CUBLAS_OP_T,
++            //                                     CUBLAS_OP_N,
++            //                                     request_seq_len,
++            //                                     request_seq_len,
++            //                                     size_per_head_,
++            //                                     1.0f,
++            //                                     (T*)output_tensors->at(1).data, // k_buf_2_,
++            //                                     gemm_data_type,
++            //                                     size_per_head_,
++            //                                     request_seq_len * size_per_head_,
++            //                                     q_buf_2_,
++            //                                     gemm_data_type,
++            //                                     size_per_head_,
++            //                                     request_seq_len * size_per_head_,
++            //                                     0.0f,
++            //                                     qk_buf_float_,
++            //                                     CUDA_R_32F,
++            //                                     request_seq_len,
++            //                                     request_seq_len * request_seq_len,
++            //                                     request_batch_size * head_num_,
++            //                                     CUDA_R_32F);
++            // sync_check_cuda_error();
++            // T scalar = 1 / sqrtf(size_per_head_ * 1.0f);
++            // invokeMaskedSoftMax(qk_buf_,
++            //                     qk_buf_float_,
++            //                     attention_mask,
++            //                     request_batch_size,
++            //                     request_seq_len,
++            //                     head_num_,
++            //                     scalar,
++            //                     stream_);
++            // sync_check_cuda_error();
++        }
++        else {
++            cublas_wrapper_->stridedBatchedGemm(CUBLAS_OP_T,
++                                                CUBLAS_OP_N,
++                                                request_tgt_seq_len,
++                                                request_src_seq_len,
++                                                size_per_head_,
++                                                1.0f,
++                                                (T*)output_tensors->at(1).data, // k_buf_2_,
++                                                gemm_data_type,
++                                                size_per_head_,
++                                                request_tgt_seq_len * size_per_head_,
++                                                q_buf_2_,
++                                                gemm_data_type,
++                                                size_per_head_,
++                                                request_src_seq_len * size_per_head_,
++                                                0.0f,
++                                                qk_buf_,
++                                                softmax_data_type,
++                                                request_tgt_seq_len,
++                                                request_src_seq_len * request_tgt_seq_len,
++                                                request_batch_size * head_num_,
++                                                CUDA_R_32F);
++
++            S scalar = (S) (1.0f / sqrtf(size_per_head_ * 1.0f));
++            invokeMixMaskedSoftMax(qk_buf_,
++                    attention_mask,
++                    request_batch_size,
++                    request_src_seq_len,
++                    request_tgt_seq_len,
++                    head_num_,
++                    scalar,
++                    stream_);
++
++            // if (request_src_seq_len == request_tgt_seq_len) {
++            //     invokeMaskedSoftMax(qk_buf_,
++            //                         qk_buf_,
++            //                         attention_mask,
++            //                         request_batch_size,
++            //                         request_tgt_seq_len,
++            //                         head_num_,
++            //                         scalar,
++            //                         stream_);
++            // } else {
++            //     invokeCrossMaskedSoftMax(qk_buf_,
++            //                         qk_buf_,
++            //                         attention_mask,
++            //                         request_batch_size,
++            //                         request_src_seq_len, request_tgt_seq_len,
++            //                         head_num_,
++            //                         scalar,
++            //                         stream_);
++            // }
++            sync_check_cuda_error();
++        }
++        cublas_wrapper_->stridedBatchedGemm(CUBLAS_OP_N,
++                                            CUBLAS_OP_N,
++                                            size_per_head_,
++                                            request_src_seq_len,
++                                            request_tgt_seq_len,
++                                            1.0f,
++                                            (T*)output_tensors->at(2).data, // v_buf_2_,
++                                            gemm_data_type,
++                                            size_per_head_,
++                                            request_tgt_seq_len * size_per_head_,
++                                            qk_buf_,
++                                            softmax_data_type,
++                                            request_tgt_seq_len,
++                                            request_src_seq_len * request_tgt_seq_len,
++                                            0.0f,
++                                            qkv_buf_2_,
++                                            gemm_data_type,
++                                            size_per_head_,
++                                            request_src_seq_len * size_per_head_,
++                                            request_batch_size * head_num_,
++                                            CUDA_R_32F);
++        sync_check_cuda_error(); 
++
++
++        invokeTransposeQKV(
++            qkv_buf_3_,
++            qkv_buf_2_,
++            request_batch_size,
++            request_src_seq_len,
++            head_num_,
++            size_per_head_,
++            stream_);
++        sync_check_cuda_error();
++// #ifdef SPARSITY_ENABLED
++//         if (sparse_ && cublas_wrapper_->isUseSparse(1, hidden_size_, m_padded, local_hidden_size_)) {
++//             cublas_wrapper_->SpGemm(CUBLAS_OP_N,
++//                                     CUBLAS_OP_N,
++//                                     hidden_size_,
++//                                     m_padded,
++//                                     local_hidden_size_,
++//                                     attention_weights->attention_output_weight.sp_kernel,
++//                                     qkv_buf_3_,
++//                                     attention_out);
++//         }
++//         else {
++// #endif
++            cublas_wrapper_->Gemm(CUBLAS_OP_N,
++                                  CUBLAS_OP_N,
++                                  hidden_size_,
++                                  m,
++                                  hidden_size_,
++                                  attention_weights->attention_output_weight.kernel,
++                                  hidden_size_,
++                                  qkv_buf_3_,
++                                  hidden_size_,
++                                  (T*)output_tensors->at(0).data,
++                                  hidden_size_);
++            int len = request_batch_size * request_src_seq_len;
++            sync_check_cuda_error();
++            invokeAddBias((T*)output_tensors->at(0).data, (const T*)attention_weights->attention_output_weight.bias, len, hidden_size_, stream_);
++            sync_check_cuda_error();
++// #ifdef SPARSITY_ENABLED
++//         }
++// #endif
++    }
++    if (is_free_buffer_after_forward_ == true) {
++        freeBuffer();
++    }
++    sync_check_cuda_error();
++}
++
++template<typename T, typename U, typename S>
++MSMHALayer<T, U, S>::~MSMHALayer()
++{
++    cublas_wrapper_ = nullptr;
++    freeBuffer();
++}
++
++template<typename T, typename U, typename S>
++void MSMHALayer<T, U, S>::allocateBuffer()
++{
++    FT_CHECK(false);
++    // allocate according to max parameters
++    if (is_allocate_buffer_ == false) {
++    #if 1
++        size_t qkv_len = getQElemNum() + getKElemNum() + getVElemNum();
++        qkv_buf_ = reinterpret_cast<T*>(allocator_->malloc(sizeof(T) * qkv_len, true));
++        q_buf_2_ = reinterpret_cast<T*>(allocator_->malloc(sizeof(T) * getQElemNum(), true));
++        qk_buf_ = reinterpret_cast<S*>(allocator_->malloc(sizeof(S) *getQKElemNum(), true));
++        qkv_buf_2_ = reinterpret_cast<T*>(allocator_->malloc(sizeof(T) * getQKVElemNum(), true));
++        qkv_buf_3_ = reinterpret_cast<T*>(allocator_->malloc(sizeof(T) * getQKVElemNum(), true));
++
++        // if (is_qk_buf_float_ == true) {
++        //     qk_buf_float_ = (float*)allocator_->malloc(
++        //         sizeof(float) * getQKElemNum(), true);
++        // }
++    #else
++        size_t buff_size = getQKElemNum() + getQElemNum();
++        buf_ = reinterpret_cast<T*>(allocator_->reMalloc(buf_, sizeof(T) * buff_size, true));
++        optimized_offset_ = getQKVElemNum();
++        qkv_buf_ = buf_ + optimized_offset_;
++        q_buf_2_ = buf_;
++        qk_buf_ = buf_ + optimized_offset_;
++        qkv_buf_2_ = buf_;
++        qkv_buf_3_ = buf_ + optimized_offset_;
++    #endif
++
++        is_allocate_buffer_ = true;
++    }
++}
++
++template<typename T, typename U, typename S>
++void MSMHALayer<T, U, S>::allocateBuffer(size_t batch_size, size_t src_seq_len, size_t tgt_seq_len) {
++    FT_LOG_DEBUG(__PRETTY_FUNCTION__);
++    #if 1
++    size_t qkv_len = getQElemNum(batch_size, src_seq_len) + getKElemNum(batch_size, tgt_seq_len)
++                     + getVElemNum(batch_size, tgt_seq_len);
++    qkv_buf_ = reinterpret_cast<T*>(allocator_->reMalloc(qkv_buf_, sizeof(T) * qkv_len, true));
++    q_buf_2_ = reinterpret_cast<T*>(allocator_->reMalloc(q_buf_2_, sizeof(T) * getQElemNum(batch_size, src_seq_len), true));
++    qk_buf_ = reinterpret_cast<S*>(
++        allocator_->reMalloc(qk_buf_, sizeof(S) * getQKElemNum(batch_size, src_seq_len, tgt_seq_len), true));
++    qkv_buf_2_ = reinterpret_cast<T*>(allocator_->reMalloc(qkv_buf_2_, sizeof(T) * getQKVElemNum(batch_size, src_seq_len), true));
++    qkv_buf_3_ = reinterpret_cast<T*>(allocator_->reMalloc(qkv_buf_3_, sizeof(T) * getQKVElemNum(batch_size, src_seq_len), true));
++
++    // if (is_qk_buf_float_ == true) {
++    //     qk_buf_float_ = (float*)allocator_->reMalloc(
++    //         qk_buf_float_, sizeof(float) * getQKElemNum(batch_size, size_t src_seq_len, size_t tgt_seq_len), true);
++    // }
++    #else
++    size_t buff_size = getQKElemNum(batch_size, src_seq_len, tgt_seq_len) + getQKVElemNum(batch_size, src_seq_len);
++    buf_ = reinterpret_cast<T*>(allocator_->reMalloc(buf_, sizeof(T) * buff_size, true));
++    optimized_offset_ = getQKVElemNum(batch_size, src_seq_len);
++    qkv_buf_ = buf_ + optimized_offset_;
++    q_buf_2_ = buf_;
++    qk_buf_ = buf_ + optimized_offset_;
++    qkv_buf_2_ = buf_;
++    qkv_buf_3_ = buf_ + optimized_offset_;
++    #endif
++    is_allocate_buffer_ = true;
++}
++
++template<typename T, typename U, typename S>
++void MSMHALayer<T, U, S>::freeBuffer() {
++    if (is_allocate_buffer_) {
++        FT_LOG_DEBUG(__PRETTY_FUNCTION__);
++        allocator_->free(qkv_buf_);
++        allocator_->free(q_buf_2_);
++        allocator_->free(qk_buf_);
++        allocator_->free(qkv_buf_2_);
++        allocator_->free(qkv_buf_3_);
++        // if (is_qk_buf_float_ == true) {
++        //     allocator_->free(qk_buf_float_);
++        // }
++        is_allocate_buffer_ = false;
++    }
++}
++
++template<typename T, typename U, typename S>
++bool MSMHALayer<T, U, S>::isValidBatchSize(size_t batch_size) {
++    if (batch_size <= max_batch_size_) {
++        return true;
++    } else {
++        freeBuffer();
++        max_batch_size_ = batch_size * 1.2;
++        return true;
++    }
++}
++
++template<typename T, typename U, typename S>
++bool MSMHALayer<T, U, S>::isValidSrcSeqLen(size_t seq_len) {
++    if (seq_len <= max_src_seq_len_) {
++        return true;
++    } else {
++        freeBuffer();
++        max_src_seq_len_ = seq_len * 1.2;
++        return true;
++    }
++}
++
++template<typename T, typename U, typename S>
++bool MSMHALayer<T, U, S>::isValidTgtSeqLen(size_t seq_len) {
++    if (seq_len <= max_tgt_seq_len_) {
++        return true;
++    } else {
++        freeBuffer();
++        max_tgt_seq_len_ = seq_len * 1.2;
++        return true;
++    }
++}
++
++
++template class MSMHALayer<float, float, float>;
++template class MSMHALayer<float, float, half>;
++template class MSMHALayer<float, half, float>;
++template class MSMHALayer<float, half, half>;
++template class MSMHALayer<half, float, float>;
++template class MSMHALayer<half, float, half>;
++template class MSMHALayer<half, half, float>;
++template class MSMHALayer<half, half, half>;
++
++
++
++
++
++
++
++
++
++
++
++
+ }  // namespace fastertransformer
+diff --git a/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h b/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h
+index 92e2175..df67c9a 100644
+--- a/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h
++++ b/src/fastertransformer/layers/attention_layers/GptContextAttentionLayer.h
+@@ -107,4 +107,205 @@ public:
+                  const AttentionWeight<T>* attention_weights) override;
+ };
+ 
++
++template<typename T,typename U=T, typename S=T>
++class MSMHALayer: public BaseAttentionLayer<T,U,S> {
++private:
++    // buffer handling
++    size_t max_batch_size_ = 0;
++
++    size_t max_src_seq_len_ = 0;
++    size_t max_tgt_seq_len_ = 0;
++
++
++    // metadata
++    const size_t head_num_;
++    const size_t size_per_head_;
++    const size_t hidden_size_;
++
++    void allocateBuffer() override;
++    void allocateBuffer(size_t batch_size, size_t src_seq_len, size_t tgt_seq_len);
++    void freeBuffer() override;
++    bool isValidBatchSize(size_t batch_size);
++    bool isValidSrcSeqLen(size_t seq_len);
++    bool isValidTgtSeqLen(size_t seq_len);
++
++    size_t getQElemNum(size_t b = 0, size_t s = 0) {
++        b = (b == 0) ? max_batch_size_ : b;
++        s = (s == 0) ? max_src_seq_len_ : s;
++        return b * s * hidden_size_;
++    }
++
++    size_t getKElemNum(size_t b = 0, size_t s = 0) {
++        b = (b == 0) ? max_batch_size_ : b;
++        s = (s == 0) ? max_tgt_seq_len_ : s;
++        return b * s * hidden_size_;
++    }
++
++    size_t getVElemNum(size_t b = 0, size_t s = 0) {
++        b = (b == 0) ? max_batch_size_ : b;
++        s = (s == 0) ? max_tgt_seq_len_ : s;
++        return b * s * hidden_size_;
++    }
++
++    size_t getQKElemNum(size_t b = 0, size_t s = 0, size_t t = 0) {
++        b = (b == 0) ? max_batch_size_ : b;
++        s = (s == 0) ? max_src_seq_len_ : s;
++        t = (t == 0) ? max_tgt_seq_len_ : t;
++
++        return b * head_num_ * s * t;
++    }
++    
++    size_t getQKVElemNum(size_t b = 0, size_t s = 0) {
++        b = (b == 0) ? max_batch_size_ : b;
++        s = (s == 0) ? max_src_seq_len_ : s;
++
++        return b * s * hidden_size_;
++    }
++
++
++    using BaseAttentionLayer<T,U,S>::is_free_buffer_after_forward_;
++    using BaseAttentionLayer<T,U,S>::is_allocate_buffer_;
++    using BaseAttentionLayer<T,U,S>::cublas_wrapper_;
++    using BaseAttentionLayer<T,U,S>::allocator_;
++
++    bool is_qk_buf_float_;
++    int optimized_offset_;
++
++
++protected:
++    using BaseAttentionLayer<T,U,S>::stream_;
++    using BaseAttentionLayer<T,U,S>::sparse_;
++    T* qkv_buf_ = nullptr;
++    T* q_buf_2_ = nullptr;
++    //T* k_buf_2_ = nullptr;
++    //T* v_buf_2_ = nullptr;
++    S* qk_buf_ = nullptr;
++    float* qk_buf_float_ = nullptr;
++    T* qkv_buf_2_ = nullptr;
++    T* qkv_buf_3_ = nullptr;
++    T* buf_ = nullptr;
++
++public:
++    MSMHALayer(size_t batch_size,
++               size_t src_seq_len,
++               size_t tgt_seq_len,
++               size_t head_num,
++               size_t size_per_head,
++               cudaStream_t stream,
++               cublasMMWrapper* cublas_wrapper,
++               IAllocator* allocator,
++               bool is_free_buffer_after_forward,
++               bool is_qk_buf_float,
++               bool sparse = false);
++
++    MSMHALayer(MSMHALayer<T> const& attention_layer);
++
++    virtual ~MSMHALayer();
++
++    void forward(std::vector<fastertransformer::Tensor>* output_tensors,
++                 const std::vector<fastertransformer::Tensor>* input_tensors,
++                 const AttentionWeight<U>* attention_weights) override;
++};
++
++// template<typename T, typename U>
++// class MSMixedMHALayer: public BaseAttentionLayer<T> {
++// private:
++//     // buffer handling
++//     size_t max_batch_size_ = 0;
++
++//     size_t max_src_seq_len_ = 0;
++//     size_t max_tgt_seq_len_ = 0;
++
++
++//     // metadata
++//     const size_t head_num_;
++//     const size_t size_per_head_;
++//     const size_t hidden_size_;
++
++//     void allocateBuffer() override;
++//     void allocateBuffer(size_t batch_size, size_t src_seq_len, size_t tgt_seq_len);
++//     void freeBuffer() override;
++//     bool isValidBatchSize(size_t batch_size);
++//     bool isValidSrcSeqLen(size_t seq_len);
++//     bool isValidTgtSeqLen(size_t seq_len);
++
++//     size_t getQElemNum(size_t b = 0, size_t s = 0) {
++//         b = (b == 0) ? max_batch_size_ : b;
++//         s = (s == 0) ? max_src_seq_len_ : s;
++//         return b * s * hidden_size_;
++//     }
++
++//     size_t getKElemNum(size_t b = 0, size_t s = 0) {
++//         b = (b == 0) ? max_batch_size_ : b;
++//         s = (s == 0) ? max_tgt_seq_len_ : s;
++//         return b * s * hidden_size_;
++//     }
++
++//     size_t getVElemNum(size_t b = 0, size_t s = 0) {
++//         b = (b == 0) ? max_batch_size_ : b;
++//         s = (s == 0) ? max_tgt_seq_len_ : s;
++//         return b * s * hidden_size_;
++//     }
++
++//     size_t getQKElemNum(size_t b = 0, size_t s = 0, size_t t = 0) {
++//         b = (b == 0) ? max_batch_size_ : b;
++//         s = (s == 0) ? max_src_seq_len_ : s;
++//         t = (t == 0) ? max_tgt_seq_len_ : t;
++
++//         return b * head_num_ * s * t;
++//     }
++    
++//     size_t getQKVElemNum(size_t b = 0, size_t s = 0) {
++//         b = (b == 0) ? max_batch_size_ : b;
++//         s = (s == 0) ? max_src_seq_len_ : s;
++
++//         return b * s * hidden_size_;
++//     }
++
++
++//     using BaseAttentionLayer<T>::is_free_buffer_after_forward_;
++//     using BaseAttentionLayer<T>::is_allocate_buffer_;
++//     using BaseAttentionLayer<T>::cublas_wrapper_;
++//     using BaseAttentionLayer<T>::allocator_;
++
++//     bool is_qk_buf_float_;
++//     int optimized_offset_;
++
++
++// protected:
++//     using BaseAttentionLayer<T>::stream_;
++//     using BaseAttentionLayer<T>::sparse_;
++//     T* qkv_buf_ = nullptr;
++//     T* q_buf_2_ = nullptr;
++//     //T* k_buf_2_ = nullptr;
++//     //T* v_buf_2_ = nullptr;
++//     T* qk_buf_ = nullptr;
++//     float* qk_buf_float_ = nullptr;
++//     T* qkv_buf_2_ = nullptr;
++//     T* qkv_buf_3_ = nullptr;
++//     T* buf_ = nullptr;
++
++// public:
++//     MSMixedMHALayer(size_t batch_size,
++//                size_t src_seq_len,
++//                size_t tgt_seq_len,
++//                size_t head_num,
++//                size_t size_per_head,
++//                cudaStream_t stream,
++//                cublasMMWrapper* cublas_wrapper,
++//                IAllocator* allocator,
++//                bool is_free_buffer_after_forward,
++//                bool is_qk_buf_float,
++//                bool sparse = false);
++
++//     MSMixedMHALayer(MSMixedMHALayer<T,U> const& attention_layer);
++
++//     virtual ~MSMHALayer();
++
++//     void forward(std::vector<fastertransformer::Tensor>* output_tensors,
++//                  const std::vector<fastertransformer::Tensor>* input_tensors,
++//                  const AttentionWeight<U>* attention_weights) override;
++// };
++
+ }  // namespace fastertransformer
+diff --git a/src/fastertransformer/models/CMakeLists.txt b/src/fastertransformer/models/CMakeLists.txt
+index af33e76..21efb6d 100644
+--- a/src/fastertransformer/models/CMakeLists.txt
++++ b/src/fastertransformer/models/CMakeLists.txt
+@@ -21,7 +21,9 @@ add_subdirectory(xlnet)
+ 
+ add_subdirectory(t5)
+ add_subdirectory(gptj)
+-add_subdirectory(multi_gpu_gpt)
++if(EXAMPLES)
++    add_subdirectory(multi_gpu_gpt)
++endif()
+ add_subdirectory(swin)
+ add_subdirectory(swin_int8)
+ add_subdirectory(vit)
+diff --git a/src/fastertransformer/models/gptj/CMakeLists.txt b/src/fastertransformer/models/gptj/CMakeLists.txt
+index d7d9d3e..e69a988 100644
+--- a/src/fastertransformer/models/gptj/CMakeLists.txt
++++ b/src/fastertransformer/models/gptj/CMakeLists.txt
+@@ -19,6 +19,7 @@ set_property(TARGET GptJDecoderLayerWeight PROPERTY POSITION_INDEPENDENT_CODE  O
+ set_property(TARGET GptJDecoderLayerWeight PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(GptJDecoderLayerWeight PUBLIC memory_utils)
+ 
++if(off)
+ add_library(GptJDecoder STATIC GptJDecoder.cc)
+ set_property(TARGET GptJDecoder PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET GptJDecoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -40,12 +41,14 @@ target_link_libraries(GptJContextDecoder PUBLIC -lcudart cublasMMWrapper
+                       add_residual_kernels
+                       gpt_kernels
+                       nccl_utils)
++endif()
+ 
+ add_library(GptJWeight STATIC GptJWeight.cc)
+ set_property(TARGET GptJWeight PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET GptJWeight PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(GptJWeight PUBLIC GptJDecoderLayerWeight)
+ 
++if(off)
+ add_library(GptJ STATIC GptJ.cc)
+ set_property(TARGET GptJ PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET GptJ PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -58,3 +61,4 @@ target_link_libraries(GptJ PUBLIC -lcudart
+                       BaseBeamSearchLayer
+                       bert_preprocess_kernels
+                       GptJWeight)
++endif()
+\ No newline at end of file
+diff --git a/src/fastertransformer/models/gptj/GptJ.cc b/src/fastertransformer/models/gptj/GptJ.cc
+index 0829e0d..cfd72b8 100644
+--- a/src/fastertransformer/models/gptj/GptJ.cc
++++ b/src/fastertransformer/models/gptj/GptJ.cc
+@@ -928,7 +928,7 @@ void GptJ<T>::forward(std::unordered_map<std::string, Tensor>* output_tensors,
+             if (output_tensors->count("output_log_probs") > 0
+                 && output_tensors->at("output_log_probs").data != nullptr) {
+                 ftNcclSend(output_tensors->at("output_log_probs").getPtr<float>(),
+-                           batch_size * beam_width * input_tensors->at("max_output_seq_len").getVal<int>(),
++                           output_tensors->at("output_log_probs").size(),
+                            0,
+                            pipeline_para_,
+                            stream_);
+@@ -958,7 +958,7 @@ void GptJ<T>::forward(std::unordered_map<std::string, Tensor>* output_tensors,
+             if (output_tensors->count("output_log_probs") > 0
+                 && output_tensors->at("output_log_probs").data != nullptr) {
+                 ftNcclRecv(output_tensors->at("output_log_probs").getPtr<float>(),
+-                           batch_size * beam_width * input_tensors->at("max_output_seq_len").getVal<int>(),
++                           output_tensors->at("output_log_probs").size(),
+                            pipeline_para_.world_size_ - 1,
+                            pipeline_para_,
+                            stream_);
+diff --git a/src/fastertransformer/models/multi_gpu_gpt/CMakeLists.txt b/src/fastertransformer/models/multi_gpu_gpt/CMakeLists.txt
+index 10b9e0b..86d733f 100644
+--- a/src/fastertransformer/models/multi_gpu_gpt/CMakeLists.txt
++++ b/src/fastertransformer/models/multi_gpu_gpt/CMakeLists.txt
+@@ -37,7 +37,7 @@ set_property(TARGET ParallelGptDecoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(ParallelGptDecoder PUBLIC -lcudart TensorParallelGeluFfnLayer
+                                                 TensorParallelDecoderSelfAttentionLayer layernorm_kernels
+                                                 add_residual_kernels nccl_utils)
+-
++                                              
+ add_library(ParallelGpt STATIC ParallelGpt.cc)
+ set_property(TARGET ParallelGpt PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET ParallelGpt PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+diff --git a/src/fastertransformer/models/multi_gpu_gpt/ParallelGpt.cc b/src/fastertransformer/models/multi_gpu_gpt/ParallelGpt.cc
+index 17f9099..d74dc6c 100644
+--- a/src/fastertransformer/models/multi_gpu_gpt/ParallelGpt.cc
++++ b/src/fastertransformer/models/multi_gpu_gpt/ParallelGpt.cc
+@@ -1057,7 +1057,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>* output_ten
+             if (output_tensors->count("output_log_probs") > 0
+                 && output_tensors->at("output_log_probs").data != nullptr) {
+                 ftNcclSend(output_tensors->at("output_log_probs").getPtr<float>(),
+-                           batch_size * beam_width * input_tensors->at("max_output_seq_len").getVal<int>(),
++                           output_tensors->at("output_log_probs").size(),
+                            0,
+                            pipeline_para_,
+                            stream_);
+@@ -1087,7 +1087,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>* output_ten
+             if (output_tensors->count("output_log_probs") > 0
+                 && output_tensors->at("output_log_probs").data != nullptr) {
+                 ftNcclRecv(output_tensors->at("output_log_probs").getPtr<float>(),
+-                           batch_size * beam_width * input_tensors->at("max_output_seq_len").getVal<int>(),
++                           output_tensors->at("output_log_probs").size(),
+                            pipeline_para_.world_size_ - 1,
+                            pipeline_para_,
+                            stream_);
+diff --git a/src/fastertransformer/models/t5/CMakeLists.txt b/src/fastertransformer/models/t5/CMakeLists.txt
+index 9f3455d..e75bbbd 100644
+--- a/src/fastertransformer/models/t5/CMakeLists.txt
++++ b/src/fastertransformer/models/t5/CMakeLists.txt
+@@ -14,6 +14,7 @@
+ 
+ cmake_minimum_required(VERSION 3.8)
+ 
++if(False)
+ add_library(T5Decoder STATIC T5Decoder.cc T5DecoderLayerWeight.cc)
+ set_property(TARGET T5Decoder PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET T5Decoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -21,6 +22,7 @@ target_link_libraries(T5Decoder PUBLIC -lcudart cublasMMWrapper TensorParallelDe
+                     TensorParallelDecoderCrossAttentionLayer TensorParallelReluFfnLayer 
+                     layernorm_kernels add_residual_kernels nccl_utils memory_utils)
+ 
++
+ add_library(T5Decoding STATIC T5Decoding.cc T5DecodingWeight.cc)
+ set_property(TARGET T5Decoding PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET T5Decoding PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -28,6 +30,8 @@ target_link_libraries(T5Decoding PUBLIC -lcudart cublasMMWrapper T5Decoder bert_
+                                         decoding_kernels DynamicDecodeLayer BaseBeamSearchLayer 
+                                         beam_search_topk_kernels gpt_kernels)
+ 
++
++
+ add_library(T5Encoder STATIC T5Encoder.cc T5EncoderWeight.cc T5EncoderLayerWeight.cc)
+ set_property(TARGET T5Encoder PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET T5Encoder PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+@@ -36,4 +40,5 @@ target_link_libraries(T5Encoder PUBLIC -lcudart bert_preprocess_kernels cublasMM
+                         TensorParallelGeluFfnLayer layernorm_kernels add_residual_kernels nccl_utils)
+ 
+ add_executable(t5_gemm t5_gemm.cc)
+-target_link_libraries(t5_gemm PUBLIC -lcudart t5_gemm_func memory_utils)
+\ No newline at end of file
++target_link_libraries(t5_gemm PUBLIC -lcudart t5_gemm_func memory_utils)
++endif()
+\ No newline at end of file
+diff --git a/src/fastertransformer/models/t5/T5Encoder.cc b/src/fastertransformer/models/t5/T5Encoder.cc
+index 698e3d6..db989ff 100644
+--- a/src/fastertransformer/models/t5/T5Encoder.cc
++++ b/src/fastertransformer/models/t5/T5Encoder.cc
+@@ -380,7 +380,7 @@ void T5Encoder<T>::forward(std::unordered_map<std::string, Tensor>* output_tenso
+                                                      request_seq_len,
+                                                      request_seq_len,
+                                                      local_batch_size,
+-                                                     hidden_units_,
++                                                     d_model_,
+                                                      stream_);
+         }
+         else {
+diff --git a/src/fastertransformer/utils/CMakeLists.txt b/src/fastertransformer/utils/CMakeLists.txt
+index 3d0f28a..3d2efbd 100644
+--- a/src/fastertransformer/utils/CMakeLists.txt
++++ b/src/fastertransformer/utils/CMakeLists.txt
+@@ -44,10 +44,12 @@ set_property(TARGET memory_utils PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET memory_utils PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(memory_utils PUBLIC -lnvToolsExt)
+ 
++if(EXAMPLES)
+ add_library(nccl_utils STATIC nccl_utils.cc)
+ set_property(TARGET nccl_utils PROPERTY POSITION_INDEPENDENT_CODE  ON)
+ set_property(TARGET nccl_utils PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
+ target_link_libraries(nccl_utils PUBLIC -lnccl)
++endif()
+ 
+ add_library(cublasINT8MMWrapper STATIC cublasINT8MMWrapper.cc)
+ set_property(TARGET cublasINT8MMWrapper PROPERTY POSITION_INDEPENDENT_CODE  ON)
+diff --git a/src/fastertransformer/utils/cublasMMWrapper.cc b/src/fastertransformer/utils/cublasMMWrapper.cc
+index e291151..6ddd6bd 100644
+--- a/src/fastertransformer/utils/cublasMMWrapper.cc
++++ b/src/fastertransformer/utils/cublasMMWrapper.cc
+@@ -313,6 +313,22 @@ void cublasMMWrapper::setFP16GemmConfig()
+     computeType_ = CUDA_R_32F;
+ }
+ 
++void cublasMMWrapper::setFP32MixedGemmConfig()
++{
++    Atype_ = CUDA_R_32F;
++    Btype_ = CUDA_R_16F;
++    Ctype_ = CUDA_R_32F;
++    computeType_ = CUDA_R_32F;
++}
++
++void cublasMMWrapper::setFP16MixedGemmConfig()
++{
++    Atype_ = CUDA_R_16F;
++    Btype_ = CUDA_R_32F;
++    Ctype_ = CUDA_R_32F;
++    computeType_ = CUDA_R_32F;
++}
++
+ #ifdef ENABLE_BF16
+ void cublasMMWrapper::setBF16GemmConfig()
+ {
+diff --git a/src/fastertransformer/utils/cublasMMWrapper.h b/src/fastertransformer/utils/cublasMMWrapper.h
+index 6f410ab..a2159e0 100644
+--- a/src/fastertransformer/utils/cublasMMWrapper.h
++++ b/src/fastertransformer/utils/cublasMMWrapper.h
+@@ -121,6 +121,8 @@ public:
+ 
+     void setFP32GemmConfig();
+     void setFP16GemmConfig();
++    void setFP32MixedGemmConfig();
++    void setFP16MixedGemmConfig();
+ #ifdef ENABLE_BF16
+     void setBF16GemmConfig();
+ #endif
+diff --git a/src/fastertransformer/utils/logger.h b/src/fastertransformer/utils/logger.h
+index bcdf8fa..e3e7007 100644
+--- a/src/fastertransformer/utils/logger.h
++++ b/src/fastertransformer/utils/logger.h
+@@ -65,7 +65,7 @@ private:
+ #else
+     const Level DEFAULT_LOG_LEVEL = INFO;
+ #endif
+-    Level level_ = DEFAULT_LOG_LEVEL;
++    Level level_ = ERROR; // DEFAULT_LOG_LEVEL;
+ 
+     Logger()
+     {
