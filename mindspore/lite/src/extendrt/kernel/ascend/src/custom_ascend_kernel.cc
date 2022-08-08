@@ -88,6 +88,7 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
     MS_LOG(ERROR) << "Input " << idx << " is invalid.";
     return false;
   }
+  // buffer deep copy
   Buffer om_data(inputs[idx]->GetData()->addr, inputs[idx]->GetData()->size);
   model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_);
   if (model_infer_ == nullptr) {
@@ -99,6 +100,11 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
   if (dyn_shape_proc_ == nullptr) {
     MS_LOG(ERROR) << "Create DynShapeProcess failed.";
     return false;
+  }
+  if (inputs[idx]->GetData()->addr != nullptr) {
+    free(inputs[idx]->GetData()->addr);
+    inputs[idx]->GetData()->addr = nullptr;
+    inputs[idx]->GetData()->size = 0;
   }
   return true;
 }
@@ -141,6 +147,7 @@ int CustomAscendKernelMod::LoadModel() {
   }
   acl_options_->batch_size = model_infer_->GetDynamicBatch();
   acl_options_->image_size = model_infer_->GetDynamicImage();
+  acl_options_->input_format = model_infer_->GetInputFormat();
 
   MS_LOG(INFO) << "Load om data success.";
   return lite::RET_OK;
@@ -172,18 +179,22 @@ int CustomAscendKernelMod::SetInputAndOutputAddr(const std::vector<AddressPtr> &
     return lite::RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); ++i) {
+    if (inputs[i] == nullptr || inputs_[i] == nullptr) {
+      MS_LOG(ERROR) << "Input " << i << " is nullptr.";
+      return lite::RET_ERROR;
+    }
     if (inputs[i]->addr == nullptr || inputs[i]->size == 0) {
       MS_LOG(ERROR) << "Input " << i << " addr is invalid.";
       return lite::RET_ERROR;
     }
     inputs_[i]->SetData(inputs[i]);
   }
-  for (size_t j = 0; j < outputs_.size(); ++j) {
-    if (outputs[j]->addr == nullptr || outputs[j]->size == 0) {
-      MS_LOG(ERROR) << "Output " << j << " addr is invalid.";
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    if (outputs[i] == nullptr || outputs_[i] == nullptr) {
+      MS_LOG(ERROR) << "Output " << i << " is nullptr.";
       return lite::RET_ERROR;
     }
-    outputs_[j]->SetData(outputs[j]);
+    outputs_[i]->SetData(outputs[i]);
   }
   return lite::RET_OK;
 }
@@ -205,6 +216,10 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   if (model_infer_->Inference(inputs_, outputs_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Custom kernel execute failed.";
     return false;
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    outputs[i]->addr = outputs_[i]->GetData()->addr;
+    outputs[i]->size = outputs_[i]->GetData()->size;
   }
   return true;
 }

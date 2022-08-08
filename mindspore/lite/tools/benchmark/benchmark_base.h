@@ -276,7 +276,7 @@ class MS_API BenchmarkBase {
       }
 
       CheckTensor *calibTensor = iter->second;
-      if (calibTensor->shape != castedMSShape) {
+      if (!CheckShapeValid(calibTensor->shape, castedMSShape)) {
         std::ostringstream oss;
         oss << "Shape of mslite output(";
         for (auto dim : castedMSShape) {
@@ -380,7 +380,7 @@ class MS_API BenchmarkBase {
       }
 
       CheckTensor *calibTensor = iter->second;
-      if (calibTensor->shape != castedMSShape) {
+      if (!CheckShapeValid(calibTensor->shape, castedMSShape)) {
         std::ostringstream oss;
         oss << "Shape of mslite output(";
         for (auto dim : castedMSShape) {
@@ -431,6 +431,34 @@ class MS_API BenchmarkBase {
     size_t elements_num = size / sizeof(T);
     (void)std::generate_n(static_cast<T *>(data), elements_num,
                           [&]() { return static_cast<T>(distribution(random_engine_)); });
+  }
+
+  bool CheckShapeValid(const std::vector<size_t> &calib_output_shape, const std::vector<size_t> &real_output_shape) {
+    if (calib_output_shape == real_output_shape) {
+      return true;
+    }
+    // (1, 225) compare with (1, 225, 1, 1) return true
+    size_t min_size =
+      calib_output_shape.size() > real_output_shape.size() ? real_output_shape.size() : calib_output_shape.size();
+    size_t i = 0;
+    for (i = 0; i < min_size; ++i) {
+      if (calib_output_shape[i] != real_output_shape[i]) {
+        return false;
+      }
+    }
+    while (i < calib_output_shape.size()) {
+      if (calib_output_shape[i] != 1) {
+        return false;
+      }
+      i++;
+    }
+    while (i < real_output_shape.size()) {
+      if (real_output_shape[i] != 1) {
+        return false;
+      }
+      i++;
+    }
+    return true;
   }
 
   int CheckThreadNumValid();

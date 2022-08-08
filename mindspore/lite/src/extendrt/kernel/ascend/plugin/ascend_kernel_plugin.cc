@@ -35,6 +35,7 @@ AscendKernelPlugin::AscendKernelPlugin() : handle_(nullptr), create_kernel_map_(
 void AscendKernelPlugin::Register() {
 #if !defined(_WIN32)
   if (is_registered_) {
+    MS_LOG(INFO) << "Create kernel map has been created.";
     return;
   }
   std::string ascend_kernel_plugin_path;
@@ -82,6 +83,7 @@ void AscendKernelPlugin::DestroyAscendKernelMap() {
     return;
   }
   destroy_map_func(create_kernel_map_);
+  is_registered_ = false;
 #endif
 }
 

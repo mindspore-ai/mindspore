@@ -81,6 +81,8 @@ int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const input
   }
 
   tensor_ptr->SetData(batch_size_ptr);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
+  tensor_ptr->SetAbstract(abstract);
   inputs->emplace_back(tensor_ptr);
   return lite::RET_OK;
 }
@@ -110,6 +112,8 @@ int DynShapeProcess::AddImageSizeInput(std::vector<KernelTensorPtr> *const input
   }
 
   tensor_ptr->SetData(image_size_ptr);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
+  tensor_ptr->SetAbstract(abstract);
   inputs->emplace_back(tensor_ptr);
   return lite::RET_OK;
 }
@@ -139,8 +143,9 @@ int DynShapeProcess::GetRealBatchSize(std::vector<KernelTensorPtr> *const inputs
 
 int DynShapeProcess::GetRealImageSize(std::vector<KernelTensorPtr> *const inputs, int32_t *image_size, int32_t num) {
   MS_CHECK_TRUE_MSG(image_size != nullptr, lite::RET_ERROR, "Image size ptr is nullptr.");
-  if (input_data_idx_ >= inputs->size()) {
-    MS_LOG(ERROR) << "Input data index " << input_data_idx_ << " is larger than input size " << inputs->size();
+  if (input_data_idx_ >= inputs->size() || input_data_idx_ >= acl_options_->input_format.size()) {
+    MS_LOG(ERROR) << "Input data index " << input_data_idx_ << " is invalid, inputs size " << inputs->size()
+                  << " input formats size " << acl_options_->input_format.size();
     return lite::RET_ERROR;
   }
   auto tensor = (*inputs)[input_data_idx_];
@@ -149,7 +154,7 @@ int DynShapeProcess::GetRealImageSize(std::vector<KernelTensorPtr> *const inputs
     MS_LOG(ERROR) << "Shape size " << shape.size() << " is invalid, input index = " << input_data_idx_;
     return lite::RET_ERROR;
   }
-  auto format = tensor->GetFormat();
+  auto format = acl_options_->input_format[input_data_idx_];
   uint64_t height;
   uint64_t width;
   if (format == mindspore::Format::NHWC) {

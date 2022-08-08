@@ -131,7 +131,12 @@ function Convert() {
         fi
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
-            model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            local model_size
+            if [[ ${export_mindir} =~ "MINDIR" ]]; then
+              model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
+            else
+              model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            fi
             let calib_final_size=${calib_size}+50
             if [[ -n ${calib_size} ]];then
               if [ ${model_size} -gt ${calib_final_size} ]; then

@@ -19,8 +19,10 @@
 
 #include <string>
 #include <set>
+#include <vector>
 #include <utility>
 #include <memory>
+#include "mindapi/base/format.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -29,6 +31,7 @@ struct AclModelOptions {
   std::string dump_cfg_path;
   std::set<uint64_t> batch_size;
   std::set<std::pair<uint64_t, uint64_t>> image_size;
+  std::vector<Format> input_format;
 
   AclModelOptions() : device_id(0) {}
 };

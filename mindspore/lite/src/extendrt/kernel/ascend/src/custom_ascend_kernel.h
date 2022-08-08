@@ -48,6 +48,8 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
+  std::vector<KernelTensorPtr> RetrieveOutputShape() { return outputs_; }
+
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
   void SetDeviceId();

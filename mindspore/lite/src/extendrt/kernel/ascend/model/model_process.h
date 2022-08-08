@@ -66,6 +66,7 @@ class ModelProcess {
   uint32_t model_id() const { return model_id_; }
   std::set<uint64_t> GetDynamicBatch();
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
+  std::vector<Format> GetInputFormat();
 
  private:
   STATUS CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
@@ -73,6 +74,7 @@ class ModelProcess {
   STATUS CheckTensorByTensorInfo(const std::vector<KernelTensorPtr> &tensor,
                                  const std::vector<AclTensorInfo> &tensor_info);
   STATUS GetOutputs(const std::vector<KernelTensorPtr> &outputs);
+  void UpdateOutputInfo(const std::vector<KernelTensorPtr> &outputs);
   STATUS ConstructTensor(const std::vector<KernelTensorPtr> &outputs);
   STATUS SetBatchSize(const std::vector<KernelTensorPtr> &inputs);
   STATUS SetImageSize(const std::vector<KernelTensorPtr> &inputs);
