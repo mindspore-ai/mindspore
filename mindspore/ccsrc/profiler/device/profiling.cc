@@ -22,7 +22,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
-#if ENABLE_GPU
+#ifdef ENABLE_GPU
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif
 #if ENABLE_D

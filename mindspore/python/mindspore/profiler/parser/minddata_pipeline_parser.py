@@ -76,11 +76,11 @@ class MinddataPipelineParser:
         with open(self._pipeline_path, 'r') as file:
             try:
                 pipeline_info = json.load(file)
-            except (json.JSONDecodeError, TypeError) as err:
+            except json.JSONDecodeError as err:
                 logger.warning(err)
                 raise ProfilerRawFileException(
                     'Fail to parse minddata pipeline file.'
-                )
+                ) from err
         if not pipeline_info:
             logger.warning('The minddata pipeline file is empty.')
             raise ProfilerRawFileException(
@@ -106,9 +106,9 @@ class MinddataPipelineParser:
 
         try:
             pipeline_path = validate_and_normalize_path(pipeline_path)
-        except RuntimeError:
+        except RuntimeError as e:
             logger.warning('Minddata pipeline file is invalid.')
-            raise ProfilerPathErrorException('Minddata pipeline file is invalid.')
+            raise ProfilerPathErrorException('Minddata pipeline file is invalid.') from e
         if not os.path.isfile(pipeline_path):
             logger.warning(
                 'The minddata pipeline file <%s> not found.', pipeline_path
@@ -129,9 +129,9 @@ class MinddataPipelineParser:
         """
         try:
             output_dir = validate_and_normalize_path(output_path)
-        except RuntimeError:
+        except RuntimeError as e:
             logger.warning('Output path is invalid.')
-            raise ProfilerPathErrorException('Output path is invalid.')
+            raise ProfilerPathErrorException('Output path is invalid.') from e
         if not os.path.isdir(output_dir):
             logger.warning('The output dir <%s> not found.', output_dir)
             raise ProfilerDirNotFoundException(output_dir)

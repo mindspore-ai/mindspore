@@ -74,7 +74,7 @@ class OPIntermediateParser:
                     timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read timeline intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         finally:
             pass
 
@@ -102,9 +102,12 @@ class OPIntermediateParser:
             csv_writer.writerow(self._op_intermediate_op_header)
 
             for op_name, op_name_time_info in op_intermediate_detail.items():
-                op_info = [
-                    op_name, round(op_name_time_info[1] / op_name_time_info[0], self._ms_decimal_digits)
-                ]
+                if op_name_time_info[0] != 0:
+                    op_info = [
+                        op_name, round(op_name_time_info[1] / op_name_time_info[0], self._ms_decimal_digits)
+                    ]
+                else:
+                    raise ValueError("The number of op total execution time can not be 0.")
                 csv_writer.writerow(op_info)
 
     def parser_pynative_op_type(self):
@@ -123,7 +126,10 @@ class OPIntermediateParser:
 
         sum_avg_time = 0
         for _, op_type in op_type_list.items():
-            op_type[1] = op_type[1] / op_type[0]
+            if op_type[0] != 0:
+                op_type[1] = op_type[1] / op_type[0]
+            else:
+                raise ValueError("The number of op count can not be 0.")
             sum_avg_time = sum_avg_time + op_type[1]
 
         if sum_avg_time <= 0:

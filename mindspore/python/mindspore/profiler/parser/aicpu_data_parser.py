@@ -95,45 +95,10 @@ class DataPreProcessParser:
         self._ai_cpu_len = 128
         self._op_task_dict = op_task_dict
 
-    def _get_source_file(self):
-        """Get log file name, which was created by ada service."""
-        file_name = get_file_join_name(self._input_path, self._source_file_target)
-        if not file_name:
-            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
-            if not file_name:
-                data_path = os.path.join(self._input_path, "data")
-                file_name = get_file_join_name(data_path, self._source_file_target)
-                if not file_name:
-                    file_name = get_file_join_name(data_path, self._source_file_target_old)
-        return file_name
-
-    def _get_kernel_result(self, number, node_list, thread_list):
-        """Get the profiling data form different aicpu kernel"""
-        try:
-            if len(node_list) == self._ms_kernel_flag:
-                node_type_name = node_list[0].split(':')[-1]
-                run_end_index = self._ms_kernel_run_end_index
-            elif len(node_list) == self._other_kernel_flag:
-                node_type_name = node_list[0].split(':')[-1].split('/')[-1].split('-')[0]
-                run_end_index = self._other_kernel_run_end_index
-            else:
-                logger.warning("the data format can't support 'node_list':%s", str(node_list))
-                return None
-
-            us_unit = 100  # Convert 10ns to 1us.
-            run_start_counter = float(node_list[1].split(':')[-1].split(' ')[1]) / us_unit
-            run_end_counter = float(node_list[run_end_index].split(':')[-1].split(' ')[1]) / us_unit
-            run_start = node_list[1].split(':')[-1].split(' ')[0]
-            run_end = node_list[run_end_index].split(':')[-1].split(' ')[0]
-            exe_time = (float(run_end) - float(run_start)) / self._ms_unit
-            total_time = float(thread_list[self._total_time_index].split('=')[-1].split()[0]) / self._ms_unit
-            dispatch_time = float(thread_list[self._dispatch_time_index].split('=')[-1].split()[0]) / self._ms_unit
-
-            return [number, node_type_name, total_time, dispatch_time, exe_time,
-                    run_start_counter, run_end_counter]
-        except IndexError as e:
-            logger.error(e)
-            return None
+    @property
+    def min_cycle_counter(self):
+        """Get minimum cycle counter in AI CPU."""
+        return self._min_cycle_counter
 
     def execute(self):
         """Execute the parser, get result data, and write it to the output file."""
@@ -265,7 +230,42 @@ class DataPreProcessParser:
 
         return aicpu_dict
 
-    @property
-    def min_cycle_counter(self):
-        """Get minimum cycle counter in AI CPU."""
-        return self._min_cycle_counter
+    def _get_source_file(self):
+        """Get log file name, which was created by ada service."""
+        file_name = get_file_join_name(self._input_path, self._source_file_target)
+        if not file_name:
+            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
+            if not file_name:
+                data_path = os.path.join(self._input_path, "data")
+                file_name = get_file_join_name(data_path, self._source_file_target)
+                if not file_name:
+                    file_name = get_file_join_name(data_path, self._source_file_target_old)
+        return file_name
+
+    def _get_kernel_result(self, number, node_list, thread_list):
+        """Get the profiling data form different aicpu kernel"""
+        try:
+            if len(node_list) == self._ms_kernel_flag:
+                node_type_name = node_list[0].split(':')[-1]
+                run_end_index = self._ms_kernel_run_end_index
+            elif len(node_list) == self._other_kernel_flag:
+                node_type_name = node_list[0].split(':')[-1].split('/')[-1].split('-')[0]
+                run_end_index = self._other_kernel_run_end_index
+            else:
+                logger.warning("the data format can't support 'node_list':%s", str(node_list))
+                return None
+
+            us_unit = 100  # Convert 10ns to 1us.
+            run_start_counter = float(node_list[1].split(':')[-1].split(' ')[1]) / us_unit
+            run_end_counter = float(node_list[run_end_index].split(':')[-1].split(' ')[1]) / us_unit
+            run_start = node_list[1].split(':')[-1].split(' ')[0]
+            run_end = node_list[run_end_index].split(':')[-1].split(' ')[0]
+            exe_time = (float(run_end) - float(run_start)) / self._ms_unit
+            total_time = float(thread_list[self._total_time_index].split('=')[-1].split()[0]) / self._ms_unit
+            dispatch_time = float(thread_list[self._dispatch_time_index].split('=')[-1].split()[0]) / self._ms_unit
+
+            return [number, node_type_name, total_time, dispatch_time, exe_time,
+                    run_start_counter, run_end_counter]
+        except IndexError as e:
+            logger.error(e)
+            return None

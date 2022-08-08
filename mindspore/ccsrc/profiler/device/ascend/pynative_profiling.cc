@@ -86,7 +86,6 @@ void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance
   }
   if (is_dynamic_shape) {
     MS_LOG(EXCEPTION) << "Dynamic shape is not supported in pynative mode.";
-    return;
   }
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   MS_EXCEPTION_IF_NULL(stream);
@@ -121,7 +120,6 @@ void PynativeProfiler::OpDataProducerEnd(const std::thread::id thread_id, const 
   }
   if (is_dynamic_shape) {
     MS_LOG(EXCEPTION) << "Dynamic shape is not supported in pynative mode.";
-    return;
   }
   if (thread_op_info_map_.find(thread_id) == thread_op_info_map_.end()) {
     MS_LOG(WARNING) << "Pynative profiling, the start time of op is null"

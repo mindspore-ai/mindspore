@@ -66,6 +66,160 @@ class MinddataProfilingAnalyzer:
         """
         return self._save_path
 
+    @staticmethod
+    def _parse_pipeline_metrics_info(metrics):
+        """
+        Parse and process the pipeline profiling metrics information for a given op.
+
+        Args:
+            metrics (dict): The pipeline profiling metrics information for a given op.
+
+        Returns:
+            List with the following analyzed metrics information:
+                output queue size
+                output queue length
+                output queue average size,
+                output queue utilization percentage
+                output queue empty frequency percentage
+        """
+        # Note: Some ops like DeviceQueue and inline ops do not have metrics information
+        queue_size = -1
+        queue_length = -1
+        queue_average_size = -1
+        queue_utilization_pct = -1
+        queue_empty_freq_pct = -1
+        if metrics and metrics['output_queue']:
+            queue_size = metrics['output_queue']['size']
+            queue_length = metrics['output_queue']['length']
+            queue_average_size = round(sum(queue_size) / len(queue_size), 2) if queue_size else -1
+            queue_utilization_pct = round(100 * queue_average_size / queue_length, 2) if queue_length else -1
+            # Compute percentage of time queue is empty
+            empty_count = 0
+            for q_size in queue_size:
+                if q_size == 0:
+                    empty_count += 1
+            queue_empty_freq_pct = round(100 * empty_count / len(queue_size), 2) if queue_size else -1
+        return [queue_size, queue_length, queue_average_size, queue_utilization_pct, queue_empty_freq_pct]
+
+    @staticmethod
+    def _validate_directory(dir_name, dir_type):
+        """
+        Validate the input directory.
+
+        Args:
+             dir_name (str): The directory name.
+             dir_type (str): The type of directory.  (Should begin with capital since is used for output messages.)
+        """
+        try:
+            validated_dir = validate_and_normalize_path(dir_name)
+        except RuntimeError as path_error:
+            logger.warning('<%s> <%s> is invalid.', dir_type, validated_dir)
+            raise ProfilerPathErrorException(dir_type + 'is invalid.') from path_error
+
+        if not os.path.isdir(validated_dir):
+            logger.warning('<%s> <%s> not found.', dir_type, validated_dir)
+            raise ProfilerDirNotFoundException(validated_dir)
+        return validated_dir
+
+    @staticmethod
+    def _parse_cpu_util_info(cpu_util_info):
+        """
+        Parse and process the CPU profiling information.
+
+        Args:
+            cpu_util_info (dict): The CPU utilization profiling information.
+
+        Returns:
+            Dictionary with analyzed summary output information
+            Dictionary consists of:
+                avg_cpu_pct: Average CPU utilization percentage for each op, a list ordered by increasing op id
+
+        Raises:
+            ProfilerRawFileException: If the format of the input is wrong.
+        """
+        # Perform sanity checks for CPU utilization information
+        cpu_processor_num = cpu_util_info.get('cpu_processor_num')
+        cpu_op_info = cpu_util_info.get('op_info')
+        if cpu_processor_num is None or not cpu_op_info:
+            raise ProfilerRawFileException('The format of MindData CPU utilization JSON file is wrong.')
+
+        for item in cpu_op_info:
+            if not item:
+                raise ProfilerRawFileException('The contents of MindData CPU utilization JSON file is wrong.')
+
+        # Parse and process the following CPU utilization information:
+        # - overage cpu utilization for each op
+        dict_opid_cpuutil = {}
+        for op in cpu_util_info["op_info"]:
+            # Note: The CPU utilization data may have an extra entry with op_id=-1
+            # Omit info for op_id=1
+            if op["op_id"] != -1:
+                op_sys, op_usr = op["metrics"]["sys_utilization"], op["metrics"]["user_utilization"]
+                dict_opid_cpuutil[op["op_id"]] = [op_sys[i] + op_usr[i] for i in range(len(op_sys))]
+
+        # Initialize oplist_avg_cpu_pct with -1 for each pipeline op, since
+        # CPU utilization data may not have information for each pipeline op
+        oplist_avg_cpu_pct = [-1] * len(dict_opid_cpuutil)
+        total_cpu = 0
+        for op_id, cpu in dict_opid_cpuutil.items():
+            op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
+            oplist_avg_cpu_pct[op_id] = round(op_avg_cpu_pct, 2)
+            total_cpu += op_avg_cpu_pct
+
+        return_dict = {}
+        return_dict['avg_cpu_pct'] = oplist_avg_cpu_pct
+        return return_dict
+
+    @staticmethod
+    def _compute_composite_info(summary_dict):
+        """
+        Compute composite analysis information from the current summary pipeline data.
+
+        Args:
+            summary_dict (dict): Input summary pipeline information.
+
+        Returns:
+            Dictionary with composite analysis output information
+            Dictionary consists of:
+                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
+        """
+        return_dict = {}
+
+        # Build list: average CPU utilization percentage per worker - for each op
+        avg_cpu_pct_per_worker = []
+        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
+            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
+        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
+
+        return return_dict
+
+    @staticmethod
+    def _analyze_for_bottleneck_op(summary_dict):
+        """
+        Analyze the MindData summary information and identify any potential bottleneck operator
+        in the MindData pipeline.
+
+        Args:
+            summary_dict (dict): Input summary pipeline information.
+
+        Returns:
+            Dictionary with the following information, if applicable:
+            - CPU utilization analysis
+            - queue utilization analysis
+            - bottleneck warning: Information on the bottleneck op
+                (This is returned only if a potential bottleneck is identified.)
+            - bottleneck suggestion: Reason why the subject op is it is identified as
+                a potential bottleneck, plus suggestion on how to resolve the bottleneck.
+                (This is returned only if a potential bottleneck is identified.)
+        """
+        try:
+            bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
+            return_dict = bottleneck_analyzer.analyze()
+        except IndexError:
+            return_dict = {}
+
+        return return_dict
+
     def analyze(self):
         """
         Analyze the MindData profiling files, produce summary pipeline information, including potential
@@ -84,7 +238,7 @@ class MinddataProfilingAnalyzer:
         with open(self._pipeline_path_filename, 'r') as pipeline_file:
             try:
                 pipeline_info = json.load(pipeline_file)
-            except (json.JSONDecodeError, TypeError) as path_filename_error:
+            except json.JSONDecodeError as path_filename_error:
                 logger.warning(path_filename_error)
                 raise ProfilerRawFileException(
                     'Failed to find the MindData pipeline profiling file.') from path_filename_error
@@ -96,7 +250,7 @@ class MinddataProfilingAnalyzer:
         with open(self._cpu_utilization_path_filename, 'r') as cpu_util_file:
             try:
                 cpu_util_info = json.load(cpu_util_file)
-            except (json.JSONDecodeError, TypeError) as path_filename_error:
+            except json.JSONDecodeError as path_filename_error:
                 logger.warning(path_filename_error)
                 raise ProfilerRawFileException(
                     'Failed to find the MindData CPU utilization file.') from path_filename_error
@@ -119,26 +273,6 @@ class MinddataProfilingAnalyzer:
         # Analyze the MindData profiling file information and save the result
         summary_dict = self._analyze_and_save(pipeline_info, cpu_util_info, device_trace_info)
         return summary_dict
-
-    @staticmethod
-    def _validate_directory(dir_name, dir_type):
-        """
-        Validate the input directory.
-
-        Args:
-             dir_name (str): The directory name.
-             dir_type (str): The type of directory.  (Should begin with capital since is used for output messages.)
-        """
-        try:
-            validated_dir = validate_and_normalize_path(dir_name)
-        except RuntimeError as path_error:
-            logger.warning('<%s> <%s> is invalid.', dir_type, validated_dir)
-            raise ProfilerPathErrorException(dir_type + 'is invalid.') from path_error
-
-        if not os.path.isdir(validated_dir):
-            logger.warning('<%s> <%s> not found.', dir_type, validated_dir)
-            raise ProfilerDirNotFoundException(validated_dir)
-        return validated_dir
 
     def _get_pipeline_path_filename(self, source_dir):
         """
@@ -262,41 +396,6 @@ class MinddataProfilingAnalyzer:
         summary_templatename = 'minddata_pipeline_summary_{}.json'
         return os.path.join(output_dir, summary_templatename.format(self._device_id))
 
-    @staticmethod
-    def _parse_pipeline_metrics_info(metrics):
-        """
-        Parse and process the pipeline profiling metrics information for a given op.
-
-        Args:
-            metrics (dict): The pipeline profiling metrics information for a given op.
-
-        Returns:
-            List with the following analyzed metrics information:
-                output queue size
-                output queue length
-                output queue average size,
-                output queue utilization percentage
-                output queue empty frequency percentage
-        """
-        # Note: Some ops like DeviceQueue and inline ops do not have metrics information
-        queue_size = -1
-        queue_length = -1
-        queue_average_size = -1
-        queue_utilization_pct = -1
-        queue_empty_freq_pct = -1
-        if metrics and metrics['output_queue']:
-            queue_size = metrics['output_queue']['size']
-            queue_length = metrics['output_queue']['length']
-            queue_average_size = round(sum(queue_size) / len(queue_size), 2) if queue_size else -1
-            queue_utilization_pct = round(100 * queue_average_size / queue_length, 2) if queue_length else -1
-            # Compute percentage of time queue is empty
-            empty_count = 0
-            for q_size in queue_size:
-                if q_size == 0:
-                    empty_count += 1
-            queue_empty_freq_pct = round(100 * empty_count / len(queue_size), 2) if queue_size else -1
-        return [queue_size, queue_length, queue_average_size, queue_utilization_pct, queue_empty_freq_pct]
-
     def _parse_pipeline_info(self, pipeline_info):
         """
         Parse and process the pipeline profiling information.
@@ -385,105 +484,6 @@ class MinddataProfilingAnalyzer:
 
         return_dict['children_ids'] = [x[1] for x in sorted(dict_opid_children_ids.items())]
         return_dict['parent_id'] = [x[1] for x in sorted(dict_opid_parent_id.items())]
-
-        return return_dict
-
-    @staticmethod
-    def _parse_cpu_util_info(cpu_util_info):
-        """
-        Parse and process the CPU profiling information.
-
-        Args:
-            cpu_util_info (dict): The CPU utilization profiling information.
-
-        Returns:
-            Dictionary with analyzed summary output information
-            Dictionary consists of:
-                avg_cpu_pct: Average CPU utilization percentage for each op, a list ordered by increasing op id
-
-        Raises:
-            ProfilerRawFileException: If the format of the input is wrong.
-        """
-        # Perform sanity checks for CPU utilization information
-        cpu_processor_num = cpu_util_info.get('cpu_processor_num')
-        cpu_op_info = cpu_util_info.get('op_info')
-        if cpu_processor_num is None or not cpu_op_info:
-            raise ProfilerRawFileException('The format of MindData CPU utilization JSON file is wrong.')
-
-        for item in cpu_op_info:
-            if not item:
-                raise ProfilerRawFileException('The contents of MindData CPU utilization JSON file is wrong.')
-
-        # Parse and process the following CPU utilization information:
-        # - overage cpu utilization for each op
-        dict_opid_cpuutil = {}
-        for op in cpu_util_info["op_info"]:
-            # Note: The CPU utilization data may have an extra entry with op_id=-1
-            # Omit info for op_id=1
-            if op["op_id"] != -1:
-                op_sys, op_usr = op["metrics"]["sys_utilization"], op["metrics"]["user_utilization"]
-                dict_opid_cpuutil[op["op_id"]] = [op_sys[i] + op_usr[i] for i in range(len(op_sys))]
-
-        # Initialize oplist_avg_cpu_pct with -1 for each pipeline op, since
-        # CPU utilization data may not have information for each pipeline op
-        oplist_avg_cpu_pct = [-1] * len(dict_opid_cpuutil)
-        total_cpu = 0
-        for op_id, cpu in dict_opid_cpuutil.items():
-            op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
-            oplist_avg_cpu_pct[op_id] = round(op_avg_cpu_pct, 2)
-            total_cpu += op_avg_cpu_pct
-
-        return_dict = {}
-        return_dict['avg_cpu_pct'] = oplist_avg_cpu_pct
-        return return_dict
-
-    @staticmethod
-    def _compute_composite_info(summary_dict):
-        """
-        Compute composite analysis information from the current summary pipeline data.
-
-        Args:
-            summary_dict (dict): Input summary pipeline information.
-
-        Returns:
-            Dictionary with composite analysis output information
-            Dictionary consists of:
-                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
-        """
-        return_dict = {}
-
-        # Build list: average CPU utilization percentage per worker - for each op
-        avg_cpu_pct_per_worker = []
-        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
-            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
-        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
-
-        return return_dict
-
-    @staticmethod
-    def _analyze_for_bottleneck_op(summary_dict):
-        """
-        Analyze the MindData summary information and identify any potential bottleneck operator
-        in the MindData pipeline.
-
-        Args:
-            summary_dict (dict): Input summary pipeline information.
-
-        Returns:
-            Dictionary with the following information, if applicable:
-            - CPU utilization analysis
-            - queue utilization analysis
-            - bottleneck warning: Information on the bottleneck op
-                (This is returned only if a potential bottleneck is identified.)
-            - bottleneck suggestion: Reason why the subject op is it is identified as
-                a potential bottleneck, plus suggestion on how to resolve the bottleneck.
-                (This is returned only if a potential bottleneck is identified.)
-        """
-        try:
-            bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
-            return_dict = bottleneck_analyzer.analyze()
-        except IndexError:
-            return_dict = {}
 
         return return_dict
 
@@ -668,12 +668,12 @@ class BottleneckAnalyzer:
                                           "Zip"])
 
         # These are the threshold values used in the pipeline bottleneck analyzer algorithm
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM = 75.0
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM = 20.0
-        self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 50
-        self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 60
-        self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM = 50
-        self._IN_QUEUE_UTIL_PCT_MAXIMUM = 10
+        self._avg_cpu_util_pct_per_worker_maximum = 75.0
+        self._avg_cpu_util_pct_per_worker_minimum = 20.0
+        self._leaf_output_queue_empty_freq_pct_maximum = 50
+        self._devicequeue_input_queue_empty_freq_pct_maximum = 60
+        self._in_out_queue_util_pct_diff_maximum = 50
+        self._in_queue_util_pct_maximum = 10
 
     def analyze(self):
         """ analyze all op's usage """
@@ -696,15 +696,6 @@ class BottleneckAnalyzer:
 
         return detailed_analysis
 
-    def __get_non_inline_child_recur(self, cur_op_id):
-        """get the child id of cur op which isn't an inline op"""
-        if cur_op_id == self.op_id_not_exist or not self.children_ids[cur_op_id]:
-            return self.op_id_not_exist
-        cur_child_id = self.children_ids[cur_op_id][0]
-        if self.queue_average_size[cur_child_id] != -1:
-            return cur_child_id
-        return self.__get_non_inline_child_recur(cur_child_id)
-
     def analyze_cpu_usage(self):
         """ analyze cpu usage of each op """
         cpu_usage_analysis = []
@@ -712,7 +703,7 @@ class BottleneckAnalyzer:
             if op_id == self.op_id_not_exist or self.op_names[op_id] in self.non_multithreaded_ops:
                 continue
 
-            if self.avg_cpu_pct_per_worker[op_id] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM and \
+            if self.avg_cpu_pct_per_worker[op_id] > self._avg_cpu_util_pct_per_worker_maximum and \
                     self.op_names[op_id]:
                 cpu_usage_analysis.append(
                     ("{} is using {}% CPU per worker."
@@ -720,7 +711,7 @@ class BottleneckAnalyzer:
                      ">{} might bring extra performance.").format(self.pipeline_ops[op_id],
                                                                   self.avg_cpu_pct_per_worker[op_id],
                                                                   self.num_workers[op_id]))
-            elif self.avg_cpu_pct_per_worker[op_id] < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM and \
+            elif self.avg_cpu_pct_per_worker[op_id] < self._avg_cpu_util_pct_per_worker_minimum and \
                     self.num_workers[op_id] > 1:
                 cpu_usage_analysis.append(
                     ("{} is using {}% CPU per worker. Using num_parallel_workers={} might not bring as much benefit"
@@ -742,7 +733,7 @@ class BottleneckAnalyzer:
                 op_id), self.queue_utilization_pct[op_id]
             if in_op_id == self.op_id_not_exist and out_q != self.queue_usage_not_exist:
                 # This is a leaf node since input queue does not exist and output queue exists
-                if out_q < self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                if out_q < self._leaf_output_queue_empty_freq_pct_maximum:
                     queue_usage_analysis.append(("Leaf op {} is using {}% of its output queue."
                                                  "Setting num_parallel_workers"
                                                  ">{} might speed up I/O.").format(self.pipeline_ops[op_id],
@@ -750,7 +741,7 @@ class BottleneckAnalyzer:
                                                                                    self.num_workers[op_id]))
             elif self.op_names[op_id] == "DeviceQueue" and in_op_id != self.op_id_not_exist:
                 # if this is device_queue op,
-                if self.queue_empty_freq_pct[in_op_id] > self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                if self.queue_empty_freq_pct[in_op_id] > self._devicequeue_input_queue_empty_freq_pct_maximum:
                     queue_usage_analysis.append((
                         "{}'s input queue is empty {}% of the time. This might indicate dataset bottlenecks."
                         " Hence host cannot keep up with the device {}% of the time."
@@ -759,7 +750,7 @@ class BottleneckAnalyzer:
                                                                                self.queue_empty_freq_pct[in_op_id]))
             elif in_op_id != self.op_id_not_exist and out_q != self.queue_usage_not_exist:
                 in_q = self.queue_utilization_pct[in_op_id]
-                if in_q != self.queue_usage_not_exist and in_q - out_q > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM:
+                if in_q != self.queue_usage_not_exist and in_q - out_q > self._in_out_queue_util_pct_diff_maximum:
                     queue_usage_analysis.append((
                         "{}'s input queue usage={}% is greater output queue usage={}%."
                         " This indicates child op {} might be producing faster than its parent {} can consume."
@@ -781,20 +772,29 @@ class BottleneckAnalyzer:
                     or self.op_names[op_id] == "DeviceQueue":
                 continue
 
-            if wkr_cpu > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM:
+            if wkr_cpu > self._avg_cpu_util_pct_per_worker_maximum:
                 bottleneck = self.pipeline_ops[op_id]
                 suggestion = "{} has high CPU utilization per worker of {}%".format(
                     self.pipeline_ops[op_id], wkr_cpu)
                 suggestion += " Try increasing num_parallel_workers above {}.".format(self.num_workers[op_id])
-            elif wkr_cpu < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM:
+            elif wkr_cpu < self._avg_cpu_util_pct_per_worker_minimum:
                 in_op_id = self.__get_non_inline_child_recur(op_id)
                 in_q_usage = self.queue_utilization_pct[in_op_id]
                 if in_op_id != self.op_id_not_exist and (
-                        in_q_usage < self._IN_QUEUE_UTIL_PCT_MAXIMUM or out_q -
-                        in_q_usage > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM):
+                        in_q_usage < self._in_queue_util_pct_maximum or out_q -
+                        in_q_usage > self._in_out_queue_util_pct_diff_maximum):
                     bottleneck = self.pipeline_ops[op_id]
                     suggestion = "{} has low CPU utilization per worker of {}%".format(
                         self.pipeline_ops[op_id], wkr_cpu)
                     suggestion += " and abnormal queue usage. Try increasing prefetch_size."
 
         return [bottleneck], [suggestion]
+
+    def __get_non_inline_child_recur(self, cur_op_id):
+        """get the child id of cur op which isn't an inline op"""
+        if cur_op_id == self.op_id_not_exist or not self.children_ids[cur_op_id]:
+            return self.op_id_not_exist
+        cur_child_id = self.children_ids[cur_op_id][0]
+        if self.queue_average_size[cur_child_id] != -1:
+            return cur_child_id
+        return self.__get_non_inline_child_recur(cur_child_id)

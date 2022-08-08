@@ -68,6 +68,35 @@ class Integrator:
         self._column = ""
         self._result = []
 
+    @staticmethod
+    def _is_match_condition(exp_key, exp_value, actual_value):
+        """
+        Check whether the actual value meets the expect condition.
+
+        Args:
+            exp_key (str): Expect key of the condition.
+            exp_value (str): Expect value.
+            actual_value (str): Actual value.
+
+        Returns:
+            bool, `True` if the actual meets the expect condition, else `False`.
+        """
+        if exp_key == 'in':
+            if actual_value not in exp_value:
+                return False
+        elif exp_key == 'not_in':
+            if actual_value in exp_value:
+                return False
+        elif exp_key == 'partial_match_str_in':
+            for partial_match_str in exp_value:
+                if partial_match_str in actual_value:
+                    return True
+            return False
+        else:
+            return False
+
+        return True
+
     def integrate(self):
         """Integrate the parsed profiling files."""
         self._parse_aicore_detail_time()
@@ -290,9 +319,9 @@ class Integrator:
             with open(file_path, 'r', encoding='utf-8') as file:
                 try:
                     self._point_info = json.load(file)
-                except (json.JSONDecodeError, TypeError) as err:
+                except json.JSONDecodeError as err:
                     logger.warning(err)
-                    raise ProfilerRawFileException('Fail to parse point info file.')
+                    raise ProfilerRawFileException('Fail to parse point info file.') from err
 
     def _query_for_all_reduce(self):
         """
@@ -351,8 +380,10 @@ class Integrator:
         factor = 1e5  # convert time unit from 10ns to 1ms
         reduce_pid = 10000
         reduce_info = []
-        reduce_fields = [field_name for field_name in self._column
-                         if field_name.startswith('stream_') and not field_name.endswith('point')]
+        reduce_fields = [
+            field_name for field_name in self._column
+            if field_name.startswith('stream_') and not field_name.endswith('point')
+        ]
         for reduce_field in reduce_fields:
             reduce_start = row_info_dict.get(reduce_field + '_start_point')
             reduce_start = reduce_start / factor \
@@ -466,35 +497,6 @@ class Integrator:
                         return False
         return True
 
-    @staticmethod
-    def _is_match_condition(exp_key, exp_value, actual_value):
-        """
-        Check whether the actual value meets the expect condition.
-
-        Args:
-            exp_key (str): Expect key of the condition.
-            exp_value (str): Expect value.
-            actual_value (str): Actual value.
-
-        Returns:
-            bool, `True` if the actual meets the expect condition, else `False`.
-        """
-        if exp_key == 'in':
-            if actual_value not in exp_value:
-                return False
-        elif exp_key == 'not_in':
-            if actual_value in exp_value:
-                return False
-        elif exp_key == 'partial_match_str_in':
-            for partial_match_str in exp_value:
-                if partial_match_str in actual_value:
-                    return True
-            return False
-        else:
-            return False
-
-        return True
-
     def _set_display_col_name(self, is_display_detail, is_display_full_op_name):
         """
         Set the display column name according to the filter condition.
@@ -545,7 +547,7 @@ class BaseTimelineGenerator:
 
     _STEPS_SORT_INDEX = -4
 
-    __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
+    _col_names = ['op_name', 'stream_id', 'start_time', 'duration']
     _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
 
     _map_tid_name_to_int = {
@@ -591,6 +593,88 @@ class BaseTimelineGenerator:
         self._format_meta_data_list = []
         self._thread_processed_list = []
         self._op_name_list = []
+
+    @staticmethod
+    def get_parallel_context():
+        """Get parallel context."""
+        try:
+            parallel_mode = get_auto_parallel_context("parallel_mode")
+            stage_num = get_auto_parallel_context("pipeline_stages")
+        except RuntimeError:
+            logger.warning("[profiler] the feature of cluster bottleneck analyse "
+                           "is not supported in offline parse mode.")
+            parallel_mode = "data_parallel"
+            stage_num = 1
+        if stage_num > 1:
+            parallel_mode = "pipeline-parallel"
+        elif parallel_mode != "data_parallel":
+            parallel_mode = "model-parallel"
+        else:
+            parallel_mode = "data-parallel"
+        return parallel_mode, stage_num
+
+    @staticmethod
+    def _update_num_of_streams(timeline, stream_count_dict):
+        """Update number of streams."""
+        stream_id = timeline[1]
+        if stream_id in ["Steps", "Scope Name"]:
+            return
+        if stream_id not in stream_count_dict.keys():
+            stream_count_dict[stream_id] = 1
+        else:
+            stream_count_dict[stream_id] += 1
+
+    def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
+        """Load data according to the parsed profiling files."""
+        # Write timeline to file.
+        logger.info('Writing timeline file...')
+        self.write_timeline_to_json_by_limitation(size_limit)
+        logger.info('Finished file writing!')
+
+    def write_timeline_to_json_by_limitation(self, size_limit):
+        """Write timeline to json by limitation."""
+        display_file_path = os.path.join(
+            self._profiling_dir,
+            self._display_filename
+        )
+        display_file_path = validate_and_normalize_path(display_file_path)
+
+        try:
+            with open(display_file_path, 'w') as json_file:
+                json_file.write('[')
+                for _, item in enumerate(self._timeline_meta):
+                    json.dump(item, json_file)
+                    if "scope_level" in item.keys():
+                        self._max_scope_name_num = max(
+                            self._max_scope_name_num, item["scope_level"] + 1)
+                    file_size = os.path.getsize(display_file_path)
+                    json_file.write(',')
+                    if file_size > size_limit:
+                        break
+                label_name_json = json.dumps(self.get_thread_label_name())
+                label_name_json = label_name_json.lstrip('[')
+                json_file.write(label_name_json)
+                os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
+        except (IOError, OSError) as err:
+            logger.critical('Error occurred when write timeline display file: %s', err)
+            raise ProfilerIOException() from err
+
+    def write_timeline_summary(self):
+        """Write timeline summary to json."""
+        timeline_summary_file_path = os.path.join(
+            self._profiling_dir,
+            self._timeline_summary_filename
+        )
+
+        timeline_summary_file_path = validate_and_normalize_path(timeline_summary_file_path)
+
+        try:
+            with open(timeline_summary_file_path, 'w') as json_file:
+                json.dump(self._timeline_summary, json_file)
+            os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
+        except (IOError, OSError) as err:
+            logger.critical('Error occurred when write timeline summary file: %s', err)
+            raise ProfilerIOException() from err
 
     def get_thread_label_name(self):
         """Get process and thread config."""
@@ -679,9 +763,10 @@ class BaseTimelineGenerator:
 
         # merged_display_list data used for ui page.
         merged_display_list = [
-            [display_name, tid, time_merged_segment_list[i * 2],
-             (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]) * factor, pid] for i in \
-            range(len(time_merged_segment_list) // 2)
+            [
+                display_name, tid, time_merged_segment_list[i * 2],
+                (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]) * factor, pid
+            ] for i in range(len(time_merged_segment_list) // 2)
         ]
 
         if get_interval_time:
@@ -689,8 +774,9 @@ class BaseTimelineGenerator:
 
         # merged_res_list data used to compute overlap with other time_list.
         merged_res_list = [
-            [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid] for i in \
-            range(len(time_merged_segment_list) // 2)
+            [
+                display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid
+            ] for i in range(len(time_merged_segment_list) // 2)
         ]
 
         # interval_display_list is interval time used for ui page.
@@ -701,69 +787,6 @@ class BaseTimelineGenerator:
         ]
 
         return merged_res_list, interval_display_list, merged_display_list
-
-    def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
-        """Load data according to the parsed profiling files."""
-        # Write timeline to file.
-        logger.info('Writing timeline file...')
-        self.write_timeline_to_json_by_limitation(size_limit)
-        logger.info('Finished file writing!')
-
-    def write_timeline_to_json_by_limitation(self, size_limit):
-        """Write timeline to json by limitation."""
-        display_file_path = os.path.join(
-            self._profiling_dir,
-            self._display_filename
-        )
-        display_file_path = validate_and_normalize_path(display_file_path)
-
-        try:
-            with open(display_file_path, 'w') as json_file:
-                json_file.write('[')
-                for _, item in enumerate(self._timeline_meta):
-                    json.dump(item, json_file)
-                    if "scope_level" in item.keys():
-                        self._max_scope_name_num = max(
-                            self._max_scope_name_num, item["scope_level"] + 1)
-                    file_size = os.path.getsize(display_file_path)
-                    json_file.write(',')
-                    if file_size > size_limit:
-                        break
-                label_name_json = json.dumps(self.get_thread_label_name())
-                label_name_json = label_name_json.lstrip('[')
-                json_file.write(label_name_json)
-                os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when write timeline display file: %s', err)
-            raise ProfilerIOException()
-
-    def write_timeline_summary(self):
-        """Write timeline summary to json."""
-        timeline_summary_file_path = os.path.join(
-            self._profiling_dir,
-            self._timeline_summary_filename
-        )
-
-        timeline_summary_file_path = validate_and_normalize_path(timeline_summary_file_path)
-
-        try:
-            with open(timeline_summary_file_path, 'w') as json_file:
-                json.dump(self._timeline_summary, json_file)
-            os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when write timeline summary file: %s', err)
-            raise ProfilerIOException()
-
-    @staticmethod
-    def _update_num_of_streams(timeline, stream_count_dict):
-        """Update number of streams."""
-        stream_id = timeline[1]
-        if stream_id in ["Steps", "Scope Name"]:
-            return
-        if stream_id not in stream_count_dict.keys():
-            stream_count_dict[stream_id] = 1
-        else:
-            stream_count_dict[stream_id] += 1
 
     def _update_format_meta_data(self, timeline_dict):
         """Update format meta data which control the display arrange and map the thread name."""
@@ -904,25 +927,6 @@ class BaseTimelineGenerator:
 
         return step_time_list
 
-    @staticmethod
-    def get_parallel_context():
-        """Get parallel context."""
-        try:
-            parallel_mode = get_auto_parallel_context("parallel_mode")
-            stage_num = get_auto_parallel_context("pipeline_stages")
-        except RuntimeError:
-            logger.warning("[profiler] the feature of cluster bottleneck analyse "
-                           "is not supported in offline parse mode.")
-            parallel_mode = "data_parallel"
-            stage_num = 1
-        if stage_num > 1:
-            parallel_mode = "pipeline-parallel"
-        elif parallel_mode != "data_parallel":
-            parallel_mode = "model-parallel"
-        else:
-            parallel_mode = "data-parallel"
-        return parallel_mode, stage_num
-
     def _write_cluster_metrices(self, metrices, is_pipeline_parallel, device_target, dev_id):
         """Write cluster metric."""
         # Note that the feature of cluster bottleneck analyse is not supported in offline parse mode,
@@ -954,7 +958,7 @@ class BaseTimelineGenerator:
             os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
     def _register_op_name(self, timeline_list):
         """Register op name to op name list."""
@@ -991,6 +995,43 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             "communication": (self._MERGED_COMMUNICATION_TID, self._OP_OVERLAP_PID),
             "free_time": (self._FREE_TIME_TID, self._OP_OVERLAP_PID)
         }
+
+    def init_timeline(self, reduce_op_type):
+        """Init timeline metadata, adding all collected info."""
+        timeline_list = self._load_timeline_data(reduce_op_type)
+
+        # Init a dict for counting the num of streams.
+        stream_count_dict = {}
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, 0)
+            # Updating the collection of streams.
+            if len(timeline) == 4:
+                self._update_num_of_streams(timeline, stream_count_dict)
+
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
+        # Update timeline summary info
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict)
+
+    def check_op_name(self, op_name):
+        """
+        Check whether the operator name exists.
+
+        Args:
+            op_name (str): The operator name or operator name prefix.
+
+        Returns:
+            bool, `True` if the operator name does exist, else `False`.
+        """
+        if not op_name:
+            raise ProfilerParamValueErrorException('The op_name should exist.')
+        for op_time_info in self._timeline_meta:
+            full_op_name = op_time_info['name']
+            if full_op_name and full_op_name.startswith(op_name):
+                return True
+        return False
 
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
@@ -1120,7 +1161,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         time_diff = gpu_start_time - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
@@ -1147,7 +1188,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                             communication_info.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_timeline_list, communication_info
 
@@ -1174,46 +1215,9 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     activity_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load activity timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return activity_timeline_list, cuda_compute_ops_timeline_list
-
-    def init_timeline(self, reduce_op_type):
-        """Init timeline metadata, adding all collected info."""
-        timeline_list = self._load_timeline_data(reduce_op_type)
-
-        # Init a dict for counting the num of streams.
-        stream_count_dict = {}
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, 0)
-            # Updating the collection of streams.
-            if len(timeline) == 4:
-                self._update_num_of_streams(timeline, stream_count_dict)
-
-        # Add format thread meta data.
-        self._format_meta_data_list.extend(self._timeline_meta)
-        self._timeline_meta = self._format_meta_data_list
-
-        # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict)
-
-    def check_op_name(self, op_name):
-        """
-        Check whether the operator name exists.
-
-        Args:
-            op_name (str): The operator name or operator name prefix.
-
-        Returns:
-            bool, `True` if the operator name does exist, else `False`.
-        """
-        if not op_name:
-            raise ProfilerParamValueErrorException('The op_name should exist.')
-        for op_time_info in self._timeline_meta:
-            full_op_name = op_time_info['name']
-            if full_op_name and full_op_name.startswith(op_name):
-                return True
-        return False
 
     def _get_step_time_list_from_step_trace(self):
         """Produce the time of each step based on step_trace_profiling file."""
@@ -1242,7 +1246,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     step_num += 1
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         except StopIteration:
             logger.warning('No step trace data exists.')
             return False
@@ -1262,7 +1266,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 return bool(len(first_string.split(',')) == 2)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         except StopIteration:
             logger.warning('No step trace data exists.')
             return False
@@ -1468,54 +1472,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 names.append(all_reduce_name)
         return names
 
-    def _parse_timeline_data(self, timeline, min_cycle_counter):
-        """Parse timeline data."""
-        # factor to convert the time unit from 1ms to 1us for timeline display
-        factor = 1000
-        op_meta = TimelineContainer(timeline)
-        timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name.split('/')[-1]
-        timeline_dict['ph'] = 'X'
-        timeline_dict['tid'] = op_meta.stream_id
-        timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) * factor
-        dur = op_meta.duration * factor
-        timeline_dict['dur'] = dur
-        if op_meta.pid is None:
-            timeline_dict['pid'] = int(self._device_id)
-            # Update total time of operator execution.
-            if op_meta.stream_id not in ["Steps", "Scope Name"]:
-                self._timeline_summary['total_time'] += op_meta.duration
-        else:  # AllReduce and AI CPU pid
-            timeline_dict['pid'] = op_meta.pid
-
-        if op_meta.stream_id == "Scope Name":
-            # remove the level of scope name which has a format like "0-conv2-Conv2d".
-            timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
-            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
-        elif op_meta.stream_id[:len(self._host_cpu_op_label)] == self._host_cpu_op_label:
-            timeline_dict['pid'] = self._HOST_CPU_PID
-
-        self._update_format_meta_data(timeline_dict)
-        self._timeline_meta.append(timeline_dict)
-
-    def _get_op_timeline(self, communication_info, source_path):
-        """get ai_core and cpu timeline."""
-        all_reduce_names = AscendTimelineGenerator._get_all_reduce_names(communication_info)
-        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data(all_reduce_names)
-        for timeline in timeline_list:
-            timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
-
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
-        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
-        if cpu_timeline_list:
-            self._clock_synchronize_to_device(cpu_timeline_list, source_path)
-            timeline_list.extend(cpu_timeline_list)
-        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
-        self._timeline_summary['op_exe_times'] = len(timeline_list)
-        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
-        return timeline_list
-
     def init_timeline(self, communication_info, framework_info, aicpu_info, min_cycle_counter, source_path):
         """
         Init timeline metadata, adding all collected info.
@@ -1592,6 +1548,86 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         # Update timeline summary info
         self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
 
+    def init_pynative_timeline(self):
+        """Init timeline for pynative model."""
+        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
+        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        if cpu_timeline_list:
+            self._pynative_clock_synchronize(cpu_timeline_list)
+            timeline_list.extend(cpu_timeline_list)
+
+        self._register_op_name(timeline_list)
+        self._timeline_summary['op_exe_times'] = len(timeline_list)
+        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
+        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+        self._timeline_summary['num_of_ops'] = len(self._op_name_list)
+
+        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
+        min_cycle_counter = float(timeline_list[0][self._start_time_idx])
+
+        step_timeline = self._pynative_get_step_timeline_list(timeline_list)
+        timeline_list.extend(step_timeline)
+
+        stream_count_dict = {}
+        max_scope_name_num = 0
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, min_cycle_counter)
+            self._update_num_of_streams(timeline, stream_count_dict)
+            cur_scope_name_num = len(timeline[self._op_name_idx].split('/')) - 1
+            max_scope_name_num = max(cur_scope_name_num, max_scope_name_num)
+
+        self._timeline_summary['max_scope_name_num'] = max_scope_name_num
+        self._timeline_summary['num_of_streams'] = len(stream_count_dict)
+
+    def _parse_timeline_data(self, timeline, min_cycle_counter):
+        """Parse timeline data."""
+        # factor to convert the time unit from 1ms to 1us for timeline display
+        factor = 1000
+        op_meta = TimelineContainer(timeline)
+        timeline_dict = {}
+        timeline_dict['name'] = op_meta.op_name.split('/')[-1]
+        timeline_dict['ph'] = 'X'
+        timeline_dict['tid'] = op_meta.stream_id
+        timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) * factor
+        dur = op_meta.duration * factor
+        timeline_dict['dur'] = dur
+        if op_meta.pid is None:
+            timeline_dict['pid'] = int(self._device_id)
+            # Update total time of operator execution.
+            if op_meta.stream_id not in ["Steps", "Scope Name"]:
+                self._timeline_summary['total_time'] += op_meta.duration
+        else:  # AllReduce and AI CPU pid
+            timeline_dict['pid'] = op_meta.pid
+
+        if op_meta.stream_id == "Scope Name":
+            # remove the level of scope name which has a format like "0-conv2-Conv2d".
+            timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
+            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
+        elif op_meta.stream_id[:len(self._host_cpu_op_label)] == self._host_cpu_op_label:
+            timeline_dict['pid'] = self._HOST_CPU_PID
+
+        self._update_format_meta_data(timeline_dict)
+        self._timeline_meta.append(timeline_dict)
+
+    def _get_op_timeline(self, communication_info, source_path):
+        """get ai_core and cpu timeline."""
+        all_reduce_names = AscendTimelineGenerator._get_all_reduce_names(communication_info)
+        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data(all_reduce_names)
+        for timeline in timeline_list:
+            timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
+
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
+        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
+        if cpu_timeline_list:
+            self._clock_synchronize_to_device(cpu_timeline_list, source_path)
+            timeline_list.extend(cpu_timeline_list)
+        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
+        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
+        self._timeline_summary['op_exe_times'] = len(timeline_list)
+        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+        return timeline_list
+
     def _clock_synchronize_to_device(self, timeline_list, source_path):
         """Synchronize the timestamp from host to device."""
         host_start_file_path = os.path.join(source_path, f"host_start.log.{self._device_id}")
@@ -1604,7 +1640,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 host_monotonic = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read host_start.log: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         try:
             with open(dev_start_file_path) as f_obj:
                 lines = f_obj.readlines()
@@ -1612,7 +1648,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 dev_cntvct = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read dev_start.log: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         factor_ns_to_ms = 1e-6
         factor_ten_ns_to_ns = 10
@@ -1814,38 +1850,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         return intersection_segment_display_list
 
-    def init_pynative_timeline(self):
-        """Init timeline for pynative model."""
-        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
-        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
-        if cpu_timeline_list:
-            self._pynative_clock_synchronize(cpu_timeline_list)
-            timeline_list.extend(cpu_timeline_list)
-
-        self._register_op_name(timeline_list)
-        self._timeline_summary['op_exe_times'] = len(timeline_list)
-        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
-        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
-        self._timeline_summary['num_of_ops'] = len(self._op_name_list)
-
-        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        min_cycle_counter = float(timeline_list[0][self._start_time_idx])
-
-        step_timeline = self._pynative_get_step_timeline_list(timeline_list)
-        timeline_list.extend(step_timeline)
-
-        stream_count_dict = {}
-        max_scope_name_num = 0
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, min_cycle_counter)
-            self._update_num_of_streams(timeline, stream_count_dict)
-            cur_scope_name_num = len(timeline[self._op_name_idx].split('/')) - 1
-            max_scope_name_num = max(cur_scope_name_num, max_scope_name_num)
-
-        self._timeline_summary['max_scope_name_num'] = max_scope_name_num
-        self._timeline_summary['num_of_streams'] = len(stream_count_dict)
-
     def _pynative_get_step_timeline_list(self, timeline_list):
         """Get step timeline list for pynative model."""
         step_list = []
@@ -1885,7 +1889,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         time_diff = gpu_start_time * 1000 - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
             timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff
@@ -1919,16 +1923,6 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         super().__init__(profiling_dir, 0, 0, model)
         self._device_target = DeviceTarget.CPU.value
 
-    def _get_and_validate_path(self, file_name):
-        """Generate op or activity file path from file name, and validate this path."""
-        file_path = os.path.join(
-            self._profiling_dir,
-            file_name.format(self._device_id)
-        )
-        file_path = validate_and_normalize_path(file_path)
-
-        return file_path
-
     def load_cpu_op_data(self):
         """Load cpu operator data from file"""
         op_file_path = self._get_and_validate_path(
@@ -1943,6 +1937,46 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
             time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_ms_to_us
 
         return timeline_list
+
+    def init_timeline(self):
+        """Init timeline metadata, adding all collected info."""
+        timeline_list = self._load_timeline_data()
+
+        # Init a dict for counting the num of streams.
+        stream_count_dict = {}
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, 0)
+            # Updating the collection of streams.
+            if len(timeline) == 4:
+                self._update_num_of_streams(timeline, stream_count_dict)
+
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
+        # Update timeline summary info
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
+
+    def get_timeline_data(self):
+        """Get timeline data from file."""
+        timeline_list = self.load_cpu_op_data()
+        factor_ns_to_ms = 1e6
+        factor_us_to_ms = 1e3
+        for time_item in timeline_list:
+            time_item[self._start_time_idx] = float(time_item[self._start_time_idx]) / factor_ns_to_ms
+            time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_us_to_ms
+
+        return timeline_list
+
+    def _get_and_validate_path(self, file_name):
+        """Generate op or activity file path from file name, and validate this path."""
+        file_path = os.path.join(
+            self._profiling_dir,
+            file_name.format(self._device_id)
+        )
+        file_path = validate_and_normalize_path(file_path)
+
+        return file_path
 
     def _load_op_data(self, op_file_path):
         """Load operator data from file"""
@@ -1966,20 +2000,9 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
                         op_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_timeline_list
-
-    def get_timeline_data(self):
-        """Get timeline data from file."""
-        timeline_list = self.load_cpu_op_data()
-        factor_ns_to_ms = 1e6
-        factor_us_to_ms = 1e3
-        for time_item in timeline_list:
-            time_item[self._start_time_idx] = float(time_item[self._start_time_idx]) / factor_ns_to_ms
-            time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_us_to_ms
-
-        return timeline_list
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
@@ -2050,22 +2073,3 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
 
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
-
-    def init_timeline(self):
-        """Init timeline metadata, adding all collected info."""
-        timeline_list = self._load_timeline_data()
-
-        # Init a dict for counting the num of streams.
-        stream_count_dict = {}
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, 0)
-            # Updating the collection of streams.
-            if len(timeline) == 4:
-                self._update_num_of_streams(timeline, stream_count_dict)
-
-        # Add format thread meta data.
-        self._format_meta_data_list.extend(self._timeline_meta)
-        self._timeline_meta = self._format_meta_data_list
-
-        # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
