@@ -14,14 +14,11 @@ mindspore.ops.isfinite
 
     其中 :math:`Finite` 表示的不是number。
 
-    **参数：**
+    参数：
+        - **x** (Tensor) - IsFinite的输入，任意维度的Tensor。
 
-    - **x** (Tensor) - IsFinite的输入，任意维度的Tensor。
+    返回：
+        Tensor，输出的shape与输入相同，数据类型为bool。
 
-    **返回：**
-
-    Tensor，输出的shape与输入相同，数据类型为bool。
-
-    **异常：**
-
-    - **TypeError** - `x` 不是Tensor。
+    异常：
+        - **TypeError** - `x` 不是Tensor。
