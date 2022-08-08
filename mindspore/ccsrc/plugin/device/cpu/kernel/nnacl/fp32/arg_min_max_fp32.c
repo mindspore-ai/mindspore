@@ -140,7 +140,7 @@ void ArgMinMaxDim1(const float *input, void *output, float *output_value, const 
     for (int j = 0; j < param->in_strides_[1]; ++j) {
       for (int k = 0; k < in_shape1; ++k) {
         int offset = param->in_strides_[1] * k + in_dim0_offset + j;
-        param->arg_elements_[k].index_ = k;
+        param->arg_elements_[k].index_ = (uint32_t)k;
         param->arg_elements_[k].data_.f_data_ = input[offset];
       }
       qsort(param->arg_elements_, in_shape1, sizeof(ArgElement), *compare_func);
