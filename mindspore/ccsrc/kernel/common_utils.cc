@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <thread>
 #include <tuple>
+#include <cmath>
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -1387,5 +1388,12 @@ bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, st
   return true;
 }
 }  // namespace broadcast_utils
+
+namespace math {
+void SinCosf(float x, float *sinv, float *cosv) {
+  *sinv = sinf(x);
+  *cosv = cosf(x);
+}
+}  // namespace math
 }  // namespace kernel
 }  // namespace mindspore
