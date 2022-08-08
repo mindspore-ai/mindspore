@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <stack>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -33,9 +34,15 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
+#include "runtime/hardware/device_type.h"
 
 namespace mindspore {
 namespace somas {
+struct EventPair {
+  CNodePtr send_;
+  CNodePtr recv_;
+};
+
 union DestinationUnion {
   size_t id;
   size_t index;
@@ -43,80 +50,85 @@ union DestinationUnion {
 };
 
 struct TensorConflictInfo {
-  size_t tensor_id_;
-  size_t src_node_id_;
+  size_t tensor_id;
+  size_t src_node_id;
   size_t destination_num;
   DestinationUnion l;
   DestinationUnion r;
   TensorConflictInfo(size_t tensor_id, size_t src_node_id)
-      : tensor_id_(tensor_id), src_node_id_(src_node_id), destination_num(0) {}
+      : tensor_id(tensor_id), src_node_id(src_node_id), destination_num(0) {}
 };
+
+struct Block {
+  size_t start_offset_;
+  size_t size_;
+  size_t end_offset_;
+
+  Block(size_t start, size_t size) : start_offset_(start), size_(size) { end_offset_ = start_offset_ + size_; }
+};
+
+void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_blocks);
+
+enum class UnReuseType { kUnReuseAll, kUnReuseInput, kUnReuseOutput, kUnReuseWorkspace };
 class Somas {
  public:
   // Constructors/Destructors
   Somas() = default;
   Somas(const Somas &) = delete;
   Somas &operator=(const Somas &) = delete;
-  ~Somas() { mem_base_addr_ = nullptr; }
+  virtual ~Somas() = default;
 
-  bool Allocate(const session::KernelGraph *graph);
-  const size_t GetTotalMemSize() const { return mem_offset_; }
-  void set_mem_base_addr(uint8_t *mem_base_addr) { mem_base_addr_ = mem_base_addr; }
-  uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
-  uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
-
+  bool Assign(const session::KernelGraph &graph);
+  bool Assign(const KernelGraphPtr &graph_ptr);
   std::string SomasInfo(bool calc_hash = false) const;
-  std::string SomasMemory() const;
-  void DumpSomasInfoIR(const string filename) const;
-  void DumpSomasMemoryIR(const string &filename) const;
-
-  static bool NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2);
 #ifndef ENABLE_SECURITY
-  void ConvertToProfilingNode(uint32_t graph_id) const;
+  virtual void ConvertToProfilingNode(uint32_t graph_id) const {}
 #endif
 
  private:
+  // device implementation interface
+  virtual bool Initialize() = 0;
+  virtual string GetDeviceName() const = 0;
+  virtual size_t GetAlignSize(size_t original_size) const = 0;
+  virtual size_t GetCommunicationReservedSize() const;
+
+  virtual bool GetEnableCacheFlag(const session::KernelGraph &graph) const;
+  virtual std::vector<vector<uint32_t>> GetStreamGroupInfo(const session::KernelGraph &graph) const;
+  virtual bool GetDependExecOrderFlag(const session::KernelGraph &graph) const = 0;
+  virtual std::pair<bool, std::string> GetDebugConfig() const;
+
+  virtual std::map<std::string, UnReuseType> GetUnReuseNodeType(const session::KernelGraph &graph) const;
+  virtual std::map<std::string, UnReuseType> GetUnReuseNodeName(const session::KernelGraph &graph) const;
+
+  virtual bool InitDevSpecControlTensors(const session::KernelGraph &graph) = 0;
+  virtual bool DevSpecNodeProcess(const session::KernelGraph &graph) = 0;
+  // end
+
+  // SOMAS Configuration
+  std::string device_name_{"SOMAS"};
+  size_t communication_gap_size_{0};
+
+  size_t depend_exec_order_{false};
+  bool enable_cache_{false};
+  bool save_debug_info_{false};
+  std::string debug_info_path_;
+
+  std::map<std::string, UnReuseType> un_reuse_node_type_;
+  std::map<std::string, UnReuseType> un_reuse_node_name_;
+  // end
+
   std::vector<DynamicBitSet> reuse_matrix_;
   // hash id
   std::string hash_id_;
-  // Maps
-  mindspore::HashMap<size_t, SomasTensorPtr> tensors_map_;
-  mindspore::HashMap<void *, std::vector<SomasNodePtr>> nodes_map_;
-  mindspore::HashMap<void *, vector<SomasParameterPtr>> parameters_map_;
-  mindspore::HashMap<size_t, SomasNodePtr> nodes_id_map_;
-
-  // Vectors
-  std::vector<SomasNodePtr> nodes_list_;
-  std::vector<SomasStreamPtr> streams_list_;
-  std::vector<SomasTensorPtr> tensors_list_;
-  std::vector<SomasParameterPtr> parameters_list_;
 
   // Stream groups
   std::vector<vector<uint32_t>> streams_groups_;
-
-  // event info map
-  std::map<size_t, std::pair<CNodePtr, CNodePtr>> event_map_;
 
   // Solver
   TensorsDescMap solver_tensor_desc_map_;
   SomasSolverPrePtr somas_solver_;
 
-  // Contiguous list
-  std::vector<vector<size_t>> contiguous_tensors_list_;
-
-  // Ref lists
-  std::vector<vector<size_t>> ref_node_constraints_;
   std::vector<vector<size_t>> ref_overlap_constraints_;
-
-  // total Offset
-  size_t mem_offset_{0};
-
-  // Memory base addr
-  uint8_t *mem_base_addr_{nullptr};
-
-  // Save debug info
-  bool save_graphs_{false};
-  std::string save_graphs_path_;
 
   // statistic info
   size_t upper_bound_{0};
@@ -128,74 +140,147 @@ class Somas {
   size_t lifelong_start_total_size_{0};
   size_t lifelong_end_total_size_{0};
 
-  bool InitSomasTensors(const session::KernelGraph *graph);
-  void InitBasicInfo(const session::KernelGraph *graph);
-  void InitSomasStreamAndNode(const session::KernelGraph *graph);
-  void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph);
-  void InitSomasInputTensors(const session::KernelGraph *graph);
-  void InitSomasEventInfos();
-  void GetNextOutputProcess(const session::KernelGraph *graph);
-  void IndependentNodeOutputProcess(const session::KernelGraph *graph);
-#ifndef ENABLE_SECURITY
-  void SummaryInputProcess(const session::KernelGraph *graph);
-#endif
-  void RefNodeProcess(const session::KernelGraph *graph);
-  void NonTaskSplitProcess(const session::KernelGraph *graph);
-  void UnReuseNodeProcess(const session::KernelGraph *graph);
-  SomasTensorPtr CreateGapTensor(size_t gap_tensor_id);
-  void GenContiguousList(const session::KernelGraph *graph);
+  std::vector<vector<size_t>> processed_contiguous_tensors_list_;
+  // key: contiguous list index with first union tensor; value: contiguous list index with other union tensor
+  std::map<size_t, size_t> contiguous_list_with_ref_index_map_;
 
-  void ComputeConflictPairs();
+  bool ConfigSomas(const session::KernelGraph &graph);
 
-  bool Assign(const session::KernelGraph *graph);
-
-  std::string Offline() const;
-  void DumpOfflineIR(const string filename) const;
-  std::string GetSplitName(const string &scope_name) const;
-  size_t CalcLowerBound() const;
-  void GenGraphStatisticInfo();
+  // somas model
+  bool InitSomasModel(const session::KernelGraph &graph);
+  bool InitBasicInfoFromGraph(const session::KernelGraph &graph);
+  void InitSomasStreamAndNode(const session::KernelGraph &graph);
+  void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph);
+  void InitSomasInputTensors(const session::KernelGraph &graph);
+  void InitCommonNodeInputs(const CNodePtr &kernel);
+  void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
   SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index);
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index);
-  void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
-  void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
-  void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
-                                 const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
-                                 const std::vector<size_t> &destination_node_list,
-                                 const vector<DynamicBitSet> &nodes_dependency,
-                                 std::vector<DynamicBitSet> *tensor_relation) const;
+  void InitControlTensors(const session::KernelGraph &graph);
+  bool CommonSpecNodeProcess(const session::KernelGraph &graph);
+  SomasStreamPtr GetSomasStream(size_t stream_id) const;
+#ifndef ENABLE_SECURITY
+  void SummaryInputProcess(const session::KernelGraph &graph);
+#endif
+  void RefNodeProcess(const session::KernelGraph &graph);
+  void UnReuseNodeProcess(const session::KernelGraph &graph);
+  void CommunicationNodeProcess(const session::KernelGraph &graph);
+  void GetContiguousListContainUnionTensor();
+  std::map<size_t, size_t> GetRefTensorsInContiguousList();
+  common::KernelWithIndex GetVisitKernelWithReturnType(const AnfNodePtr &ori_node, size_t ori_index);
+
+  // conflict matrix
+  static bool NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2);
+  void ComputeConflictMatrix();
+  void ComputeBasicMatrix();
+  static void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
+                                        const std::vector<TensorConflictInfo> &tensor_conflict_info,
+                                        const std::vector<size_t> &destination_node_list,
+                                        const vector<DynamicBitSet> &nodes_dependency,
+                                        std::vector<DynamicBitSet> *tensor_relation);
   void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &target_tensors_list,
-                                   const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
+                                   const std::vector<TensorConflictInfo> &tensor_conflict_info,
                                    const std::vector<size_t> &destination_node_list,
                                    const vector<DynamicBitSet> &nodes_dependency,
                                    std::vector<DynamicBitSet> *tensor_relation) const;
   void UpdateTensorDestinations();
-  void UpdateRefTensorsConflict();
-  void UpdateRefOverlapTensorsConflicts();
-  void UpdateRefTensorsOffset();
-  void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
-  void DumpParameters(std::ostringstream &oss) const;
-  void DumpTensors(std::ostringstream &oss) const;
-  void DumpNodes(std::ostringstream &oss) const;
-  std::map<size_t, size_t> GetContiguousListContainRefTensor();
-  std::map<size_t, size_t> GetRefTensorsInContiguousList();
-  bool SaveSomasResult(const session::KernelGraph *graph);
-  bool VerifySomasResult(const session::KernelGraph *graph, const nlohmann::json &somas_json) const;
-  bool LoadSomasResult(const session::KernelGraph *graph, const string &filename);
-  bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
-  bool CalcSomasModelHash(const session::KernelGraph *graph);
-  void UpdateInputTensor(SomasNodePtr node, SomasNodePtr pre_somas_node, SomasTensorPtr input_somas_tensor) const;
-  bool LoadSomasCache(const session::KernelGraph *graph);
-  SomasStreamPtr GetSomasStream(size_t stream_id) const;
-  SomasNodePtr GetSomasNode(size_t node_id) const;
+  void UpdateUnionTensorsConflict();
   static void BuildConflictInfo(const std::shared_ptr<SomasTensor> &tensor, TensorConflictInfo *tensor_conflict_info,
                                 std::vector<size_t> *destination_node_list);
   static bool CheckIsDependency(const TensorConflictInfo &tensor_conflict_info, const size_t &src_node_id,
                                 const vector<DynamicBitSet> &nodes_dependency,
                                 const std::vector<size_t> &destination_node_list);
   void ProcessSemiLifeLongTensor();
+
+  // solver
+  bool Solve(const session::KernelGraph &graph);
+  void UpdateUnionTensorsOffset();
+  void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
+
+  // cache
+  bool SaveSomasResult(const session::KernelGraph &graph);
+  bool VerifySomasResult(const session::KernelGraph &graph, const nlohmann::json &somas_json) const;
+  bool LoadSomasResult(const session::KernelGraph &graph, const string &filename);
+  bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
+  bool CalcSomasModelHash(const session::KernelGraph &graph);
+  bool LoadSomasCache(const session::KernelGraph &graph);
+
+  // log
+  std::string Offline() const;
+  void DumpOfflineIR(const string &filename) const;
+  size_t CalcLowerBound() const;
+  void GenGraphStatisticInfo();
+  void DumpParameters(std::ostringstream &oss) const;
+  void DumpTensors(std::ostringstream &oss) const;
+  void DumpNodes(std::ostringstream &oss) const;
+  void DumpSomasModelInfo(const string &tag, uint32_t graph_id) const;
+
+  // update graph
+  std::vector<std::pair<size_t, size_t>> GetNodeOutputSomasResult(const AnfNodePtr &node) const;
+  std::vector<std::pair<size_t, size_t>> GetNodeWorkSpaceSomasResult(const AnfNodePtr &node) const;
+  bool UpdateSomasResultToGraph(const session::KernelGraph &graph);
+
+ protected:
+  std::vector<SomasParameterPtr> parameters_list_;
+  std::vector<SomasTensorPtr> control_tensors_list_;
+  std::vector<SomasTensorPtr> tensors_list_;
+  std::vector<SomasNodePtr> nodes_list_;
+
+  mindspore::HashMap<size_t, SomasStreamPtr> streams_map_;
+  mindspore::HashMap<void *, vector<SomasParameterPtr>> parameters_map_;
+  mindspore::HashMap<void *, std::vector<SomasNodePtr>> nodes_map_;
+
+  std::vector<vector<size_t>> union_tensors_list_;
+  std::vector<vector<size_t>> contiguous_tensors_list_;
+
+  void AddControlTensor(const SomasNodePtr &from, const SomasNodePtr &to);
+  void AddControlTensorFromExecOrder(const session::KernelGraph &graph);
+  void GraphOutputProcess(const session::KernelGraph &graph);
+  void UpdateContiguousTensorList();
+  SomasNodePtr GetSomasNode(size_t node_id) const;
+  static std::string GetSplitName(const string &scope_name);
+
+  size_t reused_memory_size_{0};
+  std::vector<std::pair<size_t, size_t>> dump_merged_blocks_;
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
+using SomasCreator = std::function<std::shared_ptr<Somas>()>;
+
+// @todo will delete when old runtime remove
+class SomasManager {
+ public:
+  static SomasManager &Instance() {
+    static SomasManager instance{};
+    return instance;
+  }
+  void Register(device::DeviceType device_type, SomasCreator &&creator) {
+    if (base_map_.find(device_type) == base_map_.end()) {
+      (void)base_map_.emplace(device_type, creator);
+    }
+  }
+  SomasPtr GetSomas(device::DeviceType device_type) {
+    auto iter = base_map_.find(device_type);
+    if (base_map_.end() != iter) {
+      MS_EXCEPTION_IF_NULL(iter->second);
+      return (iter->second)();
+    }
+    return nullptr;
+  }
+
+ private:
+  std::map<device::DeviceType, SomasCreator> base_map_;
+};
+
+class SomasRegister {
+ public:
+  SomasRegister(device::DeviceType device_type, SomasCreator &&creator) {
+    SomasManager::Instance().Register(device_type, std::move(creator));
+  }
+  ~SomasRegister() = default;
+};
+
+#define REG_SOMAS(S, T, C) static const somas::SomasRegister g_##S##_reg(T, []() { return std::make_shared<C>(); });
 }  // namespace somas
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_H_

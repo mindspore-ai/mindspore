@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <memory>
 #include <set>
 #include <vector>
-
+#include <string>
 #include "utils/hash_map.h"
 #include "backend/common/somas/somas_solver_pre.h"
 
@@ -38,21 +38,21 @@ using lifetime_t = struct Lifetime;
 // Tensor type
 enum TensorType {
   kCommon,
-  kOutputOnly,
   kWorkspace,
-  kGetNextOutput,
+  kOutputOnly,
+  kGraphOutput,
+  kGraphInput,
   kSummaryInput,
-  kRefNodeInput,
-  kRefNodeOutput,
-  kEventVirtualOutput,
+  kUnion,
+  kControl,
   kUnknown
 };
 
 enum LifeLongType {
   kLifeLongNone,        // life time is from tensor start to tensor end
-  kLifeLongGraphAll,    // life time is  from graph start to graph end
-  kLifeLongGraphStart,  // life time is  from graph start to tensor end
-  kLifeLongGraphEnd     // life time is  from tensor start to graph end
+  kLifeLongGraphAll,    // life time is from graph start to graph end
+  kLifeLongGraphStart,  // life time is from graph start to tensor end
+  kLifeLongGraphEnd     // life time is from tensor start to graph end
 };
 
 class SomasTensor {
@@ -60,7 +60,6 @@ class SomasTensor {
   size_t aligned_size_{0};
   LifeLongType lifelong_value_;
 
-  bool between_streams_;
   bool contiguous_;
 
   lifetime_t lifetime_;
@@ -72,7 +71,7 @@ class SomasTensor {
   vector<size_t> consumer_list_;
 
   // Constructors/Destructors
-  explicit SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
+  explicit SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t ori_size, size_t aligned_size,
                        LifeLongType lifelong_value = kLifeLongNone);
   SomasTensor(const SomasTensor &) = delete;
   SomasTensor &operator=(const SomasTensor &) = delete;
@@ -86,14 +85,12 @@ class SomasTensor {
   const size_t &GetAlignedSize() const { return aligned_size_; }
   const size_t &GetNumConstraints() const { return num_constraints_; }
   bool IsLifelong() const { return lifelong_value_ == kLifeLongGraphAll; }
-  bool IsWorkspace() const { return type_ == kWorkspace; }
   bool IsOutputOnly() const { return type_ == kOutputOnly; }
   size_t GetOffset() const { return offset_; }
-  bool IsBetweenStreams() const { return between_streams_; }
   bool IsSemiLifelongStart() const { return lifelong_value_ == kLifeLongGraphStart; }
   bool IsSemiLifelongEnd() const { return lifelong_value_ == kLifeLongGraphEnd; }
-  bool IsRefOverlap() const { return ref_overlap_; }
-
+  string GetTypeString();
+  string GetLifelongString();
   // Computing functions
   void SetOffset() {
     if (aligned_size_ != 0) {
@@ -104,7 +101,6 @@ class SomasTensor {
   size_t num_constraints_{0};
 
  private:
-  bool ref_overlap_;
   const size_t id_{0};
   const size_t source_node_id_;
   const size_t source_stream_id_;

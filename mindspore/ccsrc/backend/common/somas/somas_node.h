@@ -39,14 +39,14 @@ class SomasNode {
 
   // node's dependency including data dependency and time dependency
   std::set<std::shared_ptr<SomasNode>> ancestor_nodes_;
-  std::set<SomasTensorPtr> tensors_;
-
+  // data tensor
   std::vector<SomasTensorPtr> input_tensors_;
   std::vector<SomasTensorPtr> output_tensors_;
   std::vector<SomasTensorPtr> workspace_tensors_;
   std::map<size_t, SomasParameterPtr> input_parameters_map_;
-
-  mindspore::HashMap<int64_t, size_t> anc_stream_max_order_;
+  // control tensor
+  std::vector<SomasTensorPtr> control_input_tensors_;
+  std::vector<SomasTensorPtr> control_output_tensors_;
 
   // Constructors/Destructors
   SomasNode(std::string scope_full_name, size_t id, NodeType type, const size_t &stream_id)
@@ -57,7 +57,7 @@ class SomasNode {
 
   // Accessors
   const size_t &GetId() const { return id_; }
-  const size_t GetStreamId() const { return stream_id_; }
+  const size_t &GetStreamId() const { return stream_id_; }
   const NodeType &GetType() const { return type_; }
 
  private:

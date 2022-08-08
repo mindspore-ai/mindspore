@@ -18,10 +18,6 @@
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "include/common/debug/common.h"
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/string_recorder.h"
-#endif
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -37,41 +33,21 @@ size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) {
 }
 
 void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
-  SomasPtr somas_reuse_util_ptr = std::make_shared<somas::Somas>();
-  MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr);
-  somas_reuse_util_ptr_ = somas_reuse_util_ptr;
+  SomasAllocatorPtr somas_allocator_ptr = std::make_shared<device::CommonSomasAllocator>();
+  MS_EXCEPTION_IF_NULL(somas_allocator_ptr);
+  somas_allocator_ptr_ = somas_allocator_ptr;
 
-  if (!(somas_reuse_util_ptr->Allocate(&graph))) {
+  if (!(somas_allocator_ptr->Assign(graph))) {
     MS_LOG(EXCEPTION) << "Somas Allocate Failed.";
   }
 
-  size_t total_allocated_size = somas_reuse_util_ptr->GetTotalMemSize();
+  size_t total_allocated_size = graph.somas_whole_block_size();
   MS_LOG(INFO) << "Graph " << graph.graph_id() << ": TotalSomasReuseDynamicSize [" << total_allocated_size << "]";
   if (total_allocated_size > 0) {
     auto base_ptr = MallocDynamicMem(total_allocated_size, false);
     MS_LOG(INFO) << "Somas Reuse Memory Base Address [" << static_cast<void *>(base_ptr) << "], End Address ["
                  << static_cast<void *>(base_ptr + total_allocated_size) << "]";
-    somas_reuse_util_ptr->set_mem_base_addr(base_ptr);
-  }
-
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  SubModuleId module = SubModuleId::SM_OPTIMIZER;
-
-  std::string name = "somas_allocate_info." + std::to_string(graph.graph_id());
-  (void)mindspore::RDR::RecordString(module, name, somas_reuse_util_ptr_->SomasInfo());
-
-  name = "somas_mem_info." + std::to_string(graph.graph_id());
-  (void)mindspore::RDR::RecordString(module, name, somas_reuse_util_ptr_->SomasMemory());
-#endif
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_path = GetSaveGraphsPathName("somas_allocate_info_" + std::to_string(graph.graph_id()) + ".ir");
-    somas_reuse_util_ptr_->DumpSomasInfoIR(file_path);
-
-    std::string mem_file_path = GetSaveGraphsPathName("somas_mem_info_" + std::to_string(graph.graph_id()) + ".ir");
-    somas_reuse_util_ptr_->DumpSomasMemoryIR(mem_file_path);
+    somas_allocator_ptr->set_mem_base_addr(base_ptr);
   }
 }
 
@@ -94,8 +70,8 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
         address->communication_ptr_ = ptr - kMemAlignSize;
       }
     } else if (type == kSomasReuseDynamicMem) {
-      MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
-      ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
+      MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
+      ptr = somas_allocator_ptr_->GetNodeOutputPtr(node, index);
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
@@ -109,8 +85,8 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   } else if (type == kSomasReuseDynamicMem) {
-    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
-    ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
+    MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
+    ptr = somas_allocator_ptr_->GetNodeOutputPtr(node, index);
   }
   address->ptr_ = ptr;
   return ptr;
@@ -118,8 +94,8 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
 
 uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size) {
   if (type == kSomasReuseDynamicMem) {
-    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
-    return somas_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
+    MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
+    return somas_allocator_ptr_->GetNodeWorkSpacePtr(node, index);
   }
   return MallocDynamicMem(size, false);
 }

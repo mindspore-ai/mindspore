@@ -104,16 +104,6 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   return communication_mem ? alloc_address + kMemAlignSize : alloc_address;
 }
 
-void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
-  MemoryManager::MallocSomasDynamicMem(graph);
-#ifndef ENABLE_SECURITY
-  if (MemoryProfiling::GetInstance().IsMemoryProfilingInitialized()) {
-    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
-    somas_reuse_util_ptr_->ConvertToProfilingNode(graph.graph_id());
-  }
-#endif
-}
-
 // communication memory: [512align_size + data + 512align_size]
 // return the pointer to the start of data address.
 uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {

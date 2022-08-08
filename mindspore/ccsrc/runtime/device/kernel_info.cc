@@ -15,6 +15,7 @@
  */
 
 #include "runtime/device/kernel_info.h"
+#include <utility>
 
 namespace mindspore {
 namespace device {
@@ -105,6 +106,13 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
     return false;
   }
   workspace_address_list_[index] = output_address;
+  return true;
+}
+
+bool KernelInfo::SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
+                                std::vector<std::pair<size_t, size_t>> &&workspace_somas_result) {
+  somas_output_result_ = std::move(output_somas_result);
+  somas_workspace_result_ = std::move(workspace_somas_result);
   return true;
 }
 

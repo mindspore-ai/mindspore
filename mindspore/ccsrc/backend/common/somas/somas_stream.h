@@ -31,7 +31,7 @@ class SomasStream {
   std::vector<SomasNodePtr> nodes_;
 
   // Constructors/Destructors
-  explicit SomasStream(int64_t id) : id_(id) {}
+  explicit SomasStream(size_t id) : id_(id) {}
   SomasStream(const SomasStream &) = delete;
   SomasStream &operator=(const SomasStream &) = delete;
   ~SomasStream() = default;

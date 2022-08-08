@@ -98,7 +98,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/backend/common/somas/somas_solver_alg.cc
         ${CCSRC_DIR}/backend/graph_compiler/graph_partition.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mock/segment_runner.cc
-        ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
         ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
         ${CCSRC_DIR}/runtime/device/kernel_info.cc
         ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
@@ -109,6 +108,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/runtime/device/memory_offload_strategy.cc
         ${CCSRC_DIR}/runtime/device/memory_manager.cc
         ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
+        ${CCSRC_DIR}/runtime/device/common_somas_allocator.cc
         ${CCSRC_DIR}/runtime/pynative/op_executor.cc
         ${CCSRC_DIR}/runtime/pynative/op_runtime_info.cc
         ${CCSRC_DIR}/runtime/hardware/device_type.cc
@@ -117,6 +117,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/kernel/kernel.cc
         ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
         ${CCSRC_DIR}/kernel/oplib/oplib.cc
+        ${CCSRC_DIR}/common/debug/anf_dump_utils.cc
+        ${CCSRC_DIR}/common/debug/anf_ir_dump.cc
         ${CCSRC_DIR}/common/debug/common.cc
         ${CCSRC_DIR}/common/debug/env_config_parser.cc
         ${CCSRC_DIR}/common/thread_pool.cc

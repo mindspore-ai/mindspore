@@ -22,14 +22,15 @@
 #include <map>
 #include <queue>
 #include "common/mem_reuse/mem_reuse.h"
-#include "backend/common/somas/somas.h"
+#include "runtime/device/common_somas_allocator.h"
+
 namespace mindspore {
 namespace device {
 enum MemType { kStaticMem, kDynamicMem, kSomasReuseDynamicMem };
 constexpr int kGetAllOuts = -1;
 constexpr uint64_t kMemAlignSize = 512;
 constexpr uint64_t kTwiceMemAlignSize = kMemAlignSize << 1;
-using SomasPtr = mindspore::somas::SomasPtr;
+using SomasAllocatorPtr = mindspore::device::CommonSomasAllocatorPtr;
 
 class MemoryManager {
  public:
@@ -80,7 +81,7 @@ class MemoryManager {
     return MallocStaticMem(size, communication_mem, kInvalidGraphId);
   }
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
-  SomasPtr somas_reuse_util_ptr_{nullptr};
+  SomasAllocatorPtr somas_allocator_ptr_{nullptr};
 };
 }  // namespace device
 }  // namespace mindspore
