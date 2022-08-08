@@ -129,8 +129,8 @@ bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::
       if (y_in < 0 || y_in > image_height - 1) {
         continue;
       }
-      const int top_y_index = floorf(y_in);
-      const int bottom_y_index = ceilf(y_in);
+      const int top_y_index = FloatToInt(floorf(y_in));
+      const int bottom_y_index = FloatToInt(ceilf(y_in));
       const float y_lerp = y_in - top_y_index;
       for (int x = 0; x < crop_width; x++) {
         const float x_in =
@@ -138,8 +138,8 @@ bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::
         if (x_in < 0 || x_in > image_width - 1) {
           continue;
         }
-        const int left_x_ind = floorf(x_in);
-        const int right_x_ind = ceilf(x_in);
+        const int left_x_ind = FloatToInt(floorf(x_in));
+        const int right_x_ind = FloatToInt(ceilf(x_in));
         const float x_lerp = x_in - left_x_ind;
         for (int d = 0; d < depth; d++) {
           const float top_left_value(
