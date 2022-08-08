@@ -42,6 +42,8 @@ class FIFOReplayBuffer {
   // Push a transition to replay buffer. If the replay buffer is full, the oldest one will be overridden.
   bool Push(const std::vector<AddressPtr> &inputs);
 
+  bool Emplace(const size_t &pos, const std::vector<AddressPtr> &inputs);
+
   // Get a transition by the index.
   std::vector<AddressPtr> GetItem(size_t idx);
 

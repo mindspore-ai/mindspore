@@ -97,6 +97,10 @@ constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
+constexpr auto kReservoirReplayBufferCreate = "ReservoirReplayBufferCreate";
+constexpr auto kReservoirReplayBufferPush = "ReservoirReplayBufferPush";
+constexpr auto kReservoirReplayBufferSample = "ReservoirReplayBufferSample";
+constexpr auto kReservoirReplayBufferDestroy = "ReservoirReplayBufferDestroy";
 constexpr auto kReLUV3 = "ReLUV3";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
@@ -121,12 +125,25 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kPriorityReplayBufferSample,
                                               kPriorityReplayBufferUpdate,
                                               kPriorityReplayBufferDestroy,
+                                              kReservoirReplayBufferCreate,
+                                              kReservoirReplayBufferPush,
+                                              kReservoirReplayBufferSample,
+                                              kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
                                               kRandomShuffle};
-const std::set<std::string> kDynamicInputOps{
-  kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
-  kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
-  kIdentityN};
+const std::set<std::string> kDynamicInputOps{kPrint,
+                                             kPack,
+                                             kMeshgrid,
+                                             kStackInitOpName,
+                                             kStackDestroyOpName,
+                                             kStackPushOpName,
+                                             kStackPopOpName,
+                                             kDynamicStitch,
+                                             kPriorityReplayBufferPush,
+                                             kPriorityReplayBufferSample,
+                                             kReservoirReplayBufferPush,
+                                             kReservoirReplayBufferSample,
+                                             kIdentityN};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
