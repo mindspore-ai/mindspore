@@ -1277,7 +1277,7 @@ class Conv2D(Primitive):
     :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where group is the group number to split the input in the channel dimension.
 
-    If the 'pad_mode' is set to be "valid", the output height and width will be
+    If the 'pad_mode' is set to be "pad", the output height and width will be
     :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
     (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
