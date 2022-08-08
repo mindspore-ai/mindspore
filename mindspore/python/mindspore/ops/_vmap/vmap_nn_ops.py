@@ -1004,8 +1004,8 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
                 ValueError("The source axis of `var` is None, "
                            "but the source axis of `m/v/vhat/beta1_power/beta2_power/lr/grad` is not None. "
                            "The execution of operator `{}` cannot be guaranteed.".format(prim_name))
-            out_var, out_m, out_v, out_vhat = prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
-            return ((out_var, None), (out_m, None), (out_v, None), (out_vhat, None))
+            out_var = prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
+            return (out_var, None)
 
         if any(dim != 0 for dim in [var_dim, m_dim, v_dim, vhat_dim]):
             ValueError("For `{}`, the source axis of `var/m/v/vhat` must be 0, "
@@ -1017,8 +1017,8 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         grad = _bdim_at_front(grad, grad_dim, axis_size)
 
-        out_var, out_m, out_v, out_vhat = batch_prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
-        return ((out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0))
+        out_var = batch_prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
+        return (out_var, 0)
 
     return vmap_rule
 
