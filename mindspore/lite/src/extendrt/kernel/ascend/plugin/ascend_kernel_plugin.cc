@@ -38,7 +38,7 @@ void AscendKernelPlugin::Register() {
     return;
   }
   std::string ascend_kernel_plugin_path;
-  auto ret = DLSoPath("libmindspore-extendrt.so", "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
+  auto ret = DLSoPath("libmindspore-lite.so", "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
     return;
