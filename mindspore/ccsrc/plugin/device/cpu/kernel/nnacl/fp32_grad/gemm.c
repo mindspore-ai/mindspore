@@ -23,7 +23,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 void AddMatrix(const float *v1, float *v2, float beta, int row, int col, int stride) {
 #else
 void AddMatrix(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
