@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZATION_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZATION_H_
 #include <cstdint>
 #include <vector>
 #include <cmath>
@@ -23,6 +23,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
+#include "ir/tensor.h"
 
 namespace mindspore::lite::quant {
 constexpr float kBinarySearchStep = 2.0;
@@ -36,20 +37,22 @@ typedef struct {
   MinMax mm;
 } LayerParam;
 
-class MixedBitWeightQuantizer {
+class MixedBitWeightQuantization {
  public:
-  explicit MixedBitWeightQuantizer(float target_relative_err = 0.01, float target_search_tolerance = 0.01,
-                                   int max_search_iters = 100)
+  explicit MixedBitWeightQuantization(float target_relative_err, float target_search_tolerance = 0.01,
+                                      int max_search_iters = 100)
       : target_relative_err_(target_relative_err),
         target_search_tolerance_(target_search_tolerance),
         max_search_iters_(max_search_iters) {}
-  ~MixedBitWeightQuantizer() = default;
+  ~MixedBitWeightQuantization() = default;
 
-  int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
-                     std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas,
-                     const std::string &description, bool use_auto_tune_alg);
+  int QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                  int index, schema::QuantType quant_type, bool use_auto_tune_alg = false);
 
  private:
+  int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
+                     std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas,
+                     const std::string &description, bool use_auto_tune_alg = false);
   float MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim, float scale);
 
   static MinMax GetMinMax(const float *arr, int arrc);
@@ -63,7 +66,7 @@ class MixedBitWeightQuantizer {
 
   float GetDx(float *weights, int *shape, int dims, int preferred_dim, const std::string &description);
 
-  void GetBiasCorrection(float *weights, int element_num, float scale, float *origin_dequant_datas);
+  void CalculateBiasCorrection(float *weights, int element_num, float scale, float *origin_dequant_datas);
 
   float CalculateMeanError(std::vector<float> norms2, std::vector<float> dnorms2);
 
@@ -75,4 +78,4 @@ class MixedBitWeightQuantizer {
   int max_search_iters_;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_MIXED_BIT_WEIGHT_QUANTIZATION_H_

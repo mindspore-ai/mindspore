@@ -21,7 +21,9 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "tools/converter/quantizer/fse_bit_stream.h"
-#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
+#include "schema/inner/model_generated.h"
+#include "src/common/log_adapter.h"
+#include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
 constexpr int MAX_SYMS = 65534;

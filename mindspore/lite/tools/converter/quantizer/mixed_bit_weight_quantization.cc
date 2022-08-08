@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 #include <cmath>
 #include <cfloat>
 #include <map>
 #include "tools/common/statistic_utils.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
 constexpr float kTwentyFour = 24.0f;
 
-void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num, float scale,
-                                                float *origin_dequant_datas) {
+void MixedBitWeightQuantization::CalculateBiasCorrection(float *weights, int element_num, float scale,
+                                                         float *origin_dequant_datas) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(origin_dequant_datas != nullptr);
   MS_ASSERT(element_num > 0);
@@ -60,7 +61,7 @@ void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num,
 }
 
 // the error is currently measured per channel.
-float MixedBitWeightQuantizer::CalculateMeanError(std::vector<float> norms2, std::vector<float> dnorms2) {
+float MixedBitWeightQuantization::CalculateMeanError(std::vector<float> norms2, std::vector<float> dnorms2) {
   int error_count = 0;
   float mse_error = 1e-10f;
   const float soft = 1e-7f;
@@ -77,8 +78,8 @@ float MixedBitWeightQuantizer::CalculateMeanError(std::vector<float> norms2, std
 }
 
 // the `preferred` dim should point to the output channels dimension.
-float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim,
-                                                        float scale) {
+float MixedBitWeightQuantization::MeasureQuantizationError(float *weights, const int *shape, int dims,
+                                                           int preferred_dim, float scale) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   // Init
@@ -109,7 +110,7 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
   MS_ASSERT(bucket_volume != 0);
   const float upround_offset = 0.5;
   // Bias Correction
-  GetBiasCorrection(weights, element_num, scale, origin_dequant_datas.data());
+  CalculateBiasCorrection(weights, element_num, scale, origin_dequant_datas.data());
   for (int i = 0; i < element_num; i++) {
     int bucket = (i / bucket_volume) % bucket_count;
     norms2[bucket] += weights[i] * weights[i];
@@ -122,7 +123,7 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
   return mean_error;
 }
 
-LayerParam MixedBitWeightQuantizer::CalculateLayerParams(const float *weights, int element_num) {
+LayerParam MixedBitWeightQuantization::CalculateLayerParams(const float *weights, int element_num) {
   MS_ASSERT(weights != nullptr);
   float temp_norm_tot = 0.0;
   for (int i = 0; i < element_num; i++) {
@@ -133,7 +134,7 @@ LayerParam MixedBitWeightQuantizer::CalculateLayerParams(const float *weights, i
   return ret;
 }
 
-MinMax MixedBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
+MinMax MixedBitWeightQuantization::GetMinMax(const float *arr, int arrc) {
   MS_ASSERT(arr != nullptr);
   MinMax min_max = {INFINITY, -INFINITY};
   for (int i = 0; i < arrc; i++)
@@ -144,9 +145,9 @@ MinMax MixedBitWeightQuantizer::GetMinMax(const float *arr, int arrc) {
   return min_max;
 }
 
-BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(float *weights, int *shape, int dims,
-                                                                             int preferred_dim, int max_iters,
-                                                                             float target_err, float rel_tol) {
+BinarySearchResult MixedBitWeightQuantization::BinarySearchForQuantizationScale(float *weights, int *shape, int dims,
+                                                                                int preferred_dim, int max_iters,
+                                                                                float target_err, float rel_tol) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   int element_num = 1;
@@ -191,8 +192,8 @@ BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(flo
   }
 }
 
-float MixedBitWeightQuantizer::GetDx(float *weights, int *shape, int dims, int preferred_dim,
-                                     const std::string &description) {
+float MixedBitWeightQuantization::GetDx(float *weights, int *shape, int dims, int preferred_dim,
+                                        const std::string &description) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   static std::map<std::string, LayerParam> param_map;
@@ -213,10 +214,10 @@ float MixedBitWeightQuantizer::GetDx(float *weights, int *shape, int dims, int p
   return (target_relative_err_ + target_search_tolerance_ * std::sqrt(kTwentyFour / element_num)) / params.inv_norm;
 }
 
-int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
-                                            std::vector<schema::QuantParamT> *quant_params,
-                                            std::vector<int16_t> *quant_datas, const std::string &description,
-                                            bool use_auto_tune_alg) {
+int MixedBitWeightQuantization::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
+                                               std::vector<schema::QuantParamT> *quant_params,
+                                               std::vector<int16_t> *quant_datas, const std::string &description,
+                                               bool use_auto_tune_alg) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(quant_params != nullptr);
   MS_ASSERT(quant_datas != nullptr);
@@ -252,8 +253,8 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
   return RET_OK;
 }
 
-int MixedBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc, float scale,
-                                             schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
+int MixedBitWeightQuantization::QuantizeByScale(const float *weights, int weightsc, float scale,
+                                                schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(weightsc <= quant_datas->size());
   const float upround_offset = 0.5;
@@ -268,5 +269,41 @@ int MixedBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc,
   quant_params->numBits = 0;
   quant_params->inited = true;
   return RET_OK;
+}
+
+int MixedBitWeightQuantization::QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node,
+                                            const tensor::TensorPtr &weight, int index, schema::QuantType quant_type,
+                                            bool use_auto_tune_alg) {
+  CHECK_NULL_RETURN(primitive);
+  CHECK_NULL_RETURN(weight);
+  std::vector<schema::QuantParamT> quant_params;
+  int elem_count = weight->DataSize();
+  auto *raw_data = static_cast<float *>(weight->data_c());
+  if (raw_data == nullptr) {
+    MS_LOG(ERROR) << "rawDatas is nullptr";
+    return RET_ERROR;
+  }
+
+  std::vector<int16_t> quant_data(elem_count);
+  auto ret = DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data,
+                            parameter_node->fullname_with_scope(), use_auto_tune_alg);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = UpdateTensorDataAndSize(parameter_node, weight, quant_data.data(), quant_data.size() * sizeof(int16_t),
+                                kNumberTypeInt16);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
+    return RET_ERROR;
+  }
+
+  if (quant_params.empty()) {
+    MS_LOG(ERROR) << "quant_params empty";
+    return RET_ERROR;
+  }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  quant_param_holder->set_input_quant_param(index, quant_params);
+  quant_param_holder->set_quant_type(quant_type);
+  return ret;
 }
 }  // namespace mindspore::lite::quant
