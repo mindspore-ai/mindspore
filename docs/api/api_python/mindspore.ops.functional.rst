@@ -361,6 +361,7 @@ Array操作
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
+    mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.index_add
     mindspore.ops.index_fill
@@ -396,7 +397,6 @@ Array操作
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
-    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements

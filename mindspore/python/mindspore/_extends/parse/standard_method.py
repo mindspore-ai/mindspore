@@ -1502,6 +1502,24 @@ def std(x, axis=None, ddof=0, keepdims=False):
     return F.tensor_pow(x_var, 0.5)
 
 
+def one_hot(self, depth, on_value, off_value, axis=-1):
+    r"""
+    Computes an one-hot tensor.
+    Refer to :func:`mindspore.ops.one_hot` for more detail.
+    """
+    check_is_int(axis, 'axis')
+    return P.OneHot(axis)(self, depth, on_value, off_value)
+
+
+def gather_elements(x, dim, index):
+    r"""
+    Gathers elements along an axis specified by dim.
+
+    Refer to :func:`mindspore.ops.gather_elements` for more detail.
+    """
+    return F.gather_elements(x, dim, index)
+
+
 def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
     """
     Return sum of array elements over a given axis.
