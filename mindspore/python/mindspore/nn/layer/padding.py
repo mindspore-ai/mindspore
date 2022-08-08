@@ -52,13 +52,14 @@ def _swap_to_ms_padding_order(padding):
 
 
 @constexpr
-def _check(input_shape, padding):
+def _check(input_shape, padding, name):
     """
     Check relationship between input shape and padding to make sure after negative dimension padding the out is
     positive.
     """
     if len(input_shape) < len(padding):
-        msg = 'Dimension of input must more than or equal to len(padding)/2'  # modify
+        msg = "For '{}', the dimension of input must more than or equal to len(padding)/2, " \
+              "but got {}".format(name, len(input_shape))
         raise ValueError(msg)
     if len(input_shape) > len(padding):
         if len(padding) == 2 and isinstance(padding[0], int):
@@ -66,17 +67,29 @@ def _check(input_shape, padding):
         else:
             padding = [(0, 0) for i in range(len(input_shape) - len(padding))] + [x for x in padding]
     for index, item in enumerate(padding):
+        if index == 0:
+            dim_name = '1st'
+        elif index == 1:
+            dim_name = '2nd'
+        elif index == 2:
+            dim_name = '3rd'
+        else:
+            dim_name = str(index + 1) + 'th'
+
         if item[0] < -input_shape[index]:
-            msg = 'Dimension out of range, expected no less than -{}, but got {}'.format(input_shape[index],
-                                                                                         item[0])
+            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
+                  "value of parameter 'padding' applied to the {} dimension of input must " \
+                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item[0])
             raise ValueError(msg)
         if item[1] < -input_shape[index]:
-            msg = 'Dimension out of range, expected no less than -{}, but got {}'.format(input_shape[index],
-                                                                                         item[1])
+            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
+                  "value of parameter 'padding' applied to the {} dimension of input must " \
+                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item[0])
             raise ValueError(msg)
         if input_shape[index] + item[0] + item[1] <= 0:
-            msg = 'The input size {}, plus negative padding {} and {} resulted in a non-positive output size, ' \
-                  'which is invalid. Check dimension of your input'.format(input_shape[index], item[0], item[1])
+            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
+                  "but the {} dimension of input shape {} plus padding {} and {} resulted in a non-positive output " \
+                  "shape.".format(name, input_shape, dim_name, input_shape[index], item[0], item[1])
             raise ValueError(msg)
     return padding
 
@@ -126,6 +139,7 @@ class _ConstantPadNd(Cell):
             The size of i-td to last dimension of output is :math:`padding\_{2m} + x.shape[-m-1] + padding\_{2m+1}`.
             The remaining dimensions of the output are consistent with those of the input.
         value (union[int, float]): Padding value.
+        name (str): Name of method, used for positioning error messages in the base class.
 
     Returns:
         Tensor, the tensor after padding.
@@ -139,28 +153,54 @@ class _ConstantPadNd(Cell):
         ValueError: If the output shape after padding is not positive.
     """
 
-    def __init__(self, padding, value):
+    def __init__(self, padding, value, name='ConstantPadNd'):
         """Initialize Pad."""
         super(_ConstantPadNd, self).__init__()
-        self.value = value
-        self.padding = self._to_ms_padding(padding)
+        if isinstance(padding, int):
+            if name == 'ConstantPad1d':
+                padding = (padding, padding)
+            elif name in ['ConstantPad2d', 'ZeroPad2d']:
+                padding = (padding, padding, padding, padding)
+            elif name == 'ConstantPad3d':
+                padding = (padding, padding, padding, padding, padding, padding)
 
-    def _to_ms_padding(self, padding):
-        """Transform the padding to the format of ms.nn.Pad."""
-        if len(padding) % 2 != 0:
-            msg = 'the length of padding must be a multiple of 2.'
-            raise ValueError(msg)
-        new_padding = []
-        for i in range(len(padding) // 2):
-            new_padding.append([padding[2 * i], padding[2 * i + 1]])
-        new_padding.reverse()
-        return new_padding
+        elif isinstance(padding, tuple):
+            if len(padding) % 2 != 0:
+                msg = "For '{}', the length of parameter 'padding' with tuple type must be a multiple of 2, " \
+                      "but got {}".format(name, len(padding))
+                raise ValueError(msg)
+            if name == 'ConstantPad1d' and len(padding) != 2:
+                msg = "For '{}', the length of parameter 'padding' with tuple type must equal to 2." \
+                      "but got {}".format(name, len(padding))
+                raise ValueError(msg)
+            if name in ['ConstantPad2d', 'ZeroPad2d'] and len(padding) > 4:
+                msg = "For '{}', the length of parameter 'padding' with tuple type must no more than 4." \
+                      "but got {}".format(name, len(padding))
+                raise ValueError(msg)
+            if name == 'ConstantPad3d' and len(padding) > 6:
+                msg = "For '{}', the length of parameter 'padding' with tuple type must no more than 6." \
+                      "but got {}".format(name, len(padding))
+                raise ValueError(msg)
+
+        else:
+            msg = "For '{}', the type of parameter 'padding' must be in [int, float], " \
+                  "but got {}".format(name, type(padding))
+            raise TypeError(msg)
+
+        if not isinstance(value, (int, float)):
+            msg = "For '{}', the type of parameter 'value' must be in [int, float], " \
+                  "but got {}".format(name, type(value))
+            raise TypeError(msg)
+
+        self.value = value
+        self.padding = _swap_to_ms_padding_order(padding)
+        self._name = name
 
     def construct(self, x):
         """Construct the pad net."""
         input_shape = x.shape
         input_type = x.dtype
-        padding = _check(input_shape, self.padding)
+        padding = _check(input_shape, self.padding, self._name)
         new_padding, start, end = _get_new_padding(padding)
         mask = ops.Ones()(input_shape, input_type)
         output = ops.Pad(new_padding)(x)
@@ -249,20 +289,7 @@ class ConstantPad1d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        if isinstance(padding, int):
-            padding = (padding, padding)
-        elif isinstance(padding, tuple):
-            if len(padding) != 2:
-                msg = 'the length of padding with tuple type must be 2.'
-                raise ValueError(msg)
-        else:
-            msg = 'type of padding must be int or float, but got {}'.format(type(padding))
-            raise TypeError(msg)
-
-        if not isinstance(value, (int, float)):
-            msg = 'type of value must be int or float, but got {}'.format(type(value))
-            raise TypeError(msg)
-        super(ConstantPad1d, self).__init__(padding, value)
+        super(ConstantPad1d, self).__init__(padding, value, name='ConstantPad1d')
 
 
 class ConstantPad2d(_ConstantPadNd):
@@ -314,20 +341,7 @@ class ConstantPad2d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        if isinstance(padding, int):
-            padding = (padding, padding, padding, padding)
-        elif isinstance(padding, tuple):
-            if len(padding) // 2 > 2:
-                msg = 'the length of padding with tuple type must less than or equal to 4.'
-                raise ValueError(msg)
-        else:
-            msg = 'type of padding must be int or float, but got {}'.format(type(padding))
-            raise TypeError(msg)
-
-        if not isinstance(value, (int, float)):
-            msg = 'type of value must be int or float, but got {}'.format(type(value))
-            raise TypeError(msg)
-        super(ConstantPad2d, self).__init__(padding, value)
+        super(ConstantPad2d, self).__init__(padding, value, name='ConstantPad2d')
 
 
 class ConstantPad3d(_ConstantPadNd):
@@ -385,20 +399,7 @@ class ConstantPad3d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        if isinstance(padding, int):
-            padding = (padding, padding, padding, padding, padding, padding)
-        elif isinstance(padding, tuple):
-            if len(padding) // 2 > 3:
-                msg = 'the length of padding with tuple type must less than or equal to 6.'
-                raise ValueError(msg)
-        else:
-            msg = 'type of padding must be int or float, but got {}'.format(type(padding))
-            raise TypeError(msg)
-
-        if not isinstance(value, (int, float)):
-            msg = 'type of value must be int or float, but got {}'.format(type(value))
-            raise TypeError(msg)
-        super(ConstantPad3d, self).__init__(padding, value)
+        super(ConstantPad3d, self).__init__(padding, value, name='ConstantPad3d')
 
 
 class _ReflectionPadNd(Cell):
@@ -406,6 +407,7 @@ class _ReflectionPadNd(Cell):
     Using a given padding to do reflection pad on the given tensor.
     Work as a parent class, and only accepts tuple as padding input.
     """
+
     def __init__(self, padding, name="ReflectionPadNd"):
         super(_ReflectionPadNd, self).__init__()
         self.name = name
@@ -533,7 +535,7 @@ class ReflectionPad2d(_ReflectionPadNd):
         super(ReflectionPad2d, self).__init__(padding, 'ReflectionPad2d')
 
 
-class ZeroPad2d(ConstantPad2d):
+class ZeroPad2d(_ConstantPadNd):
     r"""
     Pads the last two dimensions of input tensor with zero.
 
@@ -580,4 +582,4 @@ class ZeroPad2d(ConstantPad2d):
 
     def __init__(self, padding):
         value = 0
-        super(ZeroPad2d, self).__init__(padding, value)
+        super(ZeroPad2d, self).__init__(padding, value, name='ZeroPad2d')
