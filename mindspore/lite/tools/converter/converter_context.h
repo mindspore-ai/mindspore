@@ -124,6 +124,9 @@ class ConverterInnerContext {
     return external_used_config_infos_;
   }
 
+  void SetTargetDevice(const std::string &target_device) { target_device_ = target_device; }
+  std::string GetTargetDevice() const { return target_device_; }
+
  private:
   ConverterInnerContext() = default;
   virtual ~ConverterInnerContext() = default;
@@ -132,6 +135,7 @@ class ConverterInnerContext {
   std::map<std::string, std::vector<int64_t>> graph_input_tensor_shape_map_;
   std::vector<std::string> graph_output_tensor_names_;
   std::map<std::string, std::map<std::string, std::string>> external_used_config_infos_;
+  std::string target_device_;
 };
 }  // namespace lite
 }  // namespace mindspore

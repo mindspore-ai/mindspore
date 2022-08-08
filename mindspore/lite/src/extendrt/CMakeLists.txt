@@ -56,14 +56,14 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         )
-
-    if(NOT MSLITE_ENABLE_ACL)
-        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-            ${MINDIR_KERNEL_SRC}
-            ${MINDIR_MODEL_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
-            )
-    endif()
+    # when cpu kernel is need
+    #if(NOT MSLITE_ENABLE_ACL)
+    #    set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+    #        ${MINDIR_KERNEL_SRC}
+    #        ${MINDIR_MODEL_SRC}
+    #        ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
+    #        )
+    #endif()
 
     set(FBS_FILES
         ${CCSRC_DIR}/../schema/cipher.fbs
@@ -139,11 +139,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
 
-    if(NOT MSLITE_ENABLE_ACL)
-        add_subdirectory(mock/lite_runtime)
-        add_dependencies(mindspore-extendrt mindspore-infer-lite)
-        target_link_libraries(mindspore-extendrt mindspore-infer-lite)
-    endif()
+    # when cpu kernel is need
+    #if(NOT MSLITE_ENABLE_ACL)
+    #    add_subdirectory(mock/lite_runtime)
+    #    add_dependencies(mindspore-extendrt mindspore-infer-lite)
+    #    target_link_libraries(mindspore-extendrt mindspore-infer-lite)
+    #endif()
 
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
