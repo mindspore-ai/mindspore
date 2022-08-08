@@ -59,8 +59,12 @@ bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   auto output_shape = output_shape_;
   size_t block_size = block_size_;
   size_t input_dimension = input_shape.size();
-  size_t output_strides[3] = {1, 1, 1};
+  const size_t kOutputStridesRank = 3;
+  size_t output_strides[kOutputStridesRank] = {1, 1, 1};
 
+  MS_EXCEPTION_IF_CHECK_FAIL(input_dimension - 1 <= kOutputStridesRank, "Input rank must be less than or equal to 4!");
+  MS_EXCEPTION_IF_CHECK_FAIL(input_dimension - 1 < output_shape.size(),
+                             "Input rank must be less than or equal to output!");
   for (size_t i = input_dimension - 1; i >= 1; --i) {
     for (size_t j = 0; j < i; ++j) {
       output_strides[j] *= static_cast<size_t>(output_shape[i]);
