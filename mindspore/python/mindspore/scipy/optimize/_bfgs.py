@@ -72,9 +72,9 @@ class MinimizeBfgs(nn.Cell):
 
     def construct(self, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
         # Constant tensors which avoid loop unrolling
-        _BOOL_FALSE = _to_tensor(False)
-        _INT_ZERO = _to_tensor(0)
-        _INT_ONE = _to_tensor(1)
+        const_bool_false = _to_tensor(False)
+        const_int_zero = _to_tensor(0)
+        const_int_one = _to_tensor(1)
 
         if maxiter is None:
             maxiter = mnp.size(x0) * 200
@@ -86,18 +86,18 @@ class MinimizeBfgs(nn.Cell):
 
         state = {
             "converged": _norm(g_0, ord_=mnp.inf) < gtol,
-            "failed": _BOOL_FALSE,
-            "k": _INT_ZERO,
-            "nfev": _INT_ONE,
-            "ngev": _INT_ONE,
-            "nhev": _INT_ZERO,
+            "failed": const_bool_false,
+            "k": const_int_zero,
+            "nfev": const_int_one,
+            "ngev": const_int_one,
+            "nhev": const_int_zero,
             "x_k": x0,
             "f_k": f_0,
             "g_k": g_0,
             "H_k": identity,
             "old_old_fval": f_0 + _norm(g_0) / 2,
-            "status": _INT_ZERO,
-            "line_search_status": _INT_ZERO
+            "status": const_int_zero,
+            "line_search_status": const_int_zero
         }
 
         while state["k"] < maxiter:
