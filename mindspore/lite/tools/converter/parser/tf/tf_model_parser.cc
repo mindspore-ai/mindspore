@@ -18,6 +18,7 @@
 #include "tools/converter/parser/tf/tf_model_parser.h"
 #include <functional>
 #include <set>
+#include <queue>
 #include "include/registry/node_parser_registry.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
@@ -738,8 +739,17 @@ void TFModelParser::UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_fun
 
 STATUS TFModelParser::ConvertSubgraph() {
   bool success_flag = true;
+  std::queue<int> tf_graph_index_q{};
   for (int i = 0; i < tf_root_graph_->library().function_size(); i++) {
-    auto &tf_sub_fuction = tf_root_graph_->library().function(i);
+    tf_graph_index_q.push(i);
+  }
+  int max_move_times = tf_root_graph_->library().function_size();
+  // key is graph index, value is the time move to the queue back.
+  std::unordered_map<int, int> move_times_map{};
+  while (!tf_graph_index_q.empty()) {
+    auto cur_index = tf_graph_index_q.front();
+    tf_graph_index_q.pop();
+    auto &tf_sub_fuction = tf_root_graph_->library().function(cur_index);
     auto &tf_sub_signature = tf_sub_fuction.signature();
     auto input_arg_size = tf_sub_signature.input_arg_size();
     auto &sub_graph_name = tf_sub_signature.name();
@@ -757,9 +767,19 @@ STATUS TFModelParser::ConvertSubgraph() {
         return RET_ERROR;
       }
     } else {
+      if (move_times_map.find(cur_index) == move_times_map.end()) {
+        move_times_map[cur_index] = 1;
+        tf_graph_index_q.push(cur_index);
+      } else {
+        move_times_map[cur_index]++;
+        if (move_times_map[cur_index] >= max_move_times) {
+          MS_LOG(WARNING) << "This function is not belong to any while op or if op, graph name: " << sub_graph_name;
+        } else {
+          tf_graph_index_q.push(cur_index);
+        }
+      }
       continue;
     }
-
     FuncGraphPtr sub_func_graph = std::make_shared<FuncGraph>();
     MS_CHECK_TRUE_RET(sub_func_graph != nullptr, RET_ERROR);
     sub_func_graph->set_attr("graph_name", MakeValue(sub_graph_name));
@@ -785,7 +805,7 @@ STATUS TFModelParser::ConvertSubgraph() {
     }
     if (!success_flag) {
       MS_LOG(ERROR) << "Convert subgraph is failed.";
-      continue;
+      return RET_ERROR;
     }
 
     if (ConvertSubgraphOutputs(&tf_sub_node_map, anf_sub_node_map, tf_sub_fuction, sub_func_graph) != RET_OK) {
@@ -796,10 +816,7 @@ STATUS TFModelParser::ConvertSubgraph() {
     // add while cond body function to while node input
     UpdateMap(cnode, sub_func_graph, sub_graph_name);
   }
-  if (!success_flag) {
-    MS_LOG(ERROR) << "Convert subgraph is failed.";
-    return RET_ERROR;
-  }
+
   if (ControlFlowNodePostProcess(while_cond_map_, while_body_map_) != RET_OK ||
       (ControlFlowNodePostProcess(if_then_map_, if_else_map_) != RET_OK)) {
     MS_LOG(ERROR) << "while/if node post process failed";
