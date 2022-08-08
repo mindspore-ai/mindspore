@@ -135,9 +135,9 @@ bool SegmentSumCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
 template <typename T1, typename T2>
 bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
   std::vector<int64_t> segments;
   int64_t seg_tmp = 1;
   for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
@@ -171,7 +171,8 @@ bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
         count_no += LongToSize(segments[j]);
       }
       size_t input_addr_base = count_no * num_compare_per;
-      auto task = [&](size_t start, size_t end) {
+      auto task = [input_addr_base, input_x_data_addr, count, num_compare_per, segment_ids_data_addr, count_no,
+                   &output_data_addr](size_t start, size_t end) {
         for (size_t j = start; j < end; ++j) {
           size_t sum_init_addr = input_addr_base + j;
           T1 sum_value = input_x_data_addr[sum_init_addr];
@@ -189,7 +190,8 @@ bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
       }
     }
   } else {
-    auto task = [&](size_t start, size_t end) {
+    auto task = [input_x_data_addr, num_compare_per, segment_ids_data_addr, segments, &output_data_addr](size_t start,
+                                                                                                         size_t end) {
       for (size_t i = start; i < end; ++i) {
         const auto count = LongToSize(segments[i]);
         size_t count_no = 0;
