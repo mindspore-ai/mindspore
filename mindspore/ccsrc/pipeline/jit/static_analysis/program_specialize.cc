@@ -750,9 +750,14 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                       << (new_node->func_graph() ? new_node->func_graph()->ToString() : "FG(Null)")
                       << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
   }
-  const auto &conf_eval_result = conf->ObtainEvalResult();
-  MS_EXCEPTION_IF_NULL(conf_eval_result);
-  new_node->set_abstract(conf_eval_result->abstract());
+  EvalResultPtr conf_eval_result = nullptr;
+  try {
+    conf_eval_result = conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(conf_eval_result);
+    new_node->set_abstract(conf_eval_result->abstract());
+  } catch (const std::exception &) {
+    MS_LOG(EXCEPTION) << "Fail to get abstract value with " << conf->ToString() << ", for " << new_node->DebugString();
+  }
   if (new_node->isa<CNode>() && new_node->abstract()->isa<PartialAbstractClosure>()) {
     auto partial_abstract = dyn_cast_ptr<PartialAbstractClosure>(new_node->abstract());
     if (partial_abstract->node() == node) {
