@@ -136,6 +136,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegment
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
+from mindspore.ops.operations.sparse_ops import SparseReshape
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
@@ -4236,6 +4237,16 @@ test_case_other_ops = [
                         Tensor(np.array([0, 2, 2]).astype(np.int32)),
                         Tensor(np.array([0, 2]).astype(np.int32)),
                         Tensor(np.array([5.3, 2.4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('SparseReshape', {
+        'block': SparseReshape(),
+        'desc_inputs': [Tensor(np.array([[0, 0, 0],
+                                         [0, 0, 1],
+                                         [0, 1, 0],
+                                         [1, 0, 0],
+                                         [1, 2, 3]], np.int64)),
+                        Tensor(np.array([2, 3, 6], np.int64)),
+                        Tensor(np.array([9, -1], np.int64))],
         'skip': ['backward']}),
 ]
 
