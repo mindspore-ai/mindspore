@@ -107,7 +107,7 @@ inline bool ParallelThreadPool::RunTaskOnce(int start, int end) {
 bool ParallelThreadPool::RunParallel() {
   bool ret = false;
   bool find;
-  int max_num = tasks_size_;
+  int max_num = static_cast<int>(tasks_size_);
   if (max_num < kActorParallelThreshold) {
     ParallelTask *p_task;
     do {
@@ -169,10 +169,10 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   bool expected;
   size_t max_task_num = tasks_size_;
 
-  for (task_index = tasks_end_; task_index < max_task_num; task_index++) {
+  for (task_index = static_cast<size_t>(tasks_end_); task_index < max_task_num; task_index++) {
     expected = false;
     if (tasks_[task_index].occupied.compare_exchange_strong(expected, true)) {
-      tasks_end_ = task_index + 1;
+      tasks_end_ = static_cast<int>(task_index + 1);
       break;
     }
   }
@@ -180,7 +180,7 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
     for (task_index = 0; task_index < max_task_num; task_index++) {
       expected = false;
       if (tasks_[task_index].occupied.compare_exchange_strong(expected, true)) {
-        tasks_end_ = task_index + 1;
+        tasks_end_ = static_cast<int>(task_index + 1);
         break;
       }
     }
@@ -238,7 +238,8 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
   }
   size_t core_num = std::thread::hardware_concurrency();
   all_thread_num = all_thread_num < core_num ? all_thread_num : core_num;
-  size_t tasks_size = actor_thread_num_ = actor_thread_num < all_thread_num ? actor_thread_num : all_thread_num;
+  actor_thread_num_ = actor_thread_num < all_thread_num ? actor_thread_num : all_thread_num;
+  size_t tasks_size = actor_thread_num;
 
   tasks_ = new (std::nothrow) ParallelTask[tasks_size]();
   THREAD_ERROR_IF_NULL(tasks_);

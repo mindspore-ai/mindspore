@@ -101,7 +101,7 @@ Option<uuid> uuid::FromString(const std::string &s) {
 // To check whether uuid looks like 0000000-000-000-000-000000000000000
 bool uuid::IsNilUUID() const {
   for (std::size_t i = 0; i < Size(); i++) {
-    if (uuidData[i]) {
+    if (static_cast<bool>(uuidData[i])) {
       return false;
     }
   }

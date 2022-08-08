@@ -16,11 +16,10 @@
 
 #include "async/uuid_generator.h"
 #include <atomic>
-#include <climits>
 
 namespace mindspore {
 namespace uuid_generator {
-std::string UUID::ToString() {
+std::string UUID::ToString() const {
   std::ostringstream ret;
   ret << *this;
   return ret.str();

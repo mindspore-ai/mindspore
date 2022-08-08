@@ -72,7 +72,7 @@ class MS_CORE_API ActorMgr {
   void SetActorReady(const ActorReference &actor) const;
 
  private:
-  inline bool IsLocalAddres(const AID &id) {
+  inline bool IsLocalAddres(const AID &id) const {
     if (id.Url() == "" || id.Url().empty() || urls.find(id.Url()) != urls.end()) {
       return true;
     } else {

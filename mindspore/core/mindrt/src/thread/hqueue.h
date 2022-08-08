@@ -27,8 +27,8 @@ class HQueue;
 struct Pointer {
   int32_t index = -1;
   uint32_t version = 0;
-  bool operator==(const Pointer &that) { return (index == that.index && version == that.version); }
-  bool operator!=(const Pointer &that) { return !(*this == that); }
+  bool operator==(const Pointer &that) const { return (index == that.index && version == that.version); }
+  bool operator!=(const Pointer &that) const { return !(*this == that); }
 };
 
 template <typename T>
@@ -46,7 +46,7 @@ class HQueue {
   HQueue() {}
   virtual ~HQueue() {}
 
-  bool IsInit() { return nodes.size() != 0; }
+  bool IsInit() const { return nodes.size() != 0; }
 
   bool Init(int32_t sz) {
     if (IsInit() || sz <= 0) {
@@ -167,7 +167,7 @@ class HQueue {
     }
   }
 
-  bool Empty() {
+  bool Empty() const {
     Pointer head = qhead;
     Pointer tail = qtail;
     if (head.index < 0) {

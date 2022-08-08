@@ -25,7 +25,7 @@ namespace uuid_generator {
 struct UUID : public mindspore::uuids::uuid {
  public:
   explicit UUID(const mindspore::uuids::uuid &inputUUID) : mindspore::uuids::uuid(inputUUID) {}
-  std::string ToString();
+  std::string ToString() const;
 };
 }  // namespace uuid_generator
 

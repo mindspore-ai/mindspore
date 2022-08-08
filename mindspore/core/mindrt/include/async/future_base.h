@@ -17,13 +17,9 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_BASE_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_BASE_H
 
-#include <future>
-#include <iostream>
-#include <string>
+#include <list>
 #include <utility>
 #include <memory>
-#include <list>
-
 #include "actor/actor.h"
 #include "async/spinlock.h"
 #include "async/status.h"
@@ -37,7 +33,7 @@ class Promise;
 class LessFuture {
  public:
   LessFuture() {}
-  LessFuture(const LessFuture &obj) {}
+  LessFuture(const LessFuture &) {}
   LessFuture &operator=(const LessFuture &) = delete;
   virtual ~LessFuture() {}
 };

@@ -120,6 +120,6 @@ uint16_t AID::GetPort() const {
   if (index == std::string::npos) {
     return 0;
   }
-  return (uint16_t)std::stoul(url.substr(index + 1));
+  return static_cast<uint16_t>(std::stoul(url.substr(index + 1)));
 }
 };  // end of namespace mindspore
