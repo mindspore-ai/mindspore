@@ -1,0 +1,150 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/gpu/kernel/random/random_poisson_gpu_kernel.h"
+#include <functional>
+#include <utility>
+#include <memory>
+#include <string>
+#include <algorithm>
+#include "ir/anf.h"
+#include "utils/log_adapter.h"
+#include "kernel/common_utils.h"
+#include "include/cuda_fp16.h"
+
+namespace mindspore {
+namespace kernel {
+namespace {
+using KernelRunFunc = RandomPoissonGpuKernelMod::KernelRunFunc;
+#define ADD_KERNEL(shape_dtype, rate_dtype, output_dtype, rate_type, output_type) \
+  {                                                                               \
+    KernelAttr()                                                                  \
+      .AddInputAttr(kNumberType##shape_dtype)                                     \
+      .AddInputAttr(kNumberType##rate_dtype)                                      \
+      .AddOutputAttr(kNumberType##output_dtype),                                  \
+      &RandomPoissonGpuKernelMod::LaunchKernel<rate_type, output_type>            \
+  }
+}  // namespace
+
+bool RandomPoissonGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  unit_shape_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
+  unit_rate_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(1).first);
+  unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(0).first);
+
+  auto kernel_ptr = std::make_shared<ops::RandomPoisson>(base_operator->GetPrim());
+  seed_ = static_cast<int64_t>(kernel_ptr->get_seed());
+  seed2_ = static_cast<int64_t>(kernel_ptr->get_seed2());
+  return true;
+}
+
+int RandomPoissonGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  for (const auto &input : inputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  ResetResource();
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> rate_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
+                                                         inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  int64_t shape_elements = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies<int64_t>());
+  rate_elements_ = std::accumulate(rate_shape.begin(), rate_shape.end(), 1, std::multiplies<int64_t>());
+  output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  if (output_elements_ == 0) {
+    is_null_input_ = true;
+  }
+  input_size_list_.emplace_back(shape_elements * unit_shape_size_);
+  input_size_list_.emplace_back(rate_elements_ * unit_rate_size_);
+  output_size_list_.emplace_back(output_elements_ * unit_output_size_);
+  workspace_size_list_.push_back(output_elements_ * sizeof(curandState));
+  return KRET_OK;
+}
+
+template <typename R, typename T>
+bool RandomPoissonGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
+  R *rate_addr = GetDeviceAddress<R>(inputs, 1);
+  T *output = GetDeviceAddress<T>(outputs, 0);
+  curandState *devStates = nullptr;
+  void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
+  devStates = reinterpret_cast<curandState *>(workspace_addr);
+  RandomPoisson(seed_, seed2_, devStates, rate_addr, rate_elements_, output, output_elements_,
+                reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomPoissonGpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    ADD_KERNEL(Int32, Float16, Float16, half, half),     ADD_KERNEL(Int32, Float16, Float32, half, float),
+    ADD_KERNEL(Int32, Float16, Float64, half, double),   ADD_KERNEL(Int32, Float16, Int32, half, int),
+    ADD_KERNEL(Int32, Float16, Int64, half, int64_t),
+
+    ADD_KERNEL(Int32, Float32, Float16, float, half),    ADD_KERNEL(Int32, Float32, Float32, float, float),
+    ADD_KERNEL(Int32, Float32, Float64, float, double),  ADD_KERNEL(Int32, Float32, Int32, float, int),
+    ADD_KERNEL(Int32, Float32, Int64, float, int64_t),
+
+    ADD_KERNEL(Int32, Float64, Float16, double, half),   ADD_KERNEL(Int32, Float64, Float32, double, float),
+    ADD_KERNEL(Int32, Float64, Float64, double, double), ADD_KERNEL(Int32, Float64, Int32, double, int),
+    ADD_KERNEL(Int32, Float64, Int64, double, int64_t),
+
+    ADD_KERNEL(Int32, Int32, Float16, int, half),        ADD_KERNEL(Int32, Int32, Float32, int, float),
+    ADD_KERNEL(Int32, Int32, Float64, int, double),      ADD_KERNEL(Int32, Int32, Int32, int, int),
+    ADD_KERNEL(Int32, Int32, Int64, int, int64_t),
+
+    ADD_KERNEL(Int32, Int64, Float16, int64_t, half),    ADD_KERNEL(Int32, Int64, Float32, int64_t, float),
+    ADD_KERNEL(Int32, Int64, Float64, int64_t, double),  ADD_KERNEL(Int32, Int64, Int32, int64_t, int),
+    ADD_KERNEL(Int32, Int64, Int64, int64_t, int64_t),
+
+    ADD_KERNEL(Int64, Float16, Float16, half, half),     ADD_KERNEL(Int64, Float16, Float32, half, float),
+    ADD_KERNEL(Int64, Float16, Float64, half, double),   ADD_KERNEL(Int64, Float16, Int32, half, int),
+    ADD_KERNEL(Int64, Float16, Int64, half, int64_t),
+
+    ADD_KERNEL(Int64, Float32, Float16, float, half),    ADD_KERNEL(Int64, Float32, Float32, float, float),
+    ADD_KERNEL(Int64, Float32, Float64, float, double),  ADD_KERNEL(Int64, Float32, Int32, float, int),
+    ADD_KERNEL(Int64, Float32, Int64, float, int64_t),
+
+    ADD_KERNEL(Int64, Float64, Float16, double, half),   ADD_KERNEL(Int64, Float64, Float32, double, float),
+    ADD_KERNEL(Int64, Float64, Float64, double, double), ADD_KERNEL(Int64, Float64, Int32, double, int),
+    ADD_KERNEL(Int64, Float64, Int64, double, int64_t),
+
+    ADD_KERNEL(Int64, Int32, Float16, int, half),        ADD_KERNEL(Int64, Int32, Float32, int, float),
+    ADD_KERNEL(Int64, Int32, Float64, int, double),      ADD_KERNEL(Int64, Int32, Int32, int, int),
+    ADD_KERNEL(Int64, Int32, Int64, int, int64_t),
+
+    ADD_KERNEL(Int64, Int64, Float16, int64_t, half),    ADD_KERNEL(Int64, Int64, Float32, int64_t, float),
+    ADD_KERNEL(Int64, Int64, Float64, int64_t, double),  ADD_KERNEL(Int64, Int64, Int32, int64_t, int),
+    ADD_KERNEL(Int64, Int64, Int64, int64_t, int64_t)};
+  return func_list;
+}
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, RandomPoisson, RandomPoissonGpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore

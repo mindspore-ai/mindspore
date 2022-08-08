@@ -75,6 +75,20 @@ TypePtr RandomPoissonInferType(const PrimitivePtr &prim, const std::vector<Abstr
 }
 }  // namespace
 
+int64_t RandomPoisson::get_seed() const {
+  auto value_ptr = this->GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+
+void RandomPoisson::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+int64_t RandomPoisson::get_seed2() const {
+  auto value_ptr = this->GetAttr(kSeed2);
+  return GetValue<int64_t>(value_ptr);
+}
+
+void RandomPoisson::set_seed2(const int64_t seed2) { (void)this->AddAttr(kSeed2, api::MakeValue(seed2)); }
+
 AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

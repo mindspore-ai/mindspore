@@ -503,9 +503,10 @@ class RandomPoisson(Primitive):
          dtype (mindspore.dtype): The type of output. Default: mindspore.int64.
 
     Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype is int32 or int64.
+        - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype must be in
+                               [int32, int64]
         - **rate** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
-          of occurrences of the event.
+          of occurrences of the event. Its type must be in [float16, float32, float64, int32, int64]
 
     Outputs:
         Tensor. Its shape is (*shape, *rate.shape). Its type is spcified by `dtype`.
@@ -517,7 +518,7 @@ class RandomPoisson(Primitive):
         ValueError: If `shape` elements are negative.
 
     Supported Platforms:
-        ``Ascend````CPU``
+        ``Ascend````GPU````CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)

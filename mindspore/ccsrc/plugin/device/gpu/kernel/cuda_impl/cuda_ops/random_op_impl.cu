@@ -15,6 +15,7 @@
  */
 
 #include "random_op_impl.cuh"
+#include "include/cuda_fp16.h"
 template <typename T>
 __global__ void NormalKernel(int seed, curandState *globalState, T *output, size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -60,6 +61,17 @@ __global__ void TruncatedNormalKernel(int seed, curandState *globalState, S *out
       random_data = (S)curand_normal(&globalState[i]);
     }while(random_data < -(S)0.2 || random_data > (S)0.2);
     output[i] = random_data;
+  }
+  return;
+}
+
+template <typename R, typename T>
+__global__ void RandomPoissonKernel(int seed, curandState *globalState, R *rate, int rate_size, T *output,
+                                    size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    curand_init(seed, i, 0, &globalState[i]);
+    auto j = i % rate_size;
+    output[i] = (T)curand_poisson(&globalState[i], rate[j]);
   }
   return;
 }
@@ -129,6 +141,23 @@ void TruncatedNormal(int seed, int seed2, curandState *globalState, S *output, s
   return;
 }
 
+template <typename R, typename T>
+void RandomPoisson(int seed, int seed2, curandState *globalState, R *rate, int64_t rate_size, T *output, size_t count,
+                   cudaStream_t cuda_stream) {
+  int RNG_seed = 0;
+  std::random_device rd;
+  if (seed2 != 0) {
+    RNG_seed = seed2;
+  } else if (seed != 0) {
+    RNG_seed = seed;
+  } else {
+    RNG_seed = static_cast<int>(rd());
+  }
+  RandomPoissonKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, rate, rate_size,
+                                                                          output, count);
+  return;
+}
+
 template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandState *globalState,
                                                     float *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandState *globalState,
@@ -149,3 +178,38 @@ template CUDA_LIB_EXPORT void TruncatedNormal<float>(int seed, int seed2,  curan
                                                      float *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TruncatedNormal<double>(int seed, int seed2,  curandState *globalState,
                                                       double *output, size_t count, cudaStream_t cuda_stream);
+#define ADD_RANDOM_POISSON(rate_type, output_type) \
+  template CUDA_LIB_EXPORT void RandomPoisson<rate_type, output_type>(int seed, int seed2, curandState *globalState, \
+                                                                      rate_type *rate, int64_t rate_size, \
+                                                                      output_type *output, size_t count, \
+                                                                      cudaStream_t cuda_stream);
+
+ADD_RANDOM_POISSON(half, half)
+ADD_RANDOM_POISSON(half, float)
+ADD_RANDOM_POISSON(half, double)
+ADD_RANDOM_POISSON(half, int)
+ADD_RANDOM_POISSON(half, int64_t)
+
+ADD_RANDOM_POISSON(float, half)
+ADD_RANDOM_POISSON(float, float)
+ADD_RANDOM_POISSON(float, double)
+ADD_RANDOM_POISSON(float, int)
+ADD_RANDOM_POISSON(float, int64_t)
+
+ADD_RANDOM_POISSON(double, half)
+ADD_RANDOM_POISSON(double, float)
+ADD_RANDOM_POISSON(double, double)
+ADD_RANDOM_POISSON(double, int)
+ADD_RANDOM_POISSON(double, int64_t)
+
+ADD_RANDOM_POISSON(int, half)
+ADD_RANDOM_POISSON(int, float)
+ADD_RANDOM_POISSON(int, double)
+ADD_RANDOM_POISSON(int, int)
+ADD_RANDOM_POISSON(int, int64_t)
+
+ADD_RANDOM_POISSON(int64_t, half)
+ADD_RANDOM_POISSON(int64_t, float)
+ADD_RANDOM_POISSON(int64_t, double)
+ADD_RANDOM_POISSON(int64_t, int)
+ADD_RANDOM_POISSON(int64_t, int64_t)
