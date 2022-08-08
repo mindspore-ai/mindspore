@@ -1648,8 +1648,8 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
             `False`.
 
     Outputs:
-        Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})`(4-D) and
-        :math:`(N, C, D_{out}, H_{out}, W_{out})`(5-D).
+        Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
+        :math:`(N, C, D_{out}, H_{out}, W_{out})` (5-D).
 
     Raises:
         TypeError: If `input_x` or `grid` is not a Tensor.
