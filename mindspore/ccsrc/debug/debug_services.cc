@@ -860,7 +860,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
  * Description: This function is to convert files in each directory from device format to host format and append the
  * converted npy file name into NPYFilePool. It's for Ascend async dump only.
  */
-void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list) {
+void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list) const {
   for (auto const &d : dir_to_files_map) {
     std::vector<std::string> files_to_convert_in_dir;
     std::vector<std::string> files_after_convert_in_dir;
@@ -910,7 +910,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFileP
  * append into NPYFilePool. It's for Ascend async dump only.
  */
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                               const std::string &dump_key, NPYFilePool *const result_list) {
+                                               const std::string &dump_key, NPYFilePool *const result_list) const {
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
@@ -1003,7 +1003,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
 
 void DebugServices::ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files,
                                            const std::vector<ProtoDump> &proto_dump,
-                                           const std::string &specific_dump_dir, NPYFilePool *const result_list) {
+                                           const std::string &specific_dump_dir, NPYFilePool *const result_list) const {
   DirMap dir_to_files_map;
   for (const auto &node : proto_dump) {
     std::string dump_name = node.dump_name;
@@ -1114,7 +1114,7 @@ DebugServices::NPYFilePool DebugServices::PreProcessDumpDirSync(const std::strin
 
 void DebugServices::ProcessConvertList(const DumpFileMap &dump_dir_mapped_files,
                                        const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
-                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) {
+                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) const {
   MS_EXCEPTION_IF_NULL(dir_to_files_map);
   auto it = dump_dir_mapped_files.find(specific_dump_dir);
   if (it == dump_dir_mapped_files.end()) {
@@ -2158,7 +2158,7 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   return true;
 }
 
-std::string DebugServices::RealPath(const std::string &input_path) {
+std::string DebugServices::RealPath(const std::string &input_path) const {
   if (input_path.length() >= PATH_MAX) {
     MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
@@ -2193,14 +2193,6 @@ std::string DebugServices::RealPath(const std::string &input_path) {
   }
 
   return std::string(real_path);
-}
-
-uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) {
-#if defined(__APPLE__)
-  return *reinterpret_cast<const uint64_t *>(buffer.data());
-#else
-  return le64toh(*reinterpret_cast<const uint64_t *>(buffer.data()));
-#endif
 }
 
 bool DebugServices::TensorExistsInCurrent(const std::string &tensor_name) {
