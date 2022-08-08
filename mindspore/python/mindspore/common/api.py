@@ -494,6 +494,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
+        >>> from mindspore import ops
         >>> from mindspore import ms_function
         ...
         >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
@@ -527,7 +528,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
         ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
         ... # While fn differs during calling again, recompilation will be triggered.
         >>> def func(x):
-        ...     return P.exp(x)
+        ...     return ops.exp(x)
         ...
         >>> def closure_fn(x, fn):
         ...     @ms_function(hash_args=fn)
