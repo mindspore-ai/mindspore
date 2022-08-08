@@ -105,7 +105,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
   group_indices->clear();
   int64_t running_flat_group_index = flat_group_index;
   for (int64_t group_dim_index = SizeToLong(group_shape.size()) - 1; group_dim_index >= 0; --group_dim_index) {
-    const auto group_dim = group_shape[group_dim_index];
+    const auto group_dim = group_shape[LongToSize(group_dim_index)];
     (void)group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
     running_flat_group_index /= group_dim;
   }
@@ -113,7 +113,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
 }  // namespace
 
 template <typename T>
-void GetGroupSet(kernel::AddressPtr input, const size_t last_dim, const std::vector<size_t> &input_strides,
+void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const std::vector<size_t> &input_strides,
                  const std::vector<size_t> &group_indices, std::set<T> *result) {
   if (group_indices.size() != input_strides.size() - 1) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "
