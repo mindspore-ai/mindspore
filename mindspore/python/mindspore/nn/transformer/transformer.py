@@ -34,12 +34,12 @@ from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
 from mindspore.log import _LogActionOnce
-from .layers import _LayerNorm, _Linear, _check_input_shape, \
+from mindspore.nn.transformer.layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
-from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config, \
-    MoEParallelConfig
-from .moe import default_moe_config, MoE, _check_moe_config
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, \
+    OpParallelConfig, _Config, _check_config, MoEParallelConfig
+from mindspore.nn.transformer.moe import default_moe_config, MoE, _check_moe_config
 
 __all__ = [
     "AttentionMask",
@@ -1490,7 +1490,7 @@ class TransformerEncoderLayer(Cell):
             self.batch_size = batch_size
             self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
-
+            parallel_config_args = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(batch_size=batch_size,
                                                 src_seq_length=seq_length,
                                                 tgt_seq_length=seq_length,
@@ -1501,8 +1501,7 @@ class TransformerEncoderLayer(Cell):
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=parallel_config_args)
             if self.use_moe:
                 self.output = MoE(hidden_size=hidden_size,
                                   dropout_rate=hidden_dropout_rate,
@@ -1568,7 +1567,7 @@ class TransformerEncoderLayer(Cell):
             self.layernorm1.shard(((parallel_config.data_parallel, 1),))
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2.shard(((parallel_config.data_parallel, 1),))
-
+            parallel_config_args = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(batch_size=batch_size,
                                                 src_seq_length=seq_length,
                                                 tgt_seq_length=seq_length,
@@ -1579,8 +1578,7 @@ class TransformerEncoderLayer(Cell):
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=parallel_config_args)
             if self.use_moe:
                 self.output = MoE(hidden_size=hidden_size,
                                   dropout_rate=hidden_dropout_rate,
@@ -1883,6 +1881,7 @@ class TransformerDecoderLayer(Cell):
 
             self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            parallel_config_args = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(hidden_size=hidden_size,
                                                 num_heads=num_heads,
                                                 batch_size=batch_size,
@@ -1893,8 +1892,7 @@ class TransformerDecoderLayer(Cell):
                                                 use_past=use_past,
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=parallel_config_args)
 
             # Cross attention with the output of encoder as memory tensor
             self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
@@ -1907,8 +1905,7 @@ class TransformerDecoderLayer(Cell):
                                                       softmax_compute_type=softmax_compute_type,
                                                       use_past=use_past,
                                                       param_init_type=param_init_type,
-                                                      parallel_config=parallel_config.dpmp
-                                                      if self.use_moe else parallel_config)
+                                                      parallel_config=parallel_config_args)
             self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
                 layernorm_compute_type)
 
@@ -1983,6 +1980,7 @@ class TransformerDecoderLayer(Cell):
             self.layernorm1.shard(((parallel_config.data_parallel, 1),))
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2.shard(((parallel_config.data_parallel, 1),))
+            parallel_config_args = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(hidden_size=hidden_size,
                                                 num_heads=num_heads,
                                                 batch_size=batch_size,
@@ -1993,8 +1991,7 @@ class TransformerDecoderLayer(Cell):
                                                 use_past=use_past,
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=parallel_config_args)
 
             # Cross attention with the output of encoder as memory tensor
             self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
@@ -2007,8 +2004,7 @@ class TransformerDecoderLayer(Cell):
                                                       softmax_compute_type=softmax_compute_type,
                                                       use_past=use_past,
                                                       param_init_type=param_init_type,
-                                                      parallel_config=parallel_config.dpmp
-                                                      if self.use_moe else parallel_config)
+                                                      parallel_config=parallel_config_args)
             self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
                 layernorm_compute_type)
             self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
@@ -2403,6 +2399,7 @@ class TransformerEncoder(Cell):
             self.aux_loss = Tensor(0.0, mstype.float32)
             self.num_layers = num_layers
             self.blocks = nn.CellList()
+            parallel_config_args = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
             for i in range(num_layers):
                 block = TransformerEncoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2418,8 +2415,7 @@ class TransformerEncoder(Cell):
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=parallel_config_args)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2439,6 +2435,7 @@ class TransformerEncoder(Cell):
                            "'set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)'")
             self.num_layers = num_layers
             self.blocks = nn.CellList()
+            parallel_config_args = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
             for i in range(num_layers):
                 block = TransformerEncoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2454,8 +2451,7 @@ class TransformerEncoder(Cell):
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=parallel_config_args)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2638,6 +2634,7 @@ class TransformerDecoder(Cell):
             self.blocks = nn.CellList()
             _check_moe_config(moe_config, parallel_config)
             self.use_moe = (moe_config.expert_num > 1)
+            parallel_config_args = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
             for i in range(num_layers):
                 block = TransformerDecoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2654,8 +2651,7 @@ class TransformerDecoder(Cell):
                                                 param_init_type=param_init_type,
                                                 post_layernorm_residual=post_layernorm_residual,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=parallel_config_args)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2677,6 +2673,7 @@ class TransformerDecoder(Cell):
             self.blocks = nn.CellList()
             _check_moe_config(moe_config, parallel_config)
             self.use_moe = (moe_config.expert_num > 1)
+            parallel_config_args = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
             for i in range(num_layers):
                 block = TransformerDecoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2693,8 +2690,7 @@ class TransformerDecoder(Cell):
                                                 param_init_type=param_init_type,
                                                 post_layernorm_residual=post_layernorm_residual,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=parallel_config_args)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()

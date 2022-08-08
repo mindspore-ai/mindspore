@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm
-from ..common import ms_function
+from mindspore.common import ms_function
 
 _allgather_cell = None
 

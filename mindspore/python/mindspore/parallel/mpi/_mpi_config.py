@@ -31,15 +31,15 @@ class _MpiConfig:
     _instance = None
     _instance_lock = threading.Lock()
 
-    def __init__(self):
-        self._mpiconfig_handle = MpiConfig.get_instance()
-
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance_lock.acquire()
             cls._instance = object.__new__(cls)
             cls._instance_lock.release()
         return cls._instance
+
+    def __init__(self):
+        self._mpiconfig_handle = MpiConfig.get_instance()
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)

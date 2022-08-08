@@ -62,16 +62,16 @@ class _AutoParallelContext:
     _instance = None
     _instance_lock = threading.Lock()
 
-    def __init__(self):
-        self._context_handle = AutoParallelContext.get_instance()
-        self._dataset_strategy_using_str = True
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance_lock.acquire()
             cls._instance = object.__new__(cls)
             cls._instance_lock.release()
         return cls._instance
+
+    def __init__(self):
+        self._context_handle = AutoParallelContext.get_instance()
+        self._dataset_strategy_using_str = True
 
     def check_context_handle(self):
         """
@@ -127,6 +127,17 @@ class _AutoParallelContext:
                 self._set_allgather_comm_fusion(config[key], key)
             else:
                 raise KeyError("comm fusion type must be allreduce, allgather or reducescatter, but got {}".format(key))
+
+    def get_comm_fusion(self):
+        """Get comm fusion config."""
+        self.check_context_handle()
+        mode = self._context_handle.get_fusion_mode()
+        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
+            config = self.fusion_threshold_mb()
+        if mode == _ParallelFusionConfig.INDEX:
+            config = self.get_all_reduce_fusion_split_indices()
+        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
+                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
 
     def _set_allreduce_comm_fusion(self, comm_fusion):
         """
@@ -195,21 +206,10 @@ class _AutoParallelContext:
             raise KeyError("fusion method mode must be auto or size, but got {}".format(
                 comm_fusion[_ParallelFusionConfig.MODE]))
 
-        fusion_threshold = 64 if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.AUTO else \
-                                 comm_fusion[_ParallelFusionConfig.FUSION_CONFIG]
+        fusion_threshold = 64
+        if comm_fusion[_ParallelFusionConfig.MODE] != _ParallelFusionConfig.AUTO:
+            fusion_threshold = comm_fusion[_ParallelFusionConfig.FUSION_CONFIG]
         self.set_fusion_threshold_mb(fusion_threshold, comm_type)
-
-    def get_comm_fusion(self):
-        """Get comm fusion config."""
-        self.check_context_handle()
-        mode = self._context_handle.get_fusion_mode()
-        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
-            config = self.fusion_threshold_mb()
-        if mode == _ParallelFusionConfig.INDEX:
-            config = self.get_all_reduce_fusion_split_indices()
-        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
-                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
-
 
     def set_fusion_threshold_mb(self, fusion_threshold=64, comm_type="allreduce"):
         """

@@ -14,7 +14,7 @@
 # ============================================================================
 """Interfaces for parallel-related functionality"""
 from __future__ import absolute_import
-from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
+from mindspore.parallel.algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
 
 __all__ = ["set_algo_parameters", "reset_algo_parameters", "get_algo_parameters"]

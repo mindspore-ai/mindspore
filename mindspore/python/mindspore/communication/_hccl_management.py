@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import ctypes
 import os
 from mindspore import context
-from .._c_expression import get_hccl_rank_id, get_hccl_rank_size
+from mindspore._c_expression import get_hccl_rank_id, get_hccl_rank_size
 
 MAX_GROUP_NAME_LEN = 127
 MAX_RANK_NUM = 4096
