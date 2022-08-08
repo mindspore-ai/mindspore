@@ -131,7 +131,7 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 
 template <typename T>
 void MatrixSetDiagV3CpuKernelMod::LaunchFuncA(T *output_data, const T *diagonal_data, const T *input_data, size_t start,
-                                              size_t end) {
+                                              size_t end) const {
   for (size_t elem = start; elem < end; ++elem) {
     int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
     int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
@@ -148,7 +148,7 @@ void MatrixSetDiagV3CpuKernelMod::LaunchFuncA(T *output_data, const T *diagonal_
 
 template <typename T>
 void MatrixSetDiagV3CpuKernelMod::LaunchFuncB(T *output_data, const T *diagonal_data, const T *input_data, size_t start,
-                                              size_t end) {
+                                              size_t end) const {
   for (size_t elem = start; elem < end; ++elem) {
     int64_t t = SizeToLong(elem % (input_rows_ * input_columns_));
     int64_t index = SizeToLong(elem / (input_rows_ * input_columns_));
@@ -175,7 +175,7 @@ void MatrixSetDiagV3CpuKernelMod::LaunchFuncB(T *output_data, const T *diagonal_
 
 template <typename T>
 void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+                                            const std::vector<kernel::AddressPtr> &outputs) const {
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_data);
   auto diagonal_data = reinterpret_cast<T *>(inputs[1]->addr);
@@ -191,7 +191,7 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
 
 template <typename T>
 bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+                                           const std::vector<kernel::AddressPtr> &outputs) const {
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_data);
   auto diagonal_data = reinterpret_cast<T *>(inputs[1]->addr);
