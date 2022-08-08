@@ -68,21 +68,21 @@ class UniqueConsecutiveHelperGpuKernel : public UniqueConsecutiveHelperBase {
     size_t input_tensor_size = input_size_list_[0];
     size_t elements_size = num_elements_ * sizeof(S);
     size_t elements_plus_one_size = (num_elements_ + 1) * sizeof(S);
+    // input_index workspace
     work_size_list_.emplace_back(elements_size);
+    // sorted_index workspace
     work_size_list_.emplace_back(elements_size);
+    // range_data workspace
     work_size_list_.emplace_back(elements_plus_one_size);
+    // indices_data workspace
     work_size_list_.emplace_back(input_tensor_size);
+    // Transpose scalar workspace
+    work_size_list_.emplace_back(input_shape_.size() * sizeof(size_t));
+    work_size_list_.emplace_back(input_shape_.size() * sizeof(size_t));
+
     output_size_list_.emplace_back(input_tensor_size);
-    if (return_idx()) {
-      output_size_list_.emplace_back(elements_size);
-    } else {
-      output_size_list_.emplace_back(0);
-    }
-    if (return_counts()) {
-      output_size_list_.emplace_back(elements_size);
-    } else {
-      output_size_list_.emplace_back(0);
-    }
+    output_size_list_.emplace_back(elements_size);
+    output_size_list_.emplace_back(elements_size);
     return 0;
   }
 
@@ -93,49 +93,60 @@ class UniqueConsecutiveHelperGpuKernel : public UniqueConsecutiveHelperBase {
     S *s_sorted_index = nullptr;
     S *s_range_data = nullptr;
     T *t_indices_data = nullptr;
+    size_t *dev_input_shape = nullptr;
+    size_t *dev_input_axis = nullptr;
     T *t_output_ptr = nullptr;
     S *s_output_index = nullptr;
     S *s_output_counts = nullptr;
-    int flag = GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &t_input_ptr);
+    int flag = GetDeviceAddress<T>(input_ptrs, kIndex0, kernel_name_, &t_input_ptr);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<S>(work_ptrs, 0, kernel_name_, &s_input_index);
+    flag = GetDeviceAddress<S>(work_ptrs, kIndex0, kernel_name_, &s_input_index);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<S>(work_ptrs, 1, kernel_name_, &s_sorted_index);
+    flag = GetDeviceAddress<S>(work_ptrs, kIndex1, kernel_name_, &s_sorted_index);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<S>(work_ptrs, 2, kernel_name_, &s_range_data);
+    flag = GetDeviceAddress<S>(work_ptrs, kIndex2, kernel_name_, &s_range_data);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<T>(work_ptrs, 3, kernel_name_, &t_indices_data);
+    flag = GetDeviceAddress<T>(work_ptrs, kIndex3, kernel_name_, &t_indices_data);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<T>(output_ptrs, 0, kernel_name_, &t_output_ptr);
+    flag = GetDeviceAddress<size_t>(work_ptrs, kIndex4, kernel_name_, &dev_input_shape);
+    if (flag != 0) {
+      return flag;
+    }
+    flag = GetDeviceAddress<size_t>(work_ptrs, kIndex5, kernel_name_, &dev_input_axis);
+    if (flag != 0) {
+      return flag;
+    }
+    flag = GetDeviceAddress<T>(output_ptrs, kIndex0, kernel_name_, &t_output_ptr);
     if (flag != 0) {
       return flag;
     }
     if (return_idx()) {
-      flag = GetDeviceAddress<S>(output_ptrs, 1, kernel_name_, &s_output_index);
+      flag = GetDeviceAddress<S>(output_ptrs, kIndex1, kernel_name_, &s_output_index);
       if (flag != 0) {
         return flag;
       }
     }
     if (return_counts()) {
-      flag = GetDeviceAddress<S>(output_ptrs, 2, kernel_name_, &s_output_counts);
+      flag = GetDeviceAddress<S>(output_ptrs, kIndex2, kernel_name_, &s_output_counts);
       if (flag != 0) {
         return flag;
       }
     }
 
-    post_output_size_ = CalUniqueConsecutive(
-      t_input_ptr, num_elements_, input_shape_, is_flattend(), axis(), s_input_index, s_sorted_index, s_range_data,
-      t_indices_data, t_output_ptr, s_output_index, s_output_counts, reinterpret_cast<cudaStream_t>(cuda_stream));
+    post_output_size_ =
+      CalUniqueConsecutive(t_input_ptr, num_elements_, input_shape_, is_flattend(), axis(), s_input_index,
+                           s_sorted_index, s_range_data, t_indices_data, dev_input_shape, dev_input_axis, t_output_ptr,
+                           s_output_index, s_output_counts, reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
 
