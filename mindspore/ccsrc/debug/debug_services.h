@@ -400,21 +400,21 @@ class DebugServices {
 
   ProcessedNPYFiles ProcessNPYFilePool(const NPYFilePool &npy_file_pool) const;
 
-  static void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
+  void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list) const;
 
-  static void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                         const std::string &dump_key, NPYFilePool *const result_list);
+  void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
+                                  const std::string &dump_key, NPYFilePool *const result_list) const;
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                           std::vector<unsigned int> root_graph_id, NPYFilePool *const result_list);
 
-  static void ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files, const std::vector<ProtoDump> &proto_dump,
-                                     const std::string &specific_dump_dir, NPYFilePool *const result_list);
+  void ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files, const std::vector<ProtoDump> &proto_dump,
+                              const std::string &specific_dump_dir, NPYFilePool *const result_list) const;
 
-  static void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
-                                 const std::string &specific_dump_dir, DirMap *dir_to_files_map,
-                                 NPYFilePool *const result_list);
+  void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
+                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
+                          NPYFilePool *const result_list) const;
 
   void GetTensorDataInfoAsync(const std::vector<ProtoDump> &proto_dump, const std::string &specific_dump_dir,
                               uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,
@@ -482,9 +482,7 @@ class DebugServices {
   bool GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *const task_id,
                             uint64_t *const stream_id) const;
 
-  static std::string RealPath(const std::string &input_path);
-
-  static uint64_t BytestoUInt64(const std::vector<char> &buffer);
+  std::string RealPath(const std::string &input_path) const;
 
   bool TensorExistsInCurrent(const std::string &tensor_name);
 

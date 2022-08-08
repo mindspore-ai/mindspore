@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,7 +339,7 @@ void DataDumper::OpDebugRegister() {
 
   is_op_debug_ = true;
   int64_t value = 0;
-  rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, MEMORY_INFO_TS_LIMITED, &value);
+  rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, static_cast<int32_t>(MEMORY_INFO_TS_LIMITED), &value);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
