@@ -506,7 +506,7 @@ class ReflectionPad2d(_ReflectionPadNd):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReflectionPad2d

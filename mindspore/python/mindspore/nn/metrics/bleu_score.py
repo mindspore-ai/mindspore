@@ -36,7 +36,7 @@ class BleuScore(Metric):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore.nn as nn
         >>>
         >>> candidate_corpus = [['i', 'have', 'a', 'pen', 'on', 'my', 'desk']]
