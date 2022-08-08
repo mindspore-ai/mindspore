@@ -20,14 +20,12 @@
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "include/curand.h"
-#include "mindspore/core/ops/apply_adam_with_amsgrad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kApplyAdamWithAmsgradInputsNum = 8;
-constexpr size_t kApplyAdamWithAmsgradOutputsNum = 4;
-constexpr size_t kScalarIndex = 0;
+constexpr size_t kApplyAdamWithAmsgradOutputsNum = 1;
 constexpr size_t kIndexVar = 0;
 constexpr size_t kIndexM = 1;
 constexpr size_t kIndexV = 2;
@@ -41,6 +39,13 @@ constexpr size_t kIndexGrad = 7;
 bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
+  if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
+                  << " and " << kApplyAdamWithAmsgradOutputsNum << ", but got " << inputs.size() << " and "
+                  << outputs.size();
+    return false;
+  }
+
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(base_operator);
@@ -48,12 +53,6 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   beta1_ = kernel_ptr_->get_beta1();
   beta2_ = kernel_ptr_->get_beta2();
   epsilon_ = kernel_ptr_->get_epsilon();
-  if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
-                  << " and " << kApplyAdamWithAmsgradOutputsNum << ", but got " << inputs.size() << " and "
-                  << outputs.size();
-    return false;
-  }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -63,7 +62,7 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   }
 
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndexVar).first);
   return true;
 }
 
@@ -75,6 +74,7 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (ret != 0) {
     return ret;
   }
+  input_elements_ = 0;
 
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
@@ -150,24 +150,31 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 bool ApplyAdamWithAmsgradGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &workspace,
                                               const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
   kernel_func_(this, inputs, outputs, stream_ptr);
   return true;
 }
 
 template <typename T>
 bool ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &, void *stream_ptr) {
-  auto var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  auto m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  auto v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  auto vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->addr);
-  auto beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
-  auto beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
+  auto *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
+  auto *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
+  auto *vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->addr);
+  auto *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
+  auto *beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->addr);
+  auto *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
+  auto *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
 
-  CalApplyAdamWithAmsgrad(input_elements_, batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1_,
-                          beta2_, epsilon_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  T beta1 = static_cast<T>(beta1_);
+  T beta2 = static_cast<T>(beta2_);
+  T epsilon = static_cast<T>(epsilon_);
+
+  auto *output_var = reinterpret_cast<T *>(outputs[kIndexVar]->addr);
+
+  CalApplyAdamWithAmsgrad(input_elements_, batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1,
+                          beta2, epsilon, output_var, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;
 }
@@ -183,13 +190,7 @@ std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::KernelFunc>>
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddOutputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)
-                                                     .AddOutputAttr(kNumberTypeFloat64)
-                                                     .AddOutInRef(0, 0)
-                                                     .AddOutInRef(1, 1)
-                                                     .AddOutInRef(2, 2)
-                                                     .AddOutInRef(3, 3),
+                                                     .AddOutInRef(0, 0),
                                                    &ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel<double>},
                                                   {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -201,13 +202,7 @@ std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::KernelFunc>>
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutInRef(0, 0)
-                                                     .AddOutInRef(1, 1)
-                                                     .AddOutInRef(2, 2)
-                                                     .AddOutInRef(3, 3),
+                                                     .AddOutInRef(0, 0),
                                                    &ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel<float>},
                                                   {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat16)
@@ -219,13 +214,7 @@ std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::KernelFunc>>
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutInRef(0, 0)
-                                                     .AddOutInRef(1, 1)
-                                                     .AddOutInRef(2, 2)
-                                                     .AddOutInRef(3, 3),
+                                                     .AddOutInRef(0, 0),
                                                    &ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel<half>}};
 
 std::vector<KernelAttr> ApplyAdamWithAmsgradGpuKernelMod::GetOpSupport() {

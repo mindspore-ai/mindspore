@@ -507,7 +507,7 @@ class Adam(Optimizer):
         self.use_amsgrad = use_amsgrad
         self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
-        self.vhat = self._parameters.clone(prefix="vhat", init=-100000)
+        self.vhat = self._parameters.clone(prefix="vhat", init='zeros')
 
         self._is_device = True
         if use_amsgrad:

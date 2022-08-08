@@ -46,9 +46,9 @@ class ApplyAdamWithAmsgradCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchApplyAdamWithAmsgrad(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<float> beta1_ = {0.9};
-  std::vector<float> beta2_ = {0.999};
-  std::vector<float> epsilon_ = {1e-8};
+  float beta1_{0.9};
+  float beta2_{0.999};
+  float epsilon_{1e-8};
 
   int64_t batch_rank_{0};
   int64_t batch_size_{1};
