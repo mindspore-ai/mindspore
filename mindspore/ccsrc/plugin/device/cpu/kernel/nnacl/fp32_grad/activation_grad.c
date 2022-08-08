@@ -138,8 +138,8 @@ int SoftplusGrad(const float *src0, const float *src1, int length, float *dst) {
   return NNACL_OK;
 }
 
-int HShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd) {
-  int i = 0;
+int HShrinkGrad(const float *src0, const float *src1, size_t length, float *dst, float lambd) {
+  size_t i = 0;
   const float neg_lambd = -1 * lambd;
 #if defined(ENABLE_AVX)
   for (; i <= length - C8NUM; i += C8NUM) {

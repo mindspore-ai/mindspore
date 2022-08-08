@@ -77,7 +77,7 @@ bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   auto task = [input, output, this](size_t start, size_t end) {
-    auto ret = HShrink(input + start, (end - start), output + start, this->lambd_);
+    auto ret = HShrink(input + start, SizeToInt(end - start), output + start, this->lambd_);
     if (ret != NNACL_OK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
       return false;
