@@ -120,7 +120,7 @@ bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
 }
 
 void ApplyAdagradDACpuKernelMod::CheckShapeAndDtypeEqual(int64_t size_a, int64_t size_b, const char *name_a,
-                                                         const char *name_b) {
+                                                         const char *name_b) const {
   if (size_a != size_b) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape and dtype of '" << name_a << "' and '" << name_b
                       << "' must be the same, "
