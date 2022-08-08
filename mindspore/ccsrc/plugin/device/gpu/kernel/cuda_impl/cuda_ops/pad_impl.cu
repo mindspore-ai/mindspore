@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "include/cuda_fp16.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 // For internal OP use, not user facing
 template <typename T>
@@ -303,15 +307,53 @@ template CUDA_LIB_EXPORT void CalPadGradNHWC<half>(const size_t size, const half
                                                    const int old_height, const int old_width, const int channels,
                                                    const int padded_height, const int padded_width, const int pad_top,
                                                    const int pad_left, half* dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<double>(const double *input, double *output, const size_t *input_shape,
+                                                    const size_t *strides, const int *paddings, const int input_size,
+                                                    const size_t input_rank, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalPadGeneral<float>(const float *input, float *output, const size_t *input_shape,
                                                    const size_t *strides, const int *paddings, const int input_size,
                                                    const size_t input_rank, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalPadGeneral<half>(const half *input, half *output, const size_t *input_shape,
                                                   const size_t *strides, const int *paddings, const int input_size,
                                                   const size_t input_rank, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalPadGeneral<int>(const int *input, int *output, const size_t *input_shape,
-                                                 const size_t *strides, const int *paddings, const int input_size,
-                                                 const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<int8_t>(const int8_t *input, int8_t *output, const size_t *input_shape,
+                                                    const size_t *strides, const int *paddings, const int input_size,
+                                                    const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<int16_t>(const int16_t *input, int16_t *output, const size_t *input_shape,
+                                                     const size_t *strides, const int *paddings, const int input_size,
+                                                     const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<int32_t>(const int32_t *input, int32_t *output, const size_t *input_shape,
+                                                     const size_t *strides, const int *paddings, const int input_size,
+                                                     const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<int64_t>(const int64_t *input, int64_t *output, const size_t *input_shape,
+                                                     const size_t *strides, const int *paddings, const int input_size,
+                                                     const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<uint8_t>(const uint8_t *input, uint8_t *output, const size_t *input_shape,
+                                                     const size_t *strides, const int *paddings, const int input_size,
+                                                     const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<uint16_t>(const uint16_t *input, uint16_t *output,
+                                                      const size_t *input_shape, const size_t *strides,
+                                                      const int *paddings, const int input_size,
+                                                      const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<uint32_t>(const uint32_t *input, uint32_t *output,
+                                                      const size_t *input_shape, const size_t *strides,
+                                                      const int *paddings, const int input_size,
+                                                      const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<uint64_t>(const uint64_t *input, uint64_t *output,
+                                                      const size_t *input_shape, const size_t *strides,
+                                                      const int *paddings, const int input_size,
+                                                      const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<bool>(const bool *input, bool *output, const size_t *input_shape,
+                                                  const size_t *strides, const int *paddings, const int input_size,
+                                                  const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                            const size_t *input_shape, const size_t *strides,
+                                                            const int *paddings, const int input_size,
+                                                            const size_t input_rank, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalPadGeneral<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                             const size_t *input_shape, const size_t *strides,
+                                                             const int *paddings, const int input_size,
+                                                             const size_t input_rank, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalPad3d<float>(const size_t size, const float* input, const int num, const int channels,
                                               const int old_depth, const int old_height, const int old_width,
                                               const int padded_depth, const int padded_height, const int padded_width,

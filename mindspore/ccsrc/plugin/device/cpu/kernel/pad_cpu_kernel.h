@@ -18,35 +18,53 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_
 
 #include <memory>
-#include <unordered_map>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class PadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class PadCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<PadCpuKernelMod> {
  public:
   PadCpuKernelMod() = default;
   ~PadCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) {
+    if (is_null_input_) {
+      return true;
+    }
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs);
 
-  TypeId dtype_{kTypeUnknown};
   std::vector<std::vector<int64_t>> paddings_;
   size_t input_rank_;
-  std::vector<int32_t> flattened_paddings_;
+  std::vector<size_t> flattened_paddings_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> strides_;
   size_t input_size_{1};
   size_t output_size_{1};
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

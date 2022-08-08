@@ -15,6 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/pad_cpu_kernel.h"
+#include <complex>
+#include <map>
+#include <utility>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -25,18 +29,35 @@ constexpr size_t kPadOutputsNum = 1;
 constexpr size_t kPadElemSize = 2;
 }  // namespace
 
-void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  paddings_ = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
-    return;
+bool PadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kPadInputsNum || outputs.size() != kPadOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kPadInputsNum << " and "
+                  << kPadOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int PadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
 
-  input_shape_ = Convert2SizeT(input_shape);
+  auto paddings = base_operator->GetAttr(kAttrPaddings);
+  MS_EXCEPTION_IF_NULL(paddings);
+  paddings_ = GetValue<std::vector<std::vector<int64_t>>>(paddings);
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
+  is_null_input_ =
+    (std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>()) == 0);
+  if (is_null_input_) {
+    return static_cast<int>(KRET_OK);
+  }
 
   input_rank_ = input_shape_.size();
   if (paddings_.size() != input_rank_) {
@@ -51,14 +72,16 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', each element in 'paddings' must have size 2, but got: " << paddings_[i].size();
     }
-    flattened_paddings_.push_back(paddings_[i][0]);
-    flattened_paddings_.push_back(paddings_[i][1]);
+    flattened_paddings_.push_back(LongToSize(paddings_[i][0]));
+    flattened_paddings_.push_back(LongToSize(paddings_[i][1]));
   }
 
+  input_size_ = 1;
+  output_size_ = 1;
   for (size_t i = 0; i < input_rank_; i++) {
     input_size_ *= input_shape_[i];
-    output_size_ *= (input_shape_[i] + IntToSize(flattened_paddings_[kPadElemSize * i]) +
-                     IntToSize(flattened_paddings_[(kPadElemSize * i) + 1]));
+    output_size_ *=
+      (input_shape_[i] + flattened_paddings_[kPadElemSize * i] + flattened_paddings_[(kPadElemSize * i) + 1]);
   }
 
   if (input_rank_ < 1) {
@@ -77,30 +100,14 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     size_t ind = IntToSize(i);
     strides_[ind] = static_cast<size_t>(output_shape[ind + 1]) * strides_[ind + 1];
   }
-}
-
-bool PadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                             const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be float16, float32, float64, or int32, but got "
-                      << TypeIdLabel(dtype_);
-  }
-  return true;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename T>
-bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
   const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (memset_s(outputs_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
@@ -114,8 +121,7 @@ bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
       for (size_t i = input_rank_; i >= 1; i--) {
         size_t unravel_dimension = input_shape_[i - 1];
         size_t unraveled_index = linear_index % unravel_dimension;
-        padded_linear_index +=
-          ((unraveled_index + IntToSize(flattened_paddings_[kPadElemSize * (i - 1)])) * strides_[i - 1]);
+        padded_linear_index += ((unraveled_index + flattened_paddings_[kPadElemSize * (i - 1)]) * strides_[i - 1]);
         linear_index -= unraveled_index;
         linear_index /= unravel_dimension;
       }
@@ -124,6 +130,36 @@ bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   };
   ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_);
   return true;
+}
+
+const std::vector<std::pair<KernelAttr, PadCpuKernelMod::KernelRunFunc>> &PadCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, PadCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &PadCpuKernelMod::LaunchKernel<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), &PadCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &PadCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &PadCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &PadCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &PadCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &PadCpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &PadCpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &PadCpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &PadCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &PadCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &PadCpuKernelMod::LaunchKernel<std::complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &PadCpuKernelMod::LaunchKernel<std::complex<double>>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Pad, PadCpuKernelMod);
