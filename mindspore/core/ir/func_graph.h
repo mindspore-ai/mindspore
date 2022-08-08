@@ -41,7 +41,7 @@
 #include "abstract/abstract_value.h"
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;

@@ -22,7 +22,7 @@
 #include <string>
 #include <optional>
 #include "mindspore/core/utils/ms_utils.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

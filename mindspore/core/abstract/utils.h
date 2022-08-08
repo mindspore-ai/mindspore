@@ -28,7 +28,7 @@
 #include "utils/any.h"
 #include "utils/misc.h"
 #include "utils/shape_utils.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 namespace mindspore {
 namespace abstract {

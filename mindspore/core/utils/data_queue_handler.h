@@ -20,7 +20,7 @@
 #include <utility>
 #include <functional>
 #include <vector>
-#include "utils/visible.h"
+#include "utils/macros.h"
 #include "utils/callback_handler.h"
 
 namespace mindspore {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_UTILS_VISIBLE_H_
-#define MINDSPORE_CORE_UTILS_VISIBLE_H_
+/**
+ * @brief This file used to define uniform macros on different platforms
+ *
+ */
+#ifndef MINDSPORE_CORE_UTILS_MACORS_H_
+#define MINDSPORE_CORE_UTILS_MACORS_H_
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
 #ifdef BUILDING_DLL
@@ -27,11 +31,22 @@
 #define MS_EXPORT __declspec(dllimport)
 #define GVAR_DEF(type, name, value) MS_CORE_API extern const type name;
 #endif
-#define MS_LOCAL
 #else
 #define MS_CORE_API __attribute__((visibility("default")))
 #define MS_EXPORT __attribute__((visibility("default")))
-#define MS_LOCAL __attribute__((visibility("hidden")))
 #define GVAR_DEF(type, name, value) MS_CORE_API inline const type name = value;
 #endif
-#endif  // MINDSPORE_CORE_UTILS_VISIBLE_H_
+
+#ifdef _MSC_VER
+#define NO_RETURN __declspec(noreturn)
+#else
+#define NO_RETURN __attribute__((noreturn))
+#endif
+
+#ifdef _MSC_VER
+#define ALWAYS_INLINE __declspec(__forceinline)
+#else
+#define ALWAYS_INLINE __attribute__((__always_inline__))
+#endif
+
+#endif  // MINDSPORE_CORE_UTILS_MACORS_H_

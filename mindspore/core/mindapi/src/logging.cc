@@ -17,6 +17,7 @@
 #define MIND_LOG_NO_MS_LOG
 #include "mindapi/base/logging.h"
 #include "utils/log_adapter.h"
+#include "utils/macros.h"
 
 namespace mindspore::api {
 static MsLogLevel ToMsLogLevel(LogLevel level) {
@@ -49,7 +50,7 @@ class LogWriterImpl {
     writer_ < log_stream;
   }
 
-  void WriteAndThrow(const LogStream &stream) const __attribute__((noreturn)) {
+  void WriteAndThrow(const LogStream &stream) const NO_RETURN {
     mindspore::LogStream log_stream;
     log_stream << stream.stream_.rdbuf();
     writer_ ^ log_stream;

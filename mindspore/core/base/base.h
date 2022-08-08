@@ -27,7 +27,7 @@
 #include <utility>
 #include <algorithm>
 #include "utils/hashing.h"
-#include "utils/visible.h"
+#include "utils/macros.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
@@ -125,7 +125,8 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \param[in] tid Define a type id.
   ///
   /// \return The result of the judgment.
-  static bool IsDerivedFrom(uint32_t tid) __attribute__((__always_inline__)) { return tid == Base::kTypeId; }
+
+  static bool IsDerivedFrom(uint32_t tid) ALWAYS_INLINE { return tid == Base::kTypeId; }
 
   /// \brief Judge whether this object is an instance of a given class which is derived from Base.
   ///
@@ -205,7 +206,7 @@ inline T *dyn_cast_ptr(const std::shared_ptr<U> &r) {
 
 #define MS_DECLARE_PARENT(current_t, parent_t)                                             \
   static constexpr uint32_t kTypeId = ConstStringHash(#parent_t "_" #current_t);           \
-  static bool IsDerivedFrom(uint32_t tid) __attribute__((__always_inline__)) {             \
+  static bool IsDerivedFrom(uint32_t tid) ALWAYS_INLINE {                                  \
     return (tid == current_t::kTypeId) || parent_t::IsDerivedFrom(tid);                    \
   }                                                                                        \
   uint32_t tid() const override { return current_t::kTypeId; }                             \

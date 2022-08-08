@@ -24,7 +24,7 @@
 #include <thread>
 #include <limits>
 #include <cmath>
-#include "utils/visible.h"
+#include "utils/macros.h"
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
   ClassType(const ClassType &) = delete;   \
