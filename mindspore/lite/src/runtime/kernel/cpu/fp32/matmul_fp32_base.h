@@ -44,9 +44,13 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int Prepare() override;
   int FullConnectionPrepare();
   int MatmulPrepare();
+  void SetConv1x1OriginWeight(float *conv1x1_origin_weight) { conv1x1_origin_weight_ = conv1x1_origin_weight; }
+  void SetConv1x1OriginBias(float *conv1x1_origin_bias) { conv1x1_origin_bias_ = conv1x1_origin_bias; }
+  int Conv1x1Prepare();
   int ReSize() override;
   int FullConnectionReSize();
   int MatmulReSize();
+  int Conv1x1ReSize();
   int Run() override;
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
@@ -112,6 +116,9 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   bool pack_opt_{false};  // indicate whether packing can be multi-threads, currently, only support in ARM64 && packA.
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
+
+  float *conv1x1_origin_weight_ = nullptr;
+  float *conv1x1_origin_bias_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_BASE_H_

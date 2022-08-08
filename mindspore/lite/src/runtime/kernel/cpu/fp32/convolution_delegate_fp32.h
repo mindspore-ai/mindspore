@@ -19,6 +19,7 @@
 #include <vector>
 #include "src/runtime/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/matmul_parameter.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::InnerContext;
@@ -30,6 +31,9 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateCPUKernel() override {
     FreeCopiedData();
+    if (matmul_param_ != nullptr) {
+      matmul_param_ = nullptr;
+    }
     if (conv_kernel_ != nullptr) {
       op_parameter_ = nullptr;  // op_parameter will be freed in conv_kernel
       delete conv_kernel_;
@@ -84,6 +88,8 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   kernel::LiteKernel *CpuConvFp32KernelSelect();
   kernel::LiteKernel *CpuConvFp32NC4KernelSelect();
   kernel::LiteKernel *CpuConvFp32NHWCKernelSelect();
+  kernel::LiteKernel *CreateConv1x1MatmulKernel();
+  bool CheckAvxUseSW1x1Conv(const ConvParameter *conv_param);
   bool CheckAvxUseSWConv(const ConvParameter *conv_param);
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
@@ -117,10 +123,13 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
 
  protected:
   kernel::LiteKernel *conv_kernel_{nullptr};
+  MatMulParameter *matmul_param_{nullptr};
   float *origin_weight_{nullptr};
   float *origin_bias_{nullptr};
   bool need_free_weight_{false};
   bool need_free_bias_{false};
+  bool input_const_{false};
+  bool weight_const_{false};
 };
 }  // namespace mindspore::kernel
 
