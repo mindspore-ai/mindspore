@@ -3087,7 +3087,7 @@ def median(x, global_median=False, axis=0, keep_dims=False):
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1 : common median compute

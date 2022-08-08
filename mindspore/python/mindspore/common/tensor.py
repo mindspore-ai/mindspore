@@ -4742,15 +4742,11 @@ class Tensor(Tensor_):
             axis (int): The dimension need to reduce. Default: 0.
             keepdim (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
-        Outputs:
-              Not exist when global_median is True.
-
         Returns:
-            y (Tensor) - Has the same dtype as the self Tensor.
-                If `keep_dims` is true, the output tensors have the same dimension as the self Tensor except in
-                dimension `axis` which are of size 1. Otherwise, the outputs tensor have 1 fewer dimension than input.
+            y (Tensor) - Has the same dtype as the self Tensor. If `global_median` is true, the `y` has only one
+                element.  If `keep_dims` is true, the `y` has the same shape as the self Tensor except the shape of
+                `y` in dimension `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
             indices (Tensor) - Has the same shape as the `y`, but dtype is int64.
-                Not exist when global_median is True.
 
         Raises:
             TypeError: If dtype of self Tensor is not one of the following: int16, int32, int64, float32, double.
