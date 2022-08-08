@@ -55,10 +55,9 @@ mindspore.nn.CrossEntropyLoss
         - **label_smoothing** (float): 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。 默认值: 0.0。
 
     输入：
-        - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`
-          (针对二维数据), 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。输入值需为对数概率。数据类型仅支持float32或float16。
-        - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)`
-          (针对高维数据)。
+        - **logits** (Tensor) - 输入预测值，shape为 :math:`(C,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。输入值需为对数概率。数据类型仅支持float32或float16。
+        - **labels** (Tensor) - 输入目标值。若目标值为类别索引，则shape为 :math:`()` 、 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` ，数据类型仅支持int32。
+          若目标值为类别概率，则shape为 :math:`(C,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` ，数据类型仅支持float32或float16。
 
     返回：
         Tensor，一个数据类型与logits相同的Tensor。
