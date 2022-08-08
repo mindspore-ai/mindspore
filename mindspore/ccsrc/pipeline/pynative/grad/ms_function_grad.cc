@@ -163,46 +163,52 @@ void MsFunction::UpdateMsFunctionForwardTensors(const FrontendOpRunInfoPtr &op_r
   }
 }
 
-void MsFunction::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
-                                        ValuePtrList *input_values, CNodePtr *ms_function_cnode) const {
-  // Get input node info of ms_function
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
-  std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
+void MsFunction::GetInputArgsNode(const py::args &args, AnfNodePtrList *input_nodes, ValuePtrList *input_values) const {
+  MS_EXCEPTION_IF_NULL(input_nodes);
   MS_EXCEPTION_IF_NULL(input_values);
-  const auto &grad_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
-  for (size_t i = 0; i < args.size(); ++i) {
-    const auto &inp_i_value = PyNativeAlgo::DataConvert::PyObjToValue(args[i]);
-    const auto &input_i_node = grad_executor->GetInput(inp_i_value);
+  const auto &grad_exec = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
+
+  size_t input_args_size = args.size();
+  for (size_t i = 0; i < input_args_size; ++i) {
+    const auto &input_i_value = PyNativeAlgo::DataConvert::PyObjToValue(args[i]);
+    MS_LOG(DEBUG) << "The input " << i << " value of ms_function graph is: " << input_i_value->ToString();
+    (void)input_values->emplace_back(input_i_value);
+
+    const auto &input_i_node = grad_exec->GetInput(input_i_value);
     MS_EXCEPTION_IF_NULL(input_i_node);
     MS_LOG(DEBUG) << "The input " << i << " node of ms_function graph is: " << input_i_node->DebugString();
-    (void)input_nodes.emplace_back(input_i_node);
-    MS_LOG(DEBUG) << "The input " << i << " value of ms_function graph is: " << inp_i_value->ToString();
-    (void)(*input_values).emplace_back(inp_i_value);
+    (void)input_nodes->emplace_back(input_i_node);
   }
+}
 
-  // Get dfbuilder and graph info map
-  const auto &top_cell = grad_executor->top_cell();
+void MsFunction::GetWeightsNode(const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes,
+                                ValuePtrList *input_values, const size_t input_args_index) const {
+  const auto &grad_exec = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
+  // Get graph info map.
+  const auto &top_cell = grad_exec->top_cell();
   auto df_builder = top_cell->df_builder();
   MS_EXCEPTION_IF_NULL(df_builder);
   const auto &graph_info = top_cell->graph_info_map().at(df_builder);
   MS_EXCEPTION_IF_NULL(graph_info);
   // Get weights info of ms_function
-  std::vector<AnfNodePtr> new_params;
   auto manage = Manage(ms_func_graph, false);
-  for (const auto &anf_node : ms_func_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto param = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(param);
-    if (!param->has_default()) {
-      (void)new_params.emplace_back(param);
+  const auto &original_params = ms_func_graph->parameters();
+  size_t params_size = original_params.size();
+  std::vector<AnfNodePtr> new_params;
+  for (size_t i = 0; i < params_size; ++i) {
+    if (i < input_args_index) {  // non-weights node.
+      (void)new_params.emplace_back(original_params[i]);
       continue;
     }
+    const auto &anf_node = original_params[i];
+    auto param = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
     auto param_info = param->param_info();
     MS_EXCEPTION_IF_NULL(param_info);
     auto param_name = param_info->name();
     if (graph_info->params.count(param_name) != 0) {
       // Share same weight parameter in different ms_function call.
-      auto same_param = graph_info->params.at(param_name);
+      const auto &same_param = graph_info->params.at(param_name);
       manage->Replace(anf_node, same_param);
       param = same_param;
     } else {
@@ -210,19 +216,30 @@ void MsFunction::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const
       param->debug_info()->set_name(param_name);
     }
     (void)new_params.emplace_back(param);
-    (void)input_nodes.emplace_back(param);
-    (void)(*input_values).emplace_back(param->default_param());
+    (void)input_nodes->emplace_back(param);
+    const auto &default_param = param->default_param();
+    MS_EXCEPTION_IF_NULL(default_param);
+    (void)input_values->emplace_back(default_param);
     top_cell->SetParamNodeMapInGraphInfoMap(df_builder, param_name, param);
     MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
-                  << param->default_param()->ToString() << ". Its name is: " << param_name;
+                  << default_param->ToString() << ". Its name is: " << param_name;
   }
   ms_func_graph->set_parameters(new_params);
   manage->Clear();
+}
 
+void MsFunction::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
+                                        ValuePtrList *input_values, CNodePtr *ms_function_cnode) const {
+  // Get input node info of ms_function
+  std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
+  GetInputArgsNode(args, &input_nodes, input_values);
+  // Get weights node info of ms_function.
+  GetWeightsNode(ms_func_graph, &input_nodes, input_values, args.size());
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
-  *ms_function_cnode = top_cell->fg()->NewCNode(input_nodes);
-  MS_LOG(DEBUG) << "Make ms function forward cnode: " << (*ms_function_cnode)->DebugString();
+  const auto &grad_exec = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
+  *ms_function_cnode = grad_exec->top_cell()->fg()->NewCNode(input_nodes);
+  MS_LOG(DEBUG) << "Make ms function forward CNode: " << (*ms_function_cnode)->DebugString();
 }
 
 // Make adjoint for ms_function fprop graph and connect it with previous op
@@ -241,7 +258,6 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph,
   // Connect grad graph of ms_function to context.
   auto k_pynative_cell_ptr = top_cell->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  MS_EXCEPTION_IF_NULL(grad_graph);
   if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, input_values, actual_out_v, grad_graph)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();

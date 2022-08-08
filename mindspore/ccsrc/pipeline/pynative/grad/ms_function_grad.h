@@ -41,22 +41,26 @@ class MsFunction {
 
  private:
   const std::string &graph_phase() const { return graph_phase_; }
+  void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
+                           const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  // Update device address of value node in grad graph by forward tensors.
   void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::TensorPtr> &total_output_tensors,
                   const FuncGraphPtr &grad_graph) const;
   void ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const FrontendOpRunInfoPtr &op_run_info,
                                     const ValuePtr &added_out, const FuncGraphPtr &ms_func_graph,
                                     const FuncGraphPtr &grad_graph) const;
   void UpdateMsFunctionForwardTensors(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &new_forward_value) const;
+  // Make CNode for ms_function forward graph.
+  void GetInputArgsNode(const py::args &args, AnfNodePtrList *input_nodes, ValuePtrList *input_values) const;
+  void GetWeightsNode(const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes, ValuePtrList *input_values,
+                      const size_t input_args_index) const;
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode) const;
   // Make adjoint for ms_function fprop graph and connect it with previous op
   CNodePtr MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
                                     const py::object &actual_out, const py::args &args,
                                     const ValuePtr &actual_out_v) const;
-  void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
-                           const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
 
- private:
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
   // Stores parameter in ms_function
