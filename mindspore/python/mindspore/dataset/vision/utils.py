@@ -121,7 +121,8 @@ class Border(str, Enum):
     - Border.REFLECT: means it reflects the values on the edge omitting the last value of edge.
     - Border.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
 
-    Note: This class derived from class str to support json serializable.
+    Note:
+        This class derived from class str to support json serializable.
     """
     CONSTANT: str = "constant"
     EDGE: str = "edge"

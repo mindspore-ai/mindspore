@@ -52,7 +52,7 @@ class OcclusionSensitivity(Metric):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor
         >>>
