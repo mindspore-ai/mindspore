@@ -52,8 +52,9 @@ void ParallelWorker::Run() {
 
 void ParallelWorker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  if (alive_) {
-    cond_var_.wait(_l);
+  cond_var_.wait(_l, [&] { return active_num_ > 0 || !alive_; });
+  if (active_num_ > 0) {
+    active_num_--;
   }
 }
 
@@ -197,7 +198,9 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   p_task->finished = 1;
   p_task->task_num = task_num;
   p_task->valid.store(true);
-  ActiveWorkers();
+  for (auto &worker : workers_) {
+    worker->FastActive();
+  }
 
   p_task->status |= p_task->func(p_task->content, 0, 0, 0);
 
