@@ -81,7 +81,7 @@ class Embedding(Cell):
     Raises:
         TypeError: If `vocab_size` or `embedding_size` is not an int.
         TypeError: If `use_one_hot` is not a bool.
-        ValueError: If `padding_idx` is an int which not in range [0, `vocab_size`].
+        ValueError: If `padding_idx` is an int which not in range [0, `vocab_size`).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -109,7 +109,7 @@ class Embedding(Cell):
         self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
-            self.padding_idx = validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_BOTH,
+            self.padding_idx = validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_LEFT,
                                                          "padding_idx", self.cls_name)
             if isinstance(self.init_tensor, Tensor) and self.init_tensor.init is not None:
                 self.init_tensor = self.init_tensor.init_data()

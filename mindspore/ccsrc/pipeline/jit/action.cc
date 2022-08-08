@@ -809,7 +809,7 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   auto phase = graph_executor->phase();
   MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
   // Exporting graph in PyNative mode or only running forward process no need to do this action.
-  auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+  auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
   if (phase.find("export") == 0 || !pynative_exec->grad_flag()) {
     MS_LOG(DEBUG) << "When exporting graph or only running forward process, no need to eliminate forward cnode.";
     auto grad_exec = pynative_exec->grad_executor();

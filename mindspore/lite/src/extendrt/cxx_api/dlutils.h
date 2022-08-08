@@ -70,15 +70,32 @@ inline Status DLSoPath(const std::string &benchmark_so, const std::string &targe
 
 inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function) {
   // do dlopen and export functions from c_dataengine
+  if (handle == nullptr) {
+    MS_LOG(WARNING) << "Input parameter handle cannot be nullptr";
+    return Status(kMEFailed, "Input parameter handle cannot be nullptr");
+  }
   *handle = dlopen(dl_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
 
+  auto get_dl_error = []() -> std::string {
+    auto error = dlerror();
+    return error == nullptr ? "" : error;
+  };
   if (*handle == nullptr) {
-    return Status(kMEFailed, "dlopen failed, the pointer[handle] is null.");
+    auto error = get_dl_error();
+    MS_LOG(WARNING) << "dlopen " << dl_path << " failed, error: " << error;
+    return Status(kMEFailed, "dlopen " + dl_path + " failed, error: " + error);
   }
-
-  *function = dlsym(*handle, func_name.c_str());
-  if (*function == nullptr) {
-    return Status(kMEFailed, "Could not find " + func_name + " in " + dl_path);
+  if (!func_name.empty()) {
+    if (function == nullptr) {
+      MS_LOG(WARNING) << "Input parameter function cannot be nullptr";
+      return Status(kMEFailed, "Input parameter function cannot be nullptr");
+    }
+    *function = dlsym(*handle, func_name.c_str());
+    if (*function == nullptr) {
+      auto error = get_dl_error();
+      MS_LOG(WARNING) << "Could not find " + func_name + " in " + dl_path + ", error: " << error;
+      return Status(kMEFailed, "Could not find " + func_name + " in " + dl_path + ", error: " + error);
+    }
   }
   return kSuccess;
 }

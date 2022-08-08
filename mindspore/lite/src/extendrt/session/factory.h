@@ -28,23 +28,12 @@ class SessionRegistry {
   SessionRegistry() = default;
   virtual ~SessionRegistry() = default;
 
-  static SessionRegistry *GetInstance() {
-    static SessionRegistry instance;
-    return &instance;
-  }
+  static SessionRegistry &GetInstance();
 
   void RegSession(const mindspore::SessionType &session_type,
-                  std::function<std::shared_ptr<InferSession>(const SessionConfig &)> creator) {
-    session_map_[session_type] = creator;
-  }
+                  std::function<std::shared_ptr<InferSession>(const SessionConfig &)> creator);
 
-  std::shared_ptr<InferSession> GetSession(const mindspore::SessionType &session_type, const SessionConfig &config) {
-    auto it = session_map_.find(session_type);
-    if (it == session_map_.end()) {
-      return nullptr;
-    }
-    return it->second(config);
-  }
+  std::shared_ptr<InferSession> GetSession(const mindspore::SessionType &session_type, const SessionConfig &config);
 
  private:
   mindspore::HashMap<SessionType, std::function<std::shared_ptr<InferSession>(const SessionConfig &)>> session_map_;
@@ -54,7 +43,7 @@ class SessionRegistrar {
  public:
   SessionRegistrar(const mindspore::SessionType &session_type,
                    std::function<std::shared_ptr<InferSession>(const SessionConfig &)> creator) {
-    SessionRegistry::GetInstance()->RegSession(session_type, creator);
+    SessionRegistry::GetInstance().RegSession(session_type, creator);
   }
   ~SessionRegistrar() = default;
 };

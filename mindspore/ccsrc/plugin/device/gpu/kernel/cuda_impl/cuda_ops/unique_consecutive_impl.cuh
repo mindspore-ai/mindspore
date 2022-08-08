@@ -20,10 +20,8 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive(const T *input, int num_elements,
-                                                                   const std::vector<int64_t> &input_shape,
-                                                                   bool is_flattend, int64_t axis, S *input_index,
-                                                                   S *sorted_index, S *range_data, T *indices_data,
-                                                                   T *output, S *index, S *count,
-                                                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT std::vector<std::vector<int>> CalUniqueConsecutive(
+  const T *input, int num_elements, const std::vector<int64_t> &input_shape, bool is_axis_none, int64_t axis,
+  S *input_index, S *sorted_index, S *range_data, T *indices_data, size_t *dev_input_shape, size_t *dev_input_axis,
+  T *output, S *index, S *count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNIQUE_CONSECUTIVE_IMPL_CUH_

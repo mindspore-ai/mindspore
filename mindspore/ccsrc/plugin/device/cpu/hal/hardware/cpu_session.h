@@ -45,12 +45,13 @@ class CPUSession : public SessionBasic {
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
   void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
-  KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+  KernelGraphPtr BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
                              const std::vector<tensor::TensorPtr> &input_tensors,
                              const std::vector<int64_t> &tensors_mask) override;
-  void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
-                 VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
-  void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+  void RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
+                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                 const std::vector<int64_t> &tensors_mask) override;
+  void RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                        std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                        const std::vector<int64_t> &tensors_mask) override;
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,

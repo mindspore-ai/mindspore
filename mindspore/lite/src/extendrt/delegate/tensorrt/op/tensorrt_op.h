@@ -26,7 +26,7 @@
 #include "include/errorcode.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "src/litert/delegate/auto_registration_factory.h"
+#include "src/extendrt/delegate/tensorrt/op_registration_factory.h"
 #include "src/extendrt/delegate/tensorrt/tensor_info.h"
 #include "src/common/log_util.h"
 #include "ops/base_operator.h"

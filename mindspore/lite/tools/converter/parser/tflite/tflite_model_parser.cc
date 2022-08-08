@@ -435,23 +435,8 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
   if (primitive_c->name() == "Conv2D" || primitive_c->name() == "Conv2DFusion") {
     round_type = 2;
   }
-  int32_t inputs_size = 0;
-  int32_t outputs_size = 0;
-  if (primitive_c->name() == "FullyConnection") {
-    std::vector<int32_t> inputs(op->inputs.size());
-    std::vector<int32_t> outputs(op->outputs.size());
-    auto it =
-      std::copy_if(op->inputs.begin(), op->inputs.end(), inputs.begin(), [](const int32_t item) { return item >= 0; });
-    inputs.resize(std::distance(inputs.begin(), it));
-    it = std::copy_if(op->outputs.begin(), op->outputs.end(), outputs.begin(),
-                      [](const int32_t item) { return item >= 0; });
-    outputs.resize(std::distance(outputs.begin(), it));
-  } else {
-    inputs_size = op->inputs.size();
-    outputs_size = op->outputs.size();
-  }
-  auto quant_params_holder = std::make_shared<QuantParamHolder>(inputs_size, outputs_size);
-  MSLITE_CHECK_PTR(quant_params_holder);
+
+  std::map<int, std::vector<schema::QuantParamT>> in_quant_param;
   size_t idx = 0;
   for (auto input_idx : op->inputs) {
     if (input_idx < 0) {
@@ -468,9 +453,10 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    quant_params_holder->set_input_quant_param(idx, quant_params);
+    in_quant_param.insert({idx, quant_params});
     idx++;
   }
+  std::map<size_t, std::vector<schema::QuantParamT>> out_quant_param;
   idx = 0;
   for (auto output_idx : op->outputs) {
     if (output_idx < 0) {
@@ -487,10 +473,20 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    quant_params_holder->set_output_quant_param(idx, quant_params);
+    out_quant_param.insert({idx, quant_params});
     idx++;
   }
-  primitive_c->AddAttr("quant_params", quant_params_holder);
+  if (!in_quant_param.empty() || !out_quant_param.empty()) {
+    auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+    MSLITE_CHECK_PTR(quant_params_holder);
+    for (auto &iter : in_quant_param) {
+      quant_params_holder->set_input_quant_param(iter.first, iter.second);
+    }
+    for (auto &iter : out_quant_param) {
+      quant_params_holder->set_output_quant_param(iter.first, iter.second);
+    }
+    primitive_c->AddAttr("quant_params", quant_params_holder);
+  }
   return RET_OK;
 }
 

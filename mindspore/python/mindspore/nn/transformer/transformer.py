@@ -31,6 +31,7 @@ from mindspore._checkparam import Validator
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
+from mindspore.log import _LogActionOnce
 from .layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
@@ -390,7 +391,8 @@ class FeedForward(Cell):
             >>> print(output.shape)
             (2, 20, 15)
     """
-
+    @_LogActionOnce(logger=logger, key='FeedForward',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
                                 ffn_hidden_size=Validator.check_positive_int,
                                 dropout_rate=Validator.check_non_negative_float,
@@ -578,7 +580,8 @@ class AttentionMask(Cell):
               [1. 1. 1. 0]
               [0. 0. 0. 0]]]
     """
-
+    @_LogActionOnce(logger=logger, key='AttentionMask',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(seq_length=Validator.check_positive_int,
                                 parallel_config=_valid_type_checks([OpParallelConfig], "AttentionMask"))
     def __init__(self, seq_length, parallel_config=default_dpmp_config):
@@ -667,7 +670,8 @@ class VocabEmbedding(Cell):
             >>> print(table.shape)
             (30, 30)
     """
-
+    @_LogActionOnce(logger=logger, key='VocabEmbedding',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(vocab_size=Validator.check_positive_int,
                                 embedding_size=Validator.check_positive_int,
                                 parallel_config=_valid_type_checks([EmbeddingOpParallelConfig], "VocabEmbedding"))
@@ -821,7 +825,8 @@ class MultiHeadAttention(Cell):
             >>> print(past[1].shape)
             (2, 3, 20, 5)
     """
-
+    @_LogActionOnce(logger=logger, key='MultiHeadAttention',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
@@ -1420,7 +1425,8 @@ class TransformerEncoderLayer(Cell):
             >>> print(past[1].shape)
             (2, 2, 16, 4)
     """
-
+    @_LogActionOnce(logger=logger, key='TransformerEncoderLayer',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
@@ -1804,7 +1810,8 @@ class TransformerDecoderLayer(Cell):
             >>> print(past[3].shape)
             (2, 2, 20, 32)
     """
-
+    @_LogActionOnce(logger=logger, key='TransformerDecoderLayer',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
@@ -2344,7 +2351,8 @@ class TransformerEncoder(Cell):
             >>> print(past[0][1].shape)
             (2, 2, 16, 4)
     """
-
+    @_LogActionOnce(logger=logger, key='TransformerEncoder',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
@@ -2575,7 +2583,8 @@ class TransformerDecoder(Cell):
             >>> print(past[0][3].shape)
             (2, 2, 20, 32)
     """
-
+    @_LogActionOnce(logger=logger, key='TransformerDecoder',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
@@ -2842,7 +2851,8 @@ class Transformer(Cell):
             >>> print(de_past[0][3].shape)
             (2, 2, 20, 32)
     """
-
+    @_LogActionOnce(logger=logger, key='Transformer',
+                    no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,

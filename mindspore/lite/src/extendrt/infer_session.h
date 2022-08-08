@@ -51,6 +51,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
  protected:
   FuncGraphPtr graph_;
   compile::GraphPartitionPtr partition_;
+  static void HandleGPUContext(const std::shared_ptr<Context> &context);
 };
 }  // namespace mindspore
 #endif

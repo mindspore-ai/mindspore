@@ -136,3 +136,33 @@ def test_pad_vmap_cpu():
     vmap_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     vmap_case()
+
+
+class PadNet(nn.Cell):
+    def __init__(self, paddings):
+        super(PadNet, self).__init__()
+        self.pad = ops.Pad(paddings)
+
+    def construct(self, x):
+        return self.pad(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('dtype', [np.bool_, np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32,
+                                   np.int64, np.float16, np.float64, np.complex64, np.complex128])
+def test_pad_dtype(mode, dtype):
+    """
+    Feature: test ops.Pad forward.
+    Description: inputs with different data type.
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    paddings = ((1, 0), (1, 1))
+    x = np.arange(3 * 4).reshape((3, 4)).astype(dtype)
+    expect = np.pad(x, paddings, mode="constant", constant_values=0)
+    net = PadNet(paddings)
+    output = net(Tensor(x))
+    np.testing.assert_array_almost_equal(output.asnumpy(), expect)

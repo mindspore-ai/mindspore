@@ -31,7 +31,7 @@ class MaxPoolGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   MaxPoolGradWithArgmaxCpuKernelMod() {}
   ~MaxPoolGradWithArgmaxCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -41,9 +41,7 @@ class MaxPoolGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-  bool ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
-
- protected:
+  void ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

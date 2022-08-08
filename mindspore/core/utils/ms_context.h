@@ -24,15 +24,6 @@
 #include <functional>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#ifdef ENABLE_TDTQUE
-#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
-using mindspore::dataset::TdtHandle;
-#endif
-#ifndef NO_DLIB
-#include "acl/acl_tdt.h"
-#include "runtime/dev.h"
-#include "runtime/config.h"
-#endif
 
 namespace mindspore {
 enum MsBackendPolicy {
@@ -154,11 +145,7 @@ class MS_CORE_API MsContext {
   bool enable_dump_ir() const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
-#ifdef ENABLE_TDTQUE
-  using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
-  void CreateTensorPrintThread(const PrintThreadCrt &ctr);
-  void DestroyTensorPrintThread();
-#endif
+
   static void device_seter(const DeviceSeter &device) { seter_ = device; }
   static void device_type_seter(const DeviceTypeSeter &device_type) { device_type_seter_ = device_type; }
 
@@ -194,10 +181,6 @@ class MS_CORE_API MsContext {
   float float_params_[MsCtxParam::NUM_FLOAT_PARAMS];
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
   MsBackendPolicy backend_policy_;
-#ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle_ = nullptr;
-  std::thread acl_tdt_print_;
-#endif
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string

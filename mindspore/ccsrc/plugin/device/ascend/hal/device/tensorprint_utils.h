@@ -19,16 +19,15 @@
 
 #include <map>
 #include <string>
-#include "ir/dtype/type.h"
-#include "acl/acl_tdt.h"
-#include "tdt/tsd_client.h"
-#include "tdt/data_common.h"
-#include "tdt/tdt_host_interface.h"
-#include "proto/print.pb.h"
-#include "include/common/visible.h"
+#include <thread>
+#include <functional>
 
-namespace mindspore {
-class COMMON_EXPORT TensorPrint {
+extern "C" {
+struct acltdtChannelHandle;
+}  // extern "C"
+
+namespace mindspore::device::ascend {
+class TensorPrint {
  public:
   explicit TensorPrint(const std::string &path, const acltdtChannelHandle *acl_handle)
       : print_file_path_(path), acl_handle_(acl_handle) {}
@@ -39,5 +38,9 @@ class COMMON_EXPORT TensorPrint {
   std::string print_file_path_;
   const acltdtChannelHandle *acl_handle_;
 };
-}  // namespace mindspore
+
+using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
+void CreateTensorPrintThread(const PrintThreadCrt &ctr);
+void DestroyTensorPrintThread();
+}  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_

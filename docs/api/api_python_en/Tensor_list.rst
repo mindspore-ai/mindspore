@@ -85,6 +85,7 @@ Reduction Methods
     mindspore.Tensor.argmin_with_value
     mindspore.Tensor.max
     mindspore.Tensor.mean
+    mindspore.Tensor.median
     mindspore.Tensor.min
     mindspore.Tensor.norm
     mindspore.Tensor.prod
@@ -226,7 +227,7 @@ Gradient Clipping
     mindspore.Tensor.clip
 
 Parameter Operation Methods
---------------------
+---------------------------
 
 .. msplatformautosummary::
     :toctree: Tensor

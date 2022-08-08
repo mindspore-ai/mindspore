@@ -2318,3 +2318,57 @@ TEST_F(MindDataTestPipeline, TestAdjustBrightnessParamCheck) {
   // Expect failure: invalid value of AdjustBrightness
   EXPECT_EQ(iter1, nullptr);
 }
+
+/// Feature: TrivialAugmentWide op
+/// Description: test TrivialAugmentWide pipeline
+/// Expectation: create an ImageFolder dataset then do auto augmentation on it with the policy
+TEST_F(MindDataTestPipeline, TestTrivialAugmentWide) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrivialAugmentWide.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto trivial_augment_wide_op = vision::TrivialAugmentWide(31, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({trivial_augment_wide_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: TrivialAugmentWide op
+/// Description: test TrivialAugmentWide with invalid fill_value
+/// Expectation: pipeline iteration failed with wrong argument fill_value
+TEST_F(MindDataTestPipeline, TestTrivialAugmentWideInvalidFillValue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrivialAugmentWideInvalidFillValue.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto trivial_augment_wide_op = vision::TrivialAugmentWide(31,
+                                             InterpolationMode::kNearestNeighbour, {20, 20});
+
+  ds = ds->Map({trivial_augment_wide_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

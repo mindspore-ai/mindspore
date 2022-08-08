@@ -53,7 +53,7 @@ AnfNodePtrList ExpandMultiJ(const FuncGraphVector &func_graphs, const OptimizerP
 bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
   // Check whether need to eliminate forward cnodes in pynative mode.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+    auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();
     bool eliminate_forward = grad_exec->eliminate_forward();
     grad_exec->set_eliminate_forward(eliminate_forward && prim_nodes_.empty());

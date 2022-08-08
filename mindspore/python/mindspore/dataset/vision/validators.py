@@ -1271,3 +1271,18 @@ def check_solarize(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_trivial_augment_wide(method):
+    """Wrapper method to check the parameters of TrivialAugmentWide."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [num_magnitude_bins, interpolation, fill_value], _ = parse_user_args(method, *args, **kwargs)
+        type_check(num_magnitude_bins, (int,), "num_magnitude_bins")
+        check_value(num_magnitude_bins, (2, FLOAT_MAX_INTEGER), "num_magnitude_bins")
+        type_check(interpolation, (Inter,), "interpolation")
+        check_fill_value(fill_value)
+        return method(self, *args, **kwargs)
+
+    return new_method

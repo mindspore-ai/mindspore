@@ -44,7 +44,7 @@ inline ValuePtr PyAttrValue(const py::object &obj) {
   return converted_ret;
 }
 
-OpExecInfoPtr ConstructOpExecInfo() {
+FrontendOpRunInfoPtr ConstructOpExecInfo() {
   py::str op_name = "Conv2D";
   py::object tensor_py_module = py::module::import("mindspore.common.tensor").attr("Tensor");
   py::object np_py_module = py::module::import("numpy");
@@ -64,8 +64,7 @@ OpExecInfoPtr ConstructOpExecInfo() {
   auto conv_obj = prim::GetPythonOps("conv2d_prim", "gtest_input.pynative");
   py::none py_none;
   py::args args = py::make_tuple(conv_obj, op_name, op_inputs);
-  py::list args_input = args[PY_INPUTS];
-  return PynativeExecutor::GetInstance()->forward_executor()->GenerateOpExecInfo(args);
+  return PyNativeExecutor::GetInstance()->forward_executor()->GenerateOpRunInfo(args);
 }
 
 TEST_F(TestPynativeExecute, TestCreateContext) {

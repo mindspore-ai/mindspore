@@ -62,6 +62,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         solarize_ir.cc
         swap_red_blue_ir.cc
         to_tensor_ir.cc
+        trivial_augment_wide_ir.cc
         uniform_aug_ir.cc
         vertical_flip_ir.cc
         )

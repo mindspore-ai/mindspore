@@ -1241,6 +1241,7 @@ def squeeze(input_x, axis=()):
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
 
     Raises:
+        TypeError: If `input_x` is not a tensor.
         TypeError: If `axis` is neither an int nor tuple.
         TypeError: If `axis` is a tuple whose elements are not all int.
         ValueError: If the corresponding dimension of the specified axis isn't equal to 1.
@@ -1625,7 +1626,7 @@ def scatter_div(input_x, indices, updates):
     return scatter_div_(input_x, indices, updates)
 
 
-def scatter_nd(indices, updates, out_shape):
+def scatter_nd(indices, updates, shape):
     r"""
     Scatters a tensor into a new tensor depending on the specified indices.
 
@@ -1724,7 +1725,7 @@ def scatter_nd(indices, updates, out_shape):
          [0. 1.1 0.]
          [0. 0.  0.]]
     """
-    return scatter_nd_(indices, updates, out_shape)
+    return scatter_nd_(indices, updates, shape)
 
 
 def scatter_update(input_x, indices, updates):

@@ -198,12 +198,12 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     // Replace hook node with make tuple node.
     abstract::AbstractBasePtrList multi_output_abs;
     std::vector<AnfNodePtr> multi_output_nodes{NewValueNode(prim::kPrimMakeTuple)};
-    std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
-                  [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
-                    MS_EXCEPTION_IF_NULL(inp);
-                    (void)multi_output_nodes.emplace_back(inp);
-                    (void)multi_output_abs.emplace_back(inp->abstract());
-                  });
+    (void)std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
+                        [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
+                          MS_EXCEPTION_IF_NULL(inp);
+                          (void)multi_output_nodes.emplace_back(inp);
+                          (void)multi_output_abs.emplace_back(inp->abstract());
+                        });
     auto primal_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(primal_graph);
     auto make_tuple = primal_graph->NewCNode(std::move(multi_output_nodes));
@@ -364,7 +364,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   }
   // Run in pynative mode, when @ms_function is used.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+    auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();
     if (grad_exec->eliminate_forward()) {
       PynativeDFunctor::ReplaceEquivdout(k_app, cnode_morph);

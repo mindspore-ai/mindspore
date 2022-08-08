@@ -18,8 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ALLGATHER_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
-
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

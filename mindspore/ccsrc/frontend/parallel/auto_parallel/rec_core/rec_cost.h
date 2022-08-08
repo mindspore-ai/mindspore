@@ -25,12 +25,13 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace parallel {
 #define DOUBLE_MAX (std::numeric_limits<double>::max)()
-#define MATMUL_MEM_COEF 0.25
-#define REDIS_COEF 16
+constexpr double MATMUL_MEM_COEF = 0.25;
+constexpr size_t REDIS_COEF = 16;
 
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -69,7 +70,7 @@ class CostMatMul {
     return cost_in_k_;
   }
 
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const;
 
   double cost_in_i_ = 0;
 
@@ -130,7 +131,7 @@ class CostConvolution {
     return cost_in_q_;
   }
 
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const;
 
   double cost_in_b_ = 0;
 
@@ -152,12 +153,12 @@ class CostPooling {
  public:
   StrategyRec GetOptimalStr(const Graph::NodeType &node,
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
+                            const Graph &graph) const;
 
   double GetMinCostIn() const { return cost_in_; }
 
  private:
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const;
 
   double cost_in_ = 0;
 };  // class CostPooling is used to compute the cost of Pooling operator.

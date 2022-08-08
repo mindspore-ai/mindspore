@@ -94,7 +94,7 @@ def test_tensorarray():
     ta.close()
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
 def test_static_tensorarray():
     """

@@ -90,7 +90,7 @@ def shard(fn, in_strategy, out_strategy, device="Ascend", level=0):
 @deprecated("1.8", "range", False)
 def arange(start=0, stop=None, step=1, rtype=None):
     r"""
-    The ops.arange interface is deprecated, please use :class:`mindspore.ops.range`
+    The ops.arange interface is deprecated, please use :func:`mindspore.ops.range`
 
     Supported Platforms:
         deprecated

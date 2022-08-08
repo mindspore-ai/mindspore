@@ -214,7 +214,10 @@ size_t AnfAlgo::GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(output_index_value_node);
   auto value_node = output_index_value_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
-  return LongToSize(GetValue<int64_t>(value_node->value()));
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto idx = value->isa<Int64Imm>() ? GetValue<int64_t>(value) : GetValue<int>(value);
+  return LongToSize(idx);
 }
 
 KernelWithIndex AnfAlgo::VisitKernel(const AnfNodePtr &anf_node, size_t index) {

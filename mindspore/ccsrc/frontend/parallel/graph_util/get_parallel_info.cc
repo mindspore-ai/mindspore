@@ -34,8 +34,8 @@ namespace {
 constexpr char INPUTS[] = "inputs";
 constexpr char ATTRS[] = "attrs";
 using FuncGraphNameMap = const std::unordered_map<FuncGraphPtr, std::string>;
-static std::unordered_map<std::string, size_t> op_count;
-static std::unordered_map<CNodePtr, std::string> name_map;
+static std::unordered_map<std::string, size_t> op_count = {};
+static std::unordered_map<CNodePtr, std::string> name_map = {};
 
 // Extract the op name and the topology number of the same node in the graph
 // e.g, Default/Mul-op32 -> Mul-op0, Default/Mul-op35 -> Mul-op1

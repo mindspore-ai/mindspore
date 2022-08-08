@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_TASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_TASK_H_
 
+#include <utility>
 #include <vector>
 #include <memory>
 #include <queue>
 #include <map>
 #include <string>
-#include <utility>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -33,7 +33,7 @@ namespace mindspore::runtime {
 class OpTaskContext {
  public:
   OpTaskContext(GraphCompilerInfo *graph_compiler_info, KernelGraphPtr graph,
-                std::vector<session::KernelWithIndex> output_nodes, session::OpRunInfo op_run_info,
+                std::vector<session::KernelWithIndex> output_nodes, session::BackendOpRunInfoPtr op_run_info,
                 device::DeviceContext *device_context, bool is_pynative_infer)
       : graph_compiler_info_(graph_compiler_info),
         graph_(std::move(graph)),
@@ -46,7 +46,7 @@ class OpTaskContext {
   GraphCompilerInfo *graph_compiler_info() const { return graph_compiler_info_; }
   const KernelGraphPtr &graph() const { return graph_; }
   const std::vector<session::KernelWithIndex> &output_nodes() const { return output_nodes_; }
-  const session::OpRunInfo &op_run_info() const { return op_run_info_; }
+  const session::BackendOpRunInfoPtr &op_run_info() const { return op_run_info_; }
   device::DeviceContext *device_context() const { return device_context_; }
   bool is_pynative_infer() const { return is_pyantive_infer_; }
 
@@ -54,7 +54,7 @@ class OpTaskContext {
   GraphCompilerInfo *graph_compiler_info_;
   KernelGraphPtr graph_;
   std::vector<session::KernelWithIndex> output_nodes_;
-  session::OpRunInfo op_run_info_;
+  session::BackendOpRunInfoPtr op_run_info_;
   device::DeviceContext *device_context_;
   bool is_pyantive_infer_{false};
 };

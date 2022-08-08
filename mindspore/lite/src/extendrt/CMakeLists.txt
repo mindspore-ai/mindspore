@@ -50,6 +50,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/delegate.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/graph_executor_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         )
 
     if(NOT MSLITE_ENABLE_ACL)
@@ -173,21 +178,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     endif()
 
     if(SUPPORT_TENSORRT)
-        add_compile_definitions(GPU_TENSORRT)
-        set(TENSORRT_PATH $ENV{TENSORRT_PATH})
-        set(CUDA_PATH $ENV{CUDA_HOME})
-        set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
-        set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
-        include_directories(${TENSORRT_PATH}/include)
-        include_directories(${CUDA_PATH}/include)
+        add_definitions(-DSUPPORT_TENSORRT)
         add_subdirectory(delegate/tensorrt)
-        target_link_libraries(mindspore-extendrt tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
-    else()
-        set(TENSORRT_STUB
-            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
-            )
-        add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
-        target_link_libraries(mindspore-extendrt tensorrt_stub)
     endif()
 
     set(TEST_CLOUD_INFER on)

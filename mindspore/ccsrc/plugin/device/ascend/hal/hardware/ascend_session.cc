@@ -656,7 +656,7 @@ void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelG
   MS_LOG(INFO) << "HardwareOptimize Finish";
 }
 
-KernelGraphPtr AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+KernelGraphPtr AscendSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
                                           const std::vector<tensor::TensorPtr> &input_tensors,
                                           const std::vector<int64_t> &tensors_mask) {
   auto it = run_op_graphs_.find(graph_info);
@@ -774,7 +774,7 @@ void StoreCNodePrimitive(const KernelGraphPtr &graph) {
   }
 }
 
-KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, const OpRunInfo &op_run_info,
+KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                                                 const std::vector<tensor::TensorPtr> &input_tensors,
                                                 const std::vector<int64_t> &tensors_mask, bool cache_miss) {
   auto &task_manager = PynativeTaskManager::GetInstance();
@@ -795,18 +795,19 @@ KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, con
   return graph;
 }
 
-bool AscendSession::DisableLazyBuild(const OpRunInfo &op_run_info) {
+bool AscendSession::DisableLazyBuild(const BackendOpRunInfoPtr &op_run_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return !op_run_info.lazy_build || ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
-         op_run_info.output_is_dynamic_shape || ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  return !op_run_info->base_op_run_info.lazy_build || ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
+         op_run_info->base_op_run_info.has_dynamic_output ||
+         ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 }
 
-void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void AscendSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  if (DisableLazyBuild(*op_run_info)) {
+  if (DisableLazyBuild(op_run_info)) {
     session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
     RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
     return;
@@ -815,7 +816,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   MS_EXCEPTION_IF_NULL(input_tensors);
   ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
   bool cache_miss = run_op_graphs_.find(graph_info) == run_op_graphs_.end();
-  auto graph = CreateKernelGraph(graph_info, *op_run_info, *input_tensors, tensors_mask, cache_miss);
+  auto graph = CreateKernelGraph(graph_info, op_run_info, *input_tensors, tensors_mask, cache_miss);
   EraseValueNodeTensor(tensors_mask, input_tensors);
   MS_EXCEPTION_IF_NULL(graph);
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
@@ -826,8 +827,8 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
     // Cache match and there are no task in Queue. Just Launch immediately.
     LaunchFunc(graph, tensor_to_node, *input_tensors);
   } else {
-    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->output_is_dynamic_shape, graph,
-                                                         tensors_mask, *input_tensors, tensor_to_node);
+    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->base_op_run_info.has_dynamic_output,
+                                                         graph, tensors_mask, *input_tensors, tensor_to_node);
     task_manager.PushLaunchTask(std::make_shared<LaunchTask>(run_op_context));
 
     if (cache_miss || !task_manager.QueueEmpty()) {
@@ -846,13 +847,12 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   }
 }
 
-void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                                     std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                                     const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
   ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
-  const auto &graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  const auto &graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // wait for allreduce
@@ -876,13 +876,13 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   UpdateOutputs(graph, outputs, *input_tensors, &tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->output_is_dynamic_shape) {
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
     UpdateOutputAbstract(graph, op_run_info);
   }
   RunOpMemoryClear(graph.get());
 }
 
-KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
+KernelGraphPtr AscendSession::PreBuildOp(const BackendOpRunInfoPtr &op_run_info,
                                          const std::vector<tensor::TensorPtr> &input_tensors,
                                          const std::vector<int64_t> &tensors_mask) {
   // Construct graph include one op
@@ -952,9 +952,9 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     // Get OpRunInfo and GraphInfo
     GraphInfo graph_info;
     GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
-    OpRunInfo op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
-    if (op_run_info.output_is_dynamic_shape) {
-      MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info.op_name << " is dynamic shape.";
+    BackendOpRunInfoPtr op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
+    if (op_run_info->base_op_run_info.has_dynamic_output) {
+      MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info->base_op_run_info.op_name << " is dynamic shape.";
       break;
     }
 

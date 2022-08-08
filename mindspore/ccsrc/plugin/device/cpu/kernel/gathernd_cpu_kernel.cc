@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-#define MAX_INT (((unsigned int)(-1)) >> 1)
+#define MAX_INT ((static_cast<unsigned int>(-1)) >> 1)
 
 constexpr size_t kGatherNdInputsNum = 2;
 constexpr size_t kGatherNdOutputsNum = 1;

@@ -41,7 +41,6 @@ static const std::set<std::string> kAdjustCnodeName = {"Resize", "Conv2dTranspos
 static const std::map<int64_t, std::string> kEnumFormatToStrMap = {{Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"}};
 namespace {
 constexpr auto kMakeTuple = "MakeTuple";
-constexpr auto kOutputNames = "outputs_names";
 constexpr auto kCustomPrimTypeACL = "ACL";
 constexpr auto kCustomNodeName = "custom_0";
 constexpr auto kNCHWFormat = "NCHW";
@@ -104,6 +103,7 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
 
 AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
     : fmk_type_(param->fmk_type),
+      export_mindir_(param->export_mindir),
       user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
       om_parameter_(nullptr),
       custom_node_(nullptr) {}
@@ -160,6 +160,9 @@ STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Delete redundant parameters failed.";
     return lite::RET_ERROR;
   }
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_ERROR, "Manager is nullptr.");
+  manager->Reset();
   if (!user_options_cfg_.offline) {
     MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
     return lite::RET_OK;
@@ -172,7 +175,8 @@ STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "To NHWC Format failed.";
     return lite::RET_ERROR;
   }
-  MS_LOG(DEBUG) << "Post pro graph success.";
+
+  MS_LOG(DEBUG) << "Post proc graph success.";
   return lite::RET_OK;
 }
 
@@ -516,8 +520,6 @@ void AclPassImpl::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
   prim->set_attr(attrs);
   prim->AddAttr(kFuncType, api::MakeValue<std::string>("acl_build"));
   prim->AddAttr(kUniqueName, api::MakeValue<std::string>("CustomAscend"));
-  auto output_names = lite::ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
-  prim->AddAttr(kOutputNames, api::MakeValue<std::vector<std::string>>(output_names));
 }
 
 CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {

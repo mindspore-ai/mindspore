@@ -109,7 +109,7 @@ bool CanConvertDefaultShapeToNZ(const ShapeVector &shape) {
     if (i > 2) {
       break;
     }
-    if (SizeToInt(shape[shape.size() - i]) != 1 && SizeToInt(shape[shape.size() - i] % kCubeSize != 0)) {
+    if (LongToInt(shape[shape.size() - i]) != 1 && shape[shape.size() - i] % SizeToLong(kCubeSize) != 0) {
       return false;
     }
   }

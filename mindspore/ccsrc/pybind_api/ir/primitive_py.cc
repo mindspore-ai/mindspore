@@ -340,7 +340,7 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
     input_args[i] = py_args[i];
   }
   // Run bprop function.
-  auto inst = pynative::PynativeExecutor::GetInstance();
+  auto inst = pynative::PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   try {
     MS_LOG(DEBUG) << "Run bprop function start.";

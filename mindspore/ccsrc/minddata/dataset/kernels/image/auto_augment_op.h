@@ -55,9 +55,6 @@ class AutoAugmentOp : public TensorOp {
 
   Space GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size);
 
-  Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
-                      float magnitude);
-
   AutoAugmentPolicy policy_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;

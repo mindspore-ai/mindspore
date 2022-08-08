@@ -19,7 +19,7 @@ import os
 import shutil
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 from tbe.common.rl_bank.bank_manager import set_current_op_name
 from tbe.common.repository_manager.interface import cann_kb_finalize, cann_kb_init
@@ -127,13 +127,6 @@ def __init_tune_env(job, need_ga):
     try:
         import auto_tune.auto_tune_main as at_atm
         from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
-        if need_ga:
-            res = at_atm.ga_tune_init()
-            if not res:
-                job.error("check soc version failed in tune init")
-                job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
-                return False
-        return True
     except ImportError:
         msg = "TBEException", \
               "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
@@ -147,6 +140,14 @@ def __init_tune_env(job, need_ga):
         return False
     finally:
         pass
+
+    if need_ga:
+        res = at_atm.ga_tune_init()
+        if not res:
+            job.error("check soc version failed in tune init")
+            job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
+            return False
+    return True
 
 
 def __creating_default_custom_path(auto_tiling_mode, base_custom_path):
@@ -208,7 +209,7 @@ def _parallel_compilation_init(initialize: TbeJob):
     real_debug_level = get_real_op_debug_level(initialize.content)
     auto_tiling_mode = initialize.content["SocInfo"]["autoTilingMode"]
     offline_tune = initialize.content["SocInfo"]["offlineTune"]
-    pid_ts = "{}_pid{}".format(datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3], os.getpid())
+    pid_ts = "{}_pid{}".format(datetime.now(tz=timezone.utc).strftime('%Y%m%d_%H%M%S%f')[:-3], os.getpid())
     ret = init_multi_process_env(False, soc_info, auto_tiling_mode, real_debug_level,
                                  None, 1, pid_ts)
     if ret is None:
@@ -284,7 +285,7 @@ def _normalize_module_name(module_name, py_module_path):
     :return:
     """
     if py_module_path not in sys.path:
-        sys.path.insert(0, py_module_path)
+        sys.path.append(py_module_path)
         sync_syspath(py_module_path)
 
 

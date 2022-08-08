@@ -92,7 +92,8 @@ void MaximumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, siz
   }
 }
 
-void GetCargo(std::vector<size_t> *cargo, const std::vector<size_t> &shape, const std::vector<size_t> &dout_shape) {
+void GetCargo(std::vector<size_t> *const cargo, const std::vector<size_t> &shape,
+              const std::vector<size_t> &dout_shape) {
   int i = dout_shape.size() - 1;
   int j = shape.size() - 1;
   (*cargo)[i] = 1;

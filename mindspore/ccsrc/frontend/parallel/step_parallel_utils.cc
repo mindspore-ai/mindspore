@@ -247,12 +247,14 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
   return tuple_index_value->cast<Int64ImmPtr>()->value();
 }
 
-void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
-                            int64_t get_item_index,
+void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
+                            const NodeUsersMap &node_users_map, int64_t get_item_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(node_users_map);
-  auto node_set = (*node_users_map)[node];
+  if (node_users_map.count(node) == 0) {
+    return;
+  }
+  auto node_set = node_users_map.at(node);
   for (auto &node_pair : node_set) {
     auto use_cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode);
@@ -275,6 +277,8 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
     }
     if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
       next_nodes->push_back(std::make_pair(node_pair, get_item_index));
+    } else if (use_cnode->input(0)->isa<CNode>()) {
+      continue;
     } else {
       // search recursively
       RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, next_nodes);

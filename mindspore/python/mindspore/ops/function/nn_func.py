@@ -157,13 +157,11 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
         pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
             Default: 'valid'.
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
+            - same: The height and width of the output are the same as the input divided by 'strides'
+              and rounded up.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
+            - valid: Returns the output of the valid calculation without filling. Redundant pixels that
+              do not satisfy the calculation will be discarded.
         data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
@@ -1354,6 +1352,10 @@ def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', la
 
     if weight is None:
         weight = _ones_like(inputs)
+    else:
+        broadcast_shape = [1 for _ in range(inputs.ndim)]
+        broadcast_shape[1] = weight.shape[0]
+        weight = weight.reshape(broadcast_shape)
 
     if reduction == 'mean':
         return -(inputs * target * weight).sum() / (inputs.size / n_classes)
@@ -1421,6 +1423,8 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 4:
         ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
+    elif ndim == 1:
+        ret = _nll_loss(inputs, target, 0, weight, ignore_index, reduction, label_smoothing)
     else:
         n = inputs.shape[0]
         c = inputs.shape[1]
@@ -1815,13 +1819,13 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(0.2, 1, 0.1).reshape((2, 2, 1, 2)).astype(np.float32))
         >>> output = ops.grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros',
-                                     align_corners=True)
+        ...                          align_corners=True)
         >>> print(output)
         [[[[ 1.9      ]
            [ 2.1999998]]

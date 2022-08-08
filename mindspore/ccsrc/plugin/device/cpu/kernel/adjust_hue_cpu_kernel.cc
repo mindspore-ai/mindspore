@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/adjust_hue_cpu_kernel.h"
 #include <Eigen/Dense>
 #include <algorithm>
+#include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -38,6 +39,7 @@ namespace detail {
 static void rgb_to_hv_range(float r, float g, float b, float *h, float *v_min, float *v_max) {
   float v_mid;
   int h_category;
+  const float eps = 1e-6;
   // According to the figures in:
   // https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma
   // For the conditions, we don't care about the case where two components are
@@ -84,7 +86,7 @@ static void rgb_to_hv_range(float r, float g, float b, float *h, float *v_min, f
       h_category = kAdjustHueFive;
     }
   }
-  if (*v_max == *v_min) {
+  if (std::fabs(*v_max - *v_min) <= eps) {
     *h = 0;
     return;
   }
@@ -144,14 +146,15 @@ HsvTuple rgb2hsv(const float r, const float g, const float b) {
   const float M = fmaxf(r, fmaxf(g, b));
   const float m = fminf(r, fminf(g, b));
   const float chroma = M - m;
+  const float eps = 1e-6;
   float h = 0.0f, s = 0.0f;
   // hue
   if (chroma > 0.0f) {
-    if (M == r) {
+    if (std::fabs(M - r) <= eps) {
       const float num = (g - b) / chroma;
       const float sign = copysignf(1.0f, num);
       h = (static_cast<float>(sign < 0.0f) * 6.0f + sign * fmodf(sign * num, 6.0f)) / 6.0f;
-    } else if (M == g) {
+    } else if (std::fabs(M - g) <= eps) {
       h = ((b - r) / chroma + 2.0f) / 6.0f;
     } else {
       h = ((r - g) / chroma + 4.0f) / 6.0f;
@@ -226,7 +229,7 @@ bool LaunchAdjustHueKernel(const std::vector<kernel::AddressPtr> &inputs,
   std::int64_t total = num_elements / kChannelSize;
   std::int64_t per_unit_size{total / std::min(kAdjustHueParallelNum - SizeToLong(kAdjustHueInputNum), total)};
   if (total > kAdjustHueParallelNum) {
-    CPUKernelUtils::ParallelFor(sharder_adjusthue, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(sharder_adjusthue, static_cast<size_t>(total), static_cast<float>(per_unit_size));
   } else {
     sharder_adjusthue(0, total);
   }
@@ -262,7 +265,7 @@ bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
   std::int64_t total = num_elements / kChannelSize;
   std::int64_t per_unit_size{total / std::min(kAdjustHueParallelNum - SizeToLong(kAdjustHueInputNum), total)};
   if (total > kAdjustHueParallelNum) {
-    CPUKernelUtils::ParallelFor(sharder_adjusthue, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(sharder_adjusthue, static_cast<size_t>(total), static_cast<float>(per_unit_size));
   } else {
     sharder_adjusthue(0, total);
   }
@@ -307,7 +310,7 @@ bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 std::vector<KernelAttr> AdjustHueCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
   return support_list;
 }

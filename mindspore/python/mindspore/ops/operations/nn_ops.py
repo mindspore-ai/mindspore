@@ -17,7 +17,6 @@
 
 import math
 from functools import partial
-import numpy as np
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 from ... import context
@@ -2262,13 +2261,11 @@ class AvgPool(_Pool):
         pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
             Default: 'valid'.
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
+            - same: The height and width of the output are the same as the input divided by 'strides'
+              and rounded up.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
+            - valid: Returns the output of the valid calculation without filling. Redundant pixels that
+              do not satisfy the calculation will be discarded.
         data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
@@ -4323,7 +4320,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
-class Pad(PrimitiveWithInfer):
+class Pad(Primitive):
     r"""
     Pads the input tensor according to the paddings.
 
@@ -4368,28 +4365,8 @@ class Pad(PrimitiveWithInfer):
     def __init__(self, paddings):
         """Initialize Pad"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        if not isinstance(paddings, tuple):
-            raise TypeError(f"For '{self.name}', the type of 'paddings' must be tuple, "
-                            f"but got {type(paddings)}.")
-        for item in paddings:
-            if len(item) != 2:
-                raise ValueError(f"For '{self.name}', the shape of 'paddings' must be (n, 2), "
-                                 f"but got {paddings}.")
+        validator.check_value_type("paddings", paddings, [tuple], self.name)
         self.paddings = paddings
-
-    def infer_shape(self, x_shape):
-        validator.check_int(len(self.paddings), len(x_shape), Rel.EQ, 'paddings.shape', self.name)
-        paddings = np.array(self.paddings)
-        if not np.all(paddings >= 0):
-            raise ValueError(f"For '{self.name}', all elements of paddings must be >= 0.")
-        y_shape = ()
-        for i in range(int(paddings.size / 2)):
-            y_shape += ((x_shape[i] + paddings[i, 0] + paddings[i, 1]),)
-        return y_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
-        return x_dtype
 
 
 class PadV3(Primitive):

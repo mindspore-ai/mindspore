@@ -77,7 +77,8 @@ void MarkForwardCNode(const FuncGraphPtr &root);
 
 void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
 
-void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution);
+void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution,
+                        const NodeUsersMap &node_users_map);
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node);
 

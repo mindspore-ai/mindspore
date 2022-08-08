@@ -1,0 +1,405 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "pipeline/pynative/forward/do_cast.h"
+#include <memory>
+#include <utility>
+#include <algorithm>
+#include "pipeline/pynative/pynative_utils.h"
+
+namespace mindspore {
+namespace pynative {
+const char kOpsFunctionModelName[] = "mindspore.ops.functional";
+
+void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
+  if (cast_prim_ == nullptr) {
+    const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+    const auto &adapter = py::cast<PrimitivePyAdapterPtr>(cast_prim);
+    MS_EXCEPTION_IF_NULL(adapter);
+    cast_prim_ = adapter->attached_primitive();
+    if (cast_prim_ == nullptr) {
+      cast_prim_ = std::make_shared<PrimitivePy>(cast_prim, adapter);
+      adapter->set_attached_primitive(cast_prim_);
+    }
+    if (!cast_prim_->HasPyObj()) {
+      MS_LOG(EXCEPTION) << "Pyobj is empty";
+    }
+  }
+  // Mixed precision conversion tensors which has cast dtype
+  SetTensorMixPrecisionCast(op_run_info);
+  // Implicit transform
+  SetImplicitCast(op_run_info);
+}
+
+bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
+  MS_EXCEPTION_IF_NULL(v);
+  return !v->isa<tensor::Tensor>() && !v->isa<tensor::CSRTensor>() && !v->isa<IntegerImm>() && !v->isa<FloatImm>() &&
+         !v->isa<BoolImm>();
+}
+
+ValuePtr CastOperation::GetDstType(const TypeId &type_id) const {
+  constexpr int k8Bits = 8;
+  constexpr int k16Bits = 16;
+  constexpr int k32Bits = 32;
+  constexpr int k64Bits = 64;
+  ValuePtr value = nullptr;
+  if (type_id == kNumberTypeFloat16) {
+    value = std::make_shared<Float>(k16Bits);
+  } else if (type_id == kNumberTypeFloat32) {
+    value = std::make_shared<Float>(k32Bits);
+  } else if (type_id == kNumberTypeFloat64) {
+    value = std::make_shared<Float>(k64Bits);
+  } else if (type_id == kNumberTypeBool) {
+    value = std::make_shared<Bool>();
+  } else if (type_id == kNumberTypeInt8) {
+    value = std::make_shared<Int>(k8Bits);
+  } else if (type_id == kNumberTypeUInt8) {
+    value = std::make_shared<UInt>(k8Bits);
+  } else if (type_id == kNumberTypeInt16) {
+    value = std::make_shared<Int>(k16Bits);
+  } else if (type_id == kNumberTypeInt32) {
+    value = std::make_shared<Int>(k32Bits);
+  } else if (type_id == kNumberTypeInt64) {
+    value = std::make_shared<Int>(k64Bits);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support dst type " << type_id;
+  }
+  MS_EXCEPTION_IF_NULL(value);
+  return value;
+}
+
+TypeId CastOperation::JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_int64,
+                                   bool has_tensor_int8) const {
+  if (max_type == TypeId::kNumberTypeBool) {
+    if (has_scalar_int64) {
+      max_type = TypeId::kNumberTypeInt64;
+    }
+    if (has_scalar_float32) {
+      max_type = TypeId::kNumberTypeFloat32;
+    }
+  }
+  if (max_type != TypeId::kNumberTypeFloat16 && max_type != TypeId::kNumberTypeFloat32 &&
+      max_type != TypeId::kNumberTypeFloat64 && max_type != TypeId::kTypeUnknown && has_scalar_float32) {
+    max_type = TypeId::kNumberTypeFloat32;
+  }
+  if (max_type == TypeId::kNumberTypeUInt8 && has_tensor_int8) {
+    max_type = TypeId::kNumberTypeInt16;
+  }
+  return max_type;
+}
+
+void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
+                               const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
+                               mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  constexpr size_t index_size = 2;
+  for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
+    const auto &type = it->first;
+    const auto &indexes = it->second;
+    if (type == SignatureEnumDType::kDTypeEmptyDefaultValue || indexes.size() < index_size) {
+      continue;
+    }
+    size_t priority = 0;
+    TypeId max_type = TypeId::kTypeUnknown;
+    bool has_scalar_float32 = false;
+    bool has_scalar_int64 = false;
+    bool has_tensor_int8 = false;
+    // Find the maximum priority of the same dtype
+    size_t input_size = op_run_info->input_value.size();
+    for (size_t index : indexes) {
+      if (index >= input_size) {
+        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << input_size;
+      }
+      const auto &v = op_run_info->input_value[index];
+      if (v->isa<FloatImm>()) {
+        has_scalar_float32 = true;
+      }
+      if (!v->isa<BoolImm>() && v->isa<IntegerImm>()) {
+        has_scalar_int64 = true;
+      }
+      if (v->isa<tensor::Tensor>()) {
+        auto arg = v->cast<tensor::TensorPtr>();
+        TypeId arg_type_id = arg->data_type();
+        auto type_priority = prim::type_map.find(arg_type_id);
+        if (type_priority == prim::type_map.end()) {
+          continue;
+        }
+        if (arg_type_id == kNumberTypeInt8) {
+          has_tensor_int8 = true;
+        }
+        if (type_priority->second > priority) {
+          max_type = type_priority->first;
+          priority = type_priority->second;
+        }
+      }
+    }
+    max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
+    MS_EXCEPTION_IF_NULL(dst_type);
+    (void)dst_type->emplace(std::make_pair(type, max_type));
+  }
+}
+
+const std::string &CastOperation::TypeIdToMsTypeStr(const TypeId &type_id) const {
+  const auto &type_name = type_name_map.find(type_id);
+  if (type_name == type_name_map.end()) {
+    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
+  }
+  return type_name->second;
+}
+
+bool CastOperation::GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType> *dtypes) const {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(dtypes);
+  const auto &signature = prim->signatures();
+  bool has_sig_dtype = false;
+  (void)std::transform(signature.begin(), signature.end(), std::back_inserter(*dtypes),
+                       [&has_sig_dtype](const Signature &sig) {
+                         auto dtype = sig.dtype;
+                         if (dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
+                           has_sig_dtype = true;
+                         }
+                         return dtype;
+                       });
+  return has_sig_dtype;
+}
+
+void CastOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
+                                 mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) const {
+  MS_EXCEPTION_IF_NULL(type_indexes);
+  for (size_t i = 0; i < dtypes.size(); ++i) {
+    auto it = type_indexes->find(dtypes[i]);
+    if (it == type_indexes->end()) {
+      (void)type_indexes->emplace(std::make_pair(dtypes[i], std::vector<size_t>{i}));
+    } else {
+      (void)it->second.emplace_back(i);
+    }
+  }
+}
+
+ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
+                                   const std::string &op_name, size_t index) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(v);
+  const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
+  MS_EXCEPTION_IF_NULL(cast_prim_);
+  cast_run_info->op_prim = cast_prim_;
+  cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
+  cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
+  cast_run_info->base_op_run_info.next_op_name = op_name;
+  cast_run_info->base_op_run_info.next_input_index = index;
+  cast_run_info->base_op_run_info.lazy_build = op_run_info->lazy_build;
+  (void)cast_run_info->input_value.emplace_back(v);
+  (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
+  return PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpForward(cast_run_info);
+}
+
+ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast,
+                                                const ValuePtr &v, const std::string &op_name, size_t index) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(is_cast);
+  MS_EXCEPTION_IF_NULL(v);
+  if (op_run_info->mix_type != kNotSet) {
+    auto dst_dtype = kFloat16;
+    if (op_run_info->mix_type == kFP32) {
+      dst_dtype = kFloat32;
+    }
+    const auto &tensor = v->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto source_dtype = tensor->Dtype();
+    if (source_dtype != nullptr && IsSubType(source_dtype, kFloat) && *source_dtype != *dst_dtype) {
+      MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
+                    << "th input, and to type " << dst_dtype->ToString();
+      *is_cast = true;
+      return DoAutoCast(op_run_info, tensor, dst_dtype->type_id(), op_name, index);
+    }
+  }
+  return v;
+}
+
+ValuePtr CastOperation::DoParamMixPrecisionCastTuple(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast,
+                                                     const ValueSequencePtr &value_seq, const std::string &op_name,
+                                                     size_t index) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(is_cast);
+  size_t tuple_size = value_seq->size();
+  const auto &value_tuple = value_seq->value();
+  ValuePtrList result(tuple_size, nullptr);
+  for (size_t i = 0; i < tuple_size; i++) {
+    if (value_tuple[i]->isa<tensor::MetaTensor>()) {
+      MS_LOG(DEBUG) << "Call cast for item " << i;
+      result[i] = DoParamMixPrecisionCast(op_run_info, is_cast, value_tuple[i], op_name, index);
+    } else if (value_tuple[i]->isa<ValueSequence>()) {
+      result[i] =
+        DoParamMixPrecisionCastTuple(op_run_info, is_cast, value_tuple[i]->cast<ValueSequencePtr>(), op_name, index);
+    } else {
+      result[i] = value_tuple[i];
+    }
+  }
+  if (value_seq->isa<ValueList>()) {
+    return std::make_shared<ValueList>(result);
+  } else {
+    return std::make_shared<ValueTuple>(result);
+  }
+}
+
+void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
+                                    const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                                    const std::vector<SignatureEnumDType> &dtypes) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  const auto &signature = op_run_info->op_prim->signatures();
+  auto &input_args = op_run_info->input_value;
+  size_t input_args_size = input_args.size();
+  for (size_t i = 0; i < input_args_size; ++i) {
+    // No need to implicit cast if no dtype.
+    if (dtypes.empty() || dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+      continue;
+    }
+    auto it = dst_type.find(dtypes[i]);
+    if (it == dst_type.end() || it->second == kTypeUnknown) {
+      continue;
+    }
+    const auto &v = input_args[i];
+    auto sig = SignatureEnumRW::kRWDefault;
+    if (!signature.empty()) {
+      if (i >= signature.size()) {
+        MS_EXCEPTION(ValueError) << "Signature size is not equal to index, signature size " << signature.size()
+                                 << ", index " << i;
+      }
+      sig = signature[i].rw;
+    }
+    TypeId arg_type_id = kTypeUnknown;
+    if (v->isa<tensor::MetaTensor>()) {
+      const auto &arg = v->cast<tensor::MetaTensorPtr>();
+      arg_type_id = arg->data_type();
+    }
+    // Implicit cast
+    bool is_same_type = false;
+    if (arg_type_id != kTypeUnknown) {
+      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
+    }
+    if (sig == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
+      prim::RaiseExceptionForConvertRefDtype(op_run_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
+                                             TypeIdToMsTypeStr(it->second), i);
+    }
+    if (is_same_type) {
+      continue;
+    }
+
+    if (IsValueTypeInvalid(v)) {
+      MS_EXCEPTION(TypeError) << "For '" << op_run_info->op_prim->name() << "', the " << (i + 1) << "th input "
+                              << signature[i].name << " can not be implicitly converted. "
+                              << "Its type is " << v->type()->ToString() << ", and the value is " << v->ToString()
+                              << ". Only support Tensor or Scalar.";
+    }
+    MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
+                  << "th input, and to type " << TypeIdToType(it->second)->ToString();
+    const auto &cast_output = DoAutoCast(op_run_info, v, it->second, op_run_info->base_op_run_info.op_name, i);
+    input_args[i] = cast_output;
+  }
+}
+
+void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  const auto &forward_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
+  if (forward_executor->IsFirstCell() || forward_executor->CellNotSetMixedPrecision(op_run_info)) {
+    // Pure function running, mix precision cast is disable, or cell not set mix precision
+    MS_LOG(DEBUG) << "No mix precision for " << op_run_info->base_op_run_info.op_name;
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  const auto &signature = op_run_info->op_prim->signatures();
+  for (size_t i = 0; i < op_run_info->input_value.size(); i++) {
+    const auto &v = op_run_info->input_value[i];
+    auto sig = SignatureEnumRW::kRWDefault;
+    if (!signature.empty()) {
+      if (i >= signature.size()) {
+        MS_EXCEPTION(ValueError) << "Signature size is not equal to index, signature size " << signature.size()
+                                 << ", index " << i;
+      }
+      sig = signature[i].rw;
+    }
+    // mix precision for non param
+    bool is_cast = false;
+    ValuePtr cast_output = nullptr;
+    if (v->isa<tensor::MetaTensor>()) {
+      auto meta_tensor = v->cast<tensor::MetaTensorPtr>();
+      if (meta_tensor && meta_tensor->is_parameter()) {
+        // If parameter write(not kRWRead), no need cast
+        if (sig != SignatureEnumRW::kRWRead) {
+          continue;
+        }
+      }
+      cast_output = DoParamMixPrecisionCast(op_run_info, &is_cast, v, op_run_info->op_prim->name(), i);
+    } else if (v->isa<ValueSequence>()) {
+      // mix precision for tuple inputs
+      cast_output = DoParamMixPrecisionCastTuple(op_run_info, &is_cast, v->cast<ValueSequencePtr>(),
+                                                 op_run_info->op_prim->name(), i);
+    }
+    if (is_cast) {
+      MS_EXCEPTION_IF_NULL(cast_output);
+      op_run_info->input_value[i] = cast_output;
+    }
+  }
+}
+
+void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  const auto &prim = op_run_info->op_prim;
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &it = implicit_cast_map_.find(prim->name());
+  if (it == implicit_cast_map_.end()) {
+    std::vector<SignatureEnumDType> dtypes;
+    bool has_dtype_sig = GetSignatureType(prim, &dtypes);
+    if (!has_dtype_sig) {
+      PrimSignature sig_value{has_dtype_sig, {}, {}};
+      implicit_cast_map_[prim->name()] = sig_value;
+      return;
+    }
+    const auto &signature = prim->signatures();
+    auto sig_size = signature.size();
+    // Ignore monad signature
+    for (const auto &sig : signature) {
+      if (sig.default_value != nullptr && sig.default_value->isa<Monad>()) {
+        --sig_size;
+      }
+    }
+    auto size = op_run_info->input_value.size();
+    if (sig_size > 0 && sig_size != size) {
+      MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs size " << size
+                               << " does not match the requires "
+                               << "signature size " << sig_size;
+    }
+    mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
+    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
+    GetTypeIndex(dtypes, &type_indexes);
+    GetDstType(op_run_info, type_indexes, &dst_type);
+    DoSignatureCast(op_run_info, dst_type, dtypes);
+    PrimSignature sig_value{has_dtype_sig, dtypes, type_indexes};
+    implicit_cast_map_[prim->name()] = sig_value;
+  } else {
+    if (!it->second.has_dtype_sig) {
+      MS_LOG(DEBUG) << op_run_info->base_op_run_info.op_name << " have no dtype sig";
+      return;
+    }
+    MS_LOG(DEBUG) << "Do signature for " << op_run_info->base_op_run_info.op_name << " with cache";
+    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
+    GetDstType(op_run_info, it->second.type_indexes, &dst_type);
+    DoSignatureCast(op_run_info, dst_type, it->second.dtypes);
+  }
+}
+}  // namespace pynative
+}  // namespace mindspore

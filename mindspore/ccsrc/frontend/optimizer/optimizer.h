@@ -251,7 +251,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   void set_is_first_order_j(bool is_first_order_j) { is_first_order_j_ = is_first_order_j; }
 
   struct {
-    int64_t counter;
+    int64_t counter = 0;
     std::string name;
   } CurPass_;
 

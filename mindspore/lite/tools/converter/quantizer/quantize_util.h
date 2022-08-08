@@ -46,7 +46,7 @@
 #include "abstract/dshape.h"
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/quant_params.h"
-#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 #include "src/litert/lite_session.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
@@ -66,11 +66,6 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
                        bool *channel_at_first, int *channel_cnt);
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
-
-int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                        const PrimitivePtr &primitive, schema::QuantType quant_type, WeightQuantType weight_quant_type,
-                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetric,
-                        bool use_auto_tune_alg);
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 

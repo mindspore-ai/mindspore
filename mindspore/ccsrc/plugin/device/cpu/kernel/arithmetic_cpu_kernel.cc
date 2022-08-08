@@ -84,7 +84,7 @@ template <typename T>
 void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
   size_t idx_1 = 0;
   size_t idx_2 = 0;
-  auto zero = (T)0;
+  auto zero = static_cast<T>(0);
   for (size_t i = 0; i < size; ++i) {
     auto dividend = input1[idx_1];
     auto divisor = input2[idx_2];
@@ -285,7 +285,7 @@ void ArithmeticCpuTypeFunc<T>::AddV2(const T *input1, const T *input2, T *out) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+      out[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
       iter.GenNextPos();
     }
   };
@@ -397,7 +397,7 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
       auto dividend = input1[iter.GetInputPosA()];
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
           out[i] = std::numeric_limits<T>::quiet_NaN();
@@ -448,7 +448,7 @@ void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, 
       auto dividend = input1[iter.GetInputPosA()];
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
@@ -469,7 +469,7 @@ void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
       auto dividend = input1[iter.GetInputPosA()];
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
           out[i] = std::numeric_limits<T>::quiet_NaN();
@@ -498,7 +498,7 @@ void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *o
       auto dividend = input1[iter.GetInputPosA()];
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
           out[i] = std::numeric_limits<T>::quiet_NaN();
@@ -522,7 +522,7 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
       auto dividend = input1[iter.GetInputPosA()];
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         out[i] = zero;
         continue;
