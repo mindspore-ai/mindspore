@@ -607,9 +607,10 @@ class _LogActionOnce:
     """
     __is_logged__ = dict()
 
-    def __init__(self, logger, key):
+    def __init__(self, logger, key, no_warning=False):
         self.logger = logger
         self.key = key
+        self.no_warning = no_warning
 
     def __call__(self, func):
         def wrapper(*args, **kwargs):
@@ -617,7 +618,7 @@ class _LogActionOnce:
                 return func(*args, **kwargs)
 
             _old_ = self.logger.warning
-            if self.key in _LogActionOnce.__is_logged__:
+            if self.no_warning or self.key in _LogActionOnce.__is_logged__:
                 self.logger.warning = lambda x: x
             else:
                 _LogActionOnce.__is_logged__[self.key] = True

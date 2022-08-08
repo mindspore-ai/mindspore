@@ -65,8 +65,8 @@ Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
-
-  auto stra = strategy->GetInputDim().at(0);
+  auto input_dim = strategy->GetInputDim();
+  auto stra = input_dim.at(0);
   auto in_shape = inputs_shape_.at(0);
   for (size_t i = 0; i < stra.size(); ++i) {
     if ((in_shape[i] == 1) && (stra[i] != 1)) {
