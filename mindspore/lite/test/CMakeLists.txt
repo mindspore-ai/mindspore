@@ -118,6 +118,7 @@ if(MSLITE_ENABLE_CONVERTER)
     endif()
     add_definitions(-DPRIMITIVE_WRITEABLE)
     file(GLOB_RECURSE TEST_CONVERTER_UT_SRC
+            ${TEST_DIR}/ut/tools/converter/decomposer/svd_test.cc
             ${TEST_DIR}/ut/tools/converter/registry/*.cc
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
             ${TEST_DIR}/st/converter_test.cc
@@ -211,6 +212,7 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             graph_pass_mid
             fusion_mid
             quantizer_mid
+            decomposer_mid
             proto_mid
             ccsrc_src_mid
             converter_src_mid

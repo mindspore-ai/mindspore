@@ -86,6 +86,7 @@ endif()
 
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
+add_subdirectory(decomposer)
 add_subdirectory(registry)
 add_subdirectory(preprocess)
 add_subdirectory(config_parser)
@@ -349,6 +350,7 @@ target_link_libraries(mindspore_converter
         graph_pass_mid
         fusion_mid
         quantizer_mid
+        decomposer_mid
         proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
