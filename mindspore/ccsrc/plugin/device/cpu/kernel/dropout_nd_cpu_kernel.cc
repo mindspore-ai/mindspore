@@ -142,7 +142,7 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
           DropoutFp32(per_input, scale_, SizeToInt(inner_size), per_output);
         } else {
           for (size_t j = 0; j < inner_size; ++j) {
-            per_output[j] = static_cast<T>(scale_) * per_input[j];
+            per_output[j] = static_cast<T>(scale_ * static_cast<float>(per_input[j]));
           }
         }
       } else {
