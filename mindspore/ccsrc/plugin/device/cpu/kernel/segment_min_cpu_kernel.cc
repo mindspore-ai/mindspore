@@ -147,8 +147,8 @@ bool SegmentMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
             auto cmp_addr = min_init_addr + k * num_compare_per;
             min_value = std::min(min_value, input_x_data_addr[cmp_addr]);
           }
-          auto segment_ids_value = static_cast<size_t>(segment_ids_data_addr[count_no]);
-          output_data_addr[segment_ids_value * num_compare_per + j] = min_value;
+          auto segment_ids_value = static_cast<int64_t>(segment_ids_data_addr[count_no]);
+          output_data_addr[LongToSize(segment_ids_value) * num_compare_per + j] = min_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
