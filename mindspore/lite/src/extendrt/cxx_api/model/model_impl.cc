@@ -96,7 +96,23 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   return outputs;
 }
 
-MSTensor ModelImpl::GetInputByTensorName(const std::string &name) { return MSTensor(); }
+MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return MSTensor(nullptr);
+  }
+  auto tensor_ptr = session_->GetInputByTensorName(name);
+  if (tensor_ptr == nullptr) {
+    MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
+    return MSTensor(nullptr);
+  }
+  auto ms_inputs = TensorUtils::TensorPtrToMSTensor({tensor_ptr}, {name});
+  if (ms_inputs.empty()) {
+    MS_LOG(ERROR) << "Tensor to ms tensor failed." << name << " .";
+    return MSTensor(nullptr);
+  }
+  return ms_inputs[0];
+}
 
 std::vector<std::string> ModelImpl::GetOutputTensorNames() {
   if (session_ == nullptr) {

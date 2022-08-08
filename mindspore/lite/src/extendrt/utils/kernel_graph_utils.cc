@@ -915,6 +915,7 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
       inputs->push_back(ms_tensor);
       auto abstract = parameter->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
       inputs_name->push_back(abstract->name());
     }
   }

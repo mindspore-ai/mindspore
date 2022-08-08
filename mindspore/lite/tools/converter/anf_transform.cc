@@ -457,7 +457,7 @@ int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::sh
       MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
       return RET_ERROR;
     }
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormatMindIR"})) {
+    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormatMindIR", "DecreaseTransposeAlgo"})) {
       MS_LOG(ERROR) << "Run SpecifyGraphInputFormatMindIR pass failed";
       return RET_ERROR;
     }

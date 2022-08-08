@@ -188,18 +188,30 @@ std::vector<tensor::TensorPtr> SingleOpInferSession::GetOutputs() { return outpu
 std::vector<tensor::TensorPtr> SingleOpInferSession::GetInputs() { return inputs_; }
 std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> SingleOpInferSession::GetInputNames() { return input_names_; }
-tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensorName) {
+
+tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensor_name) {
   for (size_t idx = 0; idx < output_names_.size(); ++idx) {
-    if (output_names_[idx] == tensorName) {
+    if (output_names_[idx] == tensor_name) {
       if (idx < outputs_.size()) {
         return outputs_[idx];
       }
     }
   }
-  MS_LOG(ERROR) << "Can't found tensor name " << tensorName;
+  MS_LOG(ERROR) << "Can't found tensor name " << tensor_name;
   return nullptr;
 }
-tensor::TensorPtr SingleOpInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+
+tensor::TensorPtr SingleOpInferSession::GetInputByTensorName(const std::string &tensor_name) {
+  for (size_t idx = 0; idx < input_names_.size(); ++idx) {
+    if (input_names_[idx] == tensor_name) {
+      if (idx < inputs_.size()) {
+        return inputs_[idx];
+      }
+    }
+  }
+  MS_LOG(ERROR) << "Can't found tensor name " << tensor_name;
+  return nullptr;
+}
 
 static std::shared_ptr<InferSession> SingleOpSessionCreator(const SessionConfig &config) {
   return std::make_shared<SingleOpInferSession>();

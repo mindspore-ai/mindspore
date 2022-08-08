@@ -73,6 +73,7 @@ std::shared_ptr<LiteTensorImpl> LiteTensorImpl::CreateTensorImplByDeepCopy(const
     return nullptr;
   }
   impl->set_from_session(false);
+  impl->set_own_data(true);
   return impl;
 }
 
