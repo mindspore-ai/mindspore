@@ -84,6 +84,7 @@ class AclPassImpl {
   CNodePtr custom_node_;
   std::shared_ptr<AclModelOptions> options_;
   AnfNodePtrList graph_outputs_;
+  std::vector<size_t> tuple_idx_;
   AnfNodePtrList graph_aipp_inputs_;
   std::vector<std::string> graph_output_names_;
   std::vector<std::vector<int64_t>> graph_output_dims_;

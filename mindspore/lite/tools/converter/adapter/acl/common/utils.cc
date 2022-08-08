@@ -108,7 +108,7 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
   return lite::RET_OK;
 }
 
-TypeId GetTypeFromNode(const AnfNodePtr &node) {
+TypeId GetTypeFromNode(const AnfNodePtr &node, const size_t tuple_idx) {
   TypeId type = kNumberTypeFloat32;
   MS_CHECK_TRUE_MSG(node != nullptr, type, "node is nullptr.");
   if (utils::isa<CNodePtr>(node)) {
@@ -123,6 +123,27 @@ TypeId GetTypeFromNode(const AnfNodePtr &node) {
       auto type_ptr = abstract_tensor->element()->GetTypeTrack();
       MS_CHECK_TRUE_MSG(type_ptr != nullptr, type, "type_ptr is nullptr.");
       type = type_ptr->type_id();
+    } else if (utils::isa<abstract::AbstractTuplePtr>(cnode->abstract())) {
+      auto abstract_tuple = cnode->abstract()->cast<abstract::AbstractTuplePtr>();
+      if (abstract_tuple->elements().empty()) {
+        MS_LOG(ERROR) << "abstract_tuple elements is empty.";
+        return type;
+      }
+      if (tuple_idx >= abstract_tuple->size()) {
+        MS_LOG(ERROR) << "tuple_idx out of range.";
+        return type;
+      }
+      auto abstract_base = abstract_tuple->elements()[tuple_idx];
+      if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+        auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
+        if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
+          MS_LOG(WARNING) << "Abstract_tensor or abstract_tensor->element() is nullptr";
+          return type;
+        }
+        auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+        MS_CHECK_TRUE_MSG(type_ptr != nullptr, type, "type_ptr is nullptr");
+        type = type_ptr->type_id();
+      }
     }
     MS_LOG(INFO) << "node type id is " << type;
   }

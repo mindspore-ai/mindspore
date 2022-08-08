@@ -155,7 +155,6 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
   }
 
   param->aclModelOptionCfgParam.om_file_path = param->output_file;
-  param->aclModelOptionCfgParam.offline = true;
 
   if (!param->config_file.empty() || !param->config_param.empty()) {
     auto ret = InitConfigParam(param);
@@ -754,6 +753,8 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     MS_LOG(ERROR) << "Converter input parameters check valid failed";
     return status;
   }
+
+  param->aclModelOptionCfgParam.offline = !not_save;
   ConverterImpl converter_impl;
   auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();

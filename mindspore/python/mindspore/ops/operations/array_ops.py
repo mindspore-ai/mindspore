@@ -974,7 +974,7 @@ class UniqueConsecutive(Primitive):
     Refer to :func:`mindspore.ops.unique_consecutive` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
