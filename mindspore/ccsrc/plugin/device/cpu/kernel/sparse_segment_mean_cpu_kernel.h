@@ -39,7 +39,7 @@ class SparseSegmentMeanCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -59,7 +59,6 @@ class SparseSegmentMeanCpuKernelMod : public NativeCpuKernelMod {
   size_t indices_size_{1};
   size_t x_size_{1};
   size_t y_size_{1};
-  size_t batch_rank_{0};
   size_t batch_size_{1};
 };
 }  // namespace kernel
