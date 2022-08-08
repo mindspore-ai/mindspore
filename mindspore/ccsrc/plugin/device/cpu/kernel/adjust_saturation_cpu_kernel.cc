@@ -142,7 +142,8 @@ bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const s
   if (total > kAdjustSaturationParallelNum) {
     std::int64_t per_unit_size =
       total / std::min(kAdjustSaturationParallelNum - SizeToLong(kAdjustSaturationTwo), total);
-    CPUKernelUtils::ParallelFor(sharder_adjustsaturation, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(sharder_adjustsaturation, static_cast<size_t>(total),
+                                static_cast<float>(per_unit_size));
   } else {
     sharder_adjustsaturation(0, total);
   }

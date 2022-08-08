@@ -229,7 +229,7 @@ bool LaunchAdjustHueKernel(const std::vector<kernel::AddressPtr> &inputs,
   std::int64_t total = num_elements / kChannelSize;
   std::int64_t per_unit_size{total / std::min(kAdjustHueParallelNum - SizeToLong(kAdjustHueInputNum), total)};
   if (total > kAdjustHueParallelNum) {
-    CPUKernelUtils::ParallelFor(sharder_adjusthue, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(sharder_adjusthue, static_cast<size_t>(total), static_cast<float>(per_unit_size));
   } else {
     sharder_adjusthue(0, total);
   }
@@ -265,7 +265,7 @@ bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
   std::int64_t total = num_elements / kChannelSize;
   std::int64_t per_unit_size{total / std::min(kAdjustHueParallelNum - SizeToLong(kAdjustHueInputNum), total)};
   if (total > kAdjustHueParallelNum) {
-    CPUKernelUtils::ParallelFor(sharder_adjusthue, total, per_unit_size);
+    CPUKernelUtils::ParallelFor(sharder_adjusthue, static_cast<size_t>(total), static_cast<float>(per_unit_size));
   } else {
     sharder_adjusthue(0, total);
   }

@@ -285,7 +285,7 @@ void ArithmeticCpuTypeFunc<T>::AddV2(const T *input1, const T *input2, T *out) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+      out[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
       iter.GenNextPos();
     }
   };
