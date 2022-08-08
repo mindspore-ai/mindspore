@@ -22,7 +22,6 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "backend/graph_compiler/transform.h"
-#include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -83,25 +82,6 @@ MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
 #endif
   }
   return backend_policy;
-}
-
-void ConvertAttrToUnifyMindIR(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &op_prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(op_prim);
-
-  const auto &op_name = op_run_info->base_op_run_info.op_name;
-  auto attrs = op_prim->attrs();
-  for (auto attr : attrs) {
-    bool converted = CheckAndConvertUtils::ConvertAttrValueToString(op_name, attr.first, &attr.second);
-    if (converted) {
-      op_prim->set_attr(attr.first, attr.second);
-    }
-    bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(op_name, attr.first, &attr.second);
-    if (converted_ir_attr) {
-      op_prim->set_attr(attr.first, attr.second);
-    }
-  }
 }
 
 void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info) {
@@ -701,7 +681,6 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   CheckIfNeedSyncForHeterogeneous(cur_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, cur_target);
   dynamic_shape()->UpdateInputTensorToDynamicShape(op_run_info);
-  ConvertAttrToUnifyMindIR(op_run_info);
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_run_info);
   auto backend_op_run_info =
