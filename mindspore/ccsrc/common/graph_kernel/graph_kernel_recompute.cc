@@ -32,6 +32,7 @@
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/core/graph_builder.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore::graphkernel {
 namespace {

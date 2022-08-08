@@ -23,6 +23,7 @@
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;

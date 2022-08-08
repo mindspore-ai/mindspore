@@ -126,7 +126,7 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
       }
     }
   };
-  CPUKernelUtils::ParallelFor(sharder_fractional_avg_pool_grad, out_batch);
+  CPUKernelUtils::ParallelFor(sharder_fractional_avg_pool_grad, LongToSize(out_batch));
   // Depending on the type, cast double to type T.
   for (size_t i = 0; i < output_nums; ++i) {
     *(output + i) = static_cast<T>(in_backprop_tensor_temp[i]);

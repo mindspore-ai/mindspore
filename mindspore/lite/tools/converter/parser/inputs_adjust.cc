@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/primitive_c.h"
 #include "nnacl/op_base.h"
+#include "ops/core_ops.h"
 
 namespace mindspore::lite {
 namespace {

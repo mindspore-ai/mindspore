@@ -33,6 +33,7 @@
 #include "ir/anf.h"
 #include "ir/cell.h"
 #include "ir/tensor.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/any.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -329,8 +330,8 @@ void GetDstType(const py::tuple &py_args,
 }
 
 const std::string &TypeIdToMsTypeStr(const TypeId &type_id) {
-  const auto &type_name = type_name_map.find(type_id);
-  if (type_name == type_name_map.end()) {
+  const auto &type_name = type_name_map().find(type_id);
+  if (type_name == type_name_map().cend()) {
     MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
   }
   return type_name->second;

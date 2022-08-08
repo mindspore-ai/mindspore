@@ -43,14 +43,14 @@ bool Compute(const ComputeParams<T> *params, const size_t start, const size_t en
     size_t offset = 0;
     std::vector<size_t> local_indices;
     for (size_t j = 0; j < params->indices_unit_rank_; ++j) {
-      auto index = IntToSize(indices[i * params->indices_unit_rank_ + j]);
-      (void)local_indices.emplace_back(index);
+      auto index = indices[i * params->indices_unit_rank_ + j];
+      (void)local_indices.emplace_back(IntToSize(index));
       if (index < 0) {
         MS_LOG(ERROR) << "For '" << kKernelName
                       << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
         return false;
       }
-      offset += index * out_strides->at(j) * params->unit_size_;
+      offset += IntToSize(index) * out_strides->at(j) * params->unit_size_;
     }
     if (offset * sizeof(T) > params->x_mem_size_) {
       MS_LOG(ERROR) << "For '" << kKernelName
@@ -114,8 +114,8 @@ void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   size_t out_stride = 1;
   out_strides_.push_back(out_stride);
-  for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
-    out_stride *= LongToSize(shape[i + 1]);
+  for (int64_t i = SizeToLong(indices_unit_rank_) - 2; i >= 0; i--) {
+    out_stride *= LongToSize(shape[LongToSize(i + 1)]);
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());

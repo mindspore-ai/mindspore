@@ -311,7 +311,7 @@ class SparseOptimizerCpuKernelMod : public NativeCpuKernelMod {
     for (size_t i = 0; i < sorted_indices.size(); ++i) {
       T index = sorted_indices[i].first;
       T global_index = sorted_indices[i].second;
-      T global_value_offset = global_index * param.value_stride_;
+      auto global_value_offset = static_cast<size_t>(global_index) * param.value_stride_;
       if (i == 0 || index != last_index) {
         if (i != 0) {
           unique_indices_size++;

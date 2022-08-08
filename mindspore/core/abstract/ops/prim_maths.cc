@@ -193,12 +193,12 @@ AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &, const PrimitivePt
   auto x_element_type = x_element->number_type();
   auto y_element_type = y_element->number_type();
 
-  auto x_priority = type_priority_map.find(x_element_type);
-  if (x_priority == type_priority_map.end()) {
+  auto x_priority = type_priority_map().find(x_element_type);
+  if (x_priority == type_priority_map().cend()) {
     MS_LOG(EXCEPTION) << "input_x type is " << x_element_type << ", it's not number type.";
   }
-  auto y_priority = type_priority_map.find(y_element_type);
-  if (y_priority == type_priority_map.end()) {
+  auto y_priority = type_priority_map().find(y_element_type);
+  if (y_priority == type_priority_map().cend()) {
     MS_LOG(EXCEPTION) << "input_y type is " << y_element_type << ", it's not number type.";
   }
 

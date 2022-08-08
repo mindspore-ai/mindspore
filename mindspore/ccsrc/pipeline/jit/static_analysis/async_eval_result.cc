@@ -106,7 +106,7 @@ void AnalysisSchedule::Wait() {
   StaticAnalysisException::Instance().CheckException();
 }
 
-void AnalysisSchedule::WaitForRun() {
+void AnalysisSchedule::WaitForRun() const {
   // Control the order to run.
   AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
   control_run_order->set_result(std::make_shared<AbstractScalar>(1));
