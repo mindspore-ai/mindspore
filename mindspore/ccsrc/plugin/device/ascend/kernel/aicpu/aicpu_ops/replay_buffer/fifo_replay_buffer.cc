@@ -54,8 +54,12 @@ bool FIFOReplayBuffer::Push(const std::vector<AddressPtr> &inputs) {
   head_ = head_ >= capacity_ ? 0 : head_ + 1;
   size_ = size_ >= capacity_ ? capacity_ : size_ + 1;
 
+  return Emplace(head_, inputs);
+}
+
+bool FIFOReplayBuffer::Emplace(const size_t &pos, const std::vector<AddressPtr> &inputs) {
   for (size_t i = 0; i < inputs.size(); i++) {
-    void *offset = reinterpret_cast<uint8_t *>(buffer_[i]->addr) + head_ * schema_[i];
+    void *offset = reinterpret_cast<uint8_t *>(buffer_[i]->addr) + pos * schema_[i];
     auto ret = memcpy_s(offset, buffer_[i]->size, inputs[i]->addr, inputs[i]->size);
     if (ret != EOK) {
       AICPU_LOGE("memcpy_s() failed. Error code: %d.", ret);
