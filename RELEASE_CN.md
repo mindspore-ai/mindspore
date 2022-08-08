@@ -173,10 +173,10 @@ mindspore.context、mindspore.parallel、mindspore.profiler、mindspore.train模
 
 例如：
 
--`mindspore.context.set_context`可简化为`mindspore.set_context`。
--`mindspore.parallel.set_algo_parameters`可简化为`mindspore.set_algo_parameters`。
--`mindspore.profiler.Profiler`可简化为`mindspore.Profiler`。
--`mindspore.train.callback.Callback`可简化为`mindspore.Callback`。
+- `mindspore.context.set_context`可简化为`mindspore.set_context`。
+- `mindspore.parallel.set_algo_parameters`可简化为`mindspore.set_algo_parameters`。
+- `mindspore.profiler.Profiler`可简化为`mindspore.Profiler`。
+- `mindspore.train.callback.Callback`可简化为`mindspore.Callback`。
 
 API页面统一汇总至：<https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore.html>。
 
