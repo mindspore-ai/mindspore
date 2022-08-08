@@ -227,7 +227,7 @@ Gradient Clipping
     mindspore.Tensor.clip
 
 Parameter Operation Methods
---------------------
+---------------------------
 
 .. msplatformautosummary::
     :toctree: Tensor
