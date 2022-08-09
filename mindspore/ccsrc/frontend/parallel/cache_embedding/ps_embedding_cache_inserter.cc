@@ -520,8 +520,7 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheGraph() const {
 
   auto graph_manager = root_graph_->manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
-  graph_manager->Replace(root_graph_->output(), final_output_node);
-  return true;
+  return graph_manager->Replace(root_graph_->output(), final_output_node);
 }
 
 bool PsEmbeddingCacheInserter::Run() {
