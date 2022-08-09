@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/cpu/fp32/convolution_depthwise_slidewindow_x86_fp32.h"
 #include "src/runtime/kernel/cpu/base/group_convolution_creator.h"
 #include "src/runtime/kernel/cpu/fp32/group_convolution_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/convolution_sw_1x1_fp32.h"
 #include "nnacl/base/conv_common_base.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
@@ -127,6 +128,8 @@ int ConvolutionDelegateCPUKernel::Prepare() {
     MS_LOG(ERROR) << "Get weight and bias failed.";
     return ret;
   }
+  input_const_ = in_tensors_[kInputIndex]->IsConst() && !op_parameter_->is_train_session_;
+  weight_const_ = in_tensors_[kWeightIndex]->IsConst() && !op_parameter_->is_train_session_;
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -196,60 +199,91 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NC4KernelSelect() {
   return nullptr;
 }
 
-bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {
-  if (conv_param->input_channel_ / op_parameter_->thread_num_ <= 64 &&
-      conv_param->input_h_ >= conv_param->thread_num_ &&
-      (conv_param->kernel_h_ < 7 || conv_param->input_h_ / conv_param->kernel_h_ >= 4) &&
-      (conv_param->kernel_w_ < 7 || conv_param->input_w_ / conv_param->kernel_w_ >= 4)) {
-    return true;
-  } else {
-    return false;
+bool ConvolutionDelegateCPUKernel::CheckAvxUseSW1x1Conv(const ConvParameter *conv_param) {
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
+        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
+      return true;
+    }
   }
+  return false;
+}
+
+bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
+        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
+        (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
+      return true;
+    }
+  } else {
+    if (conv_param->input_channel_ / op_parameter_->thread_num_ <= C64NUM &&
+        conv_param->input_h_ >= conv_param->thread_num_ &&
+        (conv_param->kernel_h_ < C7NUM || conv_param->input_h_ / conv_param->kernel_h_ >= C4NUM) &&
+        (conv_param->kernel_w_ < C7NUM || conv_param->input_w_ / conv_param->kernel_w_ >= C4NUM)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+
+  matmul_param_ = new (std::nothrow) MatMulParameter;
+  if (matmul_param_ == nullptr) {
+    MS_LOG(WARNING) << "Memory allocation failed, Create Conv1x1 Matmul Kernel failed.";
+    return nullptr;
+  }
+
+  matmul_param_->row_ = conv_param->output_h_ * conv_param->output_w_;
+  matmul_param_->col_ = conv_param->output_channel_;
+  matmul_param_->deep_ = conv_param->input_channel_;
+  matmul_param_->batch = conv_param->input_batch_;
+  matmul_param_->op_parameter_ = conv_param->op_parameter_;
+  matmul_param_->act_type_ = conv_param->act_type_;
+  matmul_param_->a_transpose_ = false;
+  matmul_param_->b_transpose_ = true;
+  matmul_param_->a_const_ = input_const_;
+  matmul_param_->b_const_ = weight_const_;
+  auto kernel = new (std::nothrow) kernel::ConvolutionSW1x1CPUKernel(
+    reinterpret_cast<OpParameter *>(matmul_param_), in_tensors_, out_tensors_,
+    static_cast<const lite::InnerContext *>(this->ms_context_), origin_weight_, origin_bias_);
+  return kernel;
 }
 
 kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() {
   kernel::LiteKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+
+  int out_unit;
+  if (CheckIfUseWinograd(&out_unit, conv_param)) {
+    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(
+      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_), out_unit,
+      origin_weight_, origin_bias_);
+  }
+
 #ifdef ENABLE_AVX
-    if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
-        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
-        (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
-      kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-        origin_weight_, origin_bias_);
-    } else {
+  if (kernel == nullptr && CheckAvxUseSW1x1Conv(conv_param)) {
+    kernel = CreateConv1x1MatmulKernel();
+  }
+
+  if (kernel == nullptr && CheckAvxUseSWConv(conv_param)) {
+    kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
+      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+      origin_weight_, origin_bias_);
+  }
+#endif
+
+  if (kernel == nullptr) {
+    if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
       kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
-    }
-#else
-    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
-      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-      origin_weight_, origin_bias_);
-#endif
-  } else {
-    int out_unit;
-    if (CheckIfUseWinograd(&out_unit, conv_param)) {
-      kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_), out_unit,
-        origin_weight_, origin_bias_);
     } else {
-#ifdef ENABLE_AVX
-      if (CheckAvxUseSWConv(conv_param)) {
-        kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
-          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-          origin_weight_, origin_bias_);
-      } else {
-        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
-          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-          origin_weight_, origin_bias_);
-      }
-#else
       kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
-#endif
     }
   }
   return kernel;
