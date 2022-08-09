@@ -126,8 +126,11 @@ SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> &con
     auto delegate_config = std::make_shared<mindspore::DelegateConfig>(context);
     auto &device_contexts = context->MutableDeviceInfo();
     for (auto device_context : device_contexts) {
-      // delegate init
       MS_EXCEPTION_IF_NULL(device_context);
+      if (device_context->GetDeviceType() == kAscend) {
+        config.type_ = kSingleOpSession;
+        return config;
+      }
       // get graph executor delegate
       auto delegate = mindspore::DelegateRegistry::GetInstance().GetDelegate(
         device_context->GetDeviceType(), device_context->GetProvider(), delegate_config);
