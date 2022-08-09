@@ -212,7 +212,7 @@ class TFRecordToMR:
         Yield a dict with key to be fields in schema, and value to be data.
         This function is for old version tensorflow whose version number < 2.1.0
 
-        Yields:
+        Returns:
             dict, data dictionary whose keys are the same as columns.
         """
         dataset = self.tf.data.TFRecordDataset(self.source)
@@ -264,7 +264,7 @@ class TFRecordToMR:
         """
         Yield a dictionary whose keys are fields in schema.
 
-        Yields:
+        Returns:
             dict, data dictionary whose keys are the same as columns.
         """
         dataset = self.tf.data.TFRecordDataset(self.source)
