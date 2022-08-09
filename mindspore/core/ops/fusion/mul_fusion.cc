@@ -29,7 +29,9 @@ void MulFusion::set_activation_type(const ActivationType &activation_type) {
 }
 ActivationType MulFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
-  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (value_ptr == nullptr) {
+    return NO_ACTIVATION;
+  }
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 void MulFusion::Init(const ActivationType &activation_type) { this->set_activation_type(activation_type); }
