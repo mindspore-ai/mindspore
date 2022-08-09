@@ -57,6 +57,7 @@ bool FakeQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
   narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
   quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   if (num_bits_ <= 2 || num_bits_ >= 16) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of num_bits should be in (2, 16), but got "
@@ -76,7 +77,6 @@ bool FakeQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   }
 
   // shape info for gpu
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();

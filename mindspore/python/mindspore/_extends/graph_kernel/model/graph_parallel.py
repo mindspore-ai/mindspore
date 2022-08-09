@@ -174,8 +174,8 @@ class ScheduleAnalyzer:
             return abs(a - b)
 
         def _check_different(old_classes, new_classes):
-            for o, n in zip(old_classes, new_classes):
-                if o != n:
+            for old_class, new_class in zip(old_classes, new_classes):
+                if old_class != new_class:
                     return True
             return False
 
