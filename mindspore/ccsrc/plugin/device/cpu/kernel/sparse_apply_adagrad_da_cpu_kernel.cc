@@ -146,7 +146,7 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 template <typename I, typename T>
 bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> &,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+                                                    const std::vector<kernel::AddressPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradDAOutputsNum, kernel_name_);
 
@@ -175,14 +175,15 @@ bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       ga[j] = ga[j] + g[k];
       da[j] = da[j] + g[k] * g[k];
       if (l1_scalar > static_cast<T>(0.0)) {
-        var[j] =
-          static_cast<T>(-1.0) * (T)Sign(static_cast<double>(ga[j])) *
-          (T)std::fmax(static_cast<double>(((T)std::fabs(static_cast<double>(ga[j])) / global_step_scalar) - l1_scalar),
-                       static_cast<double>(0.0)) /
-          (l2_scalar + (T)std::sqrt(static_cast<double>(da[j])) / gs_lr);
+        var[j] = static_cast<T>(-1.0) * static_cast<T>(Sign(static_cast<double>(ga[j]))) *
+                 static_cast<T>(std::fmax(
+                   static_cast<double>((static_cast<T>(std::fabs(static_cast<double>(ga[j]))) / global_step_scalar) -
+                                       l1_scalar),
+                   static_cast<double>(0.0))) /
+                 (l2_scalar + static_cast<T>(std::sqrt(static_cast<double>(da[j]))) / gs_lr);
       } else {
         var[j] = static_cast<T>(-1.0) * (ga[j] / global_step_scalar) /
-                 (l2_scalar + (T)std::sqrt(static_cast<double>(da[j])) / gs_lr);
+                 (l2_scalar + static_cast<T>(std::sqrt(static_cast<double>(da[j]))) / gs_lr);
       }
     }
   }
