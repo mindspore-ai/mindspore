@@ -7,6 +7,7 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/base/optimize_handler_wrapper.c
         ${WRAPPER_DIR}/base/affine_wrapper.c
         ${WRAPPER_DIR}/fp32/matmul_fp32_wrapper.c
+        ${WRAPPER_DIR}/fp32/concat_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/arithmetic_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/deconvolution_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/scale_fp32_wrapper.c
@@ -15,6 +16,7 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/fp32/conv_winograd_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/pooling_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/transpose_fp32_wrapper.c
+        ${WRAPPER_DIR}/fp32/split_fp32_wrapper.c
         ${WRAPPER_DIR}/int8/matmul_int8_wrapper.c
         ${WRAPPER_DIR}/int8/add_int8_wrapper.c
         ${WRAPPER_DIR}/int8/concat_int8_wrapper.c

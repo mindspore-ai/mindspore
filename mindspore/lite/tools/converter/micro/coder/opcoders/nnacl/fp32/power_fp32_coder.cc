@@ -28,6 +28,9 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   scale_ = reinterpret_cast<PowerParameter *>(parameter_)->scale_;
   shift_ = reinterpret_cast<PowerParameter *>(parameter_)->shift_;
   int size = input_tensor_->ElementsNum();
+  if (support_parallel_) {
+    thread_num_ = 1;
+  }
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(size, thread_num_);
   int len = MSMIN(stride, size - stride * kDefaultTaskId);
