@@ -65,7 +65,7 @@ def repeat_elements(x, rep, axis=0):
         rep (int): The number of times to repeat, must be positive.
         axis (int): The axis along which to repeat, default 0.
 
-    Outputs:
+    Returns:
         One tensor with values repeated along the specified axis. If x has shape
         (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
         si * rep, ..., sn). The output type will be the same as the type of `x`.
@@ -142,7 +142,7 @@ def sequence_mask(lengths, maxlen=None):
         maxlen (int): size of the last dimension of returned tensor. Must be positive and same
             type as elements in `lengths`. Default is None.
 
-    Outputs:
+    Returns:
         One mask tensor of shape `lengths.shape + (maxlen,)` .
 
     Raises:

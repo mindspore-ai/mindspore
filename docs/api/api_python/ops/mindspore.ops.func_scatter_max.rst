@@ -18,7 +18,7 @@ mindspore.ops.scatter_max
         - **indices** (Tensor) - 指定最大值操作的索引，数据类型必须为mindspore.int32或者mindspore.int64。
         - **updates** (Tensor) - 指定与 `input_x` 取最大值操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
-    输出：
+    返回：
         Tensor，更新后的 `input_x` ，shape和类型与 `input_x` 相同。
 
     异常：
