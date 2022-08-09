@@ -174,7 +174,12 @@ int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::stri
   std::vector<float> data;
   std::vector<std::string> strings_data;
   size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1u, std::multiplies<size_t>());
-  if (GetDataTypeByTensorName(tensor_name) == static_cast<int>(kObjectTypeString)) {
+  auto tensor_data_type = GetDataTypeByTensorName(tensor_name);
+  if (tensor_data_type == static_cast<int>(kTypeUnknown)) {
+    MS_LOG(ERROR) << "get data type failed.";
+    return RET_ERROR;
+  }
+  if (tensor_data_type == static_cast<int>(kObjectTypeString)) {
     strings_data.push_back(line);
     for (size_t i = 1; i < shape_size; i++) {
       getline(in_file_stream, line);
