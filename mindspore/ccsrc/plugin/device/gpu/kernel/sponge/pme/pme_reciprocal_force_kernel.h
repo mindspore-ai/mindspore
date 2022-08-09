@@ -161,7 +161,7 @@ class PMEReciprocalForceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   cufftComplex expc(cufftComplex z) {
     cufftComplex res;
     float t = expf(z.x);
-    sincosf(z.y, &res.y, &res.x);
+    mindspore::kernel::math::SinCosf(z.y, &res.y, &res.x);
     res.x *= t;
     res.y *= t;
     return res;

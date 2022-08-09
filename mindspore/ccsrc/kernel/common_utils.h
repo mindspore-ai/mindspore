@@ -402,6 +402,10 @@ bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, st
                            std::vector<size_t> *rhs);
 }  // namespace broadcast_utils
 
+namespace math {
+void SinCosf(float x, float *sinv, float *cosv);
+}
+
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \
     if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \
