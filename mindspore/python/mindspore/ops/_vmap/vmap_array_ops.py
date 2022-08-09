@@ -34,6 +34,7 @@ from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import Col2Im
 from ..operations.array_ops import NonZero
 from ..operations.array_ops import IndexFill
+from ..operations.random_ops import RandomPoisson
 from ..composite import _VmapGeneralRule
 from ..operations.array_ops import TensorScatterElements
 
@@ -1668,3 +1669,4 @@ get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_un
 get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(Col2Im)(get_unsupported_dynamic_vmap_rule)
+get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(RandomPoisson)(get_unsupported_dynamic_vmap_rule)
