@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/histogram_cpu_kernel.h"
 #include <algorithm>
-#include <cmath>
 #include <ctime>
 #include <functional>
 #include <limits>
@@ -64,7 +63,6 @@ bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_
                               << "', the dtype of 'x' should be float16, float32, int32, but got "
                               << TypeIdLabel(x_type_);
-      break;
   }
   return true;
 }
@@ -75,7 +73,7 @@ void HistogramCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto x_data = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto y_data = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
   size_t x_num = inputs[kIndex0]->size / sizeof(T);
-  const int32_t y_num = bins_;
+  const int32_t y_num = LongToInt(bins_);
   // initial y as all zero
   std::fill(y_data, y_data + y_num, 0);
   // calculate left and right of input
@@ -118,17 +116,17 @@ void HistogramCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       int64_t pos =
         static_cast<int64_t>((elt - static_cast<InterType>(leftmost_edge)) / step * static_cast<InterType>(bins_));
       pos = std::min(pos, nbins_minus_1);
-      hist_local[pos] += 1;
+      hist_local[pos] += LongToUlong(1);
     }
     // Locks and updates the common output
     const std::lock_guard<std::mutex> lock(hist_mutex);
-    std::transform(hist_local.begin(), hist_local.end(), y_data, y_data, std::plus<int32_t>());
+    (void)std::transform(hist_local.begin(), hist_local.end(), y_data, y_data, std::plus<int32_t>());
   };
   CPUKernelUtils::ParallelFor(sharder_histogram, x_num);
 }
 
 std::vector<KernelAttr> HistogramCPUKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};

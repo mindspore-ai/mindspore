@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/identityn_cpu_kernel.h"
 #include <algorithm>
-#include <cmath>
 #include <ctime>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"

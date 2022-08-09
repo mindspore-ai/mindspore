@@ -44,7 +44,7 @@ void GridSampler3DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto stride_compute = [&](std::vector<size_t> &stride, std::vector<int64_t> shape) {
     for (int i = kFour; i > -static_cast<int>(kOne); i--) {
       stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= shape[i];
+      stride_tmp *= LongToUlong(shape[i]);
     }
     stride_tmp = kOne;
   };
@@ -249,8 +249,8 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
                                                                             bool align_corners, T *grad_x) const {
   T grad_clip, grad_refl;
   if (align_corners) {
-    *grad_x = static_cast<T>(size - kOne) / kTwo;
-    coord = ((coord + kOne) / kTwo) * (size - kOne);
+    *grad_x = LongToUlong(static_cast<T>(size - kOne) / kTwo);
+    coord = LongToUlong(((coord + kOne) / kTwo) * (size - kOne));
   } else {
     *grad_x = static_cast<T>(size) / kTwo;
     coord = ((coord + kOne) * size - kOne) / kTwo;
