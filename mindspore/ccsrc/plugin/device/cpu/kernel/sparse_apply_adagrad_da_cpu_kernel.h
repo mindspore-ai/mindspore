@@ -39,7 +39,7 @@ class SparseApplyAdagradDACpuKernelMod : public SparseOptimizerCpuKernelMod,
 
   template <typename I, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+                    const std::vector<kernel::AddressPtr> &outputs) const;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
