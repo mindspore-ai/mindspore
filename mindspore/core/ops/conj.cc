@@ -15,9 +15,7 @@
  */
 
 #include "ops/conj.h"
-#include <map>
 #include <string>
-#include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -26,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ConjInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ConjInferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
@@ -48,7 +46,7 @@ AbstractBasePtr ConjInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
   auto infer_type = ConjInferType(primitive, input_args);
-  auto infer_shape = ConjInferShape(primitive, input_args);
+  auto infer_shape = ConjInferShape(input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
