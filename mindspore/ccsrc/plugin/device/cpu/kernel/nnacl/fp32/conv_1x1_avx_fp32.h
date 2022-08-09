@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
 #define MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
 
-#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/conv_parameter.h"
 
@@ -35,9 +34,7 @@ void Conv1x1SWOWxOCAVXKernel(float *dst, const float *src, const float *weight, 
                              size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                              size_t dst_flag);
 #endif
-
-#endif
 #ifdef __cplusplus
 }
-#endif
 #endif  // MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
+#endif
