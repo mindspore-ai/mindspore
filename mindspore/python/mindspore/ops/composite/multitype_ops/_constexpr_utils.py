@@ -280,6 +280,14 @@ def judge_indexes_types(dtypes, target_type):
 
 
 @constexpr
+def check_type_isinstance(dtype, target_type):
+    """Checks whether the dtype is instance of target type."""
+    if isinstance(dtype, (list, tuple)):
+        return all(isinstance(ele, target_type) for ele in dtype)
+    return isinstance(dtype, target_type)
+
+
+@constexpr
 def check_type_invalid(dtype, target_type):
     """Checks whether the dtype is valid."""
     return dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type)
@@ -599,16 +607,15 @@ def get_stride_info_from_integer(data_shape, number):
 def get_slice_stride(index_slice, dim_size):
     """Get slice stride info"""
     step = 1 if index_slice.step is None else index_slice.step
-    start_default = 0
-    stop_default = dim_size
     if step < 0:
         start_default = -1
         stop_default = -(dim_size + 1)
-    start = start_default if index_slice.start is None else index_slice.start
-    if index_slice.stop is None:
-        stop = stop_default
+        stop = stop_default if index_slice.stop is None else max(stop_default, index_slice.stop)
     else:
-        stop = min(stop_default, index_slice.stop) if step >= 0 else max(stop_default, index_slice.stop)
+        start_default = 0
+        stop_default = dim_size
+        stop = stop_default if index_slice.stop is None else min(stop_default, index_slice.stop)
+    start = start_default if index_slice.start is None else index_slice.start
     return start, stop, step
 
 

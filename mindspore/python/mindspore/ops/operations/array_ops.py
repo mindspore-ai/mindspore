@@ -35,6 +35,7 @@ from ...common._decorator import deprecated
 from ...common.parameter import Parameter
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
+from ..._c_expression import get_dyn_shape
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -269,6 +270,9 @@ class DType(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize DType"""
+
+    def __call__(self, x):
+        return x.dtype
 
 
 class SameTypeShape(PrimitiveWithInfer):
@@ -804,6 +808,9 @@ class Shape(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Shape"""
+
+    def __call__(self, x):
+        return get_dyn_shape(x)
 
 
 class TensorShape(Primitive):

@@ -198,6 +198,19 @@ AbstractBasePtr InferImplTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
   return std::make_shared<AbstractType>(type);
 }
 
+AbstractBasePtr InferImplTopTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a pointer to an AbstractBase object
+  if (args_spec_list.size() != 1) {
+    MS_LOG(EXCEPTION) << "The Typeof operator must requires 1 argument, but the size of arguments is "
+                      << args_spec_list.size() << ".";
+  }
+  AbstractBasePtr abs_base = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(abs_base);
+  TypeId type_id = abs_base->BuildType()->type_id();
+  return std::make_shared<AbstractType>(TypeIdToType(type_id));
+}
+
 AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -990,6 +1003,7 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TopTypeOf, prim::kPrimTopTypeOf, InferImplTopTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);

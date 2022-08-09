@@ -171,6 +171,7 @@ PYBIND11_MODULE(_c_expression, m) {
               py::arg("decrypt") = py::none(), "Load model as Graph.");
 
   (void)m.def("init_cluster", &mindspore::distributed::Initialize, "Init Cluster");
+  (void)m.def("get_dyn_shape", &mindspore::pynative::GetDynShape, "Get Dynamic Shape of Tensor");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")

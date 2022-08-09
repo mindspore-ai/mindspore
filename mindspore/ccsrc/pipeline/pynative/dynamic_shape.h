@@ -54,6 +54,7 @@ class DynamicShape {
     id_with_dynamic_abs_[id] = abs;
   }
   void reset() { id_with_dynamic_abs_.clear(); }
+  py::object GetDynShape(const py::args &args) const;
 
  private:
   ShapeVector GetTensorShape(const ValuePtr &v) const;

@@ -462,6 +462,23 @@ void DynamicShape::CheckPreviousTopCellCanBeDynamicShape(const py::object &cell,
   }
 }
 
+py::object DynamicShape::GetDynShape(const py::args &args) const {
+  const auto &obj = args[0];
+  const auto &base_shape_ptr = obj.cast<tensor::TensorPtr>()->base_shape_ptr();
+  if (base_shape_ptr != nullptr) {
+    auto value = MakeValue(base_shape_ptr->cast<abstract::ShapePtr>()->shape());
+    return ValueToPyData(value);
+  }
+  const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  auto it = id_with_dynamic_abs_.find(arg_id);
+  if (it != id_with_dynamic_abs_.end()) {
+    auto value = MakeValue(GetShapeFromAbstract(it->second)->shape());
+    return ValueToPyData(value);
+  }
+  auto value = MakeValue(GetTensorShape(obj.cast<tensor::TensorPtr>()));
+  return ValueToPyData(value);
+}
+
 void DynamicShape::FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::args &args,
                                     std::vector<ShapeVector> *new_args_shape) const {
   MS_EXCEPTION_IF_NULL(top_cell);

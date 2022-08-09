@@ -2077,3 +2077,31 @@ class ClipByNorm(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("clip_norm_type", clip_norm_type,
                                            [mstype.float16, mstype.float32], self.name)
         return mstype.float32
+
+
+class TopTypeof(Primitive):
+    """
+        Internal primitive method, to speed up mindspore.ops.typeof.
+
+        Returns the top type of the input data.
+
+        In Pynative mode, returns the top type in cache.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.typeof_cache = dict()
+        self.prim_toptypeof = Primitive('TopTypeof')
+
+    def __call__(self, x):
+        index_type = type(x).__name__
+        if 'Tensor' in index_type:
+            index_type = 'Tensor'
+        if index_type in ('slice', 'list', 'tuple', 'Tensor', 'NoneType', 'int', 'bool', 'ellipsis'):
+            if index_type not in self.typeof_cache:
+                self.typeof_cache[index_type] = self.prim_toptypeof(x)
+            return self.typeof_cache.get(index_type)
+        return self.prim_toptypeof(x)
