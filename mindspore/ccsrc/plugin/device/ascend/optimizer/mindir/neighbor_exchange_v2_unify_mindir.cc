@@ -383,9 +383,13 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroupRankIds, MakeValue<std::vector<uint32_t>>(group_rank_ids), all_to_all_v);
 
-  if (neighbor_exchange_v2_or_grad->HasAttr(parallel::COMM_REUSE) &&
-      GetValue<bool>(neighbor_exchange_v2_or_grad->GetAttr(parallel::COMM_REUSE))) {
-    all_to_all_v->AddAttr(parallel::COMM_REUSE, MakeValue(true));
+  auto neighbor_exchange_v2_or_grad_prim = GetCNodePrimitive(neighbor_exchange_v2_or_grad);
+  MS_EXCEPTION_IF_NULL(neighbor_exchange_v2_or_grad_prim);
+  if (neighbor_exchange_v2_or_grad_prim->HasAttr(parallel::COMM_REUSE) &&
+      GetValue<bool>(neighbor_exchange_v2_or_grad_prim->GetAttr(parallel::COMM_REUSE))) {
+    auto all_to_all_v_prim = GetCNodePrimitive(all_to_all_v);
+    MS_EXCEPTION_IF_NULL(all_to_all_v_prim);
+    (void)all_to_all_v_prim->AddAttr(parallel::COMM_REUSE, MakeValue(true));
   }
 
   // add depend for input & alltoallv in send_empty condition

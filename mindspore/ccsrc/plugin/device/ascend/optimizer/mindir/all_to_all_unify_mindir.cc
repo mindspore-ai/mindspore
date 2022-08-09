@@ -147,8 +147,13 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(rank_ids), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroupRankIds, MakeValue<std::vector<uint32_t>>(group_rank_ids), all_to_all_v);
-  if (all_to_all->HasAttr(parallel::COMM_REUSE) && GetValue<bool>(all_to_all->GetAttr(parallel::COMM_REUSE))) {
-    all_to_all_v->AddAttr(parallel::COMM_REUSE, MakeValue(true));
+  auto all_to_all_prim = GetCNodePrimitive(all_to_all);
+  MS_EXCEPTION_IF_NULL(all_to_all_prim);
+  if (all_to_all_prim->HasAttr(parallel::COMM_REUSE) &&
+      GetValue<bool>(all_to_all_prim->GetAttr(parallel::COMM_REUSE))) {
+    auto all_to_all_v_prim = GetCNodePrimitive(all_to_all_v);
+    MS_EXCEPTION_IF_NULL(all_to_all_v_prim);
+    (void)all_to_all_v_prim->AddAttr(parallel::COMM_REUSE, MakeValue(true));
   }
   MS_LOG(INFO) << "Create AllToAllv success, split count " << split_count << ", rank size " << rank_size;
   return all_to_all_v;
