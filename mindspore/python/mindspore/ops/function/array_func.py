@@ -3966,6 +3966,7 @@ def max(x, axis=0, keep_dims=False):
         - values (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
+        TypeError: If data type `x` is not float16, float32 or float64.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 

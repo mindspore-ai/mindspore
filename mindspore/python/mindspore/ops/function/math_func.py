@@ -2003,7 +2003,7 @@ def linspace(start, stop, num):
         num (int): Number of ticks in the interval, inclusive of start and stop.
             Must be positive int number.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as `start`, and the shape of :math:`(num)`
 
     Raises:

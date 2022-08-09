@@ -142,7 +142,7 @@ def sequence_mask(lengths, maxlen=None):
         maxlen (int): size of the last dimension of returned tensor. Must be positive and same
             type as elements in `lengths`. Default is None.
 
-    Outputs:
+    Returns:
         One mask tensor of shape `lengths.shape + (maxlen,)` .
 
     Raises:

@@ -294,6 +294,25 @@ mindspore.Tensor
 
         Tensor，是一个与 `x` 相同类型的Tensor。
 
+    .. py:method:: broadcast_to(shape)
+
+        将输入shape广播到目标shape。
+
+        更多细节请参考 :func:`mindspore.ops.broadcast_to`。
+
+        **参数：**
+
+        - **shape** (tuple) - 要广播的目标形状。可以由用户指定，或在要广播的维度上指定-1，它将被该位置的输入张量形状替换。
+
+        **返回：**
+
+        Tensor，形状为用户指定的 `shape`，类型和 `self` 相同。
+
+        **异常：**
+
+        - **TypeError** - 如果输入的 `shape` 参数不是tuple类型。
+        - **ValueError** - 如果输入的 `shape` 与 `self` 的形状不兼容，或者目标 `shape` 中的-1位于无效位置。
+
     .. py:method:: choose(choices, mode='clip')
 
         根据原始Tensor数组和一个索引数组构造一个新的Tensor。
@@ -1875,6 +1894,31 @@ mindspore.Tensor
 
         Tensor，具有与入参 `shape` 相同的维度。
 
+    .. py:method:: xdivy(y)
+
+        计算原Tensor除以输入的Tensor。当原Tensor为零时，则返回零。原Tensor的数据类型需要是float，complex或bool。
+        后面为了使表达清晰，使用 `x` 代替原Tensor。
+
+        .. math::
+            out_i = x_{i}\y_{i}
+
+        `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。y是一个Tensor或Scalar。当y是Tensor时，x和y的数据类型不能同时是bool的，它们的shape可以广播。当y是Scalar时，只能是一个常量。
+
+        **参数：**
+
+        - **y** (Union[Tensor, number.Number, bool]) - float、complex或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
+
+        **返回：**
+
+        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。
+
+        **异常：**
+
+        - **TypeError** - 如果 `y` 不是以下之一：Tensor、Number、bool。
+        - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32、float64、complex64、complex128、bool。
+        - **ValueError** - 如果 `x` 不能广播至 `y` 的shape。
+        - **RuntimeError** - 如果Parameter的 `x` , `y` 需要进行数据类型转换，但是Parameter是不支持数据类型转换。
+  
     .. py:method:: xlogy(y)
 
         计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是

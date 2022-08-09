@@ -258,7 +258,7 @@ def tensor_dot(x1, x2, axes):
             automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
             as axes for each respectively.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
         contracted in both inputs
 
