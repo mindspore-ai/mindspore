@@ -66,6 +66,7 @@ from .array_func import (
     scatter_nd_min,
     gather,
     gather_d,
+    gather_elements,
     gather_nd,
     scalar_cast,
     index_fill,

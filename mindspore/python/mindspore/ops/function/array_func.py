@@ -4151,6 +4151,7 @@ __all__ = [
     'unsorted_segment_prod',
     'gather',
     'gather_d',
+    'gather_elements',
     'gather_nd',
     'one_hot',
     'index_fill',

@@ -182,6 +182,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
        {"__ms_iter__", std::string("array_iter")},                         // C.array_iter
        {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
+       {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
        {"itemset", std::string("itemset")},                                // P.itemset,
        {"transpose", std::string("transpose")},                            // P.transpose

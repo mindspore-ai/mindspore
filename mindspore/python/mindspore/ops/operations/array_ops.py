@@ -6500,10 +6500,31 @@ class TensorScatterMax(_TensorScatterOp):
 
 class TensorScatterMin(_TensorScatterOp):
     """
-    By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
+    By comparing the value at the position indicated by the index in input_x with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_min` for more detail.
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of input_x[indices].
+    For more details, see use cases.
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to `input_x`.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+          The rank must be at least 2.
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
 
     Supported Platforms:
         ``GPU``
@@ -6530,8 +6551,35 @@ class TensorScatterMin(_TensorScatterOp):
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("TensorScatterMin")
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
+
+    def infer_shape(self, input_x_shape, indices_shape, updates_shape):
+        if len(indices_shape) < 2:
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
+
+        if indices_shape[-1] > len(input_x_shape):
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(input_x_shape)}.")
+
+        updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
+        if updates_shape_check != updates_shape:
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
+
+        return input_x_shape
+
+    def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
+        args = {"input_x": input_x_dtype, "updates": updates_dtype}
+        valid_input_types = (mstype.float16, mstype.float32, mstype.int8, mstype.uint8, mstype.int32)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_input_types, self.name)
+        return input_x_dtype
 
 
 class TensorScatterSub(_TensorScatterOp):

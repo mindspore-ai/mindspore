@@ -3928,6 +3928,60 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('masked_select')(self, mask)
 
+    def gather_elements(self, dim, index):
+        """
+        Gathers elements along an axis specified by dim.
+
+        For a 3-D tensor, the output is:
+
+        .. code-block::
+
+            output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
+
+            output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
+
+            output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
+
+        `x` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
+        If `dim` = i, `x` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
+        the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
+        where `y`>=1 and the output will have the same shape with `index`.
+
+        Args:
+            dim (int): The axis along which to index. It must be int32 or int64.
+                The value range is [-self.ndim, self.ndim).
+            index (Tensor): The indices of elements to gather. It can be one of the following data types:
+                int32, int64. The value range of each index element is [-self.shape(dim), self.shape(dim)).
+
+        Returns:
+            Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`,
+            and has the same data type with `self.dtype`.
+
+        Raises:
+            TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
+            ValueError: If length of shape of `self` is not equal to length of shape of `index`.
+            ValueError: If the size of the dimension except `dim` is not equal between `self` and `index`.
+            ValueError: If the value of `dim` is not in the expected range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+            >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+            >>> dim = 1
+            >>> output = x.gather_elements(dim, index)
+            >>> print(output)
+            [[1 1]
+             [4 3]]
+        """
+        self._init_check()
+        validator.check_value_type('index', index, (Tensor_,), 'Tensor.gather_elements')
+        return tensor_operator_registry.get('gather_elements')(self, dim, index)
+
     def nonzero(self):
         """
         Return a Tensor of the positions of all non-zero values.
