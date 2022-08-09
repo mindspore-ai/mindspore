@@ -105,6 +105,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override {
     auto kernel_ptr = std::dynamic_pointer_cast<ops::Lamb>(base_operator);
     kernel_name_ = kernel_ptr->name();
+    InitResource();
     return true;
   }
 
@@ -114,7 +115,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For 'Lamb', the number of inputs should be " << INPUT_NUM << ", but got " << inputs.size();
     }
 
-    InitResource();
     InitParamSizeByType();
 
     auto variable_int64_shape = inputs[kVarIndex]->GetShapeVector();

@@ -55,7 +55,7 @@ int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   outer_size_ = x_shape.at(LongToSize(batch_rank));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank + 1, x_shape.end(), size_t(1), std::multiplies{});
   x_size_ = inner_size_ * outer_size_;
-  indices_size_ = indices_shape.at(batch_rank);
+  indices_size_ = indices_shape.at(LongToSize(batch_rank));
   y_size_ = std::accumulate(y_shape.begin() + batch_rank, y_shape.end(), size_t(1), std::multiplies{});
   return ret;
 }
