@@ -85,6 +85,9 @@ class MindRecordException(Exception):
         self._error_msg = error_item[1]
         self._error_code = MindRecordException.transform_error_code(error_item[0])
 
+    def __str__(self):
+        return "[{}]: {}".format(self.__class__.__name__, self._error_msg)
+
     @property
     def error_msg(self):
         """return the description of this error."""
@@ -98,9 +101,6 @@ class MindRecordException(Exception):
     def error_code(self):
         """return the unique error number of this error."""
         return self._error_code
-
-    def __str__(self):
-        return "[{}]: {}".format(self.__class__.__name__, self._error_msg)
 
     @staticmethod
     def transform_error_code(exception_no):

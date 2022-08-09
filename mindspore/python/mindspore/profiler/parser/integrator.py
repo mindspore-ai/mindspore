@@ -992,6 +992,62 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             "free_time": (self._FREE_TIME_TID, self._OP_OVERLAP_PID)
         }
 
+    def init_timeline(self, reduce_op_type):
+        """Init timeline metadata, adding all collected info."""
+        timeline_list = self._load_timeline_data(reduce_op_type)
+
+        # Init a dict for counting the num of streams.
+        stream_count_dict = {}
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, 0)
+            # Updating the collection of streams.
+            if len(timeline) == 4:
+                self._update_num_of_streams(timeline, stream_count_dict)
+
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
+        # Update timeline summary info
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict)
+
+    def check_op_name(self, op_name):
+        """
+        Check whether the operator name exists.
+
+        Args:
+            op_name (str): The operator name or operator name prefix.
+
+        Returns:
+            bool, `True` if the operator name does exist, else `False`.
+        """
+        if not op_name:
+            raise ProfilerParamValueErrorException('The op_name should exist.')
+        for op_time_info in self._timeline_meta:
+            full_op_name = op_time_info['name']
+            if full_op_name and full_op_name.startswith(op_name):
+                return True
+        return False
+
+    def is_gpu_kernel_async_launch(self):
+        """Recognize the solution that launch the gpu kernel async."""
+        step_trace_profiling_path = self._get_and_validate_path(
+            self._step_trace_original_filename
+        )
+        try:
+            with open(step_trace_profiling_path, 'r') as f_obj:
+                line = next(f_obj)
+                first_string = line.strip().split()[0]
+                # the data format of launch the gpu kernel async is "Default/op1,160123 op-name"
+                # otherwise, the data format is "Default/op1 160123,12 "
+                return bool(len(first_string.split(',')) == 2)
+        except (IOError, OSError) as err:
+            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            raise ProfilerIOException() from err
+        except StopIteration:
+            logger.warning('No step trace data exists.')
+            return False
+
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
         file_path = os.path.join(
@@ -1155,8 +1211,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         """Load activity data from file"""
         activity_timeline_list = []
         cuda_compute_ops_timeline_list = []
+        args_dict = {}
         try:
-            args_dict = {}
             with open(activity_args_file_path, 'r') as args_file:
                 csv_reader = csv.reader(args_file)
                 keys_list = next(csv_reader)
@@ -1177,43 +1233,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             raise ProfilerIOException()
 
         return activity_timeline_list, cuda_compute_ops_timeline_list
-
-    def init_timeline(self, reduce_op_type):
-        """Init timeline metadata, adding all collected info."""
-        timeline_list = self._load_timeline_data(reduce_op_type)
-
-        # Init a dict for counting the num of streams.
-        stream_count_dict = {}
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, 0)
-            # Updating the collection of streams.
-            if len(timeline) == 4:
-                self._update_num_of_streams(timeline, stream_count_dict)
-
-        # Add format thread meta data.
-        self._format_meta_data_list.extend(self._timeline_meta)
-        self._timeline_meta = self._format_meta_data_list
-
-        # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict)
-
-    def check_op_name(self, op_name):
-        """
-        Check whether the operator name exists.
-
-        Args:
-            op_name (str): The operator name or operator name prefix.
-
-        Returns:
-            bool, `True` if the operator name does exist, else `False`.
-        """
-        if not op_name:
-            raise ProfilerParamValueErrorException('The op_name should exist.')
-        for op_time_info in self._timeline_meta:
-            full_op_name = op_time_info['name']
-            if full_op_name and full_op_name.startswith(op_name):
-                return True
-        return False
 
     def _get_step_time_list_from_step_trace(self):
         """Produce the time of each step based on step_trace_profiling file."""
@@ -1245,25 +1264,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             raise ProfilerIOException()
 
         return step_time_list
-
-    def is_gpu_kernel_async_launch(self):
-        """Recognize the solution that launch the gpu kernel async."""
-        step_trace_profiling_path = self._get_and_validate_path(
-            self._step_trace_original_filename
-        )
-        try:
-            with open(step_trace_profiling_path, 'r') as f_obj:
-                line = next(f_obj)
-                first_string = line.strip().split()[0]
-                # the data format of launch the gpu kernel async is "Default/op1,160123 op-name"
-                # otherwise, the data format is "Default/op1 160123,12 "
-                return bool(len(first_string.split(',')) == 2)
-        except (IOError, OSError) as err:
-            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException()
-        except StopIteration:
-            logger.warning('No step trace data exists.')
-            return False
 
     def _get_cluster_timeline(self, timeline, activity_info, comm_info, step_info):
         """
@@ -1917,15 +1917,35 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         super().__init__(profiling_dir, 0, 0, model)
         self._device_target = DeviceTarget.CPU.value
 
-    def _get_and_validate_path(self, file_name):
-        """Generate op or activity file path from file name, and validate this path."""
-        file_path = os.path.join(
-            self._profiling_dir,
-            file_name.format(self._device_id)
-        )
-        file_path = validate_and_normalize_path(file_path)
+    def get_timeline_data(self):
+        """Get timeline data from file."""
+        timeline_list = self.load_cpu_op_data()
+        factor_ns_to_ms = 1e6
+        factor_us_to_ms = 1e3
+        for time_item in timeline_list:
+            time_item[self._start_time_idx] = float(time_item[self._start_time_idx]) / factor_ns_to_ms
+            time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_us_to_ms
 
-        return file_path
+        return timeline_list
+
+    def init_timeline(self):
+        """Init timeline metadata, adding all collected info."""
+        timeline_list = self._load_timeline_data()
+
+        # Init a dict for counting the num of streams.
+        stream_count_dict = {}
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, 0)
+            # Updating the collection of streams.
+            if len(timeline) == 4:
+                self._update_num_of_streams(timeline, stream_count_dict)
+
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
+        # Update timeline summary info
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
 
     def load_cpu_op_data(self):
         """Load cpu operator data from file"""
@@ -1941,6 +1961,16 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
             time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_ms_to_us
 
         return timeline_list
+
+    def _get_and_validate_path(self, file_name):
+        """Generate op or activity file path from file name, and validate this path."""
+        file_path = os.path.join(
+            self._profiling_dir,
+            file_name.format(self._device_id)
+        )
+        file_path = validate_and_normalize_path(file_path)
+
+        return file_path
 
     def _load_op_data(self, op_file_path):
         """Load operator data from file"""
@@ -1967,17 +1997,6 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
             raise ProfilerIOException()
 
         return op_timeline_list
-
-    def get_timeline_data(self):
-        """Get timeline data from file."""
-        timeline_list = self.load_cpu_op_data()
-        factor_ns_to_ms = 1e6
-        factor_us_to_ms = 1e3
-        for time_item in timeline_list:
-            time_item[self._start_time_idx] = float(time_item[self._start_time_idx]) / factor_ns_to_ms
-            time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_us_to_ms
-
-        return timeline_list
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
@@ -2048,22 +2067,3 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
 
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
-
-    def init_timeline(self):
-        """Init timeline metadata, adding all collected info."""
-        timeline_list = self._load_timeline_data()
-
-        # Init a dict for counting the num of streams.
-        stream_count_dict = {}
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, 0)
-            # Updating the collection of streams.
-            if len(timeline) == 4:
-                self._update_num_of_streams(timeline, stream_count_dict)
-
-        # Add format thread meta data.
-        self._format_meta_data_list.extend(self._timeline_meta)
-        self._timeline_meta = self._format_meta_data_list
-
-        # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
