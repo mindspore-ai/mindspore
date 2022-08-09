@@ -2757,8 +2757,11 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
         axis = axis + rank_base + 1
     for i in range(1, n):
         validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
-        if x_shape[i] != x_shape[0]:
-            raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
+        validator.check('len of x_shape[%d]' % i, len(x_shape[i]), 'len of x_shape[0]', rank_base, Rel.EQ,
+                        prim_name, ValueError)
+        for j in range(0, rank_base):
+            if x_shape[i][j] != x_shape[0][j] and x_shape[i][j] != -1 and x_shape[0][j] != -1:
+                raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
 
     out = {}
     if is_shape_unknown(out_shape):
