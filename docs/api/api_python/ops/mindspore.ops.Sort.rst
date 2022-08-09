@@ -5,6 +5,9 @@
 
     根据指定的轴对输入Tensor的元素进行排序。默认为升序排序。
 
+    .. warning::
+        目前仅支持float16数据类型。如果使用float32类型可能导致数据精度损失。
+
     参数：
         - **axis** (int) - 指定排序的轴。默认值：-1。
         - **descending** (bool) - 指定排序方式。如果 `descending` 为True，则根据value对元素进行降序排序。默认值：False。
