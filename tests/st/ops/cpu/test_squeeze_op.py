@@ -19,6 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops as P
+from mindspore.ops.functional import vmap
 
 
 class SqueezeNet(Cell):
@@ -89,3 +90,22 @@ def test_tensor():
 
     output = Tensor(x).squeeze(0)
     assert np.all(output.asnumpy() == x.squeeze(0))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_squeeze_vmap():
+    """
+    Feature: Test Squeeze CPU vmap.
+    Description: test vmap for squeeze.
+    Expectation: match to np benchmark.
+    """
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 16)
+    net = SqueezeNet()
+    output = vmap(net, in_axes=-1, out_axes=-1)(Tensor(x))
+    assert np.all(output.asnumpy() == x.squeeze())

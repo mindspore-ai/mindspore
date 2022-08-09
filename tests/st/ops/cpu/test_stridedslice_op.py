@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -43,6 +44,24 @@ def test_slice():
     expect = [[[5., 5., 5.],
                [6., 7., 8.]]]
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice_vmap():
+    """
+    Feature: Test stridedslice CPU vmap.
+    Description: test vmap for stridedslice.
+    Expectation: match to np benchmark.
+    """
+
+    x = Tensor(np.ones((4, 3, 5, 16)))
+    stridedslice_vmap = vmap(StridedSlice(), in_axes=-1)
+    output = stridedslice_vmap(x)
+    expect = np.ones((16, 1, 2, 3))
+    assert np.allclose(output.asnumpy(), expect)
+
 
 if __name__ == '__main__':
     test_slice()

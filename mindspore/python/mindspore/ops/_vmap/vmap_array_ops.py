@@ -28,7 +28,7 @@ from mindspore.ops import constexpr
 from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
-    _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis
+    _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, get_unop_vmap_rule
 from ..operations.array_ops import Fills
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import Col2Im
@@ -1664,9 +1664,102 @@ def get_slice_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Squeeze)
+def get_squeeze_vmap_rule(prim, axis_size):
+    """VmapRule for `Squeeze`."""
+    if hasattr(prim, 'axis'):
+        prim_axis = prim.axis
+    else:
+        prim_axis = None
+
+    @constexpr
+    def move_axis(axes):
+        new_axis = ()
+        for axis in axes:
+            if axis < 0:
+                new_axis = new_axis + (axis,)
+            else:
+                new_axis = new_axis + (axis + 1,)
+        return new_axis
+
+    @constexpr
+    def generate_all_axis_except_first(x_rank):
+        new_axis = ()
+        for i in range(1, x_rank, 1):
+            new_axis += (i,)
+        return new_axis
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+
+        if prim_axis is None:
+            if axis_size == 1:
+                new_axis = generate_all_axis_except_first(F.rank(x))
+                batch_squeeze = P.Squeeze(axis=new_axis)
+                out = batch_squeeze(x)
+                return (out, 0)
+
+            out = prim(x)
+            return (out, 0)
+
+        new_axis = move_axis(prim_axis)
+        batch_squeeze = P.Squeeze(axis=new_axis)
+        out = batch_squeeze(x)
+        return (out, 0)
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.StridedSlice)
+def get_stridedslice_vmap_rule(prim, axis_size):
+    """VmapRule for `StridedSlice`."""
+    new_begin_mask = prim.begin_mask * 2 + 1
+    new_end_mask = prim.end_mask * 2 + 1
+    new_ellipsis_mask = prim.ellipsis_mask
+    new_new_axis_mask = prim.new_axis_mask * 2
+    new_shrink_axis_mask = prim.shrink_axis_mask * 2
+    batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
+                                        new_shrink_axis_mask)
+
+    @constexpr
+    def get_new_begin_end_strided(begin, end, strided):
+        new_begin = (0,) + begin
+        new_end = (0,) + end
+        new_strided = (1,) + strided
+        return new_begin, new_end, new_strided
+
+    def vmap_rule(x_bdim, begin_bdim, end_bdim, strided_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, begin_bdim, end_bdim, strided_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        begin, begin_dim = begin_bdim
+        end, end_dim = end_bdim
+        strided, strided_dim = strided_bdim
+
+        if any(dim is not None for dim in [begin_dim, end_dim, strided_dim]):
+            _raise_value_error("vmap of `StridedSlice` not support `begin`, `end` or `strided` has batch dimension, "
+                               "but got {}, {}, {}".format(begin_dim, end_dim, strided_dim))
+
+        # x_dim is not None, and other is None
+        x = _bdim_at_front(x, x_dim, axis_size)
+        new_begin, new_end, new_strided = get_new_begin_end_strided(begin, end, strided)
+        result = batch_stridedslice(x, new_begin, new_end, new_strided)
+        return (result, 0)
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(Col2Im)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(RandomPoisson)(get_unsupported_dynamic_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.ZerosLike)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.OnesLike)(get_unop_vmap_rule)
