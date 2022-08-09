@@ -170,7 +170,7 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
-  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position) const;
+  std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, const bool get_by_position) const;
   void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const;
   // Manage resource for construct forward graph.
   AnfNodePtr GetObjNode(const ValuePtr &v, const std::string &obj_id) const;

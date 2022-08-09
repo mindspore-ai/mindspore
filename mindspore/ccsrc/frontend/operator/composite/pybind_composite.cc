@@ -38,8 +38,9 @@ REGISTER_PYBIND_WITH_PARENT_NAME(
     // Reg GradOperation
     (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(*m, "GradOperation_")
       .def(py::init<std::string &>(), py::arg("fn"))
-      .def(py::init<std::string &, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"), py::arg("get_by_list"),
-           py::arg("sens_param"), py::arg("get_by_position"));
+      .def(py::init<std::string &, bool, bool, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
+           py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"), py::arg("has_aux"),
+           py::arg("get_value"));
 
     // Reg VmapOperation
     (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(*m, "VmapOperation_")

@@ -345,6 +345,7 @@ from .random_func import (
 from .grad import (
     grad_func,
     grad,
+    value_and_grad,
     jet,
     derivative,
     jvp,

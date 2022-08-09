@@ -144,7 +144,8 @@ using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
-                         bool sens_param = false, bool get_by_position = false);
+                         bool sens_param = false, bool get_by_position = false, bool has_aux = false,
+                         bool get_value = false);
   ~GradOperation() override = default;
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
@@ -158,12 +159,23 @@ class GradOperation : public MetaFuncGraph {
   bool get_by_list_;
   bool sens_param_;
   bool get_by_position_;
+  bool has_aux_;
+  bool get_value_;
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
                        const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad) const;
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
+
+class GradAux : public MetaFuncGraph {
+ public:
+  explicit GradAux(const std::string &name) : MetaFuncGraph(name) {}
+  ~GradAux() override = default;
+  MS_DECLARE_PARENT(GradAux, MetaFuncGraph);
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+};
+using GradAuxPtr = std::shared_ptr<GradAux>;
 
 class TaylorOperation : public MetaFuncGraph {
  public:
