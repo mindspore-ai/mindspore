@@ -1065,7 +1065,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 while op_queue:
                     tmp_queue = []
                     for op in op_queue:
-                        if op in visited or not op in total_ops:
+                        if op in visited or op not in total_ops:
                             continue
                         if _early_stop(op):
                             return False
