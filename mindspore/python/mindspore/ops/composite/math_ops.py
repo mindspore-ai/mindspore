@@ -258,7 +258,7 @@ def tensor_dot(x1, x2, axes):
             automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
             as axes for each respectively.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
         contracted in both inputs
 
@@ -346,7 +346,7 @@ def dot(x1, x2):
         x2 (Tensor): Second tensor in Dot op with datatype float16 or float32,
             The rank must be greater than or equal to 2.
 
-    Outputs:
+    Returns:
         Tensor, dot product of x1 and x2.
 
     Raises:
@@ -559,7 +559,7 @@ def batch_dot(x1, x2, axes=None):
           `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
           Default: None.
 
-    Outputs:
+    Returns:
         Tensor, batch dot product of `x1` and `x2`. For example: The Shape of output
         for input `x1` shapes (batch, d1, axes, d2) and `x2` shapes (batch, d3, axes, d4) is (batch, d1, d2, d3, d4),
         where d1 and d2 means any number.
@@ -744,7 +744,7 @@ def cummin(x, axis):
           from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
           from the last dimension. For example, -1 means the last dimension.
 
-    Outputs:
+    Returns:
         - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
         - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
 
@@ -783,7 +783,7 @@ def resize_nearest_neighbor(input_x, size, align_corners=False):
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
                               and output tensors are aligned. Default: False.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
         The data type is the same as the `input_x`.
 

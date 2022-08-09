@@ -69,7 +69,7 @@ def all_finite(inputs):
         device targets.
 
     Args:
-        inputs(Union(tuple(Tenosr), list(Tensor))): a iterable Tensor.
+        inputs (Union(tuple(Tenosr), list(Tensor))): a iterable Tensor.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -109,7 +109,7 @@ class LossScaler():
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -118,7 +118,7 @@ class LossScaler():
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -127,7 +127,7 @@ class LossScaler():
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite(Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
         """
         raise NotImplementedError
 
@@ -142,7 +142,7 @@ class StaticLossScaler(LossScaler):
         This is an experimental interface that is subject to change or deletion.
 
     Args:
-        scale_value(Union(float, int)): The initial loss scale value.
+        scale_value (Union(float, int)): The initial loss scale value.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -171,7 +171,7 @@ class StaticLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -183,7 +183,7 @@ class StaticLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -195,7 +195,7 @@ class StaticLossScaler(LossScaler):
         `scale_value` is fixed.
 
         Args:
-            grads_finite(Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
         """
 
 
@@ -212,10 +212,10 @@ class DynamicLossScaler(LossScaler):
         This is an experimental interface that is subject to change or deletion.
 
     Args:
-        scale_value(Union(float, int)): The initial loss scale value.
-        scale_factor(int): The scale factor.
-        scale_window(int): Maximum continuous training steps that do not have
-                            overflow to increase the loss scale.
+        scale_value (Union(float, int)): The initial loss scale value.
+        scale_factor (int): The scale factor.
+        scale_window (int): Maximum continuous training steps that do not have
+            overflow to increase the loss scale.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -244,7 +244,7 @@ class DynamicLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -256,7 +256,7 @@ class DynamicLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs(Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -268,7 +268,7 @@ class DynamicLossScaler(LossScaler):
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite(Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor

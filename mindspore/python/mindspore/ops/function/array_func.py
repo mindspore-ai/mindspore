@@ -1285,7 +1285,7 @@ def squeeze(input_x, axis=()):
 
     Note:
         - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
-    and there is no Tensor data copy process.
+          and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
     Args:
@@ -1294,7 +1294,7 @@ def squeeze(input_x, axis=()):
             all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
             Default: (), an empty tuple.
 
-    Outputs:
+    Returns:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
 
     Raises:
@@ -1476,7 +1476,7 @@ def scatter_max(input_x, indices, updates):
         updates (Tensor): The tensor doing the max operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
 
-    Outputs:
+    Returns:
         Tensor, the updated `input_x`, the type and shape same as `input_x`.
 
     Raises:
@@ -1568,7 +1568,7 @@ def scatter_min(input_x, indices, updates):
         updates (Tensor): The tensor doing the min operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
-    Outputs:
+    Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
@@ -1623,7 +1623,7 @@ def scatter_div(input_x, indices, updates):
         updates (Tensor): The tensor doing the divide operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
-    Outputs:
+    Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
@@ -3444,7 +3444,7 @@ def index_fill(x, dim, index, value):
             a Tensor, it must be a 0-dimensional Tensor and has the same dtype as `x`. Otherwise,
             the `value` will be cast to a 0-dimensional Tensor with the same data type as `x`.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype and shape as input Tensor.
 
     Raises:

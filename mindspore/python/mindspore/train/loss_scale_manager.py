@@ -29,7 +29,7 @@ class LossScaleManager:
     `get_update_cell` is used to get the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale,
     the instance will be called during the training. Currently, the `get_update_cell` is mostly used.
 
-    For example, :class:`mindspore.FixedLossScaleManager` and :class:`mindspore.DynamicLossScaleManager`.
+    For example, :class:`mindspore.amp.FixedLossScaleManager` and :class:`mindspore.amp.DynamicLossScaleManager`.
     """
     def get_loss_scale(self):
         """Get the value of loss scale, which is the amplification factor of the gradients."""
@@ -48,7 +48,7 @@ class LossScaleManager:
 class FixedLossScaleManager(LossScaleManager):
     """
     Loss scale(Magnification factor of gradients when mix precision is used) manager with a fixed loss scale value,
-    inherits from :class:`mindspore.LossScaleManager`.
+    inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
         loss_scale (float): Magnification factor of gradients. Note that if `drop_overflow_update` is set to False,
@@ -124,7 +124,7 @@ class FixedLossScaleManager(LossScaleManager):
 class DynamicLossScaleManager(LossScaleManager):
     """
     Loss scale(Magnification factor of gradients when mix precision is used) manager with loss scale dynamically
-    adjusted, inherits from :class:`mindspore.LossScaleManager`.
+    adjusted, inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
         init_loss_scale (float): Initialize loss scale. Default: 2**24.
