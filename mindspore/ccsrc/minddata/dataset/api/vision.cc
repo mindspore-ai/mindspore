@@ -22,6 +22,7 @@
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
@@ -148,6 +149,18 @@ AdjustGamma::AdjustGamma(float gamma, float gain) : data_(std::make_shared<Data>
 
 std::shared_ptr<TensorOperation> AdjustGamma::Parse() {
   return std::make_shared<AdjustGammaOperation>(data_->gamma_, data_->gain_);
+}
+
+// AdjustSharpness Transform Operation.
+struct AdjustSharpness::Data {
+  explicit Data(float sharpness_factor) : sharpness_factor_(sharpness_factor) {}
+  float sharpness_factor_;
+};
+
+AdjustSharpness::AdjustSharpness(float sharpness_factor) : data_(std::make_shared<Data>(sharpness_factor)) {}
+
+std::shared_ptr<TensorOperation> AdjustSharpness::Parse() {
+  return std::make_shared<AdjustSharpnessOperation>(data_->sharpness_factor_);
 }
 
 // AutoAugment Transform Operation.

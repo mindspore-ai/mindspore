@@ -62,11 +62,11 @@ from mindspore._c_expression import typing
 from . import py_transforms_util as util
 from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
-from .validators import check_adjust_brightness, check_adjust_gamma, check_alpha, check_auto_augment, \
-    check_auto_contrast, check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, \
-    check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, \
-    check_hsv_to_rgb, check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, \
-    check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, \
+from .validators import check_adjust_brightness, check_adjust_gamma, check_adjust_sharpness, check_alpha, \
+    check_auto_augment, check_auto_contrast, check_bounding_box_augment_cpp, check_center_crop, check_convert_color, \
+    check_crop, check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, check_five_crop, \
+    check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, check_mix_up, check_mix_up_batch_c, \
+    check_normalize, check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, \
     check_posterize, check_prob, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
     check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
     check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
@@ -192,6 +192,38 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
             PIL Image, gamma adjusted image.
         """
         return util.adjust_gamma(img, self.gamma, self.gain)
+
+
+class AdjustSharpness(ImageTensorOperation):
+    r"""
+    Adjust sharpness of input image. Input image is expected to be in [H, W, C] or [H, W] format.
+
+    Args:
+        sharpness_factor (float): How much to adjust the sharpness, should be a
+            non negative number. 0 gives a blurred image, 1 gives the
+            original image while 2 increases the Sharpness by a factor of 2.
+
+    Raises:
+        TypeError: If `sharpness_factor` is not of type float.
+        ValueError: If `sharpness_factor` is less than 0.
+        RuntimeError: If given tensor shape is not <H, W, C> or <H, W>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.AdjustSharpness(sharpness_factor=2.0)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+    @check_adjust_sharpness
+    def __init__(self, sharpness_factor):
+        super().__init__()
+        self.sharpness_factor = sharpness_factor
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.AdjustSharpnessOperation(self.sharpness_factor)
 
 
 class AutoAugment(ImageTensorOperation):

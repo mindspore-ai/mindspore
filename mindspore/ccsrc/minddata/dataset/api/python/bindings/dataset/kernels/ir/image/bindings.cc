@@ -22,6 +22,7 @@
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
@@ -100,6 +101,16 @@ PYBIND_REGISTER(
         return ajust_gamma;
       }));
   }));
+
+PYBIND_REGISTER(AdjustSharpnessOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::AdjustSharpnessOperation, TensorOperation,
+                                   std::shared_ptr<vision::AdjustSharpnessOperation>>(*m, "AdjustSharpnessOperation")
+                    .def(py::init([](float sharpness_factor) {
+                      auto adjust_sharpness = std::make_shared<vision::AdjustSharpnessOperation>(sharpness_factor);
+                      THROW_IF_ERROR(adjust_sharpness->ValidateParams());
+                      return adjust_sharpness;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   AutoAugmentOperation, 1, ([](const py::module *m) {

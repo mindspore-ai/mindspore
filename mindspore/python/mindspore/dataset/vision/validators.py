@@ -1024,6 +1024,19 @@ def check_adjust_gamma(method):
     return new_method
 
 
+def check_adjust_sharpness(method):
+    """Wrapper method to check the parameters of AdjustSharpness ops (Python and C++)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sharpness_factor], _ = parse_user_args(method, *args, **kwargs)
+        type_check(sharpness_factor, (float, int), "sharpness_factor")
+        check_value(sharpness_factor, (0, FLOAT_MAX_INTEGER))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_auto_contrast(method):
     """Wrapper method to check the parameters of AutoContrast ops (Python and C++)."""
 

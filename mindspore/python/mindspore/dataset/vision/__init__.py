@@ -44,8 +44,8 @@ from . import c_transforms
 from . import py_transforms
 from . import transforms
 from . import utils
-from .transforms import AdjustBrightness, AdjustGamma, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, \
-    ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, \
+from .transforms import AdjustBrightness, AdjustGamma, AdjustSharpness, AutoAugment, AutoContrast, BoundingBoxAugment, \
+    CenterCrop, ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, \
     HorizontalFlip, HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, \
     PadToSize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, RandomColorAdjust, RandomCrop, \
     RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \

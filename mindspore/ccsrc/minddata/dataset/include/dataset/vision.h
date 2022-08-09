@@ -99,6 +99,37 @@ class MS_API AdjustGamma final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply adjust sharpness on input image. Input image is expected to be in [H, W, C] or [H, W] format.
+class MS_API AdjustSharpness final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sharpness_factor How much to adjust the sharpness. Can be any Non negative real number.
+  ///     0 gives a blurred image, 1 gives the original image while 2 increases the Sharpness by a factor of 2.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto adjust_sharpness_op = vision::AdjustSharpness(2.0);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, adjust_sharpness_op},   // operations
+  ///                            {"image"});                         // input columns
+  /// \endcode
+  explicit AdjustSharpness(float sharpness_factor);
+
+  /// \brief Destructor.
+  ~AdjustSharpness() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply AutoAugment data augmentation method.
 class MS_API AutoAugment final : public TensorTransform {
  public:
