@@ -50,6 +50,13 @@ struct KernelWithIndexCmp {
   }
 };
 
+struct SomasInfo {
+  // whole_block_size_ is 0 indicating that somas did not allocate memory for this graph.
+  size_t whole_block_size_{0};
+  // offset -> aligned_size_
+  std::map<size_t, size_t> merged_blocks_map_;
+};
+
 using DeviceType = device::DeviceType;
 using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 
@@ -57,6 +64,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
  public:
   KernelGraph()
       : inputs_(std::make_shared<std::vector<AnfNodePtr>>()),
+        somas_info_(std::make_shared<SomasInfo>()),
         graph_id_(0),
         stream_distinction_label_(kInvalidDistincLabel),
         device_target_(DeviceType::kUnknown),
@@ -69,6 +77,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
     inputs_ = graph.inputs_;
+    somas_info_ = graph.somas_info_;
     child_graph_result_ = graph.child_graph_result_;
     execution_order_ = graph.execution_order_;
     mem_reuse_exec_order_ = graph.mem_reuse_exec_order_;
@@ -452,6 +461,11 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool IsCommSubGraph(uint32_t id) const { return comm_sub_graph_ids_.find(id) != comm_sub_graph_ids_.end(); }
   void RecordNewCommSubGraphId(uint32_t id) { comm_sub_graph_ids_.insert(id); }
 
+  // somas total memory size
+  SomasInfo *MutableSomasInfo() const { return somas_info_.get(); }
+  size_t somas_whole_block_size() const { return somas_info_->whole_block_size_; }
+  const std::map<size_t, size_t> &somas_merged_blocks_map() const { return somas_info_->merged_blocks_map_; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -477,6 +491,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // members
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
+  std::shared_ptr<SomasInfo> somas_info_;
   std::vector<AnfNodePtr> child_graph_result_;
   std::vector<CNodePtr> execution_order_;
   std::vector<CNodePtr> mem_reuse_exec_order_;

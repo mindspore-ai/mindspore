@@ -608,8 +608,8 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
   bool all_support = device_context->PartitionGraph(func_graph);
+  auto run_mode = device_context->GetRunMode(func_graph);
   if (all_support) {
-    auto run_mode = device_context->GetRunMode(func_graph);
     if (run_mode == device::RunMode::kGraphMode) {
       auto graph_id = graph_compiler_->CompileWholeGraphForGraphRunMode(func_graph, device_context);
       graph_id_to_device_context_[graph_id] = device_context;
@@ -1385,9 +1385,15 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
 
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
+  auto strategy = runtime::GraphExecutionStrategy::kPipeline;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
+    strategy = runtime::GraphExecutionStrategy::kPipelineWithExecutionOrder;
+  }
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
                                              root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
-                                             runtime::GraphExecutionStrategy::kPipeline);
+                                             strategy);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(

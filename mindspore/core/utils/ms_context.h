@@ -46,6 +46,8 @@ const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
+const int kOptimizeO0 = 0;
+const int kOptimizeO1 = 1;
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
@@ -89,6 +91,7 @@ enum MsCtxParam : unsigned {
   // parameter of type int
   MS_CTX_TYPE_INT_BEGIN = MS_CTX_TYPE_BOOL_END,
   MS_CTX_EXECUTION_MODE = MS_CTX_TYPE_INT_BEGIN,
+  MS_CTX_MEMORY_OPTIMIZE_LEVEL,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32

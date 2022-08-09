@@ -985,7 +985,12 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, {node, i});
     MS_EXCEPTION_IF_NULL(device_address);
     uint8_t *ptr = mem_manager_->MallocOutputMem(node, i, type, output_sizes[i], device_address, false);
-    MS_EXCEPTION_IF_NULL(ptr);
+    if (ptr == nullptr && type == kSomasReuseDynamicMem) {
+      MS_LOG(INFO) << "node: " << node->fullname_with_scope() << " could be a RefNode, please check it"
+                   << " output index: " << i << " memory type: " << type;
+    } else {
+      MS_EXCEPTION_IF_NULL(ptr);
+    }
     device_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
     AnfAlgo::SetOutputAddr(device_address, i, node.get());
   }

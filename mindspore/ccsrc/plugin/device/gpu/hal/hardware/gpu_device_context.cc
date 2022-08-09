@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/hal/device/gpu_stream_assign.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
+#include "plugin/device/gpu/hal/hardware/gpu_somas.h"
 #include "runtime/data_queue/data_queue_mgr.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
@@ -40,6 +41,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
@@ -256,6 +258,25 @@ DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
                                                            device_context_->device_context_key().device_id_);
   device_address->set_host_shape(shape);
   return device_address;
+}
+
+void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
+    auto somas = std::make_shared<GPUSomas>();
+    bool ret = somas->Assign(kernel_graph);
+    if (ret) {
+      MS_LOG(INFO) << "Somas allocate success for graph " << kernel_graph->graph_id()
+                   << " somas size: " << kernel_graph->somas_whole_block_size();
+    } else {
+      MS_LOG(WARNING) << "Somas allocate failed for graph " << kernel_graph->graph_id();
+    }
+  }
+  MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << kernel_graph->graph_id();
 }
 
 void GPUKernelExecutor::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {

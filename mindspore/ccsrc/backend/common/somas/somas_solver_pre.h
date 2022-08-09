@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,14 +184,14 @@ class SomasSolverPre {
 
   size_t GetMaxOffset() const { return max_offset_; }
 
-  Status Solving(const session::KernelGraph *graph, TensorsDescMap *ptensors,
+  Status Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
                  const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
                  bool bVerifySolution,  // true -> Check continuous and non overlapping constraints solution
                  bool ball = true,      // true -> run full set of heuristics, false -> run single heuristic specified
                  SortingType sorting = kGreaterSizeSmallerIndex, FittingType fitting = kBest,
                  AlgorithmType algorithm = kManyObjects);
 
-  void Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
+  void Log(const session::KernelGraph &graph, const TensorsDescMap &tensors,
            const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) const;
 
   Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const;
@@ -201,11 +201,11 @@ class SomasSolverPre {
 
  private:
   size_t max_offset_;
-  void SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
+  void SolverInputLog(const session::KernelGraph &graph, const TensorsDescMap &tensors,
                       const vector<vector<size_t>> &continuous_v) const;
-  void SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const;
+  void SolverOutputLog(const session::KernelGraph &graph, const TensorsDescMap &tensors) const;
   vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) const;
-  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph) const;
+  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph &graph) const;
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
 }  // namespace somas

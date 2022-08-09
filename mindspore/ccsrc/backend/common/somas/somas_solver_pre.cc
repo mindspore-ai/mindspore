@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &t
   }
   return vecTensorsMap;
 }
-Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap *ptensors,
+Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
                                const std::vector<DynamicBitSet> *pConstraints,
                                const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool ball,
                                SortingType sorting, FittingType fitting, AlgorithmType algorithm) {
@@ -198,7 +198,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
   return ret;
 }
 
-void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
+void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap &tensors,
                          const std::vector<DynamicBitSet> *pConstraints,
                          const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
@@ -213,13 +213,13 @@ void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap
 }
 
 void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints,
-                                       const session::KernelGraph *graph) const {
+                                       const session::KernelGraph &graph) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_tensor_relation.ir..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string filename =
-    GetSaveGraphsPathName("somas_tensor_relation_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+    GetSaveGraphsPathName("somas_tensor_relation_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
   for (size_t tid1 = 0; tid1 < pConstraints->size(); tid1++) {
     oss << 't' << tid1 << ' ';
@@ -232,14 +232,14 @@ void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstr
   MS_LOG(INFO) << "SomasSolver somas_tensor_relation Log done";
 }
 
-void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
+void SomasSolverPre::SolverInputLog(const session::KernelGraph &graph, const TensorsDescMap &tensors,
                                     const vector<vector<size_t>> &continuous_v) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_solver_input..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string filename =
-    GetSaveGraphsPathName("somas_solver_input_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+    GetSaveGraphsPathName("somas_solver_input_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
   for (auto &t : tensors) {
     oss << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
@@ -256,13 +256,13 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
   MS_LOG(INFO) << "SomasSolver input Log done";
 }
 
-void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const {
+void SomasSolverPre::SolverOutputLog(const session::KernelGraph &graph, const TensorsDescMap &tensors) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_solver_output_..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string out_filename =
-    GetSaveGraphsPathName("somas_solver_output_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path);
+    GetSaveGraphsPathName("somas_solver_output_" + std::to_string(graph.graph_id()) + ".ir", save_graphs_path);
   std::ostringstream oss;
   constexpr size_t contiguous_left = 1;
   constexpr size_t contiguous_mid = 2;

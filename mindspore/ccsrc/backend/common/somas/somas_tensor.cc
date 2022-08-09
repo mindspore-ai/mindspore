@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,35 @@
 */
 
 #include "backend/common/somas/somas_tensor.h"
+#include <map>
+#include <string>
 
 namespace mindspore {
 namespace somas {
-SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
-                         LifeLongType lifelong_value)
-    : lifelong_value_(lifelong_value),
-      between_streams_(false),
+std::map<somas::TensorType, std::string> tensor_type_name_map = {
+  {kCommon, "Common"},         {kWorkspace, "Workspace"},
+  {kOutputOnly, "OutputOnly"}, {kGraphOutput, "GraphOutput"},
+  {kGraphInput, "GraphInput"}, {kSummaryInput, "SummaryInput"},
+  {kUnion, "Union"},           {kControl, "Control"},
+  {kUnknown, "Unknown"}};
+
+std::map<LifeLongType, std::string> life_long_name_map = {{kLifeLongNone, "LifeLongNone"},
+                                                          {kLifeLongGraphAll, "LifeLongGraphAll"},
+                                                          {kLifeLongGraphStart, "LifeLongGraphStart"},
+                                                          {kLifeLongGraphEnd, "LifeLongGraphEnd"}};
+
+SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t ori_size,
+                         size_t aligned_size, LifeLongType lifelong_value)
+    : aligned_size_(aligned_size),
+      lifelong_value_(lifelong_value),
       contiguous_(false),
       type_(kUnknown),
       offset_(0),
       num_constraints_(0),
-      ref_overlap_(false),
       id_(id),
       source_node_id_(source_node_id),
       source_stream_id_(source_stream_id),
-      original_size_(real_size) {
-  const size_t alignment = 512;
-  const size_t alignment_complement = 31;
-  aligned_size_ = (real_size > 0) ? ((real_size + alignment + alignment_complement) / alignment) * alignment : 0;
+      original_size_(ori_size) {
   solver_tensor_desc_ = std::make_shared<SomasSolverTensorDesc>(id_, aligned_size_, offset_, false);
 }
 
@@ -49,5 +59,9 @@ SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {
     return solver_tensor_desc_;
   }
 }
+
+std::string SomasTensor::GetTypeString() { return tensor_type_name_map[type_]; }
+
+std::string SomasTensor::GetLifelongString() { return life_long_name_map[lifelong_value_]; }
 }  // namespace somas
 }  // namespace mindspore
