@@ -42,23 +42,23 @@ void LiteEntranceOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *c
   return;
 }
 
-void LiteEntranceOpActor::InitInputData() {
-  SetInputShape();
+int LiteEntranceOpActor::InitInputData() {
+  auto ret = SetInputShape();
 
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->out_tensors()[i + 1];
     auto src_tensor = inputs_data_[i];
     dst_tensor->set_data_type(src_tensor->data_type());
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
-      SetTensorData(dst_tensor, src_tensor);
+      (void)SetTensorData(dst_tensor, src_tensor);
     } else {
-      MoveTensorData(dst_tensor, src_tensor);
+      (void)MoveTensorData(dst_tensor, src_tensor);
     }
   }
-  return;
+  return ret;
 }
 
-void LiteEntranceOpActor::SetInputShape() {
+int LiteEntranceOpActor::SetInputShape() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto &output_tensor = kernel_->out_tensors()[i + 1];
     if (output_tensor->shape() == inputs_data_[i]->shape()) {
@@ -70,6 +70,7 @@ void LiteEntranceOpActor::SetInputShape() {
       SetTensorShape(output_tensor, inputs_data_[i]);
     }
   }
+  return RET_OK;
 }
 
 void LiteEntranceOpActor::AsyncOutput(OpContext<Tensor> *context) {

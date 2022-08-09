@@ -76,8 +76,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
 
  protected:
-  virtual void SetInputShape();
-  virtual void InitInputData();
+  virtual int SetInputShape();
+  virtual int InitInputData();
+  virtual int AssignInputData();
   void SetOutputData(OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
 
