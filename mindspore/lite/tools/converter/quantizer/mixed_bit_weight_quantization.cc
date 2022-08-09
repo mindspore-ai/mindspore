@@ -192,8 +192,7 @@ BinarySearchResult MixedBitWeightQuantization::BinarySearchForQuantizationScale(
   }
 }
 
-float MixedBitWeightQuantization::GetDx(float *weights, int *shape, int dims, int preferred_dim,
-                                        const std::string &description) {
+float MixedBitWeightQuantization::GetDx(float *weights, const int *shape, int dims, const std::string &node_name) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(shape != nullptr);
   static std::map<std::string, LayerParam> param_map;
@@ -204,10 +203,10 @@ float MixedBitWeightQuantization::GetDx(float *weights, int *shape, int dims, in
   }
 
   LayerParam params;
-  auto params_it = param_map.find(description);
+  auto params_it = param_map.find(node_name);
   if (params_it == param_map.end()) {
     params = CalculateLayerParams(weights, element_num);
-    param_map.insert({description, params});
+    param_map.insert({node_name, params});
   } else {
     params = params_it->second;
   }
@@ -216,7 +215,7 @@ float MixedBitWeightQuantization::GetDx(float *weights, int *shape, int dims, in
 
 int MixedBitWeightQuantization::DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
                                                std::vector<schema::QuantParamT> *quant_params,
-                                               std::vector<int16_t> *quant_datas, const std::string &description,
+                                               std::vector<int16_t> *quant_datas, const std::string &node_name,
                                                bool use_auto_tune_alg) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(quant_params != nullptr);
@@ -232,7 +231,7 @@ int MixedBitWeightQuantization::DoQuantization(float *weights, std::vector<int64
 
   float scale = 1.0;
   if (use_auto_tune_alg) {
-    scale = GetDx(weights, input_shape, dims, preferred_dim, description);
+    scale = GetDx(weights, input_shape, dims, node_name);
   } else {
     BinarySearchResult br = BinarySearchForQuantizationScale(
       weights, input_shape, dims, preferred_dim, max_search_iters_, target_relative_err_, target_search_tolerance_);

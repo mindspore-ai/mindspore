@@ -67,20 +67,21 @@ class WeightQuantizer : public Quantizer {
   ~WeightQuantizer() override = default;
 
   int DoQuantize(FuncGraphPtr func_graph) override;
+
   int DoQuantize(const FuncGraphPtr &func_graph, double init_scale);
 
   int WeightQuant(const FuncGraphPtr &func_graph, const std::set<PrimitivePtr> &support_weight_quant_types,
                   const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
                   bool compression = true);
 
-  float GetMinScale() const;
+  std::set<tensor::TensorPtr> GetWeightQuantizedTensors() { return this->weight_quantized_tensors_; }
 
  private:
   int LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::set<PrimitivePtr> &per_layer_types,
                   const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
                   bool compression = true);
-  int MarkWeightQuantizationInNodes(const FuncGraphPtr &);
-  int DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
+  int MarkGraphWeightQuantType(const FuncGraphPtr &func_graph);
+  int MarkCnodeWeightQuantType(const CNodePtr &cnode);
   int DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &weight_indices,
                          WeightQuantType weight_quant_type, int q_min, int q_max, bool symmetric = false,
                          bool compression = true);
@@ -89,12 +90,12 @@ class WeightQuantizer : public Quantizer {
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
 
  private:
-  bool linear_quant{true};
+  bool linear_quant_{true};
   size_t bit_num_{8};
-  // delete it in the future.
+  // Support for mark shared weight node.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
-  bool is_auto_tune_ = false;
-  bool is_mixed_bit_ = false;
+  bool is_auto_tune_{false};
+  bool is_mixed_bit_{false};
   double mixed_bit_init_scale_ = 0.02;
   int quant_min_{-128};
   int quant_max_{127};

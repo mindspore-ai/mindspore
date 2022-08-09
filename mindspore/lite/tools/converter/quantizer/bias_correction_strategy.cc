@@ -31,6 +31,8 @@
 #include "include/errorcode.h"
 #include "mindapi/base/type_id.h"
 #include "tools/common/tensor_util.h"
+#include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
+#include "ir/func_graph.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -543,7 +545,8 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
       return RET_ERROR;
     }
     if (int32_bias) {
-      status = DoParameterBiasQuant(parameter, primitive);
+      FixedBitWeightQuantization fixed_bit_quant;
+      status = fixed_bit_quant.QuantBias(parameter, primitive);
       if (status != RET_OK) {
         MS_LOG(ERROR) << op_name << " Do bias quant failed.";
         return RET_ERROR;

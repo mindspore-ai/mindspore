@@ -52,7 +52,7 @@ class MixedBitWeightQuantization {
  private:
   int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
                      std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas,
-                     const std::string &description, bool use_auto_tune_alg = false);
+                     const std::string &node_name, bool use_auto_tune_alg = false);
   float MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim, float scale);
 
   static MinMax GetMinMax(const float *arr, int arrc);
@@ -64,7 +64,7 @@ class MixedBitWeightQuantization {
   BinarySearchResult BinarySearchForQuantizationScale(float *weights, int *shape, int dims, int preferred_dim,
                                                       int max_iters, float target_err, float rel_tol);
 
-  float GetDx(float *weights, int *shape, int dims, int preferred_dim, const std::string &description);
+  float GetDx(float *weights, const int *shape, int dims, const std::string &node_name);
 
   void CalculateBiasCorrection(float *weights, int element_num, float scale, float *origin_dequant_datas);
 
