@@ -246,6 +246,22 @@ def _dict_setitem_with_list(data, key, value):
     return F.dict_setitem(data, key, value)
 
 
+@setitem.register("Dictionary", "String", "Dictionary")
+def _dict_setitem_with_dict(data, key, value):
+    """
+    Assigns value to dictionary.
+
+    Inputs:
+        data (dict): Data of type dict.
+        key (str): Key of the data.
+        value (dict): Value given.
+
+    Outputs:
+        dict, type is as same as the element type of data.
+    """
+    return F.dict_setitem(data, key, value)
+
+
 @setitem.register("Dictionary", "String", "Tuple")
 def _dict_setitem_with_tuple(data, key, value):
     """
