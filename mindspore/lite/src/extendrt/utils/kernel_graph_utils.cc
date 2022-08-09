@@ -21,6 +21,7 @@
 
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "ir/graph_utils.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore::infer {
 KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_graph,

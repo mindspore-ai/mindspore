@@ -19,6 +19,7 @@
 #include <utility>
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "ops/tuple_get_item.h"
+#include "ops/core_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

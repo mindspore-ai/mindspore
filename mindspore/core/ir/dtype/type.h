@@ -233,18 +233,15 @@ class MS_CORE_API Object : public Type {
   const TypeId parent_type_;
 };
 
-//
-// TypeId name map
-//
-inline const mindspore::HashMap<TypeId, std::string> type_name_map = {
-  {kNumberTypeBool, "bool_"},      {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
-  {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
-  {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
+/// \brief Gettype_name_map.
+///
+/// \return type_name_map
+MS_CORE_API const mindspore::HashMap<TypeId, std::string> &type_name_map();
 
-inline const mindspore::HashMap<TypeId, int> type_priority_map = {
-  {kNumberTypeBool, 0},    {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},
-  {kNumberTypeInt16, 3},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 5},
-  {kNumberTypeFloat16, 6}, {kNumberTypeFloat32, 7}, {kNumberTypeFloat64, 8}};
+/// \brief type_priority_map.
+///
+/// \return type_priority_map
+MS_CORE_API const mindspore::HashMap<TypeId, int> &type_priority_map();
 
 /// \brief Get TypePtrList description.
 ///

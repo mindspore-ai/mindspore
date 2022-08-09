@@ -30,6 +30,7 @@
 #include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore::graphkernel {
 namespace {

@@ -80,6 +80,22 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kObjectTypeUMonad, "UMonad"},
                                                               {kObjectTypeIOMonad, "IOMonad"}};
 
+const mindspore::HashMap<TypeId, int> &type_priority_map() {
+  static const mindspore::HashMap<TypeId, int> type_priority_map = {
+    {kNumberTypeBool, 0},    {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},
+    {kNumberTypeInt16, 3},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 5},
+    {kNumberTypeFloat16, 6}, {kNumberTypeFloat32, 7}, {kNumberTypeFloat64, 8}};
+  return type_priority_map;
+}
+
+const mindspore::HashMap<TypeId, std::string> &type_name_map() {
+  static const mindspore::HashMap<TypeId, std::string> type_name_map = {
+    {kNumberTypeBool, "bool_"},      {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
+    {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
+    {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
+  return type_name_map;
+}
+
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
     case static_cast<int>(BitsNum::eBits8):

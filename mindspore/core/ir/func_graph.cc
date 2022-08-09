@@ -23,6 +23,7 @@
 #include "utils/ordered_set.h"
 #include "utils/convert_utils_base.h"
 #include "abstract/abstract_function.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 /*

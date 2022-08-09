@@ -25,6 +25,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/action.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace parse {
