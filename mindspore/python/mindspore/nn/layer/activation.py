@@ -718,6 +718,9 @@ class Hardtanh(Cell):
 
     Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
 
+    Note:
+        On Ascend, data type of float16 might lead to accidental accuracy problem.
+
     Args:
         min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
         max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
