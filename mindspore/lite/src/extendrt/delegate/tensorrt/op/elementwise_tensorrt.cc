@@ -179,26 +179,7 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
   }
   *x_input = input(ctx, 0);
   *y_input = input(ctx, 1);
-  int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
-  auto input_helper = const_tensor_index == 0 ? y_input : x_input;
-  auto const_helper = const_tensor_index == 0 ? x_input : y_input;
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*x_input);
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*y_input);
 
-  if (input_helper->trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      input_helper->format_ != const_helper->format_) {
-    // when inputs format are different, change to NHWC
-    auto need_trans = input_helper->format_ == Format::NCHW ? input_helper : const_helper;
-    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *need_trans->trt_tensor_);
-    if (transpose_layer == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return RET_ERROR;
-    }
-    transpose_layer->setName((op_name_ + "_input_transpose2NHWC").c_str());
-    need_trans->trt_tensor_ = transpose_layer->getOutput(0);
-    need_trans->format_ = Format::NHWC;
-    need_trans->same_format_ = true;
-  }
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*x_input);
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*y_input);
   if (GetDimsVolume(x_input->trt_tensor_->getDimensions()) == GetDimsVolume(y_input->trt_tensor_->getDimensions()) &&

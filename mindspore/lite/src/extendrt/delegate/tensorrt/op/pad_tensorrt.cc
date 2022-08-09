@@ -69,18 +69,6 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   nvinfer1::ITensor *pad_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(pad_input, input(ctx, 0).format_, input(ctx, 0).same_format_);
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
-    // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
-      return RET_ERROR;
-    }
-    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
-    this->transpose_layer_ = transpose_layer_in;
-    pad_input = transpose_layer_in->getOutput(0);
-    MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(pad_input, Format::NCHW, false);
-  }
 
   // trt 6 only support 2D padding
   const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data());

@@ -66,15 +66,6 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreProcessInputs failed for " << op_name_;
     return ret;
   }
-  if (!same_format_) {
-    if (trt_input_tensors[0]->getDimensions().nbDims == DIMENSION_4D && out_format_ == Format::NCHW) {
-      // when inputs all NCHW, change axis
-      axis_ = ConvertAxisFromNHWC2NCHW(axis_);
-      MS_LOG(DEBUG) << "concate axis change to " << axis_ << " when using NCHW format.";
-    } else {
-      MS_LOG(WARNING) << "input tensor format needs check, convert concat axis failed for " << op_name_;
-    }
-  }
 
   if (type_ == ops::kNameStack) {
     for (size_t i = 0; i != in_tensors_.size(); ++i) {
@@ -127,29 +118,9 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
     }
   }
 
-  // make sure all inputs are same format
-  if (input_nbDims == DIMENSION_4D) {
-    for (size_t i = 0; i < in_tensors_.size(); i++) {
-      if (input(ctx, i).format_ == out_format_) {
-        trt_input_tensors[i] = input(ctx, i).trt_tensor_;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(input(ctx, i));
-      } else {
-        nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *input(ctx, i).trt_tensor_);
-        if (transpose_layer == nullptr) {
-          MS_LOG(ERROR) << "op action convert failed";
-          return RET_ERROR;
-        }
-        trt_input_tensors[i] = transpose_layer->getOutput(0);
-        this->transpose_layer_ = transpose_layer;
-        same_format_ = true;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
-      }
-    }
-  } else {
-    for (size_t i = 0; i < in_tensors_.size(); i++) {
-      trt_input_tensors[i] = input(ctx, i).trt_tensor_;
-      MS_LOG(DEBUG) << "concate input " << GetTensorFormat(input(ctx, i));
-    }
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    trt_input_tensors[i] = input(ctx, i).trt_tensor_;
+    MS_LOG(DEBUG) << "concate input " << GetTensorFormat(input(ctx, i));
   }
   return RET_OK;
 }

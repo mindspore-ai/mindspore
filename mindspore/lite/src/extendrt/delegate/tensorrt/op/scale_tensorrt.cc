@@ -69,7 +69,7 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(scale_in_tensor, out_format_, out_same_format_);
 
   nvinfer1::ITensor *op_out_tensor{nullptr};
-  if (scale_in_tensor->getDimensions().nbDims == DIMENSION_4D) {
+  if (scale_in_tensor->getDimensions().nbDims == DIMENSION_4D && mode_ != nvinfer1::ScaleMode::kCHANNEL) {
     op_out_tensor = RunAs4DimsScale(ctx, scale_in_tensor);
   } else {
     op_out_tensor = RunAsMutiDimsScale(ctx, scale_in_tensor);
@@ -92,37 +92,6 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
 nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(TensorRTContext *ctx) {
   nvinfer1::ITensor *scale_in_tensor = input(ctx, 0).trt_tensor_;
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && mode_ == nvinfer1::ScaleMode::kCHANNEL) {
-    // per channel input format should be nchw, otherwise should be same with scale nhwc
-    // transpose: NHWC->NCHW
-    if ((input(ctx, 0).format_ == Format::NHWC && axis_ == kNHWC_C) ||
-        (input(ctx, 0).same_format_ == true && axis_ == kNHWC_C)) {
-      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
-      if (transpose_layer_in == nullptr) {
-        MS_LOG(ERROR) << "op action convert failed";
-        return nullptr;
-      }
-      transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
-      scale_in_tensor = transpose_layer_in->getOutput(0);
-      out_format_ = Format::NCHW;
-      out_same_format_ = !out_same_format_;
-    } else if (out_format_ != Format::NCHW && axis_ != kNCHW_C) {
-      MS_LOG(WARNING) << op_name_ << " out format (NHWC:1, NCHW:0) infer as " << out_format_ << ", and axis is "
-                      << axis_;
-    }
-  } else if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-             input(ctx, 0).format_ == Format::NCHW && mode_ == nvinfer1::ScaleMode::kELEMENTWISE) {
-    // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "op action convert failed";
-      return nullptr;
-    }
-    transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
-    scale_in_tensor = transpose_layer_in->getOutput(0);
-    out_format_ = Format::NHWC;
-    out_same_format_ = true;
-  }
   return scale_in_tensor;
 }
 

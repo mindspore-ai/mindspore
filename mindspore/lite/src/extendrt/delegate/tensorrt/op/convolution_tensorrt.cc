@@ -54,17 +54,6 @@ int ConvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   nvinfer1::ITensor *conv_input = input(ctx, 0).trt_tensor_;
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
-    // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
-    if (transpose_layer_in == nullptr) {
-      MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
-      return RET_ERROR;
-    }
-    transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
-    this->transpose_layer_ = transpose_layer_in;
-    conv_input = transpose_layer_in->getOutput(0);
-  }
 
   // transpose weight
   const auto &weight_tensor = in_tensors_[1];
