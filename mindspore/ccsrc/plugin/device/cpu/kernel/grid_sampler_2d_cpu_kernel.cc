@@ -74,7 +74,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(const T *x_addr, const T *grid_addr,
       count--;
     }
     out_iter[count] = out_iter[kOne] % LongToSize(output_shape_[count]);
-    out_iter[1] /= LongToSize(output_shape_[count--]);
+    out_iter[1] /= LongToSize(output_shape_[count]);
     if (count == 0) {
       break;
     }
