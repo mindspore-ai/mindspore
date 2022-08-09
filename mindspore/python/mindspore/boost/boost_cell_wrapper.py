@@ -39,7 +39,6 @@ from .base import _load_local_pca_mat
 
 __all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
 
-
 _get_delta_weight = C.MultitypeFuncGraph("_get_delta_weight")
 
 
@@ -118,6 +117,10 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
     Outputs:
         Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
+
+        - loss(Tensor): A scalar Tensor.
+        - overflow(Tensor): A scalar Tensor which type is bool.
+        - loss scaling value(Tensor): A scalar Tensor.
 
     Raises:
         TypeError: If `sens` is not a number.
@@ -224,7 +227,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Args:
             inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
-        Outputs:
+        Returns:
             - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
         """
         if self.train_strategy is None:
@@ -250,7 +253,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             sens (Tensor): Tensor with shape :math:`()`.
             inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
-        Outputs:
+        Returns:
             - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
@@ -280,7 +283,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             loss (Tensor): Tensor with shape :math:`()`.
             grads (tuple(Tensor)): Tuple of gradient tensors.
 
-        Outputs:
+        Returns:
             - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.optimizer(grads))
@@ -303,6 +306,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     def check_adasum_enable(self):
         r"""
         Check adasum enable.
+
+        Returns:
+            - **enable_adasum** (bool) - Check whether the Adasum algorithm is enabled.
         """
         if not getattr(self.optimizer, "adasum", None) or not self.reducer_flag:
             return False
@@ -315,6 +321,10 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     def check_dim_reduce_enable(self):
         r"""
         Check dim_reduce enable.
+
+        Returns:
+            - **enable_dim_reduce** (bool) - Check whether the dimensionality reduction second-order training
+              algorithm is enabled.
         """
         if not getattr(self.optimizer, "dim_reduce", None):
             return False
