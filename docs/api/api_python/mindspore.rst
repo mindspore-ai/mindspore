@@ -98,17 +98,6 @@ mindspore
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-混合精度
---------------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.LossScaleManager
-    mindspore.FixedLossScaleManager
-    mindspore.DynamicLossScaleManager
-    mindspore.build_train_network
-
 序列化
 -------
 

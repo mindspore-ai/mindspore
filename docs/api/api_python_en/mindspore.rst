@@ -215,19 +215,6 @@ Dataset Helper
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-Loss Scale
--------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.LossScaleManager
-    mindspore.FixedLossScaleManager
-    mindspore.DynamicLossScaleManager
-    mindspore.build_train_network
-
 Serialization
 -------------
 

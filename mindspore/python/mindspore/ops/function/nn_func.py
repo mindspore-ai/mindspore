@@ -798,7 +798,7 @@ def softsign(x):
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
             additional dimensions, with float16 or float32 data type.
 
-    Outputs:
+    Returns:
         Tensor, with the same type and shape as the `x`.
 
     Raises:
@@ -834,7 +834,7 @@ def soft_shrink(x, lambd=0.5):
         x (Tensor): The input of soft shrink with data type of float16 or float32.
         lambd(float): The :math:`\lambda` must be no less than zero. Default: 0.5.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and data type as `x`.
 
     Raises:
@@ -1304,7 +1304,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
 
-    Outputs:
+    Returns:
         Tensor, the computed loss value.
 
     Supported Platforms:
@@ -1495,7 +1495,7 @@ def log_softmax(logits, axis=-1):
           additional dimensions, with float16 or float32 data type.
         axis (int): The axis to perform the Log softmax operation. Default: -1.
 
-    Outputs:
+    Returns:
         Tensor, with the same type and shape as the logits.
 
     Raises:
@@ -1702,7 +1702,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
             `False`.
 
-    Outputs:
+    Returns:
         Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
         :math:`(N, C, D_{out}, H_{out}, W_{out})` (5-D).
 

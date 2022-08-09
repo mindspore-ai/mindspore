@@ -1,7 +1,4 @@
-mindspore.build_train_network
-=======================================
-
-.. py:function:: mindspore.build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs)
+.. py:function:: mindspore.amp.build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs)
 
     构建混合精度训练网络。
 
