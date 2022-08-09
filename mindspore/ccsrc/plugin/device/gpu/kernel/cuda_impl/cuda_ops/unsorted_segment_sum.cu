@@ -77,8 +77,55 @@ template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input
                                                  half* output_addr, cudaStream_t stream, const uint32_t &device_id);
 
 template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int8_t* input_addr, int* ids_addr,
+                                                 int8_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int8_t* input_addr, int64_t* ids_addr,
+                                                 int8_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int16_t* input_addr, int* ids_addr,
+                                                 int16_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int16_t* input_addr, int64_t* ids_addr,
+                                                 int16_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
                                                  size_t output_dim1, int* input_addr, int* ids_addr, int* output_addr,
                                                  cudaStream_t stream, const uint32_t &device_id);
 template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
                                                  size_t output_dim1, int* input_addr, int64_t* ids_addr,
                                                  int* output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int64_t* input_addr, int* ids_addr,
+                                                 int64_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int64_t* input_addr, int64_t* ids_addr,
+                                                 int64_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint8_t* input_addr, int* ids_addr,
+                                                 uint8_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint8_t* input_addr, int64_t* ids_addr,
+                                                 uint8_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint16_t* input_addr, int* ids_addr,
+                                                 uint16_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint16_t* input_addr, int64_t* ids_addr,
+                                                 uint16_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint32_t* input_addr, int* ids_addr,
+                                                 uint32_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint32_t* input_addr, int64_t* ids_addr,
+                                                 uint32_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint64_t* input_addr, int* ids_addr,
+                                                 uint64_t* output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint64_t* input_addr, int64_t* ids_addr,
+                                                 uint64_t* output_addr, cudaStream_t stream, const uint32_t &device_id);

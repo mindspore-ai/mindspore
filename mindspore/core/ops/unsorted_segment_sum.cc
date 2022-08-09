@@ -173,7 +173,8 @@ TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_num_segments, num_type_set, prim_name);
   /* check input_x */
   auto x_type_ptr = input_args[kInputIndex0]->BuildType();
-  std::set<TypePtr> x_type_set = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
+  std::set<TypePtr> x_type_set = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
+                                  kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type_ptr, x_type_set, prim_name);
 }
 }  // namespace

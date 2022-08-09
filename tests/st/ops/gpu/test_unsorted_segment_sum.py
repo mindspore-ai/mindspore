@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ class UnsortedSegmentSumDynNet(nn.Cell):
         self.num_segments = num_segments
         self.to_dyn_1 = dyn_a
         self.to_dyn_2 = dyn_b
+
     def construct(self, data, ids):
         # testing selective inputs being dynamic
         if self.to_dyn_1:
@@ -310,3 +311,26 @@ def test_dyn_b():
                [0., 0., 0.],
                [0., 0., 0.]]]
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32,
+                                   np.int64, np.float16, np.float32, np.float64])
+def test_uss_dtype(mode, dtype):
+    """
+    Feature: test ops.UnsortedSegmentSum forward.
+    Description: inputs with different data type.
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=mode, device_target='GPU')
+    x = np.arange(1, 10).reshape(3, 3).astype(dtype)
+    input_x = Tensor(x)
+    segment_ids = Tensor([0, 1, 0], mstype.int32)
+    num_segments = 2
+    net = UnsortedSegmentSumNet(num_segments)
+    output = net(input_x, segment_ids)
+    expect_np = np.array([[8, 10, 12], [4, 5, 6]], dtype=dtype)
+    assert (output.asnumpy() == expect_np).all()
