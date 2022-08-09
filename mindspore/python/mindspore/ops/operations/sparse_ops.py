@@ -671,20 +671,23 @@ class SparseConcat(Primitive):
         ``CPU``
 
     Examples:
-        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = Tensor([3, 4], dtype=mstype.int64)
-        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
         >>> shape1 = Tensor([3, 4], dtype=mstype.int64)
-        >>> sparse_concat = ops.SparseConcat(0)
-        >>> out = sparse_concat((indices0, indices1), (values0, values1), (shape0, shape1))
-        >>> print(out)
-        shape = [3 4]
-        [0 1]: "1"
-        [0 4]: "3"
-        [1 2]: "4"
-        [1 5]: "2"
+        >>> sparse_concat = ops.SparseConcat(1)
+        >>> indices, value, shape = sparse_concat((indices0, indices1), (values0, values1), (shape0, shape1))
+        >>> print(indices)
+        [[0 1]
+         [0 4]
+         [1 2]
+         [1 5]]
+        >>> print(value)
+        [1 3 2 4]
+        >>> print(shape)
+        [3 8]
     """
     @prim_attr_register
     def __init__(self, concat_dim=0):
