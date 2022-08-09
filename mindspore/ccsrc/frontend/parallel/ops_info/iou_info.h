@@ -36,7 +36,10 @@ class IOUInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
 
  protected:
-  Status GetAttrs() override { return SUCCESS; }
+  Status GetAttrs() override {
+    infer_strategy_mode_ = INDEPENDENT_MODE;
+    return SUCCESS;
+  }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;

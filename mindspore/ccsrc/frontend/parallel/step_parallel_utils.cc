@@ -876,11 +876,6 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  if (!IsSplittableOperator(prim_name)) {
-    MS_LOG(ERROR) << "The primitive is not support to create operator info, name is " << prim_name;
-    return nullptr;
-  }
 
   auto shape_list = ExtractShape(cnode);
   if (shape_list.empty()) {
@@ -888,7 +883,25 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   }
 
   auto attrs = prim->attrs();
-  return OperatorInstanceByName(prim_name, attrs, shape_list);
+  OperatorInfoPtr op_info = OperatorInstance(prim, attrs, shape_list);
+  MS_EXCEPTION_IF_NULL(op_info);
+
+  // When the 'inputs' contains numerical values for some operators, these values should be extracted from
+  // ANF graph
+  auto &inputs = cnode->inputs();
+  std::vector<ValuePtr> input_value;
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    if (inputs[index]->isa<ValueNode>()) {
+      input_value.push_back(GetValueNode(inputs[index]));
+      continue;
+    }
+    (void)input_value.emplace_back(nullptr);
+  }
+
+  (*op_info).set_input_value(input_value);
+  (*op_info).set_outputs_dtype(cnode->Type());
+  (*op_info).set_cnode(cnode);
+  return op_info;
 }
 
 bool IsPynativeParallel() {

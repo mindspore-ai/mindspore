@@ -168,6 +168,7 @@ Status GatherInfo::GetAttrs() {
     dynamic_shape_indices_ = true;
   }
 #endif
+  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 

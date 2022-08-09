@@ -1235,15 +1235,6 @@ void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &dist
   }
 }
 
-OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
-                                    std::vector<Shapes> shape_list) {
-  OperatorInfoPtr operator_ = OperatorInstance(prim, attrs, shape_list);
-  for (size_t i = 0; i < shape_list[0].size(); ++i) {
-    MS_LOG(INFO) << "No:  " << i << "  input's shape: " << ShapeToString(shape_list[0][i]);
-  }
-  return operator_;
-}
-
 StrategyPtr ExtractStrategy(const ValuePtr &stra) {
   if (stra == nullptr) {
     return nullptr;
@@ -1821,29 +1812,9 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
 
-    auto attrs = prim->attrs();
-    MS_LOG(INFO) << "extract information: node: " << node->ToString() << " prim " << prim->name();
-
-    std::vector<Shapes> shape_list = ExtractShape(cnode);
-    if (shape_list.empty()) {
-      MS_LOG(EXCEPTION) << "Failure:node " << node->ToString() << " failed to extract shape";
-    }
-    OperatorInfoPtr operator_ = OperatorInstance(prim, attrs, shape_list);
+    OperatorInfoPtr operator_ = CreateOperatorInfo(cnode);
     MS_EXCEPTION_IF_NULL(operator_);
 
-    auto &inputs = cnode->inputs();
-    std::vector<ValuePtr> input_value;
-    for (size_t index = 1; index < inputs.size(); ++index) {
-      if (inputs[index]->isa<ValueNode>()) {
-        input_value.push_back(GetValueNode(inputs[index]));
-        continue;
-      }
-      (void)input_value.emplace_back(nullptr);
-    }
-
-    (*operator_).set_input_value(input_value);
-    (*operator_).set_outputs_dtype(cnode->Type());
-    (*operator_).set_cnode(cnode);
     if (prim->name() == RESHAPE) {
       cnode->set_user_data<OperatorInfo>(operator_);
       continue;
