@@ -1236,6 +1236,7 @@ class _UsersDatasetTemplate:
         """
         Internal class _ReInitTemplate.
         """
+
         def __init__(self):
             pass
 
@@ -1385,7 +1386,9 @@ class ArgoverseDataset(InMemoryGraphDataset):
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
-            num of column name should be equal to num of item in return data when implement method like `__getitem__`.
+            num of column name should be equal to num of item in return data when implement method like `__getitem__`,
+            recommend to specify it with
+            `column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]` like the following example.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
@@ -1394,11 +1397,23 @@ class ArgoverseDataset(InMemoryGraphDataset):
         perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
             `__getitem__` method in this process). Default True, will save all the data in graph
             (like edge index, node feature and graph feature) into graph feature.
+
+    Examples:
+        >>> from mindspore.dataset import ArgoverseDataset
+        >>>
+        >>> argoverse_dataset_dir = "/path/to/argoverse_dataset_directory"
+        >>> graph_dataset = ArgoverseDataset(data_dir=argoverse_dataset_dir,
+        ...                                  column_names=["edge_index", "x", "y", "cluster", "valid_len",
+        ...                                                "time_step_len"])
+        >>> for item in graph_dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+        ...     pass
     """
 
     def __init__(self, data_dir, column_names="graph", num_parallel_workers=1, shuffle=None,
                  python_multiprocessing=True, perf_mode=True):
         # For high performance, here we store edge_index into graph_feature directly
+        if not isinstance(perf_mode, bool):
+            raise TypeError("Type of 'perf_mode' should be bool, but got {}.".format(type(perf_mode)))
         self.perf_mode = perf_mode
         super().__init__(data_dir=data_dir, column_names=column_names, shuffle=shuffle,
                          num_parallel_workers=num_parallel_workers, python_multiprocessing=python_multiprocessing)
@@ -1406,8 +1421,8 @@ class ArgoverseDataset(InMemoryGraphDataset):
     def __getitem__(self, index):
         graph = self.graphs[index]
         if self.perf_mode:
-            return graph.get_graph_feature(
-                feature_types=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"])
+            return tuple(graph.get_graph_feature(
+                feature_types=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]))
 
         graph_info = graph.graph_info()
         all_nodes = graph.get_all_nodes(graph_info["node_type"][0])
