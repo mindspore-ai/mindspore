@@ -6446,7 +6446,28 @@ class TensorScatterMax(_TensorScatterOp):
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_max` for more detail.
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of input_x[indices].
+    For more details, see use cases.
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to `input_x`.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+          The rank must be at least 2.
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
 
     Supported Platforms:
         ``GPU``
@@ -6462,9 +6483,9 @@ class TensorScatterMax(_TensorScatterOp):
         >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
         >>> op = ops.TensorScatterMax()
         >>> # 5, Perform the max operation for the first time:
-        >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[1.0, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the max operation for the second time:
-        >>> #      second_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> #      second_input_x = Max(input_x[0][0], updates[1]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ 2.2  0.3  3.6]

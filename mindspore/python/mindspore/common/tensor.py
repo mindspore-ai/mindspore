@@ -2737,9 +2737,9 @@ class Tensor(Tensor_):
             >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
             >>> op = ops.TensorScatterMax()
             >>> # 5, Perform the max operation for the first time:
-            >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[1.0, 0.3, 3.6], [0.4, 0.5, -3.2]]
             >>> # 6, Perform the max operation for the second time:
-            >>> #      second_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> #      second_input_x = Max(input_x[0][0], updates[1]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
             >>> output = op(input_x, indices, updates)
             >>> print(output)
             [[ 2.2  0.3  3.6]
