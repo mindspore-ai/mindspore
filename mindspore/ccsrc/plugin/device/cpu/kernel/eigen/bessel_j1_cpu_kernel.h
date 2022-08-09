@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J0_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J0_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J1_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J1_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -25,33 +25,27 @@
 
 namespace mindspore {
 namespace kernel {
-class BesselJ0CpuKernelMod : public NativeCpuKernelMod {
+class BesselJ1CpuKernelMod : public NativeCpuKernelMod {
  public:
-  BesselJ0CpuKernelMod() = default;
-  ~BesselJ0CpuKernelMod() override = default;
+  BesselJ1CpuKernelMod() = default;
+  ~BesselJ1CpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double polevl(double x, const double coef[], int N);
-  static double p1evl(double x, const double coef[], int N);
-  static double j0(double x);
-  template <typename T>
-  static void BesselJ0Func(const T *input, T *output, size_t start, size_t end);
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselJ0CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using BesselKernel = std::function<bool(BesselJ1CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
   BesselKernel kernel_func_;
 
@@ -62,4 +56,4 @@ class BesselJ0CpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J0_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J1_CPU_KERNEL_H_

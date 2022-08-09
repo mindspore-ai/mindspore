@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y1_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y1_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J0_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J0_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class BesselY1CpuKernelMod : public NativeCpuKernelMod {
+class BesselJ0CpuKernelMod : public NativeCpuKernelMod {
  public:
-  BesselY1CpuKernelMod() = default;
-  ~BesselY1CpuKernelMod() override = default;
+  BesselJ0CpuKernelMod() = default;
+  ~BesselJ0CpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -39,18 +39,13 @@ class BesselY1CpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double polevl(double x, const double coef[], int N);
-  static double p1evl(double x, const double coef[], int N);
-  static double y1(double x);
-  template <typename T>
-  static void BesselY1Func(const T *input, T *output, size_t start, size_t end);
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselY1CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using BesselKernel = std::function<bool(BesselJ0CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
   BesselKernel kernel_func_;
 
@@ -61,4 +56,4 @@ class BesselY1CpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_Y1_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_BESSEL_J0_CPU_KERNEL_H_
