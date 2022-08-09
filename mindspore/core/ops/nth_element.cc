@@ -46,10 +46,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(n);
     auto n_value_ptr = n->BuildValue();
     if (n_value_ptr->isa<tensor::Tensor>()) {
-      MS_EXCEPTION_IF_NULL(n_value_ptr);
-      auto n_tensor = n_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_tensor);
-      n_val = *static_cast<int64_t *>(n_tensor->data_c());
+      n_val = CheckAndConvertUtils::CheckTensorIntValue("n", n_value_ptr, prim_name)[0];
     }
   } else if (input_args[1]->isa<abstract::AbstractScalar>()) {
     auto n = input_args[1]->cast<abstract::AbstractScalarPtr>();
