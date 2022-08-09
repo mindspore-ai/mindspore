@@ -161,13 +161,35 @@ int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
 }
 
 int SwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
-  int ret = SigmoidFp16(src, dst, ele_num);
-  if (ret != NNACL_OK) {
-    return NNACL_ERR;
+  int i = 0;
+#ifdef ENABLE_NEON
+  float32x4_t const_val = vdupq_n_f32(1.0f);
+  for (int num_max = ele_num - C16NUM; i <= num_max; i += C16NUM) {
+    float16x4x4_t ins = vld4_f16(src + i);
+    float32x4_t in0 = MS_CVT_F32_F16(ins.val[0]);
+    float32x4_t in1 = MS_CVT_F32_F16(ins.val[1]);
+    float32x4_t in2 = MS_CVT_F32_F16(ins.val[2]);
+    float32x4_t in3 = MS_CVT_F32_F16(ins.val[3]);
+    float32x4_t exp0 = simd_exp128_f32(vnegq_f32(in0));
+    float32x4_t exp1 = simd_exp128_f32(vnegq_f32(in1));
+    float32x4_t exp2 = simd_exp128_f32(vnegq_f32(in2));
+    float32x4_t exp3 = simd_exp128_f32(vnegq_f32(in3));
+    float32x4_t res0 = MS_DIVQ_F32(in0, vaddq_f32(const_val, exp0));
+    float32x4_t res1 = MS_DIVQ_F32(in1, vaddq_f32(const_val, exp1));
+    float32x4_t res2 = MS_DIVQ_F32(in2, vaddq_f32(const_val, exp2));
+    float32x4_t res3 = MS_DIVQ_F32(in3, vaddq_f32(const_val, exp3));
+    float16x4x4_t res = {MS_CVT_F16_F32(res0), MS_CVT_F16_F32(res1), MS_CVT_F16_F32(res2), MS_CVT_F16_F32(res3)};
+    vst4_f16(dst + i, res);
   }
-  int index = 0;
-  for (; index < ele_num; index++) {
-    dst[index] = src[index] * dst[index];
+  for (int num_max = ele_num - C4NUM; i <= num_max; i += C4NUM) {
+    float32x4_t in = MS_CVT_F32_F16(vld1_f16(src + i));
+    float16x4_t res = MS_CVT_F16_F32(MS_DIVQ_F32(in, vaddq_f32(const_val, simd_exp128_f32(vnegq_f32(in)))));
+    vst1_f16(dst + i, res);
+  }
+#endif
+  for (; i < ele_num; ++i) {
+    float temp = simd_exp32_f32(-src[i]);
+    dst[i] = src[i] / (1.0f + temp);
   }
   return NNACL_OK;
 }
@@ -223,8 +245,25 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
   if (approximate) {
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
 #ifdef ENABLE_NEON
-    int C4 = DOWN_ROUND(length, C4NUM);
-    for (; i < C4; i += C4NUM) {
+    for (int num_max = length - C16NUM; i <= num_max; i += C16NUM) {
+      float16x4x4_t ins = vld4_f16(src + i);
+      float32x4_t in0 = MS_CVT_F32_F16(ins.val[0]);
+      float32x4_t in1 = MS_CVT_F32_F16(ins.val[1]);
+      float32x4_t in2 = MS_CVT_F32_F16(ins.val[2]);
+      float32x4_t in3 = MS_CVT_F32_F16(ins.val[3]);
+      float32x4_t res0 = 0.5f * in0 * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in0 * in0) * in0));
+      float32x4_t res1 = 0.5f * in1 * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in1 * in1) * in1));
+      float32x4_t res2 = 0.5f * in2 * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in2 * in2) * in2));
+      float32x4_t res3 = 0.5f * in3 * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in3 * in3) * in3));
+      float16x4x4_t res = {
+        MS_CVT_F16_F32(res0),
+        MS_CVT_F16_F32(res1),
+        MS_CVT_F16_F32(res2),
+        MS_CVT_F16_F32(res3),
+      };
+      vst4_f16(dst + i, res);
+    }
+    for (int num_max = length - C4NUM; i <= num_max; i += C4NUM) {
       float32x4_t in = MS_CVT_F32_F16(vld1_f16(src + i));
       float32x4_t res = 0.5f * in * (1.0f + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
       vst1_f16(dst + i, MS_CVT_F16_F32(res));
