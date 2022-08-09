@@ -154,6 +154,9 @@ def jet(fn, primals, series):
     must be provided together. Generally, it is recommended to set the values of given first order derivative to 1,
     while the other to 0, which is like the derivative of origin input with respect to itself.
 
+    Note:
+        If `primals` is Tensor of int type, it will be converted to Tensor of float type.
+
     Args:
         fn (Union[Cell, function]): Function to do TaylorOperation.
         primals (Union[Tensor, tuple[Tensor]]): The inputs to `fn`.
@@ -261,6 +264,9 @@ def derivative(fn, primals, order):
     This function is designed to calculate the higher order differentiation of given composite function. To figure out
     `order`-th order differentiations, original inputs and order must be provided together. In particular, the value of
     input first order derivative is set to 1, while the other to 0.
+
+    Note:
+        If `primals` is Tensor of int type, it will be converted to Tensor of float type.
 
     Args:
         fn (Union[Cell, function]): Function to do TaylorOperation.
