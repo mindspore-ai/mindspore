@@ -25,7 +25,7 @@ function Run_Converter() {
     convert_status=$?
     if [[ convert_status -ne 0 ]]; then
       echo "run server inference convert failed."
-      exit 1
+      return 1
     fi
 }
 
@@ -40,7 +40,7 @@ function Run_server_inference_avx512() {
     run_benchmark_status=$?
     if [[ run_benchmark_status -ne 0 ]]; then
       echo "run server inference benchmark failed."
-      exit 1
+      return 1
     fi
 }
 
@@ -56,7 +56,7 @@ function Run_server_inference_arm64() {
     run_benchmark_status=$?
     if [[ run_benchmark_status -ne 0 ]]; then
       echo "run server inference benchmark failed."
-      exit 1
+      return 1
     fi
 }
 
@@ -134,11 +134,9 @@ Print_Converter_Result $run_converter_result_file
 
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
-    Print_Converter_Result $run_converter_result_file
 else
     echo "Run converter failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result $run_converter_result_file
     exit 1
 fi
 # Empty config file is allowed, but warning message will be shown
