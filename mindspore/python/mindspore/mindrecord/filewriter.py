@@ -283,6 +283,8 @@ class FileWriter:
             MRMOpenError: If failed to open MindRecord file.
             MRMSetHeaderError: If failed to set header.
         """
+        logger.warning("This interface will be deleted or invisible in the future.")
+
         if not self._writer.is_open:
             ret = self._writer.open(self._paths, self._overwrite)
         if not self._writer.get_shard_header():
