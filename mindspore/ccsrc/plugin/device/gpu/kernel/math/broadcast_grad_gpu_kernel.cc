@@ -33,8 +33,8 @@ bool BroadcastOpGradGpuKernelMod::GetOpType() {
   };
   auto iter = broadcast_type_map.find(kernel_name_);
   if (iter == broadcast_type_map.end()) {
-    MS_LOG(ERROR) << "For " << kernel::Map2Str(broadcast_type_map) << ", it only support max and min grad, but got "
-                  << kernel_name_;
+    MS_LOG(ERROR) << "For " << kernel::Map2Str<std::map, BroadcastGradOpType>(broadcast_type_map)
+                  << ", it only support max and min grad, but got " << kernel_name_;
     return false;
   }
   op_type_ = iter->second;

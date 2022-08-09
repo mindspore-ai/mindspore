@@ -85,7 +85,8 @@ class BiasAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
-    auto cudnn_dims = std::max(num_dims, 4UL);
+    constexpr size_t four_4D = 4;
+    size_t cudnn_dims = std::max(num_dims, four_4D);
     std::unique_ptr<int[]> x_dims = std::make_unique<int[]>(cudnn_dims);
     std::unique_ptr<int[]> b_dims = std::make_unique<int[]>(cudnn_dims);
     for (size_t i = 0; i < cudnn_dims; i++) {

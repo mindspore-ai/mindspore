@@ -55,8 +55,11 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Activation', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_)
-                  << ", but got " << kernel_name_;
+    MS_LOG(ERROR)
+      << "For 'Activation', the kernel name must be in "
+      << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMod::ActivationFunc>>>(
+           kernel_attr_map_)
+      << ", but got " << kernel_name_;
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -93,8 +96,8 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   auto iter = activation_mode_map.find(kernel_name_);
   if (iter == activation_mode_map.end()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', only support these activations: " << kernel::Map2Str(activation_mode_map) << ", but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only support these activations: "
+                  << kernel::Map2Str<std::map, cudnnActivationMode_t>(activation_mode_map) << ", but got "
                   << kernel_name_;
     return KRET_RESIZE_FAILED;
   }
@@ -141,8 +144,11 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 std::vector<KernelAttr> ActivationFwdGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Activation', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_)
-                  << ", but got " << kernel_name_;
+    MS_LOG(ERROR)
+      << "For 'Activation', the kernel name must be in "
+      << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMod::ActivationFunc>>>(
+           kernel_attr_map_)
+      << ", but got " << kernel_name_;
     return std::vector<KernelAttr>{};
   }
   std::vector<KernelAttr> support_list;

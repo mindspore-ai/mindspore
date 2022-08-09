@@ -200,8 +200,8 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   device::gpu::CudaDeviceStream end = nullptr;
   float bind_cost = 0;
   float cross_cost = 0;
-  CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::CreateEvent(&start), "Failed to create event.");
-  CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::CreateEvent(&end), "Failed to create event.");
+  CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::ConstructEvent(&start), "Failed to create event.");
+  CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::ConstructEvent(&end), "Failed to create event.");
 
   CHECK_OP_RET_WITH_EXCEPT(device::gpu::CudaDriver::RecordEvent(start, stream), "Failed to record event to stream.");
   StepBindBlock(env_num_, agent_num_, game_setting_device_, agent_state_device, action, state, reward, done, stream);

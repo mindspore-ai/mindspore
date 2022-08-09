@@ -61,8 +61,9 @@ class BesselHelperGpuKernel : public GpuKernelHelperBase {
     ResetResource();
     auto iter = kBesselOpTypeMap.find(kernel_name_);
     if (iter == kBesselOpTypeMap.end()) {
-      MS_LOG(ERROR) << "For 'BesselOp', only support these types: " << kernel::Map2Str(kBesselOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'BesselOp', only support these types: "
+                    << kernel::Map2Str<std::map, BesselOptype>(kBesselOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
     bessel_op_type_ = iter->second;
@@ -101,8 +102,9 @@ class BesselHelperGpuKernel : public GpuKernelHelperBase {
       iter->second(input_size_list_[0] / sizeof(T), input_addr, output_addr, device_id_,
                    reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      MS_LOG(ERROR) << "For 'BesselOp', only support these types: " << kernel::Map2Str(kBesselOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'BesselOp', only support these types: "
+                    << kernel::Map2Str<std::map, BesselOptype>(kBesselOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
     return 0;

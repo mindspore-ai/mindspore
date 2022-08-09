@@ -16,6 +16,7 @@
 #include "plugin/device/gpu/hal/device/gpu_kernel_runtime.h"
 #include <algorithm>
 #include <map>
+#include <chrono>
 #include "include/common/debug/anf_dump_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
@@ -465,8 +466,7 @@ void GPUKernelRuntime::AssignMemory(const session::KernelGraph &graph) {
 }
 
 bool GPUKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_sink) {
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
+  std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
   bool ret = true;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -497,10 +497,9 @@ bool GPUKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_sink)
       ret = LaunchKernels(graph);
     }
   }
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
+  auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+  uint64_t cost = ms_duration.count();
   MS_LOG(DEBUG) << "GPU kernel runtime run graph in " << cost << " us";
   return ret;
 }
@@ -932,8 +931,8 @@ void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, c
   float cost_time = 0;
   CudaDeviceStream start = nullptr;
   CudaDeviceStream end = nullptr;
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create event.");
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create event.");
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&start), "Failed to create event.");
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&end), "Failed to create event.");
 
   MS_EXCEPTION_IF_NULL(stream_);
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(start, stream_), "Failed to record event to stream.");
