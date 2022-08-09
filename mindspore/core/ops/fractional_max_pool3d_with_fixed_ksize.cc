@@ -69,6 +69,43 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<float> *ksize, std::vec
   }
 }
 
+void GetOutputSize(const std::vector<int64_t> &input_shape, const std::string &data_format, const int64_t outputD,
+                   const int64_t outputH, const int64_t outputW, std::vector<int64_t> *output_size) {
+  if (input_shape.size() == kDimSize4) {
+    if (data_format == "NCDHW") {
+      int64_t c_dim = input_shape[kDimSize4FormatNCDHWIndexN];
+      output_size->push_back(c_dim);
+      output_size->push_back(outputD);
+      output_size->push_back(outputH);
+      output_size->push_back(outputW);
+    } else {
+      int64_t c_dim = input_shape[kDimSize4FormatNDHWCIndexC];
+      output_size->push_back(outputD);
+      output_size->push_back(outputH);
+      output_size->push_back(outputW);
+      output_size->push_back(c_dim);
+    }
+  } else {
+    if (data_format == "NCDHW") {
+      int64_t n_dim = input_shape[kDimSize5FormatNCDHWIndexN];
+      int64_t c_dim = input_shape[kDimSize5FormatNCDHWIndexC];
+      output_size->push_back(n_dim);
+      output_size->push_back(c_dim);
+      output_size->push_back(outputD);
+      output_size->push_back(outputH);
+      output_size->push_back(outputW);
+    } else {
+      int64_t n_dim = input_shape[kDimSize5FormatNDHWCIndexN];
+      int64_t c_dim = input_shape[kDimSize5FormatNDHWCIndexC];
+      output_size->push_back(n_dim);
+      output_size->push_back(outputD);
+      output_size->push_back(outputH);
+      output_size->push_back(outputW);
+      output_size->push_back(c_dim);
+    }
+  }
+}
+
 abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const PrimitivePtr &primitive,
                                                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -101,40 +138,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
   int64_t outputD = output_shape[kOutputshapeIndexD];
   int64_t outputH = output_shape[kOutputshapeIndexH];
   int64_t outputW = output_shape[kOutputshapeIndexW];
-
-  if (input_shape.size() == kDimSize4) {
-    if (data_format == "NCDHW") {
-      int64_t c_dim = input_shape[kDimSize4FormatNCDHWIndexN];
-      output_size.push_back(c_dim);
-      output_size.push_back(outputD);
-      output_size.push_back(outputH);
-      output_size.push_back(outputW);
-    } else {
-      int64_t c_dim = input_shape[kDimSize4FormatNDHWCIndexC];
-      output_size.push_back(outputD);
-      output_size.push_back(outputH);
-      output_size.push_back(outputW);
-      output_size.push_back(c_dim);
-    }
-  } else {
-    if (data_format == "NCDHW") {
-      int64_t n_dim = input_shape[kDimSize5FormatNCDHWIndexN];
-      int64_t c_dim = input_shape[kDimSize5FormatNCDHWIndexC];
-      output_size.push_back(n_dim);
-      output_size.push_back(c_dim);
-      output_size.push_back(outputD);
-      output_size.push_back(outputH);
-      output_size.push_back(outputW);
-    } else {
-      int64_t n_dim = input_shape[kDimSize5FormatNDHWCIndexN];
-      int64_t c_dim = input_shape[kDimSize5FormatNDHWCIndexC];
-      output_size.push_back(n_dim);
-      output_size.push_back(outputD);
-      output_size.push_back(outputH);
-      output_size.push_back(outputW);
-      output_size.push_back(c_dim);
-    }
-  }
+  GetOutputSize(input_shape, data_format, outputD, outputH, outputW, &output_size);
   if (std::any_of(output_size.begin(), output_size.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_LOG(EXCEPTION) << "For '" << op_name << "', output_size is not valid.";
   }
@@ -144,7 +148,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
         << "For '" << op_name
         << "', if 'x' is 4 dimensional, the first dimension size of 'x' and 'random_samples' must be equal.";
     }
-    if (random_samples_shape[kDimSize2] != kDimSize3) {
+    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
       MS_EXCEPTION(ValueError)
         << "For '" << op_name
         << "', if 'x' is 4 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
@@ -160,7 +164,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
         << "For '" << op_name
         << "', if 'x' is 5 dimensional, the second dimension size of 'x' and 'random_samples' must be equal.";
     }
-    if (random_samples_shape[kDimSize2] != kDimSize3) {
+    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
       MS_EXCEPTION(ValueError)
         << "For '" << op_name
         << "', if 'x' is 5 dimensional, the second dimension size of 'random_samples' must be equal to 3.";

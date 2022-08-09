@@ -89,7 +89,7 @@ TypePtr SparseApplyAdagradDAInferType(const PrimitivePtr &primitive, const std::
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices, valids1, prim_name);
 
   std::map<std::string, TypePtr> args_global_step;
-  (void)args_global_step.insert({"global_step", global_step});
+  (void)args_global_step.emplace("global_step", global_step);
   const std::set<TypePtr> valids2 = {kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_global_step, valids2, prim_name);
   return var;

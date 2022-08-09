@@ -29,11 +29,11 @@ namespace {
 abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kDefalutRank = 2;
+  const size_t kDefalutRank = 2;
   const size_t kBatchRank = 3;
-  const int64_t kBatchIndex = 3;
-  const int64_t kRowIndex = 2;
-  const int64_t kColIndex = 1;
+  const size_t kBatchIndex = 3;
+  const size_t kRowIndex = 2;
+  const size_t kColIndex = 1;
   auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto x1_shape = x1_shape_map[kShape];
@@ -50,7 +50,7 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
                              << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
   }
-  int64_t rank = SizeToLong(x1_shape.size());
+  size_t rank = SizeToLong(x1_shape.size());
   if (rank == kDefalutRank) {
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"

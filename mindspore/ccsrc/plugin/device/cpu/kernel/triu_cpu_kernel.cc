@@ -65,8 +65,8 @@ bool TriuCpuKernelMod::TriuCompute(const std::vector<AddressPtr> &inputs, const 
   auto matrixs_num = input_size / matrix_size;
 
   for (int64_t k = 0; k < SizeToLong(matrixs_num); ++k) {
-    MatrixMap input(input_addr + k * matrix_size, matrix_width, matrix_height);
-    MatrixMap output(output_addr + k * matrix_size, matrix_width, matrix_height);
+    MatrixMap input(input_addr + k * SizeToLong(matrix_size), matrix_width, matrix_height);
+    MatrixMap output(output_addr + k * SizeToLong(matrix_size), matrix_width, matrix_height);
     output = input.template triangularView<Eigen::Upper>();
     if (diagonal_ < 0) {
       for (int64_t j = 0; j < SizeToLong(matrix_height); j++) {

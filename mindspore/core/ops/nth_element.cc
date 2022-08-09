@@ -34,7 +34,8 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
 
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input shape", input_shape.size(), kGreaterEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kGreaterEqual, 1,
+                                           primitive->name());
   auto n_val = 0;
   if (input_args[1]->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> valid_types = {kInt32};
@@ -68,7 +69,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> out_shape;
   int64_t len = SizeToLong(input_shape.size());
   for (int64_t i = 0; i < len - 1; i++) {
-    (void)out_shape.emplace_back(input_shape[i]);
+    (void)out_shape.emplace_back(input_shape[LongToSize(i)]);
   }
   auto return_shape = out_shape;
   return std::make_shared<abstract::Shape>(return_shape);

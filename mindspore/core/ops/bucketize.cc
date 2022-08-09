@@ -59,7 +59,7 @@ std::vector<float> Bucketize::get_boundaries() const {
 AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t input_num = 1;
+  const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = BucketizeInferType(primitive, input_args);
   auto infer_shape = BucketizeInferShape(primitive, input_args);

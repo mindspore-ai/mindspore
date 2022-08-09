@@ -52,8 +52,8 @@ AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t InputNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, InputNum, prim_name);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = AsinhInferType(primitive, input_args);
   auto shapes = AsinhInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

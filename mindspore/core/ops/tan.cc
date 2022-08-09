@@ -50,7 +50,7 @@ MIND_API_OPERATOR_IMPL(Tan, BaseOperator);
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t input_num = 1;
+  const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = TanInferType(primitive, input_args);
   auto shapes = TanInferShape(primitive, input_args);

@@ -68,7 +68,6 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
                               << "[complex64, float32], [float32, complex64], [complex128, complex128],"
                               << "[complex128, float64], [float64, complex128],"
                               << "but got : [" << x1_type->meta_type() << "," << x2_type->meta_type() << "].";
-      return type_infer_dict[std::make_pair(x1_type, x2_type)];
     }
   }
   std::map<std::string, TypePtr> types;

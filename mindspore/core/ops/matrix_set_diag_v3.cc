@@ -90,8 +90,9 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal rank size don't match with x rank size.";
       }
       for (int64_t i = 0; i < rank - kNumber2; i++) {
-        if (diagonal_shape[LongToSize(i)] != x_shape[LongToSize(i)])
+        if (diagonal_shape[LongToSize(i)] != x_shape[LongToSize(i)]) {
           MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal shape value don't match with x shape value.";
+        }
       }
       max_diag_len = std::min(row + std::min(k_val[0], 0), col + std::min(-k_val[0], 0));
     } else {
@@ -107,8 +108,9 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal rank size don't match with x rank size.";
       }
       for (int64_t i = 0; i < rank - kNumber2; i++) {
-        if (diagonal_shape[LongToSize(i)] != x_shape[LongToSize(i)])
+        if (diagonal_shape[LongToSize(i)] != x_shape[LongToSize(i)]) {
           MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal shape value don't match with x shape value.";
+        }
       }
       max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
       int64_t in_row_diagonal = diagonal_shape[LongToSize(diagonal_rank - kNumber2)];
