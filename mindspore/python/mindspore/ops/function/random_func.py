@@ -336,28 +336,31 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     Args:
-        shape (Tensor): The shape of random tensor to be generated, 1-D `Tensor` whose dtype is mindspore.dtype.int32 or
-          mindspore.dtype.int64.
-        rate (Tensor): The μ parameter the distribution was constructed with. The parameter defines mean number of
-          occurrences of the event. It should be a `Tensor` whose dtype is mindspore.dtype.int64, mindspore.dtype.int32,
-          mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
+        shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D `Tensor` whose
+          dtype is mindspore.dtype.int32 or mindspore.dtype.int64.
+        rate (Tensor): The μ parameter the distribution was constructed with. It represents the mean of the distribution
+          and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
+          mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers
           and must be non-negative. Default: None, which will be treated as 0.
         dtype (mindspore.dtype): The data type of output: mindspore.dtype.int64, mindspore.dtype.int32,
           mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16. Default: mindspore.dtype.float32.
 
     Returns:
-        Tensor. The shape should be `mindspore.concat([shape, mindspore.shape(mean)], axis=0)`. The data type should be
-        equal to argument `dtype`.
+        A Tensor whose shape is `mindspore.concat([`shape`, mindspore.shape(`rate`)], axis=0)` and data type is equal to
+        argument `dtype`.
 
     Raises:
-        TypeError: If `shape` is not a Tensor[mindspore.dtype.int64] nor a Tensor[mindspore.dtype.int32].
-        TypeError: If `rate` is not a Tensor or `rate` is a Tensor whose dtype is not in [mindspore.dtype.int64,
-          mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16].
-        TypeError: If `seed` is not an int.
-        TypeError: If `dtype` is not mindspore.dtype.int64, mindspore.dtype.int32, mindspore.dtype.float64,
-          mindspore.dtype.float32 nor mindspore.dtype.float16.
-        ValueError: If elements of input `shape` tensor is not positive.
+        TypeError: If `shape` is not a Tensor.
+        TypeError: If datatype of `shape` is not mindspore.dtype.int64 nor mindspore.dtype.int32.
+        ValueError: If shape of `shape` is not 1-D.
+        TypeError: If `rate` is not a Tensor nor a scalar.
+        TypeError: If datatype of `rate` is not in [mindspore.dtype.int64, mindspore.dtype.int32,
+          mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16].
+        TypeError: If `seed` is not a non-negtive int.
+        TypeError: If `dtype` is not in [mindspore.dtype.int64, mindspore.dtype.int32, mindspore.dtype.float64,
+          mindspore.dtype.float32 nor mindspore.dtype.float16].
+        ValueError: If any element of input `shape` tensor is not positive.
 
     Supported Platforms:
         ``CPU``
@@ -365,20 +368,20 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     Examples:
         >>> from mindspore import Tensor, ops
         >>> import mindspore
-        >>> # case 1: It can be broadcast.
-        >>> shape = Tensor(np.array([4, 1]), mindspore.int32)
-        >>> rate = Tensor(np.array([5.0, 10.0]), mindspore.float32)
+        >>> # case 1: 1-D shape, 2-D rate, float64 output
+        >>> shape = Tensor(np.array([2, 2]), mindspore.int64)
+        >>> rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
         >>> output = ops.random_poisson(shape, rate, seed=5, dtype=mindspore.float64)
         >>> print(output.shape, output.dtype)
-        (4, 1, 2) Float64
-        >>> # case 2: It can not be broadcast. It is recommended to use the same shape.
-        >>> shape = Tensor(np.array([2, 2]), mindspore.int32)
-        >>> rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
+        (2, 2, 2, 2) float64
+        >>> # case 2: 1-D shape, scalar rate, int64 output
+        >>> shape = Tensor(np.array([2, 2]), mindspore.int64)
+        >>> rate = Tensor(5.0, mindspore.float64)
         >>> output = ops.random_poisson(shape, rate, seed=5, dtype=mindspore.int64)
         >>> print(output.shape, output.dtype)
-        (2, 2, 2, 2) Int64
+        (2, 2) Int64
     """
-    seed1, seed2 = _get_seed(seed, "poisson")
+    seed1, seed2 = _get_seed(seed, "random_poisson")
     prim_random_poisson = P.random_ops.RandomPoisson(seed1, seed2, dtype)
     value = prim_random_poisson(shape, rate)
     return value
@@ -391,5 +394,6 @@ __all__ = [
     'standard_normal',
     'random_gamma',
     'uniform_candidate_sampler',
+    'random_poisson',
 ]
 __all__.sort()
