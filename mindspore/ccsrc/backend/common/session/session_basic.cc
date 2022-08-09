@@ -2903,7 +2903,7 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
 }
 
 void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                                      device::DeviceContext *const device_context) {
+                                      const device::DeviceContext *device_context) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();

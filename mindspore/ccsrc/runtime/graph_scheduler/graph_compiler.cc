@@ -1022,7 +1022,7 @@ void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef
 }
 
 void GraphCompiler::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
-                                       device::DeviceContext *device_context) const {
+                                       const device::DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->DoAllReduceOnGrads(actor_info, outputs, device_context);
 }
