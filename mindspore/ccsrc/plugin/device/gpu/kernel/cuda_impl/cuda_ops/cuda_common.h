@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_COMMON_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_COMMON_H_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
-
+#ifdef _MSC_VER
+#define uint unsigned int
+#endif
 namespace mindspore {
 namespace device {
 namespace gpu {
@@ -58,5 +60,18 @@ class CudaCommon {
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
+
+#ifdef _MSC_VER
+// some cuda op(such as cum_minmax) use isnan with int type, but msvc not support
+// so, implement its
+__device__ __forceinline__ bool IsNan(const int8_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const int16_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const int32_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const int64_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const uint8_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const uint16_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const uint32_t &x) { return false; }
+__device__ __forceinline__ bool IsNan(const uint64_t &x) { return false; }
+#endif  // _MSC_VER
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_COMMON_H_

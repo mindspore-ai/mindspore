@@ -104,7 +104,8 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
     }
     bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
-    auto num_dims_fix = std::max(num_dims_, 4UL);
+    constexpr size_t four_4D = 4;
+    size_t num_dims_fix = std::max(num_dims_, four_4D);
     for (size_t i = 0; i < num_dims_fix; i++) {
       dy_shape_.push_back((i < num_dims_) ? dy_shape[i] : 1);
       db_shape_.push_back((i == pos) ? dy_shape[i] : 1);
@@ -185,7 +186,8 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateReduceTensorDescriptor(&op_desc_),
                                   "cudnnCreateOpTensorDescriptor failed");
       // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
-      auto cudnn_dims = std::max(num_dims_, 4UL);
+      constexpr size_t four_4D = 4;
+      size_t cudnn_dims = std::max(num_dims_, four_4D);
       std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
       std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
       for (size_t i = 0; i < cudnn_dims; i++) {

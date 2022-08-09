@@ -221,26 +221,26 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
 
     int seed = InitSeed(seed_, seed2_, deterministic_);
     // Generate pooling sequence.
-    int64_t height_cum_seq[output_shape_[kOutputShapeIndexH] + 1];
-    int64_t width_cum_seq[output_shape_[kOutputShapeIndexW] + 1];
-    flag = GeneratePoolingSequence(height_cum_seq, input_shape_[kInputShapeIndexH], output_shape_[kOutputShapeIndexH],
-                                   pseudo_random_, seed);
+    std::vector<int64_t> height_cum_seq(output_shape_[kOutputShapeIndexH] + 1);
+    std::vector<int64_t> width_cum_seq(output_shape_[kOutputShapeIndexW] + 1);
+    flag = GeneratePoolingSequence(height_cum_seq.data(), input_shape_[kInputShapeIndexH],
+                                   output_shape_[kOutputShapeIndexH], pseudo_random_, seed);
     if (flag != 0) {
       return flag;
     }
-    flag = GeneratePoolingSequence(width_cum_seq, input_shape_[kInputShapeIndexW], output_shape_[kOutputShapeIndexW],
-                                   pseudo_random_, seed);
+    flag = GeneratePoolingSequence(width_cum_seq.data(), input_shape_[kInputShapeIndexW],
+                                   output_shape_[kOutputShapeIndexW], pseudo_random_, seed);
     if (flag != 0) {
       return flag;
     }
 
-    auto cuda_ret = cudaMemcpy(row_pooling_sequence, height_cum_seq,
+    auto cuda_ret = cudaMemcpy(row_pooling_sequence, height_cum_seq.data(),
                                sizeof(int64_t) * (output_shape_[kOutputShapeIndexH] + 1), cudaMemcpyHostToDevice);
     if (cuda_ret != 0) {
       MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
       return -1;
     }
-    cuda_ret = cudaMemcpy(col_pooling_sequence, width_cum_seq,
+    cuda_ret = cudaMemcpy(col_pooling_sequence, width_cum_seq.data(),
                           sizeof(int64_t) * (output_shape_[kOutputShapeIndexW] + 1), cudaMemcpyHostToDevice);
     if (cuda_ret != 0) {
       MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);

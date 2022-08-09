@@ -310,8 +310,10 @@ bool UnaryOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_) << ", but got "
-                  << kernel_name_;
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::UnaryOpFunc>>>(
+                       kernel_attr_map_)
+                  << ", but got " << kernel_name_;
     return false;
   }
   if (inputs.empty() || outputs.empty()) {
@@ -347,8 +349,10 @@ int UnaryOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_) << ", but got "
-                  << kernel_name_;
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::UnaryOpFunc>>>(
+                       kernel_attr_map_)
+                  << ", but got " << kernel_name_;
     return std::vector<KernelAttr>{};
   }
   std::vector<KernelAttr> support_list;
@@ -385,8 +389,10 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
-    MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(func_map) << " currently, but got "
-                  << kernel_name_;
+    MS_LOG(ERROR) << "For 'UnaryOp', only support these types: "
+                  << kernel::Map2Str<std::map, std::function<void(const T *, T *, const size_t, cudaStream_t)>>(
+                       func_map)
+                  << " currently, but got " << kernel_name_;
     return false;
   }
   auto input_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);

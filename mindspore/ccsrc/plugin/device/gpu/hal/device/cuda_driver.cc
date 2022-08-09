@@ -170,7 +170,7 @@ bool CudaDriver::SyncStream(const CudaDeviceStream &stream) {
   return true;
 }
 
-bool CudaDriver::CreateEvent(CudaDeviceEvent *event, unsigned int flag) {
+bool CudaDriver::ConstructEvent(CudaDeviceEvent *event, unsigned int flag) {
   auto ret = cudaEventCreateWithFlags(reinterpret_cast<cudaEvent_t *>(event), flag);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaEventCreateWithFlags failed, ret[" << static_cast<int>(ret) << "], "

@@ -88,8 +88,9 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   auto iter = kScatterNdFunctorTypeMap.find(kernel_name_);
   if (iter == kScatterNdFunctorTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "Only support these scatter functors: " << Map2Str(kScatterNdFunctorTypeMap)
-                      << " currently, but got " << kernel_name_;
+    MS_LOG(EXCEPTION) << "Only support these scatter functors: "
+                      << Map2Str<std::map, ScatterNdFunctorType>(kScatterNdFunctorTypeMap) << " currently, but got "
+                      << kernel_name_;
   }
   scatter_nd_functor_type_ = iter->second;
 

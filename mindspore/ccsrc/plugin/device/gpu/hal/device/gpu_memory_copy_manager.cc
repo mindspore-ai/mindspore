@@ -34,7 +34,7 @@ void GPUMemCopyManager::AddMemSwapOutTask(const DeviceAddressPtr &device_address
   MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(host_addr.addr);
   CudaDeviceStream event = nullptr;
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&event, cudaEventDisableTiming), "Failed to create CUDA event.");
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&event, cudaEventDisableTiming), "Failed to create CUDA event.");
   DeviceMemPtr device_ptr = const_cast<DeviceMemPtr>(device_address->GetPtr());
   MS_EXCEPTION_IF_NULL(device_ptr);
   device_address->set_status(DeviceAddressStatus::kInDeviceToHost);
@@ -55,12 +55,12 @@ void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address,
   CudaDeviceStream start = nullptr;
   CudaDeviceStream end = nullptr;
   if (profiling) {
-    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create CUDA event.");
-    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create CUDA event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&start), "Failed to create CUDA event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&end), "Failed to create CUDA event.");
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(start, swap_in_stream_),
                              "Failed to record CUDA event to swap in stream.");
   } else {
-    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end, cudaEventDisableTiming), "Failed to create CUDA event.");
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::ConstructEvent(&end, cudaEventDisableTiming), "Failed to create CUDA event.");
   }
   DeviceMemPtr device_ptr = const_cast<DeviceMemPtr>(device_address->GetPtr());
   MS_EXCEPTION_IF_NULL(device_ptr);

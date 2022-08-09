@@ -96,8 +96,11 @@ bool UnaryGradOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'UnaryGrad op', the kernel name must be in" << kernel::Map2Str(kernel_attr_map_)
-                  << ", but got " << kernel_name_;
+    MS_LOG(ERROR)
+      << "For 'UnaryGrad op', the kernel name must be in"
+      << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod::UnaryOpGradFunc>>>(
+           kernel_attr_map_)
+      << ", but got " << kernel_name_;
     return false;
   }
   size_t input_num = inputs.size();
@@ -157,8 +160,10 @@ bool UnaryGradOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
                 {kInvGrad, InvGrad<T>}};
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
-    MS_LOG(ERROR) << "For 'UnaryGrad', only support these types: " << kernel::Map2Str(func_map)
-                  << " currently, but got " << kernel_name_;
+    MS_LOG(ERROR)
+      << "For 'UnaryGrad', only support these types: "
+      << kernel::Map2Str<std::map, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>>(func_map)
+      << " currently, but got " << kernel_name_;
     return false;
   }
   auto input_x_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);

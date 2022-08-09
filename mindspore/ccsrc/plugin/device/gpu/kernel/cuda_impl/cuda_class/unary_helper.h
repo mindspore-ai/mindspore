@@ -94,8 +94,9 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
     ResetResource();
     auto iter = kUnaryOpTypeMap.find(kernel_name_);
     if (iter == kUnaryOpTypeMap.end()) {
-      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(kUnaryOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: "
+                    << kernel::Map2Str<std::map, UnaryOptype>(kUnaryOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
     unary_op_type_ = iter->second;
@@ -146,8 +147,9 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       iter->second(input_addr, output_addr, input_size_list_[0] / sizeof(T),
                    reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(kUnaryOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: "
+                    << kernel::Map2Str<std::map, UnaryOptype>(kUnaryOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
 

@@ -503,8 +503,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
 std::vector<KernelAttr> PoolingGradGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'PoolingGradGpuKernelMod', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_)
-                  << ", but got " << kernel_name_;
+    MS_LOG(ERROR)
+      << "For 'PoolingGradGpuKernelMod', the kernel name must be in "
+      << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod::PoolingGradFunc>>>(
+           kernel_attr_map_)
+      << ", but got " << kernel_name_;
     return std::vector<KernelAttr>{};
   }
   std::vector<KernelAttr> support_list;

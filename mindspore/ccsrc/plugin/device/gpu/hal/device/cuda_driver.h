@@ -55,7 +55,7 @@ class CudaDriver {
   static bool DestroyStream(const CudaDeviceStream &stream);
   static bool SyncStream(const CudaDeviceStream &stream);
 
-  static bool CreateEvent(CudaDeviceEvent *event, unsigned int flag = cudaEventDefault);
+  static bool ConstructEvent(CudaDeviceEvent *event, unsigned int flag = cudaEventDefault);
   static bool DestroyEvent(const CudaDeviceEvent &event);
   static bool RecordEvent(CudaDeviceEvent event, CudaDeviceStream stream = 0);
   static bool SyncEvent(const CudaDeviceEvent &event);
