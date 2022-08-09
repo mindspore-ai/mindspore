@@ -18,6 +18,7 @@
 #include <vector>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_Concat;
 
@@ -71,14 +72,19 @@ int ConcatFP32Coder::DoCode(CoderContext *const context) {
     code << "shape_" << i << ", ";
   }
   code << "};\n";
-  if (support_parallel_) {
-    thread_num_ = 1;
+  if (!support_parallel_) {
+    code.CodeFunction("Concat", "inputs_addr", input_num, axis_, "inputs_output_shape", output_tensor_->shape().size(),
+                      output_tensor_, 0, 1, sizeof(float));
+  } else {
+    Collect(context, {"wrapper/fp32/concat_fp32_wrapper.h"}, {"concat_fp32_wrapper.c"});
+    code.CodeBaseStruct("ConcatFp32Args", kRunArgs, "inputs_addr", input_num, axis_, "inputs_output_shape",
+                        output_tensor_->shape().size(), output_tensor_, gThreadNum, sizeof(float));
+    code.CodeFunction(kParallelLaunch, "DoConcatRun", kRunArgsAddr, gThreadNum);
   }
-  code.CodeFunction("Concat", "inputs_addr", input_num, axis_, "inputs_output_shape", output_tensor_->shape().size(),
-                    output_tensor_, 0, thread_num_, sizeof(float));
   context->AppendCode(code.str());
   return RET_OK;
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

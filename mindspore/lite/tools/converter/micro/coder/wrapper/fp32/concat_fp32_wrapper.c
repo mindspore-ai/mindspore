@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#include "wrapper/fp32/pooling_fp32_wrapper.h"
-#include "nnacl/fp32/pooling_fp32.h"
+#include "wrapper/fp32/concat_fp32_wrapper.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/base/concat_base.h"
 
-int DoMaxPooling(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  PoolingFp32Args *args = (PoolingFp32Args *)cdata;
-  return MaxPooling(args->input_, args->output_, args->pooling_param_, task_id, args->min_, args->max_);
+int DoConcatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  ConcatFp32Args *args = (ConcatFp32Args *)cdata;
+  Concat(args->inputs_addr_, args->input_num_, args->axis_, args->inputs_output_shape_, args->shape_size_,
+         args->output_, task_id, args->thread_num_, args->data_size_);
+  return NNACL_OK;
 }

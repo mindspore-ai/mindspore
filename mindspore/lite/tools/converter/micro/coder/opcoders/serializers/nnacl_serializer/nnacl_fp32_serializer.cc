@@ -97,6 +97,12 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceParamet
                  "{0}", slice_parameter.param_length_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SplitParameter &split_parameter) {
+  CodeBaseStruct("SplitParameter", name, split_parameter.op_parameter_, split_parameter.num_split_, "split_sizes",
+                 split_parameter.split_dim_, ToString(split_parameter.strides_), "{0}", split_parameter.n_dims_,
+                 split_parameter.split_count_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const TileParameter &tile_parameter) {
   CodeBaseStruct("TileParameter", name, tile_parameter.op_parameter_, ToString(tile_parameter.multiples_),
                  ToString(tile_parameter.in_shape_), ToString(tile_parameter.out_shape_),
