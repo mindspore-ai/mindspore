@@ -528,7 +528,7 @@ def kl_div(logits, labels, reduction='mean'):
         Otherwise it is a scalar.
 
     Supported Platforms:
-        ``Ascend`` `CPU`` ``GPU``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `reduction` is not a str.
