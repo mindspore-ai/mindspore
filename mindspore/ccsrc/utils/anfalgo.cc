@@ -461,7 +461,8 @@ bool AnfAlgo::HasNodeAttr(const std::string &key, const CNodePtr &node) {
     return false;
   }
   // call node's input0 is not a primitive.
-  if (!IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
+  if (!IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0)) &&
+      !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
     return false;
   }
   // single op cnode.
