@@ -64,7 +64,7 @@ inline void RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_
 }
 
 template <typename T>
-inline void Copy(T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
+inline void Copy(T *input, const T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
                  size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     size_t k1 = i / dim2 % dim0;

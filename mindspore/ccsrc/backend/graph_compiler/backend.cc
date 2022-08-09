@@ -793,7 +793,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
       }
     }
     if (args_tuple_num == 0) {
-      (void)args->emplace_back(value);
+      args->emplace_back(value);
       front_index++;
     }
   }

@@ -239,6 +239,8 @@ Reduction函数
     mindspore.ops.amax
     mindspore.ops.amin
     mindspore.ops.argmin
+    mindspore.ops.cummax
+    mindspore.ops.cummin
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
@@ -265,8 +267,6 @@ Reduction函数
     :template: classtemplate.rst
 
     mindspore.ops.approximate_equal
-    mindspore.ops.cummax
-    mindspore.ops.cummin
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.gt

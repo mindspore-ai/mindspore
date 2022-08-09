@@ -53,14 +53,16 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
                                  << ", 'other' size: " << other_shape[i] << ".";
       }
     }
-    if (input_size > MAX)
+    if (input_size > MAX) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', the size of tensor 'input' must be less than [2147483648], but got: "
                                << input_size << ".";
-    if (other_size > MAX)
+    }
+    if (other_size > MAX) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', the size of tensor 'other' must be less than [2147483648], but got: "
                                << other_size << ".";
+    }
   }
   return BroadCastInferShape(op_name, input_args);
 }
