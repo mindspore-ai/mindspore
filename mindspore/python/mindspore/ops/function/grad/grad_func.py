@@ -421,7 +421,7 @@ def linearize(fn, inputs):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, Parameter , ops
+        >>> from mindspore import Tensor, Parameter, ops
         >>> from mindspore import nn
         >>> from mindspore.ops.functional import linearize
 
@@ -429,21 +429,21 @@ def linearize(fn, inputs):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.matmul = ops.MatMul()
-        ...     def construct(self, x , y):
-        ...         out = self.matmul(x , y)
+        ...     def construct(self, x, y):
+        ...         out = self.matmul(x, y)
         ...         return out
-        >>> x = Tensor(np.array([[1, 2 , 3 ], [3, 4 , 5]]).astype(np.float32))
-        >>> y = Tensor(np.array([[1, 2], [3, 4] , [5 , 6]]).astype(np.float32))
-        >>> v = (Tensor(np.array([[1, 1 , 1], [1, 1 , 1]]).astype(np.float32)),
-            Tensor(np.array([[1, 1], [1, 1], [0 , 0]]).astype(np.float32)))
-        >>> output , jvp_fn = linearize(Net() , (x,y))
+        >>> x = Tensor(np.array([[1, 2, 3], [3, 4, 5]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32))
+        >>> v = (Tensor(np.array([[1, 1, 1], [1, 1, 1]]).astype(np.float32)),
+        ...      Tensor(np.array([[1, 1], [1, 1], [0, 0]]).astype(np.float32)))
+        >>> output, jvp_fn = linearize(Net(), (x, y))
         >>> print(output)
         [[22. 28.]
-        [40. 52.]]
+         [40. 52.]]
         >>> jvp = jvp_fn(v)
         >>> print(jvp)
         [[12. 15.]
-        [16. 19.]]
+         [16. 19.]]
     """
 
     @ms_function(hash_args=fn)
