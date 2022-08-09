@@ -30,8 +30,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   bool shape_check_pass = x_shape.size() == kDim1 && y_shape.size() == kDim1;

@@ -67,8 +67,8 @@ TypePtr AssignInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto value_type = input_args[1]->BuildType();
   auto variable_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("variable", variable_type, check_types, prim_name);
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(std::map<std::string, TypePtr>{{"value", value_type}}, check_types,
-                                                     prim_name);
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(std::map<std::string, TypePtr>{{"value", value_type}},
+                                                           check_types, prim_name);
   return variable_type;
 }
 

@@ -40,18 +40,18 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
   std::vector<int64_t> ret_shape;
   ret_shape.push_back(grad_shape[0]);
   ret_shape.push_back(grad_shape[1]);
-  ret_shape.insert(ret_shape.end(), size_v.begin(), size_v.end());
+  (void)ret_shape.insert(ret_shape.end(), size_v.begin(), size_v.end());
   if (grad_shape_ptr->IsDynamic()) {
     auto grad_min_shape = grad_shape_ptr->min_shape();
     std::vector<int64_t> ret_min_shape;
     ret_min_shape.push_back(grad_min_shape[0]);
     ret_min_shape.push_back(grad_min_shape[1]);
-    ret_min_shape.insert(ret_min_shape.end(), size_v.begin(), size_v.end());
+    (void)ret_min_shape.insert(ret_min_shape.end(), size_v.begin(), size_v.end());
     auto grad_max_shape = grad_shape_ptr->max_shape();
     std::vector<int64_t> ret_max_shape;
     ret_max_shape.push_back(grad_max_shape[0]);
     ret_max_shape.push_back(grad_max_shape[1]);
-    ret_max_shape.insert(ret_max_shape.end(), size_v.begin(), size_v.end());
+    (void)ret_max_shape.insert(ret_max_shape.end(), size_v.begin(), size_v.end());
     return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
   }
   return std::make_shared<abstract::Shape>(ret_shape);

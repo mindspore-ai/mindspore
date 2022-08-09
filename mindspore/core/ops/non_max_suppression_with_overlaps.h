@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <algorithm>
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "abstract/ops/primitive_infer_map.h"

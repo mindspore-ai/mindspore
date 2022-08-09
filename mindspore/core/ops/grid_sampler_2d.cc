@@ -23,8 +23,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr GridSampler2DInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr GridSampler2DInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   const int64_t normal_shape_size = 4;

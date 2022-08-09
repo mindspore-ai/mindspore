@@ -73,7 +73,7 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (int64_t i = 0; i < num_split; i++) {
     auto shape = x_shape;
-    shape[split_dim] = size_splits[LongToSize(i)];
+    shape[LongToSize(split_dim)] = size_splits[LongToSize(i)];
     abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
     shape_tuple.push_back(out_shape);
   }

@@ -53,7 +53,7 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
   T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
   T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
   constexpr float ONE = 1.0;
-  if (beta1_power - ONE == 0) {
+  if (common::IsFloatEqual(beta1_power, ONE)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
   }
   T new_lr = static_cast<T>(lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power));
@@ -88,7 +88,7 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &in
   float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex];
   float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->addr);
   constexpr float ONE = 1.0;
-  if (beta1_power - ONE == 0) {
+  if (common::IsFloatEqual(beta1_power, ONE)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
   }
   float new_lr = lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power);

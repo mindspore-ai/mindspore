@@ -29,7 +29,7 @@ const size_t KTwo = 2;
 const size_t KThree = 3;
 const size_t KFour = 4;
 
-abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &primitive,
+abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &,
                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[KZero]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[KOne]->BuildShape())[kShape];

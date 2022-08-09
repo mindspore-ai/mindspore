@@ -24,8 +24,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   int64_t x_size = SizeToLong(x_shape.size());
   const int64_t kDimSize2 = 2;

@@ -28,8 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr CheckNumericsInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr CheckNumericsInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(x_shape);
 }
