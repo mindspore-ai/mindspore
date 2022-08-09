@@ -80,10 +80,7 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
     return nullptr;
   }
   int64_t axis_format_value = (axis_val[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
-    // transpose axis to NCHW
-    axis_format_value = ConvertAxisFromNHWC2NCHW(axis_format_value);
-  }
+
   uint32_t axis_bit = 1 << axis_format_value;
   MS_LOG(DEBUG) << op_name_ << " axis_value is " << axis_format_value << ", set axis to " << axis_bit;
   current_layer_->setAxes(axis_bit);

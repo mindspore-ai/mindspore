@@ -133,32 +133,7 @@ int ShuffleTensorRT::InputTensorPreprocess(TensorRTContext *ctx) {
   shuffler_input_ = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
   out_format_ = input(ctx, 0).format_;
-  if (shuffler_input_->getDimensions().nbDims == DIMENSION_4D && !input(ctx, 0).same_format_) {
-    // input tensor support NCHW format input
-    /*
-    if (input(ctx, 0).format_ == Format::NCHW) {
-      // for transpose op, if tensor has same dim with ms tensor, keep origin dims
-      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx_, *shuffler_input_);
-      if (transpose_layer == nullptr) {
-        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
-        return RET_ERROR;
-      }
-      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-      shuffler_input_ = transpose_layer->getOutput(0);
-      out_format_ = Format::NHWC;
-    } else if (input(ctx, 0).format_ == Format::NHWC) {
-      // infer format may error, correct here
-      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx_, *shuffler_input_);
-      if (transpose_layer == nullptr) {
-        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
-        return RET_ERROR;
-      }
-      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-      shuffler_input_ = transpose_layer->getOutput(0);
-      out_format_ = Format::NCHW;
-    }
-     */
-  }
+
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(shuffler_input_, out_format_, true);
   return RET_OK;
 }
@@ -244,15 +219,7 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     perm_data++;
   }
   shuffle_layer->setFirstTranspose(perm);
-  if (perm_ternsor.ElementNum() == DIMENSION_4D) {
-    if (perm.order[kNCHW_C] == kNHWC_C && perm.order[kNCHW_H] == kNHWC_H && perm.order[kNCHW_W] == kNHWC_W) {
-      out_format_ = Format::NCHW;
-    } else if (perm.order[kNHWC_H] == kNCHW_H && perm.order[kNHWC_W] == kNCHW_W && perm.order[kNHWC_C] == kNCHW_C) {
-      out_format_ = Format::NHWC;
-    } else {
-      MS_LOG(INFO) << "input format and perm order is not NHWC or NCHW: " << op_name_;
-    }
-  }
+
   shuffler_output_ = shuffle_layer->getOutput(0);
   return RET_OK;
 }

@@ -48,36 +48,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   out_format_ = input(ctx, 0).format_;
   nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      !SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
-    /*
-    if (input(ctx, 0).format_ == Format::NCHW) {
-      // NCHW->NHWC
-      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
-      if (transpose_layer == nullptr) {
-        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
-        return RET_ERROR;
-      }
-      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-      reduce_input = transpose_layer->getOutput(0);
-      out_format_ = Format::NHWC;
-      this->transpose_layer_ = transpose_layer;
-    } else if (input(ctx, 0).format_ == Format::NHWC) {
-      // NHWC->NCHW
-      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
-      if (transpose_layer == nullptr) {
-        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
-        return RET_ERROR;
-      }
-      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-      reduce_input = transpose_layer->getOutput(0);
-      out_format_ = Format::NCHW;
-      this->transpose_layer_ = transpose_layer;
-    } else {
-      MS_LOG(WARNING) << "input tensor format needs check: " << op_name_;
-    }
-     */
-  }
+
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
   if (reduce_op->get_mode() == ReduceMode::Reduce_L2) {
     // x^2

@@ -53,17 +53,6 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *resize_in_tensor = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
 
-  if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
-    // NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
-    if (transpose_layer == nullptr) {
-      MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
-      return RET_ERROR;
-    }
-    transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-    resize_in_tensor = transpose_layer->getOutput(0);
-    this->transpose_layer_ = transpose_layer;
-  }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, true);
 
   auto method = resize_op_->get_method();
