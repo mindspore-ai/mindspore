@@ -26,6 +26,7 @@ using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
 using mindspore::schema::PrimitiveType_Erf;
 using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_IsFinite;
 using mindspore::schema::PrimitiveType_Log;
 using mindspore::schema::PrimitiveType_LogicalNot;
 using mindspore::schema::PrimitiveType_Neg;
@@ -40,6 +41,7 @@ namespace mindspore::kernel {
 typedef int (*ArithmeticSelfFunc)(const float *input, float *output, const int element_size);
 typedef int (*ArithmeticSelfBoolFunc)(const bool *input, bool *output, const int element_size);
 typedef int (*ArithmeticSelfIntFunc)(const int *input, int *output, const int element_size);
+typedef int (*ArithmeticSelfFloatBoolFunc)(const float *input, bool *output, const int element_size);
 class ArithmeticSelfCPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -48,6 +50,7 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
     func_ = GetArithmeticSelfFun(parameter->type_);
     func_bool_ = GetArithmeticSelfBoolFun(parameter->type_);
     func_int_ = GetArithmeticSelfIntFun(parameter->type_);
+    func_float_bool_ = GetArithmeticSelfFloatBoolFun(parameter->type_);
   }
   ~ArithmeticSelfCPUKernel() override = default;
 
@@ -60,9 +63,11 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
   ArithmeticSelfFunc GetArithmeticSelfFun(int primitive_type) const;
   ArithmeticSelfBoolFunc GetArithmeticSelfBoolFun(int primitive_type) const;
   ArithmeticSelfIntFunc GetArithmeticSelfIntFun(int primitive_type) const;
+  ArithmeticSelfFloatBoolFunc GetArithmeticSelfFloatBoolFun(int primitive_type) const;
   ArithmeticSelfFunc func_;
   ArithmeticSelfBoolFunc func_bool_;
   ArithmeticSelfIntFunc func_int_;
+  ArithmeticSelfFloatBoolFunc func_float_bool_;
 };
 int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel

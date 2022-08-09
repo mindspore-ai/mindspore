@@ -174,6 +174,7 @@ int GatherNdCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GatherNd, LiteKernelCreator<GatherNdCPUKernel>)
 #endif

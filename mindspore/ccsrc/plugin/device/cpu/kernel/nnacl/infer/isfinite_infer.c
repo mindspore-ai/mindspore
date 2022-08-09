@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/size_infer.h"
+#include "nnacl/infer/isfinite_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int SizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                   OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+int IsFiniteInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                       OpParameter *parameter) {
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
-  const TensorC *in_tensor = inputs[0];
-  TensorC *out_tensor = outputs[0];
-  out_tensor->data_type_ = kNumberTypeInt32;
-  out_tensor->format_ = in_tensor->format_;
+  const TensorC *input = inputs[0];
+  TensorC *output = outputs[0];
+
+  output->data_type_ = kNumberTypeBool;
+  output->format_ = input->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-
-  out_tensor->shape_size_ = 0;
-  out_tensor->shape_[0] = 1;
-
+  for (size_t i = 0; i < input->shape_size_; i++) {
+    output->shape_[i] = input->shape_[i];
+  }
+  output->shape_size_ = input->shape_size_;
   return NNACL_OK;
 }
 
-REG_INFER(SizeOp, PrimType_Size, SizeInferShape)
+REG_INFER(IsFinite, PrimType_IsFinite, IsFiniteInferShape)

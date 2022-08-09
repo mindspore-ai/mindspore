@@ -30,18 +30,16 @@ PrimitiveCPtr TFArgMaxParser::Parse(const tensorflow::NodeDef &tf_op,
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   auto tf_axis_input_name = tf_op.input(tf_op.input_size() - 1);
-  if (tf_node_map.find(tf_axis_input_name) == tf_node_map.end()) {
-    MS_LOG(ERROR) << "not find axis node.";
-    return nullptr;
+  if (tf_node_map.find(tf_axis_input_name) != tf_node_map.end()) {
+    auto axis_node = tf_node_map.at(tf_axis_input_name);
+    MS_CHECK_TRUE_RET(axis_node != nullptr, nullptr);
+    if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
+      MS_LOG(ERROR) << "The attr value should be specified.";
+      return nullptr;
+    }
+    auto &axis_tensor = attr_value.tensor();
+    prim->set_axis(axis_tensor.int_val(0));
   }
-  auto axis_node = tf_node_map.at(tf_axis_input_name);
-  MS_CHECK_TRUE_RET(axis_node != nullptr, nullptr);
-  if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
-    MS_LOG(ERROR) << "The attr value should be specified.";
-    return nullptr;
-  }
-  auto &axis_tensor = attr_value.tensor();
-  prim->set_axis(axis_tensor.int_val(0));
   prim->set_out_max_value(false);
 
   *output_size = 1;

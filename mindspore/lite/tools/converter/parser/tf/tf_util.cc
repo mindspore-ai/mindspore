@@ -119,6 +119,12 @@ std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
         MS_LOG(ERROR) << "Failed to flatten RaggedRange node name!";
       }
       return ret;
+    } else if (input_splits[0].find("TopKV2") != std::string::npos) {
+      if (input_splits[1] == "values") {
+        return input_splits[0] + ":0";
+      } else if (input_splits[1] == "indices") {
+        return input_splits[0] + ":1";
+      }
     }
     if (input_splits[2] == "0") {
       ret = input_splits[0];

@@ -195,3 +195,13 @@ int ElementErf(const float *input, float *output, const int element_size) {
   }
   return NNACL_OK;
 }
+
+int ElementIsFinite(const float *input, bool *output, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = true;
+    if (isnan(input[i]) || isinf(input[i])) {
+      output[i] = false;
+    }
+  }
+  return NNACL_OK;
+}
