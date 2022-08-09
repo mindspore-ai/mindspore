@@ -80,7 +80,7 @@ tensor_mul = P.Mul()
 tensor_div = P.RealDiv()
 tensor_floordiv = P.FloorDiv()
 floordiv = tensor_floordiv
-tensor_xdivy = P.Xdivy()
+xdivy_ = P.Xdivy()
 tensor_pow = P.Pow()
 pows = tensor_pow
 tensor_mod = P.FloorMod()
@@ -4542,7 +4542,7 @@ def xdivy(x, y):
         >>> print(output)
         [ 1.   2.  -0.5]
     """
-    return tensor_xdivy(x, y)
+    return xdivy_(x, y)
 
 
 def log1p(x):
@@ -4610,7 +4610,6 @@ __all__ = [
     'tensor_floordiv',
     'floor_div',
     'floordiv',
-    'tensor_xdivy',
     'xdivy',
     'tensor_pow',
     'pow',

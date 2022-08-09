@@ -77,6 +77,11 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto y_min_shape = y_shape_map[kMinShape];
   auto y_max_shape = y_shape_map[kMaxShape];
 
+  // To support Dynamic rank
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+
   if (x_shape == y_shape) {
     return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
   }
