@@ -99,6 +99,36 @@ class MS_API AdjustGamma final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Adjust the color saturation of the input image.
+class MS_API AdjustSaturation final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] saturation_factor Adjust image saturation, non negative real number.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto adjust_saturation_op = vision::AdjustSaturation(2.0);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, adjust_saturation_op},  // operations
+  ///                            {"image"});                         // input columns
+  /// \endcode
+  explicit AdjustSaturation(float saturation_factor);
+
+  /// \brief Destructor.
+  ~AdjustSaturation() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply adjust sharpness on input image. Input image is expected to be in [H, W, C] or [H, W] format.
 class MS_API AdjustSharpness final : public TensorTransform {
  public:

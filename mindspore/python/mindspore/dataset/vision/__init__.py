@@ -44,15 +44,15 @@ from . import c_transforms
 from . import py_transforms
 from . import transforms
 from . import utils
-from .transforms import AdjustBrightness, AdjustGamma, AdjustSharpness, AutoAugment, AutoContrast, BoundingBoxAugment, \
-    CenterCrop, ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, \
-    HorizontalFlip, HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, \
-    PadToSize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, RandomColorAdjust, RandomCrop, \
-    RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \
-    RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, RandomPerspective, RandomPosterize, RandomResizedCrop, \
-    RandomResizedCropWithBBox, RandomResize, RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, \
-    RandomSharpness, RandomSolarize, RandomVerticalFlip, RandomVerticalFlipWithBBox, Rescale, Resize, ResizeWithBBox, \
-    RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, ToNumpy, ToPIL, ToTensor, ToType, TrivialAugmentWide, \
-    UniformAugment, VerticalFlip, not_random
+from .transforms import AdjustBrightness, AdjustGamma, AdjustSaturation, AdjustSharpness, AutoAugment, AutoContrast, \
+    BoundingBoxAugment, CenterCrop, ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, \
+    GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, \
+    Normalize, NormalizePad, Pad, PadToSize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, \
+    RandomColorAdjust, RandomCrop, RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, \
+    RandomGrayscale, RandomHorizontalFlip, RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, \
+    RandomPerspective, RandomPosterize, RandomResizedCrop, RandomResizedCropWithBBox, RandomResize, \
+    RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, RandomSharpness, RandomSolarize, RandomVerticalFlip, \
+    RandomVerticalFlipWithBBox, Rescale, Resize, ResizeWithBBox, RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, \
+    ToNumpy, ToPIL, ToTensor, ToType, TrivialAugmentWide, UniformAugment, VerticalFlip, not_random
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, get_image_num_channels, \
     get_image_size

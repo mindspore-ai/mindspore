@@ -22,6 +22,7 @@
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_saturation_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
@@ -101,6 +102,16 @@ PYBIND_REGISTER(
         return ajust_gamma;
       }));
   }));
+
+PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::AdjustSaturationOperation, TensorOperation,
+                                   std::shared_ptr<vision::AdjustSaturationOperation>>(*m, "AdjustSaturationOperation")
+                    .def(py::init([](float saturation_factor) {
+                      auto ajust_saturation = std::make_shared<vision::AdjustSaturationOperation>(saturation_factor);
+                      THROW_IF_ERROR(ajust_saturation->ValidateParams());
+                      return ajust_saturation;
+                    }));
+                }));
 
 PYBIND_REGISTER(AdjustSharpnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustSharpnessOperation, TensorOperation,
