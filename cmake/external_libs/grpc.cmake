@@ -7,6 +7,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else()
     set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2 \
         -Dgrpc=mindspore_grpc -Dgrpc_impl=mindspore_grpc_impl -Dgrpc_core=mindspore_grpc_core")
+    set(grpc_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2")
     if(NOT ENABLE_GLIBCXX)
         set(grpc_CXXFLAGS "${grpc_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     endif()
