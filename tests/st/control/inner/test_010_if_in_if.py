@@ -64,6 +64,8 @@ class IfInIfNet2(nn.Cell):
         super().__init__()
         self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
         self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.tensor_true = Tensor([True])
+        self.tensor_false = Tensor([False])
 
     def construct(self, x):
         if self.check(self.param_a, self.param_b):
@@ -83,9 +85,9 @@ class IfInIfNet2(nn.Cell):
     def check(self, x, y):
         if x < y:
             self.param_b += 1
-            return True
+            return self.tensor_true
         self.param_b -= 1
-        return False
+        return self.tensor_false
 
 
 class IfInIfNet3(nn.Cell):

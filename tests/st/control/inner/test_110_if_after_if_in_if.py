@@ -67,6 +67,8 @@ class IfAfterIfInIfNet2(nn.Cell):
         super().__init__()
         self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
         self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.tensor_true = Tensor([True])
+        self.tensor_false = Tensor([False])
 
     def construct(self, x):
         out = x + self.param_b
@@ -84,9 +86,9 @@ class IfAfterIfInIfNet2(nn.Cell):
     def subfunc(self, x):
         if x > self.param_a:
             self.param_b += 1
-            return True
+            return self.tensor_true
         self.param_b -= 1
-        return False
+        return self.tensor_false
 
 
 class IfAfterIfInIfNet3(nn.Cell):
