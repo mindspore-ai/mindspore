@@ -13,6 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """GraphKernel cost model"""
+from mindspore import log as logger
 
 
 class Utils:
@@ -124,7 +125,7 @@ class PrimLib:
             axis_relation, elem_relation = [], []
             delta = len(out_shape) - len(in_shape)
             if delta > 0:
-                for i in range(0, delta):
+                for _ in range(0, delta):
                     axis_relation.append(None)
                     elem_relation.append(None)
             for i, _ in enumerate(in_shape):
@@ -246,7 +247,7 @@ class PrimLib:
         """Get op primtive"""
         prim = cls.primtives.get(op.prim, None)
         if prim is None:
-            print('[WARN] primtive is not registered: ' + op.prim)
+            logger.warning("primtive is not registered: {}".format(op.prim))
             prim = cls.default_primtive
         return prim
 
