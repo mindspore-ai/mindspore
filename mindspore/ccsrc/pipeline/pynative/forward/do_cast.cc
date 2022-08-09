@@ -153,8 +153,8 @@ void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
 }
 
 const std::string &CastOperation::TypeIdToMsTypeStr(const TypeId &type_id) const {
-  const auto &type_name = type_name_map.find(type_id);
-  if (type_name == type_name_map.end()) {
+  const auto &type_name = type_name_map().find(type_id);
+  if (type_name == type_name_map().cend()) {
     MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
   }
   return type_name->second;

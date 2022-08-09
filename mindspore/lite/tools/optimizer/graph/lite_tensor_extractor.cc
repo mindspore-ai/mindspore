@@ -22,6 +22,7 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "utils/ms_utils_secure.h"
 #include "nnacl/op_base.h"
+#include "ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

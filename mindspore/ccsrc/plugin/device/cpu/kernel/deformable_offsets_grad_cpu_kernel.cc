@@ -262,8 +262,9 @@ void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStr
 
 template <typename T>
 void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNHWCKernel(size_t num_kernels,
-                                                                       const DeformableOffsetGradDims &dims, T *input_x,
-                                                                       T *input_offset, T *input_grad, T *output_grad_x,
+                                                                       const DeformableOffsetGradDims &dims,
+                                                                       const T *input_x, const T *input_offset,
+                                                                       const T *input_grad, T *output_grad_x,
                                                                        T *output_grad_offset) {
   OffsetStride offset_stride;
   offset_stride.kernel_w_stride = 1;
@@ -315,8 +316,9 @@ void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNHWCKernel(size_t nu
 
 template <typename T>
 void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNCHWKernel(size_t num_kernels,
-                                                                       const DeformableOffsetGradDims &dims, T *input_x,
-                                                                       T *input_offset, T *input_grad, T *output_grad_x,
+                                                                       const DeformableOffsetGradDims &dims,
+                                                                       const T *input_x, const T *input_offset,
+                                                                       const T *input_grad, T *output_grad_x,
                                                                        T *output_grad_offset) {
   OffsetStride offset_stride;
   offset_stride.offset_w_stride = 1;
@@ -394,9 +396,9 @@ bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
                                                      const std::vector<kernel::AddressPtr> &outputs) {
   const size_t num_kernels =
     dims_.x_n * dims_.offset_h * dims_.offset_w * dims_.kernel_h * dims_.kernel_w * dims_.deformable_group;
-  T *input_grad = GetDeviceAddress<T>(inputs, kGradXIndex);
-  T *input_x = GetDeviceAddress<T>(inputs, kXIndex);
-  T *input_offset = GetDeviceAddress<T>(inputs, kOffsetIndex);
+  const T *input_grad = GetDeviceAddress<T>(inputs, kGradXIndex);
+  const T *input_x = GetDeviceAddress<T>(inputs, kXIndex);
+  const T *input_offset = GetDeviceAddress<T>(inputs, kOffsetIndex);
   T *output_grad_x = GetDeviceAddress<T>(outputs, kGradXIndex);
   T *output_grad_offset = GetDeviceAddress<T>(outputs, kGradOffsetIndex);
 
@@ -467,7 +469,7 @@ KernelAttrAndFuncList &DeformableOffsetsGradCpuKernelMod::GetFuncList() const {
 
 void DeformableOffsetsGradCpuKernelMod::GetDataFormat() { data_format_ = deformable_kernel_operator_->get_format(); }
 
-void DeformableOffsetsGradCpuKernelMod::CheckInOutNum(size_t inputs_num, size_t outputs_num) {
+void DeformableOffsetsGradCpuKernelMod::CheckInOutNum(size_t inputs_num, size_t outputs_num) const {
   if (inputs_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputNum << ", but got "
                       << inputs_num;

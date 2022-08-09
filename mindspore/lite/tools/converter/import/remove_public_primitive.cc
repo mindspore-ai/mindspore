@@ -20,6 +20,7 @@
 #include <string>
 #include "tools/converter/parser/parser_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/core_ops.h"
 
 namespace mindspore {
 namespace lite {

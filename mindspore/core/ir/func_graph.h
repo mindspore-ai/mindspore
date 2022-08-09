@@ -37,7 +37,6 @@
 #include "utils/ordered_map.h"
 #include "base/base_ref.h"
 #include "base/effect_info.h"
-#include "ir/func_graph_cloner.h"
 #include "abstract/abstract_value.h"
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
@@ -137,7 +136,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   // Create a cnode with given inputs, bound to this graph.
   virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
-  virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
+  virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs);
   CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs);
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.

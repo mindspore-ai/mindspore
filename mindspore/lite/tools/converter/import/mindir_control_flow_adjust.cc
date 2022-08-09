@@ -27,6 +27,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/core_ops.h"
 namespace {
 constexpr const int kSwitchTruePartialIndex = 2;
 constexpr const int kSwitchFalsePartialIndex = 3;

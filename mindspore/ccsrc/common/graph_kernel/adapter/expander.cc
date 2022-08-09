@@ -33,6 +33,7 @@
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {

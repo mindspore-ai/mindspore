@@ -29,6 +29,7 @@
 #include "ir/param_info.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"

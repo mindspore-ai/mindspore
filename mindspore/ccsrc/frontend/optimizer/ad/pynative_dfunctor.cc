@@ -15,6 +15,7 @@
  */
 
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 namespace ad {

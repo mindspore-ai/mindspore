@@ -29,7 +29,7 @@ namespace opt {
 namespace irpass {
 class SparseSoftmaxCrossEntropyWithLogitsSplit : public AnfVisitor {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &opt, const AnfNodePtr &node) override;
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 
   void Visit(const AnfNodePtr &node) override;
 

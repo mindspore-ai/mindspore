@@ -449,7 +449,7 @@ class SideEffectFinder {
     }
   }
 
-  void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) {
+  void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) const {
     const auto caller_input_size = caller->inputs().size();
     for (auto &branch : branches) {
       if (caller_input_size != branch->parameters().size() + 1) {

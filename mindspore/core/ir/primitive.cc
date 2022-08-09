@@ -49,6 +49,7 @@ Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::stri
 Primitive::Primitive(const Primitive &prim)
     : Named(prim),
       attrs_(prim.attrs_),
+      evaluate_added_attrs_(prim.evaluate_added_attrs_),
       instance_name_(prim.instance_name_),
       is_base_(prim.is_base_),
       has_signature_(prim.has_signature_),
@@ -63,6 +64,7 @@ Primitive &Primitive::operator=(const Primitive &other) {
   }
   Named::operator=(other);
   attrs_ = other.attrs_;
+  evaluate_added_attrs_ = other.evaluate_added_attrs_;
   instance_name_ = other.instance_name_;
   is_base_ = other.is_base_;
   has_signature_ = other.has_signature_;

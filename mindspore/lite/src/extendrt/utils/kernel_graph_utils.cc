@@ -22,6 +22,7 @@
 
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "ir/graph_utils.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

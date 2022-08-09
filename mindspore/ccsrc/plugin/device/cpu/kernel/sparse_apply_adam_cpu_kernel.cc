@@ -181,21 +181,21 @@ int SparseApplyAdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape.size() << " and the dimension of 'var': " << var_shape.size();
     return KRET_RESIZE_FAILED;
   }
-  var_first_dim_size_ = var_shape[0];
+  var_first_dim_size_ = LongToSize(var_shape[0]);
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
                     << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
       return KRET_RESIZE_FAILED;
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'indices' must be 1-D, but got "
                   << indices_shape.size() << "-D.";
     return KRET_RESIZE_FAILED;
   }
-  indices_size_ = indices_shape[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the first dimension value of 'grad' must be equal to "
@@ -263,7 +263,7 @@ bool SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto *m = reinterpret_cast<float *>(inputs[1]->addr);
   auto *v = reinterpret_cast<float *>(inputs[2]->addr);
   auto beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
-  if (beta1_power == 1) {
+  if (std::fabs(beta1_power - 1.0f) <= std::numeric_limits<float>::epsilon()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'beta1_power' can not be 1.";
     return false;
   }

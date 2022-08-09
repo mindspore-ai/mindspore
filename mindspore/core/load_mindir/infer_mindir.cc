@@ -25,6 +25,7 @@
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace {

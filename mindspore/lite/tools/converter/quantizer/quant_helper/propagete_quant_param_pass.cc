@@ -27,6 +27,7 @@
 #include "tools/common/node_util.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/optimizer/common/format_utils.h"
+#include "ops/core_ops.h"
 
 namespace mindspore::lite::quant {
 namespace {
