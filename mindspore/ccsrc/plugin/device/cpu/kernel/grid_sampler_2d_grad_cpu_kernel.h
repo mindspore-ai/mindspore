@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,15 +135,26 @@ struct Vec256 {
   Vec256<T> trunc() const { return map(std::trunc); }
   static Vec256<T> LoadU(const void *ptr) {
     Vec256 vec;
-    std::memcpy(vec.values, ptr, 32);  // 32
+    auto cp_ret = memcpy_s(static_cast<void *>(vec.values), 32, ptr, 32);
+    if (cp_ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed. errorno is: " << cp_ret;
+    }
     return vec;
   }
   static Vec256<T> LoadU(const void *ptr, int64_t count) {
     Vec256 vec;
-    std::memcpy(vec.values, ptr, count * sizeof(T));
+    auto cp_ret = memcpy_s(static_cast<void *>(vec.values), count * sizeof(T), ptr, count * sizeof(T));
+    if (cp_ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed. errorno is: " << cp_ret;
+    }
     return vec;
   }
-  void store(void *ptr, int count = size()) const { std::memcpy(ptr, values, count * sizeof(T)); }
+  void store(void *ptr, int count = size()) const {
+    auto cp_ret = memcpy_s(ptr, count * sizeof(T), values, count * sizeof(T));
+    if (cp_ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed. errorno is: " << cp_ret;
+    }
+  }
   const T &operator[](int idx) const { return values[idx]; }
   T &operator[](int idx) { return values[idx]; }
   int zero_mask() const {
@@ -234,9 +245,15 @@ struct Vec256 {
     Vec256<T> vec;
     for (int64_t i = 0; i != size(); i++) {
       if (op(values[i], other.values[i])) {
-        std::memset(static_cast<void *>(vec.values + i), 0xFF, sizeof(T));
+        auto ret = memset_s(static_cast<void *>(vec.values + i), sizeof(T), 0xFF, sizeof(T));
+        if (ret != 0) {
+          MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";
+        }
       } else {
-        std::memset(static_cast<void *>(vec.values + i), 0, sizeof(T));
+        auto ret = memset_s(static_cast<void *>(vec.values + i), sizeof(T), 0, sizeof(T));
+        if (ret != 0) {
+          MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";
+        }
       }
     }
     return vec;
@@ -862,6 +879,10 @@ struct ApplyGridSample2D<T, hTwo, GridSamplerInterpolation::Nearest, padding, al
     }
     auto GGridPtr = (*GGridSlice)[0].data() + offset * 2;
     std::memset(GGridPtr, 0, sizeof(T) * len * hTwo);
+    auto ret = memset_s(static_cast<void *>(GGridPtr), sizeof(T) * len * hTwo, 0, sizeof(T) * len * hTwo);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";
+    }
   }
 };
 
