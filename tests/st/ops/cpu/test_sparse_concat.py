@@ -320,6 +320,8 @@ def test_sparse_concat_int():
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
+    a = Tensor((3,4))
+    print(a.dtype)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     values_types = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, \
                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
@@ -338,6 +340,8 @@ def test_sparse_concat_float():
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
+    a = Tensor((3,4))
+    print(a.dtype)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     sparse_concat_float(mstype.int32, mstype.float32)
     sparse_concat_float(mstype.int32, mstype.float16)
