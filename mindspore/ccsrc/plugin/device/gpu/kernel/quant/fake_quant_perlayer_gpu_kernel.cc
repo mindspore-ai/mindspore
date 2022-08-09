@@ -20,6 +20,7 @@
 #include <thrust/pair.h>
 #include <thrust/device_vector.h>
 #include <cuda_runtime_api.h>
+#include "plugin/device/gpu/kernel/quant/constant.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,7 +41,7 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
+  if (input_num != kDimSizeThree) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
@@ -103,13 +104,13 @@ bool FakeQuantPerLayerGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   if (is_null_input_) {
     return true;
   }
-  float *output = GetDeviceAddress<float>(outputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 0);
-  float *input_min = GetDeviceAddress<float>(inputs, 1);
-  float *input_max = GetDeviceAddress<float>(inputs, 2);
-  float *scale = GetDeviceAddress<float>(workspace, 0);
-  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
-  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
+  float *output = GetDeviceAddress<float>(outputs, kDimIndexZeroth);
+  float *input = GetDeviceAddress<float>(inputs, kDimIndexZeroth);
+  float *input_min = GetDeviceAddress<float>(inputs, kDimIndexFirst);
+  float *input_max = GetDeviceAddress<float>(inputs, kDimIndexSecond);
+  float *scale = GetDeviceAddress<float>(workspace, kDimIndexZeroth);
+  float *nudge_min = GetDeviceAddress<float>(workspace, kDimIndexFirst);
+  float *nudge_max = GetDeviceAddress<float>(workspace, kDimIndexSecond);
 
   if (training_) {
     // control flow for quant_delay

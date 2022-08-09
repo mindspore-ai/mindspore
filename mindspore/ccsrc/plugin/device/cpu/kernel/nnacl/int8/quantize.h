@@ -18,7 +18,6 @@
 #define MINDSPORE_NNACL_QUANTIZATION_QUANTIZE_H_
 
 #include <math.h>
-#include <limits.h>
 #include "nnacl/op_base.h"
 
 #define INPUT_PER_CHANNEL 0b001

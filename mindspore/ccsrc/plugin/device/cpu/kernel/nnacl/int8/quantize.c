@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/int8/quantize.h"
+#include <limits.h>
 
 const uint64_t dSignMask = 1ull << 63;
 const uint64_t dExponentMask = 0x7ffull << 52;

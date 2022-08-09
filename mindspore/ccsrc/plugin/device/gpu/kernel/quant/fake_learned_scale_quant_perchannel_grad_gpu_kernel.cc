@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/quant/fake_learned_scale_quant_perchannel_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/quant/constant.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_learned_scale_quant_perchannel_impl.cuh"
 
 namespace mindspore {
@@ -31,20 +32,22 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Init(const CNodePtr &kerne
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 4) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
+  if (input_num != kDimSizeFour) {
+    MS_LOG(EXCEPTION) << "For FakeLearnedScaleQuantPerChannelGradGpuKernelMod('" << kernel_name << "'), the number "
+                      << "of inputs should be 4, but got " << input_num;
   }
 
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
+  if (output_num != kDimSizeTwo) {
+    MS_LOG(EXCEPTION) << "For FakeLearnedScaleQuantPerChannelGradGpuKernelMod('" << kernel_name << "'), the number "
+                      << "of outputs should be 2, but got " << output_num;
   }
 
   quant_delay_ =
     static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
-                      << quant_delay_;
+    MS_LOG(EXCEPTION) << "For FakeLearnedScaleQuantPerChannelGradGpuKernelMod('" << kernel_name << "'), the value "
+                      << "of quant_delay_ cannot be less than 0, but got " << quant_delay_;
   }
 
   neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
@@ -74,14 +77,14 @@ void FakeLearnedScaleQuantPerChannelGradGpuKernelMod::InitSizeLists() {
 bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                                              const std::vector<AddressPtr> &workspace,
                                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  float *grad_input = GetDeviceAddress<float>(outputs, 0);
-  float *grad_alpha = GetDeviceAddress<float>(outputs, 1);
-  float *gradient = GetDeviceAddress<float>(inputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 1);
-  float *input_alpha = GetDeviceAddress<float>(inputs, 2);
-  float *input_quant_max = GetDeviceAddress<float>(inputs, 3);
-  float *input_div_alpha = GetDeviceAddress<float>(workspace, 0);
-  float *input_quant = GetDeviceAddress<float>(workspace, 1);
+  float *grad_input = GetDeviceAddress<float>(outputs, kDimIndexZeroth);
+  float *grad_alpha = GetDeviceAddress<float>(outputs, kDimIndexFirst);
+  float *gradient = GetDeviceAddress<float>(inputs, kDimIndexZeroth);
+  float *input = GetDeviceAddress<float>(inputs, kDimIndexFirst);
+  float *input_alpha = GetDeviceAddress<float>(inputs, kDimIndexSecond);
+  float *input_quant_max = GetDeviceAddress<float>(inputs, kDimSizeThree);
+  float *input_div_alpha = GetDeviceAddress<float>(workspace, kDimIndexZeroth);
+  float *input_quant = GetDeviceAddress<float>(workspace, kDimIndexFirst);
 
   MS_EXCEPTION_IF_NULL(grad_input);
   MS_EXCEPTION_IF_NULL(grad_alpha);

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/fake_quant_perlayer_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/quant/constant.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_quant_perlayer_impl.cuh"
 
 namespace mindspore {
@@ -36,7 +37,7 @@ bool FakeQuantPerLayerGradGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 4) {
+  if (input_num != kDimSizeFour) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
   }
 
@@ -104,14 +105,14 @@ bool FakeQuantPerLayerGradGpuKernelMod::Launch(const std::vector<AddressPtr> &in
   if (is_null_input_) {
     return true;
   }
-  float *output = GetDeviceAddress<float>(outputs, 0);
-  float *gradient = GetDeviceAddress<float>(inputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 1);
-  float *input_min = GetDeviceAddress<float>(inputs, 2);
-  float *input_max = GetDeviceAddress<float>(inputs, 3);
-  float *scale = GetDeviceAddress<float>(workspace, 0);
-  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
-  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
+  float *output = GetDeviceAddress<float>(outputs, kDimIndexZeroth);
+  float *gradient = GetDeviceAddress<float>(inputs, kDimIndexZeroth);
+  float *input = GetDeviceAddress<float>(inputs, kDimIndexFirst);
+  float *input_min = GetDeviceAddress<float>(inputs, kDimIndexSecond);
+  float *input_max = GetDeviceAddress<float>(inputs, kDimIndexThird);
+  float *scale = GetDeviceAddress<float>(workspace, kDimIndexZeroth);
+  float *nudge_min = GetDeviceAddress<float>(workspace, kDimIndexFirst);
+  float *nudge_max = GetDeviceAddress<float>(workspace, kDimIndexSecond);
 
   if (global_step_ >= quant_delay_) {
     CalNudgePerLayer(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, symmetric_,
