@@ -43,7 +43,7 @@ void ImpleComplex(void *real, void *imag, void *target, size_t size) {
   }
 }
 
-abstract::ShapePtr ComplexInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ComplexInferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
@@ -94,7 +94,7 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
 
   auto data_size = real_tensor->DataSize();
   auto dtype = real_tensor->data_type();
-  auto shape = ComplexInferShape(prim, input_args)->shape();
+  auto shape = ComplexInferShape(input_args)->shape();
   auto output_type = (dtype == kNumberTypeFloat32 ? kNumberTypeComplex64 : kNumberTypeComplex128);
   auto result_tensor = std::make_shared<tensor::Tensor>(output_type, shape);
   auto real_datac = real_tensor->data_c();
@@ -126,7 +126,7 @@ AbstractBasePtr ComplexInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = ComplexInferType(primitive, input_args);
-  auto infer_shape = ComplexInferShape(primitive, input_args);
+  auto infer_shape = ComplexInferShape(input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

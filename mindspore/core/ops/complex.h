@@ -34,7 +34,7 @@ class MIND_API Complex : public BaseOperator {
   /// \brief Constructor.
   Complex() : BaseOperator(kNameComplex) { InitIOName({"real", "imag"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Complex for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
