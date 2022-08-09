@@ -11,6 +11,14 @@ mindspore.RowTensor
 
     由 `RowTensor` 切片表示的稠密张量具有以下属性： `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]` 。
 
+    如果 `indices` 是[0]， `values` 是[[1, 2]]， `shape` 是(3, 2)，那么它对应的稠密Tensor如下：
+
+    .. code-block::
+
+        [[1, 2],
+         [0, 0],
+         [0, 0]]
+
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。
 
