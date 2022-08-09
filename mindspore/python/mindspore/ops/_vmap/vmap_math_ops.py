@@ -26,6 +26,7 @@ from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
+from ..composite import _VmapGeneralRule
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
     get_unary_grad_vmap_rule, _vmap_clone_prim, _bdim_at_any
@@ -475,6 +476,7 @@ def get_reducer_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(Median)
 def get_median_vmap_rule(prim, axis_size):
     """VmapRule for median operations."""
+    prim_vmap = _VmapGeneralRule(prim, axis_size)
     global_median = prim.global_median
     axis = prim.axis
     keep_dims = prim.keep_dims
@@ -491,6 +493,8 @@ def get_median_vmap_rule(prim, axis_size):
         return axis_new, dim_new
 
     def vmap_rule(x_bdim):
+        if global_median is True:
+            return prim_vmap(x_bdim)
         x, x_dim = x_bdim
         rank = len(x.shape)
         axis_new, dim_new = trans_axis(axis, rank, x_dim, keep_dims)
@@ -559,6 +563,7 @@ def get_index_add_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.MedianGrad)
 def get_median_grad_vmap_rule(prim, axis_size):
     """VmapRule for MedianGrad."""
+    prim_vmap = _VmapGeneralRule(prim, axis_size)
     global_median = prim.global_median
     axis = prim.axis
     keep_dims = prim.keep_dims
@@ -572,16 +577,23 @@ def get_median_grad_vmap_rule(prim, axis_size):
             dim_new = dim
         else:
             dim_new = dim - 1 if dim > axis_new else dim
-        return axis_new, dim_new
+        return dim_new
 
     def vmap_rule(dy_bdim, x_bdim, y_bdim, indices_bdim):
-        dy, _ = dy_bdim
+        if global_median is True:
+            return prim_vmap(dy_bdim, x_bdim, y_bdim, indices_bdim)
+        dy, dy_dim = dy_bdim
         x, x_dim = x_bdim
-        y, _ = y_bdim
-        indices, _ = indices_bdim
+        y, y_dim = y_bdim
+        indices, indices_dim = indices_bdim
         rank = len(x.shape)
-        axis_new, dim_new = trans_grad_axis(axis, rank, x_dim, keep_dims)
-        x_grad = G.MedianGrad(global_median, axis_new, keep_dims)(dy, x, y, indices)
+        dim_new = trans_grad_axis(axis, rank, x_dim, keep_dims)
+
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        x_grad = G.MedianGrad(global_median, axis, keep_dims)(dy, x, y, indices)
         return (x_grad, dim_new)
     return vmap_rule
 
