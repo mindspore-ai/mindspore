@@ -852,7 +852,6 @@ class Profiler:
 
     def _cpu_analyse(self):
         """Collect and analyse cpu performance data."""
-
         size_limit = 100 * 1024 * 1024  # 100MB
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))

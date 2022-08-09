@@ -89,28 +89,6 @@ class BaseStepTraceParser:
         file_name = self._output_path.rsplit('/', 2)
         return file_name[-1] if len(file_name) == 3 else ''
 
-    def show(self):
-        """The property of step trace info."""
-        summary_info = {}
-        if self._result:
-            summary_info = get_summary_for_step_trace(self._result[-1], self._header, self._is_training_mode)
-            summary_info['total_steps'] = len(self._result) - 1
-        print('\nStep trace summary info (unit: syscnt):')
-        print(summary_info)
-        print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s' % self.output_file)
-
-    @abstractmethod
-    def record_point_info(self, output_path):
-        """
-        Record point info into json.
-
-        Args:
-            output_path (str): The output path for saving point info.
-
-        Returns:
-            dict, parsed point info.
-        """
-
     @staticmethod
     def _get_op_type(tag, name):
         """
@@ -137,6 +115,28 @@ class BaseStepTraceParser:
             log.warning("Unexpected op name:%s", name)
 
         return op_name
+
+    @abstractmethod
+    def record_point_info(self, output_path):
+        """
+        Record point info into json.
+
+        Args:
+            output_path (str): The output path for saving point info.
+
+        Returns:
+            dict, parsed point info.
+        """
+
+    def show(self):
+        """The property of step trace info."""
+        summary_info = {}
+        if self._result:
+            summary_info = get_summary_for_step_trace(self._result[-1], self._header, self._is_training_mode)
+            summary_info['total_steps'] = len(self._result) - 1
+        print('\nStep trace summary info (unit: syscnt):')
+        print(summary_info)
+        print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s' % self.output_file)
 
     def parse_and_save(self):
         """Parse step trace files and save the result."""

@@ -1033,6 +1033,25 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 return True
         return False
 
+    def is_gpu_kernel_async_launch(self):
+        """Recognize the solution that launch the gpu kernel async."""
+        step_trace_profiling_path = self._get_and_validate_path(
+            self._step_trace_original_filename
+        )
+        try:
+            with open(step_trace_profiling_path, 'r') as f_obj:
+                line = next(f_obj)
+                first_string = line.strip().split()[0]
+                # the data format of launch the gpu kernel async is "Default/op1,160123 op-name"
+                # otherwise, the data format is "Default/op1 160123,12 "
+                return bool(len(first_string.split(',')) == 2)
+        except (IOError, OSError) as err:
+            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            raise ProfilerIOException() from err
+        except StopIteration:
+            logger.warning('No step trace data exists.')
+            return False
+
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
         file_path = os.path.join(
@@ -1196,8 +1215,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         """Load activity data from file"""
         activity_timeline_list = []
         cuda_compute_ops_timeline_list = []
+        args_dict = {}
         try:
-            args_dict = {}
             with open(activity_args_file_path, 'r') as args_file:
                 csv_reader = csv.reader(args_file)
                 keys_list = next(csv_reader)
@@ -1251,25 +1270,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             logger.warning('No step trace data exists.')
             return False
         return step_time_list
-
-    def is_gpu_kernel_async_launch(self):
-        """Recognize the solution that launch the gpu kernel async."""
-        step_trace_profiling_path = self._get_and_validate_path(
-            self._step_trace_original_filename
-        )
-        try:
-            with open(step_trace_profiling_path, 'r') as f_obj:
-                line = next(f_obj)
-                first_string = line.strip().split()[0]
-                # the data format of launch the gpu kernel async is "Default/op1,160123 op-name"
-                # otherwise, the data format is "Default/op1 160123,12 "
-                return bool(len(first_string.split(',')) == 2)
-        except (IOError, OSError) as err:
-            logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException() from err
-        except StopIteration:
-            logger.warning('No step trace data exists.')
-            return False
 
     def _get_cluster_timeline(self, timeline, activity_info, comm_info, step_info):
         """
