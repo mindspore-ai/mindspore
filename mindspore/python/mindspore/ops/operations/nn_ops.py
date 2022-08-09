@@ -5262,7 +5262,7 @@ class KLDivLoss(Primitive):
         RuntimeError: If `logits` or `labels` is a scalar when `reduction` is 'batchmean'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5285,12 +5285,12 @@ class KLDivLoss(Primitive):
     def __init__(self, reduction='mean'):
         """Initialize KLDivLoss."""
         device_target = context.get_context("device_target")
-        if device_target == "CPU":
-            support_mode = ['none', 'mean', 'batchmean', 'sum']
-        elif device_target == "GPU":
+        if device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
             support_mode = ['none', 'batchmean', 'sum']
+        elif device_target == "CPU":
+            raise ValueError(f"'{self.name}' does not support device target: '{device_target}'")
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
