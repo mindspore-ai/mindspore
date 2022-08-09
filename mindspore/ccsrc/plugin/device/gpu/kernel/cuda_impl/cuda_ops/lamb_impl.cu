@@ -89,8 +89,8 @@ void ApplyLambEraly(const size_t size, T *variable, T *m, T *v, const float *bet
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void ApplyLambLater(const size_t size, T *variable, const float *lr, const float *update,
-                                    const float *trust_ratio, cudaStream_t cuda_stream) {
+void ApplyLambLater(const size_t size, T *variable, const float *lr, const float *update,
+                    const float *trust_ratio, cudaStream_t cuda_stream) {
   ApplyLambAfterNormKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, variable, lr, update, trust_ratio);
 }
 

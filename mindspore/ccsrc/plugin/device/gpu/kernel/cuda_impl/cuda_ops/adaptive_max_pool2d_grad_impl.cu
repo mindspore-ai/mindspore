@@ -30,10 +30,10 @@ __global__ void AdaptiveMaxPool2DGradKernel(const T *input_data, const S *max_in
 }
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int n, const int c,
-                                              const uint input_height, const uint input_width,
-                                              const uint output_height, const uint output_width, T *output_data,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_index, const int n, const int c,
+                              const uint input_height, const uint input_width,
+                              const uint output_height, const uint output_width, T *output_data,
+                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int input_hw = input_height * input_width;
   const int input_chw = c * input_hw;
   const int input_nchw = n * input_chw;

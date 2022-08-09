@@ -25,8 +25,8 @@ __global__ void NextAfterKernel(const size_t size, const T *input1, const T *inp
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void NextAfter(const size_t size, const T *input1, const T *input2, T *output,
-                               const uint32_t &device_id, cudaStream_t cuda_stream) {
+void NextAfter(const size_t size, const T *input1, const T *input2, T *output,
+               const uint32_t &device_id, cudaStream_t cuda_stream) {
   NextAfterKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream
                  >>>(size, input1, input2, output);
   return;

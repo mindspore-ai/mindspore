@@ -298,9 +298,9 @@ void KernelHelper(BinaryFunctor functor, ValueType init, const ValueType *input_
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void CumMinMax(CumOpType cum_op_type, const DataType *input_ptr, DataType *value_ptr,
-                               IndexType *index_ptr, size_t outer_size_st, size_t axis_size_st, size_t inner_size_st,
-                               const uint32_t &device_id, cudaStream_t cuda_stream) {
+void CumMinMax(CumOpType cum_op_type, const DataType *input_ptr, DataType *value_ptr,
+               IndexType *index_ptr, size_t outer_size_st, size_t axis_size_st, size_t inner_size_st,
+               const uint32_t &device_id, cudaStream_t cuda_stream) {
   switch (cum_op_type) {
     case CUMMIN: {
       KernelHelper(BinaryFunctor<thrust::less_equal<DataType>, DataType>{}, NumericMax<DataType>(), input_ptr,

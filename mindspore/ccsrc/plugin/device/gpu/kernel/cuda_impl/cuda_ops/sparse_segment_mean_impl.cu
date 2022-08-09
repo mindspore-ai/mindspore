@@ -94,11 +94,11 @@ __global__ void SparseSegmentMeanKernel(const DataType *x_ptr, const IndexType *
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
-                                       const IndexType *segment_ids_ptr, size_t *segment_pos_ptr, DataType *y_ptr,
-                                       size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
-                                       size_t x_size, size_t y_size, size_t batch_size, uint32_t device_id,
-                                       cudaStream_t cuda_stream) {
+void SparseSegmentMean(const DataType *x_ptr, const IndexType *indices_ptr,
+                       const IndexType *segment_ids_ptr, size_t *segment_pos_ptr, DataType *y_ptr,
+                       size_t outer_size, size_t inner_size, size_t indices_size, size_t segment_size,
+                       size_t x_size, size_t y_size, size_t batch_size, uint32_t device_id,
+                       cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to indices_size.
   SparseSegmentPosKernel<<<CUDA_BLOCKS(device_id, indices_size + 1), CUDA_THREADS(device_id), 0, cuda_stream>>>(

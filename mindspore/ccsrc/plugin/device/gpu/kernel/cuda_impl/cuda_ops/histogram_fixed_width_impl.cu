@@ -22,8 +22,8 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void HistogramFixedWidthKernel(int num_samples, const T *d_samples, const double *d_levels,
-                                               int32_t *d_histogram, int64_t num_levels, cudaStream_t cuda_stream) {
+void HistogramFixedWidthKernel(int num_samples, const T *d_samples, const double *d_levels,
+                               int32_t *d_histogram, int64_t num_levels, cudaStream_t cuda_stream) {
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   (void)cub::DeviceHistogram::HistogramRange(nullptr, temp_storage_bytes, d_samples, d_histogram, num_levels, d_levels,

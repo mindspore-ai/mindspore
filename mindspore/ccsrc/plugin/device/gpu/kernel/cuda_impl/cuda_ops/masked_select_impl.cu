@@ -67,10 +67,10 @@ __global__ void MaskedSelectKernel(const T *input_ptr, const size_t *index_ptr, 
 
 // the i is input shape, the j is mask shape, the o is broadcast shape
 template <typename T>
-CUDA_LIB_EXPORT void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                  const std::vector<size_t> i, const std::vector<size_t> j, const std::vector<size_t> o,
-                                  T *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                  T *output_ptr, cudaStream_t cuda_stream) {
+void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr,
+                  const std::vector<size_t> i, const std::vector<size_t> j, const std::vector<size_t> o,
+                  T *input_broadcast_ptr, bool *mask_broadcast_ptr,
+                  T *output_ptr, cudaStream_t cuda_stream) {
   size_t broadcast_size = o[0] * o[1] * o[2] * o[3] * o[4] * o[5] * o[6];
   const T *last_input = nullptr;
   const bool *last_mask = nullptr;
