@@ -3481,10 +3481,10 @@ class UpsampleTrilinear3DGrad(Primitive):
         validator.check_value_type('input_size', input_size, [list, tuple], self.name)
         for item in input_size:
             validator.check_value_type('input_size_item', item, int, self.name)
-        validator.check_value_type('output_size', output_size, [list], self.name)
+        validator.check_value_type("output_size", output_size, [list, tuple], self.name)
         for item in output_size:
             validator.check_value_type('output_size_item', item, int, self.name)
-        validator.check_value_type('scales', scales, [list], self.name)
+        validator.check_value_type("scales", scales, [list, tuple], self.name)
         for item in scales:
             validator.check_value_type('scales_item', item, float, self.name)
         validator.check_value_type('align_corners', align_corners, bool, self.name)

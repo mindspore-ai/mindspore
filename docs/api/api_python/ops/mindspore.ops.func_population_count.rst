@@ -13,4 +13,5 @@ mindspore.ops.population_count
 
     异常：
         - **TypeError** - `input_x` 不是Tensor。
-        - **TypeError** - `input_x` 的数据类型不是int16或uint16（Ascend平台）。`input` 的数据类型不是int8、int16、int32、int64、uint8、uint16、uint32、uint64（CPU和GPU平台）。
+        - **TypeError** - `input_x` 的数据类型不是int16或uint16（Ascend平台）。
+        - **TypeError** - `input_x` 的数据类型不是int8、int16、int32、int64、uint8、uint16、uint32、uint64（CPU和GPU平台）。
