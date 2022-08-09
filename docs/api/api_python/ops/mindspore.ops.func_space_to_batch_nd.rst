@@ -17,10 +17,6 @@ mindspore.ops.space_to_batch_nd
             w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_shape[i]
         \end{array}
 
-    .. note::
-
-        Ascend只支持四维张量的输入。
-
     **参数：**
 
     - **input_x** (Tensor) - 输入张量，Ascend平台必须为四维。
@@ -37,6 +33,6 @@ mindspore.ops.space_to_batch_nd
     - **TypeError** - 如果 `paddings` 不是 list 或者 tuple。
     - **ValueError** - 如果当 `block_size` 为 list 或 tuple， `block_size` 不是一维。
     - **ValueError** - 如果 Ascend 平台上 `block_size` 长度不是2。
-    - **ValueError** - 如果 `paddings` 的形状不是 (2, M), 其中 M 为 `block_size` 的长度。
+    - **ValueError** - 如果 `paddings` 的形状不是 (M, 2), 其中 M 为 `block_size` 的长度。
     - **ValueError** - 如果 `block_size` 的元素不是大于一的整数。
     - **ValueError** - 如果 `paddings` 的元素不是非负的整数。

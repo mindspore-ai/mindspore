@@ -120,7 +120,7 @@ def _compile_aot(file):
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        (out, _) = proc.communicate()
+        (out, _) = proc.communicate(timeout=30)
 
         if proc.returncode != 0:
             msg = "Compilation error in compiling {}:\n".format(file)
@@ -143,6 +143,17 @@ class Custom(ops.PrimitiveWithInfer):
 
     .. warning::
         This is an experimental prototype that is subject to change.
+
+    .. note::
+        The supported platforms are determined by the input `func_type`:
+
+            - "hybrid": supports ["Ascend", "GPU", "CPU"].
+            - "akg": supports ["Ascend", "GPU", "CPU"].
+            - "tbe": supports ["Ascend"].
+            - "aot": supports ["GPU", "CPU"].
+            - "pyfunc": supports ["CPU"].
+            - "julia": supports ["CPU"].
+            - "aicpu": supports ["Ascend"].
 
     Args:
         func (Union[function, str]):
@@ -494,6 +505,60 @@ class Custom(ops.PrimitiveWithInfer):
         self.add_prim_attr("func_type", self.func_type)
         self._update_attr()
 
+    def __infer__(self, *args):
+        if callable(self.out_shape):
+            infer_shape = self.out_shape(*(x["shape"] for x in args))
+        else:
+            infer_shape = self.out_shape
+
+        if callable(self.out_dtype):
+            infer_dtype = self.out_dtype(*(x["dtype"] for x in args))
+        else:
+            infer_dtype = self.out_dtype
+
+        infer_value = None
+
+        # deal with the case of ms script
+        # enable auto infer function if any infer information is missing
+        if self._is_ms_kernel and (infer_dtype is None or infer_shape is None):
+            logger.warning("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
+                           "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
+                           "result.".format(self.log_prefix))
+
+            auto_infer_result = self._auto_infer(*args)
+
+            # use automatically inferred shape/dtype if the input infer values are null
+            infer_shape = auto_infer_result[0] if infer_shape is None else infer_shape
+            infer_dtype = auto_infer_result[1] if infer_dtype is None else infer_dtype
+            infer_value = auto_infer_result[2]
+
+        # deal with case that the custom op is of type pyfunc with empty output
+        if self.func_type == "pyfunc":
+            if infer_shape == ():
+                logger.warning("{}, 'out_shape' is an empty tuple. Add a placeholder instead. "
+                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
+                infer_shape = (1,)
+            if infer_dtype == ():
+                logger.warning("{}, 'out_dtype' is an empty tuple. Add a placeholder instead. "
+                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
+                infer_dtype = mstype.int32
+
+        # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
+        if not isinstance(infer_shape, (tuple, list)):
+            raise TypeError("{}, 'out_shape' must be one of [tuple, list, function], but got {}"
+                            .format(self.log_prefix, type(infer_shape)))
+
+        if not isinstance(infer_dtype, (typing.Type, tuple, list)):
+            raise TypeError("{}, 'out_dtype' must be one of [mindspore.dtype, tuple, list, function], but got {}"
+                            .format(self.log_prefix, type(infer_dtype)))
+
+        out = {
+            "shape": infer_shape,
+            "dtype": infer_dtype,
+            "value": infer_value,
+        }
+        return out
+
     def get_bprop(self):
         return self.bprop
 
@@ -558,7 +623,7 @@ class Custom(ops.PrimitiveWithInfer):
         """Update information of func"""
         if callable(self.func):
             # For the func_type other then hybrid, get the original function if func is decorated
-            if "__wrapped__" in self.func.__dict__ and not self.func_type in ["hybrid", "pyfunc"]:
+            if "__wrapped__" in self.func.__dict__ and self.func_type not in ["hybrid", "pyfunc"]:
                 self.func = self.func.__dict__["__wrapped__"]
             # func name
             self.func_name = self.func.__name__
@@ -588,7 +653,9 @@ class Custom(ops.PrimitiveWithInfer):
                 inplace_assign_output = determine_variable_usage(root, self.func_name)
                 if inplace_assign_output:
                     self.add_prim_attr("inplace_assign_output",
-                                       " ".join((str(j) for i in inplace_assign_output for j in i)))
+                                       " ".join((str(j)
+                                                 for i in inplace_assign_output
+                                                 for j in i)))
                 self.add_prim_attr('func_source_str', self.func_source_str)
 
             # unique func name
@@ -628,7 +695,7 @@ class Custom(ops.PrimitiveWithInfer):
                     new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
 
-            for i, item in enumerate(reg_info.get("outputs", [])):
+            for _, item in enumerate(reg_info.get("outputs", [])):
                 output_name_list = []
                 if isinstance(item, dict) and item.get("name"):
                     output_name_list.append(item.get("name"))
@@ -935,57 +1002,3 @@ class Custom(ops.PrimitiveWithInfer):
         infer_value = Tensor(fake_output) if enable_infer_value else None
 
         return infer_shape, infer_dtype, infer_value
-
-    def __infer__(self, *args):
-        if callable(self.out_shape):
-            infer_shape = self.out_shape(*(x["shape"] for x in args))
-        else:
-            infer_shape = self.out_shape
-
-        if callable(self.out_dtype):
-            infer_dtype = self.out_dtype(*(x["dtype"] for x in args))
-        else:
-            infer_dtype = self.out_dtype
-
-        infer_value = None
-
-        # deal with the case of ms script
-        # enable auto infer function if any infer information is missing
-        if self._is_ms_kernel and (infer_dtype is None or infer_shape is None):
-            logger.warning("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
-                           "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
-                           "result.".format(self.log_prefix))
-
-            auto_infer_result = self._auto_infer(*args)
-
-            # use automatically inferred shape/dtype if the input infer values are null
-            infer_shape = auto_infer_result[0] if infer_shape is None else infer_shape
-            infer_dtype = auto_infer_result[1] if infer_dtype is None else infer_dtype
-            infer_value = auto_infer_result[2]
-
-        # deal with case that the custom op is of type pyfunc with empty output
-        if self.func_type == "pyfunc":
-            if infer_shape == ():
-                logger.warning("{}, 'out_shape' is an empty tuple. Add a placeholder instead. "
-                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
-                infer_shape = (1,)
-            if infer_dtype == ():
-                logger.warning("{}, 'out_dtype' is an empty tuple. Add a placeholder instead. "
-                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
-                infer_dtype = mstype.int32
-
-        # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
-        if not isinstance(infer_shape, (tuple, list)):
-            raise TypeError("{}, 'out_shape' must be one of [tuple, list, function], but got {}"
-                            .format(self.log_prefix, type(infer_shape)))
-
-        if not isinstance(infer_dtype, (typing.Type, tuple, list)):
-            raise TypeError("{}, 'out_dtype' must be one of [mindspore.dtype, tuple, list, function], but got {}"
-                            .format(self.log_prefix, type(infer_dtype)))
-
-        out = {
-            "shape": infer_shape,
-            "dtype": infer_dtype,
-            "value": infer_value,
-        }
-        return out
