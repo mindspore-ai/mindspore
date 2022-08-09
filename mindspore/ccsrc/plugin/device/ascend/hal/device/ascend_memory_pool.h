@@ -29,11 +29,10 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   AscendMemoryPool(const AscendMemoryPool &) = delete;
   AscendMemoryPool &operator=(const AscendMemoryPool &) = delete;
 
+  void Init();
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t free_mem_size() override;
-  // Set mem pool block size
-  void SetMemPoolBlockSize(size_t available_device_mem_size) override;
 
   void ResetIdleMemBuf() const;
 

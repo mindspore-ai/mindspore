@@ -24,37 +24,25 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-// The minimum unit size (8MB) of memory block used for dynamic extend in graph run mode.
-static const size_t ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE = 8 << 20;
+// The minimum unit size (8MB) of memory block used for dynamic extend in graph task sink mode.
+static const size_t ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
+constexpr float kCommonMemoryRatio = 0.9667;   // 29/30
+constexpr float kPersistMemoryRatio = 0.0333;  // 1/30
 
-void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
+void AscendMemoryPool::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  float mem_block_size = ms_context->get_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE);
-  // set from context configuration
-  if (mem_block_size != kDefaultMempoolBlockSize) {
-    size_t config_size = FloatToSize(mem_block_size * kGBToByte);
-    if (config_size > available_device_mem_size) {
-      MS_LOG(WARNING) << "Memory pool block size " << config_size
-                      << " is bigger than currently available maximum memory " << available_device_mem_size
-                      << ", and the actual effective value will be " << available_device_mem_size;
-    }
-    // Reserve 1G for persistent_mem
-    if (available_device_mem_size > DYNAMIC_MEM_ALLOC_UNIT_SIZE) {
-      available_device_mem_size -= DYNAMIC_MEM_ALLOC_UNIT_SIZE;
-    }
-    size_t real_block_size = std::min(config_size, available_device_mem_size);
-    SetMemAllocUintSize(real_block_size, DYNAMIC_MEM_ALLOC_UNIT_SIZE);
-    return;
-  }
-
-  // set by default configuration
-  const bool is_graph_run_mode = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (is_graph_run_mode) {
-    SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE,
-                        ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE);
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  const bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto total_size = AscendMemAdapter::GetInstance().GetMsUsedHbmSize();
+  if (pynative_mode) {
+    SetMemPoolBlockSize(total_size);
   } else {
-    SetMemAllocUintSize(DYNAMIC_MEM_ALLOC_UNIT_SIZE, DYNAMIC_MEM_ALLOC_UNIT_SIZE);
+    if (task_sink) {
+      SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH, ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH);
+    } else {
+      SetMemAllocUintSize(FloatToSize(total_size * kCommonMemoryRatio), FloatToSize(total_size * kPersistMemoryRatio));
+    }
   }
 }
 
@@ -71,33 +59,27 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
                     << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
                     << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
                        "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
-    AscendMemAdapter::GetInstance().DevMemStatistics();
-    DumpDynamicMemPoolDebugInfo();
     return 0;
   }
-
   size_t alloc_mem_size;
-  SetMemPoolBlockSize(device_free_mem_size);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   auto alloc_mem_unit_size = MemAllocUnitSize(from_persistent_mem);
   MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_unit_size;
   alloc_mem_size = alloc_mem_unit_size;
-
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const bool is_graph_run_mode = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (is_graph_run_mode) {
-    // Growing at adding alloc unit size
-    while (alloc_mem_size < size) {
-      alloc_mem_size = alloc_mem_size + alloc_mem_unit_size;
-    }
-  } else {
+  if (pynative_mode) {
     // Growing at twice of alloc unit size
     constexpr size_t kDouble = 2;
     while (alloc_mem_size < size) {
       alloc_mem_size = alloc_mem_size * kDouble;
     }
+  } else {
+    // Growing at adding alloc unit size
+    while (alloc_mem_size < size) {
+      alloc_mem_size = alloc_mem_size + alloc_mem_unit_size;
+    }
   }
-
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
   return alloc_mem_size;
 }
