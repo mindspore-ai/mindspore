@@ -80,7 +80,9 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
 std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(const std::string &op_type) const {
   std::map<std::string, std::string> attrs;
   static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
-    {"ArgMaxWithValue", {{"axis", "dimension"}}}, {"ArgMinWithValue", {{"axis", "dimension"}}}};
+    {"ArgMaxWithValue", {{"axis", "dimension"}}},
+    {"ArgMinWithValue", {{"axis", "dimension"}}},
+    {"DepthToSpace", {{"block_size", "block_size"}}}};
   auto iter = op_type_map.find(op_type);
   return iter == op_type_map.end() ? attrs : iter->second;
 }
