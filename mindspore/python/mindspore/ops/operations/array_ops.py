@@ -6209,7 +6209,7 @@ class Range(PrimitiveWithCheck):
         validator.check("delta_shape", len(delta_shape), "", 0, Rel.EQ, self.name)
 
     def check_dtype(self, start_dtype, limit_dtype, delta_dtype):
-        valid_dtypes = [mstype.int32, mstype.float32]
+        valid_dtypes = [mstype.int32, mstype.float32, mstype.int64, mstype.float64]
         inputs = {"start": start_dtype, "limit": limit_dtype, "delta": delta_dtype}
         validator.check_tensors_dtypes_same_and_valid(inputs, valid_dtypes, self.name)
 

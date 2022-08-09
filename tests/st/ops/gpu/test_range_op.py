@@ -65,6 +65,7 @@ def test_range_precision_end_equals_last_element():
     np_expected = np.arange(-12000, -12053, -1, dtype=np.float32)
     np.testing.assert_allclose(ms_out, np_expected, rtol=1e-5)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -88,6 +89,7 @@ def test_range_int():
     ms_out = range_net(Tensor(3, mstype.int32), Tensor(-11, mstype.int32), Tensor(-5, mstype.int32)).asnumpy()
     np_expected = np.array([3, -2, -7])
     np.testing.assert_array_equal(ms_out, np_expected)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -113,6 +115,67 @@ def test_range_float():
     np_expected = np.array([1.5])
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_int64():
+    """
+    Feature: test Range op on GPU.
+    Description: test the Range when input is int64.
+    Expectation: result is right.
+    """
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(2, mstype.int64), Tensor(5, mstype.int64), Tensor(1, mstype.int64)).asnumpy()
+    np_expected = np.array([2, 3, 4])
+    np.testing.assert_array_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(-24, mstype.int64), Tensor(1, mstype.int64), Tensor(4, mstype.int64)).asnumpy()
+    np_expected = np.array([-24, -20, -16, -12, -8, -4, 0])
+    np.testing.assert_array_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(8, mstype.int64), Tensor(1, mstype.int64), Tensor(-1, mstype.int64)).asnumpy()
+    np_expected = np.array([8, 7, 6, 5, 4, 3, 2])
+    np.testing.assert_array_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(3, mstype.int64), Tensor(-11, mstype.int64), Tensor(-5, mstype.int64)).asnumpy()
+    np_expected = np.array([3, -2, -7])
+    np.testing.assert_array_equal(ms_out, np_expected)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_float64():
+    """
+    Feature: test Range op on GPU.
+    Description: test the Range when input is float64.
+    Expectation: result is right.
+    """
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(2.3, mstype.float64), Tensor(5.5, mstype.float64), Tensor(1.2, mstype.float64)).asnumpy()
+    np_expected = np.array([2.3, 3.5, 4.7])
+    np.testing.assert_array_almost_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64)).asnumpy()
+    np_expected = np.array([-4.0, -2.5])
+    np.testing.assert_array_almost_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(8.0, mstype.float64), Tensor(1.0, mstype.float64), Tensor(-1.0, mstype.float64)).asnumpy()
+    np_expected = np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0])
+    np.testing.assert_array_almost_equal(ms_out, np_expected)
+
+    range_net = RangeNet()
+    ms_out = range_net(Tensor(1.5, mstype.float64), Tensor(-1, mstype.float64), Tensor(-18.9, mstype.float64)).asnumpy()
+    np_expected = np.array([1.5])
+    np.testing.assert_array_almost_equal(ms_out, np_expected)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -122,6 +185,7 @@ def test_range_invalid_max_output_length():
         _ = P.Range(-1)
         _ = P.Range(None)
         _ = P.Range('5')
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training

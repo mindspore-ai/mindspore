@@ -34,5 +34,11 @@ void CalRange(const int size, const float start, const float limit, const float 
 template CUDA_LIB_EXPORT void CalRange<float>(const int size, const float start, const float limit, const float delta,
                                               const float *input, float *output, cudaStream_t cuda_stream);
 
+template CUDA_LIB_EXPORT void CalRange<double>(const int size, const float start, const float limit, const float delta,
+                                            const double *input, double *output, cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void CalRange<int>(const int size, const float start, const float limit, const float delta,
                                             const int *input, int *output, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalRange<int64_t>(const int size, const float start, const float limit, const float delta,
+                                            const int64_t *input, int64_t *output, cudaStream_t cuda_stream);

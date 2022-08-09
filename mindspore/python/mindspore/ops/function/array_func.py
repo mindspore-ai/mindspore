@@ -489,11 +489,11 @@ def range(start, limit, delta):
 
     Args:
         start (Tensor): A scalar Tensor. The first number in the sequence. Must have
-          type: int32 or float32.
+          type: int32 ,int64, float32 or float64.
         limit (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 or float32.
+          have type: int32 ,int64, float32 or float64.
         delta (Tensor): A scalar Tensor. Number that increments `start`. Must have
-          type: int32 or float32.
+          type: int32 ,int64, float32 or float64.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
