@@ -153,8 +153,7 @@ class Categorical(Distribution):
         self.less = P.Less()
         # when the graph kernel mode is enable
         # use Log directly as akg will handle the corner cases
-        self.log = P.Log() if context.get_context(
-            "enable_graph_kernel") else log_generic
+        self.log = P.Log() if context.get_context("enable_graph_kernel") else log_generic
         self.log_softmax = P.LogSoftmax()
         self.logicor = P.LogicalOr()
         self.logicand = P.LogicalAnd()

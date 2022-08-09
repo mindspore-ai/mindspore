@@ -269,7 +269,7 @@ class VariableUsage(ast.NodeVisitor):
         else:
             decl, loop, usage = self.status.get(node.id, (None, None, None))
             usage.add(type(node.ctx))
-            if not loop in self.scope_level:
+            if loop not in self.scope_level:
                 raise ValueError(
                     "In the function {} written in the Hybrid DSL, there is "
                     "a variable used out of the scope it is defined: {}".format(self.func_name, node.id))
@@ -412,7 +412,7 @@ class VariableUsage(ast.NodeVisitor):
                 "In the function {} written in the Hybrid DSL, getattr is only supported for a tensor object, "
                 "not for the object with type: {}".format(self.func_name, type(node.value)))
 
-        if not node.value.id in self.output_tensor + self.temp_tensor + list(self.args_index.keys()):
+        if node.value.id not in self.output_tensor + self.temp_tensor + list(self.args_index.keys()):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, getattr is only supported for a tensor variable "
                 "after its declaration, not for: {}".format(self.func_name, node.value.id))
@@ -442,16 +442,17 @@ class VariableUsage(ast.NodeVisitor):
                                     "should be the name of a tensor, but get a {}.".format(self.func_name, type(i)))
             symbols = list(i.id for i in node.value.elts)
         for sy in symbols:
-            if not sy in list(self.args_index.keys()) + self.output_tensor:
+            if sy not in list(self.args_index.keys()) + self.output_tensor:
                 raise TypeError("In the function {} written in the Hybrid DSL, the element in the return value "
                                 "should be either an input tensor or a tensor allocated by output_tensor, "
                                 "but get name: {}".format(self.func_name, sy))
         for sy in self.output_tensor:
-            if not sy in symbols:
+            if sy not in symbols:
                 raise TypeError("In the function {} written in the Hybrid DSL, the tensor is allocated as an output "
                                 "tensor but not in the return value: {}".format(self.func_name, sy))
         self.inplace_assign_output = list([idx, self.args_index.get(val, -1)]
-                                          for idx, val in enumerate(symbols) if val in self.args_index)
+                                          for idx, val in enumerate(symbols)
+                                          if val in self.args_index)
 
 
 def determine_variable_usage(root, func_name):

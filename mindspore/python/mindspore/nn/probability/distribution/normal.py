@@ -170,8 +170,7 @@ class Normal(Distribution):
         self.expm1 = P.Expm1()
         # when the graph kernel mode is enable
         # use Log directly as akg will handle the corner cases
-        self.log = P.Log() if context.get_context(
-            "enable_graph_kernel") else log_generic
+        self.log = P.Log() if context.get_context("enable_graph_kernel") else log_generic
         self.erf = P.Erf()
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
