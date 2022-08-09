@@ -32,6 +32,7 @@
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
+constexpr auto kAdaptiveMaxPool3DGradOpName = "AdaptiveMaxPool3DGrad";
 constexpr auto kFractionalAvgPoolGradOpName = "FractionalAvgPoolGrad";
 constexpr auto kSegmentMaxOpName = "SegmentMax";
 constexpr auto kSegmentMinOpName = "SegmentMin";
@@ -907,7 +908,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentProdOpName,
                                               kNonZeroOpName,
                                               kSparseSparseMinimumOpName,
-                                              kRpcRecvOpName};
+                                              kRpcRecvOpName,
+                                              kAdaptiveMaxPool3DGradOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
