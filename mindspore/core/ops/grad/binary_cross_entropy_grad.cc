@@ -59,13 +59,13 @@ TypePtr BinaryCrossEntropyGradInferType(const PrimitivePtr &prim, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[kInputIndex0]->BuildType());
-  types.emplace("y", input_args[kInputIndex1]->BuildType());
-  types.emplace("dout", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("logits", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("labels", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("dout", input_args[kInputIndex2]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   if (weight_shape.size() > 0) {
-    types.emplace("weight", input_args[kInputIndex3]->BuildType());
+    (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return input_args[kInputIndex0]->BuildType();

@@ -19,16 +19,11 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LCM_CPU_KERNEL_H_
 
 #include <functional>
-#include <memory>
 #include <vector>
-#include <iostream>
-#include <string>
-#include <map>
 #include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/nnacl/arithmetic.h"
 
 namespace mindspore {
 namespace kernel {

@@ -34,7 +34,7 @@ class MIND_API Conj : public BaseOperator {
   /// \brief Constructor.
   Conj() : BaseOperator(kNameConj) { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Conj for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
