@@ -141,7 +141,6 @@ template <typename T>
 float GetCosSimilarity(const T *vector_a, const T *vector_b, size_t size) {
   MS_ASSERT(vector_a != nullptr);
   MS_ASSERT(vector_b != nullptr);
-  MS_ASSERT(vector_a.size() == vector_b.size());
   double dot_sum = 0;
   double sum_a = 0;
   double sum_b = 0;
