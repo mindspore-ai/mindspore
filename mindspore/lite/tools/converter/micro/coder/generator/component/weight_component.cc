@@ -83,25 +83,34 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
     }
     if (CheckConstantTensor(tensor)) {
       if (config.target() != kCortex_M) {
-        hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
+        hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];  // " << tensor->tensor_name()
+             << std::endl;
         cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
       } else {
-        hofs << "extern const " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
+        hofs << "extern const " << GetTensorDataType(tensor->data_type()) << name << "[];  // " << tensor->tensor_name()
+             << std::endl;
       }
     } else if (tensor->category() == lite::Category::VAR) {
-      hofs << "extern " << GetTensorDataType(tensor->data_type()) << "*" << name << ";\n";
+      hofs << "extern " << GetTensorDataType(tensor->data_type()) << "*" << name << ";  // " << tensor->tensor_name()
+           << std::endl;
       cofs << GetTensorDataType(tensor->data_type()) << "*" << name << " = NULL;\n";
     }
   }
   cofs << "\n";
 }
 
-void CodeInitWeightState(std::ofstream &ofs) {
-  ofs << "/**\n"
-      << "  * @param weight_buffer, the address of the weight binary file\n"
-      << "  * @param weight_size, the size of the model file in bytes\n"
-      << "  **/\n"
+void CodeInitWeightState(std::ofstream &ofs, const Configurator &config) {
+  ofs << "/// \\brief Init model weight from buffer.\n\n"
+      << "/// \\param[in] weight_buffer The address of the weight binary file.\n"
+      << "/// \\param[in] weight_size The size of the weight file in bytes.\n"
       << "int Init(void *weight_buffer, int weight_size);\n\n";
+}
+
+void CodeExportWeightState(std::ofstream &ofs, const Configurator &config) {
+  ofs << "/// \\brief Export model weight to the specified path.\n\n"
+      << "/// \\param[in] output_weight_file The path of the export weight file.\n\n"
+      << "/// \\return 0 on success or -1 in case of error.\n"
+      << "int Export(const char* output_weight_file);\n\n";
 }
 
 void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
@@ -114,20 +123,15 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "  return w_size;\n";
     ofs << "}\n\n";
 
-    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
-        << "  if (weight_buffer == NULL) {\n"
-        << "    return RET_ERROR;\n"
-        << "  }\n";
-    ofs << "  struct ModelParameter {\n"
-        << "    void *addr;\n"
-        << "    size_t size;\n"
-        << "    size_t offset;\n"
-        << "  };\n";
+    ofs << "struct ModelParameter {\n"
+        << "  void *addr;\n"
+        << "  size_t size;\n"
+        << "  size_t offset;\n"
+        << "};\n\n";
 
-    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+    // generate weight struct array
     size_t params_num = 0;
     size_t offset = 0;
-    std::string params;
     std::string origins;
     for (const auto &item : ctx->saved_weights()) {
       std::string name = item.first;
@@ -135,21 +139,21 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
       if (!CheckConstantTensor(tensor)) {
         continue;
       }
-      std::map<Tensor *, std::string> ctx_tensor_map = ctx->tensors_map();
-      auto iter = ctx_tensor_map.find(tensor);
-      if (iter != ctx_tensor_map.end()) {
-        origins += "    {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
-        params_num++;
-      } else {
-        TypeId data_type = tensor->data_type();
-        params +=
-          "  " + GetTensorDataType(data_type) + "*" + name + " = (weight_buffer + " + std::to_string(offset) + ");\n";
-      }
+      origins += "  {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
+      params_num++;
       offset += tensor->Size();
     }
-    ofs << params << "\n";
-    ofs << "  struct ModelParameter model_params[] = {\n" << origins << "  };\n";
+    ofs << "struct ModelParameter model_params[] = {\n" << origins << "  };\n";
     ofs << "\n";
+
+    // generate weight init function
+    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+        << "  if (weight_buffer == NULL) {\n"
+        << "    return RET_ERROR;\n"
+        << "  }\n";
+
+    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+
     ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
         << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
            "      return RET_ERROR;\n"
@@ -165,6 +169,8 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "int Init(void *weight_buffer, int weight_size) {\n";
     ofs << "  const size_t w_size = " << ctx->weight_buffer_size() << ";\n";
   }
+
+  // generate matrix weight init func
   ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
   for (const auto &block : ctx->init_contents()) {
     ofs << "{\n" << block << "}\n";
@@ -173,6 +179,29 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
       << ") {\n    return RET_ERROR;\n  }\n";
   ofs << "  return RET_OK;\n";
   ofs << "}\n\n";
+}
+
+void CodeWeightExportFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  if (config.target() == kCortex_M) {
+    MS_LOG(DEBUG) << "weight file is unsupported to export when in Cortex M mode.";
+    return;
+  }
+  ofs << "int Export(const char* output_weight_file) {\n"
+      << "  if (output_weight_file == NULL) {\n"
+      << "    return RET_ERROR;\n"
+      << "  }\n\n"
+      << "  FILE *fp;\n"
+      << "  if((fp = fopen(output_weight_file, \"wb\")) == NULL) {\n"
+      << "    printf(\"open file failed.\");\n"
+      << "    return RET_ERROR;\n"
+      << "  }\n"
+      << "  int params_len = sizeof(model_params) / sizeof(model_params[0]);\n"
+      << "  for (int i = 0; i < params_len; ++i) {\n"
+      << "    fwrite(model_params[i].addr, sizeof(char), model_params[i].size, fp);\n"
+      << "  }\n"
+      << "  fclose(fp);\n"
+      << "  return RET_OK;\n"
+      << "}\n";
 }
 
 void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const std::string &net_file) {

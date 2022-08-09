@@ -19,19 +19,14 @@
 #include <vector>
 #include <utility>
 #include "coder/context.h"
-#include "coder/train.h"
 #include "coder/allocator/allocator.h"
-#include "coder/generator/generator.h"
 #include "coder/generator/inference/inference_generator.h"
-#include "coder/generator/train/train_generator.h"
 #include "coder/opcoders/op_coder_builder.h"
 #include "coder/opcoders/kernel_registry.h"
 #include "coder/utils/coder_utils.h"
 #include "coder/log.h"
 #include "src/common/ops/populate/populate_register.h"
-#include "src/common/version_manager.h"
 #include "src/litert/infer_manager.h"
-#include "src/litert/scheduler.h"
 #include "src/litert/lite_model.h"
 #include "include/errorcode.h"
 #include "include/model.h"
@@ -42,8 +37,7 @@
 namespace mindspore::lite::micro {
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
-int CoderSession::EndCode() {
-  int ret = RET_OK;
+int CoderSession::PassArgsToContext() {
   context_->set_tensor_map(allocator_->tensors_map());
   context_->set_saved_weights(allocator_->saved_weights());
   size_t de_quant_max_workspace_size = nnacl::Dequant::GetInstance()->de_quant_max_workspace();
@@ -53,26 +47,21 @@ int CoderSession::EndCode() {
   context_->set_total_buffer_size(final_total_size);
   context_->set_graph_inputs(coder_graph_->input_tensors());
   context_->set_graph_outputs(coder_graph_->output_tensors());
-  Configurator *config = Configurator::GetInstance();
-  if (config->debug_mode()) {
+  if (Configurator::GetInstance()->debug_mode()) {
     std::vector<std::string> blocks;
     blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
     context_->set_code_blocks(blocks);
   }
-  if (config->code_mode() == Train) {
-    ret = Train::TransformGraphForTrain(context_.get(), op_coders_, schema_version_);
-    MS_CHECK_RET_CODE(ret, "transform graph for train failed.");
-  }
-  return ret;
+  return RET_OK;
 }
 
-int CoderSession::Run() {
-  MS_LOG(INFO) << "start run opcoders";
-  // 1. assign memory
+int CoderSession::Preprocess() {
+  // assign memory
   std::vector<lite::Tensor *> inputs = coder_graph_->input_tensors();
   int ret = allocator_->Assign(inputs, op_coders_);
   MS_CHECK_RET_CODE(ret, "assign memory failed");
-  // 2. prepare, init model parameters
+
+  // prepare, init model parameters
   for (const auto &op_coder : op_coders_) {
     MS_CHECK_PTR(op_coder);
     MS_LOG(DEBUG) << "prepare: " << op_coder->name();
@@ -80,41 +69,40 @@ int CoderSession::Run() {
     MS_CHECK_RET_CODE(ret, "prepare coder " << op_coder->name() << " failed");
     allocator_->enable_is_next();
   }
-  // 3. docode, write operator code
+  return RET_OK;
+}
+
+int CoderSession::DoCode() {
+  int ret = RET_OK;
   for (const auto &op_coder : op_coders_) {
     MS_CHECK_PTR(op_coder);
     MS_LOG(DEBUG) << "code: " << op_coder->name();
     ret = op_coder->DoCode(this->context_.get());
     MS_CHECK_RET_CODE(ret, "do coder " << op_coder->name() << " failed");
   }
+  return ret;
+}
+int CoderSession::Run() {
+  MS_LOG(INFO) << "start run opcoders";
 
-  ret = this->EndCode();
-  MS_CHECK_RET_CODE(ret, "End code failed.");
+  int ret = Preprocess();
+  MS_CHECK_RET_CODE(ret, "preprocess failed");
+
+  ret = DoCode();
+  MS_CHECK_RET_CODE(ret, "do code failed");
+
+  (void)PassArgsToContext();
   MS_LOG(INFO) << "run opcoders success";
   return RET_OK;
 }
 
 int CoderSession::GenerateCode() {
   MS_LOG(INFO) << "CoderSession::GenerateCode start";
-  std::shared_ptr<Generator> generator;
-  Configurator *config = Configurator::GetInstance();
-  CodeMode code_mode = config->code_mode();
-  switch (code_mode) {
-    case Inference:
-      MS_LOG(INFO) << "generate code for Inference";
-      generator = std::make_shared<InferenceGenerator>(std::move(context_));
-      break;
-    case Train:
-      MS_LOG(INFO) << "generate code for Train";
-      generator = std::make_shared<TrainGenerator>(std::move(context_));
-      break;
-    default:
-      MS_LOG(ERROR) << "unsupported generator code mode, " << code_mode;
-      return RET_ERROR;
-  }
+  auto generator = std::make_shared<InferenceGenerator>(std::move(context_));
+  MS_CHECK_PTR(generator);
+
   // when use file, coder context need to remove initial parameters from tensors info
   // we use tmp_tensor_list to storage
-  MS_CHECK_PTR(generator);
   int ret = generator->GenerateCode();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "generate code failed";
@@ -146,29 +134,37 @@ int CoderSession::Build() {
 }
 
 int CoderSession::InitOpcodersInputsAndOutputs() {
-  std::map<Tensor *, OperatorCoder *> input_node_map;
-  std::map<Tensor *, OperatorCoder *> output_node_map;
+  std::map<Tensor *, OperatorCoder *> tensor_pre_coders;                // a tensor is a certain coder's output
+  std::map<Tensor *, std::vector<OperatorCoder *>> tensor_post_coders;  // a tensor is many coder's input
   for (const auto &op_coder : op_coders_) {
-    std::vector<Tensor *> inputs = op_coder->input_tensors();
-    std::for_each(inputs.begin(), inputs.end(),
-                  [&](Tensor *t) { input_node_map.insert(std::make_pair(t, op_coder.get())); });
-    std::vector<Tensor *> outputs = op_coder->input_tensors();
-    std::for_each(outputs.begin(), outputs.end(),
-                  [&](Tensor *t) { output_node_map.insert(std::make_pair(t, op_coder.get())); });
+    for (auto *in_tensor : op_coder->input_tensors()) {
+      tensor_post_coders[in_tensor].emplace_back(op_coder.get());
+    }
+    for (auto *output_tensor : op_coder->output_tensors()) {
+      tensor_pre_coders[output_tensor] = op_coder.get();
+    }
   }
   for (const auto &op_coder : op_coders_) {
+    op_coder->SetInputOps({});
     std::vector<Tensor *> inputs = op_coder->input_tensors();
     for (const auto &tensor : inputs) {
-      auto item = output_node_map.find(tensor);
-      if (item != output_node_map.end()) {
+      auto item = tensor_pre_coders.find(tensor);
+      if (item != tensor_pre_coders.end() && item->second != op_coder.get()) {
         op_coder->AddInputOp(item->second);
       }
     }
+
+    op_coder->SetOutputOps({});
     std::vector<Tensor *> outputs = op_coder->output_tensors();
     for (const auto &tensor : outputs) {
-      auto item = input_node_map.find(tensor);
-      if (item != input_node_map.end()) {
-        op_coder->AddOutputOp(item->second);
+      auto item = tensor_post_coders.find(tensor);
+      if (item != tensor_post_coders.end()) {
+        for (auto *find_coder : item->second) {
+          if (find_coder == op_coder.get()) {
+            continue;
+          }
+          op_coder->AddOutputOp(find_coder);
+        }
       }
     }
   }
@@ -290,7 +286,7 @@ int CoderSession::CreateOpCoders() {
     op_coders_.push_back(std::move(op_coder));
     builder.Reset();
   }
-  InitOpcodersInputsAndOutputs();
+  (void)InitOpcodersInputsAndOutputs();
   return RET_OK;
 }
 
@@ -307,11 +303,5 @@ int CoderSession::CompileGraph() {
   MS_CHECK_RET_CODE(InitTensorsRef(), "InitTensorsRefcount failed!");
   return RET_OK;
 }
-
-std::shared_ptr<CoderSession> CreateCoderSession() {
-  auto session = std::make_shared<CoderSession>();
-  return session;
-}
-
 CoderSession::~CoderSession() { allocator_->Free(); }
 }  // namespace mindspore::lite::micro

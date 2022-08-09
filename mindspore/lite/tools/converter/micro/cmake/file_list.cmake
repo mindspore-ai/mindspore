@@ -7,7 +7,13 @@ set(CODER_SRC
         ${MICRO_DIR}/coder/train.cc
         ${MICRO_DIR}/coder/utils/coder_utils.cc
         ${MICRO_DIR}/coder/utils/dir_utils.cc
+        ${MICRO_DIR}/coder/utils/train_utils.cc
         ${MICRO_DIR}/coder/utils/type_cast.cc
+        )
+
+set(CODER_SRC ${CODER_SRC}
+        ${MICRO_DIR}/coder/train/train_session.cc
+        ${MICRO_DIR}/coder/train/train_generator.cc
         )
 
 set(CODER_ALLOCATOR_SRC
@@ -18,7 +24,6 @@ set(CODER_ALLOCATOR_SRC
 set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/generator.cc
         ${MICRO_DIR}/coder/generator/inference/inference_generator.cc
-        ${MICRO_DIR}/coder/generator/train/train_generator.cc
         ${MICRO_DIR}/coder/generator/component/common_component.cc
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
@@ -31,6 +36,7 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/const_blocks/load_input.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/calib_output.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark_train.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/mcontext.cc
         )
 

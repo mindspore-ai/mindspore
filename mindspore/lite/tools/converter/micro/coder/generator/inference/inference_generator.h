@@ -28,6 +28,7 @@ class InferenceGenerator : public Generator {
   ~InferenceGenerator() override = default;
 
  private:
+  void CodeNetExecuteFunc(std::ofstream &ofs) override;
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 };

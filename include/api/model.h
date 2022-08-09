@@ -102,7 +102,7 @@ class MS_API Model {
                       const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
                       const std::string &cropto_lib_path);
 
-  /// \brief Builds a model
+  /// \brief Build a model
   ///
   /// \param[in] graph GraphCell is a derivative of Cell. Cell is not available currently. GraphCell can be constructed
   /// from Graph, for example, model.Build(GraphCell(graph), context).
@@ -124,7 +124,7 @@ class MS_API Model {
 
   Status Build(GraphCell graph, Node *optimizer, std::vector<Expr *> inputs,
                const std::shared_ptr<Context> &model_context, const std::shared_ptr<TrainCfg> &train_cfg);
-  /// \brief Builds a Transfer Learning model where the backbone weights are fixed and the head weights are trainable
+  /// \brief Build a Transfer Learning model where the backbone weights are fixed and the head weights are trainable
   ///
   /// \param[in] backbone The static, non-learnable part of the graph
   /// \param[in] head The trainable part of the graph
@@ -135,7 +135,7 @@ class MS_API Model {
   Status BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shared_ptr<Context> &context,
                                const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
 
-  /// \brief Resizes the shapes of inputs.
+  /// \brief Resize the shapes of inputs.
   ///
   /// \param[in] inputs A vector that includes all input tensors in order.
   /// \param[in] dims Defines the new shapes of inputs, should be consistent with inputs.
@@ -170,10 +170,10 @@ class MS_API Model {
   /// \return Status.
   Status Predict(const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  /// \brief Train model by step.
+  /// \brief Run model by step.
   ///
-  /// \param[in] before CallBack before predict.
-  /// \param[in] after CallBack after predict.
+  /// \param[in] before CallBack before RunStep.
+  /// \param[in] after CallBack after RunStep.
   ///
   /// \return Status.
   Status RunStep(const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
@@ -226,36 +226,36 @@ class MS_API Model {
   /// \return The input tensor with the given name, if the name is not found, an invalid tensor is returned.
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
 
-  /// \brief Obtains all gradient tensors of the model.
+  /// \brief Obtain all gradient tensors of the model.
   ///
   /// \return The vector that includes all gradient tensors.
   std::vector<MSTensor> GetGradients() const;
 
-  /// \brief update gradient tensors of the model.
+  /// \brief Update gradient tensors of the model.
   ///
   /// \param[in] gradients A vector new gradients.
   ///
   /// \return Status of operation
   Status ApplyGradients(const std::vector<MSTensor> &gradients);
 
-  /// \brief Obtains all weights tensors of the model.
+  /// \brief Obtain all weights tensors of the model.
   ///
   /// \return The vector that includes all gradient tensors.
   std::vector<MSTensor> GetFeatureMaps() const;
 
-  /// \brief update weights tensors of the model.
+  /// \brief Update weights tensors of the model.
   ///
   /// \param[in] new_weights A vector new weights.
   ///
   /// \return Status of operation
   Status UpdateFeatureMaps(const std::vector<MSTensor> &new_weights);
 
-  /// \brief Obtains optimizer params tensors of the model.
+  /// \brief Obtain optimizer params tensors of the model.
   ///
   /// \return The vector that includes all params tensors.
   std::vector<MSTensor> GetOptimizerParams() const;
 
-  /// \brief update the optimizer parameters.
+  /// \brief Update the optimizer parameters.
   ///
   /// \param[in] params A vector new optimizer params.
   ///
@@ -271,14 +271,14 @@ class MS_API Model {
   /// \return Status of operation.
   Status SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f);
 
-  /// \brief Sets the Learning Rate of the training.
+  /// \brief Set the Learning Rate of the training.
   ///
   /// \param[in] learning_rate to set.
   ///
   /// \return Status of operation.
   Status SetLearningRate(float learning_rate);
 
-  /// \brief Gets the Learning Rate of the optimizer.
+  /// \brief Get the Learning Rate of the optimizer.
   ///
   /// \return Learning rate. 0.0 if no optimizer was found.
   float GetLearningRate();

@@ -315,7 +315,7 @@ int TrainSession::AllocTensors(const std::vector<kernel::KernelExec *> &kernels)
     for (auto tensor : kernel->out_tensors()) {
       auto it = offset_map.find(tensor);
       if (it != offset_map.end()) {
-        tensor->set_data(reinterpret_cast<void *>(reinterpret_cast<char *>(tensors_data_) + it->second));
+        tensor->set_data(reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(tensors_data_) + it->second));
       }
     }
   }
@@ -764,7 +764,7 @@ void TrainSession::CompileTrainKernels() {
     }
   }
   std::unordered_map<kernel::KernelExec *, int> map;
-  while (queue.size()) {
+  while (!queue.empty()) {
     // pop first element
     auto k = queue.front();
     train_kernels_.push_back(k);

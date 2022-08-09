@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ class MemoryAllocator {
    * in view of weight, bias and workspace
    */
 
-  void *Malloc(TypeId type_id, size_t size, MallocType type) {
+  void *Malloc(TypeId type_id, size_t size, MallocType type, const std::string &tensor_name = "") {
     if (type != kWorkspace) {
-      return MallocWeightTensor(type_id, size, type);
+      return MallocWeightTensor(type_id, size, type, tensor_name);
     }
     if (size == 0 || size >= UINT_MAX) {
       return nullptr;
@@ -123,7 +123,9 @@ class MemoryAllocator {
     it = origin_weights_addr_.find(tensor);
     if (it != origin_weights_addr_.end()) {
       saved_weights_addr_.insert(std::make_pair(it->second, tensor));
-      if (immutable) malloc_weights_addr_.insert(std::make_pair(tensor, it->second));
+      if (immutable) {
+        malloc_weights_addr_.insert(std::make_pair(tensor, it->second));
+      }
       return it->second;
     }
     MS_LOG(ERROR) << "uninitialized memory";
@@ -138,7 +140,7 @@ class MemoryAllocator {
   std::map<std::string, Tensor *> saved_weights() const { return saved_weights_addr_; }
   size_t total_buffer_size() const { return tensors_size_ + workspace_size_; }
   void enable_is_next() { is_next_ = true; }
-  void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type);
+  void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type, const std::string &tensor_name = "");
 
  private:
   int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);

@@ -22,7 +22,7 @@ void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
   if (inputs.handle_list == NULL) {
     return;
   }
-  for (int i = 0; i < inputs.handle_num; i++) {
+  for (size_t i = 0; i < inputs.handle_num; i++) {
     MicroTensor *micro_tensor = inputs.handle_list[i];
     if (!micro_tensor) {
       continue;

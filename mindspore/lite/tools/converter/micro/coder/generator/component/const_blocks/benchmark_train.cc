@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "coder/generator/component/const_blocks/benchmark.h"
+#include "coder/generator/component/const_blocks/benchmark_train.h"
 
 namespace mindspore::lite::micro {
-const char benchmark_source[] = R"RAW(/**
+const char benchmark_train_source[] = R"RAW(/**
  * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ const char benchmark_source[] = R"RAW(/**
 
 void usage() {
   printf(
-    "-- mindspore benchmark params usage:\n"
+    "-- mindspore benchmark_train params usage:\n"
     "args[0]: executable file\n"
     "args[1]: inputs binary file\n"
     "args[2]: model weight binary file\n"
@@ -130,7 +130,7 @@ int main(int argc, const char **argv) {
     usage();
     return kMSStatusLiteError;
   }
-  printf("=======run benchmark======\n");
+  printf("=======run benchmark_train======\n");
 
   MSContextHandle ms_context_handle = NULL;
   if (argc >= 6) {
@@ -213,12 +213,12 @@ int main(int argc, const char **argv) {
         return kMSStatusLiteParamInvalid;
       }
   }
-  printf("Running warm up loops...");
+  printf("Running warm up loops...\n");
   for (int i = 0; i < warm_up_loop_count; ++i) {
-    ret = MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
+    ret = MSModelRunStep(model_handle, NULL, NULL);
     if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
-      printf("MSModelPredict failed, ret: %d", ret);
+      printf("MSModelRunStep failed, ret: %d", ret);
       return ret;
     }
   }
@@ -228,10 +228,10 @@ int main(int argc, const char **argv) {
     printf("\nloop count: %d\n", loop_count);
     uint64_t start_time = GetTimeUs();
     for (int i = 0; i < loop_count; ++i) {
-      ret = MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
+      ret = MSModelRunStep(model_handle, NULL, NULL);
       if (ret != kMSStatusSuccess) {
         MSModelDestroy(&model_handle);
-        printf("MSModelPredict failed, ret: %d", ret);
+        printf("MSModelRunStep failed, ret: %d", ret);
         return ret;
       }
     }
@@ -239,17 +239,43 @@ int main(int argc, const char **argv) {
     float total_time = (float)(end_time - start_time) / 1000.0f;
     printf("total time: %.5fms, per time: %.5fms\n", total_time, total_time / loop_count);
   }
-  ret = MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
+  ret = MSModelRunStep(model_handle, NULL, NULL);
   if (ret != kMSStatusSuccess) {
     MSModelDestroy(&model_handle);
+    printf("MSModelRunStep failed, ret: %d", ret);
     return ret;
   }
-  printf("========run success=======\n");
-  printf("\noutputs: \n");
+  printf("========run train mode success=======\n");
+  printf("outputs: \n");
   for (size_t i = 0; i < outputs_handle.handle_num; i++) {
     MSTensorHandle output = outputs_handle.handle_list[i];
     PrintTensorHandle(output);
   }
+
+  ret = MSModelSetTrainMode(model_handle, false);  // when change train mode, outputs handle needs to be refreshed
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    printf("MSModelSetTrainMode failed, ret: %d", ret);
+    return ret;
+  }
+  outputs_handle = MSModelGetOutputs(model_handle);
+  if (!outputs_handle.handle_list) {
+    printf("MSModelGetOutputs failed, ret: %d", ret);
+    return ret;
+  }
+  ret = MSModelRunStep(model_handle, NULL, NULL);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    printf("MSModelRunStep failed, ret: %d", ret);
+    return ret;
+  }
+  printf("\n========run eval mode success=======\n");
+  printf("outputs: \n");
+  for (size_t i = 0; i < outputs_handle.handle_num; i++) {
+    MSTensorHandle output = outputs_handle.handle_list[i];
+    PrintTensorHandle(output);
+  }
+
   if (argc >= 5) {
     CalibTensor *calib_tensors;
     int calib_num = 0;
@@ -265,185 +291,18 @@ int main(int argc, const char **argv) {
     }
     FreeCalibTensors(&calib_tensors, calib_num);
   }
+
+  ret = MSModelExportWeight(model_handle, "./export.bin");
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    printf("MSModelExportWeight failed, ret: %d", ret);
+    return ret;
+  }
+  printf("========export weight success=======\n");
+
   printf("========run success=======\n");
   MSModelDestroy(&model_handle);
   return kMSStatusSuccess;
 }
-)RAW";
-
-const char benchmark_source_cortex[] = R"RAW(/**
- * Copyright 2022 Huawei Technologies Co., Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#include "calib_output.h"
-#include "load_input.h"
-#include "data.h"
-#include "c_api/types_c.h"
-#include "c_api/model_c.h"
-#include "c_api/context_c.h"
-#include "src/tensor.h"
-#include <time.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// Print data in tensor
-void PrintTensorHandle(MSTensorHandle tensor) {
-  printf("name: %s, ", MSTensorGetName(tensor));
-  MSDataType data_type = MSTensorGetDataType(tensor);
-  printf("DataType: %d, ", data_type);
-  size_t element_num = (size_t)(MSTensorGetElementNum(tensor));
-  printf("Elements: %zu, ", element_num);
-  printf("Shape: [");
-  size_t shape_num = 0;
-  const int64_t *dims = MSTensorGetShape(tensor, &shape_num);
-  for (size_t i = 0; i < shape_num; i++) {
-    printf("%d ", (int)dims[i]);
-  }
-  printf("], Data: \n");
-  void *data = MSTensorGetMutableData(tensor);
-  element_num = element_num > 10 ? 10 : element_num;
-  switch (data_type) {
-    case kMSDataTypeNumberTypeFloat32: {
-      for (size_t i = 0; i < element_num; i++) {
-        printf("%.6f, ", ((float *)data)[i]);
-      }
-      printf("\n");
-    } break;
-    case kMSDataTypeNumberTypeInt32: {
-      for (size_t i = 0; i < element_num; i++) {
-        printf("%ld", ((int32_t *)data)[i]);
-      }
-      printf("\n");
-    } break;
-    case kMSDataTypeNumberTypeInt8: {
-      for (size_t i = 0; i < element_num; i++) {
-        printf("%c", ((int8_t *)data)[i]);
-      }
-      printf("\n");
-    } break;
-    case kMSDataTypeNumberTypeUInt8: {
-      for (size_t i = 0; i < element_num; i++) {
-        printf("%u", ((uint8_t *)data)[i]);
-      }
-      printf("\n");
-    } break;
-    default:
-      printf("Unsupported data type to print");
-      break;
-  }
-}
-
-int benchmark() {
-  int ret;
-  printf("========run benchmark======\n");
-  printf("========Model build========\n");
-  MSModelHandle model_handle = MSModelCreate();
-  if (model_handle == NULL) {
-    printf("MSModelCreate failed.\n");
-    return kMSStatusLiteNullptr;
-  }
-  ret = MSModelBuild(model_handle, NULL, 0, kMSModelTypeMindIR, NULL);
-  if (ret != kMSStatusSuccess) {
-    printf("MSModelBuildFromFile failed, ret : %d.\n", ret);
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-
-  printf("========Load inputs=======\n");
-  MSTensorHandleArray inputs_handle = MSModelGetInputs(model_handle);
-  if (inputs_handle.handle_list == NULL) {
-    printf("MSModelGetInputs failed.");
-    MSModelDestroy(&model_handle);
-    return kMSStatusLiteError;
-  }
-  ret = SetDataToMSTensor(&inputs_handle, &g_inputs);
-  if (ret != kMSStatusSuccess) {
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-  ret = LoadCalibInputs(&inputs_handle, &g_calib_inputs);
-  if (ret != kMSStatusSuccess) {
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-
-  printf("========Set outputs data pointer=======\n");
-  MSTensorHandleArray outputs_handle = MSModelGetOutputs(model_handle);
-  if (outputs_handle.handle_list == NULL) {
-    printf("MSModelGetOutputs failed.");
-    MSModelDestroy(&model_handle);
-    return kMSStatusLiteError;
-  }
-  ret = SetDataToMSTensor(&outputs_handle, &g_outputs);
-  if (ret != kMSStatusSuccess) {
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-
-  printf("========Infer start=======\n");
-  ret = MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
-  if (ret != kMSStatusSuccess) {
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-
-  printf("========Compare outputs=======\n");
-  for (size_t i = 0; i < outputs_handle.handle_num; i++) {
-    MSTensorHandle output = outputs_handle.handle_list[i];
-    PrintTensorHandle(output);
-  }
-
-  ret = CompareOutputs(&outputs_handle, &g_calib_outputs);
-  if (ret != kMSStatusSuccess) {
-    MSModelDestroy(&model_handle);
-    return ret;
-  }
-
-  printf("========Calib success=======\n");
-  MSModelDestroy(&model_handle);
-  return kMSStatusSuccess;
-}
-)RAW";
-
-const char benchmark_h_cortex[] = R"RAW(/**
- * Copyright 2022 Huawei Technologies Co., Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-#ifndef MINDSPORE_LITE_MICRO_BENCHMARK_H_
-#define MINDSPORE_LITE_MICRO_BENCHMARK_H_
-#ifdef __cplusplus
-extern "C" {
-#endif
-int benchmark();
-#ifdef __cplusplus
-}
-#endif
-#endif //MINDSPORE_LITE_MICRO_BENCHMARK_H_
 )RAW";
 }  // namespace mindspore::lite::micro

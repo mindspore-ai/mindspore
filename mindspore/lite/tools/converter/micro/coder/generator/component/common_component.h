@@ -49,6 +49,6 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
 void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                const Configurator &config);
 
-void CodeInferenceState(std::ofstream &ofs);
+void CodeExecuteState(std::ofstream &ofs);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_

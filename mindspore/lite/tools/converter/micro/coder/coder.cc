@@ -18,17 +18,29 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "tools/common/flag_parser.h"
 #include "tools/converter/micro/coder/session.h"
-#include "tools/converter/micro/coder/context.h"
+#include "tools/converter/micro/coder/train/train_session.h"
 #include "utils/dir_utils.h"
-#include "securec/include/securec.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "tools/converter/micro/coder/config.h"
-#include "tools/converter/micro/coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
+namespace {
+std::shared_ptr<CoderSession> CreateCoderSession() {
+  std::shared_ptr<CoderSession> session;
+  auto code_mode = Configurator::GetInstance()->code_mode();
+  if (code_mode == CodeMode::Inference) {
+    session = std::make_shared<CoderSession>();
+  } else if (code_mode == CodeMode::Train) {
+    session = std::make_shared<CoderTrainSession>();
+  } else {
+    MS_LOG(ERROR) << "unsupported code mode. " << code_mode;
+    session = nullptr;
+  }
+  return session;
+}
+}  // namespace
 int Coder::Run(const void *model_buff, size_t size) {
   session_ = CreateCoderSession();
   if (session_ == nullptr) {
@@ -133,6 +145,10 @@ int Coder::Init(const std::string &code_mode, const std::string &target, bool su
   auto code_item = kCodeModeMap.find(code_mode);
   MS_CHECK_TRUE_MSG(code_item != kCodeModeMap.end(), RET_ERROR, "unsupported code mode: " + code_mode);
   config->set_code_mode(code_item->second);
+  if (code_item->second == CodeMode::Train && config->target() == kCortex_M) {
+    MS_LOG(ERROR) << "Cortex-M cannot support train.";
+    return RET_ERROR;
+  }
 
   if (support_parallel && config->target() == kCortex_M) {
     MS_LOG(ERROR) << "Cortex-M cannot support parallel.";

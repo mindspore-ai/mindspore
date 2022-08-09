@@ -16,166 +16,161 @@
 
 #include "coder/generator/component/train_component.h"
 #include <string>
+#include "nnacl/op_base.h"
 #include "coder/utils/type_cast.h"
 
 namespace mindspore::lite::micro {
-void CodeTrainParams(std::ofstream &ofs) {
-  ofs << "struct TrainParameter {\n"
-         "  float beta1_;\n"
-         "  float beta2_;\n"
-         "  float epsilon_;\n"
-         "};\n"
-         "\n"
-         "enum EarlyStopType {\n"
-         "  Diff = 0,\n"
-         "  WeigthDiff = 1,\n"
-         "  Abs = 2,\n"
-         "};\n"
-         "\n"
-         "struct EarlyStop {\n"
-         "  enum EarlyStopType type;\n"
-         "  float tolerate;\n"
-         "};\n\n";
-}
+void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  std::vector<Tensor *> train_outputs = ctx->graph_train_outputs();
+  std::vector<Tensor *> eval_outputs = ctx->graph_eval_outputs();
+  auto train_outputs_size = train_outputs.size();
+  auto eval_outputs_size = eval_outputs.size();
 
-void CodeFeaturesState(std::ofstream &ofs) {
-  ofs << "/**\n"
-         " *\n"
-         " * @param size, return the number of features\n"
-         " * @return, the address of features\n"
-         " */\n"
-      << "FeatureParam *GetFeatures(int *size);\n\n";
-  ofs << "/**\n"
-         " *\n"
-         " * @param features, the address of features\n"
-         " * @param size, the number of features\n"
-         " * @return, status\n"
-         " */\n"
-      << "int UpdateFeatures(FeatureParam *features, int size);\n\n";
-}
-
-void CodeFeaturesImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
-  size_t features_num = 0;
-  ofs << "static FeatureParam feature_params[] = {\n";
-  for (const auto &item : ctx->saved_weights()) {
-    std::string addr = item.first;
-    Tensor *tensor = item.second;
-    if (tensor->tensor_name().empty()) {
-      MS_LOG(ERROR) << "exist empty feature";
-      continue;
+  auto array_tostring = [&ofs](Tensor *tensor, size_t index) {
+    ofs << "    output_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
+    ofs << "    output_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type()) << ";\n";
+    ofs << "    output_tensors[" << index << "]->format = kMSFormatNHWC;\n";
+    ofs << "    output_tensors[" << index << "]->ndim = " << tensor->shape().size() << ";\n";
+    size_t shape_size = tensor->shape().size();
+    ofs << "    output_tensors[" << index << "]->shape = "
+        << "malloc(" << shape_size << " * sizeof(int64_t));\n";
+    for (size_t i = 0; i < shape_size; i++) {
+      ofs << "    output_tensors[" << index << "]->shape[" << i << "]= " << tensor->shape()[i] << ";\n";
     }
-    ofs << "\t{\"" << tensor->tensor_name() << "\", " << addr << ", " << tensor->ElementsNum() << ", "
-        << EnumMicroTensorDataType(tensor->data_type()) << "}, \n";
-    features_num++;
+    ofs << "    output_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
+    ofs << "    output_tensors[" << index << "]->data = NULL;\n";
+  };
+
+  ofs << R"RAW(
+MSStatus MSModelSetTrainMode(MSModelHandle model, bool train) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
   }
-  ofs << "};\n";
-
-  ofs << "FeatureParam *GetFeatures(int *size) {\n"
-      << "  *size = " << features_num << ";\n"
-      << "  return feature_params;\n"
-         "}\n\n";
-
-  ofs << "int "
-      << "UpdateFeatures(FeatureParam *features, int size) {\n"
-      << "  for (int i = 0; i < size; ++i) {\n"
-         "    FeatureParam *src = features + i;\n"
-         "    FeatureParam dst;\n"
-         "    // find the dst feature\n"
-         "    bool is_find = false;\n"
-      << "    for (int j = 0; j < " << features_num << "; ++j) {\n"
-      << "      if (strcmp(src->name, feature_params[j].name) == 0) {\n"
-         "        dst = feature_params[j];\n"
-         "        is_find = true;\n"
-         "        break;\n"
-         "      }\n"
-         "    }\n"
-         "    if (!is_find) {\n"
-         "      MICRO_ERROR(\"invalid feature param: %s\", src->name);\n"
-         "      return RET_ERROR;\n"
-         "    }\n"
-         "    if (src->elenums != dst.elenums) {\n"
-         "      MICRO_ERROR(\"feature %s elenums is mismatch, src: %lu, dst: %lu\", src->name, src->elenums, "
-         "dst.elenums);\n"
-         "      return RET_ERROR;\n"
-         "    }\n"
-         "    memcpy(dst.data, src->data, src->elenums * sizeof(float));\n"
-         "  }\n"
-         "  MICRO_INFO(\"update features map success\");\n"
-         "  return RET_OK;\n"
+  micro_model->train_mode = train;
+  MSTensorHandleArrayDestroy(micro_model->outputs);
+)RAW";
+  ofs << "  if (train) {\n"
+      << "    MSTensorHandleArray model_outputs;\n"
+      << "    model_outputs.handle_num = " << train_outputs_size << ";\n"
+      << "    MicroTensor **output_tensors = malloc(" << train_outputs_size << " * sizeof(MicroTensor *));\n"
+      << "    model_outputs.handle_list = (MSTensorHandle *)(output_tensors);\n"
+      << "    micro_model->outputs = model_outputs;\n";
+  for (size_t i = 0; i < train_outputs_size; ++i) {
+    Tensor *output = train_outputs[i];
+    array_tostring(output, i);
+  }
+  ofs << "  } else {\n"
+      << "    MSTensorHandleArray model_outputs;\n"
+      << "    model_outputs.handle_num = " << eval_outputs_size << ";\n"
+      << "    MicroTensor **output_tensors = malloc(" << eval_outputs_size << " * sizeof(MicroTensor *));\n"
+      << "    model_outputs.handle_list = (MSTensorHandle *)(output_tensors);\n"
+      << "    micro_model->outputs = model_outputs;\n";
+  for (size_t i = 0; i < eval_outputs_size; ++i) {
+    Tensor *output = eval_outputs[i];
+    array_tostring(output, i);
+  }
+  ofs << "  }\n"
+      << "  return kMSStatusSuccess;\n"
          "}\n\n";
 }
 
-void CodeTrainState(std::ofstream &ofs) {
-  ofs
-    << "/**\n"
-       " * Train Function\n"
-       " * @param epoch, the train epoch\n"
-       " * @param iterations, which is equal to batch_num, the number of iterations of each epoch\n"
-       " * @param use_train_param, default parameters already exists, such as the momentum, user can update these\n"
-       " * parameters to improve the accuracy\n"
-       " * @param parameter, the TrainParameter contains epsilon/beta1/beta2\n"
-       " * @return status\n"
-       " */\n"
-    << "int Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter *parameter, "
-       "const struct EarlyStop *early_stop);\n\n";
-}
-
-void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
-  std::vector<Tensor *> inputs = ctx->graph_inputs();
-  size_t inputs_num = inputs.size();
-  auto inputs_tostring = [&inputs, &ctx]() {
-    std::string result;
-    result += "{";
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      result += ctx->input_name() + std::to_string(i) + ", ";
-    }
-    result += "}";
-    return result;
-  };
-  auto wrap = [](size_t i) { return "[" + std::to_string(i) + "]"; };
-  auto offset_inputs = [&inputs, &wrap]() {
-    std::string src = "origin_inputs";
-    std::string dst = "input_ptr";
-    std::string result;
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      result += dst + wrap(i) += " = " + src + wrap(i) + " + j * " + std::to_string(inputs[i]->Size()) + ";\n";
-    }
-    return result;
-  };
-  auto varify_inputs = [&inputs, &wrap]() {
-    std::string result;
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      result += "origin_input" + wrap(i) + " + iterations * " + std::to_string(inputs[i]->Size()) + " == NULL";
-      i < inputs.size() - 1 ? result += " || " : result += "";
-    }
-    return result;
-  };
-  ofs << "int Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter "
-         "*parameter, const struct EarlyStop *early_stop) {\n"
-         "  if (iterations <= 0 || epoch <= 0) {\n"
-         "    MICRO_ERROR(\"error iterations or epoch!, epoch:%d, iterations:%d\", epoch, iterations);\n"
-         "    return RET_ERROR;\n"
-         "  }\n"
-         "  MICRO_INFO(\"train epoch: %d, batch_num: %d\", epoch, iterations);\n"
-      << "  const void *origin_input[] = " << inputs_tostring() << ";\n";
-  ofs << "  if (" << varify_inputs() << ") {\n"
-      << "    MICRO_ERROR(\"input data is invalid, epoch: %d, iterations: %d\", epoch, iterations);\n"
-         "    return RET_ERROR;\n"
-         "  }\n";
-  ofs << "  for (int i = 0; i < epoch; ++i) {\n"
-      << "    const void *input_ptr[" << inputs_num << "];\n"
-      << "    float loss = 0;\n"
-      << "    for (int j = 0; j < iterations; ++j) {\n"
-      << "      " << offset_inputs() << "\n"
-      << "      "
-      << "_SetInputs(input_ptr, " << inputs_num << ");\n"
-      << "      "
-      << "_Inference();\n"
-      << "      loss = "
-      << "ComputeLossAndGradient();\n"
+void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto inputs_size = ctx->graph_inputs().size();
+  size_t train_outputs_size = ctx->graph_train_outputs().size();
+  size_t eval_outputs_size = ctx->graph_eval_outputs().size();
+  ofs << R"RAW(
+MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  bool train_mode = micro_model->train_mode;
+)RAW";
+  ofs << "  if (micro_model->inputs.handle_num != " << inputs_size << ") {\n"
+      << "    return kMSStatusLiteParamInvalid;\n"
+      << "  }\n"
+      << "  const void *inputs_data_array[" << inputs_size << "];\n"
+      << "  for (int i = 0; i < " << inputs_size << "; i++) {\n"
+      << "    inputs_data_array[i] = ((MicroTensor *)(micro_model->inputs.handle_list[i]))->data;\n"
+      << "  }\n"
+      << "  SetInputs(inputs_data_array, " << inputs_size << ");\n"
+      << "\n"
+      << "  Execute(train_mode);\n\n"
+      << "  // copy data to outputs handle\n"
+      << "  if (train_mode) {\n"
+      << "    if (micro_model->outputs.handle_num != " << train_outputs_size << ") {\n"
+      << "      return kMSStatusLiteParamInvalid;\n"
       << "    }\n"
-         "  }\n"
-         "  return RET_OK;\n"
-         "};\n\n";
+      << "    void *outputs_data_array[" << train_outputs_size << "];\n"
+      << "    for (int i = 0; i < " << train_outputs_size << "; i++) {\n"
+      << "      outputs_data_array[i] = MSTensorGetMutableData(micro_model->outputs.handle_list[i]);\n"
+      << "    }\n"
+      << "    if (CopyOutputsDataWithFlag(outputs_data_array, " << train_outputs_size << ", true) != RET_OK) {\n"
+      << "      return kMSStatusLiteError;\n"
+      << "    }\n"
+      << "  } else {\n"
+      << "    if (micro_model->outputs.handle_num != " << eval_outputs_size << ") {\n"
+      << "      return kMSStatusLiteParamInvalid;\n"
+      << "    }\n"
+      << "    void *outputs_data_array[" << eval_outputs_size << "];\n"
+      << "    for (int i = 0; i < " << eval_outputs_size << "; i++) {\n"
+      << "      outputs_data_array[i] = MSTensorGetMutableData(micro_model->outputs.handle_list[i]);\n"
+      << "    }\n"
+      << "    if (CopyOutputsDataWithFlag(outputs_data_array, " << eval_outputs_size << ", false) != RET_OK) {\n"
+      << "      return kMSStatusLiteError;\n"
+      << "    }\n"
+      << "  }\n"
+      << "  return kMSStatusSuccess;\n"
+      << "}\n\n";
+}
+
+void CodeMSModelExportWeight(std::ofstream &ofs) {
+  ofs << R"RAW(
+MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {
+  int ret = Export(export_path);
+  return ret == RET_OK ? kMSStatusSuccess : kMSStatusLiteError;
+})RAW";
+  ofs << "\n\n";
+}
+
+void CodeCopyTrainOutputsState(std::ofstream &ofs) {
+  ofs << "int CopyOutputsDataWithFlag(void **outputs, int num, bool train_mode);\n\n";
+}
+
+void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto tensor_map = ctx->tensors_map();
+  std::vector<Tensor *> train_outputs = ctx->graph_train_outputs();
+  std::vector<Tensor *> eval_outputs = ctx->graph_eval_outputs();
+  size_t train_outputs_size = train_outputs.size();
+  size_t eval_outputs_size = eval_outputs.size();
+
+  ofs << "int CopyOutputsDataWithFlag(void **outputs, int num, bool train_mode) {\n"
+      << "  if (outputs == NULL) {\n"
+      << "    return RET_ERROR;\n"
+      << "  }\n"
+      << "  if (train_mode) {\n"
+      << "    if (num != " << train_outputs_size << ") {\n"
+      << "      return RET_ERROR;\n"
+      << "    }\n";
+  for (size_t i = 0; i < train_outputs_size; ++i) {
+    Tensor *output = train_outputs[i];
+    MS_CHECK_PTR_IF_NULL(output);
+    MS_CHECK_TRUE_RET_VOID(tensor_map.find(output) != tensor_map.end());
+    ofs << "    memcpy(outputs[" << i << "], " << tensor_map[output] << ", " << output->Size() << ");\n";
+  }
+  ofs << "  } else {\n"
+      << "    if (num != " << eval_outputs_size << ") {\n"
+      << "      return RET_ERROR;\n"
+      << "    }\n";
+  for (size_t i = 0; i < eval_outputs_size; ++i) {
+    Tensor *output = eval_outputs[i];
+    MS_CHECK_PTR_IF_NULL(output);
+    MS_CHECK_TRUE_RET_VOID(tensor_map.find(output) != tensor_map.end());
+    ofs << "    memcpy(outputs[" << i << "], " << tensor_map[output] << ", " << output->Size() << ");\n";
+  }
+  ofs << "  }\n"
+      << "  return RET_OK;\n"
+         "}\n\n";
 }
 }  // namespace mindspore::lite::micro

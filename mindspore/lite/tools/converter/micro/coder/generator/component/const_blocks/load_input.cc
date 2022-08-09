@@ -143,6 +143,7 @@ int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int input
     buffers[i] = ReadInputData(inputs_path[i], &size);
     if (size != inputs_size[i] || buffers[i] == NULL) {
       printf("size mismatch, %s, input: %d, needed: %d\n", inputs_path[i], size, inputs_size[i]);
+      free(buffers[i]);
       return kMSStatusLiteError;
     }
   }

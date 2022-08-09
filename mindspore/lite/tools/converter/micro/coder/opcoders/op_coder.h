@@ -21,7 +21,6 @@
 #include <string>
 #include <memory>
 #include "tools/converter/micro/coder/context.h"
-#include "tools/converter/micro/coder/graph.h"
 #include "tools/converter/micro/coder/allocator/allocator.h"
 #include "include/errorcode.h"
 #include "src/litert/kernel_exec.h"
@@ -58,6 +57,8 @@ class OperatorCoder {
   const std::vector<Tensor *> input_tensors() const;
   const std::vector<Tensor *> output_tensors() const;
 
+  void SetInputOps(const std::vector<OperatorCoder *> &input_ops) { input_ops_ = input_ops; }
+  void SetOutputOps(const std::vector<OperatorCoder *> &output_ops) { output_ops_ = output_ops; }
   void AddInputOp(OperatorCoder *op) { input_ops_.push_back(op); }
   void AddOutputOp(OperatorCoder *op) { output_ops_.push_back(op); }
   const std::vector<OperatorCoder *> input_ops() const { return input_ops_; }

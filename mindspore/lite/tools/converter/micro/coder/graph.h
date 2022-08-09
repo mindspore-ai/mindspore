@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include "tools/converter/micro/coder/opcoders/op_coder.h"
 #include "tools/converter/micro/coder/config.h"
 #include "include/context.h"
 #include "include/model.h"
@@ -40,8 +41,12 @@ class CoderGraph {
 
   void SetAllTensors(const std::vector<Tensor *> &all_tensors);
 
-  void InitInputs();
+  int InitInputs();
   void InitOutputs();
+
+  int CompileTrainOutputs(const std::vector<OperatorCoder *> &train_coders);
+
+  int CompileEvalOutputs(const std::vector<OperatorCoder *> &train_coders);
 
   void SetInputIndices(const std::vector<uint32_t> &input_indices);
 
@@ -59,10 +64,14 @@ class CoderGraph {
 
   std::vector<Tensor *> output_tensors() const;
 
+  std::vector<Tensor *> eval_output_tensors() const;
+
+  std::vector<Tensor *> train_output_tensors() const;
+
   std::vector<Tensor *> all_tensors() const;
 
   const std::map<NODE_ID, std::vector<Tensor *>> &GetOutputsMap() const;
-
+  const std::map<std::string, std::vector<Tensor *>> &GetEvalOutputsMap() const;
   const Model *model() const { return this->model_; }
 
   void DumpUnSupportLayer(Target target);
@@ -72,9 +81,13 @@ class CoderGraph {
   // others are parameter_node
   std::vector<Tensor *> all_tensors_;
 
-  std::vector<Tensor *> input_tensors_;
+  std::vector<Tensor *> input_tensors_;  // graph origin inputs
 
-  std::vector<Tensor *> output_tensors_;
+  std::vector<Tensor *> output_tensors_;  // graph origin outputs
+
+  std::vector<Tensor *> eval_output_tensors_;  // graph outputs in Eval mode
+
+  std::vector<Tensor *> train_output_tensors_;  // graph outputs in Train mode
 
   std::vector<uint32_t> input_indices_;
 
@@ -82,7 +95,12 @@ class CoderGraph {
 
   std::map<std::string, std::vector<Tensor *>> inputs_map_;
 
-  std::map<std::string, std::vector<Tensor *>> outputs_map_;
+  std::map<std::string, std::vector<Tensor *>> outputs_map_;  // graph origin outputs tensor map
+                                                              // <node name, graph output tensors>
+
+  std::map<std::string, std::vector<Tensor *>> eval_outputs_map_;  // graph eval outputs tensor map
+
+  std::map<std::string, std::vector<Tensor *>> train_outputs_map_;  // graph train outputs tensor map
 
   Model *model_{nullptr};
 };

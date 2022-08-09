@@ -85,7 +85,7 @@ MS_API MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t
 MS_API MSStatus MSModelBuildFromFile(MSModelHandle model, const char *model_path, MSModelType model_type,
                                      const MSContextHandle model_context);
 
-/// \brief Resizes the shapes of inputs.
+/// \brief Resize the shapes of inputs.
 ///
 /// \param[in] model Model object handle.
 /// \param[in] inputs The array that includes all input tensor handles.
@@ -108,21 +108,46 @@ MS_API MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inp
 MS_API MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
                                const MSKernelCallBackC before, const MSKernelCallBackC after);
 
-/// \brief Obtains all input tensor handles of the model.
+/// \brief Run model by step. Only valid for Iot.
+///
+/// \param[in] model Model object handle.
+/// \param[in] before CallBack before RunStep.
+/// \param[in] after CallBack after RunStep.
+///
+/// \return MSStatus.
+MS_API MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after);
+
+/// \brief Set the model running mode. Only valid for Iot.
+///
+/// \param[in] model Model object handle.
+/// \param[in] train True means model runs in Train Mode, otherwise Eval Mode.
+///
+/// \return Status of operation.
+MS_API MSStatus MSModelSetTrainMode(const MSModelHandle model, bool train);
+
+/// \brief Export the weights of model to the binary file. Only valid for Iot.
+///
+/// \param[in] model Model object handle.
+/// \param[in] export_path Define the export weight file path.
+///
+/// \return Status of operation.
+MS_API MSStatus MSModelExportWeight(const MSModelHandle model, const char *export_path);
+
+/// \brief Obtain all input tensor handles of the model.
 ///
 /// \param[in] model Model object handle.
 ///
 /// \return The array that includes all input tensor handles.
 MS_API MSTensorHandleArray MSModelGetInputs(const MSModelHandle model);
 
-/// \brief Obtains all output tensor handles of the model.
+/// \brief Obtain all output tensor handles of the model.
 ///
 /// \param[in] model Model object handle.
 ///
 /// \return The array that includes all output tensor handles.
 MS_API MSTensorHandleArray MSModelGetOutputs(const MSModelHandle model);
 
-/// \brief Obtains the input tensor handle of the model by name.
+/// \brief Obtain the input tensor handle of the model by name.
 ///
 /// \param[in] model Model object handle.
 /// \param[in] tensor_name The name of tensor.
@@ -130,7 +155,7 @@ MS_API MSTensorHandleArray MSModelGetOutputs(const MSModelHandle model);
 /// \return The input tensor handle with the given name, if the name is not found, an NULL is returned.
 MS_API MSTensorHandle MSModelGetInputByTensorName(const MSModelHandle model, const char *tensor_name);
 
-/// \brief Obtains the output tensor handle of the model by name.
+/// \brief Obtain the output tensor handle of the model by name.
 ///
 /// \param[in] model Model object handle.
 /// \param[in] tensor_name The name of tensor.

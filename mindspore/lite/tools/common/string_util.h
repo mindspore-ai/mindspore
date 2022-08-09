@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@
 
 namespace mindspore {
 namespace lite {
-int EraseBlankSpaceAndLineBreak(std::string *input_string);
+bool EraseBlankSpaceAndLineBreak(std::string *input_string);
 
-int EraseQuotes(std::string *input_string);
+bool EraseQuotes(std::string *input_string);
+
+bool FindAndReplaceAll(std::string *input_str, const std::string &search, const std::string &replace);
 
 std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 
