@@ -2123,7 +2123,7 @@ def linspace(start, stop, num):
         num (int): Number of ticks in the interval, inclusive of start and stop.
             Must be positive int number.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as `start`, and the shape of :math:`(num)`
 
     Raises:
@@ -2380,7 +2380,7 @@ def ldexp(x, other):
         x (Tensor): The input tensor.
         other (Tensor): A tensor of exponents, typically integers.
 
-    Outputs:
+    Returns:
         out (Tensor, optional) : the output tensor.
 
     Raises:
@@ -2600,12 +2600,15 @@ def ge(x, y):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    Note:
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
+          and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - Broadcasting is supported.
+        - If the input Tensor can be broadcast, the low dimension will be extended to the corresponding high dimension
+          in another input by copying the value of the dimension.
 
     .. math::
 
@@ -2691,10 +2694,12 @@ def ne(x, y):
     r"""
     Computes the non-equivalence of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
+    Note:
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, the shapes of them could be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - Broadcasting is supported.
 
     .. math::
 
@@ -2757,7 +2762,7 @@ def approximate_equal(x, y, tolerance=1e-5):
         y (Tensor): A tensor of the same type and shape as `x`.
         tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
 
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the shape of `x`, and the data type is bool.
 
     Raises:
@@ -2964,13 +2969,15 @@ def maximum(x, y):
     """
     Computes the maximum of input tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-    If one of the elements being compared is a NaN, then that element is returned.
+    Note:
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+        - When the inputs are one tensor and one scalar,
+          the scalar could only be a constant.
+        - Broadcasting is supported.
+        - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
         output_i = max(x_i, y_i)
@@ -3416,7 +3423,7 @@ def mv(mat, vec):
         mat (Tensor): Input matrix of the tensor. The shape of the tensor is :math:`(N, M)`.
         vec (Tensor): Input vector of the tensor. The shape of the tensor is :math:`(M,)`.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :math:`(N,)`.
 
     Raises:
@@ -3478,7 +3485,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
             be int or float or bool, Default: 1.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
 
     Raises:
@@ -3838,7 +3845,7 @@ def deg2rad(x):
         x (Tensor[Number]): The input tensor. It must be a positive-definite matrix.
             With float16, float32 or float64 data type.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as the `x`.
 
     Raises:
@@ -3876,7 +3883,7 @@ def rad2deg(x):
     Args:
         x (Tensor): The input tensor.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
@@ -4127,7 +4134,7 @@ def logsumexp(x, axis, keep_dims=False):
             If False, don't keep these dimensions.
             Default : False.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as the `x`.
 
         - If axis is (), and keep_dims is False,
@@ -5019,7 +5026,7 @@ def log2(x):
     Args:
         x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
@@ -5194,7 +5201,7 @@ def log10(x):
     Args:
         x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
@@ -5473,9 +5480,9 @@ def remainder(x, y):
         y (Union[Tensor, numbers.Number, bool]): When the first input is a tensor, The second input
             could be a number, a bool or a tensor whose data type is number.
 
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the one after broadcasting,
-            and the data type is the one with higher precision or higher digits among the two inputs.
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
         TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.

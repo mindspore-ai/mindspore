@@ -843,7 +843,7 @@ def softsign(x):
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
             additional dimensions, with float16 or float32 data type.
 
-    Outputs:
+    Returns:
         Tensor, with the same type and shape as the `x`.
 
     Raises:
@@ -921,7 +921,7 @@ def soft_shrink(x, lambd=0.5):
         x (Tensor): The input of soft shrink with data type of float16 or float32.
         lambd(float): The :math:`\lambda` must be no less than zero. Default: 0.5.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and data type as `x`.
 
     Raises:
@@ -1236,9 +1236,9 @@ def mirror_pad(input_x, paddings, mode):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
-        **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
+        paddings (Tensor): Paddings requires constant tensor. The value of `paddings` is a
           matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
           are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
           to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]
@@ -1248,8 +1248,7 @@ def mirror_pad(input_x, paddings, mode):
         mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
             Default: "REFLECT".
 
-
-    Outputs:
+    Returns:
         Tensor, the tensor after padding.
 
         - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
@@ -1366,7 +1365,6 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-
         >>> # Case 1: Indices labels
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
@@ -1447,7 +1445,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
 
-    Outputs:
+    Returns:
         Tensor, the computed loss value.
 
     Supported Platforms:
@@ -1638,7 +1636,7 @@ def log_softmax(logits, axis=-1):
           additional dimensions, with float16 or float32 data type.
         axis (int): The axis to perform the Log softmax operation. Default: -1.
 
-    Outputs:
+    Returns:
         Tensor, with the same type and shape as the logits.
 
     Raises:
@@ -1845,7 +1843,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
             `False`.
 
-    Outputs:
+    Returns:
         Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
         :math:`(N, C, D_{out}, H_{out}, W_{out})` (5-D).
 
