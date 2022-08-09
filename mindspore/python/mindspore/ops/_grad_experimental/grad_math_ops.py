@@ -230,16 +230,15 @@ def get_bprop_index_addcdiv(self):
         dx2 = neg_op(mul_op(mul_op(mul_op(x1, value), pow_op(x2, -2)), dinput_data))
         dx1 = mul_op(dinput_data, div_op(value, x2))
         dvalue = mul_op(dinput_data, div_op(x1, x2))
-        _, dinput_data = binop_grad_common(inner_out, input_data, dinput_data, dinput_data)
-        _, dx1 = binop_grad_common(inner_out, x1, dinput_data, dx1)
-        _, dx2 = binop_grad_common(inner_out, x2, dinput_data, dx2)
-        _, dvalue = binop_grad_common(inner_out, value, dinput_data, dvalue)
+        _, dinput_data = binop_grad_common(inner_out, input_data, dout, dinput_data)
+        _, dx1 = binop_grad_common(inner_out, x1, dout, dx1)
+        _, dx2 = binop_grad_common(inner_out, x2, dout, dx2)
+        _, dvalue = binop_grad_common(inner_out, value, dout, dvalue)
         if dout.dtype in [mstype.float16, mstype.int64, mstype.float64]:
             dinput_data = F.cast(dinput_data, dout.dtype)
             dx1 = F.cast(dx1, dout.dtype)
             dx2 = F.cast(dx2, dout.dtype)
             dvalue = F.cast(dvalue, dout.dtype)
-
         return dinput_data, dx1, dx2, dvalue
 
     return bprop
