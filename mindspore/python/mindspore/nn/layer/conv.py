@@ -195,28 +195,28 @@ class Conv2d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in}}{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in}}{\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
+                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
             \end{array}
 
         pad_mode is 'valid':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
-                {\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
-                {\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} ＝ \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                {\text{stride[0]}}} \right \rceil \\
+                W_{out} ＝ \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                {\text{stride[1]}}} \right \rceil \\
             \end{array}
 
         pad_mode is 'pad':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
-                \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
-                \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
+                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
+                \text{dilation[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
+                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
+                \text{dilation[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
     Raises:
@@ -1223,19 +1223,19 @@ class Conv1dTranspose(_Conv):
         pad_mode is 'same':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in}}{\text{stride}} + 1} \right \rfloor
+            L_{out} ＝ \left \lceil{\frac{L_{in}}{\text{stride}}} \right \rceil
 
         pad_mode is 'valid':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
-            {\text{stride}} + 1} \right \rfloor
+            L_{out} ＝ \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
+            {\text{stride}}} \right \rceil
 
         pad_mode is 'pad':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{dilation} - 1) \times
-            \text{kernel_size} - 1 }{\text{stride}} + 1} \right \rfloor
+            L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
+            \text{dilation} - 1 }{\text{stride}} + 1} \right \rfloor
 
     Raises:
         TypeError: If `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding` or `dilation` is not an int.
