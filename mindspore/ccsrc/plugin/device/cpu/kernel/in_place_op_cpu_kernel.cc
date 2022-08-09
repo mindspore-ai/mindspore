@@ -56,7 +56,7 @@ struct NoCheck {
 template <typename Op>
 struct NoCheckUpdate {
   template <typename T>
-  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+  static inline void compute(T *x, const int64_t x_idx, const T *v, const int64_t v_idx) {
     x[x_idx] = Op()(v[v_idx]);
   }
 };
