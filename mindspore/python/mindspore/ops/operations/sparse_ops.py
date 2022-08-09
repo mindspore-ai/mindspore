@@ -1668,3 +1668,62 @@ class SparseMatrixOrderingAMD(Primitive):
         """Initialize SparseMatrixOrderingAMD."""
         self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
                                         'x_col_indices', 'x_values'], outputs=['y'])
+
+
+class SparseReshape(Primitive):
+    """
+    Reshapes a SparseTensor to represent values in a new dense shape.
+    This operation has the same semantics as reshape on the represented dense tensor.
+    The `input_indices` are recomputed based on the requested `new_shape`.
+    At most one component of `new_shape` can be -1.
+    Reshaping does not affect the order of values in the SparseTensor.
+
+    Inputs:
+        - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          The shape is :math:`(n, 2)`.
+        - **shape** (Tensor) - A 1D Tensor of type int64. The shape of the SparseTensor.
+        - **new_shape** (Tensor) - A 1D Tensor of type int64. The requested new dense shape.
+
+    Outputs:
+        - **y_indices** (Tensor) - A 2D Tensor of type int64. The indices of the new dense shape.
+          The tensor has the same data type and shape as `indices`.
+        - **y_shape** (Tensor) - A 1D Tensor of type int64. The shape of the new dense shape.
+
+    Raises:
+        TypeError: If the dtype of `indices`, `shape` or `new_shape` is not int64.
+        ValueError: If the shape[1] of `indices` is not equal to the first dimension of `shape`.
+        ValueError: If `indices` is not a 2D Tensor.
+        ValueError: If `shape` is not a 1D Tensor.
+        ValueError: If `new_shape` is not a 1D Tensor.
+        RuntimeError: If the number of inferred-dims(-1) is larger than 1.
+        RuntimeError: If there is any negative value(except -1) in `new_shape`.
+        RuntimeError: If the numbers of elements that `shape` and `new_shape` represent are not equal.
+        RuntimeError: If inferred-dim(-1) in `new_shape` cannot be correctly inferred.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor([[0, 0, 0],
+        ...                   [0, 0, 1],
+        ...                   [0, 1, 0],
+        ...                   [1, 0, 0],
+        ...                   [1, 2, 3]],
+        ...                   dtype=mstype.int64)
+        >>> shape = Tensor([2, 3, 6], dtype=mstype.int64)
+        >>> new_shape = Tensor([9, -1], dtype=mstype.int64)
+        >>> sparse_reshape = sparse_ops.SparseReshape()
+        >>> y_indices, y_shape = sparse_reshape(indices, shape, new_shape)
+        >>> print(y_indices)
+        [[0 0]
+         [0 1]
+         [1 2]
+         [4 2]
+         [8 1]]
+        >>> print(y_shape)
+        [9 4]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseReshape."""
+        self.init_prim_io_names(inputs=['indices', 'shape', 'new_shape'], outputs=['y_indices', 'y_shape'])
