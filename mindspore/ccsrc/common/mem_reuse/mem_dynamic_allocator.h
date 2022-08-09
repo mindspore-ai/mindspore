@@ -165,6 +165,8 @@ class DynamicMemPoolBestFit {
   size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
   // Set the minimum memory unit size using for dynamic extend.
   void SetMemAllocUintSize(size_t common_size, size_t persist_size = DYNAMIC_MEM_ALLOC_UNIT_SIZE);
+  // Set mem pool block size
+  void SetMemPoolBlockSize(size_t available_device_mem_size);
 
   // The statistics information.
   size_t TotalMemStatistics() const {
@@ -186,8 +188,6 @@ class DynamicMemPoolBestFit {
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
   virtual bool FreeDeviceMem(const DeviceMemPtr &addr) = 0;
   virtual size_t free_mem_size() = 0;
-  // Set mem pool block size
-  virtual void SetMemPoolBlockSize(size_t available_device_mem_size);
 
  protected:
   const MemStatusManagerPtr &common_mem() const { return common_mem_; }
