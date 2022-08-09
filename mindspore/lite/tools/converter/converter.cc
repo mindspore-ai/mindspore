@@ -584,7 +584,7 @@ int CheckModelFile(const std::shared_ptr<ConverterPara> &param) {
 }
 
 int CheckOutputFile(const std::shared_ptr<ConverterPara> &param) {
-  if (param != nullptr) {
+  if (param != nullptr && param->aclModelOptionCfgParam.offline) {
     if (param->output_file.empty()) {
       MS_LOG(ERROR) << "INPUT MISSING: output file path is necessary";
       return RET_INPUT_PARAM_INVALID;
