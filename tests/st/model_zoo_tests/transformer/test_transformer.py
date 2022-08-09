@@ -187,7 +187,7 @@ def test_transformer():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    assert np.allclose(loss_value[0], 11.241601, 0, 0.000005)
+    assert np.allclose(loss_value[0], 11.241601, 0, 0.00005)
 
     expect_loss_value = [11.241606, 11.243232, 11.217459, 11.204157, 11.213804,
                          11.215373, 11.190564, 11.150393, 11.191823, 11.160045]
