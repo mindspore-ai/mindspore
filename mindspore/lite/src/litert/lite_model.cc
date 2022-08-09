@@ -577,7 +577,7 @@ int Model::Export(Model *model, const char *filename) {
   ofs.seekp(0, std::ios::beg);
   ofs.write(liteModel->buf, liteModel->buf_size_);
   ofs.close();
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
   return RET_OK;
 #else
   return chmod(filename, S_IRUSR);

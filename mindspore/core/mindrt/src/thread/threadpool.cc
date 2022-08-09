@@ -60,7 +60,7 @@ void Worker::SetAffinity() {
   }
   return;
 #else
-#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
+#if !defined(__APPLE__) && !defined(_MSC_VER)
   int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_);
   if (ret != THREAD_OK) {
     THREAD_ERROR("bind thread %lu to cpu failed. ERROR %d", pthread_self(), errno);
@@ -91,7 +91,7 @@ void Worker::InitWorkerMask(const std::vector<int> &core_list, const size_t work
 
 void Worker::Run() {
   SetAffinity();
-#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
+#if !defined(__APPLE__) && !defined(_MSC_VER)
   static std::atomic_int index = {0};
   (void)pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
 #endif

@@ -1,6 +1,5 @@
 
 if(MSVC)
-    add_compile_definitions(SUPPORT_MSVC)
     add_compile_definitions(_ENABLE_ATOMIC_ALIGNMENT_FIX)
     set(CMAKE_C_FLAGS "/O2 /EHsc /GS /Zi /utf-8")
     set(CMAKE_CXX_FLAGS "/O2 /EHsc /GS /Zi /utf-8 /std:c++17")

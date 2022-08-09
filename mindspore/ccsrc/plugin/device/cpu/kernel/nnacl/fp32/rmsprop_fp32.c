@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #ifdef ENABLE_SSE
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #include <immintrin.h>
 #else
 #include <x86intrin.h>

@@ -19,7 +19,7 @@
 
 #include <utility>
 
-#define HANDLER_DEFINE(return_type, name, args...)                                                \
+#define HANDLER_DEFINE(return_type, name, ...)                                                    \
  public:                                                                                          \
   template <typename... Args>                                                                     \
   static return_type name(const Args &... argss) {                                                \
@@ -28,7 +28,7 @@
     }                                                                                             \
     return name##_handler_(argss...);                                                             \
   }                                                                                               \
-  using name##Handler = std::function<decltype(name<args>)>;                                      \
+  using name##Handler = std::function<decltype(name<__VA_ARGS__>)>;                               \
   static void Set##name##Handler(name##Handler handler) { name##_handler_ = std::move(handler); } \
                                                                                                   \
  private:                                                                                         \

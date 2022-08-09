@@ -27,7 +27,7 @@ void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSp
 
 void ActorWorker::RunWithSpin() {
   SetAffinity();
-#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
+#if !defined(__APPLE__) && !defined(_MSC_VER)
   static std::atomic_int index = {0};
   (void)pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif

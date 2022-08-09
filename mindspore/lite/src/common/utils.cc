@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace lite {
 uint64_t GetTimeUs() {
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
   const int sec_to_us = 1000000;
   LARGE_INTEGER cur_time, frequency;
   QueryPerformanceCounter(&cur_time);
