@@ -46,21 +46,6 @@ constexpr size_t kAlphaIndex = 10;
 constexpr size_t kBetaIndex = 11;
 constexpr int64_t kDefaultRank = 2;
 constexpr int64_t kBatchedRank = 3;
-
-inline void CheckSparseShape(const size_t sparse_shape_size, const size_t expected_dim, const std::string &arg_name) {
-  if (sparse_shape_size != expected_dim) {
-    MS_EXCEPTION(mindspore::ValueError) << arg_name << " must be a " << expected_dim
-                                        << "-dimensional tensor, but got a " << sparse_shape_size
-                                        << "-dimensional tensor.";
-  }
-}
-
-inline void CheckSparseIndicesDtype(const mindspore::TypePtr dtype, const std::string &arg_name) {
-  if (!(dtype->equal(mindspore::kInt16) || dtype->equal(mindspore::kInt32) || dtype->equal(mindspore::kInt64))) {
-    MS_EXCEPTION(mindspore::TypeError) << "The dtype of " << arg_name << " must be Int16 or Int32 or Int64, but got "
-                                       << dtype->ToString() << ".";
-  }
-}
 }  // namespace
 void SparseMatrixAdd::set_dense_shape(const std::vector<int64_t> &shape) {
   (void)this->AddAttr(kDenseShape, api::MakeValue(shape));
