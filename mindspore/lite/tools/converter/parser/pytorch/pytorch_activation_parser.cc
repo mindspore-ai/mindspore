@@ -33,6 +33,26 @@ PrimitiveCPtr PytorchReluParser::Parse(const torch::jit::Node *torch_node, std::
   return prim->GetPrim();
 }
 
+PrimitiveCPtr PytorchTanhParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::TANH);
+
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr PytorchSigmoidParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::SIGMOID);
+
+  return prim->GetPrim();
+}
+
 PytorchNodeRegistrar g_pytorchReluParser("relu", new PytorchReluParser());
+PytorchNodeRegistrar g_pytorchTanhParser("tanh", new PytorchTanhParser());
+PytorchNodeRegistrar g_pytorchSigmoidParser("sigmoid", new PytorchSigmoidParser());
 }  // namespace lite
 }  // namespace mindspore
