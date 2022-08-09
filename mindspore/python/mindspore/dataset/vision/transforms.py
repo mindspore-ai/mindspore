@@ -1223,6 +1223,9 @@ class Normalize(ImageTensorOperation):
     Normalize the input image with respect to mean and standard deviation. This operator will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
             The mean values must be in range [0.0, 255.0].
@@ -1725,6 +1728,9 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
 class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
+
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         brightness (Union[float, Sequence[float]], optional): Brightness adjustment factor (default=(1, 1)).
