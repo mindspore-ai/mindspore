@@ -72,10 +72,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr environ_get_set_eliminate_;
   SubstitutionPtr environ_get_depend_swap_;
   SubstitutionPtr environ_add_const_eliminate_;
-  SubstitutionPtr incorporate_environ_get_;
-  SubstitutionPtr incorporate_environ_get_bypass_recursive_;
-  SubstitutionPtr incorporate_environ_get_switch_;
-  SubstitutionPtr incorporate_environ_get_switch_layer_;
   SubstitutionPtr split_environ_get_set_with_tuple_value_;
 
   // Ref eliminate
@@ -122,7 +118,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr load_eliminater_;
 
   // Incorporation
-  SubstitutionPtr incorporate_getitem_set_;
   SubstitutionPtr incorporate_call_;
   SubstitutionPtr incorporate_call_switch_;
 

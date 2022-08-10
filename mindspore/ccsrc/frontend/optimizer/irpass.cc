@@ -27,7 +27,6 @@
 #include "frontend/optimizer/irpass/load_eliminate.h"
 #include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
-#include "frontend/optimizer/irpass/incorporate_getitem.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"
@@ -141,18 +140,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<EnvironGetDependSwap>(), "environ_get_depend_swap", prim::kPrimEnvironGet);
   environ_add_const_eliminate_ = MakeSubstitution(std::make_shared<EnvironAddConstEliminater>(),
                                                   "environ_add_const_eliminate_", prim::kPrimEnvironAdd);
-
-  incorporate_environ_get_bypass_recursive_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvironGet>(true), "incorporate_environ_get", prim::kPrimEnvironGet);
-  incorporate_environ_get_switch_ = MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitch>(),
-                                                     "incorporate_environ_get_switch", prim::kPrimEnvironGet);
-  incorporate_environ_get_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvironGet>(), "incorporate_environ_get", prim::kPrimEnvironGet);
-
-  incorporate_environ_get_switch_layer_ =
-    MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitchLayer>(), "incorporate_environ_get_switch_layer",
-                     prim::kPrimEnvironGet);
-
   split_environ_get_set_with_tuple_value_ =
     MakeSubstitution(std::make_shared<SplitEnvironGetSetWithTupleValue>(), "split_environ_get_set_with_tuple_value",
                      {prim::kPrimEnvironGet, prim::kPrimEnvironSet});
@@ -219,8 +206,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<StopGradientEliminater>(), "stopgrad_eliminater", prim::kPrimStopGradient);
 
   // Incorporation
-  incorporate_getitem_set_ =
-    MakeSubstitution(std::make_shared<IncorporateGetitemSet>(), "incorporate_getitem_set", prim::kPrimTupleGetItem);
   incorporate_call_ = MakeSubstitution(std::make_shared<IncorporateCall>(), "incorporate_call", IsCNodeDup);
   incorporate_call_switch_ =
     MakeSubstitution(std::make_shared<IncorporateCallSwitch>(), "incorporate_call_switch", IsCNodeDup);
