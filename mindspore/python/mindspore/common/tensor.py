@@ -1589,6 +1589,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input tensor.
 
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
@@ -1610,6 +1615,74 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
+    def amin(self, axis=(), keep_dims=False):
+        """
+        Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
+        reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the
+        same by controlling `keep_dims`.
+
+        Args:
+            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int, tuple(int) or
+                list(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+
+        Returns:
+            Tensor, has the same data type as input tensor.
+
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+            >>> output = input_x.amin()
+            >>> print(output)
+            1.0
+        """
+        self._init_check()
+        return tensor_operator_registry.get('amin')(self, axis, keep_dims)
+
+    def amax(self, axis=(), keep_dims=False):
+        """
+        Reduces a dimension of a tensor by the maximum value in the dimension, by default. And also can
+        reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the
+        same by controlling `keep_dims`.
+
+        Args:
+            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int, tuple(int) or
+                list(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+
+        Returns:
+            Tensor, has the same data type as input tensor.
+
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+            >>> output = input_x.amax()
+            >>> print(output)
+            3.0
+        """
+        self._init_check()
+        return tensor_operator_registry.get('amax')(self, axis, keep_dims)
+
     def prod(self, axis=(), keep_dims=False):
         """
         Reduce a dimension of a tensor by product all elements in the dimension.
@@ -1626,6 +1699,7 @@ class Tensor(Tensor_):
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2506,7 +2580,7 @@ class Tensor(Tensor_):
         Return the maximum of a tensor or maximum along an axis.
 
         Args:
-            axis (Union[None, int, tuple of ints], optional): Axis or
+            axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the maximum is selected over multiple axes,
                 instead of a single axis or all the axes as before. Default: None.
@@ -2558,7 +2632,7 @@ class Tensor(Tensor_):
         Return the minimum of a tensor or minimum along an axis.
 
         Args:
-            axis (Union[None, int, tuple of ints], optional): Axis or
+            axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the minimum is selected over multiple axes,
                 instead of a single axis or all the axes as before. Default: None.

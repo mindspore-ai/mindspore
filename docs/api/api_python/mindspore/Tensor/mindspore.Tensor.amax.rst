@@ -1,9 +1,9 @@
-mindspore.Tensor.prod
+mindspore.Tensor.amax
 =====================
 
-.. py:method:: mindspore.Tensor.prod(axis=(), keep_dims=False)
+.. py:method:: mindspore.Tensor.amax(axis=(), keep_dims=False)
 
-    默认情况下，使用指定维度的所有元素的乘积代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
+    默认情况下，使用指定维度的最大值代替该维度的其他元素，以移除该维度。也可仅缩小该维度大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
 
     参数：
         - **axis** (Union[None, int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。
