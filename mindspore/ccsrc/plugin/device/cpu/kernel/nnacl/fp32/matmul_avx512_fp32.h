@@ -15,8 +15,7 @@
  */
 #ifndef MINDSPORE_NNACL_FP32_MATMUL_AVX512_H_
 #define MINDSPORE_NNACL_FP32_MATMUL_AVX512_H_
-#ifdef ENABLE_AVX512
-#include <x86intrin.h>
+#include "nnacl/op_base.h"
 typedef void (*GemmAvx512Kernel)(float *dst, const float *src, const float *weight, const float *bias,
                                  const size_t act_flag, const size_t row_block, const size_t col_block,
                                  const size_t deep, const size_t src_stride, const size_t dst_stride,
@@ -196,5 +195,4 @@ void nnacl_gemm_avx512_1x16_kernel_nhwc_fp32(float *dst, const float *src, const
 }
 #endif
 
-#endif
 #endif  // MINDSPORE_NNACL_FP32_MATMUL_AVX512_H_

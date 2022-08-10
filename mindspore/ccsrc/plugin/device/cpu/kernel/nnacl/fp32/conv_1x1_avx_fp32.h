@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_AVX
 #ifndef MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
 #define MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
 
@@ -36,8 +35,7 @@ void Conv1x1SWOWxOCAVXKernel(float *dst, const float *src, const float *weight, 
                              size_t dst_flag);
 #endif
 
-#endif
 #ifdef __cplusplus
 }
-#endif  // MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_
 #endif
+#endif  // MINDSPORE_NNACL_FP32_CONV_1X1_AVX_FP32_H_

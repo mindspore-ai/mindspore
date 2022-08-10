@@ -20,8 +20,6 @@
 #include <float.h>
 #include "nnacl/op_base.h"
 
-#if defined(ENABLE_AVX)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,7 +60,5 @@ void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, c
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 #endif  // MINDSPORE_NNACL_FP32_MATMUL_H_
