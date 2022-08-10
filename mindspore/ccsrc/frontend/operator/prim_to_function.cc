@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ PrimToFunction::PrimToFunction()
          {kScalarDiv, kPrimTypeTwoArgs},  {"scalar_eq", kPrimTypeTwoArgs}, {"scalar_ge", kPrimTypeTwoArgs},
          {"scalar_gt", kPrimTypeTwoArgs}, {"scalar_le", kPrimTypeTwoArgs}, {"scalar_lt", kPrimTypeTwoArgs},
          {"scalar_ne", kPrimTypeTwoArgs}, {kScalarMod, kPrimTypeTwoArgs},  {kScalarMul, kPrimTypeTwoArgs},
-         {kScalarPow, kPrimTypeTwoArgs},  {kScalarSub, kPrimTypeTwoArgs},  {kScalarFloordiv, kPrimTypeTwoArgs}}) {}
+         {kScalarPow, kPrimTypeTwoArgs},  {kScalarSub, kPrimTypeTwoArgs},  {kScalarFloordiv, kPrimTypeTwoArgs},
+         {"bit_and", kPrimTypeTwoArgs},   {"bit_or", kPrimTypeTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const {
   bool result = false;

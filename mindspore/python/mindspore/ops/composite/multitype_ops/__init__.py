@@ -36,6 +36,8 @@ from .negative_impl import negative
 from .logical_and_impl import logical_and
 from .logical_or_impl import logical_or
 from .logic_not_impl import logical_not
+from .bitwise_and_impl import bitwise_and
+from .bitwise_or_impl import bitwise_or
 from .uadd_impl import uadd
 from .in_impl import in_
 from .not_in_impl import not_in_
@@ -62,6 +64,8 @@ __all__ = [
     'logical_and',
     'logical_or',
     'logical_not',
+    'bitwise_and',
+    'bitwise_or',
     'in_',
     'not_in_'
 ]

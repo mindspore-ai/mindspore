@@ -253,3 +253,15 @@ def bprop_update_state(u_monad, x, out, dout):
 def bprop_load(param, u_monad, out, dout):
     """Backpropagator for primitive `load`."""
     return dout, C.zeros_like(u_monad)
+
+
+@bprops.register("bit_and")
+def bprop_bit_and(x, y, out, dout):
+    """Backpropagator for primitive `bit_and`."""
+    return C.zeros_like(x), C.zeros_like(y)
+
+
+@bprops.register("bit_or")
+def bprop_bit_or(x, y, out, dout):
+    """Backpropagator for primitive `bit_or`."""
+    return C.zeros_like(x), C.zeros_like(y)

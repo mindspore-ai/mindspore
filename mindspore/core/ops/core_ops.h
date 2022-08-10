@@ -382,6 +382,8 @@ GVAR_DEF(PrimitivePtr, kPrimBoolNot, std::make_shared<Primitive>("bool_not"));
 GVAR_DEF(PrimitivePtr, kPrimBoolAnd, std::make_shared<Primitive>("bool_and"));
 GVAR_DEF(PrimitivePtr, kPrimBoolOr, std::make_shared<Primitive>("bool_or"));
 GVAR_DEF(PrimitivePtr, kPrimBoolEq, std::make_shared<Primitive>("bool_eq"));
+GVAR_DEF(PrimitivePtr, kPrimBitAnd, std::make_shared<Primitive>("bit_and"));
+GVAR_DEF(PrimitivePtr, kPrimBitOr, std::make_shared<Primitive>("bit_or"));
 GVAR_DEF(PrimitivePtr, kPrimGreater, std::make_shared<Primitive>("Greater"));
 GVAR_DEF(PrimitivePtr, kPrimGreaterEqual, std::make_shared<Primitive>("GreaterEqual"));
 GVAR_DEF(PrimitivePtr, kPrimLess, std::make_shared<Primitive>("Less"));

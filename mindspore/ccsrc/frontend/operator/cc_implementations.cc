@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,6 +310,50 @@ LOGIC_OP(Gt)
 LOGIC_OP(Ne)
 LOGIC_OP(Le)
 LOGIC_OP(Ge)
+
+template <typename T, typename U>
+T InnerBitAnd(T x, U y) {
+  return x & y;
+}
+
+template <typename T, typename U>
+T InnerBitOr(T x, U y) {
+  return x | y;
+}
+
+#define BIT_OP(op_t)                                                                                              \
+  ValuePtr Bit##op_t(const ValuePtrList &list) {                                                                  \
+    constexpr size_t kListInputSize = 2;                                                                          \
+    if (list.size() != kListInputSize) {                                                                          \
+      MS_EXCEPTION(NotSupportError) << "Input number of Bit" << #op_t << " should be 2, but got " << list.size(); \
+    }                                                                                                             \
+    const ValuePtr &x = list[0];                                                                                  \
+    const ValuePtr &y = list[1];                                                                                  \
+    MS_EXCEPTION_IF_NULL(x);                                                                                      \
+    MS_EXCEPTION_IF_NULL(y);                                                                                      \
+    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                               \
+      int32_t res = InnerBit##op_t(GetValue<int>(x), GetValue<int>(y));                                           \
+      return MakeValue(res);                                                                                      \
+    }                                                                                                             \
+    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                               \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int>(y));                                       \
+      return MakeValue(res);                                                                                      \
+    }                                                                                                             \
+    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                               \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(y), GetValue<int>(x));                                       \
+      return MakeValue(res);                                                                                      \
+    }                                                                                                             \
+    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                               \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                                   \
+      return MakeValue(res);                                                                                      \
+    }                                                                                                             \
+    MS_EXCEPTION(TypeError) << "Unsupported input type. For Bit" << #op_t                                         \
+                            << ", only integer types are supported, but got type of x:" << x->type_name()         \
+                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()               \
+                            << ", value of y:" << y->ToString();                                                  \
+  }
+BIT_OP(And)
+BIT_OP(Or)
 
 ValuePtr ScalarUAdd(const ValuePtrList &list) {
   if (list.size() != 1) {

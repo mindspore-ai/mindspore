@@ -2424,6 +2424,8 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
     {prim::kPrimScalarUadd, R{prim::ScalarUAdd, true, nullptr, true}},
     {prim::kPrimScalarUsub, R{prim::ScalarUSub, true, nullptr, true}},
     {prim::kPrimScalarLog, R{prim::ScalarLog, true, nullptr, true}},
+    {prim::kPrimBitAnd, R{prim::BitAnd, true, nullptr, true}},
+    {prim::kPrimBitOr, R{prim::BitOr, true, nullptr, true}},
     {prim::kPrimScalarEq, R{prim::ScalarEq, true, std::make_shared<Bool>(), true}},
     {prim::kPrimScalarLt, R{prim::ScalarLt, true, std::make_shared<Bool>(), true}},
     {prim::kPrimScalarGt, R{prim::ScalarGt, true, std::make_shared<Bool>(), true}},
