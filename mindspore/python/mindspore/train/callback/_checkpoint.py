@@ -207,7 +207,11 @@ class CheckpointConfig:
 
     @property
     def save_checkpoint_seconds(self):
-        """Get the value of _save_checkpoint_seconds."""
+        """Get the value of _save_checkpoint_seconds.
+
+        Returns:
+            Int, seconds to save the checkpoint file.
+        """
         return self._save_checkpoint_seconds
 
     @property
