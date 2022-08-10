@@ -22,10 +22,8 @@ from . import ops
 from .common.api import ms_class
 from .common.parameter import Parameter
 from .common.tensor import Tensor
-# pylint: disable=W0611
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
-# pylint: disable=W0611
-from .train.amp import build_train_network
+from .train.amp import build_train_network, auto_mixed_precision
 
 gpu_float_status = ops.FloatStatus()
 
@@ -285,3 +283,9 @@ class DynamicLossScaler(LossScaler):
 
         counter = ((self.counter + 1) % self.scale_window) * grads_finite
         ops.assign(self.counter, counter)
+
+__all__ = [
+    "DynamicLossScaleManager", "LossScaleManager", "FixedLossScaleManager",
+    "build_train_network", "DynamicLossScaler", "StaticLossScaler", "LossScaler",
+    "auto_mixed_precision", "all_finite"
+]
