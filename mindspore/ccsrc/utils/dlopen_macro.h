@@ -35,21 +35,21 @@
 #define PORTABLE_EXPORT __declspec(dllexport)
 #endif
 
-#define PLUGIN_METHOD(name, return_type, params...)        \
-  extern "C" {                                             \
-  PORTABLE_EXPORT return_type Plugin##name(params);        \
-  }                                                        \
-  constexpr const char *k##name##Name = "Plugin" #name;    \
-  using name##FunObj = std::function<return_type(params)>; \
-  using name##FunPtr = return_type (*)(params);
+#define PLUGIN_METHOD(name, return_type, ...)                   \
+  extern "C" {                                                  \
+  PORTABLE_EXPORT return_type Plugin##name(__VA_ARGS__);        \
+  }                                                             \
+  constexpr const char *k##name##Name = "Plugin" #name;         \
+  using name##FunObj = std::function<return_type(__VA_ARGS__)>; \
+  using name##FunPtr = return_type (*)(__VA_ARGS__);
 
-#define ORIGIN_METHOD(name, return_type, params...)        \
-  extern "C" {                                             \
-  return_type name(params);                                \
-  }                                                        \
-  constexpr const char *k##name##Name = #name;             \
-  using name##FunObj = std::function<return_type(params)>; \
-  using name##FunPtr = return_type (*)(params);
+#define ORIGIN_METHOD(name, return_type, ...)                   \
+  extern "C" {                                                  \
+  return_type name(__VA_ARGS__);                                \
+  }                                                             \
+  constexpr const char *k##name##Name = #name;                  \
+  using name##FunObj = std::function<return_type(__VA_ARGS__)>; \
+  using name##FunPtr = return_type (*)(__VA_ARGS__);
 
 inline static std::string GetDlErrorMsg() {
 #ifndef _WIN32

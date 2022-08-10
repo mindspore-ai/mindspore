@@ -24,7 +24,26 @@
 #include <thread>
 #include <limits>
 #include <cmath>
+#include <chrono>
 #include "utils/macros.h"
+namespace mindspore {
+class MSLogTime {
+ public:
+  MSLogTime() {}
+  ~MSLogTime() {}
+  inline void Start() { this->start = std::chrono::system_clock::now(); }
+  inline void End() { this->end = std::chrono::system_clock::now(); }
+  uint64_t GetRunTimeUS() {
+    auto ms_duration = std::chrono::duration_cast<std::chrono::microseconds>(this->end - this->start);
+    uint64_t ms = ms_duration.count();
+    return ms;
+  }
+
+ private:
+  std::chrono::system_clock::time_point start;
+  std::chrono::system_clock::time_point end;
+};
+}  // namespace mindspore
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
   ClassType(const ClassType &) = delete;   \

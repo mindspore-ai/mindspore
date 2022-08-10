@@ -1348,7 +1348,7 @@ void MindRTBackend::SyncStream() {
   }
 }
 
-std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
+std::shared_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
 
@@ -1391,12 +1391,12 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
     strategy = runtime::GraphExecutionStrategy::kPipelineWithExecutionOrder;
   }
-  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
+  return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
                                              root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
                                              strategy);
 }
 
-std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
+std::shared_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   const ActorInfo &actor_info, const std::vector<int64_t> &tensors_mask, const std::vector<TensorPtr> &input_tensors,
   bool need_erase) {
   std::vector<KernelGraphPtr> graphs;
@@ -1424,7 +1424,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   std::vector<std::vector<TensorPtr> *> input_tensors_list(
     1, const_cast<std::vector<tensor::TensorPtr> *>(&input_tensors));
   auto parser = std::make_shared<ControlNodeParser>();
-  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
+  return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
                                              std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
                                              outputs_order, 0, actor_info, need_erase,
                                              runtime::GraphExecutionStrategy::kStep);
@@ -1523,8 +1523,12 @@ void MindRTBackend::BatchBuildCallback() {
     throw(std::runtime_error(ex.what()));
   } catch (...) {
     op_executor.Reset();
+#ifndef _MSC_VER
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
+#else
+    MS_LOG(EXCEPTION) << "Error occurred when execute task in queue.";
+#endif
   }
 }
 

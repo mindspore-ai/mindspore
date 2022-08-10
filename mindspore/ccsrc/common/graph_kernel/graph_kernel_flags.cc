@@ -36,10 +36,18 @@ std::vector<std::string> GetTokens(const std::string &str, const std::string &de
   std::vector<char> c_str(str.begin(), str.end());
   c_str.push_back('\0');
   char *saveptr = nullptr;
+#ifdef _MSC_VER
+  char *pch = strtok_s(&c_str[0], delim.c_str(), &saveptr);
+#else
   char *pch = strtok_r(&c_str[0], delim.c_str(), &saveptr);
+#endif
   while (pch != nullptr) {
     (void)tokens.emplace_back(pch);
+#ifdef _MSC_VER
+    pch = strtok_s(nullptr, delim.c_str(), &saveptr);
+#else
     pch = strtok_r(nullptr, delim.c_str(), &saveptr);
+#endif
   }
   return tokens;
 }

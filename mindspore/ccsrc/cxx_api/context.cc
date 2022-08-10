@@ -118,6 +118,20 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
 
 DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
 
+#ifdef _MSC_VER
+// these func not need to realize, only for msvc compile success
+std::vector<char> DeviceInfoContext::GetProviderChar() const {
+  std::vector<char> tmp;
+  return tmp;
+}
+void DeviceInfoContext::SetProvider(const std::vector<char> &provider) { (void)provider; }
+std::vector<char> DeviceInfoContext::GetProviderDeviceChar() const {
+  std::vector<char> tmp;
+  return tmp;
+}
+void DeviceInfoContext::SetProviderDevice(const std::vector<char> &device) { (void)device; }
+#endif
+
 void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   MS_EXCEPTION_IF_NULL(data_);
   data_->params[kModelOptionCpuEnableFP16] = is_fp16;

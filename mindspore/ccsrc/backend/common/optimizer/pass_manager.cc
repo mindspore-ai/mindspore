@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/optimizer/pass_manager.h"
-
-#include <sys/time.h>
 #include <deque>
 #include <string>
 #include "ir/anf.h"

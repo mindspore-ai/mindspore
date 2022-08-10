@@ -262,7 +262,7 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
   const size_t monad_index = 2;
   const size_t tuple_inputs_size = 2;
   const size_t load_inputs_size = 3;
-  auto cnode_load = BroadFirstSearchFirstOf({cnode}, [](const CNodePtr &search_cnode) {
+  auto cnode_load = BroadFirstSearchFirstOf({cnode}, [&](const CNodePtr &search_cnode) {
     if (!IsPrimitiveCNode(search_cnode, prim::kPrimLoad)) {
       return false;
     }

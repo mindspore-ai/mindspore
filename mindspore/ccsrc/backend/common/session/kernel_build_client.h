@@ -155,7 +155,11 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
 
   std::string cmd = cmd_env;
   (void)cmd.append(1, ' ').append(cmd_script);
+#ifdef _MSC_VER
+  FILE *fpipe = _popen(cmd.c_str(), "r");
+#else
   FILE *fpipe = popen(cmd.c_str(), "r");
+#endif
   if (fpipe == nullptr) {
     MS_LOG(EXCEPTION) << "popen failed, errno: " << errno;
   }
@@ -181,7 +185,11 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
       }
     }
   }
+#ifdef _MSC_VER
+  (void)_pclose(fpipe);
+#else
   (void)pclose(fpipe);
+#endif
   const std::string py_suffix = ".py";
   if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
     MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";

@@ -21,6 +21,7 @@
 #include <optional>
 #include <fstream>
 #include <string>
+#include <random>
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
@@ -40,9 +41,17 @@ bool Common::NeedMapping(const std::string &origin_name) {
 }
 
 std::string Common::GetRandomStr() {
-  unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
   std::string npy_suffix = ".npy";
+#ifndef _MSC_VER
+  unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
   std::string random_name = std::to_string(rand_r(&seed)) + npy_suffix;
+#else
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  constexpr int min_value = 0;
+  std::uniform_int_distribution<> distrib(min_value);
+  std::string random_name = std::to_string(distrib(gen)) + npy_suffix;
+#endif
   return random_name;
 }
 

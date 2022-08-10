@@ -16,10 +16,9 @@
 
 #include "frontend/parallel/step_parallel.h"
 
-#include <sys/time.h>
 #include <cinttypes>
 #include <algorithm>
-
+#include <chrono>
 #include <map>
 #include <memory>
 #include <set>
@@ -3190,8 +3189,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     return changes;
   }
 
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
+  MSLogTime msTime;
+  msTime.Start();
 
   MS_LOG(INFO) << "Now entering step parallel";
   DumpGraph(root, std::string(STEP_PARALLEL_BEGIN));
@@ -3276,10 +3275,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // in auto parallel mode, no need to check if stategies set
   root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
 
-  (void)gettimeofday(&end_time, nullptr);
-  uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-
+  msTime.End();
+  uint64_t time = msTime.GetRunTimeUS();
   MS_LOG(INFO) << "Now leaving step parallel, used time: " << time << " us";
   return changes;
 }

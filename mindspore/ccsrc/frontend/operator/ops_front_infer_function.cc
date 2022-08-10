@@ -226,9 +226,9 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "Get the type from AbstractType value failed.";
   }
 
-  auto mode_t = mode_v->cast<TypePtr>();
+  auto tmpMode = mode_v->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  bool v = IsSubtype(args_spec_list[0], mode_t);
+  bool v = IsSubtype(args_spec_list[0], tmpMode);
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
 }
 

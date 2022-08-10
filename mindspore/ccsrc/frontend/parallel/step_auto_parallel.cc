@@ -94,10 +94,8 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
   MS_LOG(INFO) << "search_mode: " << strategy_search_mode;
 
-  struct timeval start_time {
-    0
-  }, end_time{0};
-  (void)gettimeofday(&start_time, nullptr);
+  MSLogTime msTime;
+  msTime.Start();
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(STEP_AUTO_PARALLEL_BEGIN, root);
@@ -129,9 +127,9 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
 
   // search parallelization strategy
   SearchParallelStrategy(strategy_search_mode, root, all_nodes);
-  (void)gettimeofday(&end_time, nullptr);
-  uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  msTime.End();
+  uint64_t time = msTime.GetRunTimeUS();
+
   MS_LOG(INFO) << "Now leaving step auto parallel, used time: " << time << " us";
 
   root->set_flag(AUTO_PARALLEL_RUN_ONCE_ONLY, true);
