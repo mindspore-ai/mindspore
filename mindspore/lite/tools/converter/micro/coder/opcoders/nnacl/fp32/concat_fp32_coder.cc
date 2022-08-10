@@ -71,7 +71,9 @@ int ConcatFP32Coder::DoCode(CoderContext *const context) {
     code << "shape_" << i << ", ";
   }
   code << "};\n";
-
+  if (support_parallel_) {
+    thread_num_ = 1;
+  }
   code.CodeFunction("Concat", "inputs_addr", input_num, axis_, "inputs_output_shape", output_tensor_->shape().size(),
                     output_tensor_, 0, thread_num_, sizeof(float));
   context->AppendCode(code.str());

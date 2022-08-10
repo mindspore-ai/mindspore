@@ -74,7 +74,11 @@ int GroupNormFP32Coder::DoCode(CoderContext *const context) {
             "group_norm_fp32.c",
           });
   NNaclFp32Serializer code;
-  code.CodeStruct("gn_parameter", *gn_parameter);
+  std::string param_name = "gn_parameter";
+  code.CodeStruct(param_name, *gn_parameter);
+  if (support_parallel_) {
+    code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+  }
   code.CodeFunction("GroupNormFp32", input_tensor_, scale_tensor, offset_tensor, mean_, variance_, "&gn_parameter",
                     kDefaultTaskId, output_tensor_);
   MS_LOG(INFO) << "GroupNormFp32Code has been called";
