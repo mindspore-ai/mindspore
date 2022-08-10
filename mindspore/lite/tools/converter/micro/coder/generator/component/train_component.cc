@@ -16,6 +16,7 @@
 
 #include "coder/generator/component/train_component.h"
 #include <string>
+#include "coder/utils/coder_utils.h"
 #include "nnacl/op_base.h"
 #include "coder/utils/type_cast.h"
 
@@ -132,6 +133,69 @@ MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {
   return ret == RET_OK ? kMSStatusSuccess : kMSStatusLiteError;
 })RAW";
   ofs << "\n\n";
+}
+
+void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  ofs << "static size_t PackWeightSize() {\n";
+  ofs << "  size_t w_size = 0;\n";
+  for (const auto &block : ctx->GetInitWeightSizeCode()) {
+    ofs << "  " << block;
+  }
+  ofs << "  return w_size;\n";
+  ofs << "}\n\n";
+
+  ofs << "struct ModelParameter {\n"
+      << "  void *addr;\n"
+      << "  size_t size;\n"
+      << "  size_t offset;\n"
+      << "};\n\n";
+
+  // generate weight struct array
+  size_t params_num = 0;
+  size_t offset = 0;
+  std::string origins;
+  for (const auto &item : ctx->saved_weights()) {
+    std::string name = item.first;
+    Tensor *tensor = item.second;
+    if (!CheckConstantTensor(tensor)) {
+      continue;
+    }
+    origins += "  {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
+    params_num++;
+    offset += tensor->Size();
+  }
+  ofs << "struct ModelParameter model_params[] = {\n" << origins << "  };\n";
+  ofs << "\n";
+
+  // generate weight init function
+  ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+      << "  if (weight_buffer == NULL) {\n"
+      << "    return RET_ERROR;\n"
+      << "  }\n";
+
+  ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+
+  ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
+      << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
+         "      return RET_ERROR;\n"
+         "    }\n"
+      << "    memcpy(model_params[i].addr, (weight_buffer + model_params[i].offset), model_params[i].size);\n"
+      << "  }\n";
+  ofs << "  if (" << ctx->weight_size_name() << " > 0) {\n";
+  ofs << "    " << ctx->weight_name() << " = malloc(" << ctx->weight_size_name() << ");\n";
+  ofs << "    if (" << ctx->weight_name() << " == NULL) {\n      return RET_ERROR;\n    }\n";
+  ofs << "    memset(" << ctx->weight_name() << ", 0, " << ctx->weight_size_name() << ");\n";
+  ofs << "  }\n";
+
+  // generate matrix weight init func
+  ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
+  for (const auto &block : ctx->init_contents()) {
+    ofs << "{\n" << block << "}\n";
+  }
+  ofs << "  if (" << ctx->weight_size_name() << " < " << ctx->weight_offset_name()
+      << ") {\n    return RET_ERROR;\n  }\n";
+  ofs << "  return RET_OK;\n";
+  ofs << "}\n\n";
 }
 
 void CodeCopyTrainOutputsState(std::ofstream &ofs) {

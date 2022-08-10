@@ -268,10 +268,12 @@ int Generator::CodeWeightFile() {
   }
   CodeModelParamsForNet(hofs, cofs, ctx_, *config_);
   CodeInitWeightState(hofs, *config_);
-  CodeWeightInitFunc(cofs, ctx_, *config_);
   if (config_->code_mode() == CodeMode::Train) {
+    CodeWeightInitFuncForTrain(cofs, ctx_);
     CodeExportWeightState(hofs, *config_);
     CodeWeightExportFunc(cofs, ctx_, *config_);
+  } else {
+    CodeWeightInitFunc(cofs, ctx_, *config_);
   }
   hofs.close();
   cofs.close();

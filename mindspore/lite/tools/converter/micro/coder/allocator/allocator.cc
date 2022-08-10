@@ -90,8 +90,11 @@ std::map<Tensor *, std::string> MemoryAllocator::tensors_map() const {
   std::map<Tensor *, std::string> res;
   res.insert(tensors_addr_.begin(), tensors_addr_.end());
   res.insert(malloc_weights_addr_.begin(), malloc_weights_addr_.end());
-  for (const auto &iter : saved_weights_addr_) {
-    res.insert({iter.second, iter.first});
+  if (Configurator::GetInstance()->code_mode() == CodeMode::Train) {
+    // in order to put all weights into struct ModelParameter model_params
+    for (const auto &iter : saved_weights_addr_) {
+      res.insert({iter.second, iter.first});
+    }
   }
   return res;
 }
