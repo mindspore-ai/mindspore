@@ -1545,17 +1545,15 @@ int64_t AnfAlgo::GetAttrGroups(const AnfNodePtr &node, size_t index) {
   }
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
-      auto node_name = AnfAlgo::GetCNodeName(cnode);
-      if (node_name == kAllReduceOpName || node_name == kBroadcastOpName) {
-        auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
-        if (index >= fz_group_idx.size()) {
-          MS_LOG(EXCEPTION) << "Index out of range, attr fracz_group_idx of node[" << node->fullname_with_scope()
-                            << "] only have " << fz_group_idx.size() << " numbers, but get index " << index;
-        }
-        return fz_group_idx[index];
+    if (HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
+      auto fz_group_idx = GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
+      if (index >= fz_group_idx.size()) {
+        MS_LOG(EXCEPTION) << "Index out of range, attr fracz_group_idx of node[" << node->fullname_with_scope()
+                          << "] only have " << fz_group_idx.size() << " numbers, but get index " << index;
       }
-      return AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
+      return fz_group_idx[index];
+    } else if (HasNodeAttr(kAttrFracZGroup, cnode)) {
+      return GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
     }
   }
   if (node->isa<Parameter>()) {
