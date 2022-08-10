@@ -916,6 +916,9 @@ def inplace_update(x, v, indices):
     """
     Updates specified rows with values in `v`.
 
+    Note:
+            `indices` refers to the left-most dimension.
+
     Args:
         indices (Union[int, tuple], Tensor): Indices into the left-most dimension of `x`, and determines which rows of x
             to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x). If the type
@@ -958,6 +961,9 @@ def inplace_add(x, v, indices):
     """
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
+    Note:
+            `indices` refers to the left-most dimension.
+
     Args:
         x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
@@ -999,6 +1005,9 @@ def inplace_add(x, v, indices):
 def inplace_sub(x, v, indices):
     """
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
+
+    Note:
+            `indices` refers to the left-most dimension.
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
