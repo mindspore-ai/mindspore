@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -25,23 +26,27 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 class ResizeBilinearGradAlignCornerT(nn.Cell):
     def __init__(self):
         super(ResizeBilinearGradAlignCornerT, self).__init__()
-        self.ResizeBilinearGradAlignCornerT = G.ResizeBilinearGrad(
-            align_corners=True)
+        self.op = G.ResizeBilinearGrad(align_corners=True)
 
     def construct(self, dy, size):
-        return self.ResizeBilinearGradAlignCornerT(dy, size)
+        return self.op(dy, size)
 
 
 class ResizeBilinearGradAlignCornerF(nn.Cell):
     def __init__(self):
         super(ResizeBilinearGradAlignCornerF, self).__init__()
-        self.ResizeBilinearGradAlignCornerF = G.ResizeBilinearGrad(align_corners=False)
+        self.op = G.ResizeBilinearGrad(align_corners=False)
 
     def construct(self, dy, size):
-        return self.ResizeBilinearGradAlignCornerF(dy, size)
+        return self.op(dy, size)
 
 
-def test_ResizeBilinearGradAlignCornerT():
+def test_resize_bilinear_grad_align_corner():
+    """
+    Feature: Test ResizeBilinearGrad on CPU.
+    Description:  Test align corner true.
+    Expectation: Assert that results are consistent with expect.
+    """
     dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
 
     orign_image = np.array(
@@ -65,7 +70,12 @@ def test_ResizeBilinearGradAlignCornerT():
     assert np.all(output.asnumpy() == expect)
 
 
-def test_ResizeBilinearGradAlignCornerF():
+def test_resize_bilinear_grad_align_corner_false():
+    """
+    Feature: Test ResizeBilinearGrad on CPU.
+    Description:  Test align corner false.
+    Expectation: Assert that results are consistent with expect.
+    """
     dy = np.array([[[[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]]]).astype(np.float32)
 
     orign_image = np.array([[[[1.1, 2.2], [3.3, 4.4]]]]).astype(np.float16)
@@ -79,5 +89,29 @@ def test_ResizeBilinearGradAlignCornerF():
     expect = np.array([[[[2.25, 0.75],
                          [0.75, 4.25]]]]).astype(np.float32)
     rnn = ResizeBilinearGradAlignCornerF()
+    output = rnn(Tensor(dy), Tensor(orign_image))
+    assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_resize_bilinear_grad_dtype(mode, dtype):
+    """
+    Feature: Test ResizeBilinearGrad on CPU.
+    Description:  Test float16, float32, float64.
+    Expectation: Assert that results are consistent with expect.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    dy = np.array([[[[1, 2], [3, 4]]]]).astype(dtype)
+    orign_image = np.array(
+        [[[[1.1, 2.2, 3.2, 2.5], [3.3, 4.4, 5.7, 8.1], [3.3, 4.4, 5.7, 8.1], [3.3, 4.4, 5.7, 8.1]]]]).astype(dtype)
+    expect = np.array([[[[1., 0., 0., 2.],
+                         [0., 0., 0., 0.],
+                         [0., 0., 0., 0.],
+                         [3., 0., 0., 4.]]]]).astype(dtype)
+    rnn = ResizeBilinearGradAlignCornerT()
     output = rnn(Tensor(dy), Tensor(orign_image))
     assert np.all(output.asnumpy() == expect)
