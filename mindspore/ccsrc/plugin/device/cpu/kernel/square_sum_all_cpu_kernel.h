@@ -38,7 +38,7 @@ class SquareSumAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t input_size_;
   TypeId dtype_;
   size_t batch_rank_{0};
-  size_t batch_size_{1};
+  size_t num_batch_{1};
   size_t x_size_{1};
 
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
