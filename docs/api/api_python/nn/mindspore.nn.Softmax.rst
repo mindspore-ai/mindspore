@@ -16,7 +16,7 @@ mindspore.nn.Softmax
 
     **参数：**
 
-    - **axis** (Union[int, tuple[int]]) - 指定Softmax运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。
+    - **axis** (Union[int, tuple[int]]) - 指定Softmax运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。CPU环境下，axis只支持int类型。
 
     **输入：**
 
