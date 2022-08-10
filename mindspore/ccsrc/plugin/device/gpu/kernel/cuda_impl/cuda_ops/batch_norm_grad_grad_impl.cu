@@ -194,14 +194,14 @@ __global__ void ComputeInferenceGradsKernel(const T *dy, const T *x, const float
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
-                                               const float *variance, const T *dout_dx, const float *dout_dscale,
-                                               const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
-                                               float *x_hat, float *mean_dy, float *mean_dout_dx,
-                                               float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
-                                               float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
-                                               DataFormat format, float epsilon, uint32_t device_id,
-                                               cudaStream_t stream) {
+void BatchNormGradGradTraining(const T *dy, const T *x, const float *scale, const float *mean,
+                               const float *variance, const T *dout_dx, const float *dout_dscale,
+                               const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
+                               float *x_hat, float *mean_dy, float *mean_dout_dx,
+                               float *mean_dy_mul_x_hat, float *mean_dout_dx_mul_x_hat,
+                               float *mean_dy_mul_dout_dx, const ShapeInfo &shape_info,
+                               DataFormat format, float epsilon, uint32_t device_id,
+                               cudaStream_t stream) {
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   ComputeInvStdKernel<<<CUDA_BLOCKS(device_id, shape_info.c), CUDA_THREADS(device_id), 0, stream>>>(
     variance, shape_info, epsilon, inv_std);
@@ -220,11 +220,11 @@ CUDA_LIB_EXPORT void BatchNormGradGradTraining(const T *dy, const T *x, const fl
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
-                                                const float *variance, const T *dout_dx, const float *dout_dscale,
-                                                const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
-                                                float *tmp, const ShapeInfo &shape_info, DataFormat format,
-                                                float epsilon, uint32_t device_id, cudaStream_t stream) {
+void BatchNormGradGradInference(const T *dy, const T *x, const float *scale, const float *mean,
+                                const float *variance, const T *dout_dx, const float *dout_dscale,
+                                const float *dout_dbias, T *ddy, T *dx, float *dscale, float *inv_std,
+                                float *tmp, const ShapeInfo &shape_info, DataFormat format,
+                                float epsilon, uint32_t device_id, cudaStream_t stream) {
   size_t size = shape_info.n * shape_info.c * shape_info.h * shape_info.w;
   ComputeInvStdKernel<<<CUDA_BLOCKS(device_id, shape_info.c), CUDA_THREADS(device_id), 0, stream>>>(
     variance, shape_info, epsilon, inv_std);

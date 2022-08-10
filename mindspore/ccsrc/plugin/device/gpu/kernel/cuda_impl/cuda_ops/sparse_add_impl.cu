@@ -212,14 +212,14 @@ __global__ void SparseAddKernel(const T *a_indices, const S *a_values, const T *
 }
 
 template <typename T, typename S, typename K>
-CUDA_LIB_EXPORT void SparseAdd(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
-                      T *sum_indices, S *sum_values,
-                      size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
-                      size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
-                      const size_t a_indices_num, const size_t b_indices_num,
-                      S *res_store_mem, int64_t *sum_count,
-                      const K *threshold,  const uint32_t &device_id,
-                      cudaStream_t cuda_stream) {
+void SparseAdd(const T *a_indices, const S *a_values, const T *b_indices, const S *b_values,
+               T *sum_indices, S *sum_values,
+               size_t *a_value_index, size_t *b_value_index, bool *is_from_a, S* whole_values,
+               size_t *place_holder_index, int64_t *indices, bool *threshold_valid,
+               const size_t a_indices_num, const size_t b_indices_num,
+               S *res_store_mem, int64_t *sum_count,
+               const K *threshold,  const uint32_t &device_id,
+               cudaStream_t cuda_stream) {
   SparseAddKernel<<<GET_BLOCKS(1), 1, 0, cuda_stream>>>(
                       a_indices, a_values, b_indices, b_values,
                       sum_indices, sum_values,

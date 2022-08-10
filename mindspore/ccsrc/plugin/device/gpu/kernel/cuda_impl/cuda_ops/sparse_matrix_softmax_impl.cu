@@ -54,12 +54,12 @@ __global__ void GpuCopy(IndexType *d_in, IndexType *d_out, int N) {
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseMatrixSoftmax(int shape_size, int batch_pointers_size, int row_pointers_size,
-                                         int col_indices_size, IndexType *x_dense_shape, IndexType *x_batch_pointers,
-                                         IndexType *x_row_pointers, IndexType *x_col_indices, DataType *x_values,
-                                         IndexType *y_dense_shape, IndexType *y_batch_pointers,
-                                         IndexType *y_row_pointers, IndexType *y_col_indices, DataType *softmax,
-                                         uint32_t device_id, cudaStream_t cuda_stream) {
+void SparseMatrixSoftmax(int shape_size, int batch_pointers_size, int row_pointers_size,
+                         int col_indices_size, IndexType *x_dense_shape, IndexType *x_batch_pointers,
+                         IndexType *x_row_pointers, IndexType *x_col_indices, DataType *x_values,
+                         IndexType *y_dense_shape, IndexType *y_batch_pointers,
+                         IndexType *y_row_pointers, IndexType *y_col_indices, DataType *softmax,
+                         uint32_t device_id, cudaStream_t cuda_stream) {
   int threads_per_block = CUDA_THREADS(device_id);
   unsigned int grid_num = UP_DIV(row_pointers_size - 1, threads_per_block);
 

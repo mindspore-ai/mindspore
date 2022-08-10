@@ -24,7 +24,6 @@ using Complex = mindspore::utils::Complex<T>;
 __inline__ __device__ int PermutationOrder(int m, const int *per_batch_pivot) {
   int permutation_order = 0;
   for (int i = 0; i < m - 1; ++i) {
-    // Refer to http://icl.cs.utk.edu/lapack-forum/viewtopic.php?f=2&t=340 .
     permutation_order += per_batch_pivot[i] != (i + 1);
   }
   return permutation_order;
@@ -81,9 +80,9 @@ __global__ void CalculateDeterminantByLuKernel(const T *lu_input, const int *piv
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
-                                              bool is_sign_log_determinant, T *determinant_output, T *sign_output,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
+                              bool is_sign_log_determinant, T *determinant_output, T *sign_output,
+                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   // Parallelization by batch_size.
   CalculateDeterminantByLuKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     lu_input, pivot, m, batch_size, is_sign_log_determinant, determinant_output, sign_output);

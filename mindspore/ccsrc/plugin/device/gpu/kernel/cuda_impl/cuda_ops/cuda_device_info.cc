@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+#ifndef _MSC_VER
 #include <pthread.h>
+#endif
 #include <unordered_map>
 
 namespace mindspore {

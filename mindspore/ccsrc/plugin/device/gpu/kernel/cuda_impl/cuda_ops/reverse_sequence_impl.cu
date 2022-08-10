@@ -85,10 +85,10 @@ __global__ void ReverseSequence(const size_t size, const T *input, const S *seq_
 }
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
-                                        const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
-                                        size_t *input_shape_cum_ptr, size_t shape_size, T *output,
-                                        cudaStream_t cuda_stream) {
+void CalReverseSequence(const size_t size, const T *input, const S *seq_len, const int64_t batch_dim,
+                        const int64_t seq_dim, size_t *cur_pos_arr, const size_t *input_shape_ptr,
+                        size_t *input_shape_cum_ptr, size_t shape_size, T *output,
+                        cudaStream_t cuda_stream) {
   ComputeCumShape<<<1, 1, 0, cuda_stream>>>(input_shape_ptr, input_shape_cum_ptr, shape_size);
   ReverseSequence<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input, seq_len, batch_dim, seq_dim, cur_pos_arr, input_shape_ptr, input_shape_cum_ptr, shape_size, output);

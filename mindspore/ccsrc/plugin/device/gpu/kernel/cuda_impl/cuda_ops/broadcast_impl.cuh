@@ -20,8 +20,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
-const float kFloatEplison = 1e-37;
-
 enum BroadcastOpType {
   BROADCAST_TYPE_GREATER = 0,
   BROADCAST_TYPE_LESS = 1,

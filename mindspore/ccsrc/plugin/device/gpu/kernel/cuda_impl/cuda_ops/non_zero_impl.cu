@@ -76,9 +76,9 @@ __global__ void NonZeroKernel(IndexType *output_ptr, const size_t *output_size_p
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void NonZero(const DataType *input_ptr, IndexType *output_ptr, size_t *output_size_ptr,
-                             const std::vector<size_t> &input_shape, size_t input_size, const uint32_t &device_id,
-                             cudaStream_t cuda_stream) {
+void NonZero(const DataType *input_ptr, IndexType *output_ptr, size_t *output_size_ptr,
+             const std::vector<size_t> &input_shape, size_t input_size, const uint32_t &device_id,
+             cudaStream_t cuda_stream) {
   // Set the index (1-D base) for non-zero elements and place them into output.
   // To support in place operation later, we use custom output iterator,
   // which is inspired by cub library. And output_size_ptr stores the number of non-zero elements.
