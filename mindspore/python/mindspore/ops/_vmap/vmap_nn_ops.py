@@ -1584,6 +1584,58 @@ def get_max_pool_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.LayerNorm)
+def get_layernorm_vmap_rule(prim, axis_size):
+    """VmapRule for `LayerNorm` operation."""
+    @constexpr
+    def process_attr_axis(prim_attr_axis):
+        if prim_attr_axis < 0:
+            return prim_attr_axis
+        return prim_attr_axis + 1
+
+    norm_axis = process_attr_axis(prim.begin_norm_axis)
+    params_axis = process_attr_axis(prim.begin_params_axis)
+    batch_prim = P.LayerNorm(norm_axis, params_axis)
+
+    @constexpr
+    def get_logical_shape(var_shape):
+        return var_shape[1:]
+
+    def vmap_rule(x_bdim, gamma_bdim, beta_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, gamma_bdim, beta_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        g, g_dim = gamma_bdim
+        b, b_dim = beta_bdim
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+
+        if g_dim is None and b_dim is None:
+            output, mean, var = batch_prim(x, g, b)
+            return (output, 0), (mean, 0), (var, 0)
+
+        g = _bdim_at_front(g, g_dim, axis_size)
+        b = _bdim_at_front(b, b_dim, axis_size)
+        g_logical_shape = get_logical_shape(F.shape(g))
+        b_logical_shape = get_logical_shape(F.shape(b))
+
+        ones_like_g = F.ones(g_logical_shape, F.dtype(g))
+        zeros_like_b = F.zeros(b_logical_shape, F.dtype(b))
+        output_tmp, mean, var = batch_prim(x, ones_like_g, zeros_like_b)
+
+        x_shape = F.shape(x)
+        g_shape = F.shape(g)
+        b_shape = F.shape(b)
+        g = _handle_broadcasting(g, g_shape, x_shape)
+        b = _handle_broadcasting(b, b_shape, x_shape)
+        output = F.add(F.mul(output_tmp, g), b)
+
+        return (output, 0), (mean, 0), (var, 0)
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

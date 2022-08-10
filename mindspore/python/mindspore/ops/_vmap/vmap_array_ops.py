@@ -26,17 +26,14 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops import constexpr
 from mindspore.ops.operations import _grad_ops as G
-from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
-    _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, get_unop_vmap_rule
-from ..operations.array_ops import Fills
-from ..operations.array_ops import UniqueConsecutive
-from ..operations.array_ops import Col2Im
-from ..operations.array_ops import NonZero
-from ..operations.array_ops import IndexFill
-from ..operations.random_ops import RandomPoisson
-from ..composite import _VmapGeneralRule
-from ..operations.array_ops import TensorScatterElements
+from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im, NonZero, IndexFill, \
+    TensorScatterElements
+from mindspore.ops.operations.random_ops import RandomPoisson
+from mindspore.ops.primitive import Primitive
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
+    _raise_value_error, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
+    get_unop_vmap_rule
+from mindspore.ops.composite import _VmapGeneralRule
 
 
 @vmap_rules_getters.register(P.NoRepeatNGram)
@@ -1702,15 +1699,15 @@ def get_squeeze_vmap_rule(prim, axis_size):
                 new_axis = generate_all_axis_except_first(F.rank(x))
                 batch_squeeze = P.Squeeze(axis=new_axis)
                 out = batch_squeeze(x)
-                return (out, 0)
+                return out, 0
 
             out = prim(x)
-            return (out, 0)
+            return out, 0
 
         new_axis = move_axis(prim_axis)
         batch_squeeze = P.Squeeze(axis=new_axis)
         out = batch_squeeze(x)
-        return (out, 0)
+        return out, 0
     return vmap_rule
 
 
@@ -1750,7 +1747,7 @@ def get_stridedslice_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         new_begin, new_end, new_strided = get_new_begin_end_strided(begin, end, strided)
         result = batch_stridedslice(x, new_begin, new_end, new_strided)
-        return (result, 0)
+        return result, 0
 
     return vmap_rule
 
