@@ -1169,20 +1169,19 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
 void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
                                              std::vector<AbstractActor *> *const auto_monad_actors) {
   MS_EXCEPTION_IF_NULL(graph);
-  // The data arrow linking is taken over by the control flow.
-  if (graph_compiler_info.control_node_parser_ != nullptr &&
-      graph_compiler_info.control_node_parser_->IsControlFlowDataArrow(graph, nullptr)) {
-    return;
-  }
-
   auto to_actor_name = graph->ToString() + kSuperKernelActorNameSuffix;
   auto to_actor = FetchActor(to_actor_name);
   MS_EXCEPTION_IF_NULL(to_actor);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   auto &input_nodes = graph->input_nodes();
   for (size_t node_index = 0; node_index < input_nodes.size(); ++node_index) {
     auto &input_node = input_nodes[node_index];
     MS_EXCEPTION_IF_NULL(input_node);
+    if (parser->IsControlFlowDataArrow(graph, input_node)) {
+      continue;
+    }
     if (HasAbstractMonad(input_node)) {
       MS_LOG(INFO) << "The graph:" << graph->graph_id()
                    << " has abstract monad input node:" << input_node->DebugString() << ", input index:" << node_index;
