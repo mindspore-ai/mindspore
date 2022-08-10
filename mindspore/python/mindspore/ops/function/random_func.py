@@ -23,6 +23,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from ...common import dtype as mstype
 from ...common.seed import _get_graph_seed
 from ...common.tensor import Tensor
+from ..operations.random_ops import RandomShuffle
 from .._primitive_cache import _get_cache_prim
 from .._utils import get_broadcast_shape
 
@@ -387,6 +388,37 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     return value
 
 
+def random_shuffle(x, seed=0, seed2=0):
+    r"""
+    Randomly shuffles a Tensor along its first dimension.
+
+    Args:
+        x (Tensor): The Tensor need be shuffled.
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
+            final generated random number, must be non-negative. Default: 0.
+
+    Returns:
+        Tensor. The shape and type are the same as the input `x`.
+
+    Raises:
+        TypeError: If data type of `seed` or `seed2` is not int.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
+        >>> shuffle = ops.RandomShuffle(seed=1, seed2=1)
+        >>> output = shuffle(x)
+        >>> print(output.shape)
+        (4,)
+    """
+    random_shuffle_ = _get_cache_prim(RandomShuffle)(seed=seed, seed2=seed2)
+    output = random_shuffle_(x)
+    return output
+
+
 __all__ = [
     'standard_laplace',
     'random_categorical',
@@ -395,5 +427,6 @@ __all__ = [
     'random_gamma',
     'uniform_candidate_sampler',
     'random_poisson',
+    'random_shuffle',
 ]
 __all__.sort()
