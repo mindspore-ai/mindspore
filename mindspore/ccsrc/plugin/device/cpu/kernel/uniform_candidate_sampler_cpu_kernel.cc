@@ -164,13 +164,13 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   }
 
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-
-  batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   batch_size_ = batch_size_ / num_sampled_;
   if (batch_size_ == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
-  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>()));
+  input_size_ =
+    LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>()));
   input_size_ = input_size_ / LongToSize(batch_size_);
 
   (void)output_sizes_.emplace_back(num_sampled_);
@@ -228,16 +228,18 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   }
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
 
-  batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   batch_size_ = batch_size_ / num_sampled_;
   if (batch_size_ == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
 
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  input_size_ = LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>()));
+  input_size_ =
+    LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>()));
   input_size_ = input_size_ / LongToSize(batch_size_);
 
+  output_sizes_.clear();
   (void)output_sizes_.emplace_back(num_sampled_);
   (void)output_sizes_.emplace_back(input_size_);
   (void)output_sizes_.emplace_back(num_sampled_);
