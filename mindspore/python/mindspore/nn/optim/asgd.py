@@ -22,8 +22,8 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore
 from mindspore._checkparam import Validator as validator
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
 
 
 class ASGD(Optimizer):

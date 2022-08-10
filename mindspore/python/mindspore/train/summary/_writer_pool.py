@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Write events to disk in a base directory."""
+from __future__ import absolute_import
+
 import os
 import time
 import signal
@@ -24,9 +26,9 @@ import psutil
 import mindspore.log as logger
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 
-from ._lineage_adapter import serialize_to_lineage_event
-from ._summary_adapter import package_graph_event, package_summary_event
-from .writer import LineageWriter, SummaryWriter, ExportWriter
+from mindspore.train.summary._lineage_adapter import serialize_to_lineage_event
+from mindspore.train.summary._summary_adapter import package_graph_event, package_summary_event
+from mindspore.train.summary.writer import LineageWriter, SummaryWriter, ExportWriter
 
 try:
     from multiprocessing import get_context

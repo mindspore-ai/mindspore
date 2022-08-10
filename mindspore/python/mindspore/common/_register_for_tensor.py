@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from collections import UserDict
-from .. import context
+from mindspore import context
 
 
 class Registry(UserDict):

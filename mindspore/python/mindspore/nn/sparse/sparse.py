@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.ops import operations as P
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 
 class SparseToDense(Cell):

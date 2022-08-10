@@ -18,10 +18,10 @@ from __future__ import division
 
 import math
 
-from ..common import dtype as mstype
-from ..ops import operations as P
-from .cell import Cell
-from .._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
+from mindspore.nn.cell import Cell
+from mindspore._checkparam import Validator as validator
 
 
 class LearningRateSchedule(Cell):

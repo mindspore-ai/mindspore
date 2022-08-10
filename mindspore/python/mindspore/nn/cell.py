@@ -30,17 +30,17 @@ from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common.hook_handle import HookHandle
 from mindspore.context import ParallelMode
 from mindspore.ops.composite import Shard
-from .. import context
-from .._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
-from .._checkparam import Validator
-from ..common import dtype as mstype
-from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
-from ..common.parameter import Parameter, ParameterTuple
-from ..common.tensor import Tensor, CSRTensor, COOTensor
-from ..ops.operations import Cast
-from ..ops.primitive import Primitive
-from ..ops.operations import _inner_ops as inner
-from ..parallel._tensor import _load_tensor_by_layout
+from mindspore import context
+from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
+from mindspore._checkparam import Validator
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.ops.operations import Cast
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.parallel._tensor import _load_tensor_by_layout
 
 
 class Cell(Cell_):

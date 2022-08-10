@@ -15,7 +15,7 @@
 """Cells of grad function. Calculate the gradient of input network or function."""
 from __future__ import absolute_import
 
-from .cell_grad import Jvp, Vjp
+from mindspore.nn.grad.cell_grad import Jvp, Vjp
 
 
 __all__ = ['Jvp', 'Vjp']

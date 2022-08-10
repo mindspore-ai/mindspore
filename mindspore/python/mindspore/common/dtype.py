@@ -20,8 +20,8 @@ from __future__ import absolute_import
 from inspect import isfunction
 import numpy as np
 from mindspore import log as logger
-from .._c_expression import typing
-from .._c_expression.typing import Type
+from mindspore._c_expression import typing
+from mindspore._c_expression.typing import Type
 
 __dtype__ = [
     "int8", "byte",

@@ -19,22 +19,21 @@ Pre-defined building blocks or computing units to construct neural networks.
 """
 from __future__ import absolute_import
 
-from . import layer, loss, optim, metrics, wrap, grad, probability, sparse, dynamic_lr,\
-              reinforcement
-from .learning_rate_schedule import *
-from .dynamic_lr import *
-from .cell import Cell, GraphCell
-from .layer import *
-from .loss import *
-from .optim import *
-from .metrics import *
-from .wrap import *
-from .grad import Jvp, Vjp
-from .sparse import *
-from .reinforcement import *
-from .transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, TransformerEncoder, \
-    TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, TransformerOpParallelConfig, \
-    EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, OpParallelConfig
+from mindspore.nn import layer, loss, optim, metrics, wrap, grad, probability, sparse, dynamic_lr, reinforcement
+from mindspore.nn.learning_rate_schedule import *
+from mindspore.nn.dynamic_lr import *
+from mindspore.nn.cell import Cell, GraphCell
+from mindspore.nn.layer import *
+from mindspore.nn.loss import *
+from mindspore.nn.optim import *
+from mindspore.nn.metrics import *
+from mindspore.nn.wrap import *
+from mindspore.nn.grad import Jvp, Vjp
+from mindspore.nn.sparse import *
+from mindspore.nn.reinforcement import *
+from mindspore.nn.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
+    TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer,\
+    TransformerOpParallelConfig, EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, OpParallelConfig
 
 __all__ = ["Cell", "GraphCell"]
 __all__.extend(layer.__all__)

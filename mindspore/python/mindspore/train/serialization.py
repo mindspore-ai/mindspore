@@ -55,7 +55,7 @@ from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from mindspore.train._utils import read_proto
-from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
+from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
 
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,

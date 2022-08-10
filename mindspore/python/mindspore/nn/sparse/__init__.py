@@ -15,7 +15,7 @@
 """Sparse related transformation."""
 from __future__ import absolute_import
 
-from .sparse import (SparseToDense, SparseTensorDenseMatmul)
+from mindspore.nn.sparse.sparse import (SparseToDense, SparseTensorDenseMatmul)
 
 __all__ = [
     "SparseToDense",

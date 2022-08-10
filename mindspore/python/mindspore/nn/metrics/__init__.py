@@ -20,25 +20,25 @@ on the evaluation dataset. It's used to choose the best model.
 """
 from __future__ import absolute_import
 
-from .accuracy import Accuracy
-from .hausdorff_distance import HausdorffDistance
-from .error import MAE, MSE
-from .metric import Metric, rearrange_inputs
-from .precision import Precision
-from .recall import Recall
-from .fbeta import Fbeta, F1
-from .dice import Dice
-from .roc import ROC
-from .auc import auc
-from .topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
-from .loss import Loss
-from .mean_surface_distance import MeanSurfaceDistance
-from .root_mean_square_surface_distance import RootMeanSquareDistance
-from .bleu_score import BleuScore
-from .cosine_similarity import CosineSimilarity
-from .occlusion_sensitivity import OcclusionSensitivity
-from .perplexity import Perplexity
-from .confusion_matrix import ConfusionMatrixMetric, ConfusionMatrix
+from mindspore.nn.metrics.accuracy import Accuracy
+from mindspore.nn.metrics.hausdorff_distance import HausdorffDistance
+from mindspore.nn.metrics.error import MAE, MSE
+from mindspore.nn.metrics.metric import Metric, rearrange_inputs
+from mindspore.nn.metrics.precision import Precision
+from mindspore.nn.metrics.recall import Recall
+from mindspore.nn.metrics.fbeta import Fbeta, F1
+from mindspore.nn.metrics.dice import Dice
+from mindspore.nn.metrics.roc import ROC
+from mindspore.nn.metrics.auc import auc
+from mindspore.nn.metrics.topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
+from mindspore.nn.metrics.loss import Loss
+from mindspore.nn.metrics.mean_surface_distance import MeanSurfaceDistance
+from mindspore.nn.metrics.root_mean_square_surface_distance import RootMeanSquareDistance
+from mindspore.nn.metrics.bleu_score import BleuScore
+from mindspore.nn.metrics.cosine_similarity import CosineSimilarity
+from mindspore.nn.metrics.occlusion_sensitivity import OcclusionSensitivity
+from mindspore.nn.metrics.perplexity import Perplexity
+from mindspore.nn.metrics.confusion_matrix import ConfusionMatrixMetric, ConfusionMatrix
 
 __all__ = [
     "names",

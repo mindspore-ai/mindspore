@@ -19,7 +19,7 @@ import sys
 import numpy as np
 
 from mindspore._checkparam import Validator as validator
-from .metric import EvaluationBase, rearrange_inputs, _check_onehot_data
+from mindspore.nn.metrics.metric import EvaluationBase, rearrange_inputs, _check_onehot_data
 
 
 class Precision(EvaluationBase):

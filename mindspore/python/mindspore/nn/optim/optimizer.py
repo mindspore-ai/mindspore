@@ -35,7 +35,7 @@ from mindspore.parallel._ps_context import _is_ps_mode, _enable_distributed_mind
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
-from ._dist_optimizer_registry import generate_dist_optimizer_list
+from mindspore.nn.optim._dist_optimizer_registry import generate_dist_optimizer_list
 
 __all__ = ['Optimizer', 'opt_init_args_register']
 
@@ -185,8 +185,8 @@ class Optimizer(Cell):
         """initialize optimizer attributions"""
         weight_decay = self._preprocess_weight_decay(weight_decay)
         if self.is_group_lr:
-            self.learning_rate = CellList(self.group_lr, auto_prefix=False) if self.dynamic_lr \
-                else ParameterTuple(self.group_lr)
+            self.learning_rate = CellList(self.group_lr, auto_prefix=False) \
+                if self.dynamic_lr else ParameterTuple(self.group_lr)
         else:
             self.learning_rate = self._build_single_lr(learning_rate, 'learning_rate')
 

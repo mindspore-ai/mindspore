@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import nn
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
-from .metric import Metric, rearrange_inputs
+from mindspore.nn.metrics.metric import Metric, rearrange_inputs
 
 try:
     from tqdm import trange

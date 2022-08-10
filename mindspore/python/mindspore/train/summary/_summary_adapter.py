@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Generate the summary event which conform to proto format."""
+from __future__ import absolute_import
+
 import io
 import platform
 import time
@@ -25,9 +27,9 @@ from mindspore import context
 from mindspore.communication.management import get_rank
 from mindspore.communication.management import GlobalComm
 
-from ..._checkparam import Validator
-from ..anf_ir_pb2 import DataType, ModelProto
-from ..summary_pb2 import Event
+from mindspore._checkparam import Validator
+from mindspore.train.anf_ir_pb2 import DataType, ModelProto
+from mindspore.train.summary_pb2 import Event
 
 # define the MindSpore image format
 MS_IMAGE_TENSOR_FORMAT = 'NCHW'

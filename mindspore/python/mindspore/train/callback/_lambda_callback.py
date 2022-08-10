@@ -15,7 +15,7 @@
 """Lambda Callback class."""
 from __future__ import absolute_import
 
-from ._callback import Callback
+from mindspore.train.callback._callback import Callback
 
 
 class LambdaCallback(Callback):

@@ -16,7 +16,8 @@
 Summary related classes and functions. User can use SummaryRecord to dump the summary data, the summary is a series of
 operations to collect data for analysis and visualization.
 """
+from __future__ import absolute_import
 
-from .summary_record import SummaryRecord
+from mindspore.train.summary.summary_record import SummaryRecord
 
 __all__ = ["SummaryRecord"]

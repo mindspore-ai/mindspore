@@ -25,8 +25,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.api import ms_function
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
 
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 

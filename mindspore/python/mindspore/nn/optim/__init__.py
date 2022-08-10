@@ -20,24 +20,24 @@ The optimizer is used to calculate and update the gradients.
 """
 from __future__ import absolute_import
 
-from .optimizer import Optimizer
-from .momentum import Momentum
-from .adam import Adam, AdamWeightDecay, AdamOffload
-from .lamb import Lamb
-from .sgd import SGD
-from .asgd import ASGD
-from .rprop import Rprop
-from .lars import LARS
-from .ftrl import FTRL
-from .rmsprop import RMSProp
-from .proximal_ada_grad import ProximalAdagrad
-from .lazyadam import LazyAdam
-from .ada_grad import Adagrad
-from .thor import thor
-from .adafactor import AdaFactor
-from .adasum import AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
-from .adamax import AdaMax
-from .adadelta import Adadelta
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.nn.optim.adam import Adam, AdamWeightDecay, AdamOffload
+from mindspore.nn.optim.lamb import Lamb
+from mindspore.nn.optim.sgd import SGD
+from mindspore.nn.optim.asgd import ASGD
+from mindspore.nn.optim.rprop import Rprop
+from mindspore.nn.optim.lars import LARS
+from mindspore.nn.optim.ftrl import FTRL
+from mindspore.nn.optim.rmsprop import RMSProp
+from mindspore.nn.optim.proximal_ada_grad import ProximalAdagrad
+from mindspore.nn.optim.lazyadam import LazyAdam
+from mindspore.nn.optim.ada_grad import Adagrad
+from mindspore.nn.optim.thor import thor
+from mindspore.nn.optim.adafactor import AdaFactor
+from mindspore.nn.optim.adasum import AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
+from mindspore.nn.optim.adamax import AdaMax
+from mindspore.nn.optim.adadelta import Adadelta
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam', 'AdamOffload',
            'Lamb', 'SGD', 'ASGD', 'Rprop', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor', 'AdaFactor',

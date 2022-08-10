@@ -40,7 +40,7 @@ from mindspore.train.callback._dataset_graph import DatasetGraph
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
-from ..._c_expression import security
+from mindspore._c_expression import security
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
 HYPER_CONFIG_LEN_LIMIT = 100000

@@ -28,7 +28,7 @@ from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn.optim.optimizer import opt_init_args_register
-from .optimizer import Optimizer
+from mindspore.nn.optim.optimizer import Optimizer
 
 
 def _rms(update_tensor):

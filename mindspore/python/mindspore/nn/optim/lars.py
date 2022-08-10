@@ -21,8 +21,8 @@ from mindspore.ops import functional as F
 from mindspore._checkparam import Validator as validator
 from mindspore.common import Tensor, Parameter, dtype as mstype
 from mindspore.common.api import ms_function
-from .optimizer import _grad_scale, Optimizer
-from .optimizer import opt_init_args_register
+from mindspore.nn.optim.optimizer import _grad_scale, Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
 
 _lars_opt = C.MultitypeFuncGraph("lars_opt")
 

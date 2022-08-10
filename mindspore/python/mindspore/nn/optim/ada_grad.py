@@ -18,8 +18,9 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore.common.api import ms_function
-from .optimizer import Optimizer
-from .optimizer import opt_init_args_register
+from mindspore.nn.optim.optimizer import Optimizer
+from mindspore.nn.optim.optimizer import opt_init_args_register
+
 
 _ada_grad_opt = C.MultitypeFuncGraph("ada_grad_opt")
 

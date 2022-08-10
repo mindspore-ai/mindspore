@@ -31,21 +31,21 @@ import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
-from .tensor import Tensor as PythonTensor
-from .tensor import CSRTensor as PythonCSRTensor
-from .tensor import COOTensor as PythonCOOTensor
-from .tensor import RowTensor as PythonRowTensor
-from .initializer import initializer
-from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, PynativeExecutor_
-from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
-    _ms_memory_recycle
-from ..parallel._tensor import _load_tensor_by_layout
-from ..parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
-    _get_parameter_broadcast, _get_pipeline_stages
-from .._checkparam import Validator
-from ._utils import is_shape_unknown
-from ..common.mutable import mutable
+from mindspore.common.tensor import Tensor as PythonTensor
+from mindspore.common.tensor import CSRTensor as PythonCSRTensor
+from mindspore.common.tensor import COOTensor as PythonCOOTensor
+from mindspore.common.tensor import RowTensor as PythonRowTensor
+from mindspore.common.initializer import initializer
+from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor,\
+    PynativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
+from mindspore.parallel._tensor import _load_tensor_by_layout
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
+from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, \
+    _to_full_tensor, _get_parameter_broadcast, _get_pipeline_stages
+from mindspore._checkparam import Validator
+from mindspore.common._utils import is_shape_unknown
+from mindspore.common.mutable import mutable
+
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()

@@ -32,7 +32,7 @@ from mindspore.train.dataset_helper import connect_network_with_dataset
 from mindspore.parallel._utils import _need_to_full, _to_full_tensor
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore._c_expression import init_exec_dataset
-from .dataset_helper import DatasetHelper
+from mindspore.train.train_thor.dataset_helper import DatasetHelper
 
 
 def _convert_to_ms_type(types):

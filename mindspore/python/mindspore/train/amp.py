@@ -14,17 +14,17 @@
 # ============================================================================
 """Auto mixed precision."""
 from __future__ import absolute_import
-from .. import nn
-from .._checkparam import Validator as validator
-from .._checkparam import Rel
-from ..common import dtype as mstype
-from ..nn.wrap.cell_wrapper import _TrainPipelineAccuStepCell
-from ..nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
-from ..ops import functional as F
-from ..parallel._utils import _get_pipeline_stages
-from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
-from .. import boost
-from .. import context
+
+from mindspore import nn
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.nn.wrap.cell_wrapper import _TrainPipelineAccuStepCell
+from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
+from mindspore.ops import functional as F
+from mindspore.parallel._utils import _get_pipeline_stages
+from mindspore.train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager
+from mindspore import boost, context
 
 
 AMP_WHITE_LIST = (
@@ -46,7 +46,7 @@ AMP_BLACK_LIST = (
 
 
 class _OutputTo16(nn.Cell):
-    "Wrap cell for amp. Cast network output back to float16"
+    """Wrap cell for amp. Cast network output back to float16."""
 
     def __init__(self, op):
         super(_OutputTo16, self).__init__(auto_prefix=False)

@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Generate the lineage event which conform to proto format."""
+from __future__ import absolute_import
+
 import time
 
-from ..lineage_pb2 import LineageEvent
+from mindspore.train.lineage_pb2 import LineageEvent
 
 
 def serialize_to_lineage_event(name, value):

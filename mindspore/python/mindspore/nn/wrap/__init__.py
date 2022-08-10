@@ -19,11 +19,12 @@ Use the Wrapper to combine the loss or build the training steps.
 """
 from __future__ import absolute_import
 
-from .cell_wrapper import ForwardValueAndGrad, TrainOneStepCell, WithLossCell, WithGradCell, WithEvalCell, \
-     ParameterUpdate, GetNextSingleOp, VirtualDatasetCellTriple, MicroBatchInterleaved, PipelineCell
-from .loss_scale import TrainOneStepWithLossScaleCell, DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
-from .grad_reducer import DistributedGradReducer
-from ..layer.timedistributed import TimeDistributed
+from mindspore.nn.wrap.cell_wrapper import ForwardValueAndGrad, TrainOneStepCell, WithLossCell, WithGradCell, \
+    WithEvalCell, ParameterUpdate, GetNextSingleOp, VirtualDatasetCellTriple, MicroBatchInterleaved, PipelineCell
+from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell,\
+    DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindspore.nn.layer.timedistributed import TimeDistributed
 
 
 __all__ = [

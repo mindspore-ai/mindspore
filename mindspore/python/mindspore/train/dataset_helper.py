@@ -23,12 +23,13 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.dataset.engine import offload
 import mindspore.dataset as ds
-from .. import context, nn
-from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
+from mindspore import context, nn
+from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
+from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
+    _to_full_shapes, _get_pipeline_stages
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
                                    _enable_distributed_mindrt
-from ..ops import operations as P
+from mindspore.ops import operations as P
 
 
 def _send_data(dataset, epoch_num):

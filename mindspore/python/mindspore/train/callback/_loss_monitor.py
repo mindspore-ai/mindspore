@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import numpy as np
 
 from mindspore._checkparam import Validator
-from ._callback import Callback, _handle_loss
+from mindspore.train.callback._callback import Callback, _handle_loss
 
 
 class LossMonitor(Callback):
