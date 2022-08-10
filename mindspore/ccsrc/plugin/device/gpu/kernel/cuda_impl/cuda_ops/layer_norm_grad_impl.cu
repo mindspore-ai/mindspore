@@ -107,7 +107,7 @@ __global__ void GammaAndBetaPropKernel(const int row_dim, const int col_dim, con
   }
 }
 
-constexpr int kTileSize = 4;
+constexpr int kTileSize = 8;
 template <typename T>
 struct alignas(sizeof(T) * kTileSize) TArray {
   T data[kTileSize];
@@ -243,6 +243,31 @@ inline __device__ void InputThreadReduce(const int &row, const int &col_dim, con
 }
 
 template <typename T>
+inline __device__ void TiledInputThreadReduce(const int &row, const int &col_dim, const int &param_dim,
+                                              const T &epsilon, T *sum1, T *sum2, T *sum3, const T *dy, const T *x,
+                                              const T *mean, const T *var, const T *gamma) {
+  for (int i = threadIdx.x * kTileSize; i < col_dim; i += blockDim.x * kTileSize) {
+    int pos = row * col_dim + i;
+    T dy_tile[kTileSize];
+    T x_tile[kTileSize];
+    TArray<T> *dy_tmp = reinterpret_cast<TArray<T> *>(&dy_tile);
+    *dy_tmp = *reinterpret_cast<const TArray<T> *>(&dy[pos]);
+    TArray<T> *x_tmp = reinterpret_cast<TArray<T> *>(x_tile);
+    *x_tmp = *reinterpret_cast<const TArray<T> *>(&x[pos]);
+
+    for (int j = 0; j < kTileSize; ++j) {
+      T v1 = dy_tile[j] * gamma[i + j];
+      T v2 = x_tile[j] - mean[row];
+      sum1[0] += v1 * v2;
+      sum2[0] += v1;
+      sum3[0] += v2;
+    }
+  }
+  sum1[0] = (T)(-0.5) * sum1[0] * my_pow(var[row] + epsilon, -1.5);
+  sum3[0] = (T)(-2.0) * sum3[0];
+}
+
+template <typename T>
 inline __device__ void InputWarpReduce(T *sum1, T *sum2, T *sum3) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
     sum1[0] += __shfl_down_sync(0xffffffff, sum1[0], delta);
@@ -323,21 +348,66 @@ __global__ void InputPropKernel(const int row_dim, const int col_dim, const int 
 }
 
 template <typename T>
+inline __device__ void TiledInputProp(const int &row, const int &col_dim, const int &param_dim, const T &epsilon,
+                                      const T *dy, const T *x, const T *mean, const T *var, const T *gamma, T *dx,
+                                      const T *share_mem) {
+  T col_inv = (T)(1.0 / col_dim);
+  T v3 = my_pow(var[row] + epsilon, -0.5);
+  T v4 = share_mem[0] * col_inv * (T)(2.0);
+  T v5 = (col_inv * share_mem[0] * share_mem[2] - v3 * share_mem[1]) * col_inv;
+  for (int col = threadIdx.x * kTileSize; col < col_dim; col += blockDim.x * kTileSize) {
+    int pos = row * col_dim + col;
+    T dy_tile[kTileSize];
+    T x_tile[kTileSize];
+    T dx_tile[kTileSize];
+    TArray<T> *dy_tmp = reinterpret_cast<TArray<T> *>(&dy_tile);
+    *dy_tmp = *reinterpret_cast<const TArray<T> *>(&dy[pos]);
+    TArray<T> *x_tmp = reinterpret_cast<TArray<T> *>(x_tile);
+    *x_tmp = *reinterpret_cast<const TArray<T> *>(&x[pos]);
+
+    for (int j = 0; j < kTileSize; ++j) {
+      T v1 = dy_tile[j] * gamma[col + j];
+      T v2 = x_tile[j] - mean[row];
+      dx_tile[j] = v1 * v3 + v4 * v2 + v5;
+    }
+    TArray<T> *dx_tmp = reinterpret_cast<TArray<T> *>(&dx[pos]);
+    *dx_tmp = *reinterpret_cast<TArray<T> *>(dx_tile);
+  }
+}
+
+template <typename T>
+__global__ void TiledInputPropKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon,
+                                     const T *dy, const T *x, const T *mean, const T *var, const T *gamma, T *dx) {
+  for (int row = blockIdx.x; row < row_dim; row += gridDim.x) {
+    T sum1 = 0;
+    T sum2 = 0;
+    T sum3 = 0;
+    DynamicSharedMem<T> share_mem;
+    TiledInputThreadReduce(row, col_dim, param_dim, epsilon, &sum1, &sum2, &sum3, dy, x, mean, var, gamma);
+    InputWarpReduce(&sum1, &sum2, &sum3);
+    InputBlockReduce(col_dim, &sum1, &sum2, &sum3, share_mem.addr());
+    TiledInputProp(row, col_dim, param_dim, epsilon, dy, x, mean, var, gamma, dx, share_mem.addr());
+  }
+}
+
+template <typename T>
 void LayerNormGrad(const int &row_dim, const int &col_dim, const int &param_dim, const T &epsilon, const T *dy,
                    const T *x, const T *mean, const T *var, const T *gamma, T *dx, T *dg, T *db, cudaStream_t stream) {
   const int thread_per_block = 256;
   int share_mem_size = thread_per_block / WARP_SIZE * 3 * sizeof(T);
-  InputPropKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
-                                                                         mean, var, gamma, dx);
 
   int param_reduce_dim = row_dim * col_dim / param_dim;
   int grid_size = param_dim;
   if (col_dim == param_dim && grid_size % kTileSize == 0 && col_dim % kTileSize == 0) {
+    TiledInputPropKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon,
+                                                                                dy, x, mean, var, gamma, dx);
     share_mem_size = thread_per_block / WARP_SIZE * 2 * kTileSize * sizeof(T);
     grid_size /= kTileSize;
     TiledGammaAndBetaPropKernel<<<grid_size, thread_per_block, share_mem_size, stream>>>(
       param_reduce_dim, param_dim, col_dim, epsilon, dy, x, mean, var, dg, db);
   } else {
+    InputPropKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
+                                                                           mean, var, gamma, dx);
     share_mem_size = thread_per_block / WARP_SIZE * 2 * sizeof(T);
     GammaAndBetaPropKernel<<<grid_size, thread_per_block, share_mem_size, stream>>>(
       param_reduce_dim, param_dim, col_dim, epsilon, dy, x, mean, var, dg, db);
