@@ -166,17 +166,9 @@ py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) con
   return forward_executor()->dynamic_shape()->GetDynamicInput(actual_input);
 }
 
-py::object PyNativeExecutor::CheckGraph(const py::object &cell, const py::args &args) const {
-  return grad_executor()->CheckGraph(cell, args);
-}
-
-void PyNativeExecutor::set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position) const {
-  grad->set_grad_position(std::string(py::str(grad_position)));
-}
-
 py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                             const py::args &args) const {
-  return grad_executor()->CheckAlreadyRun(grad, cell, args);
+                                             const py::object &grad_position, const py::args &args) const {
+  return grad_executor()->CheckAlreadyRun(grad, cell, grad_position, args);
 }
 
 py::object PyNativeExecutor::Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const {
@@ -239,7 +231,6 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
                            .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
                            .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
-                           .def("check_graph", &PyNativeExecutor::CheckGraph, "pynative check a grad graph.")
                            .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
                            .def("grad_ms_function", &PyNativeExecutor::GradMsFunction, "pynative grad for ms_function.")
                            .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
@@ -252,7 +243,6 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("set_graph_phase", &PyNativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
                            .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
-                           .def("set_grad_position", &PyNativeExecutor::set_grad_position, "set pynative grad position")
                            .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")
                            .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")

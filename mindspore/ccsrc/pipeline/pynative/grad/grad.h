@@ -104,10 +104,11 @@ class GradExecutor {
   // Update forward tensors info
   void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void UpdateForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &op_out) const;
-  py::object CheckGraph(const py::object &cell, const py::args &args);
+  void CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::object &sens_param, const py::tuple &args);
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
+  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
+                             const py::object &grad_position, const py::args &args);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v) const;
   AnfNodePtr GetInput(const ValuePtr &v) const;
   void ClearGrad(const py::object &cell, const py::args &args);

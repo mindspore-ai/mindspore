@@ -338,28 +338,7 @@ class GradOperation(GradOperation_):
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
-
-    def _pynative_forward_run(self, grad, args, kwargs, fn):
-        """ Pynative forward run to build grad graph. """
-        new_kwargs = kwargs
-        if self.sens_param:
-            if not 'sens' in kwargs.keys():
-                args = args[:-1]
-            else:
-                new_kwargs = kwargs.copy()
-                new_kwargs.pop('sens')
-        if isinstance(fn, FunctionType):
-            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
-                _pynative_executor.set_grad_flag(True)
-                _pynative_executor.new_graph(fn, *args, **new_kwargs)
-                output = fn(*args, **new_kwargs)
-                _pynative_executor.end_graph(fn, output, *args, **new_kwargs)
-        else:
-            # Check if fn have run already
-            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
-                fn.set_grad()
-                fn(*args, **new_kwargs)
-                fn.set_grad(False)
+        self.grad_position = (0,)
 
     def __call__(self, fn, weights=None):
         if self.grad_fn is not None and self.fn == fn:
@@ -385,10 +364,8 @@ class GradOperation(GradOperation_):
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
-                if _pynative_executor.check_graph(fn, *args, **kwargs):
-                    print("Another grad step is running")
-                self._pynative_forward_run(grad_, args, kwargs, fn)
-                _pynative_executor.grad(grad_, fn, weights, (0,), *args, **kwargs)
+                self._pynative_forward_run(fn, grad_, args, kwargs)
+                _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
@@ -405,6 +382,28 @@ class GradOperation(GradOperation_):
         self.grad_fn = after_grad
         self.fn = fn
         return self.grad_fn
+
+    def _pynative_forward_run(self, fn, grad, args, kwargs):
+        """ Pynative forward run to build grad graph. """
+        new_kwargs = kwargs
+        if self.sens_param:
+            if not 'sens' in kwargs.keys():
+                args = args[:-1]
+            else:
+                new_kwargs = kwargs.copy()
+                new_kwargs.pop('sens')
+        if isinstance(fn, FunctionType):
+            if not _pynative_executor.check_run(grad, fn, self.grad_position, *args, **new_kwargs):
+                _pynative_executor.set_grad_flag(True)
+                _pynative_executor.new_graph(fn, *args, **new_kwargs)
+                output = fn(*args, **new_kwargs)
+                _pynative_executor.end_graph(fn, output, *args, **new_kwargs)
+        else:
+            # Check if fn have run already
+            if not _pynative_executor.check_run(grad, fn, self.grad_position, *args, **new_kwargs):
+                fn.set_grad()
+                fn(*args, **new_kwargs)
+                fn.set_grad(False)
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -461,6 +460,8 @@ class _Grad(GradOperation_):
     def __call__(self, fn, weights=None, grad_position=0):
         if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position:
             return self.grad_fn
+        self.fn = fn
+        self.grad_position = grad_position
         grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
@@ -484,14 +485,10 @@ class _Grad(GradOperation_):
                     def after_grad(*args):
                         return grad_(fn)(*args)
         elif self.pynative_:
-            _pynative_executor.set_grad_position(grad_, grad_position)
-
             @_wrap_func
             def after_grad(*args, **kwargs):
-                if _pynative_executor.check_graph(fn, *args, **kwargs):
-                    print("Another grad step is running")
-                self._pynative_forward_run(grad_, args, kwargs, fn)
-                _pynative_executor.grad(grad_, fn, weights, grad_position, *args, **kwargs)
+                self._pynative_forward_run(fn, grad_, args, kwargs)
+                _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
@@ -510,11 +507,9 @@ class _Grad(GradOperation_):
                         return grad_(fn)(*args, **kwargs)
 
         self.grad_fn = after_grad
-        self.fn = fn
-        self.grad_position = grad_position
         return self.grad_fn
 
-    def _pynative_forward_run(self, grad, args, kwargs, fn):
+    def _pynative_forward_run(self, fn, grad, args, kwargs):
         """ Pynative forward runs to build grad graph. """
         new_kwargs = kwargs
         if self.sens_param:
@@ -524,14 +519,14 @@ class _Grad(GradOperation_):
             else:
                 args = args[:-1]
         if isinstance(fn, FunctionType):
-            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, self.grad_position, *args, **new_kwargs):
                 _pynative_executor.set_grad_flag(True)
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
                 outputs = fn(*args, **new_kwargs)
                 _pynative_executor.end_graph(fn, outputs, *args, **new_kwargs)
         else:
             # Check if fn has run already.
-            if not _pynative_executor.check_run(grad, fn, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, self.grad_position, *args, **new_kwargs):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
                 fn.set_grad(False)

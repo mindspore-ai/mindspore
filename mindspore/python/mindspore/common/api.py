@@ -747,50 +747,24 @@ class _PynativeExecutor:
         """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
-    def check_graph(self, obj, *args, **kwargs):
-        """
-        Determines the order of the function or cell.
-
-        Args:
-            obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell input arguments.
-            kwargs (dict): keyword arguments.
-
-        Return:
-            bool, specifies whether the running function or cell is high-order.
-        """
-        return self._executor.check_graph(obj, *args, *(kwargs.values()))
-
-    def check_run(self, grad, obj, *args, **kwargs):
+    def check_run(self, grad, obj, grad_position, *args, **kwargs):
         """
         Whether the forward graph need to construct.
 
         Args:
             grad (GradOperation): The gradoperation object.
             obj (Function/Cell): The function or cell instance.
+            grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+              If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
             args (tuple): Function or cell input arguments.
             kwargs (dict): keyword arguments.
 
         Return:
             bool, specifies whether the forward graph need to construct.
         """
-        return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
+        return self._executor.check_run(grad, obj, grad_position, *args, *(kwargs.values()))
 
-    def set_grad_position(self, grad, grad_position):
-        """
-        Set position of grad.
-
-        Args:
-            grad (GradOperation): The gradoperation object.
-            grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
-              If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-
-        Return:
-            None.
-        """
-        return self._executor.set_grad_position(grad, grad_position)
-
-    def grad(self, grad, obj, weights, grad_position, *args, **kwargs):
+    def grad(self, obj, grad, weights, grad_position, *args, **kwargs):
         """
         Get grad graph.
 
