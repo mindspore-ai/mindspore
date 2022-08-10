@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include "pipeline/jit/resource.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 namespace opt {
@@ -50,7 +51,7 @@ bool InferenceOptPreparePass(const ResourcePtr &resource);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &resource);
 bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource);
-bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
+bool MS_API AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource);
