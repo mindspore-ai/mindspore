@@ -69,11 +69,11 @@ bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<AddressPtr> &inpu
   auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->addr);
   auto *input_logits_values = reinterpret_cast<float *>(inputs[logits_values]->addr);
 
-  if (dtype_ == kNumberTypeFloat16 || dtype_ == kNumberTypeFloat32) {
+  if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel(input_logits_values, input_logits_col_indices, input_logits_dense_shape);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'logits_values' must be Float16 or Float32, but got "
+                      << "', the dtype of 'logits_values' must be Float32 or Float64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -84,7 +84,7 @@ template <typename T>
 void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(T *input_logits_values, int *input_logits_col_indices,
                                                    int *input_logits_dense_shape) {
   float total = 0;
-  size_t MAX = input_logits_values[0];
+  float MAX = input_logits_values[0];
   int row_index = input_logits_dense_shape[0];
   int start = 0;
   for (int i = 1; i <= row_index; i++) {
@@ -132,6 +132,38 @@ std::vector<KernelAttr> SparseMatrixSoftmaxCpuKernelMod::GetOpSupport() {
                                                        .AddOutputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutInRef(0, 0)
+                                                       .AddOutInRef(1, 1)
+                                                       .AddOutInRef(2, 2)
+                                                       .AddOutInRef(3, 3)
+                                                       .AddOutInRef(4, 4),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kNumberTypeFloat64)
+                                                       .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeFloat64)
+                                                       .AddOutInRef(0, 0)
+                                                       .AddOutInRef(1, 1)
+                                                       .AddOutInRef(2, 2)
+                                                       .AddOutInRef(3, 3)
+                                                       .AddOutInRef(4, 4),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kNumberTypeFloat64)
+                                                       .AddOutputAttr(kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeFloat64)
                                                        .AddOutInRef(0, 0)
                                                        .AddOutInRef(1, 1)
                                                        .AddOutInRef(2, 2)
