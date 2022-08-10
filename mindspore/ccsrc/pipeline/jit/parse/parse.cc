@@ -1995,6 +1995,24 @@ AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block,
   return block->func_graph()->NewCNodeInOrder(iter_cnode_inputs);
 }
 
+CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter_node, const AnfNodePtr &loop_var) {
+  // Construct global dict node.
+  auto global_dict_key = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
+  auto global_dict_value = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
+  auto global_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), global_dict_key, global_dict_value});
+
+  // Construct local dict node.
+  auto local_dict_key = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), NewValueNode("x"), NewValueNode("i")});
+  auto local_dict_value = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), iter_node, loop_var});
+  auto local_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), local_dict_key, local_dict_value});
+
+  // Construct script text node.
+  parse::ScriptPtr script = std::make_shared<parse::Script>("x[i]");
+  auto script_node = NewValueNode(script);
+
+  return fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+}
+
 // Implement unroll for statement with tuple/getitem.
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
@@ -2009,12 +2027,10 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
-  bool interpret_without_internal =
-    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
-  if (iter_node->interpret() || interpret_without_internal) {
-    iter_node = ConvertInterpretIterNodeToList(block, iter_node, iter_obj);
-  }
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
+  if (iter_node->interpret() && !IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret)) {
+    iter_node = HandleInterpret(block, iter_node, iter_obj);
+  }
   CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(header_block);
@@ -2031,7 +2047,14 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
-  CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+  bool interpret_without_internal =
+    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
+  CNodePtr target_var = nullptr;
+  if (iter_node->interpret() || interpret_without_internal) {
+    target_var = GenerateInterpretGetItem(body_func_graph, iter_node, loop_var);
+  } else {
+    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+  }
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
     header_block->UpdateGlobalPyParam(block->global_py_params());
