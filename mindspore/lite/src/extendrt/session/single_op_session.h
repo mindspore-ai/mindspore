@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_SESSION_GRAPH_EXECUTOR_SESSION_H_
-#define MINDSPORE_LITE_EXTENDRT_SESSION_GRAPH_EXECUTOR_SESSION_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
+#define MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_
 
-#include <vector>
 #include <string>
 #include <memory>
-#include <map>
-
-#include "extendrt/session/delegate_session.h"
-#include "extendrt/session/lite_graph_executor.h"
+#include <vector>
+#include "src/extendrt/infer_session.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
-class GraphExecutorSession : public DelegateSession {
+class SingleOpInferSession : public InferSession {
  public:
-  GraphExecutorSession() = default;
-  explicit GraphExecutorSession(std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor)
-      : graph_executor_(graph_executor) {}
-  virtual ~GraphExecutorSession() = default;
-
-  Status Init(const std::shared_ptr<Context> context) override;
+  SingleOpInferSession() = default;
+  virtual ~SingleOpInferSession() = default;
+  Status Init(const std::shared_ptr<Context> &context) override;
+  Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
-  Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
-
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
@@ -47,19 +39,16 @@ class GraphExecutorSession : public DelegateSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
-  std::map<std::string, std::string> options_;
-  bool is_use_kernel_graph_ = true;
+  Status ResizeGraphInputs(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
+
   KernelGraphUtilsPtr kernel_graph_utils_;
   KernelGraphPtr kernel_graph_;
-  FuncGraphPtr func_graph_;
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
-
-  Status InitGraphInputsOutputs();
+  uint32_t device_id_ = 0;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_EXTENDRT_SESSION_GRAPH_EXECUTOR_SESSION_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_SINGLE_OP_SESSION_H_

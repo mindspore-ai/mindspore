@@ -26,17 +26,18 @@ SessionRegistry &SessionRegistry::GetInstance() {
   return instance;
 }
 
-void SessionRegistry::RegSession(const mindspore::SessionType &session_type,
-                                 std::function<std::shared_ptr<InferSession>(const SessionConfig &)> creator) {
+void SessionRegistry::RegSession(
+  const mindspore::SessionType &session_type,
+  const std::function<std::shared_ptr<InferSession>(const std::shared_ptr<Context> &)> &creator) {
   session_map_[session_type] = creator;
 }
 
 std::shared_ptr<InferSession> SessionRegistry::GetSession(const mindspore::SessionType &session_type,
-                                                          const SessionConfig &config) {
+                                                          const std::shared_ptr<Context> &ctx) {
   auto it = session_map_.find(session_type);
   if (it == session_map_.end()) {
     return nullptr;
   }
-  return it->second(config);
+  return it->second(ctx);
 }
 }  // namespace mindspore

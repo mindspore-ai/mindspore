@@ -22,6 +22,7 @@
 #include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
+#include "src/extendrt/delegate_graph_executor.h"
 
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
@@ -171,21 +172,27 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   return data_->affinity_core_list_;
 }
 
-void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) {
+void Context::set_delegate(const std::shared_ptr<AbstractDelegate> &delegate) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->delegate = delegate;
+  data_->delegate = std::dynamic_pointer_cast<GraphSinkDelegate>(delegate);
 }
 
-std::shared_ptr<Delegate> Context::GetDelegate() const {
+std::shared_ptr<AbstractDelegate> Context::get_delegate() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return nullptr;
   }
   return data_->delegate;
 }
+
+// deprecated
+void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) { MS_LOG(ERROR) << "Invalid delegate."; }
+
+// deprecated
+std::shared_ptr<Delegate> Context::GetDelegate() const { return nullptr; }
 
 void Context::SetMultiModalHW(bool float_mode) {
   if (data_ == nullptr) {

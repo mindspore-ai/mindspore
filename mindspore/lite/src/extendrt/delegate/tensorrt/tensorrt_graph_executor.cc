@@ -24,7 +24,6 @@
 #include <utility>
 #include "ccsrc/kernel/kernel.h"
 #include "src/extendrt/delegate/delegate_utils.h"
-#include "src/extendrt/delegate/graph_executor/factory.h"
 #include "ccsrc/kernel/common_utils.h"
 #include "ccsrc/backend/common/optimizer/helper.h"
 #include "ccsrc/include/common/utils/convert_utils.h"
@@ -705,13 +704,11 @@ std::vector<tensor::Tensor> TensorRTExecutor::GetOutputInfos(const FuncGraphPtr 
   return tensors;
 }
 
-static std::shared_ptr<LiteGraphExecutor> TensorRTGraphExecutorCreator(
-  const std::shared_ptr<mindspore::DelegateConfig> &config) {
-  MS_EXCEPTION_IF_NULL(config);
-  auto executor = std::make_shared<TensorRTExecutor>(config->GetContext());
+static std::shared_ptr<device::GraphExecutor> TensorRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx) {
+  auto executor = std::make_shared<TensorRTExecutor>(ctx);
   executor->Init();
   return executor;
 }
 
-REG_GRAPH_EXECUTOR(kGPU, tensorrt_provider, TensorRTGraphExecutorCreator);
+REG_DELEGATE(kGPU, tensorrt_provider, TensorRTGraphExecutorCreator);
 }  // namespace mindspore::lite

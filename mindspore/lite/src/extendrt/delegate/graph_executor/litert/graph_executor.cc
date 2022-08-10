@@ -28,7 +28,7 @@
 
 #include "extendrt/delegate/graph_executor/litert/converters.h"
 #include "extendrt/delegate/graph_executor/litert/graph_executor.h"
-#include "extendrt/delegate/graph_executor/factory.h"
+#include "extendrt/delegate/factory.h"
 
 #include "tools/common/meta_graph_serializer.h"
 #include "extendrt/utils/tensor_utils.h"
@@ -285,11 +285,9 @@ std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(lite::
   return session;
 }
 
-static std::shared_ptr<LiteGraphExecutor> LiteRTGraphExecutorCreator(
-  const std::shared_ptr<mindspore::DelegateConfig> &config) {
-  MS_EXCEPTION_IF_NULL(config);
-  return std::make_shared<LiteRTGraphExecutor>(config->GetContext());
+static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx) {
+  return std::make_shared<LiteRTGraphExecutor>(ctx);
 }
 
-REG_GRAPH_EXECUTOR(kCPU, litert_provider, LiteRTGraphExecutorCreator);
+REG_DELEGATE(kCPU, litert_provider, LiteRTGraphExecutorCreator);
 }  // namespace mindspore

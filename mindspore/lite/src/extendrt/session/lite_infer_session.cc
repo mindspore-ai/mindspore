@@ -29,7 +29,7 @@
 namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
 
-Status LiteInferSession::Init(const std::shared_ptr<Context> context) {
+Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
   context_ = context;
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));
@@ -125,10 +125,6 @@ std::vector<int32_t> LiteInferSession::TruncateShape(const std::vector<int64_t> 
   return truncated_shape;
 }
 
-Status LiteInferSession::RunGraph() {
-  auto ret = lite_session_->RunGraph();
-  return static_cast<StatusCode>(ret);
-}
 Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(outputs);
@@ -186,7 +182,7 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
       }
     }
   }
-  auto ret = RunGraph();
+  auto ret = static_cast<StatusCode>(lite_session_->RunGraph());
   ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
@@ -200,10 +196,6 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
   }
   outputs->clear();
   *outputs = TensorUtils::MSTensorToTensor(res);
-  return kSuccess;
-}
-Status LiteInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
-                                const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
 
@@ -302,8 +294,10 @@ std::vector<tensor::TensorPtr> LiteInferSession::ConvertToTensors(
   return tensors;
 }
 
-static std::shared_ptr<InferSession> LiteInferSessionCreator(const SessionConfig &config) {
-  return std::make_shared<LiteInferSession>(config.context_);
+static std::shared_ptr<InferSession> LiteInferSessionCreator(const std::shared_ptr<Context> &ctx) {
+  auto session = std::make_shared<LiteInferSession>();
+  session->Init(ctx);
+  return session;
 }
 REG_SESSION(kLiteInferSession, LiteInferSessionCreator);
 }  // namespace mindspore

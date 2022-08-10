@@ -45,12 +45,12 @@ typedef struct MSCallBackParamC {
 typedef bool (*MSKernelCallBackC)(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
                                   const MSCallBackParamC kernel_Info);
 
-/// \brief Create a model object. Only valid for Lite.
+/// \brief Create a model object.
 ///
 /// \return Model object handle.
 MS_API MSModelHandle MSModelCreate();
 
-/// \brief Destroy the model object. Only valid for Lite.
+/// \brief Destroy the model object.
 ///
 /// \param[in] model Model object handle address.
 MS_API void MSModelDestroy(MSModelHandle *model);
@@ -62,7 +62,7 @@ MS_API void MSModelDestroy(MSModelHandle *model);
 /// \param[in] workspace_size Define the workspace size.
 MS_API void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size);
 
-/// \brief Build the model from model file buffer so that it can run on a device. Only valid for Lite.
+/// \brief Build the model from model file buffer so that it can run on a device.
 ///
 /// \param[in] model Model object handle.
 /// \param[in] model_data Define the buffer read from a model file.
@@ -74,7 +74,7 @@ MS_API void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t wor
 MS_API MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,
                              const MSContextHandle model_context);
 
-/// \brief Load and build the model from model path so that it can run on a device. Only valid for Lite.
+/// \brief Load and build the model from model path so that it can run on a device.
 ///
 /// \param[in] model Model object handle.
 /// \param[in] model_path Define the model file path.

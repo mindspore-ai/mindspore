@@ -54,7 +54,7 @@ public class ModelParallelRunner {
     }
 
     /**
-     * Build a model runner from model path so that it can run on a device. Only valid for Lite.
+     * Build a model runner from model path so that it can run on a device. 
      *
      * @param modelPath    the model path.
      * @param runnerConfig the RunnerConfig Object.
@@ -69,7 +69,7 @@ public class ModelParallelRunner {
     }
 
     /**
-     * Build a model runner from model path so that it can run on a device. Only valid for Lite.
+     * Build a model runner from model path so that it can run on a device. 
      *
      * @param modelPath the model path.
      * @return init status.
@@ -83,7 +83,7 @@ public class ModelParallelRunner {
     }
 
     /**
-     * Build a model runner from model path so that it can run on a device. Only valid for Lite.
+     * Build a model runner from model path so that it can run on a device. 
      *
      * @param inputs  inputs A vector where model inputs are arranged in sequence.
      * @param outputs outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.

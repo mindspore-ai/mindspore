@@ -48,7 +48,7 @@ class MS_API Model {
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  /// \brief Build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.
@@ -60,7 +60,7 @@ class MS_API Model {
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr);
 
-  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  /// \brief Load and build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
@@ -71,7 +71,7 @@ class MS_API Model {
   inline Status Build(const std::string &model_path, ModelType model_type,
                       const std::shared_ptr<Context> &model_context = nullptr);
 
-  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  /// \brief Build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.
@@ -87,7 +87,7 @@ class MS_API Model {
                       const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
                       const std::string &cropto_lib_path);
 
-  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  /// \brief Load and build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only

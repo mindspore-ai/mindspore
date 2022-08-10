@@ -215,42 +215,42 @@ class MS_API MSTensor {
   /// \return The boolean value that indicates whether the MSTensor not equals tensor.
   bool operator!=(const MSTensor &tensor) const;
 
-  /// \brief Set the shape of for the MSTensor. Only valid for Lite.
+  /// \brief Set the shape of for the MSTensor.
   ///
   /// \param[in] shape Shape of the MSTensor, a vector of int64_t.
   void SetShape(const std::vector<int64_t> &shape);
 
-  /// \brief Set the data type for the MSTensor. Only valid for Lite.
+  /// \brief Set the data type for the MSTensor.
   ///
   /// \param[in] data_type The data type of the MSTensor.
   void SetDataType(enum DataType data_type);
 
-  /// \brief Set the name for the MSTensor. Only valid for Lite.
+  /// \brief Set the name for the MSTensor.
   ///
   /// \param[in] name The name of the MSTensor.
   inline void SetTensorName(const std::string &name);
 
-  /// \brief Set the Allocator for the MSTensor. Only valid for Lite.
+  /// \brief Set the Allocator for the MSTensor.
   ///
   /// \param[in] allocator A pointer to Allocator.
   void SetAllocator(std::shared_ptr<Allocator> allocator);
 
-  /// \brief Obtain the Allocator of the MSTensor. Only valid for Lite.
+  /// \brief Obtain the Allocator of the MSTensor.
   ///
   /// \return A pointer to Allocator.
   std::shared_ptr<Allocator> allocator() const;
 
-  /// \brief Set the format for the MSTensor. Only valid for Lite.
+  /// \brief Set the format for the MSTensor.
   ///
   /// \param[in] format The format of the MSTensor.
   void SetFormat(mindspore::Format format);
 
-  /// \brief Obtain the format of the MSTensor. Only valid for Lite.
+  /// \brief Obtain the format of the MSTensor.
   ///
   /// \return The format of the MSTensor.
   mindspore::Format format() const;
 
-  /// \brief Set the data for the MSTensor. Only valid for Lite.
+  /// \brief Set the data for the MSTensor.
   ///
   /// \note Deprecated, this interface will be removed in the next iteration
   ///
@@ -274,12 +274,12 @@ class MS_API MSTensor {
   /// \return A pointer to the device data of the MSTensor.
   void *GetDeviceData();
 
-  /// \brief Get the quantization parameters of the MSTensor. Only valid for Lite.
+  /// \brief Get the quantization parameters of the MSTensor.
   ///
   /// \return The quantization parameters of the MSTensor.
   std::vector<QuantParam> QuantParams() const;
 
-  /// \brief Set the quantization parameters for the MSTensor. Only valid for Lite.
+  /// \brief Set the quantization parameters for the MSTensor.
   ///
   /// \param[in] quant_params The quantization parameters of the MSTensor.
   void SetQuantParams(std::vector<QuantParam> quant_params);

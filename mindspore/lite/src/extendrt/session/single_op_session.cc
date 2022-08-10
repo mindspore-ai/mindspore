@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021  uawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "src/extendrt/single_op_session.h"
+#include "src/extendrt/session/single_op_session.h"
 #include "src/extendrt/infer_device_address.h"
 
 #include "plugin/factory/ms_factory.h"
@@ -53,7 +53,7 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
   return kSuccess;
 }
 
-Status SingleOpInferSession::Init(const std::shared_ptr<Context> context) {
+Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
   MS_EXCEPTION_IF_NULL(context);
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
@@ -158,7 +158,6 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   return kSuccess;
 }
 
-Status SingleOpInferSession::RunGraph() { return kSuccess; }
 Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
@@ -244,27 +243,6 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::Tensor>
     graph_input->set_abstract(abstract);
   }
   return kSuccess;
-}  // namespace mindspore
-
-Status SingleOpInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
-                                    const std::vector<std::vector<int64_t>> &dims) {
-  if (ResizeGraphInputs(inputs, dims) != kSuccess) {
-    MS_LOG(EXCEPTION) << "Resize graph input error. ";
-  }
-  auto &kernel_nodes = kernel_graph_->execution_order();
-  for (const auto &kernel_node : kernel_nodes) {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_LOG(INFO) << "SingleOpInferSession::Resize " << kernel_name;
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
-    if (kernel_mod == nullptr) {
-      MS_LOG(EXCEPTION) << "Kernel mod is nullptr, kernel name: " << kernel_name;
-    }
-    auto args = kernel::AbstractArgsFromCNode(kernel_node);
-    if (kernel_mod->Resize(args.op, args.inputs, args.outputs) != kSuccess) {
-      MS_LOG(EXCEPTION) << "Kernel mod resize failed, kernel name: " << kernel_name;
-    }
-  }
-  return kSuccess;
 }
 std::vector<MutableTensorImplPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
 std::vector<MutableTensorImplPtr> SingleOpInferSession::GetInputs() { return inputs_; }
@@ -295,8 +273,10 @@ MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(const std::strin
   return nullptr;
 }
 
-static std::shared_ptr<InferSession> SingleOpSessionCreator(const SessionConfig &config) {
-  return std::make_shared<SingleOpInferSession>();
+static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_ptr<Context> &ctx) {
+  auto session = std::make_shared<SingleOpInferSession>();
+  session->Init(ctx);
+  return session;
 }
 REG_SESSION(kSingleOpSession, SingleOpSessionCreator);
 }  // namespace mindspore

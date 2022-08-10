@@ -19,15 +19,7 @@
 #include <memory>
 #include <vector>
 
-#include "include/api/delegate.h"
-
 namespace mindspore {
 enum SessionType { kDefaultSession = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneSession };
-
-struct SessionConfig {
-  SessionType type_;
-  std::shared_ptr<Context> context_;
-  std::vector<std::shared_ptr<Delegate>> delegates_;
-};
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_EXTENDRT_SESSION_TYPE_H_
