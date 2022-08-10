@@ -41,6 +41,8 @@
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
+#include "tools/common/string_util.h"
+#include "ops/core_ops.h"
 
 namespace mindspore::lite::quant {
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
@@ -66,6 +68,8 @@ int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_
 int GetQuantType(const CNodePtr &cnode);
 
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
+
+int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
 
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,

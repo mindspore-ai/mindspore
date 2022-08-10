@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_QUANT_TYPE_DETERMINER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_QUANT_TYPE_DETERMINER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_
 
-#include <utility>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ops/primitive_c.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::lite::quant {
-class QuantTypeDeterminer {
+class DTypeTransformPass {
  public:
-  explicit QuantTypeDeterminer(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+  explicit DTypeTransformPass(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+  ~DTypeTransformPass() = default;
 
-  ~QuantTypeDeterminer() = default;
-
-  int Determine();
-
- private:
-  bool DetermineQuantAll(const CNodePtr &cnode);
-
-  bool DetermineQuantWeight(const CNodePtr &cnode);
+  int Transform();
 
  private:
+  int DoParameterNodeTrans(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
+  int Uint8toInt8(uint8_t *data, int size);
+
   FuncGraphPtr func_graph_ = nullptr;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_QUANT_TYPE_DETERMINER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_

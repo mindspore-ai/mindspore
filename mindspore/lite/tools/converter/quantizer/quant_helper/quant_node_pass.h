@@ -44,8 +44,6 @@ class QuantNodePass {
   int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                   const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
   int DoFullQuant(const CNodePtr &cnode);
-  int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
-
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
   int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);

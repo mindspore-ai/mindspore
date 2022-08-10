@@ -116,6 +116,29 @@ void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_f
   }
 }
 
+int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
+  auto abstract_base = cnode->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of node is nullptr, " << cnode->fullname_with_scope();
+    return RET_NULL_PTR;
+  }
+
+  std::vector<AbstractBasePtr> abstracts;
+  if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
+    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract_base);
+    abstracts = abstract_tuple->elements();
+  } else {
+    abstracts.push_back(abstract_base);
+  }
+  for (auto &abstract : abstracts) {
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+    CHECK_NULL_RETURN(abstract_tensor);
+    CHECK_NULL_RETURN(abstract_tensor->element());
+    abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
+  }
+  return RET_OK;
+}
+
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {
   if (tensor.quantParams.empty()) {
     return false;

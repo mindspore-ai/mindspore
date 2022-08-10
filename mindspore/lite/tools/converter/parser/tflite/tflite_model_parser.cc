@@ -440,7 +440,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
   size_t idx = 0;
   for (auto input_idx : op->inputs) {
     if (input_idx < 0) {
-      if (primitive_c->name() == "FullyConnection") {
+      if (primitive_c->name() == "FullConnection") {
         continue;
       }
       input_idx += tflite_subgraph->tensors.size();
@@ -460,7 +460,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
   idx = 0;
   for (auto output_idx : op->outputs) {
     if (output_idx < 0) {
-      if (primitive_c->name() == "FullyConnection") {
+      if (primitive_c->name() == "FullConnection") {
         continue;
       }
       output_idx += tflite_subgraph->tensors.size();

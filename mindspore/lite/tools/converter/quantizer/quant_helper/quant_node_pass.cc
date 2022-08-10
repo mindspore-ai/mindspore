@@ -25,11 +25,6 @@
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
-namespace {
-static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                         prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                         prim::kPrimLayerNormFusion};
-}  // namespace
 int QuantNodePass::DoWeightQuant(const CNodePtr &cnode) {
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
@@ -108,29 +103,6 @@ bool QuantNodePass::IsPerchannelWeight(const std::vector<schema::QuantParamT> &q
   return (static_cast<int>(quant_params.size()) == dims[preferred_dim]);
 }
 
-int QuantNodePass::UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
-  auto abstract_base = cnode->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of node is nullptr, " << cnode->fullname_with_scope();
-    return RET_NULL_PTR;
-  }
-
-  std::vector<AbstractBasePtr> abstracts;
-  if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
-    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract_base);
-    abstracts = abstract_tuple->elements();
-  } else {
-    abstracts.push_back(abstract_base);
-  }
-  for (auto &abstract : abstracts) {
-    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-    CHECK_NULL_RETURN(abstract_tensor);
-    CHECK_NULL_RETURN(abstract_tensor->element());
-    abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
-  }
-  return RET_OK;
-}
-
 int QuantNodePass::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
@@ -176,7 +148,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
+  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
     FixedBitWeightQuantization fixed_bit_quant;
     ret = fixed_bit_quant.QuantBias(input_node, primitive);
     if (ret != RET_OK) {
@@ -297,6 +269,9 @@ int QuantNodePass::Quant() {
   CHECK_NULL_RETURN(func_graph_);
   auto cnodes = func_graph_->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+      continue;
+    }
     auto quant_holder = GetCNodeQuantHolder(cnode);
     if (quant_holder == nullptr) {
       continue;
@@ -304,6 +279,9 @@ int QuantNodePass::Quant() {
     auto quant_type = quant_holder->quant_type();
     auto node_name = cnode->fullname_with_scope();
     if (quant_type == schema::QuantType_QUANT_NONE) {
+      if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+        continue;
+      }
       // Remove unused quant param.
       MS_LOG(INFO) << node_name << " is not quant node.";
       quant_holder->ClearQuantParams();

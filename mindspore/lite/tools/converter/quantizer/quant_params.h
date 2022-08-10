@@ -21,6 +21,7 @@
 #include <vector>
 #include <set>
 #include "schema/inner/model_generated.h"
+#include "ops/core_ops.h"
 namespace mindspore::lite::quant {
 enum WeightQuantType {
   FIXED_BIT_PER_CHANNEL = 0,
@@ -44,6 +45,10 @@ constexpr int kPrimOffset = 1;
 constexpr int kU8ZeroPointOffset = 128;
 constexpr int kQuantRange = 127;
 constexpr int kMinIterations = 40;
+
+const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                                 prim::kPrimMatMulFusion, prim::kPrimFullConnection,
+                                                 prim::kPrimLayerNormFusion};
 
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,

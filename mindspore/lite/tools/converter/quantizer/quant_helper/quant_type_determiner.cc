@@ -16,6 +16,7 @@
 
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
 #include <utility>
+#include <set>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/litert/kernel_exec.h"
@@ -25,6 +26,9 @@
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
+namespace {
+static const std::set<PrimitivePtr> fp32_output_operator = {prim::kPrimDetectionPostProcess};
+}
 bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (opt::IsSpecialType(cnode)) {
@@ -52,17 +56,16 @@ bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
   if (quant_holder->quant_type() != schema::QuantType_QUANT_NONE) {
     return quant_holder->quant_type() == schema::QuantType_QUANT_ALL;
   }
-  // All output need init.
-  if (!quant_holder->IsOutputQuantParamsInited()) {
-    return false;
-  }
-
-  // Quantization parameters exist for all activations.
+  // Check input quant params, quantization parameters exist for all activations.
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->input(i);
     if (input->isa<CNode>() && !quant_holder->CheckInit(i - kPrimOffset, true)) {
       return false;
     }
+  }
+  // Check output quant params.
+  if (CheckNodeInSet(cnode, fp32_output_operator) && !quant_holder->IsOutputQuantParamsInited()) {
+    return false;
   }
   return true;
 }
@@ -127,6 +130,8 @@ int QuantTypeDeterminer::Determine() {
     } else if (DetermineQuantAll(cnode)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " set QuantType_QUANT_ALL";
       quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+    } else {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " default quant type: QuantType_QUANT_NONE";
     }
   }
   return RET_OK;
