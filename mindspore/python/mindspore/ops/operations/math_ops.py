@@ -5547,13 +5547,13 @@ class Erfinv(Primitive):
                                 erfinv(erf(x)) = x
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor to compute to, with data type float32 or float16.
+        - **input_x** (Tensor) - The input tensor to compute to, with data type float32, float16 or float64.
 
     Outputs:
         Tensor, has the same shape and dtype as `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float32 nor float16.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
