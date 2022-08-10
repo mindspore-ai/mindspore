@@ -1449,9 +1449,9 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
             tensor_slices_new_inner = []
             for j in range(ele_count):
                 new_tensor = tensor_slices_new[j * tensor_strategy[dim_len - 1 - i]]
-                for l in range(j * tensor_strategy[dim_len - 1 - i] + 1,
+                for k in range(j * tensor_strategy[dim_len - 1 - i] + 1,
                                (j + 1) * tensor_strategy[dim_len - 1 - i]):
-                    new_tensor = np.concatenate((new_tensor, tensor_slices_new[l]), axis=dim_len - 1 - i)
+                    new_tensor = np.concatenate((new_tensor, tensor_slices_new[k]), axis=dim_len - 1 - i)
                 tensor_slices_new_inner.insert(len(tensor_slices_new_inner), np.array(new_tensor))
             tensor_slices_new = tensor_slices_new_inner
         merged_tensor = Tensor(tensor_slices_new[0])
