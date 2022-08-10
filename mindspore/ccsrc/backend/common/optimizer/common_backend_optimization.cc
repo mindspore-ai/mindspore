@@ -65,7 +65,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
-  common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
@@ -128,6 +127,7 @@ void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
   pm->AddPass(std::make_shared<InplaceAssignForCustomOp>());
+  pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
