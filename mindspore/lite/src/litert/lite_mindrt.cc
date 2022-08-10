@@ -34,10 +34,15 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
     return;
   }
 
-  InitInputData();
+  auto ret = InitInputData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
+    context->SetFailed(ret);
+    return;
+  }
 
-  auto ret = kernel_->Execute(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                              *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  ret = kernel_->Execute(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                         *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   input_op_datas_.erase(op_uuid);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
@@ -303,7 +308,7 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   return RET_OK;
 }
 
-void LiteOpActor::SetInputShape() {
+int LiteOpActor::SetInputShape() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto &input_tensor = kernel_->in_tensors()[i];
     if (input_tensor->shape() == inputs_data_[i]->shape()) {
@@ -316,11 +321,11 @@ void LiteOpActor::SetInputShape() {
       SetTensorShape(input_tensor, inputs_data_[i]);
     }
   }
+  return RET_OK;
 }
 
-void LiteOpActor::InitInputData() {
-  SetInputShape();
-
+int LiteOpActor::AssignInputData() {
+  auto ret = RET_OK;
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->in_tensors()[i];
     auto src_tensor = inputs_data_[i];
@@ -329,18 +334,32 @@ void LiteOpActor::InitInputData() {
       continue;
     }
     if (NeedCastData(dst_tensor, src_tensor)) {
-      CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      ret = CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "cast tensor data failed.";
+        return ret;
+      }
       continue;
     }
     /* same data-type  */
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       // delegate graph kernel output tensor
-      SetTensorData(dst_tensor, src_tensor);
+      (void)SetTensorData(dst_tensor, src_tensor);
     } else {
-      MoveTensorData(dst_tensor, src_tensor);
+      (void)MoveTensorData(dst_tensor, src_tensor);
     }
   }
-  return;
+  return ret;
+}
+
+int LiteOpActor::InitInputData() {
+  auto ret = SetInputShape();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "set input shape failed.";
+    return ret;
+  }
+
+  return AssignInputData();
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
