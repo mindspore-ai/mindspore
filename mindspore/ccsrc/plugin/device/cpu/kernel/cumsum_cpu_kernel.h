@@ -58,7 +58,7 @@ class CumSumCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, CumSumLaunchFunc>> func_list_;
   CumSumLaunchFunc kernel_func_;
   int axis_{0};
-  ShapeVector shape_{};
+  std::vector<size_t> shape_{};
   size_t stride_{0};
   size_t stride2_{0};
   size_t dims_[3]{0};

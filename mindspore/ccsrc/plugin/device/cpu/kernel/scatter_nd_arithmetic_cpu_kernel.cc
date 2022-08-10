@@ -173,22 +173,21 @@ bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   };
 
   auto element_size = batch_size_ * inner_size_;
-  constexpr size_t min_block_size = 128;
-  auto block_size = std::max(min_block_size, element_size / GetActorMgrInnerThreadPool()->GetKernelThreadNum());
-  ParallelLaunch(task, element_size, block_size, this);
+  ParallelLaunch(task, element_size, 0, this, pool_);
   if (invalid_index_pos != -1) {
     std::stringstream indices_ss;
     std::stringstream input_shape_ss;
+    auto pos = LongToSize(invalid_index_pos);
     for (size_t i = 0; i < slice_size_; i++) {
       if (i > 0) {
         indices_ss << ", ";
         input_shape_ss << ", ";
       }
-      indices_ss << std::to_string(indices[invalid_index_pos + i]);
+      indices_ss << std::to_string(indices[pos + i]);
       input_shape_ss << std::to_string(input_shape_[i]);
     }
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << invalid_index_pos << "-th value of 'indices'["
-                  << indices_ss.str() << "] is out of range[" + input_shape_ss.str() + "].";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << pos << "-th value of 'indices'[" << indices_ss.str()
+                  << "] is out of range[" + input_shape_ss.str() + "].";
     return false;
   }
   return true;

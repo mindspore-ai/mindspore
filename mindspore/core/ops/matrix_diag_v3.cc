@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t GetTensorValue(AbstractBasePtr arg, const std::string &prim_name, const std::string &arg_name) {
+int64_t GetTensorValue(const AbstractBasePtr &arg, const std::string &prim_name, const std::string &arg_name) {
   if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
@@ -60,9 +60,9 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1], but got k[0] is "
                                << lower_diag_index << ", k[1] is " << upper_diag_index << ".";
     }
-    CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
     auto num_diags = upper_diag_index - lower_diag_index + 1;
-    if (x_shape[x_rank - number_two] != num_diags) {
+    if (x_shape[LongToSize(x_rank - number_two)] != num_diags) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
     }
     (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - number_two);
@@ -73,10 +73,12 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
   int64_t max_diag_len = x_shape.back();
   int64_t min_num_rows = max_diag_len - std::min(upper_diag_index, int64_t(0));
   int64_t min_num_cols = max_diag_len + std::max(lower_diag_index, int64_t(0));
-  if (row_val != -1 && row_val < min_num_rows)
+  if (row_val != -1 && row_val < min_num_rows) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows is too small.";
-  if (col_val != -1 && col_val < min_num_cols)
+  }
+  if (col_val != -1 && col_val < min_num_cols) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of columns is too small.";
+  }
   if (row_val == -1 && col_val == -1) {
     row_val = std::max(min_num_rows, min_num_cols);
     col_val = row_val;
@@ -212,8 +214,8 @@ AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const Pri
   auto align_ptr = primitive->GetAttr(kAlign);
   MS_EXCEPTION_IF_NULL(align_ptr);
   auto align = GetValue<std::string>(align_ptr);
-  CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
-                                    primitive->name());
+  (void)CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                          primitive->name());
   auto infer_type = MatrixDiagV3InferType(primitive, input_args);
   auto infer_shape = MatrixDiagV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

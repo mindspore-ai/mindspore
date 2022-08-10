@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Linear algebra submodule"""
+from __future__ import absolute_import
 from .ops import Cholesky
 from .ops import Eigh
 from .ops import LU
