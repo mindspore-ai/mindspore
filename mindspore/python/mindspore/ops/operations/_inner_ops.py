@@ -19,6 +19,7 @@ from collections.abc import Iterable
 import numpy as np
 
 from mindspore.common import Tensor
+from .array_ops import Cast
 from .. import signature as sig
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
@@ -2105,3 +2106,44 @@ class TopTypeof(Primitive):
                 self.typeof_cache[index_type] = self.prim_toptypeof(x)
             return self.typeof_cache.get(index_type)
         return self.prim_toptypeof(x)
+
+
+class MixedPrecisionCast(Primitive):
+    r"""
+    Internal primitive method, to achieve mindspore.functional.mixed_precision_cast.
+
+    Note:
+        This internal primitive method used to do mixed precision conversion.
+        Only the input object with float dtype will be cast.
+
+    Inputs:
+        - **dtype** (Union[Float16, Float32]) - The data type of the output object.
+        - **input** (Union[Tensor, Tuple, Dictionary, KeywordArg]) - The object to be cast.
+
+    Outputs:
+        Object, its dtype is the same as `dtype` and shape is the same as 'input'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore.ops.operations import _inner_ops as inner
+        >>> x = Tensor(np.ones([2, 3], dtype=np.float32))
+        >>> out = inner.MixedPrecisionCast(mstype.float16, x)
+        >>> print(out.dtype)
+        Float16
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MixedPrecisionCast"""
+        self.init_prim_io_names(inputs=['dst_dtype', 'input_x'], outputs=['output'])
+        self.cast = Cast()
+
+    def __call__(self, dst_dtype, x):
+        if isinstance(x, Tensor) and x.dtype in (mstype.float16, mstype.float32, mstype.float64):
+            return self.cast(x, dst_dtype)
+        return x

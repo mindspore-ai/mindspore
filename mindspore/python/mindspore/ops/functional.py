@@ -31,6 +31,7 @@ from mindspore.ops.primitive import constexpr, Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
+from .operations import _inner_ops
 from .operations import linalg_ops
 from .operations.math_ops import Median
 from .operations.array_ops import UniqueConsecutive
@@ -65,6 +66,7 @@ if not security.enable_security():
     print_ = P.Print()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
+mixed_precision_cast = _inner_ops.MixedPrecisionCast()
 
 
 def pack(x):
@@ -316,7 +318,6 @@ is_ = Primitive("is_")
 is_not = Primitive("is_not")
 in_dict = Primitive("in_dict")
 not_in_dict = Primitive("not_in_dict")
-mixed_precision_cast = Primitive("mixed_precision_cast")
 broadcast_gradient_args = Primitive('BroadcastGradientArgs')
 array_reduce = Primitive('array_reduce')
 zeros = P.Zeros()

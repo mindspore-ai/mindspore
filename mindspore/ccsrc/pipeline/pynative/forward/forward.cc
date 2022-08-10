@@ -28,10 +28,8 @@ namespace mindspore {
 namespace pynative {
 namespace {
 // primitive unable to infer value for constant input in PyNative mode
-const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "mixed_precision_cast", "HookBackward",
-                                            "CellBackwardHook"};
+const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "HookBackward", "CellBackwardHook"};
 const std::set<std::string> kForceInferPrim = {"TopK", "DropoutGenMask"};
-const std::set<std::string> kIgnoreInferPrim = {"mixed_precision_cast"};
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 std::set<std::string> kNotConstPrimOrConstInput;
 
@@ -353,9 +351,7 @@ bool ForwardExecutor::GetOutputAbstract(const FrontendOpRunInfoPtr &op_run_info)
 
   if (op_run_info->base_op_run_info.abstract == nullptr || kForceInferPrim.find(op_name) != kForceInferPrim.end()) {
     // Use python infer method
-    if (kIgnoreInferPrim.find(op_name) == kIgnoreInferPrim.end()) {
-      PynativeInfer(op_run_info);
-    }
+    PynativeInfer(op_run_info);
   }
   // Get output dynamic shape info from infer steprr
   auto abstract = op_run_info->base_op_run_info.abstract;
@@ -379,10 +375,6 @@ void ForwardExecutor::RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op
 ValuePtr ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
-  if (op_run_info->base_op_run_info.op_name == prim::kPrimMixedPrecisionCast->name()) {
-    return RunMixedPrecisionCastOp(op_run_info);
-  }
-
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
   // 2. Get input abstract
@@ -415,17 +407,6 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
     return;
   }
   cast_operation()->DoCast(op_run_info);
-}
-
-ValuePtr ForwardExecutor::RunMixedPrecisionCastOp(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &res = RunOpWithBackendPolicy(op_run_info);
-  auto res_v_list = res->cast<ValueSequencePtr>();
-  MS_EXCEPTION_IF_NULL(res_v_list);
-  if (res_v_list->size() == 1) {
-    return res_v_list->value().front();
-  }
-  return res;
 }
 
 ValuePtr ForwardExecutor::DoNopOutput(const FrontendOpRunInfoPtr &op_run_info) const {
