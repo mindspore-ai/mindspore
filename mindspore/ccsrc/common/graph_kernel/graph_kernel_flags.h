@@ -33,6 +33,7 @@ constexpr unsigned int OptLevel_MAX = 4;
 constexpr unsigned int OpLevel_0 = 0;
 constexpr unsigned int OpLevel_1 = 1;
 constexpr unsigned int OpLevel_MAX = 2;
+constexpr unsigned int default_cpu_refer_tread_num = 8;
 
 class GraphKernelFlags {
  public:
@@ -109,6 +110,11 @@ class GraphKernelFlags {
   bool enable_debug_mode{false};
 
   /**
+   * Enable conv tuning on mindspore lite.
+   */
+  bool enable_lite_conv_tuning{false};
+
+  /**
    * Expand and cluster AKG's operators by level.
    */
   unsigned int fusion_ops_level{OpLevel_0};
@@ -141,6 +147,11 @@ class GraphKernelFlags {
    * 1-3: The higher level, the larger tuning space, and the more time it takes.
    */
   unsigned int online_tuning{0};
+
+  /**
+   * Cpu refer thread num for conv and graph split tuning, default is 8.
+   */
+  unsigned int cpu_refer_thread_num{default_cpu_refer_tread_num};
 
   /**
    * Threshold for detection of recopute's memory increment case, unit is byte.

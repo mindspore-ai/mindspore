@@ -170,15 +170,16 @@ AnfNodePtr PoolLayoutDeco::Run(const AnfNodePtr &node) {
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
-    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},      {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
-    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},      {kCPUDevice, OpLevel_0, prim::kPrimSquare},
-    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},   {kCPUDevice, OpLevel_0, prim::kPrimActivation},
-    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},      {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
-    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},      {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
-    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},      {kCPUDevice, OpLevel_1, prim::kPrimReshape},
-    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},      {kCPUDevice, OpLevel_1, prim::kPrimGather},
-    {kCPUDevice, OpLevel_1, prim::kPrimShape},          {kCPUDevice, OpLevel_1, prim::kPrimConcat},
-    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}};
+    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},       {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
+    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},       {kCPUDevice, OpLevel_0, prim::kPrimSquare},
+    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},    {kCPUDevice, OpLevel_0, prim::kPrimActivation},
+    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},       {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
+    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},       {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
+    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},       {kCPUDevice, OpLevel_1, prim::kPrimReshape},
+    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},       {kCPUDevice, OpLevel_1, prim::kPrimGather},
+    {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
+    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimConv2DFusion},
+    {kCPUDevice, OpLevel_1, prim::kPrimAvgPoolFusion},   {kCPUDevice, OpLevel_1, prim::kPrimMaxPoolFusion}};
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                               flags.enable_expand_ops, flags.disable_expand_ops);

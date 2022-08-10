@@ -386,4 +386,14 @@ void GkUtils::GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList
     }
   }
 }
+
+int64_t GkUtils::GetChannelInConvFormat(const std::string &format_string) {
+  constexpr size_t nchwc_len = 5;
+  if (format_string.size() <= nchwc_len || format_string.find("NCHW") != 0) {
+    MS_LOG(EXCEPTION) << "Format must be NCHWnc, but got [" << format_string << "]";
+  }
+  constexpr size_t n_pos = 4;
+  auto channel = format_string.substr(n_pos, format_string.size() - nchwc_len);
+  return std::stol(channel);
+}
 }  // namespace mindspore::graphkernel

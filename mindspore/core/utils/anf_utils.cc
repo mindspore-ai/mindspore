@@ -385,6 +385,10 @@ int64_t AnfUtils::GetIntValue(const AnfNodePtr &anf_node) {
   auto value_node = anf_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
+  return GetIntValue(value);
+}
+
+int64_t AnfUtils::GetIntValue(const ValuePtr &value) {
   if (value->isa<Int64Imm>()) {
     return GetValue<int64_t>(value);
   } else {

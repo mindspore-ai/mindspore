@@ -268,10 +268,12 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_low_precision", &enable_low_precision);
   reg.AddFlag("enable_csr_fusion", &enable_csr_fusion);
   reg.AddFlag("enable_debug_mode", &enable_debug_mode);
+  reg.AddFlag("enable_lite_conv_tuning", &enable_lite_conv_tuning);
 
   // Integer flags
   reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth, -1);
   reg.AddFlag("online_tuning", &online_tuning);
+  reg.AddFlag("cpu_refer_thread_num", &cpu_refer_thread_num, default_cpu_refer_tread_num);
   reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
   reg.AddFlag("parallel_ops_level", &parallel_ops_level);
   reg.AddFlag("recompute_increment_threshold", &recompute_increment_threshold);
@@ -305,12 +307,14 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_csr_fusion"] = enable_csr_fusion;
   json["enable_low_precision"] = enable_low_precision;
   json["enable_debug_mode"] = enable_debug_mode;
+  json["enable_lite_conv_tuning"] = enable_lite_conv_tuning;
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;
   json["parallel_ops_level"] = parallel_ops_level;
   json["reduce_fuse_depth"] = reduce_fuse_depth;
   json["online_tuning"] = online_tuning;
+  json["cpu_refer_thread_num"] = cpu_refer_thread_num;
   json["recompute_increment_threshold"] = recompute_increment_threshold;
   json["recompute_peak_threshold"] = recompute_peak_threshold;
 

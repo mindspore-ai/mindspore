@@ -132,6 +132,16 @@ class GkUtils {
    */
   static void GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList *node_list,
                                   AnfNodePtrList *input_list = nullptr, AnfNodePtrList *output_list = nullptr);
+
+  /**
+   * @brief Get n in NCHWnc. NCHWnc format is used in conv2dfusion expander in lite. n is the value of tiling channel.
+   * @example
+   *   input
+   *     NCHW16c
+   *   output
+   *     16
+   */
+  static int64_t GetChannelInConvFormat(const std::string &format_string);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

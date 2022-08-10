@@ -19,6 +19,7 @@
 #include <vector>
 #include "utils/anf_utils.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 constexpr size_t kConv2dDataIndex = 1;
@@ -30,8 +31,7 @@ constexpr size_t kWeightChannelInAxis = 3;
 constexpr size_t kDepthWiseChannelAxis = 3;
 constexpr size_t kShapeRank = 4;
 
-std::pair<int64_t, int64_t> TilingChannel(int64_t channel) {
-  const int64_t simd_size = 8LL;
+std::pair<int64_t, int64_t> TilingChannel(int64_t channel, int64_t simd_size) {
   for (auto inner = simd_size; inner > 0; inner--) {
     if (channel % inner == 0) {
       return std::make_pair(channel / inner, inner);
@@ -75,8 +75,20 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
   auto input_shape = cb->GetInputShape(cnode, kConv2dDataIndex - 1);
   auto c_in = input_shape[kDepthWiseChannelAxis];
   int64_t c_out_o, c_out_i, c_in_o, c_in_i;
-  std::tie(c_out_o, c_out_i) = TilingChannel(c_out);
-  std::tie(c_in_o, c_in_i) = TilingChannel(c_in);
+  int64_t dst_simd_size = 8LL;
+  int64_t src_simd_size = 8LL;
+  if (common::GetEnv("MS_CPU_FEATURE") == "avx512") {
+    dst_simd_size = 16LL;
+    src_simd_size = 16LL;
+  }
+  if (prim->HasAttr("tuned_dst_format")) {
+    dst_simd_size = GkUtils::GetChannelInConvFormat(GetValue<std::string>(prim->GetAttr("tuned_dst_format")));
+  }
+  std::tie(c_out_o, c_out_i) = TilingChannel(c_out, dst_simd_size);
+  if (prim->HasAttr("tuned_src_format")) {
+    src_simd_size = GkUtils::GetChannelInConvFormat(GetValue<std::string>(prim->GetAttr("tuned_src_format")));
+  }
+  std::tie(c_in_o, c_in_i) = TilingChannel(c_in, src_simd_size);
   prim->AddAttr("weight_coo", MakeValue(c_out_o));
   prim->AddAttr("weight_coi", MakeValue(c_out_i));
   prim->AddAttr("weight_cio", MakeValue(c_in_o));
