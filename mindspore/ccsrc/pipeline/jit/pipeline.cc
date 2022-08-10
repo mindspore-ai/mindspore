@@ -278,7 +278,8 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
 }
 
 py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden) {
-  MS_LOG(DEBUG) << "GenerateArgumentsKey args size:" << args.size();
+  MS_LOG(DEBUG) << "GenerateArgumentsKey args size: " << args.size()
+                << ", enable_tuple_broaden: " << enable_tuple_broaden;
 
   abstract::AbstractBasePtrList args_abs;
   cur_convert_input_.clear();

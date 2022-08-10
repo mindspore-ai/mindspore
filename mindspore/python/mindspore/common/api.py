@@ -304,6 +304,7 @@ class _MindsporeFunctionExecutor:
             # To avoid unexpected phase matched, add create_time to generate_name.
             generate_name = generate_name + '.' + str(self._create_time)
 
+        self.enable_tuple_broaden = False
         if hasattr(self.obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
 
@@ -1097,6 +1098,8 @@ class _CellGraphExecutor:
             raise AttributeError(
                 'The class {} dose not have method {}'.format(obj.__class__.__name__, obj.__parse_method__))
         args_list = args
+
+        self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
 
