@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kApplyAdamWithAmsgradInputsNum = 8;
-constexpr size_t kApplyAdamWithAmsgradOutputsNum = 1;
+constexpr size_t kApplyAdamWithAmsgradOutputsNum = 4;
 constexpr size_t kScalarIndex = 0;
 constexpr size_t kIndexVar = 0;
 constexpr size_t kIndexM = 1;
@@ -214,7 +214,13 @@ std::vector<KernelAttr> ApplyAdamWithAmsgradCpuKernelMod::GetOpSupport() {
                                                    .AddInputAttr(kNumberTypeFloat32)
                                                    .AddInputAttr(kNumberTypeFloat32)
                                                    .AddOutputAttr(kNumberTypeFloat32)
-                                                   .AddOutInRef(0, 0),
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddOutInRef(0, 0)
+                                                   .AddOutInRef(1, 1)
+                                                   .AddOutInRef(2, 2)
+                                                   .AddOutInRef(3, 3),
                                                  KernelAttr()
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddInputAttr(kNumberTypeFloat16)
@@ -225,7 +231,13 @@ std::vector<KernelAttr> ApplyAdamWithAmsgradCpuKernelMod::GetOpSupport() {
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddInputAttr(kNumberTypeFloat16)
                                                    .AddOutputAttr(kNumberTypeFloat16)
-                                                   .AddOutInRef(0, 0)};
+                                                   .AddOutputAttr(kNumberTypeFloat16)
+                                                   .AddOutputAttr(kNumberTypeFloat16)
+                                                   .AddOutputAttr(kNumberTypeFloat16)
+                                                   .AddOutInRef(0, 0)
+                                                   .AddOutInRef(1, 1)
+                                                   .AddOutInRef(2, 2)
+                                                   .AddOutInRef(3, 3)};
   return support_list;
 }
 
