@@ -35,7 +35,7 @@ void HSVToRGBCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     return;
   }
   input_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (shape.cend()[-1] != kNumDims) {
+  if (LongToUlong(shape.cend()[-1]) != kNumDims) {
     MS_LOG(EXCEPTION) << "The last dimension of the input tensor must be size 3.";
   }
 }
