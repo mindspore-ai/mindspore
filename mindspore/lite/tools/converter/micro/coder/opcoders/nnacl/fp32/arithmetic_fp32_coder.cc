@@ -361,6 +361,9 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
   if (break_pos_ < 1) {
     return RET_ERROR;
   }
+  if (support_parallel_) {
+    thread_num_ = 1;
+  }
   int batch = arithmetic_parameter_->out_elements_num_ / arithmetic_parameter_->out_strides_[break_pos_ - 1];
   int batch_per_thread = UP_DIV(batch, thread_num_);
 
@@ -378,7 +381,11 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
 
   arithmetic_wrapper_info_ = {offset0, stride0, offset1, stride1, out_offset, out_stride, arithmetic_func_type_};
   code->CodeStruct("arithmetic_wrapper_info", arithmetic_wrapper_info_);
-  code->CodeStruct("arithmetic_parameter", *arithmetic_parameter_);
+  std::string param_name = "arithmetic_parameter";
+  code->CodeStruct(param_name, *arithmetic_parameter_);
+  if (support_parallel_) {
+    *code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+  }
   code->CodeFunction("BatchScalarCalc", wrap_uint8(input0_ptr_str_), wrap_uint8(input1_ptr_str_),
                      wrap_uint8(output_ptr_str_), batch_size, arithmetic_parameter_->out_strides_[break_pos_ - 1], true,
                      arithmetic_func_str_, "&arithmetic_wrapper_info", "&arithmetic_parameter");
@@ -388,6 +395,9 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
 
 int ArithmeticFP32Coder::BiasCalc(int task_id, CoderContext *const context, NNaclFp32Serializer *const code) {
   MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ - 1 >= 0 && arithmetic_parameter_->ndim_ - 1 < 10, RET_ERROR);
+  if (support_parallel_) {
+    thread_num_ = 1;
+  }
   int last_shape = arithmetic_parameter_->out_shape_[arithmetic_parameter_->ndim_ - 1];
   int batch = arithmetic_parameter_->out_elements_num_ / last_shape;
   int batch_per_thread = UP_DIV(batch, thread_num_);
@@ -398,7 +408,11 @@ int ArithmeticFP32Coder::BiasCalc(int task_id, CoderContext *const context, NNac
 
   int stride = last_shape * data_type_len_;
   int offset = stride * start_batch;
-  code->CodeStruct("arithmetic_parameter", *arithmetic_parameter_);
+  std::string param_name = "arithmetic_parameter";
+  code->CodeStruct(param_name, *arithmetic_parameter_);
+  if (support_parallel_) {
+    *code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
+  }
   if (arithmetic_parameter_->in_elements_num0_ > arithmetic_parameter_->in_elements_num1_) {
     arithmetic_wrapper_info_ = {offset, stride, 0, 0, offset, stride, arithmetic_func_type_};
     code->CodeStruct("arithmetic_wrapper_info", arithmetic_wrapper_info_);
