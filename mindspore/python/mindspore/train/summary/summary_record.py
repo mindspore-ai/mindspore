@@ -35,7 +35,7 @@ from .enums import PluginEnum
 # there are actually no any concurrences happening.
 _summary_lock = threading.Lock()
 # cache the summary data
-_summary_tensor_cache = {}
+SUMMARY_TENSOR_CACHE = {}
 _DEFAULT_EXPORT_OPTIONS = {
     'tensor_format': {'npy', None},
 }
@@ -52,15 +52,15 @@ def _cache_summary_tensor_data(summary):
     """
     with _summary_lock:
         for item in summary:
-            _summary_tensor_cache[item['name']] = item['data']
+            SUMMARY_TENSOR_CACHE[item['name']] = item['data']
         return True
 
 
 def _get_summary_tensor_data():
-    global _summary_tensor_cache
+    global SUMMARY_TENSOR_CACHE
     with _summary_lock:
-        data = _summary_tensor_cache
-        _summary_tensor_cache = {}
+        data = SUMMARY_TENSOR_CACHE
+        SUMMARY_TENSOR_CACHE = {}
         return data
 
 
@@ -354,7 +354,7 @@ class SummaryRecord:
             else:
                 self._event_writer.write({'graph': [{'step': step, 'value': graph_proto}]})
                 self._status['has_graph'] = True
-                if not _summary_tensor_cache:
+                if not SUMMARY_TENSOR_CACHE:
                     return True
 
         if self._mode == 'train':

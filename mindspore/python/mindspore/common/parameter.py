@@ -171,7 +171,7 @@ class Parameter(Tensor_):
         >>> print(net(x))
         [[0.]]
     """
-    __base_type__ = {}
+    _base_type = {}
 
     def __new__(cls, default_input, *args, **kwargs):
         init_data_flag = bool(isinstance(default_input, Tensor) and default_input.has_init)
@@ -250,11 +250,11 @@ class Parameter(Tensor_):
     @staticmethod
     def _get_base_class(input_class):
         input_class_name = Parameter.__name__
-        if input_class_name in Parameter.__base_type__:
-            new_type = Parameter.__base_type__[input_class_name]
+        if input_class_name in Parameter._base_type:
+            new_type = Parameter._base_type.get(input_class_name)
         else:
             new_type = type(input_class_name, (Parameter, input_class), {})
-            Parameter.__base_type__[input_class_name] = new_type
+            Parameter._base_type[input_class_name] = new_type
         return new_type
 
     @staticmethod

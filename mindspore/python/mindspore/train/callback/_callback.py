@@ -23,7 +23,7 @@ from mindspore import log as logger
 from mindspore.train.serialization import _fill_param_into_net
 from mindspore.train.summary.summary_record import _cache_summary_tensor_data
 
-_cur_net = None
+CUR_NET = None
 
 
 def set_cur_net(net):
@@ -34,8 +34,8 @@ def set_cur_net(net):
     Args:
         net (Cell): train network
     """
-    global _cur_net
-    _cur_net = net
+    global CUR_NET
+    CUR_NET = net
 
 
 def checkpoint_cb_for_save_op(parameter_list):
@@ -50,12 +50,12 @@ def checkpoint_cb_for_save_op(parameter_list):
     Returns:
         bool, true: means save checkpoint success.
     """
-    if _cur_net is None:
-        logger.warning("_cur_net is None. parameters are not updated.")
+    if CUR_NET is None:
+        logger.warning("CUR_NET is None. parameters are not updated.")
         return False
 
     logger.info("update parameters in the net.")
-    _fill_param_into_net(_cur_net, parameter_list)
+    _fill_param_into_net(CUR_NET, parameter_list)
     set_cur_net(None)
     return True
 
