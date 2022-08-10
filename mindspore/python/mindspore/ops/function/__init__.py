@@ -185,6 +185,7 @@ from .math_func import (
     ldexp,
     mv,
     addmv,
+    addr,
     inplace_add,
     inplace_sub,
     inplace_update,

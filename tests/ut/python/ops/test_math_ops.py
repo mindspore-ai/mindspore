@@ -457,6 +457,16 @@ class AddmvFunc(nn.Cell):
         return y
 
 
+class AddrFunc(nn.Cell):
+    def __init__(self):
+        super(AddrFunc, self).__init__()
+        self.addr = ops.addr
+
+    def construct(self, x, vec1, vec2, beta=1, alpha=1):
+        y = self.addr(x, vec1, vec2, beta, alpha)
+        return y
+
+
 class MvFunc(nn.Cell):
     def __init__(self):
         super(MvFunc, self).__init__()
@@ -674,6 +684,15 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]])),
                         Tensor(np.array([1., 2.]))],
         'desc_bprop': [Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]])),
+                       Tensor(np.array([1., 2.]))],
+    }),
+    ('Addr', {
+        'block': AddrFunc(),
+        'desc_inputs': [Tensor(np.array([[0., 0.], [0., 0.], [0., 0.]])),
+                        Tensor(np.array([1., 2., 3.])),
+                        Tensor(np.array([1., 2.]))],
+        'desc_bprop': [Tensor(np.array([[0., 0.], [0., 0.], [0., 0.]])),
+                       Tensor(np.array([1., 2., 3.])),
                        Tensor(np.array([1., 2.]))],
     }),
     ('Outer', {
