@@ -1728,8 +1728,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         for rank in param_rank:
             param_total_list = list(range(0, ckpt_file_len))
             if shard_size > 0:
-                shard_total_list = [param_total_list[i:i + shard_size] for i in
-                                    range(0, ckpt_file_len, shard_size)]
+                shard_total_list = []
+                for i in range(0, ckpt_file_len, shard_size):
+                    shard_total_list.append(param_total_list[i:i + shard_size])
                 param_total_list = shard_total_list[rank // shard_size]
             if shard_stride > 0:
                 param_stride = []

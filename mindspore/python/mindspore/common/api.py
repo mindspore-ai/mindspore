@@ -255,8 +255,10 @@ class _MindsporeFunctionExecutor:
                         obj.parameter_layout_dict[opt_param.name] = obj.parameter_layout_dict[param.name]
                         continue
 
-            states_tuple = (opt_states[:len(params)], opt_states[len(params):]) if len(opt_states) != len(params) \
-                else (opt_states[:len(params)],)
+            if len(opt_states) != len(params):
+                states_tuple = (opt_states[:len(params)], opt_states[len(params):])
+            else:
+                states_tuple = (opt_states[:len(params)],)
             for states in states_tuple:
                 for param, state in zip(params, states):
                     if param.shape != state.shape:

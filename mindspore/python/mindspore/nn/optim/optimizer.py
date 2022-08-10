@@ -185,8 +185,10 @@ class Optimizer(Cell):
         """initialize optimizer attributions"""
         weight_decay = self._preprocess_weight_decay(weight_decay)
         if self.is_group_lr:
-            self.learning_rate = CellList(self.group_lr, auto_prefix=False) \
-                if self.dynamic_lr else ParameterTuple(self.group_lr)
+            if self.dynamic_lr:
+                self.learning_rate = CellList(self.group_lr, auto_prefix=False)
+            else:
+                self.learning_rate = ParameterTuple(self.group_lr)
         else:
             self.learning_rate = self._build_single_lr(learning_rate, 'learning_rate')
 

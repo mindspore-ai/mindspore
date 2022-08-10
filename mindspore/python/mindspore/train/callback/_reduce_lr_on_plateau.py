@@ -128,8 +128,10 @@ class ReduceLROnPlateau(Callback):
         """
         self.cooldown_counter = 0
         self.wait = 0
-        self.best = np.Inf if self.mode == 'min' or \
-                              (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
+        if self.mode == 'min' or (self.mode == 'auto' and self.monitor in _smaller_better_metrics):
+            self.best = np.Inf
+        else:
+            self.best = -np.Inf
 
     def on_train_epoch_end(self, run_context):
         """
@@ -149,8 +151,10 @@ class ReduceLROnPlateau(Callback):
 
         parallel_mode = auto_parallel_context().get_parallel_mode()
         rank_size = 1 if parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-        reduce_monitor_value = current_monitor_value if rank_size == 1 else \
-            self._reduce(Tensor(current_monitor_value.astype(np.float32))) / rank_size
+        if rank_size == 1:
+            reduce_monitor_value = current_monitor_value
+        else:
+            reduce_monitor_value = self._reduce(Tensor(current_monitor_value.astype(np.float32))) / rank_size
 
         if reduce_monitor_value is None:
             return

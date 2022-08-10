@@ -4995,8 +4995,8 @@ class SparseTensor(COOTensor_):
 
     def __init__(self, indices, values, shape):
         "Init COOTensor"
-        print("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
-              "Please use 'COOTensor' instead.")
+        logger.warning("'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+                       "Please use 'COOTensor' instead.")
         if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
             raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
         COOTensor_.__init__(self, indices, values, shape)
