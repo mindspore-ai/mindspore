@@ -220,6 +220,14 @@ void MinimumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input
 }
 
 std::vector<std::pair<KernelAttr, MinimumCpuKernelMod::MinimumLaunchFunc>> MinimumCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &MinimumCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &MinimumCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &MinimumCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &MinimumCpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
    &MinimumCpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),

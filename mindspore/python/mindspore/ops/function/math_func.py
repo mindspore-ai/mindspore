@@ -3029,10 +3029,9 @@ def minimum(x, y):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    When the inputs are two tensors, dtypes of them cannot be bool at the same time.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
+    Shapes of them are supposed to be broadcast.
     If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
@@ -3050,7 +3049,7 @@ def minimum(x, y):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+        ValueError: If `x` and `y` are not the same shape after broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

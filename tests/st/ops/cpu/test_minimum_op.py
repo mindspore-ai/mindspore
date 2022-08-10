@@ -17,9 +17,9 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
-from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+from mindspore import ops, Tensor
 
 
 class ConstScalarAndTensorMinimum(Cell):
@@ -183,3 +183,66 @@ def test_minimum_two_tensors_notBroadcast_float64():
     diff = output.asnumpy() - expect
     assert np.all(np.abs(diff) < error)
     assert output.shape == expect.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_minimum_two_tensors_functional_int8():
+    """
+    Feature: test minimum on cpu in graph mode
+    Description: test interface functional
+    Expectation: result match numpy result
+    """
+    prop = 100 if np.random.random() > 0.5 else 50
+    x = np.random.randn(3, 4, 5).astype(np.int8) * prop
+    y = np.random.randn(3, 4, 5).astype(np.int8) * prop
+    expect = np.minimum(x, y).astype(np.int8)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    output = ops.minimum(Tensor(x), Tensor(y))
+    assert np.all(output.asnumpy() == expect)
+
+
+class MinimumTensorNet(Cell):
+    def construct(self, x, y):
+        return x.minimum(y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_minimum_two_tensors_tensor_graph_uint16():
+    """
+    Feature: test minimum on cpu in graph mode
+    Description: test interface tensor
+    Expectation: result match numpy result
+    """
+    prop = 100 if np.random.random() > 0.5 else 50
+    x = np.random.randn(3, 4, 5).astype(np.uint16) * prop
+    y = np.random.randn(3, 4, 5).astype(np.uint16) * prop
+    expect = np.minimum(x, y).astype(np.uint16)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = MinimumTensorNet()
+    output = net(Tensor(x), Tensor(y))
+    assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_minimum_two_tensors_tensor_pynative_uint8():
+    """
+    Feature: test minimum on cpu in pynative mode
+    Description: test interface tensor
+    Expectation: result match numpy result
+    """
+    prop = 100 if np.random.random() > 0.5 else 50
+    x = np.random.randn(3, 4, 5).astype(np.uint8) * prop
+    y = np.random.randn(3, 4, 5).astype(np.uint8) * prop
+    expect = np.minimum(x, y).astype(np.uint8)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    output = Tensor(x).minimum(Tensor(y))
+    assert np.all(output.asnumpy() == expect)

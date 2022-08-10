@@ -3027,6 +3027,45 @@ class Tensor(Tensor_):
 
         return self.max(axis, keepdims) - self.min(axis, keepdims)
 
+    def minimum(self, other):
+        r"""
+        Computes the minimum of self and input tensor element-wise.
+
+        `self` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        `other` must be tensor or scalar.
+        When `other` is also tensor, dtypes of `self` and `other` cannot be bool at the same time.
+        When `other` is scalar, the scalar could only be a constant.
+        Shapes of `self` and `other` are supposed to be broadcast.
+        If one of the elements being compared is a NaN, then that element is returned.
+
+        .. math::
+            output_i = min(x_i, y_i)
+
+        Args:
+            other (Union[Tensor, Number, bool]): a number or bool or tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among `self` and `other`.
+
+        Raises:
+            TypeError: If `other` is not one of the following: Tensor, Number, bool.
+            ValueError: If `self` and `other` are not the same shape after broadcast.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+            >>> out = x.minimum(y)
+            >>> print(out)
+            [1. 2. 3.]
+        """
+        return tensor_operator_registry.get('minimum')()(self, other)
+
     def clip(self, xmin, xmax, dtype=None):
         """
         Clips (limits) the values in a Tensor.
