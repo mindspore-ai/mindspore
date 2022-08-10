@@ -33,7 +33,7 @@
 
     .. py:method:: update_loss_scale(overflow)
 
-        更新loss scale值。类 :class:`mindspore.FixedLossScaleManager` 中，该方法不执行任何操作。
+        更新loss scale值。类 :class:`mindspore.amp.FixedLossScaleManager` 中，该方法不执行任何操作。
 
         **参数：**
 

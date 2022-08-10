@@ -54,11 +54,13 @@ mindspore.nn.Conv1d
     .. math::
         L_{out} ＝ \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
         {\text{stride}}} \right \rceil
+
     pad_mode为"pad"时：
 
     .. math::
         L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
         \text{dilation} - 1 }{\text{stride}} + 1} \right \rfloor
+
     **异常：**
 
     - **TypeError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 、 `padding` 或 `dilation` 不是int。
