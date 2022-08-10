@@ -75,10 +75,10 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
     if (count == kOne) {
       count--;
     }
-    out_iter[count] = out_iter[kOne] % output_shape_[count];
-    out_iter[kOne] /= output_shape_[count--];
+    out_iter[count] = LongToUlong(out_iter[kOne] % output_shape_[count]);
+    out_iter[kOne] /= LongToSize(output_shape_[count--]);
   }
-  const size_t out_c = output_shape_[kOne];
+  const size_t out_c = LongToSize(output_shape_[kOne]);
   int64_t grid_offset =
     static_cast<int64_t>(out_iter[kZero] * grid_stride_[kZero] + out_iter[kTwo] * grid_stride_[kOne] +
                          out_iter[kThree] * grid_stride_[kTwo] + out_iter[kFour] * grid_stride_[kThree]);
@@ -172,7 +172,8 @@ void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   auto x_data_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   auto grid_data_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
   auto output_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  size_t loop_count = output_shape_[kZero] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour];
+  size_t loop_count =
+    LongToSize(output_shape_[kZero] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       ComputeTask<T>(x_data_addr, grid_data_addr, output_data_addr, i);
