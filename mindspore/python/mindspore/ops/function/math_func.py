@@ -3080,20 +3080,21 @@ def median(x, global_median=False, axis=0, keep_dims=False):
         When attr `global_median` is True, the second output Tensor value is meaningless.
 
     Args:
-        x (Tensor) - The first input is a tensor whose data type is number.
-        global_median (bool) - Whether the output tensor is the global median of all input tensor elements or not.
+        x (Tensor): The first input is a tensor whose data type is number.
+        global_median (bool): Whether the output tensor is the global median of all input tensor elements or not.
           Default: False.
-        axis (int) - The dimension need to reduce. Default: 0.
-        keep_dims (bool) - Whether the output tensor need to retain `axis` dimension or not. Default: False.
+        axis (int): The dimension need to reduce. Default: 0.
+        keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
     Returns:
-        y (Tensor) - Has the same dtype as the `x`. If `global_median` is true, the `y` has only one
-          element. If `keep_dims` is true, the `y` has the same shape as the `x` except the shape of `y` in dimension
-          `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
-        indices (Tensor) - Has the same shape as the `y`, but dtype is int64.
+        y (Tensor), has the same dtype as the `x`. If `global_median` is true, the `y` has only one
+        element. If `keep_dims` is true, the `y` has the same shape as the `x` except the shape of `y` in dimension
+        `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
+
+        indices (Tensor), has the same shape as the `y`, but dtype is int64.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, double.
+        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `x` is not a Tensor.
         TypeError: If `global_median` is not a bool.
         TypeError: If `axis` is not a int.

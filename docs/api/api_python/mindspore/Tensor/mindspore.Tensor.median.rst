@@ -5,6 +5,9 @@ mindspore.Tensor.median
 
     返回指定维度上的中值。
 
+    .. warning::
+        如果 `global_median` 为True，则 `indices` 无意义。
+
     参数：
         - **global_median** (bool) - 表示是否对当前Tensor的全部元素取中值。默认值：False。
         - **axis** (int) - 计算中值的维度。默认值：(0), 取值范围为[-ndim, ndim - 1]，'ndim' 表示当前Tensor的维度长度。

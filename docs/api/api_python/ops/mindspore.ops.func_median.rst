@@ -5,6 +5,9 @@ mindspore.ops.median
 
     输出张量指定维度上的中值。
 
+    .. warning::
+        如果 `global_median` 为True，则 `indices` 无意义。
+
     参数：
         - **x** (Tensor) - median的输入，任意维度的Tensor。数据类型支持int16、int32、int64、float32或float64。
         - **global_median** (bool) - 表示是否对x的全部元素取中值。默认值：False。
