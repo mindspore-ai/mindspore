@@ -189,7 +189,9 @@ void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   if (status == -1) {
     MS_LOG(EXCEPTION) << "Some errors occurred! The error message is as above";
   }
-  (void)memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
+  if (memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memory copy fail.";
+  }
 }
 
 void *ScatterNdUpdateCpuKernelMod::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,

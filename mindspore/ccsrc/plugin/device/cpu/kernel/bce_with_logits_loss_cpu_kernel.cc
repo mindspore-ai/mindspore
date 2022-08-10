@@ -93,7 +93,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
+void BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
   auto stride_per_thread = SizeToInt(UP_DIV(input_size_, thread_num_));
   int start = stride_per_thread * task_id;
   int end = start + stride_per_thread;
@@ -102,12 +102,10 @@ bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
   auto per_label = reinterpret_cast<float *>(label_);
   auto per_weight = reinterpret_cast<float *>(weight_);
   auto per_post_weight = reinterpret_cast<float *>(post_weight_);
-  float *per_output = nullptr;
+  auto *per_output = reinterpret_cast<float *>(output_);
   float *per_reduction_sum = nullptr;
   if (is_reduction_) {
     per_reduction_sum = reinterpret_cast<float *>(reduction_output_) + task_id;
-  } else {
-    per_output = reinterpret_cast<float *>(output_);
   }
   if (!is_broadcast_) {
     per_logits += start;
@@ -117,7 +115,7 @@ bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
     per_output += start;
     BCEWithLogitLoss(per_logits, per_label, per_weight, per_post_weight, (end - start), is_reduction_, per_output,
                      per_reduction_sum);
-    return true;
+    return;
   }
   MultipleBroadcastIterator multi_broadcast_iterator(
     {input_logits_shape_, input_label_shape_, input_weight_shape_, input_post_weight_shape_}, input_logits_shape_);
@@ -125,7 +123,7 @@ bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
   constexpr float one = 1.0f;
   auto iter = multi_broadcast_iterator;
   float broadcast_reduction_sum = 0.0f;
-  iter.SetPos(start);
+  iter.SetPos(IntToSize(start));
   for (int i = start; i < end; i++) {
     auto logits_value = per_logits[iter.GetInputPos(kIndex0)];
     auto label_value = per_label[iter.GetInputPos(kIndex1)];
@@ -146,16 +144,16 @@ bool BCEWithLogitsLossCpuKernelMod::RunTask(int task_id) {
   if (is_reduction_) {
     *per_reduction_sum = broadcast_reduction_sum;
   }
-  return true;
 }
 
 namespace {
 int BCERun(void *c_data, int task_id, float, float) {
-  auto bce_kernel = reinterpret_cast<BCEWithLogitsLossCpuKernelMod *>(c_data);
-  if (!bce_kernel->RunTask(task_id)) {
-    MS_LOG(ERROR) << "bce_with_logits_loss kernel DoLaunch failed, task id: " << task_id;
+  if (c_data == nullptr) {
+    MS_LOG(ERROR) << "bce_with_logits_loss kernel does Launch failed, for null data. Its task id is " << task_id;
     return -1;
   }
+  auto bce_kernel = reinterpret_cast<BCEWithLogitsLossCpuKernelMod *>(c_data);
+  bce_kernel->RunTask(task_id);
   return 0;
 }
 }  // namespace

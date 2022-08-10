@@ -124,7 +124,7 @@ bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_v
   return max_major_value != static_cast<T>(kZeroThreshold);
 }
 
-void LUCpuKernelMod::DoSafeMemCopy(void *dest, size_t dest_max, const void *src, size_t count) {
+void LUCpuKernelMod::DoSafeMemCopy(void *dest, size_t dest_max, const void *src, size_t count) const {
   if (memcpy_s(dest, dest_max, src, count) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' It does memory copy failed.";
   }
@@ -219,7 +219,7 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
         key = index;
         index = pivots_map[key].first;
         is_visited = pivots_map[key].second;
-        lu_ori_row = lu_value + index * lu_col_;
+        lu_ori_row = lu_value + IntToSize(index) * lu_col_;
         T *tmp_wk = lu_trans_wk;
         lu_trans_wk = lu_ori_wk;
         lu_ori_wk = tmp_wk;
