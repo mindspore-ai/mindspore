@@ -49,7 +49,7 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  bool RunTask(int task_id);
+  void RunTask(int task_id);
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
