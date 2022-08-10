@@ -1120,16 +1120,13 @@ def concat(input_x, axis=0):
 
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
-    .. warning::
-        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
-
     Args:
         input_x (tuple, list): A tuple or a list of input tensors.
             Suppose there are two tensors in this tuple or list, namely t1 and t2.
             To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
             all other dimensions should be equal, that is,
             :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
-        axis (int): The specified axis. Default: 0.
+        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: 0.
 
     Returns:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
@@ -1138,7 +1135,7 @@ def concat(input_x, axis=0):
     Raises:
         TypeError: If `axis` is not an int.
         ValueError: If `input_x` have different dimension of tensor.
-        ValueError: If `axis` not in [-dims, dims - 1].
+        ValueError: If `axis` not in range :math:`[-R, R)`.
         RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
 
     Supported Platforms:
