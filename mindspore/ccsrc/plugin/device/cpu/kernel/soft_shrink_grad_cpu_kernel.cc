@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/soft_shrink_grad_cpu_kernel.h"
 #include "mindspore/core/ops/grad/soft_shrink_grad.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32_grad/activation_grad.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32_grad/activation_grad_fp32.h"
 
 namespace mindspore {
 namespace kernel {

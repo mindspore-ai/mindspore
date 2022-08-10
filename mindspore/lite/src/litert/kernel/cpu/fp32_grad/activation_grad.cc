@@ -15,7 +15,7 @@
  */
 
 #include "src/litert/kernel/cpu/fp32_grad/activation_grad.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"

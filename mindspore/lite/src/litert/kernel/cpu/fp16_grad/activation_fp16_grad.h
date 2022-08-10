@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "nnacl/fp16_grad/activation_grad.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp16_grad/activation_grad_fp16.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 
 namespace mindspore::kernel {
 class ActivationGradCPUKernelFp16 : public LiteKernel {
