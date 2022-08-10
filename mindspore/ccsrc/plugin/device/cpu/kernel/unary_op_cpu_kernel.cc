@@ -131,7 +131,9 @@ bool UnaryOpCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs, 
       std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
       output->size / sizeof(S), this, &parallel_search_info_);
   } else {
-    (void)memcpy_s(output_addr, output->size, input_addr, input->size);
+    if (memcpy_s(output_addr, output->size, input_addr, input->size) != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memory copy fail.";
+    }
   }
   return true;
 }
