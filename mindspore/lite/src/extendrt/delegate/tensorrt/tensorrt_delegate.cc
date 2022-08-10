@@ -53,22 +53,21 @@ std::vector<nvinfer1::Dims> StringToDims(const std::string &str) {
 }
 }  // namespace
 TensorRTDelegate::TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
-                                   size_t device_cache_size, const std::map<std::string, std::string> &ms_cache)
+                                   size_t device_cache_size, const std::string &serialize_path,
+                                   const std::map<std::string, std::string> &input_ranges)
     : context_(context),
       cache_model_path_(cache_model_path),
       vocab_size_(vocab_size),
-      device_cache_size_(device_cache_size) {
-  if (ms_cache.find("serialize_path") != ms_cache.end()) {
-    serialize_path_ = ms_cache.at("serialize_path");
+      device_cache_size_(device_cache_size),
+      serialize_path_(serialize_path) {
+  if (input_ranges.find("min_dims") != input_ranges.end()) {
+    min_dims_ = StringToDims(input_ranges.at("min_dims"));
   }
-  if (ms_cache.find("min_dims") != ms_cache.end()) {
-    min_dims_ = StringToDims(ms_cache.at("min_dims"));
+  if (input_ranges.find("opt_dims") != input_ranges.end()) {
+    opt_dims_ = StringToDims(input_ranges.at("opt_dims"));
   }
-  if (ms_cache.find("opt_dims") != ms_cache.end()) {
-    opt_dims_ = StringToDims(ms_cache.at("opt_dims"));
-  }
-  if (ms_cache.find("max_dims") != ms_cache.end()) {
-    max_dims_ = StringToDims(ms_cache.at("max_dims"));
+  if (input_ranges.find("max_dims") != input_ranges.end()) {
+    max_dims_ = StringToDims(input_ranges.at("max_dims"));
   }
   if (min_dims_.size() != opt_dims_.size() || min_dims_.size() != max_dims_.size()) {
     MS_LOG(WARNING) << "number of min_dims, opt_dims, max_dims are not equal";

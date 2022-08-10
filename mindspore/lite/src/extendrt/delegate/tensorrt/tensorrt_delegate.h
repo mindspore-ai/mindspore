@@ -33,7 +33,8 @@ namespace mindspore::lite {
 class TensorRTDelegate : public Delegate {
  public:
   explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
-                            size_t device_cache_size, const std::map<std::string, std::string> &ms_cache);
+                            size_t device_cache_size, const std::string &serialize_path,
+                            const std::map<std::string, std::string> &input_ranges);
   ~TensorRTDelegate() override;
 
   Status Init() override;
