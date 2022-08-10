@@ -22,7 +22,7 @@ mindspore.ops.kl_div
 
     其中 :math:`x` 代表 `logits` ；
     :math:`target` 代表 `labels` ；
-    :math:`\ell(x, target)` 为`logits` 和 `labels` 的KL散度。
+    :math:`\ell(x, target)` 为 `logits` 和 `labels` 的KL散度。
 
     .. note::
         - 目前Ascend平台不支持数据类型float64。
