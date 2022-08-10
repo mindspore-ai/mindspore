@@ -13,9 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """container"""
+from __future__ import absolute_import
+
 from collections import OrderedDict
 from abc import abstractmethod
-from ..cell import Cell
+
+from mindspore.nn.cell import Cell
 
 __all__ = ['SequentialCell', 'CellList']
 

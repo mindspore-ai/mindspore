@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-Validators for Audio processing operations.
-"""
+"""Validators for Audio processing operations."""
+from __future__ import absolute_import
 
 from functools import wraps
 
@@ -23,8 +22,8 @@ import numpy as np
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
-from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
-    ResampleMethod, ScaleType, WindowType
+from mindspore.dataset.audio.utils import BorderType, DensityFunction, FadeShape, GainType, \
+    Interpolation, MelType, Modulation, NormType, ResampleMethod, ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):

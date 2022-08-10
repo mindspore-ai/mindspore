@@ -25,7 +25,6 @@ import psutil
 
 import mindspore.log as logger
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
-
 from mindspore.train.summary._lineage_adapter import serialize_to_lineage_event
 from mindspore.train.summary._summary_adapter import package_graph_event, package_summary_event
 from mindspore.train.summary.writer import LineageWriter, SummaryWriter, ExportWriter

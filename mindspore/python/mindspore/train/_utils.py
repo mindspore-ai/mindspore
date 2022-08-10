@@ -28,7 +28,7 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strategy
-from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
+from mindspore.train.lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 
 MAX_PATH_LENGTH = 1024
 

@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """normalization"""
+from __future__ import absolute_import
+
 import itertools
 import numbers
 
@@ -32,7 +34,7 @@ from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
 from mindspore.common import dtype as mstype
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
            'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']

@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """layers for second order optimization"""
+from __future__ import absolute_import
+
 import numpy as np
+
 import mindspore.common.dtype as mstype
 import mindspore.log as logger
 from mindspore.common.tensor import Tensor
@@ -32,7 +34,7 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
 from mindspore.context import ParallelMode
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
-from .basic import ClipByNorm
+from mindspore.nn.layer.basic import ClipByNorm
 
 __all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor', 'EmbeddingLookupThor']
 

@@ -16,6 +16,8 @@
 Parallel Loss for the Parallel Training
 This is an experimental interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
+
 from mindspore.parallel import set_algo_parameters
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
@@ -28,8 +30,8 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
 from mindspore.log import _LogActionOnce
 from mindspore import log as logger
-from .layers import _check_input_dtype, _check_input_shape
-from .op_parallel_config import default_dpmp_config, OpParallelConfig
+from mindspore.nn.transformer.layers import _check_input_dtype, _check_input_shape
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = ["CrossEntropyLoss"]
 

@@ -23,7 +23,6 @@ from mindspore import ops, nn
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
 from mindspore.train.serialization import load_param_into_net
-
 from mindspore import log as logger
 from mindspore.ops import ReduceOp
 from mindspore.communication import get_group_size

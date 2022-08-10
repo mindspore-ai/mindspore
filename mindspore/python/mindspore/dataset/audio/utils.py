@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-Enum for audio ops.
-"""
+"""Enum for audio ops."""
+from __future__ import absolute_import
+
 from enum import Enum
 
 import mindspore._c_dataengine as cde

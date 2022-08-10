@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """activation"""
+from __future__ import absolute_import
+
 import numpy as np
 
 from mindspore._checkparam import Rel, Validator as validator
@@ -24,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.primitive import constexpr
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['Softmin',
            'Softmax',

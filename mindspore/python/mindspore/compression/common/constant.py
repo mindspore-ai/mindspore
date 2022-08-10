@@ -16,8 +16,8 @@
 Note:
     Constant module for compression. This is interface that is subject to change or deletion.
 """
-
 from __future__ import absolute_import
+
 import enum
 import re
 from types import DynamicClassAttribute

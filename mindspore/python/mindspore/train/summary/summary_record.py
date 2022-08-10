@@ -24,7 +24,6 @@ from collections import defaultdict
 
 from mindspore import log as logger
 from mindspore.nn import Cell
-
 from mindspore._c_expression import Tensor, security
 from mindspore._checkparam import Validator
 from mindspore.common.api import _cell_graph_executor

@@ -14,7 +14,10 @@
 # ============================================================================
 
 """basic"""
+from __future__ import absolute_import
+
 import math
+
 import mindspore.ops as P
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
@@ -22,7 +25,7 @@ from mindspore.common.initializer import initializer, Uniform
 from mindspore.common.parameter import Parameter
 from mindspore.ops.primitive import constexpr
 from mindspore._checkparam import Validator
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['BiDense']
 

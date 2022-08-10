@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Time Distributed."""
+from __future__ import absolute_import
 
 from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.ops import Reshape, Transpose, Stack, Unstack
 from mindspore.common import Tensor
 from mindspore._checkparam import Validator
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['TimeDistributed']
 

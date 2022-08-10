@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-'''RNN operators module, include RNN, GRU'''
+"""RNN operators module, include RNN, GRU."""
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 import mindspore.nn as nn
 import mindspore.ops as P
 import mindspore.context as context
@@ -26,8 +29,8 @@ from mindspore.nn.cell import Cell
 from mindspore import log as logger
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.operations._rl_inner_ops import CudnnGRU
-from .rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_cell, _lstm_cell
-from .rnn_utils import _Reverse, _ReverseSequence
+from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_cell, _lstm_cell
+from mindspore.nn.layer.rnn_utils import _Reverse, _ReverseSequence
 
 __all__ = ['LSTM', 'GRU', 'RNN']
 

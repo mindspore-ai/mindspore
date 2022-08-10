@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """loss"""
+from __future__ import absolute_import
+
 import mindspore
 import mindspore.common.dtype as mstype
 from mindspore import log
@@ -29,7 +31,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from ... import context
+from mindspore import context
 
 
 class LossBase(Cell):

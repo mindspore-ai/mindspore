@@ -15,5 +15,6 @@
 
 """Preprocess of dataset.
 """
+from __future__ import absolute_import
 
-from .preprocess_imagenet_validate_dataset import *
+from mindspore.dataset.datapreprocess.preprocess_imagenet_validate_dataset import *

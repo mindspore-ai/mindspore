@@ -15,6 +15,8 @@
 """
 BatchReadWrite
 """
+from __future__ import absolute_import
+
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations._rl_inner_ops import BatchAssign
 

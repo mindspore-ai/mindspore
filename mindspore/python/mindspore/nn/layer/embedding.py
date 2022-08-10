@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """embedding"""
+from __future__ import absolute_import
+
 import mindspore.common.dtype as mstype
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
@@ -30,9 +32,9 @@ from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_e
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
-from .basic import ClipByNorm
-from .math import Range
-from ..cell import Cell
+from mindspore.nn.layer.basic import ClipByNorm
+from mindspore.nn.layer.math import Range
+from mindspore.nn.cell import Cell
 
 __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 

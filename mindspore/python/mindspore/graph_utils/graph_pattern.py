@@ -14,6 +14,7 @@
 # ============================================================================
 """Patterns for describing graphs"""
 from __future__ import absolute_import
+
 from mindspore.ops import Primitive
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Pattern, OneOf_, Prim_, Call_, NoneOf_, Any, NewTensor_, NewParameter_, Imm

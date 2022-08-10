@@ -30,7 +30,7 @@ from mindspore.communication.management import get_group_size
 from mindspore.train.serialization import load_checkpoint
 from mindspore.parallel._utils import _get_global_rank
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from .less_batch_normalization import CommonHeadLastFN
+from mindspore.boost.less_batch_normalization import CommonHeadLastFN
 
 
 __all__ = ["OptimizerProcess", "ParameterProcess"]

@@ -13,33 +13,35 @@
 # limitations under the License.
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
+from __future__ import absolute_import
+
 import math
 import operator
 
 import numpy as onp
 
-from .. import context
-from ..common import Tensor
-from ..common import dtype as mstype
-from ..common.seed import get_seed
-from ..ops import operations as P
-from ..ops import functional as F
-from ..ops.primitive import constexpr
-from ..nn.layer.basic import tril as nn_tril
-from ..nn.layer.basic import triu as nn_triu
-from .._c_expression import Tensor as Tensor_
+from mindspore import context
+from mindspore.common import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.common.seed import get_seed
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.primitive import constexpr
+from mindspore.nn.layer.basic import tril as nn_tril
+from mindspore.nn.layer.basic import triu as nn_triu
+from mindspore._c_expression import Tensor as Tensor_
 
-from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
+from mindspore.numpy.utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
     _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar, \
     _expand, _to_tensor, _slice_along_axis, _callable
-from .utils_const import _raise_value_error, _empty, _max, _min, \
+from mindspore.numpy.utils_const import _raise_value_error, _empty, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
     _raise_type_error, _expanded_shape, _check_is_float, _iota, _type_convert, \
     _canonicalize_axis, _list_comprehensions, _ceil, _tuple_slice, _raise_unimplemented_error, \
     _tuple_setitem
-from .array_ops import ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
+from mindspore.numpy.array_ops import ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
     apply_along_axis, where, moveaxis
-from .dtypes import nan, pi
+from mindspore.numpy.dtypes import nan, pi
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32

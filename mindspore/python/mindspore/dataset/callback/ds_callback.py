@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-Python callback class
-"""
+"""Python callback class."""
+from __future__ import absolute_import
+
 import threading
+
 from mindspore._c_dataengine import PyDSCallback
 from mindspore.train.callback import Callback
 import mindspore.dataset as ds
-from .validators import check_callback
+from mindspore.dataset.callback.validators import check_callback
 
 
 class DSCallback:

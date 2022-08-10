@@ -13,16 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """logical operations, the function docs are adapted from Numpy API."""
+from __future__ import absolute_import
 
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
+from mindspore.common import Tensor
 
-from ..ops import functional as F
-from ..common import dtype as mstype
-from ..common import Tensor
-
-from .math_ops import _apply_tensor_op, absolute
-from .array_creations import zeros, ones, empty, asarray
-from .utils import _check_input_tensor, _to_tensor, _isnan
-from .utils_const import _raise_type_error, _is_shape_empty, _infer_out_shape, _check_same_type, \
+from mindspore.numpy.math_ops import _apply_tensor_op, absolute
+from mindspore.numpy.array_creations import zeros, ones, empty, asarray
+from mindspore.numpy.utils import _check_input_tensor, _to_tensor, _isnan
+from mindspore.numpy.utils_const import _raise_type_error, _is_shape_empty, _infer_out_shape, _check_same_type, \
     _check_axis_type, _canonicalize_axis, _can_broadcast, _isscalar
 
 

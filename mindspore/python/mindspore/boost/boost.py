@@ -17,10 +17,10 @@ from __future__ import absolute_import
 
 import threading
 from mindspore.nn.optim import SGD
-from .less_batch_normalization import LessBN
-from .grad_freeze import GradientFreeze
-from .base import OptimizerProcess, ParameterProcess
-from .base import _get_local_pca_mat_path
+from mindspore.boost.less_batch_normalization import LessBN
+from mindspore.boost.grad_freeze import GradientFreeze
+from mindspore.boost.base import OptimizerProcess, ParameterProcess
+from mindspore.boost.base import _get_local_pca_mat_path
 
 
 __all__ = ["AutoBoost"]

@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """internal utility functions"""
+from __future__ import absolute_import
+
 import types
 
-from ..common import Tensor
-from ..ops import functional as F
-from ..common import dtype as mstype
+from mindspore.common import Tensor
+from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
-from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
+from mindspore.numpy.utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
     _tuple_setitem, _callable_const, _check_is_float, _get_device
 
 

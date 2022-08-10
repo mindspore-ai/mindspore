@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-'''RNN Cells module, include RNNCell, GRUCell, LSTMCell'''
+"""RNN Cells module, include RNNCell, GRUCell, LSTMCell."""
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 import mindspore.ops as P
 import mindspore.common.dtype as mstype
 from mindspore import log as logger

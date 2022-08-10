@@ -13,15 +13,18 @@
 # limitations under the License.
 # ============================================================================
 """math"""
+from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
-from ..cell import Cell
-from ...common import dtype as mstype
-from ..._checkparam import Validator as validator
+from mindspore.nn.cell import Cell
+from mindspore.common import dtype as mstype
+from mindspore._checkparam import Validator as validator
 
 __all__ = ['ReduceLogSumExp',
            'Range',

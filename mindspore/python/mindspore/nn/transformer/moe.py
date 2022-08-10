@@ -15,8 +15,11 @@
 """
 Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
@@ -28,7 +31,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
-from .op_parallel_config import default_moeparallel_config
+from mindspore.nn.transformer.op_parallel_config import default_moeparallel_config
 
 __all__ = [
     "MoEConfig"]

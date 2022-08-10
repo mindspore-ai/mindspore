@@ -21,15 +21,15 @@ Note:
 """
 from __future__ import absolute_import
 
-from .boost import AutoBoost
-from .base import OptimizerProcess, ParameterProcess
-from .boost_cell_wrapper import BoostTrainOneStepCell, BoostTrainOneStepWithLossScaleCell
-from .less_batch_normalization import LessBN
-from .grad_freeze import GradientFreeze, FreezeOpt, freeze_cell
-from .grad_accumulation import GradientAccumulation
-from .adasum import AdaSum
-from .dim_reduce import DimReduce
-from .group_loss_scale_manager import GroupLossScaleManager
+from mindspore.boost.boost import AutoBoost
+from mindspore.boost.base import OptimizerProcess, ParameterProcess
+from mindspore.boost.boost_cell_wrapper import BoostTrainOneStepCell, BoostTrainOneStepWithLossScaleCell
+from mindspore.boost.less_batch_normalization import LessBN
+from mindspore.boost.grad_freeze import GradientFreeze, FreezeOpt, freeze_cell
+from mindspore.boost.grad_accumulation import GradientAccumulation
+from mindspore.boost.adasum import AdaSum
+from mindspore.boost.dim_reduce import DimReduce
+from mindspore.boost.group_loss_scale_manager import GroupLossScaleManager
 
 
 __all__ = ['AutoBoost',

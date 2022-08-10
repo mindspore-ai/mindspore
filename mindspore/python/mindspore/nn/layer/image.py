@@ -13,19 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """image"""
+from __future__ import absolute_import
+
 import numbers
 import numpy as np
+
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore._checkparam import Rel, Validator as validator
-from .conv import Conv2d
-from .container import CellList
-from .pooling import AvgPool2d
-from .activation import ReLU
-from ..cell import Cell
+from mindspore.nn.layer.conv import Conv2d
+from mindspore.nn.layer.container import CellList
+from mindspore.nn.layer.pooling import AvgPool2d
+from mindspore.nn.layer.activation import ReLU
+from mindspore.nn.cell import Cell
 
 __all__ = ['ImageGradients', 'SSIM', 'MSSSIM', 'PSNR', 'CentralCrop']
 

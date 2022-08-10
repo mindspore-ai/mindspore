@@ -18,8 +18,9 @@ Loss.
 Cells of loss function. Loss function in machine learning is the target of the model.
 It shows how well the model works on a dataset and the optimization target which the optimizer is searching.
 """
+from __future__ import absolute_import
 
-from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss,\
+from mindspore.nn.loss.loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss,\
     SoftmaxCrossEntropyWithLogits, BCELoss, MultiMarginLoss, CosineEmbeddingLoss, \
     SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss,\
     RMSELoss, MAELoss, HuberLoss, CrossEntropyLoss, NLLLoss

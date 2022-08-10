@@ -22,13 +22,15 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.dataset as ds
 """
+from __future__ import absolute_import
+
 import os
 import platform
 import random
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
-from .validator_helpers import replace_none
+from mindspore.dataset.core.validator_helpers import replace_none
 
 __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_seed', 'get_seed',
