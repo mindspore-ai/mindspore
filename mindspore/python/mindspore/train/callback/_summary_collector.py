@@ -446,7 +446,7 @@ class SummaryCollector(Callback):
                     re.match(regular, '')
                 except re.error as exc:
                     raise ValueError(f'For `collect_specified_data`, the value of `histogram_regular` '
-                                     f'is not a valid regular expression. Detail: {str(exc)}.')
+                                     f'is not a valid regular expression. Detail: {str(exc)}.') from exc
 
         bool_items = set(self._DEFAULT_SPECIFIED_DATA) - {'histogram_regular', 'collect_landscape'}
         for item in bool_items:

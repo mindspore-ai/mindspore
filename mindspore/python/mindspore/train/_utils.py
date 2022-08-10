@@ -110,7 +110,7 @@ def _make_directory(path, arg_name='path'):
             real_path = path
         except PermissionError as e:
             logger.critical("No write permission on the directory(%r), error = %r", path, e)
-            raise TypeError("No write permission on the directory.")
+            raise TypeError("No write permission on the directory.") from e
         finally:
             pass
     return real_path
@@ -255,7 +255,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
     except BaseException as e:
         logger.critical(f"Failed to phase the file: {file_name} as format: {proto_format},"
                         f" please check the correct file and format.")
-        raise ValueError(e.__str__())
+        raise ValueError(e.__str__()) from e
     finally:
         pass
 
