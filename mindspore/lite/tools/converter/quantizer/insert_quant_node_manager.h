@@ -33,15 +33,19 @@ class InsertQuantNodeManager {
 
   ~InsertQuantNodeManager() = default;
 
-  int InsertQuantDtypeCastNode(const FuncGraphPtr &graph);
+  int InsertQuantDtypeCastNode(const FuncGraphPtr &graph, TypeId src_dtype = kNumberTypeFloat32);
 
   int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops,
                              const std::set<std::string> &skip_quant_node);
 
  private:
-  ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params);
+  ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
+                                     const std::vector<schema::QuantParamT> &input_quant_params,
+                                     const std::vector<schema::QuantParamT> &output_quant_params);
 
   int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input);
+
+  bool CheckInited(const AnfNodePtr &input_node, size_t index) const;
 
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 

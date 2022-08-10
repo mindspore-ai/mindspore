@@ -30,20 +30,17 @@ namespace {
 constexpr size_t kMinSize3 = 3;
 constexpr size_t kPrimitiveCOffset = 1;
 }  // namespace
-ValueNodePtr InsertQuantNodeManager::NewQuantCastValueNode(int src_type, int dst_type,
-                                                           const std::vector<schema::QuantParamT> &quant_params) {
+ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(
+  int src_type, int dst_type, const std::vector<schema::QuantParamT> &input_quant_params,
+  const std::vector<schema::QuantParamT> &output_quant_params) {
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
   MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
   prim_c->Init(src_type, dst_type);
-  auto quant_params_holder = std::make_shared<QuantParamHolder>(quant_params.size(), quant_params.size());
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(input_quant_params.size(), output_quant_params.size());
   MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
   quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
-  for (size_t i = 0; i < quant_params.size(); i++) {
-    auto quant_param = quant_params[i];
-    std::vector<schema::QuantParamT> quant_params_in = {quant_param};
-    quant_params_holder->set_input_quant_param(i, quant_params_in);
-    quant_params_holder->set_output_quant_param(i, quant_params_in);
-  }
+  quant_params_holder->set_input_quant_param(0, input_quant_params);
+  quant_params_holder->set_output_quant_param(0, output_quant_params);
   auto prim = prim_c->GetPrim();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
   prim->AddAttr("quant_params", quant_params_holder);
@@ -80,9 +77,9 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
     return RET_NO_CHANGE;
   }
 
-  bool insert_dequant_node =
-    curnode_quant_type == schema::QuantType_QUANT_ALL && input_cnode_quant_type == schema::QuantType_QUANT_NONE;
   bool insert_quant_node =
+    curnode_quant_type == schema::QuantType_QUANT_ALL && input_cnode_quant_type == schema::QuantType_QUANT_NONE;
+  bool insert_dequant_node =
     curnode_quant_type == schema::QuantType_QUANT_NONE && input_cnode_quant_type == schema::QuantType_QUANT_ALL;
   if (!insert_dequant_node && !insert_quant_node) {
     MS_LOG(WARNING) << "value_node is null! "
@@ -91,23 +88,47 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
                     << " quant_type:" << input_cnode_quant_type;
     return RET_NO_CHANGE;
   }
+
+  TypeId data_type = kNumberTypeFloat32;
+  if (opt::GetDataTypeFromAnfNode(input_node, &data_type) != RET_OK) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " input op name: " << input_node->fullname_with_scope()
+                 << " input data type: " << data_type << " index " << input_index;
+    return RET_ERROR;
+  }
   ValueNodePtr value_node;
-  if (insert_dequant_node) {
+  // quant node, uint8toint8: update input_quant_param of cnode
+  if (insert_quant_node) {
     auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
     if (curr_primitive_quant_param_holder->get_input_quant_params().size() < input_index) {
       MS_LOG(ERROR) << "quant param is invalid.";
       return RET_ERROR;
     }
-    value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
-                                       curr_primitive_quant_param_holder->get_input_quant_params()[input_index - 1]);
-  } else {  // insert_quant_node
+    auto output_quant_params = curr_primitive_quant_param_holder->get_input_quant_params()[input_index - 1];
+    std::vector<schema::QuantParamT> input_quant_params(output_quant_params);
+    // Uint8toInt8
+    if (data_type == kNumberTypeUInt8) {
+      for (auto &quant_param : output_quant_params) {
+        quant_param.zeroPoint -= kU8ZeroPointOffset;
+      }
+      curr_primitive_quant_param_holder->set_input_quant_param(input_index - 1, output_quant_params);
+    }
+    value_node = NewQuantCastPrimitive(data_type, kNumberTypeInt8, input_quant_params, output_quant_params);
+  } else {  // insert_dequant_node, int8touint8: update output_quant_params of input_node
     auto input_primitive_quant_param_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
     if (input_primitive_quant_param_holder->get_output_quant_params().empty()) {
       MS_LOG(ERROR) << "output quant param is empty.";
       return RET_ERROR;
     }
-    value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                       input_primitive_quant_param_holder->get_output_quant_params().front());
+    std::vector<schema::QuantParamT> input_quant_params =
+      input_primitive_quant_param_holder->get_output_quant_params()[0];
+    std::vector<schema::QuantParamT> output_quant_params(input_quant_params);
+    if (data_type == kNumberTypeUInt8) {
+      for (auto &quant_param : input_quant_params) {
+        quant_param.zeroPoint -= kU8ZeroPointOffset;
+      }
+      input_primitive_quant_param_holder->set_output_quant_param(0, input_quant_params);
+    }
+    value_node = NewQuantCastPrimitive(kNumberTypeInt8, data_type, input_quant_params, output_quant_params);
   }
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
@@ -118,7 +139,28 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
   return RET_OK;
 }
 
+bool InsertQuantNodeManager::CheckInited(const AnfNodePtr &input_node, size_t index) const {
+  auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+  if (input_cnode == nullptr || input_cnode->inputs().empty()) {
+    MS_LOG(DEBUG) << "input: " << index << " " << input_cnode->fullname_with_scope() << ": "
+                  << " PrimitiveC is null";
+    return false;
+  }
+  auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<mindspore::Primitive>>(input_cnode->input(0));
+  if (input_cnode_primitive_c == nullptr) {
+    MS_LOG(DEBUG) << "input: " << index << " " << input_cnode->fullname_with_scope() << ": "
+                  << " PrimitiveC is null";
+    return false;
+  }
+  auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
+  return (input_primitive_quant_holder->IsInputQuantParamsInited() ||
+          input_primitive_quant_holder->IsOutputQuantParamsInited());
+}
+
 int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const {
+  if (opt::CheckPrimitiveType(input_node, prim::kPrimQuantDTypeCast)) {
+    return RET_NO_CHANGE;
+  }
   bool is_graph_input = IsGraphInput(input_node);
   if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
     return RET_NO_CHANGE;
@@ -139,20 +181,28 @@ int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId c
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph) {
+int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph, TypeId src_dtype) {
   MS_ASSERT(graph != nullptr);
+  if (src_dtype != kNumberTypeFloat32 && src_dtype != kNumberTypeUInt8) {
+    MS_LOG(ERROR) << "Invalid src dtype, only support fp32 and uint8.";
+    return RET_ERROR;
+  }
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto input_node = cnode->input(i);
-      auto ret = CheckDataType(input_node, kNumberTypeFloat32);
+      bool is_graph_input = IsGraphInput(input_node);
+      // Uint8 check quant params inited
+      if (src_dtype == kNumberTypeUInt8 && !is_graph_input && !CheckInited(input_node, i)) {
+        continue;
+      }
+      auto ret = CheckDataType(input_node, src_dtype);
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
         MS_LOG(ERROR) << "Check data type failed.";
         return ret;
       }
-      bool is_graph_input = IsGraphInput(input_node);
       ret = InsertCastNode(graph, cnode, i, is_graph_input);
       if (ret == RET_NO_CHANGE) {
         continue;

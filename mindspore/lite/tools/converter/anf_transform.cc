@@ -101,6 +101,7 @@
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/propagete_quant_param_pass.h"
+#include "tools/converter/quantizer/quant_helper/dtype_transform_pass.h"
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 
@@ -403,6 +404,10 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   return RET_OK;
 }
 
+bool AnfTransform::CheckExternalExtension(const std::shared_ptr<ConverterPara> &param) {
+  return (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE);
+}
+
 STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
       param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
@@ -423,6 +428,12 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
   ret = determiner.Determine();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run quant type determine failed.";
+    return ret;
+  }
+  auto dtype_trans_pass = quant::DTypeTransformPass(func_graph);
+  ret = dtype_trans_pass.Transform();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run dtype transform pass failed.";
     return ret;
   }
   auto quant_node_pass = quant::QuantNodePass(func_graph);
@@ -563,7 +574,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     return nullptr;
   }
 
-  if (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE) {
+  if (CheckExternalExtension(param)) {
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
     return nullptr;
   }

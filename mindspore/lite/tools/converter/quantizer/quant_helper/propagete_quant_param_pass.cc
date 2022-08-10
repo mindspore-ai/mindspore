@@ -110,10 +110,11 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
     if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
       if (ForwardTupleGetItem(cnode) != RET_OK) {
         MS_LOG(ERROR) << "Forward TupleGetItem " << cnode->fullname_with_scope() << " failed.";
+        return RET_ERROR;
       }
       continue;
     }
-    if (IsGraphInput(cnode) || opt::IsSpecialType(cnode)) {
+    if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
     // Infer quant param with forward (output->input).
@@ -177,7 +178,7 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
   for (auto iter = nodes.rbegin(); iter != nodes.rend(); iter++) {
     auto cnode = *iter;
     auto inputs = cnode->inputs();
-    if (IsGraphInput(cnode) || opt::IsSpecialType(cnode)) {
+    if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
     // Infer quant param with forward (output<-input).

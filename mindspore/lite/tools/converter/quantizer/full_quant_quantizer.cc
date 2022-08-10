@@ -18,7 +18,6 @@
 
 #include "tools/converter/quantizer/full_quant_quantizer.h"
 #include <dirent.h>
-#include <set>
 #include <memory>
 #include <unordered_map>
 #include <string>
@@ -40,11 +39,6 @@ using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-namespace {
-static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                         prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                         prim::kPrimLayerNormFusion};
-}  // namespace
 FullQuantQuantizer::~FullQuantQuantizer() {}
 
 int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
@@ -160,7 +154,7 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, has_bias_operator)) {
+  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
     ret = fixed_bit_quant_.QuantBias(input_node, primitive);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
