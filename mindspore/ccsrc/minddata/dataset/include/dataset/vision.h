@@ -657,6 +657,37 @@ class MS_API PadToSize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Posterize an image by reducing the number of bits for each color channel.
+class MS_API Posterize final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] bits The number of bits to keep for each channel,
+  ///     should be in range of [0, 8].
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto posterize_op = vision::Posterize(8);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, posterize_op},  // operations
+  ///                            {"image"});                 // input columns
+  /// \endcode
+  explicit Posterize(uint8_t bits);
+
+  /// \brief Destructor.
+  ~Posterize() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Automatically adjust the contrast of the image with a given probability.
 class MS_API RandomAutoContrast final : public TensorTransform {
  public:

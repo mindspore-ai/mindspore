@@ -47,9 +47,9 @@ from . import utils
 from .transforms import AdjustBrightness, AdjustGamma, AdjustSaturation, AdjustSharpness, AutoAugment, AutoContrast, \
     BoundingBoxAugment, CenterCrop, ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, \
     GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, \
-    Normalize, NormalizePad, Pad, PadToSize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, \
-    RandomColorAdjust, RandomCrop, RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, \
-    RandomGrayscale, RandomHorizontalFlip, RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, \
+    Normalize, NormalizePad, Pad, PadToSize, Posterize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, \
+    RandomColor, RandomColorAdjust, RandomCrop, RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, \
+    RandomErasing, RandomGrayscale, RandomHorizontalFlip, RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, \
     RandomPerspective, RandomPosterize, RandomResizedCrop, RandomResizedCropWithBBox, RandomResize, \
     RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, RandomSharpness, RandomSolarize, RandomVerticalFlip, \
     RandomVerticalFlipWithBBox, Rescale, Resize, ResizeWithBBox, RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, \

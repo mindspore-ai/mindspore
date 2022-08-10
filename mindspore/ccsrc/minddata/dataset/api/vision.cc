@@ -45,6 +45,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
+#include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -611,6 +612,16 @@ PadToSize::PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t
 std::shared_ptr<TensorOperation> PadToSize::Parse() {
   return std::make_shared<PadToSizeOperation>(data_->size_, data_->offset_, data_->fill_value_, data_->padding_mode_);
 }
+
+// Posterize Transform Operation
+struct Posterize::Data {
+  explicit Data(uint8_t bits) : bits_(bits) {}
+  uint8_t bits_;
+};
+
+Posterize::Posterize(uint8_t bits) : data_(std::make_shared<Data>(bits)) {}
+
+std::shared_ptr<TensorOperation> Posterize::Parse() { return std::make_shared<PosterizeOperation>(data_->bits_); }
 
 // RandomAdjustSharpness Transform Operation.
 struct RandomAdjustSharpness::Data {
