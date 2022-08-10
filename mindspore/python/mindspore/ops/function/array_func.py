@@ -2729,7 +2729,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
         ValueError: If `block_size` is not one dimensional when `block_size` is a list or tuple.
         ValueError: If the length of `block_size` is not 2 on Ascend.
         ValueError: If the element of `block_size` is not an integer larger than 1.
-        ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_size`.
+        ValueError: If shape of `paddings` is not (M, 2), where M is the length of `block_size`.
         ValueError: If the element of `paddings` is not an integer larger than 0.
         TypeError: If `block_size` is not one of list, tuple, int.
         TypeError: If `paddings` is neither list nor tuple.

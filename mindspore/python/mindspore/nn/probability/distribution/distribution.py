@@ -162,8 +162,7 @@ class Distribution(Cell):
             self.default_parameters = []
             self.parameter_names = []
         # cast value to a tensor if it is not None
-        value_t = None if value is None else cast_to_tensor(
-            value, self.parameter_type)
+        value_t = None if value is None else cast_to_tensor(value, self.parameter_type)
         self.default_parameters.append(value_t)
         self.parameter_names.append(name)
         return value_t
@@ -184,8 +183,7 @@ class Distribution(Cell):
             if arg is not None:
                 self.checktensor(arg, name)
             else:
-                arg = default if default is not None else raise_none_error(
-                    name)
+                arg = default if default is not None else raise_none_error(name)
 
             # broadcast if the number of args > 1
             if broadcast_shape is None:
