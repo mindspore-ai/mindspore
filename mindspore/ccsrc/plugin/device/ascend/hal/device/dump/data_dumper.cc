@@ -62,7 +62,8 @@ static const std::map<uint32_t, std::string> kOverflowModeStr = {{kNoOverflow, "
                                                                  {kAllOverflow, "AllOverflow"}};
 constexpr const char *kNodeNameOpDebug = "Node_OpDebug";
 constexpr const char *kOpTypeOpDebug = "Opdebug";
-
+constexpr const char *kNodeNameEndGraph = "Node_EndGraph";
+constexpr const char *kOpTypeOpEndGraph = "EndGraph";
 static constexpr auto kCurLoopCountName = "current_loop_count";
 static constexpr auto kCurEpochCountName = "current_epoch_count";
 static constexpr auto kConstLoopNumInEpochName = "const_loop_num_in_epoch";
@@ -111,6 +112,7 @@ void DataDumper::LoadDumpInfo() {
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo start";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   aicpu::dump::OpMappingInfo dump_info;
+  SetOpEndgraphMappingInfo(NOT_NULL(&dump_info));
   SetOpDebugMappingInfo(NOT_NULL(&dump_info));
   SetOpMappingInfo(NOT_NULL(&dump_info));
 
@@ -287,6 +289,21 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   DumpKernelOutput(kernel, args, dump_task);
   DumpKernelInput(kernel, args, dump_task);
 #endif
+}
+
+void DataDumper::SetOpEndgraphMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
+  for (auto &[task_id, stream_id] : end_graph_info_map_) {
+    MS_LOG(INFO) << "[DataDump] Add op end graph info to OpMappingInfo, task id = " << task_id
+                 << ", stream id = " << stream_id;
+    aicpu::dump::Task task;
+    task.set_end_graph(true);
+    task.set_task_id(task_id);
+    task.set_stream_id(stream_id);
+    MS_EXCEPTION_IF_NULL(task.mutable_op());
+    task.mutable_op()->set_op_name(kNodeNameEndGraph);
+    task.mutable_op()->set_op_type(kOpTypeOpEndGraph);
+    dump_info->mutable_task()->Add(std::move(task));
+  }
 }
 
 void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {

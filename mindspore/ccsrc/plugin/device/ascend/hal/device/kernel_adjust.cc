@@ -168,6 +168,38 @@ void KernelAdjust::InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::Ker
   MS_LOG(INFO) << "FpBp loop insert Stream Switch " << fpbp_switch_app->fullname_with_scope();
 }
 
+bool KernelAdjust::IsTaskSink() const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+}
+
+void KernelAdjust::InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  if (IsTaskSink()) {
+    auto exec_order = kernel_graph_ptr->execution_order();
+    if (exec_order.empty()) {
+      return;
+    }
+    CNodePtr fpbp_endgraph_app = CreateEndGraphOp(kernel_graph_ptr);
+    MS_EXCEPTION_IF_NULL(fpbp_endgraph_app);
+    exec_order.push_back(fpbp_endgraph_app);
+    MS_LOG(INFO) << "Insert End Graph " << fpbp_endgraph_app->fullname_with_scope();
+    kernel_graph_ptr->set_execution_order(exec_order);
+  }
+}
+
+void KernelAdjust::InsertEndGraph(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                  std::vector<CNodePtr> *exec_order, uint32_t stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr end_graph_op = CreateEndGraphOp(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(end_graph_op);
+  AnfAlgo::SetStreamId(stream_id, end_graph_op.get());
+  exec_order->push_back(end_graph_op);
+  MS_LOG(INFO) << "Insert End Graph " << end_graph_op->fullname_with_scope();
+}
+
 void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                   const std::vector<CNodePtr> &orders, size_t order_index,
                                   std::vector<CNodePtr> *memcpy_list, std::vector<CNodePtr> *other_list) {
@@ -394,6 +426,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
   if (!NeedLoopSink()) {
+    InsertEndGraphTaskSink(kernel_graph_ptr);
     return;
   }
   if (kernel_graph_ptr->is_dynamic_shape()) {
@@ -452,7 +485,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
   uint32_t fpbp_stream_id = UINT32_MAX;
   uint32_t fpbp_switch_stream_id = UINT32_MAX;
   InsertFpBpLoopStreamSwitch(kernel_graph_ptr, switch_loop_input, &exec_order, &fpbp_stream_id, &fpbp_switch_stream_id);
-
+  InsertEndGraph(kernel_graph_ptr, &exec_order, fpbp_switch_stream_id);
   if (exist_getnext) {
     InsertFpBpStartRecv(kernel_graph_ptr, &exec_order, fpbp_start_event_id, fpbp_stream_id);
   }
@@ -530,6 +563,21 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   common::AnfAlgo::SetNodeAttr(kAttrDataType, dt, stream_switch_app);
   // set distinction label and graph id
   return stream_switch_app;
+}
+
+CNodePtr KernelAdjust::CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
+    {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
+  auto abstract = std::make_shared<abstract::AbstractNone>();
+  auto end_graph = std::make_shared<Primitive>(kEndGraph);
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(end_graph));
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  CNodePtr end_graph_node = kernel_graph_ptr->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(end_graph_node);
+  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), end_graph_node.get());
+  end_graph_node->set_abstract(abstract);
+  return end_graph_node;
 }
 
 CNodePtr KernelAdjust::CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {

@@ -79,6 +79,8 @@ rtError_t rtFree(void *devPtr) {
   return RT_ERROR_NONE;
 }
 
+rtError_t rtEndGraphEx(rtModel_t model, rtStream_t stream, uint32_t flags) { return RT_ERROR_NONE; }
+
 rtError_t rtModelExecute(rtModel_t model, rtStream_t stream, uint32_t flag) { return RT_ERROR_NONE; }
 
 rtError_t rtMemAllocManaged(void **ptr, uint64_t size, uint32_t flag) { return RT_ERROR_NONE; }

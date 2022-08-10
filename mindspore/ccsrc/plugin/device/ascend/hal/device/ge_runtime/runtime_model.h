@@ -39,6 +39,7 @@ class RuntimeModel {
   const std::vector<uint32_t> &GetTaskIdList() const;
   const std::vector<uint32_t> &GetStreamIdList() const;
   const std::map<std::string, std::shared_ptr<RuntimeInfo>> &GetRuntimeInfoMap() const { return runtime_info_map_; }
+  const std::map<uint32_t, uint32_t> &GetEndGraphInfoMap() const { return end_graph_info_map_; }
   rtModel_t GetModelHandle() const { return rt_model_handle_; }
   rtStream_t GetModelStream() const { return rt_model_stream_; }
   void Run() const;
@@ -67,6 +68,7 @@ class RuntimeModel {
   std::vector<uint32_t> task_id_list_{};
   std::vector<uint32_t> stream_id_list_{};
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
+  std::map<uint32_t, uint32_t> end_graph_info_map_;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_RUNTIME_MODEL_H_

@@ -54,6 +54,9 @@ class DataDumper {
   void set_runtime_info(const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info) {
     runtime_info_map_ = runtime_info;
   }
+  void set_end_graph(const std::map<uint32_t, uint32_t> &end_graph_info_map) {
+    end_graph_info_map_ = end_graph_info_map;
+  }
 #ifndef ENABLE_SECURITY
   void LoadDumpInfo();
   void OpDebugRegister();
@@ -68,6 +71,7 @@ class DataDumper {
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
 #endif
   void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
+  void SetOpEndgraphMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
 #ifndef ENABLE_SECURITY
   void GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const;
@@ -89,6 +93,7 @@ class DataDumper {
   uint32_t graph_id_;
   std::vector<std::string> dump_kernel_names_;
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
+  std::map<uint32_t, uint32_t> end_graph_info_map_;
   bool is_op_debug_;
 };
 }  // namespace ascend

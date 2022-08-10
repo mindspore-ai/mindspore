@@ -183,6 +183,7 @@ constexpr auto kBiasAddOpName = "BiasAdd";
 constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
 constexpr auto kStreamSwitchOpName = "StreamSwitch";
 constexpr auto kStreamActiveOpName = "StreamActive";
+constexpr auto kEndGraph = "EndGraph";
 constexpr auto kAssignAddOpName = "AssignAdd";
 constexpr auto kAssignSubOpName = "AssignSub";
 constexpr auto kSendOpName = "StreamSend";

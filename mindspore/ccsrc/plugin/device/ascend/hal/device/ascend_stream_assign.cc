@@ -2475,11 +2475,7 @@ vector<CNodePtr>::iterator AscendStreamAssign::FindFirstUserInExecutionOrder(vec
   return end;
 }
 
-bool AscendStreamAssign::IsTaskSink() const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-}
+bool AscendStreamAssign::IsTaskSink() const { return KernelAdjust::GetInstance().IsTaskSink(); }
 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) {
   MS_EXCEPTION_IF_NULL(wait_active_stream_list);

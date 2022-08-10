@@ -44,6 +44,8 @@ class ModelRunner {
 
   const std::map<std::string, std::shared_ptr<RuntimeInfo>> &GetRuntimeInfoMap(uint32_t model_id) const;
 
+  const std::map<uint32_t, uint32_t> &GetEndGraphInfoMap(uint32_t model_id) const;
+
   void *GetModelHandle(uint32_t model_id) const;
 
   void *GetModelStream(uint32_t model_id) const;
