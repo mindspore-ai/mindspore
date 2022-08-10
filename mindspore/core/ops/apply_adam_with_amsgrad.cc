@@ -30,8 +30,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -59,7 +59,8 @@ abstract::ShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primitive,
 
   if (var_shape->IsDynamic() || m_shape->IsDynamic() || v_shape->IsDynamic() || vhat_shape->IsDynamic() ||
       grad_shape->IsDynamic()) {
-    return var_shape->cast<abstract::ShapePtr>();
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{var_shape, m_shape, v_shape, vhat_shape});
   }
 
   // shape of var, m, v, vhat must be the same
@@ -76,11 +77,11 @@ abstract::ShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primitive,
                                << ".";
     }
   }
-  auto shape_ptr = var_shape->cast<abstract::ShapePtr>();
-  return shape_ptr;
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{var_shape, m_shape, v_shape, vhat_shape});
 }
 
-TypePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   auto var_type = input_args[0]->BuildType();
   auto m_type = input_args[1]->BuildType();
@@ -103,16 +104,9 @@ TypePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vecto
   CheckAndConvertUtils::CheckTensorTypeValid("beta1_power_type", beta1_power_type, valid_types, prim_name);
   CheckAndConvertUtils::CheckTensorTypeValid("beta2_power_type", beta2_power_type, valid_types, prim_name);
   CheckAndConvertUtils::CheckTensorTypeValid("lr_type", lr_type, valid_types, prim_name);
-  return var_type;
+  return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type, v_type, vhat_type});
 }
 }  // namespace
-
-void ApplyAdamWithAmsgrad::Init(const float beta1, const float beta2, const float epsilon, const bool use_locking) {
-  this->set_beta1(beta1);
-  this->set_beta2(beta2);
-  this->set_epsilon(epsilon);
-  this->set_use_locking(use_locking);
-}
 
 void ApplyAdamWithAmsgrad::set_beta1(const float beta1) { (void)this->AddAttr(kBeta1, api::MakeValue(beta1)); }
 
@@ -149,7 +143,7 @@ AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 8;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ApplyAdamWithAmsgradInferType(primitive, input_args);
   auto infer_shape = ApplyAdamWithAmsgradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
