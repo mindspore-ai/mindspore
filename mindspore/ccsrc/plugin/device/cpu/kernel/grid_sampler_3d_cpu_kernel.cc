@@ -85,9 +85,9 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
   T x = grid_addr[grid_offset];
   T y = grid_addr[static_cast<size_t>(grid_offset) + grid_stride_[kFour]];
   T z = grid_addr[static_cast<size_t>(grid_offset + kTwo * grid_stride_[kFour])];
-  x = grid_sampler_compute_source_index(x, static_cast<size_t>(x_shape_[kFour]), padding_mode_, align_corners_);
-  y = grid_sampler_compute_source_index(y, static_cast<size_t>(x_shape_[kThree]), padding_mode_, align_corners_);
-  z = grid_sampler_compute_source_index(z, static_cast<size_t>(x_shape_[kTwo]), padding_mode_, align_corners_);
+  x = grid_sampler_compute_source_index(x, x_shape_[kFour], padding_mode_, align_corners_);
+  y = grid_sampler_compute_source_index(y, x_shape_[kThree], padding_mode_, align_corners_);
+  z = grid_sampler_compute_source_index(z, x_shape_[kTwo], padding_mode_, align_corners_);
   auto x_ptr_NC = out_iter[kZero] * x_stride_[kZero];
   auto output_ptr_NCDHW = out_iter[kZero] * output_stride_[kZero] + out_iter[kTwo] * output_stride_[kTwo] +
                           out_iter[kThree] * output_stride_[kThree] + out_iter[kFour] * output_stride_[kFour];
