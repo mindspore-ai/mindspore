@@ -73,7 +73,9 @@ std::string GenCommOpKey(const CNodePtr &node) {
 
 bool IsReusable(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->HasAttr(parallel::COMM_REUSE) || !GetValue<bool>(node->GetAttr(parallel::COMM_REUSE))) {
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (!prim->HasAttr(parallel::COMM_REUSE) || !GetValue<bool>(prim->GetAttr(parallel::COMM_REUSE))) {
     return false;
   }
 

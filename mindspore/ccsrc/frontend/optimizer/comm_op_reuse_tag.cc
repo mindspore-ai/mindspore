@@ -71,12 +71,11 @@ void AddCommOpReuseTag(const FuncGraphPtr &graph) {
       continue;
     }
     auto comm_prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(comm_prim);
     if (comm_prim->HasAttr(parallel::FUSION) && GetValue<int64_t>(comm_prim->GetAttr(parallel::FUSION)) != 0) {
       continue;
     }
-    auto comm_cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(node);
-    comm_cnode->AddAttr(parallel::COMM_REUSE, MakeValue(true));
+    (void)comm_prim->AddAttr(parallel::COMM_REUSE, MakeValue(true));
 
     std::string group_name = "";
     if (comm_prim->HasAttr(parallel::GROUP)) {
