@@ -154,7 +154,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   if (output_kIndex0_type == kNumberTypeInt32) {
     if (range_max_ > std::numeric_limits<int>::max()) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'range_max' can not exceed the range of int32, but "
-                               << "got" << range_max_ << ". The input data type should be changed to int64.";
+                               << "got " << range_max_ << ". The input data type should be changed to int64.";
     }
   }
 
