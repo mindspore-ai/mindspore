@@ -201,3 +201,5 @@ else()
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
 endif()
+
+set_target_properties(mindspore-extendrt PROPERTIES OUTPUT_NAME "mindspore-lite")
