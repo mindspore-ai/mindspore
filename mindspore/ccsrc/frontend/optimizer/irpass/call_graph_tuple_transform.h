@@ -55,10 +55,6 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
       new_args->push_back(arg);
       continue;
     }
-    // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
-    if (ContainSparseTensor(abs)) {
-      return false;
-    }
     auto new_arg = TransformTupleArgument(fg, arg, abs->cast<abstract::AbstractTuplePtr>());
     (void)new_args->insert(new_args->cend(), new_arg.cbegin(), new_arg.cend());
     change = true;
@@ -158,6 +154,9 @@ class CallGraphTupleTransform : public OptimizerCaller {
   ~CallGraphTupleTransform() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    if (AlreadyHasSparseComponent(node)) {
+      return nullptr;
+    }
     for (auto &transform : transformers_) {
       auto new_node = (*transform)(optimizer, node);
       if (new_node != nullptr) {
@@ -168,6 +167,31 @@ class CallGraphTupleTransform : public OptimizerCaller {
   }
 
  private:
+  bool has_sparse_tensor_ = false;
+  bool AlreadyHasSparseComponent(const AnfNodePtr &node) {
+    if (has_sparse_tensor_) {
+      return true;
+    }
+    if (IsFuncGraphCallNode(node) || IsPrimitiveCNode(node, prim::kPrimPartial)) {
+      auto call_node = node->cast<CNodePtr>();
+      const auto &call_inputs = call_node->inputs();
+      for (auto input_node : call_inputs) {
+        auto abs = input_node->abstract();
+        // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
+        if (abs != nullptr && ContainSparseTensor(abs)) {
+          has_sparse_tensor_ = true;
+          return true;
+        }
+      }
+    } else if (IsValueNode<FuncGraph>(node)) {
+      auto fg = GetValueNode<FuncGraphPtr>(node);
+      if (std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), ParamContainSparseTensor)) {
+        has_sparse_tensor_ = true;
+        return true;
+      }
+    }
+    return false;
+  }
   std::vector<OptimizerCallerPtr> transformers_{};
 };
 }  // namespace irpass

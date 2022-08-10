@@ -32,6 +32,7 @@ bool FuncGraphHasTupleInput(const FuncGraphPtr &fg);
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
                                                const abstract::AbstractTuplePtr &abs);
 bool ContainSparseTensor(const abstract::AbstractBasePtr &abs);
+bool ParamContainSparseTensor(const AnfNodePtr &param);
 
 class GraphTupleParamTransform {
  public:
