@@ -16,7 +16,7 @@
 
     **输出：**
 
-    Tensor。
+    与输入的张量具有相同的数据类型的Tensor。
 
     - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的乘积。
     - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。

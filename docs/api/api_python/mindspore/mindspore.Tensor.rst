@@ -1101,6 +1101,10 @@ mindspore.Tensor
 
         与输入的张量具有相同的数据类型的Tensor。
 
+        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的均值。
+        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
+
         **异常：**
 
         - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
@@ -1119,6 +1123,10 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最小值。
+        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
 
         **异常：**
 
@@ -1139,6 +1147,10 @@ mindspore.Tensor
 
         与输入的张量具有相同的数据类型的Tensor。
 
+        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最大值。
+        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
+
         **异常：**
 
         - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
@@ -1157,6 +1169,10 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+        - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的乘积。
+        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
 
         **异常：**
 
@@ -1995,7 +2011,7 @@ mindspore.Tensor
         - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32、float64、complex64、complex128、bool。
         - **ValueError** - 如果 `x` 不能广播至 `y` 的shape。
         - **RuntimeError** - 如果Parameter的 `x` , `y` 需要进行数据类型转换，但是Parameter是不支持数据类型转换。
-  
+
     .. py:method:: xlogy(y)
 
         计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
