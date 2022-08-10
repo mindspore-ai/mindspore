@@ -63,6 +63,7 @@ class IndexAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   size_t x_nums_{1};
   size_t y_nums_{1};
   size_t inner_size_{1};
+  size_t outer_size_{1};
   size_t x_axis_size_{1};
   size_t y_axis_size_{1};
 };
