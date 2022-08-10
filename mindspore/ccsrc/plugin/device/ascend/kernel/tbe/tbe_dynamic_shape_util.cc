@@ -150,7 +150,7 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
   if (input_range_min.empty() && input_range_max.empty()) {
     auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
     MS_EXCEPTION_IF_NULL(prev_node.first);
-    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(prev_node.first, prev_node.second);
+    auto shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
     GetRangeByShape(anf_node, shape, &ret);
   } else {
     for (size_t i = 0; i < input_range_min.size(); i++) {
@@ -181,7 +181,7 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
   RangePair ret;
 
   if (output_range_min.empty() && output_range_max.empty()) {
-    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(anf_node, index);
+    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
     GetRangeByShape(anf_node, shape, &ret);
   } else {
     for (size_t i = 0; i < output_range_min.size(); i++) {

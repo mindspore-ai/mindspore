@@ -1055,7 +1055,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
   }
 
   if (device_shape.empty()) {
-    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(anf_node, index);
+    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
     ShapeVector ret_shape;
     constexpr int64_t kDefaultValueForDynamicDim = 1;
     auto ConvertNegOneToOne = [&kDefaultValueForDynamicDim](int64_t size) {

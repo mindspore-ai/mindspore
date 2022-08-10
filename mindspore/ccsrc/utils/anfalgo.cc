@@ -529,53 +529,6 @@ KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t in
   return res;
 }
 
-// This function should be deleted when the return type of GetOutputINferShape is changed
-// from std::vector<size_t> to ShapeVector
-ShapeVector AnfAlgo::GetOutputInferShapeSigned(const AnfNodePtr &node, size_t output_idx) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto base_shape = node->Shape();
-  MS_EXCEPTION_IF_NULL(base_shape);
-  if (base_shape->isa<abstract::Shape>()) {
-    if (output_idx == 0) {
-      auto shape = base_shape->cast<abstract::ShapePtr>();
-      MS_EXCEPTION_IF_NULL(shape);
-      return shape->shape();
-    }
-    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
-                      << trace::DumpSourceLines(node);
-  } else if (base_shape->isa<abstract::TupleShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
-    if (output_idx >= tuple_shape->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
-                        << node->DebugString() << trace::DumpSourceLines(node);
-    }
-    auto b_shp = (*tuple_shape)[output_idx];
-    if (b_shp->isa<abstract::Shape>()) {
-      auto shape = b_shp->cast<abstract::ShapePtr>();
-      MS_EXCEPTION_IF_NULL(shape);
-      return shape->shape();
-    } else if (b_shp->isa<abstract::NoShape>()) {
-      return ShapeVector();
-    } else if (b_shp->isa<abstract::TupleShape>()) {
-      // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
-      // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
-      // normally.
-      MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
-                   << " is a TupleShape:" << base_shape->ToString();
-      return ShapeVector();
-    } else {
-      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
-                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
-                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
-    }
-  } else if (base_shape->isa<abstract::NoShape>()) {
-    return ShapeVector();
-  }
-  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-                    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
-}
-
 inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
   auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr);
