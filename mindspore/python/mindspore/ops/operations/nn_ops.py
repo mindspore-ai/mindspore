@@ -4021,35 +4021,7 @@ class PReLU(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
-
-    def infer_shape(self, input_x_shape, weight_shape):
-        input_x_dim = len(input_x_shape)
-        if input_x_dim in (0, 1):
-            if context.get_context("device_target") == "Ascend":
-                raise ValueError(f"For '{self.name}', the dimension of 'x' can not be 0-D or 1-D when the platform is "
-                                 f"\"Ascend\", but got dimension of 'x' is {input_x_dim}.")
-            channel_num = 1
-        else:
-            channel_num = input_x_shape[1]
-
-        weight_dim = len(weight_shape)
-        if weight_dim != 1:
-            raise ValueError(f"For '{self.name}', the dimension of 'weight' must be 1, while got {weight_dim}.")
-        if weight_shape[0] != 1 and weight_shape[0] != channel_num:
-            raise ValueError(f"For '{self.name}', the first dimension of 'weight' must be (1,) or "
-                             f"it must be equal to number of channels: {channel_num}, but got {weight_shape}")
-        return input_x_shape
-
-    def infer_dtype(self, input_x_dtype, weight_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32)
-        args = {"input_x": input_x_dtype, "weight": weight_dtype}
-        if context.get_context("device_target") == "GPU":
-            validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        else:
-            validator.check_tensor_dtype_valid("input_x", input_x_dtype, valid_dtypes, self.name)
-            validator.check_tensor_dtype_valid("weight", weight_dtype, valid_dtypes, self.name)
-        return input_x_dtype
+        self.init_prim_io_names(inputs=['x', 'weight'], outputs=['output'])
 
 
 class LSTM(PrimitiveWithInfer):

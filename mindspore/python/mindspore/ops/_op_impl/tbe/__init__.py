@@ -415,6 +415,7 @@ from .unpack import _unpack_tbe
 from .unpack_ds import _unpack_ds_tbe
 from .scatter_update import _scatter_update_tbe
 from .prelu import _prelu_tbe
+from .prelu_ds import _prelu_ds_tbe
 from .prelu_grad import _prelu_grad_tbe
 from .binary_cross_entropy_ds import _binary_cross_entropy_ds_tbe
 from .binary_cross_entropy import _binary_cross_entropy_tbe
