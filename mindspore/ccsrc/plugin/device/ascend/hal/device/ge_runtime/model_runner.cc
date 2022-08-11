@@ -60,6 +60,15 @@ const std::vector<uint32_t> &ModelRunner::GetTaskIdList(uint32_t model_id) const
   return model_iter->second->GetTaskIdList();
 }
 
+const std::vector<std::shared_ptr<Task>> &ModelRunner::GetTaskList(uint32_t model_id) const {
+  auto model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.end()) {
+    MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
+  }
+  MS_EXCEPTION_IF_NULL(model_iter->second);
+  return model_iter->second->GetTaskList();
+}
+
 const std::vector<uint32_t> &ModelRunner::GetStreamIdList(uint32_t model_id) const {
   decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
   if (model_iter == runtime_models_.cend()) {

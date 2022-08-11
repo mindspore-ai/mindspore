@@ -33,6 +33,7 @@ namespace device {
 namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
 
+namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();
   if (index >= node_sizes - 1) {
@@ -162,6 +163,25 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   UnfoldRecursiveExecOrder(kernel_graph);
 }
 
+void EnableGraphInputZeroCopy(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  // Zero copy is only enabled for PyNative.
+  if (!graph->has_flag(kFlagPyNativeRunInGraph) || !graph->is_graph_run_mode()) {
+    return;
+  }
+  const auto &input_nodes = graph->input_nodes();
+  for (const auto &input : input_nodes) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (AnfAlgo::OutputAddrExist(input, 0)) {
+      auto input_address = AnfAlgo::GetMutableOutputAddr(input, 0);
+      MS_EXCEPTION_IF_NULL(input_address);
+      input_address->set_is_ptr_persisted(false);
+      MS_LOG(INFO) << "Enable zero copy for input " << input->DebugString();
+    }
+  }
+}
+}  // namespace
+
 void AscendGraphExecutor::Initialize() {
   res_manager_ = dynamic_cast<AscendDeviceResManager *>(device_context_->device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(res_manager_);
@@ -217,6 +237,7 @@ void AscendGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) const
   AllocateGraphMemory(NOT_NULL(graph));
   LoadModel(NOT_NULL(graph));
   AssignOutputNopNodeDeviceAddress(graph, device_context_);
+  EnableGraphInputZeroCopy(graph);
 }
 
 void AscendGraphExecutor::UpdateExecOrder(const KernelGraphPtr &graph) const {

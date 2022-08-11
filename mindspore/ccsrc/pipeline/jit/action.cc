@@ -951,13 +951,6 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  // PYNATIVE: no need set any context.
-  if (mode == kPynativeMode) {
-    MS_LOG(INFO) << "Run graph mode with pynative.";
-    set_ctx(false, false, false);
-    return;
-  }
 
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
   // GPU/CPU no need set any context.

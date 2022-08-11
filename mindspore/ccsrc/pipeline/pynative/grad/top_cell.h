@@ -96,6 +96,10 @@ class TopCellInfo {
   size_t grad_order() const { return grad_order_; }
   bool is_dynamic_structure() const { return is_dynamic_structure_; }
   void set_dynamic_structure(bool is_dynamic_structure) { is_dynamic_structure_ = is_dynamic_structure; }
+  bool is_real_dynamic_structure() const { return is_real_dynamic_structure_; }
+  void set_is_real_dynamic_structure(bool is_real_dynamic_structure) {
+    is_real_dynamic_structure_ = is_real_dynamic_structure;
+  }
   bool dynamic_shape() const { return dynamic_shape_; }
   void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
   bool hook_changed() const { return hook_changed_; }
@@ -184,6 +188,8 @@ class TopCellInfo {
  private:
   bool is_topest_{false};
   bool is_dynamic_structure_{false};
+  // Set this flag to ture when all_op_info of top_cell is changed.
+  bool is_real_dynamic_structure_{false};
   bool dynamic_shape_{false};
   bool vm_compiled_{false};
   bool hook_changed_{false};

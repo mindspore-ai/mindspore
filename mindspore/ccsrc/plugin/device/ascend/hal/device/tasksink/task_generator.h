@@ -63,6 +63,10 @@ class TaskGenerator {
   std::vector<TaskDebugInfoPtr> GetTaskDebugInfo() const { return task_debug_info_list_; }
   static void DumpTaskInfo(const string &real_filename, const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 
+  static AddressPtrList GetTaskInput(const CNodePtr &node);
+  static AddressPtrList GetTaskOutput(const CNodePtr &node);
+  static AddressPtrList GetTaskWorkspace(const CNodePtr &node);
+
  private:
   std::vector<TaskDebugInfoPtr> task_debug_info_list_;
   static void LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs);

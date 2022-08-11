@@ -27,6 +27,10 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
                              uint32_t graph_id) {
   return true;
 }
+
+AddressPtrList TaskGenerator::GetTaskInput(const CNodePtr &node) { return {}; }
+AddressPtrList TaskGenerator::GetTaskOutput(const CNodePtr &node) { return {}; }
+AddressPtrList TaskGenerator::GetTaskWorkspace(const CNodePtr &node) { return {}; }
 }  // namespace tasksink
 #ifndef ENABLE_SECURITY
 void DataDumper::LoadDumpInfo() {}

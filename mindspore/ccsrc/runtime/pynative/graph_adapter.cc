@@ -22,6 +22,7 @@
 #include "ir/tensor.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/device/ms_device_shape_transfer.h"
@@ -329,5 +330,28 @@ void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
       parameter->set_abstract(new_abs);
     }
   }
+}
+
+bool GraphAdapter::IsAutoParallel() {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  return parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+}
+
+bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool pynative_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+  if (!pynative_mode) {
+    return true;
+  }
+
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
+  auto is_cut_graph = std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
+    return common::AnfAlgo::IsControlOpExecInBackend(node);
+  });
+
+  return !IsAutoParallel() && !is_cut_graph && !func_graph->has_flag(kFlagIsDynamicStructure);
 }
 }  // namespace mindspore::pynative

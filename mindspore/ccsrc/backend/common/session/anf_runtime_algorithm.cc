@@ -550,6 +550,20 @@ bool AnfRuntimeAlgorithm::WorkspaceAddrExist(const AnfNodePtr &node, size_t outp
 const DeviceAddress *AnfRuntimeAlgorithm::GetPrevNodeOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                                 bool skip_nop_node) {
   KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
+  MS_EXCEPTION_IF_NULL(kernel_with_index.first);
+  if (kernel_with_index.first->isa<ValueNode>()) {
+    auto value_node = kernel_with_index.first->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor->is_forward_output()) {
+        return dynamic_cast<const DeviceAddress *>(tensor->device_address().get());
+      }
+    }
+  }
   return AnfRuntimeAlgorithm::GetOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
 }
 

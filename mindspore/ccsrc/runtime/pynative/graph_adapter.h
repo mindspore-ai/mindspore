@@ -33,6 +33,8 @@ class GraphAdapter {
   static void RemoveUnusedValueNodes(const KernelGraphPtr &graph);
   static void HandleHeterogeneousTensors(const std::vector<std::vector<tensor::TensorPtr>> &tensors,
                                          const std::vector<device::DeviceContext *> &device_contexts);
+  static bool PyNativeEnableTaskSink(const FuncGraphPtr &func_graph);
+  static bool IsAutoParallel();
 };
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_
