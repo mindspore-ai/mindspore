@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
 import operator
-import pytest
 import numpy as np
 from mindspore import ms_function, context, Tensor
 
@@ -85,10 +84,10 @@ def test_fallback_max_with_one_input_dict():
     """
     @ms_function
     def foo():
-        x = max({1: 'a', 2: 'b', 3: 'c'})
+        x = max({'a': 1, 'b': 2, 'c': 3})
         return x
     out = foo()
-    assert out == 3
+    assert out == 'c'
 
 
 def test_fallback_max_with_one_input_numpy_array():
@@ -147,16 +146,32 @@ def test_fallback_min_with_two_inputs_list():
     assert operator.eq(out, (1, 2, 3))
 
 
-def test_fallback_builtin_function_with_non_constance_inputs():
+def test_builtin_function_max_min_with_string():
     """
-    Feature: JIT Fallback
-    Description: Test builtin function in graph mode with non-constant inputs.
-    Expectation: Raise value error.
+    Feature: Support the type of the input of built-in function min is string.
+    Description: Support the type of the input of built-in function min is string.
+    Expectation: No exception.
     """
     @ms_function
-    def foo(x, y):
-        return max(x, y)
+    def foo():
+        return max("1, 2, 3, 4"), min("1, 2, 3, 4")
 
-    with pytest.raises(ValueError) as ex:
-        foo(Tensor([1]), Tensor([1]))
-    assert "the inputs should be constant, but found variable" in str(ex.value)
+    out_max, out_min = foo()
+    assert out_max == '4'
+    assert out_min == ' '
+
+
+def test_builtin_function_max_min_with_tuple():
+    """
+    Feature: Support the type of the input of built-in function min is tuple.
+    Description: Support the type of the input of built-in function min is tuple.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = [('a', 1), ('A', 1), ('a', 2)]
+        return max(x), min(x)
+
+    out_max, out_min = foo()
+    assert out_max == ('a', 2)
+    assert out_min == ('A', 1)

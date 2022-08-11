@@ -67,27 +67,3 @@ def test_for_after_for_in_if_2():
     res_x, res_y = func3302()
     assert res_x == 4
     assert res_y == 4
-
-
-def test_for_after_for_in_if_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func3304():
-        x = Tensor([1])
-        y = Tensor([2])
-        if max(x, y) == Tensor([1]) or min(x, y) == Tensor([2]):
-            for _ in range(5):
-                raise TypeError("Not expect to enter this branch")
-
-        z = (Tensor(1), Tensor(2), Tensor(3))
-        for i in zip(z):
-            x = x * i
-        return x
-
-    res = func3304()
-    assert res == 6
