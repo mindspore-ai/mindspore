@@ -17,6 +17,9 @@ from .fractional_max_pool_with_fixed_ksize import _fractional_max_pool_with_fixe
 from .fractional_max_pool_grad_with_fixed_ksize import _fractional_max_pool_grad_with_fixed_ksize_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu
 from .nextafter import _nextafter_aicpu
+from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
+from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
+from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .fill_diagonal import _fill_diagonal_aicpu
 from .fractional_max_pool import _fractional_max_pool_aicpu
 from .fractional_max_pool_grad import _fractional_max_pool_grad_aicpu
