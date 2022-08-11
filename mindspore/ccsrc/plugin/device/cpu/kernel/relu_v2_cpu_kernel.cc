@@ -100,8 +100,9 @@ int ReLUV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
-  if (input_shape.size() != kDim4) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be 4, but got " << input_shape.size();
+  if (input_shape.size() < kDim4) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be greater than 4, but got "
+                  << input_shape.size();
     return KRET_RESIZE_FAILED;
   }
   return KRET_OK;
