@@ -18,6 +18,7 @@
 #include <cmath>
 #include <ctime>
 #include <random>
+#include <functional>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -89,9 +90,11 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of output is zero.";
   }
 
-  using random::PhiloxRandom;
-  typedef random::NormalDistribution<random::PhiloxRandom, double> Normal;
-  typedef random::UniformDistribution<random::PhiloxRandom, double> Uniform;
+  using random::MSNormalDistribution;
+  using random::MSPhiloxRandom;
+  using random::MSUniformDistribution;
+  typedef MSNormalDistribution<MSPhiloxRandom, double> Normal;
+  typedef MSUniformDistribution<MSPhiloxRandom, double> Uniform;
 #define UNIFORM(X)                                    \
   if (uniform_remaining == 0) {                       \
     uniform_remaining = Uniform::kResultElementCount; \
@@ -102,27 +105,29 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
 
   static constexpr int kReservedSamplesPerOutput = 256;
 
-  int64 num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t sample_shape_per_al = 0;
   if (num_alphas == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of alpha is zero.";
+  } else {
+    sample_shape_per_al = num_samples / num_alphas;
   }
-  int64_t sample_shape_per_al = num_samples / num_alphas;
 
-  PhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples, kReservedSamplesPerOutput);
+  MSPhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples, kReservedSamplesPerOutput);
 
-  auto DoWork = [sample_shape_per_al, num_alphas, &rng, samples_flat, alpha_flat](int64 start_output,
-                                                                                  int64 limit_output) {
+  auto DoWork = [sample_shape_per_al, num_alphas, &rng, samples_flat, alpha_flat](int64_t start_output,
+                                                                                  int64_t limit_output) {
     using Eigen::numext::exp;
     using Eigen::numext::log;
     using Eigen::numext::pow;
 
     Normal normal;
     Uniform uniform;
-    typename Normal::ResultType norm_res;
-    typename Uniform::ResultType uniform_res;
+    typename Normal::ResType norm_res;
+    typename Uniform::ResType uniform_res;
 
-    for (int64 output_idx = start_output; output_idx < limit_output;) {
-      int64 alpha_idx = output_idx / sample_shape_per_al;
+    for (int64_t output_idx = start_output; output_idx < limit_output;) {
+      int64_t alpha_idx = output_idx / sample_shape_per_al;
       T *const samples_alpha_offset = samples_flat + alpha_idx;
       const double alpha_value = static_cast<double>(alpha_flat[alpha_idx]);
 
@@ -130,11 +135,11 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
       if (alpha_value == static_cast<double>(1.0)) {
         //        ENABLE_FLOAT_EQUALITY_WARNING
         // Sample from an exponential distribution.
-        for (int64 sample_idx = output_idx % sample_shape_per_al;
+        for (int64_t sample_idx = output_idx % sample_shape_per_al;
              sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
-          PhiloxRandom gen = rng;
+          MSPhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
-          int16 uniform_remaining = 0;
+          int64_t uniform_remaining = 0;
           UNIFORM(u);
           const double res = -log(1.0 - u);
           samples_alpha_offset[sample_idx * num_alphas] = static_cast<T>(res);
@@ -147,12 +152,12 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
         const double cut = 1.0 / 3 / sqrt(su);
 
         // Compute the rest of the samples for the current alpha value.
-        for (int64 sample_idx = output_idx % sample_shape_per_al;
+        for (int64_t sample_idx = output_idx % sample_shape_per_al;
              sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
-          PhiloxRandom gen = rng;
+          MSPhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
-          int16 norm_remaining = 0;
-          int16 uniform_remaining = 0;
+          int16_t norm_remaining = 0;
+          int16_t uniform_remaining = 0;
 
           while (true) {
             if (norm_remaining == 0) {
