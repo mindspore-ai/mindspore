@@ -72,7 +72,7 @@ def test_apply_adam_with_amsgrad_op(data_type):
     grad = Tensor(grad_np)
 
     output = amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
-    ms_var = output.asnumpy()
+    ms_var = output[0].asnumpy()
     np_var = numpy_apply_adam_with_amsgrad(amsgrad.var_np, amsgrad.m_np, amsgrad.v_np, amsgrad.vhat_np, grad_np)
 
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
