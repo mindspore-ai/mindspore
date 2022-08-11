@@ -625,15 +625,16 @@ class ReduceMean(_Reduce):
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the mean of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If axis is int, set as 1, and keep_dims is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If axis is tuple(int) or list(int), set as (1, 2), and keep_dims is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -909,15 +910,16 @@ class ReduceMax(_Reduce):
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the maximum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If axis is int, set as 1, and keep_dims is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If axis is tuple(int) or list(int), set as (1, 2), and keep_dims is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -995,15 +997,16 @@ class ReduceMin(_Reduce):
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the minimum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If axis is int, set as 1, and keep_dims is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If axis is tuple(int) or list(int), set as (1, 2), and keep_dims is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1117,15 +1120,16 @@ class ReduceProd(_Reduce):
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If axis is int, set as 1, and keep_dims is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If axis is tuple(int) or list(int), set as (1, 2), and keep_dims is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
