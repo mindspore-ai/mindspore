@@ -151,10 +151,10 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   BaseRef ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                     const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position);
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
-  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
+  std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 
   // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
-  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
+  std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
                                                                 const std::vector<int64_t> &tensors_mask,
                                                                 const std::vector<TensorPtr> &input_tensors,
                                                                 bool need_erase);
@@ -201,7 +201,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   std::map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
 
-  mindspore::HashMap<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
+  mindspore::HashMap<ActorInfo, std::shared_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;

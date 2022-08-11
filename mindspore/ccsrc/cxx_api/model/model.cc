@@ -172,4 +172,13 @@ Status Model::LoadConfig(const std::vector<char> & /* config_path */) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kMCFailed;
 }
+
+#ifdef _MSC_VER
+Status Model::UpdateConfig(const std::vector<char> &section,
+                           const std::pair<std::vector<char>, std::vector<char>> &config) {
+  MS_LOG(ERROR) << "Model::UpdateConfig Unsupported on msvc.";
+  return kMCFailed;
+}
+
+#endif
 }  // namespace mindspore

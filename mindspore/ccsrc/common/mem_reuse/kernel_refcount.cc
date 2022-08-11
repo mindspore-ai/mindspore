@@ -15,6 +15,7 @@
  */
 #include "common/mem_reuse/kernel_refcount.h"
 #include <algorithm>
+#include <iterator>
 
 namespace mindspore {
 namespace memreuse {

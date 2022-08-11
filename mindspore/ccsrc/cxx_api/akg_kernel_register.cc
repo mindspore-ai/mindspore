@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 #include "cxx_api/akg_kernel_register.h"
+#ifdef _MSC_VER
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <mutex>
 #include <memory>
 #include <string>
@@ -26,13 +30,28 @@ static bool Initialized = false;
 
 namespace mindspore {
 static bool RegAllOpFromFile() {
+  std::string dir;
+#ifndef _MSC_VER
   Dl_info info;
   int dl_ret = dladdr(reinterpret_cast<void *>(RegAllOpFromFile), &info);
   if (dl_ret == 0) {
     MS_LOG(INFO) << "Get dladdr failed, skip.";
     return false;
   }
-  std::string dir(info.dli_fname);
+  dir = info.dli_fname;
+#else
+  HMODULE hModule = nullptr;
+  if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                        (LPCSTR)RegAllOpFromFile, &hModule) != 0) {
+    char szPath[MAX_PATH];
+    if (GetModuleFileName(hModule, szPath, sizeof(szPath)) != 0) {
+      dir = std::string(szPath);
+    }
+  } else {
+    MS_LOG(INFO) << "Get GetModuleHandleEx failed, skip.";
+    return false;
+  }
+#endif
   MS_LOG(INFO) << "Get library path is " << dir;
 
   auto split_pos = dir.find_last_of('/');
@@ -48,10 +67,17 @@ static bool RegAllOpFromFile() {
   }
 
   char real_path_mem[PATH_MAX] = {0};
+#ifdef _MSC_VER
+  if (_fullpath(real_path_mem, common::SafeCStr(dir), PATH_MAX) == nullptr) {
+    MS_LOG(ERROR) << "Op info path is invalid: " << dir;
+    return false;
+  }
+#else
   if (realpath(common::SafeCStr(dir), real_path_mem) == nullptr) {
     MS_LOG(ERROR) << "Op info path is invalid: " << dir;
     return false;
   }
+#endif
   std::string real_path(real_path_mem);
 
   MS_LOG(INFO) << "Start to read op info from local file " << real_path;
