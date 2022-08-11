@@ -2014,11 +2014,11 @@ class CrossEntropyLoss(LossBase):
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K),
+        - **logits** (Tensor) - Tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`,
           where `C = number of classes`. Data type must be float16 or float32.
         - **labels** (Tensor) - For class indices, tensor of shape :math:`()`, :math:`(N)` or
           :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32.
-          For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K),
+          For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`,
           data type must be float16 or float32.
 
     Returns:
