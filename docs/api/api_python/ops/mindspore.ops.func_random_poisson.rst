@@ -1,5 +1,5 @@
 mindspore.ops.random_poisson
-==========================
+============================
 
 .. py:function:: mindspore.ops.random_poisson(shape, rate, seed=None, dtype=mstype.float32)
 
