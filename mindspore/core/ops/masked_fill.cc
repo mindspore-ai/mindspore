@@ -76,12 +76,12 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
   std::set<TypePtr> valid_types;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  if (is_gpu) {
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    valid_types = {kFloat16, kFloat32, kInt8, kInt32};
+  } else {
     valid_types = {kBool,    kInt8,    kInt16,   kInt32, kInt64, kUInt8, kUInt16,    kUInt32,    kUInt64,
                    kFloat16, kFloat32, kFloat64, kInt,   kUInt,  kFloat, kComplex64, kComplex128};
-  } else {
-    valid_types = {kFloat16, kFloat32, kInt8, kInt32};
   }
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     std::map<std::string, TypePtr> types;
