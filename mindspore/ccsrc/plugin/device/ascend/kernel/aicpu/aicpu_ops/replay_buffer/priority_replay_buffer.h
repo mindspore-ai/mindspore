@@ -54,22 +54,22 @@ class PriorityTree : public SegmentTree<PriorityItem> {
 class PriorityReplayBuffer {
  public:
   // Construct a fixed-length priority replay buffer.
-  PriorityReplayBuffer(uint32_t seed, float alpha, float beta, size_t capacity, const std::vector<size_t> &schema);
+  PriorityReplayBuffer(uint32_t seed, float alpha, size_t capacity, const std::vector<size_t> &schema);
 
   // Push an experience transition to the buffer which will be given the highest priority.
   bool Push(const std::vector<AddressPtr> &items);
 
   // Sample a batch transitions with indices and bias correction weights.
-  std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<AddressPtr>>> Sample(size_t batch_size);
+  std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<AddressPtr>>> Sample(size_t batch_size,
+                                                                                                   float beta);
 
   // Update experience transitions priorities.
   bool UpdatePriorities(const std::vector<size_t> &indices, const std::vector<float> &priorities);
 
  private:
-  inline float Weight(float priority, float sum_priority, size_t size) const;
+  inline float Weight(float priority, float sum_priority, size_t size, float beta) const;
 
   float alpha_;
-  float beta_;
   size_t capacity_;
   float max_priority_;
   std::vector<size_t> schema_;

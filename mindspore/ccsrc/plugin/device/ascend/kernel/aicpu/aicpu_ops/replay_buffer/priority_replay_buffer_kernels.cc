@@ -23,9 +23,10 @@
 
 namespace aicpu {
 using PriorityReplayBufferFactory = ReplayBufferFactory<PriorityReplayBuffer>;
-constexpr size_t kIndicesIndex = 0;
-constexpr size_t kInWeightsIndex = 1;
-constexpr size_t kTransitionIndex = 2;
+constexpr size_t kBetaIndex = 0;
+constexpr size_t kIndicesIndex = 1;
+constexpr size_t kWeightsIndex = 2;
+constexpr size_t kTransitionIndex = 3;
 constexpr size_t kUpdateOpInputNum = 2;
 
 uint32_t PriorityReplayBufferCreate::ParseKernelParam() {
@@ -34,7 +35,6 @@ uint32_t PriorityReplayBufferCreate::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
   capacity_ = attrs["capacity"].i();
   alpha_ = attrs["alpha"].f();
-  beta_ = attrs["beta"].f();
   int64_t seed1 = attrs["seed"].i();
   int64_t seed2 = attrs["seed2"].i();
 
@@ -54,7 +54,7 @@ uint32_t PriorityReplayBufferCreate::DoCompute() {
   int64_t handle;
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer;
   auto &factory = PriorityReplayBufferFactory::GetInstance();
-  std::tie(handle, prioriory_replay_buffer) = factory.Create(seed_, alpha_, beta_, capacity_, schema_);
+  std::tie(handle, prioriory_replay_buffer) = factory.Create(seed_, alpha_, capacity_, schema_);
 
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[0]);
   output_data[0] = handle;
@@ -114,16 +114,17 @@ uint32_t PriorityReplayBufferSample::DoCompute() {
   std::vector<float> weights;
   std::vector<std::vector<AddressPtr>> samples;
   auto prioriory_replay_buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
-  std::tie(indices, weights, samples) = prioriory_replay_buffer->Sample(batch_size_);
+  auto beta = reinterpret_cast<float *>(io_addrs_[kBetaIndex]);
+  std::tie(indices, weights, samples) = prioriory_replay_buffer->Sample(batch_size_, beta[0]);
 
-  auto *indices_data = reinterpret_cast<void *>(io_addrs_[0]);
+  auto *indices_data = reinterpret_cast<void *>(io_addrs_[kIndicesIndex]);
   auto ret = memcpy_s(indices_data, batch_size_ * sizeof(int64_t), indices.data(), batch_size_ * sizeof(int64_t));
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);
     return kAicpuKernelStateInternalError;
   }
 
-  auto *weights_data = reinterpret_cast<void *>(io_addrs_[1]);
+  auto *weights_data = reinterpret_cast<void *>(io_addrs_[kWeightsIndex]);
   ret = memcpy_s(weights_data, batch_size_ * sizeof(float), weights.data(), batch_size_ * sizeof(float));
   if (ret != EOK) {
     AICPU_LOGE("memcpy_s() failed: %d.", ret);

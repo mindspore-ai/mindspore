@@ -33,8 +33,6 @@ void PriorityReplayBufferCreate::set_capacity(const int64_t &capacity) {
 
 void PriorityReplayBufferCreate::set_alpha(const float &alpha) { (void)this->AddAttr(kAlpha, api::MakeValue(alpha)); }
 
-void PriorityReplayBufferCreate::set_beta(const float &beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
-
 void PriorityReplayBufferCreate::set_shapes(const std::vector<std::vector<int64_t>> &shapes) {
   (void)this->AddAttr(kShapes, api::MakeValue(shapes));
 }
@@ -61,12 +59,6 @@ int64_t PriorityReplayBufferCreate::get_capacity() const {
 
 float PriorityReplayBufferCreate::get_alpha() const {
   auto value_ptr = GetAttr(kAlpha);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<float>(value_ptr);
-}
-
-float PriorityReplayBufferCreate::get_beta() const {
-  auto value_ptr = GetAttr(kBeta);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
@@ -101,7 +93,7 @@ int64_t PriorityReplayBufferCreate::get_seed1() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void PriorityReplayBufferCreate::Init(const int64_t &capacity, const float &alpha, const float &beta,
+void PriorityReplayBufferCreate::Init(const int64_t &capacity, const float &alpha,
                                       std::vector<std::vector<int64_t>> &shapes, const std::vector<TypePtr> &types,
                                       const int64_t &seed0, const int64_t &seed1) {
   auto op_name = this->name();
@@ -120,7 +112,6 @@ void PriorityReplayBufferCreate::Init(const int64_t &capacity, const float &alph
 
   this->set_capacity(capacity);
   this->set_alpha(alpha);
-  this->set_beta(beta);
   this->set_shapes(shapes);
   this->set_types(types);
   this->set_schema(schema);

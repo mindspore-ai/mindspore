@@ -339,11 +339,10 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, capacity, alpha, beta, shapes, dtypes, seed0, seed1):
+    def __init__(self, capacity, alpha, shapes, dtypes, seed0, seed1):
         """Initialize PriorityReplaBufferCreate."""
         validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
         validator.check_float_range(alpha, 0.0, 1.0, Rel.INC_BOTH)
-        validator.check_float_range(beta, 0.0, 1.0, Rel.INC_BOTH)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
         validator.check_non_negative_int(seed0, "seed0", self.name)
@@ -428,14 +427,14 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
             schema.append(num_element * type_size_in_bytes(dtype))
         self.add_prim_attr("schema", schema)
 
-    def infer_shape(self):
+    def infer_shape(self, beta):
         output_shape = [(self.batch_size,), (self.batch_size,)]
         for shape in self.shapes:
             output_shape.append((self.batch_size,) + shape)
         # indices, weights, transitions
         return tuple(output_shape)
 
-    def infer_dtype(self):
+    def infer_dtype(self, beta):
         return (mstype.int64, mstype.float32) + self.dtypes
 
 

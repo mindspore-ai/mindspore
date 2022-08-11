@@ -26,10 +26,10 @@ struct SumTree {
 
 void SumTreeInit(SumTree *tree, float *max_priority, const size_t &capacity, cudaStream_t stream);
 void InitRandState(const size_t &batch_size, const uint64_t &seed, curandState *state, cudaStream_t stream);
-void SumTreePush(SumTree *tree, const float &alpha, const size_t &idx, const size_t &capacity, float *max_priority,
-                 cudaStream_t stream);
-void SumTreeSample(SumTree *tree, curandState *state, const size_t &capacity, const float &beta,
-                   const size_t &batch_size, size_t *indices, float *weights, cudaStream_t stream);
+void SumTreePush(SumTree *tree, const float &alpha, const size_t &idx, const size_t &capacity, float *priority,
+                 float *max_priority, cudaStream_t stream);
+void SumTreeSample(SumTree *tree, curandState *state, const size_t &capacity, float *beta, const size_t &batch_size,
+                   size_t *indices, float *weights, cudaStream_t stream);
 void SumTreeUpdate(SumTree *tree, const size_t &capacity, const float &alpha, float *max_priority, size_t *indices,
                    float *priorities, const size_t &batch_size, cudaStream_t stream);
 void FifoSlice(const uint8_t *input, const size_t *indice, uint8_t *output, size_t batch_size, size_t column,

@@ -34,23 +34,22 @@ namespace gpu {
 class PriorityReplayBuffer {
  public:
   // Construct a fixed-length priority replay buffer.
-  PriorityReplayBuffer(const uint64_t &seed, const float &alpha, const float &beta, const size_t &capacity,
+  PriorityReplayBuffer(const uint64_t &seed, const float &alpha, const size_t &capacity,
                        const std::vector<size_t> &schema);
   ~PriorityReplayBuffer();
 
   // Push an experience transition to the buffer which will be given the highest priority.
-  bool Push(const std::vector<AddressPtr> &transition, cudaStream_t stream);
+  bool Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream);
 
   // Sample a batch transitions with indices and bias correction weights.
-  bool Sample(const size_t &batch_size, size_t *indices, float *weights, const std::vector<AddressPtr> &transition,
-              cudaStream_t stream);
+  bool Sample(const size_t &batch_size, float *beta, size_t *indices, float *weights,
+              const std::vector<AddressPtr> &transition, cudaStream_t stream);
 
   // Update experience transitions priorities.
   bool UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream);
 
  private:
   float alpha_{1.};
-  float beta_{1.};
 
   std::vector<size_t> schema_;
   uint64_t seed_{42};
