@@ -117,7 +117,6 @@ class Embedding(Cell):
             self.init_tensor[self.padding_idx] = 0
             self.init_tensor = Tensor(self.init_tensor)
         self.embedding_table = Parameter(self.init_tensor, name='embedding_table')
-        self.expand = P.ExpandDims()
         self.reshape_flat = P.Reshape()
         self.shp_flat = (-1,)
         self.gather = P.Gather()
@@ -129,9 +128,8 @@ class Embedding(Cell):
         self.get_shp = P.Shape()
 
     def construct(self, ids):
-        extended_ids = self.expand(ids, -1)
         out_shape = self.get_shp(ids) + (self.embedding_size,)
-        flat_ids = self.reshape_flat(extended_ids, self.shp_flat)
+        flat_ids = self.reshape_flat(ids, self.shp_flat)
 
         if self.use_one_hot:
             one_hot_ids = self.one_hot(flat_ids, self.vocab_size, self.on_value, self.off_value)
