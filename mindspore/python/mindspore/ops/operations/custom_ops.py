@@ -147,13 +147,13 @@ class Custom(ops.PrimitiveWithInfer):
     .. note::
         The supported platforms are determined by the input `func_type`:
 
-            - "hybrid": supports ["Ascend", "GPU", "CPU"].
-            - "akg": supports ["Ascend", "GPU", "CPU"].
-            - "tbe": supports ["Ascend"].
-            - "aot": supports ["GPU", "CPU"].
-            - "pyfunc": supports ["CPU"].
-            - "julia": supports ["CPU"].
-            - "aicpu": supports ["Ascend"].
+        - "hybrid": supports ["Ascend", "GPU", "CPU"].
+        - "akg": supports ["Ascend", "GPU", "CPU"].
+        - "tbe": supports ["Ascend"].
+        - "aot": supports ["GPU", "CPU"].
+        - "pyfunc": supports ["CPU"].
+        - "julia": supports ["CPU"].
+        - "aicpu": supports ["Ascend"].
 
     Args:
         func (Union[function, str]):
