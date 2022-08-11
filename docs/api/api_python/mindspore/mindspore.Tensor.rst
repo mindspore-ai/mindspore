@@ -1995,11 +1995,11 @@ mindspore.Tensor
         .. math::
             out_i = x_{i}\y_{i}
 
-        `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。y是一个Tensor或Scalar。当y是Tensor时，x和y的数据类型不能同时是bool的，它们的shape可以广播。当y是Scalar时，只能是一个常量。
+        `x` 和 `y` 的输入遵循隐式类型转换规则使数据类型一致。y必须是一个Tensor或Scalar，当y是Tensor时，x和y的数据类型不能同时是bool类型，它们的shape可以广播。当y是Scalar时，只能是一个常量。
 
         **参数：**
 
-        - **y** (Union[Tensor, number.Number, bool]) - float、complex或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
+        - **y** (Union[Tensor, number.Number, bool]) - 当第一个输入x为Tensor的时候， 第二个输入y可以是Number类型、bool类型或者数据类型为float16、float32、float64、complex64、complex128、bool的Tensor。
 
         **返回：**
 
