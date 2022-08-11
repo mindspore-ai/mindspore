@@ -3293,21 +3293,23 @@ def bernoulli(x, p=0.5, seed=-1):
 
     Args:
         x (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
-                    type must be int8, uint8, int16, int32，int64，bool, float32 or float64。
-        p (Union[Tensor, float], optional): The shape of p need to be broadcast. The elements of p represent the
-                                            probability of setting 1 for the corresponding broadcast position of
-                                            the current Tensor. Default: 0.5.
-        seed (int, optional): The seed value for random generating. Default: -1.
+                    type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
+        p (Union[Tensor, float], optional): The shape of p need to be broadcast. Data type must be float32 or float64.
+                                            The elements of p represent the probability of setting 1 for the
+                                            corresponding broadcast position of the current Tensor. The value of `p`
+                                            must be in the range `[0, 1]`. Default: 0.5.
+        seed (int, optional): The seed value for random generating. The value of `seed` must be -1 or a positive
+                              integer. Default: -1, which means using the current timestamp.
 
     Returns:
-        Tensor, with the same shape and type as x.
+        output (Tensor), with the same shape and type as x.
 
     Raises:
-        TypeError: If `seed` is not an int.
-        TypeError: If dtype of `input` is not one of: int8, uint8, int16, int32，int64，bool, float32, float64.
-        TypeError: If dtype of `input` is not one of: float32, float64.
+        TypeError: If dtype of `x` is not one of: int8, uint8, int16, int32, int64, bool, float32, float64.
+        TypeError: If dtype of `p` is not one of: float32, float64.
+        TypeError: If dtype of `seed` is not int.
         ValueError: If `p` is not in range [0, 1].
-        ValueError: If `seed` is less than 0.
+        ValueError: If `seed` is less than 0 and not -1.
 
     Supported Platforms:
         ``GPU``

@@ -180,7 +180,7 @@ mindspore.Tensor
         **参数：**
 
         - **p** (Union[Tensor, float], 可选) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
-        - **seed** (int, 可选) - 随机种子，用于生成随机数，数值范围是正数，默认取当前时间。默认值：-1。
+        - **seed** (int, 可选) - 随机种子，用于生成随机数，数值范围是-1或正整数。默认值：-1，代表取当前时间戳。
 
         **返回：**
 
@@ -189,9 +189,9 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - 当前Tensor的数据类型不在int8, uint8, int16, int32，int64，bool, float32和float64中。
-        - **TypeError** - `p` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `p` 的数据类型既不是float32也不是float64。
         - **TypeError** - `seed` 不是int。
-        - **ValueError** - `seed` 是负数。
+        - **ValueError** - `seed` 是负数且不为-1。
         - **ValueError** - `p` 数值范围不在0到1之间。
 
     .. py:method:: bitwise_and(x)
