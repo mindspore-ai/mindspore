@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
-#include "runtime/data_queue/data_queue.h"
+#include "include/backend/data_queue/data_queue.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/visible.h"
 
@@ -31,12 +31,15 @@ namespace device {
 class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
  public:
   explicit GpuDataQueueDynamic(const size_t capacity);
-  virtual ~GpuDataQueueDynamic() = default;
+  ~GpuDataQueueDynamic() override = default;
 
-  BlockQueueStatus_T Push(std::vector<DataQueueItem> data);
-  BlockQueueStatus_T Front(std::vector<DataQueueItem> *data) const;
-  BlockQueueStatus_T Pop();
-  bool Destroy();
+  DataQueueStatus Push(std::vector<DataQueueItem> data) override;
+  DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
+  DataQueueStatus Pop() override;
+  bool Destroy() override;
+
+  void SetThreadDevice() override;
+  std::shared_ptr<void> AllocHostMem(size_t size) override;
 
  private:
   struct NodeInfo {
@@ -48,17 +51,21 @@ class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
 
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
+  uint32_t device_id_;
 };
 
 class BACKEND_EXPORT GpuQueue : public DataQueue {
  public:
-  GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
-  virtual ~GpuQueue();
+  GpuQueue(size_t capacity, void *addr, const std::vector<size_t> &shape);
+  ~GpuQueue() override;
 
-  BlockQueueStatus_T Push(std::vector<DataQueueItem> data);
-  BlockQueueStatus_T Front(std::vector<DataQueueItem> *data) const;
-  BlockQueueStatus_T Pop();
-  bool Destroy();
+  DataQueueStatus Push(std::vector<DataQueueItem> data) override;
+  DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
+  DataQueueStatus Pop() override;
+  bool Destroy() override;
+
+  void SetThreadDevice() override;
+  std::shared_ptr<void> AllocHostMem(size_t size) override;
 
  private:
   struct NodeInfo {
@@ -73,6 +80,7 @@ class BACKEND_EXPORT GpuQueue : public DataQueue {
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
   bool ds_detected_{false};
+  uint32_t device_id_;
 };
 }  // namespace device
 }  // namespace mindspore

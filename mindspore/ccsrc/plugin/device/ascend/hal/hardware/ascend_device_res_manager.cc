@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
-#include "runtime/data_queue/data_queue_mgr.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
 #include "runtime/rt.h"
 
 namespace mindspore {

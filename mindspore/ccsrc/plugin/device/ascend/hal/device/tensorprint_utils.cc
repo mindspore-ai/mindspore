@@ -27,7 +27,7 @@
 #include "ir/dtype/type.h"
 #include "acl/acl_tdt.h"
 #include "proto/print.pb.h"
-#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
+#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 
 namespace py = pybind11;
 namespace mindspore::device::ascend {
@@ -392,7 +392,7 @@ void CreateTensorPrintThread(const PrintThreadCrt &ctr) {
                << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   std::string print_file_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
   g_acl_tdt_print = ctr(print_file_path, g_acl_handle);
-  dataset::TdtHandle::AddHandle(&g_acl_handle, &g_acl_tdt_print);
+  tdt_handle::AddHandle(&g_acl_handle, &g_acl_tdt_print);
 }
 
 void DestroyTensorPrintThread() {
@@ -419,7 +419,7 @@ void DestroyTensorPrintThread() {
     MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
     return;
   }
-  dataset::TdtHandle::DelHandle(&g_acl_handle);
+  tdt_handle::DelHandle(&g_acl_handle);
   MS_LOG(INFO) << "Succeed destroy acl channel";
 }
 }  // namespace mindspore::device::ascend

@@ -53,7 +53,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto graph_partition = std::make_shared<GraphPartition>(GetNonlinearOps(), b->name());
   auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 
@@ -67,7 +67,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto graph_partition = std::make_shared<GraphPartition>(GetNonlinearOps(), b->name());
   auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 
@@ -81,7 +81,7 @@ TEST_F(TestCompileSegmentRunner, test_if) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto graph_partition = std::make_shared<GraphPartition>(GetNonlinearOps(), b->name());
   auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 

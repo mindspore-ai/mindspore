@@ -39,7 +39,6 @@ constexpr auto kSplitLine = "\n-------------------------------------------------
 #if defined(__ANDROID__) || defined(ANDROID)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
-std::map<void **, std::thread *> acl_handle_map;
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
 #if defined(_WIN32) || defined(_WIN64)

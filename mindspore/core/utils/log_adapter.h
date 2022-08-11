@@ -47,7 +47,6 @@ static constexpr size_t GetRelPathPos() noexcept {
 }
 namespace mindspore {
 /// \brief The handler map for ACL.
-MS_CORE_API extern std::map<void **, std::thread *> acl_handle_map;
 #define FILE_NAME                                                                             \
   (sizeof(__FILE__) > GetRelPathPos() ? static_cast<const char *>(__FILE__) + GetRelPathPos() \
                                       : static_cast<const char *>(__FILE__))

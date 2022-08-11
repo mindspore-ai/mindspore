@@ -20,17 +20,17 @@
 #include <algorithm>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
-#ifdef ENABLE_GPUQUE
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
-#endif
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
 #include "minddata/dataset/engine/perf/cpu_sampler.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/util/log_adapter.h"
-
+#ifdef WITH_BACKEND
+#include "utils/ms_context.h"
+#endif
 namespace mindspore {
 namespace dataset {
 
@@ -824,18 +824,19 @@ ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeSt
 }
 
 std::string ProfilingManager::GetRankID() const {
-  std::string rank_id;
-#ifdef ENABLE_GPUQUE
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  int32_t rank_id_int = cfg->rank_id();
-  // If DEVICE_ID is not set, default value is 0
-  if (rank_id_int < 0) {
-    rank_id = common::GetEnv("DEVICE_ID");
-  } else {
-    rank_id = std::to_string(rank_id_int);
+  std::string rank_id = common::GetEnv("RANK_ID");
+#ifdef WITH_BACKEND
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+    std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+    int32_t rank_id_int = cfg->rank_id();
+    // If DEVICE_ID is not set, default value is 0
+    if (rank_id_int < 0) {
+      rank_id = common::GetEnv("DEVICE_ID");
+    } else {
+      rank_id = std::to_string(rank_id_int);
+    }
   }
-#else
-  rank_id = common::GetEnv("RANK_ID");
 #endif
   // If RANK_ID is not set, default value is 0
   if (rank_id.empty()) {

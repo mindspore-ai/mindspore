@@ -19,7 +19,7 @@
 #include <limits>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#ifdef WITH_BACKEND
 #include "mindspore/core/utils/numa_interface.h"
 #endif
 #include "minddata/dataset/util/task_manager.h"
@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#ifdef WITH_BACKEND
 ExecutionTree::ExecutionTree() : ExecutionTree(GlobalContext::config_manager()) {}
 
 ExecutionTree::ExecutionTree(std::shared_ptr<ConfigManager> cfg)
@@ -52,7 +52,7 @@ ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit), prepa
 
 // Destructor
 ExecutionTree::~ExecutionTree() {
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#ifdef WITH_BACKEND
   if (numa_enable_) {
     handle_ = nullptr;
   }
@@ -152,7 +152,7 @@ void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp
 Status ExecutionTree::Launch() {
   // opencv limit too many threads
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#ifdef WITH_BACKEND
   // Here we do numa bind for performance optimization, as our test result,
   // if we do numa bind when get_dataset_size launch a tree, we'll get a
   // better performance than only we do numa bind at the time _To_Device

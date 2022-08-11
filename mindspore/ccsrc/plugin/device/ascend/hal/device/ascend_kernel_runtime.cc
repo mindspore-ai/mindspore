@@ -62,10 +62,7 @@
 #endif
 #include "include/common/utils/config_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#ifdef ENABLE_TDTQUE
-#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
-using mindspore::dataset::TdtHandle;
-#endif
+#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
@@ -1102,10 +1099,10 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 #ifndef ENABLE_SECURITY
     DumpTaskExceptionInfo(graph);
 #endif
-#ifdef ENABLE_TDTQUE
+#ifdef WITH_BACKEND
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
-    if (!TdtHandle::DestroyHandle()) {
+    if (!tdt_handle::DestroyHandle()) {
       MS_LOG(WARNING) << "Destroy tdt channel failed.";
     } else {
       MS_LOG(INFO) << "Destroy tdt channel success.";

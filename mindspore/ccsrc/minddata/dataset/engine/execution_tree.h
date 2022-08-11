@@ -229,7 +229,7 @@ class ExecutionTree {
   TreeState tree_state_;             // Tracking the current tree state
   std::string unique_id_;            // A unique identifier for the tree
 
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#ifdef WITH_BACKEND
   // Constructor for if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   explicit ExecutionTree(std::shared_ptr<ConfigManager> cfg);
   // This rank_id is for numa and device_queue, one process work with only one rank_id,

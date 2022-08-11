@@ -22,9 +22,6 @@
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/treap.h"
-#ifdef ENABLE_GPUQUE
-#include <cuda_runtime_api.h>
-#endif
 
 #define ARENA_LOG_BLK_SZ (6u)
 #define ARENA_BLK_SZ (static_cast<uint16_t>(1u << ARENA_LOG_BLK_SZ))
@@ -107,20 +104,7 @@ class Arena : public MemoryPool {
   // Disable copy and assignment constructor
   Arena(const Arena &) = delete;
   Arena &operator=(const Arena &) = delete;
-  ~Arena() override {
-#ifdef ENABLE_GPUQUE
-    if (is_cuda_malloc_) {
-      if (ptr_ != nullptr) {
-        (void)cudaFreeHost(ptr_);
-      }
-    }
-#else
-    if (ptr_ != nullptr) {
-      free(ptr_);
-    }
-    ptr_ = nullptr;
-#endif
-  }
+  ~Arena() override = default;
 
   /// As a derived class of MemoryPool, we have to implement the following.
   /// But we simply transfer the call to the implementation class
@@ -150,28 +134,17 @@ class Arena : public MemoryPool {
     os << *(s.impl_);
     return os;
   }
-
-#ifdef ENABLE_GPUQUE
   /// The only method to create an arena.
   static Status CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB = 4096, bool is_cuda_malloc = false);
-#else
-  /// The only method to create an arena.
-  static Status CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB = 4096);
-#endif
 
  protected:
   mutable std::mutex mux_;
   std::unique_ptr<ArenaImpl> impl_;
-  void *ptr_;
+  std::shared_ptr<void> ptr_;
   size_t size_in_MB_;
-#ifdef ENABLE_GPUQUE
+
   bool is_cuda_malloc_;
-
   explicit Arena(size_t val_in_MB = 4096, bool is_cuda_malloc = false);
-#else
-
-  explicit Arena(size_t val_in_MB = 4096);
-#endif
 
   Status Init();
 };

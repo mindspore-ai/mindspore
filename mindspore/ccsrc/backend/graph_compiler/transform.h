@@ -43,8 +43,8 @@ extern const char kGeVm[];
 // compile namespace
 // A sub namespace in ME to support compile related definition.
 namespace compile {
-BACKEND_EXPORT extern std::vector<PrimitivePtr> nonlinear_ops;
-BACKEND_EXPORT extern std::vector<PrimitivePtr> control_ops;
+BACKEND_EXPORT const std::vector<PrimitivePtr> &GetNonlinearOps();
+BACKEND_EXPORT const std::vector<PrimitivePtr> &GetControlOps();
 BACKEND_EXPORT const std::vector<PrimitivePtr> &GetMsNonlinearOps();
 FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph);
 using VmEvalFunc = std::function<BaseRef(const VectorRef &)>;
@@ -52,7 +52,7 @@ using VmEvalFuncPtr = std::shared_ptr<std::function<BaseRef(const VectorRef &)>>
 
 class BACKEND_EXPORT CompileGraph {
  public:
-  explicit CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
+  explicit CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = GetNonlinearOps());
 
   virtual ~CompileGraph() = default;
 
@@ -113,7 +113,7 @@ using CompileGraphPtr = std::shared_ptr<CompileGraph>;
 // CompileGraphs is used to Convert a graph cluster into instruction lists.
 class BACKEND_EXPORT CompileGraphs {
  public:
-  explicit CompileGraphs(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
+  explicit CompileGraphs(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = GetNonlinearOps());
 
   virtual ~CompileGraphs() = default;
 

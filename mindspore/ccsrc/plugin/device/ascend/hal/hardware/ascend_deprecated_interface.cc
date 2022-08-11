@@ -297,12 +297,10 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
-#ifdef ENABLE_TDTQUE
   auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
     return std::thread(TensorPrint(path, acl_handle));
   };
   CreateTensorPrintThread(thread_crt);
-#endif
   return true;
 }
 
@@ -315,10 +313,8 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
   ms_context_ptr->decrease_param<uint32_t>(MS_CTX_TSD_REF);
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
-#ifdef ENABLE_TDTQUE
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
-#endif
     if (ErrorManager::GetInstance().Init() != 0) {
       MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
     }

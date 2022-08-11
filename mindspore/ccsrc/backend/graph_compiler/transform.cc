@@ -40,11 +40,17 @@ using PrimTypePair = std::pair<PrimitivePtr, AbstractFunctionPtr>;
 using MapPrimTypeFuncGraph = std::map<PrimTypePair, FuncGraphPtr>;
 using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiveAbstractClosure>;
 
-std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
-                                           prim::kPrimMakeTuple, prim::kPrimBpropCut};
+const std::vector<PrimitivePtr> &GetNonlinearOps() {
+  static std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
+                                                    prim::kPrimMakeTuple, prim::kPrimBpropCut};
+  return nonlinear_ops;
+}
 
-std::vector<PrimitivePtr> control_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch, prim::kPrimMakeTuple,
-                                         prim::kPrimSwitchLayer};
+const std::vector<PrimitivePtr> &GetControlOps() {
+  static std::vector<PrimitivePtr> control_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
+                                                  prim::kPrimMakeTuple, prim::kPrimSwitchLayer};
+  return control_ops;
+}
 
 const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
   static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn,   prim::kPrimPartial,

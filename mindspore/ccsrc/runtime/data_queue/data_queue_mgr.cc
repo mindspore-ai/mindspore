@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include "runtime/data_queue/data_queue_mgr.h"
-#if ENABLE_GPU
-#include "plugin/device/gpu/hal/device/gpu_data_queue.h"
-#elif ENABLE_D
-#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
-#endif
+#include "include/backend/data_queue/data_queue_mgr.h"
 #include <algorithm>
 #include <utility>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "utils/ms_context.h"
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/backend/data_queue/blocking_queue.h"
+#include "runtime/device/kernel_info.h"
 
 namespace py = pybind11;
 
@@ -36,136 +34,151 @@ DataQueueMgr &DataQueueMgr::GetInstance() noexcept {
   return instance;
 }
 
-BlockQueueStatus_T DataQueueMgr::Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
-                                        const size_t &capacity) {
+void DataQueueMgr::RegisterDataQueueCreator(const std::string &device_name, DataQueueCreator &&creator) {
+  data_queue_creator_map_.emplace(device_name, std::forward<DataQueueCreator>(creator));
+}
+
+std::shared_ptr<DataQueue> DataQueueMgr::CreateDataQueue(const std::string &device_name,
+                                                         const std::string &channel_name, bool dynamic_shape,
+                                                         size_t capacity, void *addr,
+                                                         const std::vector<size_t> &shape) {
+  auto iter = data_queue_creator_map_.find(device_name);
+  if (iter == data_queue_creator_map_.end()) {
+    return nullptr;
+  }
+
+  return iter->second(channel_name, dynamic_shape, capacity, addr, shape);
+}
+
+DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
+                                     const size_t &capacity) {
   MS_LOG(INFO) << "Static GPU queue: " << channel_name << " created";
   if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue already exist: " << channel_name;
-    return QUEUE_EXIST;
+    return DataQueueStatus::QUEUE_EXIST;
   }
-#if ENABLE_GPU
-  std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
-  std::shared_ptr<DataQueue> gpu_queue = std::make_shared<GpuQueue>(addr, shape, capacity);
-  BlockQueueStatus_T rt = queue->Create(gpu_queue);
-  if (rt != SUCCESS) {
-    MS_LOG(ERROR) << "Queue: " << channel_name << "create failed: " << rt;
-    return rt;
+
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  std::shared_ptr<DataQueue> data_queue = CreateDataQueue(
+    MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET), channel_name, false, capacity, addr, shape);
+  if (data_queue != nullptr) {
+    std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
+    DataQueueStatus rt = queue->Create(data_queue);
+    if (rt != DataQueueStatus::SUCCESS) {
+      MS_LOG(ERROR) << "Queue: " << channel_name << "create failed: " << rt;
+      return rt;
+    }
+    (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
+    init_ = true;
+    return DataQueueStatus::SUCCESS;
   }
-  (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
-  init_ = true;
-  return SUCCESS;
-#else
+
   MS_LOG(ERROR) << "Static data queue only support GPU target.";
-  return INTERNAL_ERROR;
-#endif
+  return DataQueueStatus::INTERNAL_ERROR;
 }
 
-BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name,
-                                      const std::function<void(void *, int32_t)> func) {
+DataQueueStatus DataQueueMgr::Open(const std::string &channel_name, const std::function<void(void *, int32_t)> func) {
   MS_LOG(INFO) << "Gpu queue: " << channel_name << " open.";
   if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
 
   name_queue_map_[channel_name]->RegisterRelease(func);
   open_by_dataset_++;
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
-BlockQueueStatus_T DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name,
-                                                     const std::function<void(void *, int32_t)> func) {
+DataQueueStatus DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name,
+                                                  const std::function<void(void *, int32_t)> func) {
   std::unique_lock<std::mutex> locker(mutex_);
   if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
-    BlockQueueStatus_T status = CreateDynamicBufQueue(channel_name, default_capacity_);
-    MS_EXCEPTION_IF_CHECK_FAIL(status == BlockQueueStatus_T::SUCCESS, "Create dynamic buffer queue failed");
+    DataQueueStatus status = CreateDynamicBufQueue(channel_name, default_capacity_);
+    MS_EXCEPTION_IF_CHECK_FAIL(status == DataQueueStatus::SUCCESS, "Create dynamic buffer queue failed");
     MS_LOG_INFO << "Create dynamic buffer queue: " << channel_name;
     cv_.notify_all();
   }
   name_queue_map_[channel_name]->RegisterRelease(func);
   open_by_dataset_++;
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name) {
+DataQueueStatus DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name) {
   std::unique_lock<std::mutex> locker(mutex_);
   auto time_out = cv_.wait_for(locker, std::chrono::seconds(MAX_WAIT_TIME_IN_SEC),
                                [this, &channel_name] { return name_queue_map_.count(channel_name); });
   if (!time_out) {
-    return TIMEOUT;
+    return DataQueueStatus::TIMEOUT;
   }
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity) {
+DataQueueStatus DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity) {
   if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue already exist: " << channel_name;
-    return QUEUE_EXIST;
+    return DataQueueStatus::QUEUE_EXIST;
   }
-#if ENABLE_GPU
-  std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
-  std::shared_ptr<DataQueue> device_queue = std::make_shared<GpuDataQueueDynamic>(capacity);
-#elif ENABLE_D
-  std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
-  std::shared_ptr<DataQueue> device_queue = std::make_shared<AscendDataQueueDynamic>(capacity);
-#else
-  MS_LOG(ERROR) << "Dynamic data queue only support Ascend/GPU target.";
-  return QUEUE_EXIST;
-#endif
-#if ENABLE_GPU || ENABLE_D
-  BlockQueueStatus_T rt = queue->Create(device_queue);
-  if (rt != SUCCESS) {
-    MS_LOG(ERROR) << "Queue: " << channel_name << "create failed: " << rt;
-    return rt;
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  std::string device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::shared_ptr<DataQueue> device_queue = CreateDataQueue(device_name, channel_name, true, capacity, nullptr, {});
+  if (device_queue != nullptr && (device_name == kGPUDevice || device_name == kAscendDevice)) {
+    std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
+    DataQueueStatus rt = queue->Create(device_queue);
+    if (rt != DataQueueStatus::SUCCESS) {
+      MS_LOG(ERROR) << "Queue: " << channel_name << "create failed: " << rt;
+      return rt;
+    }
+    (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
+    init_ = true;
+    return DataQueueStatus::SUCCESS;
   }
-  (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
-  init_ = true;
-  return SUCCESS;
-#endif
+
+  MS_LOG(ERROR) << "Dynamic data queue only support Ascend/GPU target, bug got " << device_name;
+  return DataQueueStatus::QUEUE_EXIST;
 }
 
-BlockQueueStatus_T DataQueueMgr::Open(const std::string &channel_name) const {
+DataQueueStatus DataQueueMgr::Open(const std::string &channel_name) const {
   if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T DataQueueMgr::Push(const std::string &channel_name, const std::vector<DataQueueItem> &data,
-                                      unsigned int timeout_in_sec) {
+DataQueueStatus DataQueueMgr::Push(const std::string &channel_name, const std::vector<DataQueueItem> &data,
+                                   unsigned int timeout_in_sec) {
   auto iter = name_queue_map_.find(channel_name);
   if (iter == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
   return iter->second->Push(data, timeout_in_sec);
 }
 
-BlockQueueStatus_T DataQueueMgr::Front(const std::string &channel_name, std::vector<DataQueueItem> *data) {
+DataQueueStatus DataQueueMgr::Front(const std::string &channel_name, std::vector<DataQueueItem> *data) {
   auto iter = name_queue_map_.find(channel_name);
   if (iter == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
 
   return iter->second->Front(data);
 }
 
-BlockQueueStatus_T DataQueueMgr::Pop(const std::string &channel_name) {
+DataQueueStatus DataQueueMgr::Pop(const std::string &channel_name) {
   auto iter = name_queue_map_.find(channel_name);
   if (iter == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
 
   return iter->second->Pop();
 }
 
-BlockQueueStatus_T DataQueueMgr::Clear(const std::string &channel_name) {
+DataQueueStatus DataQueueMgr::Clear(const std::string &channel_name) {
   auto iter = name_queue_map_.find(channel_name);
   if (iter == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
-    return QUEUE_NOT_EXIST;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
   }
 
   return iter->second->Clear();
@@ -238,11 +251,39 @@ size_t DataQueueMgr::Capacity(const std::string &channel_name) {
   return name_queue_map_.at(channel_name)->Capacity();
 }
 
+std::shared_ptr<DataQueue> DataQueueMgr::GetDataQueue(const std::string &channel_name) const {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(iter->second);
+  return iter->second->Queue();
+}
+
+DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &device_name) {
+  auto tmp_queue = CreateDataQueue(device_name, {}, false, 0, nullptr, {});
+  if (tmp_queue == nullptr) {
+    return DataQueueStatus::QUEUE_NOT_EXIST;
+  }
+  tmp_queue->SetThreadDevice();
+  return DataQueueStatus::SUCCESS;
+}
+
+std::shared_ptr<void> DataQueueMgr::AllocHostMem(const std::string &device_name, size_t size) {
+  auto tmp_queue = CreateDataQueue(device_name, {}, false, 0, nullptr, {});
+  if (tmp_queue == nullptr) {
+    return std::shared_ptr<void>(::malloc(size), ::free);
+  }
+
+  return tmp_queue->AllocHostMem(size);
+}
+#ifndef BUILD_LITE
 bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(data_kernel, "shared_name");
   device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
   auto ret = buf_mgr.OpenDynamicBufQueue(queue_name);
-  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::BlockQueueStatus_T::SUCCESS, "Open dynamic data queue failed");
+  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
   std::vector<device::DataQueueItem> data;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
   (void)buf_mgr.Front(queue_name, &data);
@@ -271,29 +312,6 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, data_kernel.get());
   return true;
 }
-namespace {
-struct DataQueueHandlerRegister {
-  DataQueueHandlerRegister() noexcept {
-    DataQueueHandler::SetOpenHandler(
-      [](const std::string channel_name, const std::function<void(void *, int32_t)> func) -> BlockQueueStatus_T {
-        return DataQueueMgr::GetInstance().Open(channel_name, func);
-      });
-    DataQueueHandler::SetOpenDynamicBufQueueHandler(
-      [](const std::string &channel_name, const std::function<void(void *, int32_t)> func) -> BlockQueueStatus_T {
-        return DataQueueMgr::GetInstance().OpenDynamicBufQueue(channel_name, func);
-      });
-    DataQueueHandler::SetIsClosedHandler([]() -> bool { return DataQueueMgr::GetInstance().IsClosed(); });
-    DataQueueHandler::SetCloseConfirmHandler([]() { DataQueueMgr::GetInstance().CloseConfirm(); });
-    DataQueueHandler::SetCloseHandler([](const std::string &channel) { DataQueueMgr::GetInstance().Close(channel); });
-    DataQueueHandler::SetClearHandler([](const std::string &channel) -> device::BlockQueueStatus_T {
-      return DataQueueMgr::GetInstance().Clear(channel);
-    });
-    DataQueueHandler::SetPushHandler([](const std::string &channel, const std::vector<device::DataQueueItem> &items,
-                                        unsigned int timeout) -> device::BlockQueueStatus_T {
-      return DataQueueMgr::GetInstance().Push(channel, items, timeout);
-    });
-  }
-} callback_register;
-}  // namespace
+#endif
 }  // namespace device
 }  // namespace mindspore

@@ -35,7 +35,9 @@
 #include "minddata/mindrecord/include/shard_header.h"
 #include "minddata/mindrecord/include/shard_writer.h"
 #endif
-
+#ifdef WITH_BACKEND
+#include "utils/ms_context.h"
+#endif
 namespace mindspore {
 namespace dataset {
 #ifndef ENABLE_SECURITY
@@ -355,18 +357,19 @@ Status TreeConsumer::Reset(int64_t step) {
 #endif
     RETURN_IF_NOT_OK(this->Terminate());
   }
-
-#ifdef ENABLE_GPUQUE
-  // clear the device if GPU is used.
-  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
-  if (op != nullptr) {
-    MS_LOG(INFO) << "Clearing the GPU device";
-    RETURN_IF_NOT_OK(op->ClearDevice());
+#ifdef WITH_BACKEND
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+    // clear the device if GPU is used.
+    std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+    CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+    DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
+    if (op != nullptr) {
+      MS_LOG(INFO) << "Clearing the GPU device";
+      RETURN_IF_NOT_OK(op->ClearDevice());
+    }
   }
 #endif
-
   tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
   RETURN_IF_NOT_OK(tree_adapter_->Compile(old_root, num_epochs_, step));
   RETURN_IF_NOT_OK(tree_adapter_->Launch());

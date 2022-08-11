@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#include "runtime/data_queue/data_queue.h"
+#include "include/backend/data_queue/data_queue.h"
 #include <string>
 #include "utils/ms_context.h"
+#include "runtime/hardware/device_context_manager.h"
+
 namespace mindspore {
 namespace device {
 DataQueue::DataQueue(const size_t capacity)

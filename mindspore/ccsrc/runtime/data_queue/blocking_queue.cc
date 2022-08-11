@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/data_queue/blocking_queue.h"
+#include "include/backend/data_queue/blocking_queue.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -22,60 +22,60 @@ namespace device {
 const size_t kTimeout = 100;
 void BlockingQueue::RegisterRelease(const std::function<void(void *, int32_t)> &func) { queue_->RegisterRelease(func); }
 
-BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataQueueItem> &data, unsigned int) {
+DataQueueStatus BlockingQueue::Push(const std::vector<DataQueueItem> &data, unsigned int) {
   std::unique_lock<std::mutex> locker(mutex_);
   if (queue_->IsFull()) {
     if (not_full_cond_.wait_for(locker, std::chrono::microseconds(kTimeout)) == std::cv_status::timeout) {
-      return TIMEOUT;
+      return DataQueueStatus::TIMEOUT;
     }
   }
   auto ret = queue_->Push(data);
-  if (ret != SUCCESS) {
+  if (ret != DataQueueStatus::SUCCESS) {
     return ret;
   }
   not_empty_cond_.notify_one();
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T BlockingQueue::Front(std::vector<DataQueueItem> *data) {
+DataQueueStatus BlockingQueue::Front(std::vector<DataQueueItem> *data) {
   std::unique_lock<std::mutex> locker(mutex_);
   bool timeout = not_empty_cond_.wait_for(locker, std::chrono::seconds(30), [this] { return !queue_->IsEmpty(); });
   if (!timeout) {
-    return TIMEOUT;
+    return DataQueueStatus::TIMEOUT;
   }
   return queue_->Front(data);
 }
 
-BlockQueueStatus_T BlockingQueue::Pop() {
+DataQueueStatus BlockingQueue::Pop() {
   std::unique_lock<std::mutex> locker(mutex_);
   not_empty_cond_.wait(locker, [this] { return !queue_->IsEmpty(); });
   auto ret = queue_->Pop();
-  if (ret != SUCCESS) {
+  if (ret != DataQueueStatus::SUCCESS) {
     return ret;
   }
   not_full_cond_.notify_one();
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T BlockingQueue::Create(const std::shared_ptr<DataQueue> &data_queue) {
+DataQueueStatus BlockingQueue::Create(const std::shared_ptr<DataQueue> &data_queue) {
   this->queue_ = data_queue;
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
-BlockQueueStatus_T BlockingQueue::Clear() {
+DataQueueStatus BlockingQueue::Clear() {
   std::unique_lock<std::mutex> locker(mutex_);
   while (Size() > 0) {
     std::vector<DataQueueItem> data;
     auto ret = queue_->Front(&data);
-    if (ret != SUCCESS) {
+    if (ret != DataQueueStatus::SUCCESS) {
       return ret;
     }
     ret = queue_->Pop();
-    if (ret != SUCCESS) {
+    if (ret != DataQueueStatus::SUCCESS) {
       return ret;
     }
   }
-  return SUCCESS;
+  return DataQueueStatus::SUCCESS;
 }
 
 bool BlockingQueue::Destroy() {

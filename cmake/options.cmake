@@ -81,7 +81,6 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_GPU)
-    set(ENABLE_GPUQUE ON)
     add_compile_definitions(ENABLE_GPU_COLLECTIVE)
 endif()
 

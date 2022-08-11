@@ -545,7 +545,7 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   root_graph_ = nullptr;
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
-  auto &cut_list = pynative_mode ? compile::control_ops : GetMsNonlinearOps();
+  auto &cut_list = pynative_mode ? GetControlOps() : GetMsNonlinearOps();
 
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
   graph_compiler_ = std::make_shared<GraphCompiler>();
