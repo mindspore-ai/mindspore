@@ -44,6 +44,8 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/..:$ORIGIN/../lib")
 endif()
 
+set(CMAKE_CXX_FLAGS "-fPIE ${CMAKE_CXX_FLAGS}")
+
 if(ENABLE_CACHE)
   ms_grpc_generate(CACHE_GRPC_SRCS CACHE_GRPC_HDRS cache_grpc.proto)
   target_sources(engine-cache-client PUBLIC ${CACHE_GRPC_SRCS}
