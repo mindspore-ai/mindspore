@@ -98,9 +98,6 @@ def test_dict_set_or_get_item_2():
     class DictNet(Cell):
         """DictNet1 definition"""
 
-        def __init__(self):
-            super(DictNet, self).__init__()
-
         def construct(self):
             tuple_1 = (1, 2, 3)
             tuple_2 = (4, 5, 6)
@@ -158,6 +155,58 @@ def test_dict_set_item():
     _ = net(x)
 
 
+def test_dict_set_item_2():
+    """
+    Description: test dict in dict set item.
+    Expectation: the results are as expected.
+    """
+
+    class DictSetNet(Cell):
+
+        def construct(self):
+            cur_dict = {"a": {"a0": 0, "a1": 1}}
+            cur_dict["a"]["a0"] = 3
+            cur_dict["a"]["a3"] = 3
+            cur_dict["b"] = {"b0": 0, "b1": 1}
+            return cur_dict
+
+    net = DictSetNet()
+    output = net()
+    assert len(output) == 2
+    first = output[0]
+    second = output[1]
+    assert len(first) == 3
+    assert first[0] == 3
+    assert first[1] == 1
+    assert first[2] == 3
+    assert len(second) == 2
+    assert second[0] == 0
+    assert second[1] == 1
+
+
+def test_dict_set_item_3():
+    """
+    Description: test dict in dict set item.
+    Expectation: the results are as expected.
+    """
+    class DictSetNet(Cell):
+
+        def construct(self):
+            cur_dict = {"a": {"a0": {"a00": 0, "a01": 1}}, "b": 1}
+            cur_dict["a"]["a0"]["a00"] = 3
+            cur_dict["a"]["a0"]["a01"] = 3
+            return cur_dict
+
+    net = DictSetNet()
+    output = net()
+    assert len(output) == 2
+    first = output[0]
+    assert len(first) == 1
+    assert len(first[0]) == 2
+    assert first[0][0] == 3
+    assert first[0][1] == 3
+
+
 # if the dictionary item does not exist, create a new one
 def test_dict_set_item_create_new():
     class DictSetNet(Cell):
@@ -181,8 +230,6 @@ def test_dict_items():
     """
 
     class DictItemsNet(Cell):
-        def __init__(self):
-            super(DictItemsNet, self).__init__()
 
         def construct(self, x):
             return x.items()
