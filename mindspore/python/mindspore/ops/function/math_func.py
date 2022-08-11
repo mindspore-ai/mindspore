@@ -3535,6 +3535,81 @@ def addmv(x, mat, vec, beta=1, alpha=1):
     return out
 
 
+def addr(x, vec1, vec2, beta=1, alpha=1):
+    """
+    Executes the outer-product of `vec1` and `vec2` and adds it to the vec1rix `x`.
+
+    If `vec1` is a vector of size :vec1:`N` and `vec2` is a vector of size :vec1:`M`, then `x` must be broadcastable
+    with a vec1rix of size :vec1:`(N, M)` and `out` will be a vec1rix of size :vec1:`(N, M)`.
+
+    The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
+    and the added vec1rix `x` respectively. If `beta` is 0, then `x` will be ignored.
+
+    .. vec1::
+        output = β x + α (vec1 ⊗ vec2)
+
+    Args:
+        x (Tensor): Vector to be added. The shape of the tensor is :vec1:`(N, M)`.
+        vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :vec1:`(N,)`.
+        vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :vec1:`(M,)`.
+        beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
+            float or bool, Default: 1.
+        alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
+            be int or float or bool, Default: 1.
+
+    Outputs:
+        Tensor, the shape of the output tensor is :vec1:`(N, M)`, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
+        TypeError: If inputs `x`, `vec1`, 'vec2' are not the same dtype.
+        ValueError: If `x` is not a 2-D Tensor.
+            If `vec1`, `vec2` is not a 1-D Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[2., 2.], [3., 2.], [3., 4.]], np.float32))
+        >>> vec1 = Tensor(np.array([2., 3., 2.], np.float32))
+        >>> vec2 = Tensor(np.array([3, 4], np.float32))
+        >>> output = addr(x, vec1, vec2)
+        >>> print(output)
+        [[ 8. 10.]
+         [12. 14.]
+         [ 9. 12.]]
+    """
+
+    dtypeop = P.DType()
+    input_dtype = dtypeop(x)
+    if not (isinstance(x, Tensor) and isinstance(vec1, Tensor) and isinstance(vec2, Tensor)):
+        raise TypeError("For Addr, inputs must be all tensors.")
+    if not (input_dtype == dtypeop(vec1) and input_dtype == dtypeop(vec2)):
+        raise TypeError("For Addr, the inputs should be the same dtype.")
+    _check_input_1d(vec1.shape, "vec1", "Addr")
+    _check_input_1d(vec2.shape, "vec2", "Addr")
+    _check_input_2d(x.shape, "x", "Addr")
+    _check_input_dtype("x", input_dtype,
+                       [mstype.float16, mstype.float32, mstype.float64,
+                        mstype.int16, mstype.int32, mstype.int64], "Addmv")
+    _check_attr_dtype("alpha", alpha, [int, float, bool], "Addr")
+    _check_attr_dtype("beta", beta, [int, float, bool], "Addr")
+    if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        scalar_cast = P.ScalarCast()
+        alpha = scalar_cast(alpha, mstype.int32)
+        beta = scalar_cast(beta, mstype.int32)
+    matmul_op = P.MatMul()
+    reshape_op = P.Reshape()
+
+    length_vec1 = get_x_shape(vec1.shape)
+    vec1 = reshape_op(vec1, (length_vec1[0], 1))
+    length_vec2 = get_x_shape(vec2.shape)
+    vec2 = reshape_op(vec2, (1, length_vec2[0]))
+
+    out = beta * x + alpha * matmul_op(vec1, vec2)
+    return out
+
+
 def lcm(x1, x2):
     """
     Computes least common multiplier of input tensors element-wise.
@@ -5553,6 +5628,7 @@ __all__ = [
     'gt',
     'tensor_ge',
     'ge',
+    'addr',
     'tensor_sub',
     'sub',
     'tensor_mul',
