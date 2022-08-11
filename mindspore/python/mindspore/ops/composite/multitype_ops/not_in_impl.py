@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `not in` operations."""
 
+from mindspore.ops.operations import _inner_ops as inner
 from . import _constexpr_utils as const_utils
 from . import _compile_utils as compile_utils
 from ... import functional as F
@@ -55,6 +56,21 @@ def _number_not_in_list(x, y):
        bool, if x not in y return true, x in y return false.
    """
     return not const_utils.scalar_in_sequence(x, y)
+
+
+@not_in_.register("String", "String")
+def _string_not_in_string(x, y):
+    """
+    Determine if a str not in another str.
+
+    Args:
+       x (str): x
+       y (str): y
+
+    Returns:
+       bool, if x not in y return true, x in y return false.
+   """
+    return not inner.string_in(x, y)
 
 
 @not_in_.register("String", "Tuple")

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `greater` operations."""
+
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 # greater is a metafuncgraph object which will determine if two objects are greater according to input type
 # using ".register" decorator
@@ -25,7 +27,7 @@ greater = base.MultitypeFuncGraph("greater", True)
 @greater.register("Number", "Number")
 def _greater_scalar(x, y):
     """
-    Determine whether two numbers are greater.
+    Determine whether x is greater than y.
 
     Args:
        x(Number): Number.
@@ -37,12 +39,27 @@ def _greater_scalar(x, y):
     return F.scalar_gt(x, y)
 
 
+@greater.register("String", "String")
+def _greater_string(x, y):
+    """
+    Determine whether x is greater than y.
+
+    Args:
+       x(String): String.
+       y(String): String.
+
+    Returns:
+       bool, if x > y return true, x <= y return false.
+   """
+    return inner.string_gt(x, y)
+
+
 @greater.register("Tensor", "Number")
 @greater.register("Number", "Tensor")
 @greater.register("Tensor", "Tensor")
 def _greater_tensor(x, y):
     """
-    Determine whether two tensor are greater by element.
+    Determine whether x is greater than y elementwise.
 
     Args:
        x(Tensor): Tensor.

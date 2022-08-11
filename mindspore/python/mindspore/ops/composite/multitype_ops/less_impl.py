@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 """Implementation for internal polymorphism `less` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 # less is a metafuncgraph object which will determine if two objects are less according to input type
 # using ".register" decorator
@@ -25,7 +26,7 @@ less = base.MultitypeFuncGraph("less", True)
 @less.register("Number", "Number")
 def _less_scala(x, y):
     """
-    Determine whether two numbers are less.
+    Determine whether x is less than y.
 
     Args:
        x(Number): Number.
@@ -37,12 +38,27 @@ def _less_scala(x, y):
     return F.scalar_lt(x, y)
 
 
+@less.register("String", "String")
+def _less_string(x, y):
+    """
+    Determine whether x is less than y.
+
+    Args:
+       x(String): String.
+       y(String): String.
+
+    Returns:
+       bool, if x < y return true, x >= y return false.
+   """
+    return inner.string_lt(x, y)
+
+
 @less.register("Tensor", "Number")
 @less.register("Number", "Tensor")
 @less.register("Tensor", "Tensor")
 def _less_tensor(x, y):
     """
-    Determine whether two tensor are less by element.
+    Determine whether x is less than y elementwise.
 
     Args:
        x(Tensor): Tensor.

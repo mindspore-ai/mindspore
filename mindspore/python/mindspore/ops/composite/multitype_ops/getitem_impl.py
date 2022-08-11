@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `getitem` operations."""
+from mindspore.ops.operations import _inner_ops as inner
 from . import _compile_utils as compile_utils
 from .. import base
 from ... import functional as F
@@ -186,6 +187,21 @@ def _dict_getitem_by_key(data, key):
         Type, is as same as the element type of data.
     """
     return F.dict_getitem(data, key)
+
+
+@getitem.register("String", "Number")
+def _string_getitem_by_number(data, number_index):
+    """
+    Getting item of string by number index.
+
+    Inputs:
+        data (String): A string.
+        number_index (Number): Index in scalar.
+
+    Outputs:
+        String.
+    """
+    return inner.string_getitem(data, number_index)
 
 
 @getitem.register("Tensor", "Number")

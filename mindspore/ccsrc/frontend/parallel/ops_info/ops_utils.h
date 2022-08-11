@@ -529,7 +529,6 @@ constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
 constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
 
 // Parallel don't care
-constexpr char STRING_EQUAL[] = "string_equal";
 constexpr char MAKE_TUPLE[] = "MakeTuple";
 constexpr char MAKE_LIST[] = "make_list";
 constexpr char MAKE_DICT[] = "make_dict";

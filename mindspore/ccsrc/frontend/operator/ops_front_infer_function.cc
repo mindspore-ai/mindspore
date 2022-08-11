@@ -867,46 +867,6 @@ AbstractBasePtr InferImplListEqual(const AnalysisEnginePtr &, const PrimitivePtr
   return InferImplTupleOrListEqual<AbstractList>(primitive->name(), args_spec_list);
 }
 
-AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two scalars whose value is a string.
-  const std::string op_name = primitive->name();
-  const size_t args_num = 2;
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
-  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
-
-  ValuePtr value_x = scalar_x->BuildValue();
-  ValuePtr value_y = scalar_y->BuildValue();
-  if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "The type of two arguments of StringEqual operator requires string, but got param0: "
-                      << value_x->ToString() << ", param1: " << value_y->ToString();
-  }
-
-  bool ret = (value_x->cast<StringImmPtr>()->value() == value_y->cast<StringImmPtr>()->value());
-  return std::make_shared<AbstractScalar>(ret);
-}
-
-AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two scalars whose value is a string.
-  const std::string op_name = primitive->name();
-  const size_t args_num = 2;
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
-  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
-
-  ValuePtr value_x = scalar_x->BuildValue();
-  ValuePtr value_y = scalar_y->BuildValue();
-  if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "The type of two arguments of StringConcat operator requires string, but got param0: "
-                      << value_x->ToString() << ", param1: " << value_y->ToString();
-  }
-
-  std::string ret = (value_x->cast<StringImmPtr>()->value() + value_y->cast<StringImmPtr>()->value());
-  return std::make_shared<AbstractScalar>(ret);
-}
-
 AbstractBasePtr InferImplDictLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   return InferTupleOrListOrDictLen<AbstractDictionary>(primitive->name(), args_spec_list);
@@ -1002,31 +962,112 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
   return args_spec_list[0]->Broaden();
 }
 
+void GetStringAndNumberFromAbstract(const std::string &op_name, const AbstractBasePtrList &args_spec_list,
+                                    std::string *str, int64_t *num) {
+  constexpr size_t args_num = 2;
+  CheckArgsSize(op_name, args_spec_list, args_num);
+  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  ValuePtr value_x = scalar_x->BuildValue();
+  ValuePtr value_y = scalar_y->BuildValue();
+
+  bool is_match = false;
+  if (value_x->isa<StringImm>()) {
+    *str = GetValue<std::string>(value_x);
+    if (value_y->isa<Int32Imm>()) {
+      *num = IntToLong(GetValue<int32_t>(value_y));
+      is_match = true;
+    } else if (value_y->isa<Int64Imm>()) {
+      *num = GetValue<int64_t>(value_y);
+      is_match = true;
+    }
+  } else if (value_y->isa<StringImm>()) {
+    *str = GetValue<std::string>(value_y);
+    if (value_x->isa<Int32Imm>()) {
+      *num = IntToLong(GetValue<int32_t>(value_x));
+      is_match = true;
+    } else if (value_x->isa<Int64Imm>()) {
+      *num = GetValue<int64_t>(value_x);
+      is_match = true;
+    }
+  }
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << op_name << " requires the input to be a string and an integer, but got " << value_x->ToString()
+                      << " and " << value_y->ToString() << ".";
+  }
+}
+
+AbstractBasePtr InferImplStringMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a string and an integer.
+  std::string str;
+  int64_t num = 0;
+  const std::string op_name = primitive->name();
+  GetStringAndNumberFromAbstract(op_name, args_spec_list, &str, &num);
+  std::string res;
+  // If num is less than or equal to 0, return an empty string.
+  if (num > 0) {
+    for (auto i = 0; i < num; i++) {
+      res += str;
+    }
+  }
+  return std::make_shared<AbstractScalar>(res);
+}
+
+AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a string and an integer.
+  std::string str;
+  int64_t num = 0;
+  const std::string op_name = primitive->name();
+  GetStringAndNumberFromAbstract(op_name, args_spec_list, &str, &num);
+  int64_t len = SizeToLong(str.length());
+  if (num >= len || num < -len) {
+    MS_LOG(EXCEPTION) << "String index out of range, expect:[" << -len << ", " << (len - 1) << "], but got " << num
+                      << ".";
+  }
+  if (num < 0) {
+    num += len;
+  }
+  std::string res;
+  res.append(1, str.at(num));
+  return std::make_shared<AbstractScalar>(res);
+}
+
+// String
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringMul, prim::kPrimStringMul, InferImplStringMul, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringGetItem, prim::kPrimStringGetItem, InferImplStringGetItem, nullptr);
+// Tuple
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleReversed, prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleDiv, prim::kPrimTupleDiv, InferImplTupleDiv, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleToArray, prim::kPrimTupleToArray, InferImplTuple2Array, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleEqual, prim::kPrimTupleEqual, InferImplTupleEqual, nullptr);
+// List
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListEqual, prim::kPrimListEqual, InferImplListEqual, nullptr);
+// Dict
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen, nullptr);
+// Slice
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeSlice, prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(SliceGetItem, prim::kPrimSliceGetItem, InferImplSliceGetItem, nullptr);
+// Type
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TopTypeOf, prim::kPrimTopTypeOf, InferImplTopTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleReversed, prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
+// Shape
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ReducedShape, prim::kPrimReducedShape, InferImplReduceShape, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleDiv, prim::kPrimTupleDiv, InferImplTupleDiv, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleToArray, prim::kPrimTupleToArray, InferImplTuple2Array, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ShapeMul, prim::kPrimShapeMul, InferImplShapeMul, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleEqual, prim::kPrimTupleEqual, InferImplTupleEqual, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListEqual, prim::kPrimListEqual, InferImplListEqual, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRange, prim::kPrimMakeRange, InferImplMakeRange, nullptr);
+// Auto-Grad
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StopGradient, prim::kPrimStopGradient, InferImplStopGradient, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringEqual, prim::kPrimStringEqual, InferImplStringEqual, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringConcat, prim::kPrimStringConcat, InferImplStringConcat, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
+                                   InferImplBroadcastGradientArgs, nullptr);
+// Other
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRange, prim::kPrimMakeRange, InferImplMakeRange, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
-                                   InferImplBroadcastGradientArgs, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeSlice, prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(SliceGetItem, prim::kPrimSliceGetItem, InferImplSliceGetItem, nullptr);
 }  // namespace abstract
 }  // namespace mindspore

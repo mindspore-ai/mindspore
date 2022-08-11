@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,42 +91,6 @@ def bprop_scalar_usub(x, out, dout):
     return (-dout,)
 
 
-@bprops.register("scalar_gt")
-def bprop_scalar_gt(x, y, out, dout):
-    """Backpropagator for primitive `scalar_gt`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
-@bprops.register("scalar_lt")
-def bprop_scalar_lt(x, y, out, dout):
-    """Backpropagator for primitive `scalar_lt`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
-@bprops.register("scalar_ge")
-def bprop_scalar_ge(x, y, out, dout):
-    """Backpropagator for primitive `scalar_ge`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
-@bprops.register("scalar_le")
-def bprop_scalar_le(x, y, out, dout):
-    """Backpropagator for primitive `scalar_le`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
-@bprops.register("scalar_eq")
-def bprop_scalar_eq(x, y, out, dout):
-    """Backpropagator for primitive `scalar_eq`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
-@bprops.register("scalar_ne")
-def bprop_scalar_ne(x, y, out, dout):
-    """Backpropagator for primitive `scalar_eq`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
 @bprops.register("scalar_cast")
 def bprop_scalar_cast(x, t, out, dout):
     """Backpropagator for primitive `scalar_cast`."""
@@ -205,28 +169,10 @@ def bprop_embed(x, out, dout):
     return (C.zeros_like(x),)
 
 
-@bprops.register("bool_not")
-def bprop_bool_not(x, out, dout):
-    """Backpropagator for primitive `bool_not`."""
-    return (C.zeros_like(x),)
-
-
-@bprops.register("bool_or")
-def bprop_bool_or(x, y, out, dout):
-    """Backpropagator for primitive `bool_or`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
 @bprops.register("stop_gradient")
 def bprop_stop_gradient(x, out, dout):
     """Backpropagator for primitive `stop_gradient`."""
     return (C.zeros_like(x),)
-
-
-@bprops.register("bool_and")
-def bprop_bool_and(x, y, out, dout):
-    """Backpropagator for primitive `bool_and`."""
-    return C.zeros_like(x), C.zeros_like(y)
 
 
 @bprops.register("Switch")
@@ -255,13 +201,32 @@ def bprop_load(param, u_monad, out, dout):
     return dout, C.zeros_like(u_monad)
 
 
+@bprops.register("scalar_gt")
+@bprops.register("scalar_lt")
+@bprops.register("scalar_ge")
+@bprops.register("scalar_le")
+@bprops.register("scalar_eq")
+@bprops.register("scalar_ne")
+@bprops.register("bool_and")
+@bprops.register("bool_or")
 @bprops.register("bit_and")
-def bprop_bit_and(x, y, out, dout):
-    """Backpropagator for primitive `bit_and`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
 @bprops.register("bit_or")
-def bprop_bit_or(x, y, out, dout):
-    """Backpropagator for primitive `bit_or`."""
+@bprops.register("string_eq")
+@bprops.register("string_lt")
+@bprops.register("string_gt")
+@bprops.register("string_le")
+@bprops.register("string_ge")
+@bprops.register("string_in")
+@bprops.register("string_concat")
+@bprops.register("string_mul")
+@bprops.register("string_getitem")
+def bprop_scalar_calc(x, y, out, dout):
+    """Backpropagator for scalar calculation."""
     return C.zeros_like(x), C.zeros_like(y)
+
+
+@bprops.register("bool_not")
+@bprops.register("string_not")
+def bprop_scalar_not(x, out, dout):
+    """Backpropagator for primitive `bool_not` and `string_not`."""
+    return (C.zeros_like(x),)

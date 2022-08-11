@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from mindspore import ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_fallback_all_tuple():
+def test_fallback_all_tuple_number():
     """
     Feature: JIT Fallback
     Description: Test all(Tuple) in graph mode
@@ -36,7 +36,24 @@ def test_fallback_all_tuple():
     assert (not x) and y
 
 
-def test_fallback_all_list():
+def test_fallback_all_tuple_string():
+    """
+    Feature: JIT Fallback
+    Description: Test all(Tuple) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = ('a', 'b', '', 'd')
+        y = ('a', 'b', 'c', 'd')
+        return all(x), all(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
+def test_fallback_all_list_number():
     """
     Feature: JIT Fallback
     Description: Test all(List) in graph mode
@@ -47,6 +64,23 @@ def test_fallback_all_list():
     def foo():
         x = [0, 1, 2, 3]
         y = [1, 1]
+        return all(x), all(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
+def test_fallback_all_list_string():
+    """
+    Feature: JIT Fallback
+    Description: Test all(List) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = ['a', 'b', '', 'd']
+        y = ['a', 'b', 'c', 'd']
         return all(x), all(y)
 
     x, y = foo()
@@ -70,7 +104,7 @@ def test_fallback_all_numpy():
     assert (not x) and y
 
 
-def test_fallback_any_tuple():
+def test_fallback_any_tuple_number():
     """
     Feature: JIT Fallback
     Description: Test any(Tuple) in graph mode
@@ -87,7 +121,24 @@ def test_fallback_any_tuple():
     assert (not x) and y
 
 
-def test_fallback_any_list():
+def test_fallback_any_tuple_string():
+    """
+    Feature: JIT Fallback
+    Description: Test any(Tuple) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = ('a', 'b', '', 'd')
+        y = ('a', 'b', 'c', 'd')
+        return any(x), any(y)
+
+    x, y = foo()
+    assert x and y
+
+
+def test_fallback_any_list_number():
     """
     Feature: JIT Fallback
     Description: Test any(List) in graph mode
@@ -98,6 +149,23 @@ def test_fallback_any_list():
     def foo():
         x = [0, 0, 0, 0]
         y = [1, 0]
+        return any(x), any(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
+def test_fallback_any_list_string():
+    """
+    Feature: JIT Fallback
+    Description: Test any(List) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = ['', '', '', '']
+        y = ['a', 'b', '', 'd']
         return any(x), any(y)
 
     x, y = foo()

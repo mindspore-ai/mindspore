@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 """Implementation for internal polymorphism `logical not` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 # logical_not is a metagraph object which will generate function according to input type
 # using ".register" decorator
@@ -34,6 +35,34 @@ def _logical_not_scala(x):
        bool, Return logical not operation result of x.
    """
     return F.bool_not(x.__bool__())
+
+
+@logical_not.register("String")
+def _logical_not_string(x):
+    """
+    Return logical not operation result of x.
+
+    Args:
+       x(String): String.
+
+    Returns:
+       bool, Return logical not operation result of x.
+   """
+    return inner.string_not(x)
+
+
+@logical_not.register("None")
+def _logical_not_none(x):
+    """
+    Return logical not operation result of none.
+
+    Args:
+       x(None): None.
+
+    Returns:
+       bool, return True.
+   """
+    return True
 
 
 @logical_not.register("Tensor")

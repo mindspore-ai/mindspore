@@ -54,6 +54,14 @@ ValuePtr BoolOr(const ValuePtrList &list);
 ValuePtr BoolEq(const ValuePtrList &list);
 ValuePtr BitAnd(const ValuePtrList &list);
 ValuePtr BitOr(const ValuePtrList &list);
+ValuePtr StringEq(const ValuePtrList &list);
+ValuePtr StringLt(const ValuePtrList &list);
+ValuePtr StringGt(const ValuePtrList &list);
+ValuePtr StringLe(const ValuePtrList &list);
+ValuePtr StringGe(const ValuePtrList &list);
+ValuePtr StringConcat(const ValuePtrList &list);
+ValuePtr StringNot(const ValuePtrList &list);
+ValuePtr StringIn(const ValuePtrList &list);
 }  // namespace prim
 }  // namespace mindspore
 

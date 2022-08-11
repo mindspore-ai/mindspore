@@ -2649,6 +2649,14 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
     {prim::kPrimBoolAnd, R{prim::BoolAnd, true, std::make_shared<Bool>(), true}},
     {prim::kPrimBoolEq, R{prim::BoolEq, true, std::make_shared<Bool>(), true}},
     {prim::kPrimBoolOr, R{prim::BoolOr, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringConcat, R{prim::StringConcat, true, nullptr, true}},
+    {prim::kPrimStringEq, R{prim::StringEq, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringLt, R{prim::StringLt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringGt, R{prim::StringGt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringLe, R{prim::StringLe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringGe, R{prim::StringGe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringNot, R{prim::StringNot, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimStringIn, R{prim::StringIn, true, std::make_shared<Bool>(), true}},
   };
   return uniform_prim_implement_map;
 }

@@ -31,8 +31,19 @@ from ...common.parameter import Parameter
 from ...communication.management import GlobalComm
 from ..._c_expression import call_constant_folding
 
+
+# Bit operation
 bit_and = Primitive("bit_and")
 bit_or = Primitive("bit_or")
+# String operation
+string_lt = Primitive("string_lt")
+string_gt = Primitive("string_gt")
+string_le = Primitive("string_le")
+string_ge = Primitive("string_ge")
+string_not = Primitive("string_not")
+string_in = Primitive("string_in")
+string_mul = Primitive("string_mul")
+string_getitem = Primitive("string_getitem")
 
 
 class FillV2(Primitive):
