@@ -132,8 +132,10 @@ class EarlyStopping(Callback):
 
         self.wait = 0
         self.stopped_epoch = 0
-        self.best = np.Inf if self.mode == 'min' or \
-                              (self.mode == 'auto' and self.monitor in _smaller_better_metrics) else -np.Inf
+        if self.mode == 'min' or (self.mode == 'auto' and self.monitor in _smaller_better_metrics):
+            self.best = np.Inf
+        else:
+            self.best = -np.Inf
         self.best_weights_param_dict = None
 
     def on_train_epoch_end(self, run_context):
@@ -152,8 +154,10 @@ class EarlyStopping(Callback):
 
         parallel_mode = auto_parallel_context().get_parallel_mode()
         rank_size = 1 if parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-        current = current_value if \
-            rank_size == 1 else self._reduce(Tensor(current_value.astype(np.float32))) / rank_size
+        if rank_size == 1:
+            current = current_value
+        else:
+            current = self._reduce(Tensor(current_value.astype(np.float32))) / rank_size
 
         if current is None:
             return

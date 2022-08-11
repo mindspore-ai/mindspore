@@ -114,8 +114,10 @@ class HausdorffDistance(Metric):
         string_list = ["euclidean", "chessboard", "taxicab"]
         distance_metric = validator.check_value_type("distance_metric", distance_metric, [str])
         self.distance_metric = validator.check_string(distance_metric, string_list, "distance_metric")
-        self.percentile = percentile if percentile is None else \
-            validator.check_value_type("percentile", percentile, [float])
+        if percentile is None:
+            self.percentile = percentile
+        else:
+            self.percentile = validator.check_value_type("percentile", percentile, [float])
         self.directed = directed if directed is None else validator.check_value_type("directed", directed, [bool])
         self.crop = crop if crop is None else validator.check_value_type("crop", crop, [bool])
         self.clear()

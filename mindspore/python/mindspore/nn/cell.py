@@ -1417,13 +1417,12 @@ class Cell(Cell_):
         reserve_class_name_in_scope = context.get_context("reserve_class_name_in_scope")
 
         for name, cell in self.name_cells().items():
-            yield parent_prefix + "/" + name + (("-" + cell.__class__.__name__)
-                                                if reserve_class_name_in_scope else ""), cell
+            class_name = ("-" + cell.__class__.__name__) if reserve_class_name_in_scope else ""
+            yield parent_prefix + "/" + name + class_name, cell
 
         for name, cell in self.name_cells().items():
-            for key, value in cell._children_scope_recursive(parent_prefix + "/" + name +
-                                                             (("-" + cell.__class__.__name__)
-                                                              if reserve_class_name_in_scope else "")):
+            class_name = ("-" + cell.__class__.__name__) if reserve_class_name_in_scope else ""
+            for key, value in cell._children_scope_recursive(parent_prefix + "/" + name + class_name):
                 yield key, value
 
     def get_scope(self):

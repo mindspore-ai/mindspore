@@ -342,7 +342,7 @@ class AdaFactor(Optimizer):
             self.use_fused_ada_factor = True
         else:
             self.use_fused_ada_factor = False
-        print("AdaFactor init completed", self.learning_rate)
+        logging.info("AdaFactor init completed %s.", self.learning_rate)
 
     def init_ada_factor_state(self, beta1):
         """init adafactor variables"""

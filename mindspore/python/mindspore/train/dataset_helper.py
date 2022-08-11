@@ -123,9 +123,14 @@ def _has_dynamic_shape(dataset_shapes):
 
 
 def _generate_network_with_dataset(network, dataset_helper, queue_name):
+    """
+    Generate new network with network and dataset info.
+    """
     dataset_types, dataset_shapes = dataset_helper.types_shapes()
-    (min_shapes, max_shapes) = (None, None) if not _has_dynamic_shape(dataset_shapes) \
-        else dataset_helper.dynamic_min_max_shapes()
+    if not _has_dynamic_shape(dataset_shapes):
+        (min_shapes, max_shapes) = (None, None)
+    else:
+        (min_shapes, max_shapes) = dataset_helper.dynamic_min_max_shapes()
     if network.get_inputs() and None not in network.get_inputs():
         _check_inputs(network, dataset_shapes)
         min_shapes, max_shapes = None, None
@@ -243,8 +248,10 @@ def connect_network_with_dataset(network, dataset_helper):
 
             network = _generate_dataset_sink_mode_net(
                 network, dataset_shapes, dataset_types, queue_name)
-            aux.__network_manage__ = aux.__network_manage__ if hasattr(
-                aux, '__network_manage__') else dict()
+            if hasattr(aux, '__network_manage__'):
+                aux.__network_manage__ = aux.__network_manage__
+            else:
+                aux.__network_manage__ = dict()
             aux.__network_manage__[key] = network
         return network
 

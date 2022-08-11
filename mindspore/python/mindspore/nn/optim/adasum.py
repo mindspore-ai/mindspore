@@ -182,6 +182,15 @@ class _AdaSum(Cell):
         self.device_number = device_number
         self.group_number = group_number
         self.parameter_tuple = parameter_tuple
+        self.calc_times = int(math.log(self.group_number, 2))
+        self.send_node = []
+        self.send_list_forward = []
+        self.recv_list_forward = []
+        self.send_list_rollback = []
+        self.recv_list_rollback = []
+        self.allreduce_list = []
+        self.parameter_divisibility_list = []
+        self.allreduce_node_num_list = []
         self._generate_communication_op()
         self.hyper_map = C.HyperMap()
         self.update_reshape_list = []
@@ -215,28 +224,18 @@ class _AdaSum(Cell):
 
     def _generate_communication_op(self):
         """generate communication op."""
-        self.calc_times = int(math.log(self.group_number, 2))
-        self.send_node = []
-        self.send_list_forward = []
-        self.recv_list_forward = []
-        self.send_list_rollback = []
-        self.recv_list_rollback = []
-        self.allreduce_list = []
-        self.parameter_divisibility_list = []
-        self.allreduce_node_num_list = []
         last_delta_weights = []
-        fusion_attr = "fusion" if context.get_auto_parallel_context("parallel_mode") \
-                                  in ["data_parallel", "hybrid_parallel"] else "origin_fusion"
+        fusion_attr = "origin_fusion"
+        if context.get_auto_parallel_context("parallel_mode") in ["data_parallel", "hybrid_parallel"]:
+            fusion_attr = "fusion"
         for step in range(self.calc_times):
             current_group = self.device_number * (2 ** step)
-            sr_target = self.rank
-            if (sr_target // current_group) % 2 == 0:
-                dest_target = sr_target + current_group
+            if (self.rank // current_group) % 2 == 0:
+                dest_target = self.rank + current_group
                 self.send_node.append(True)
             else:
-                dest_target = sr_target - current_group
+                dest_target = self.rank - current_group
                 self.send_node.append(False)
-
             send_left = []
             send_right = []
             recv_left = []
@@ -248,7 +247,7 @@ class _AdaSum(Cell):
             weights_index = 0
             fusion_id = (step + 1) * 3
             for shape, dtype, name in left_delta_weights:
-                send_tag = self._hash(step, sr_target, weights_index)
+                send_tag = self._hash(step, self.rank, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
                 send.add_prim_attr(fusion_attr, fusion_id)
                 send.add_prim_attr("opposite_rank", dest_target)
@@ -263,7 +262,7 @@ class _AdaSum(Cell):
                 recv_left.append(recv)
                 weights_index += 1
             for shape, dtype, name in right_delta_weights:
-                send_tag = self._hash(step, sr_target, weights_index)
+                send_tag = self._hash(step, self.rank, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
                 send.add_prim_attr(fusion_attr, fusion_id + 1)
                 send.add_prim_attr("opposite_rank", dest_target)
