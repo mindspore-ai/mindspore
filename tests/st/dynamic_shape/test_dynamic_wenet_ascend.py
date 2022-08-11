@@ -17,7 +17,6 @@ import time
 import logging
 from typing import Optional, Tuple
 import numpy as np
-import pytest
 
 import mindspore
 
@@ -1776,10 +1775,6 @@ def create_dataset(batch_size=32, label_len=30, mel_bins=80):
     return ds
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_train():
     """
     Feature: Test the simplified dynamic shape WeNet-ASR network with small data.
