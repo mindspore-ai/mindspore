@@ -25,7 +25,7 @@
 #include "mindspore/lite/src/tensor.h"
 #include "mindspore/lite/src/litert/kernel_exec.h"
 #include "mindspore/lite/src/litert/kernel/cpu/fp32_grad/activation_grad.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 
 namespace mindspore {
 class TestActGradFp32 : public mindspore::CommonTest {

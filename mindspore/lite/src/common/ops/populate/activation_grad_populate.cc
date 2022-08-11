@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore {

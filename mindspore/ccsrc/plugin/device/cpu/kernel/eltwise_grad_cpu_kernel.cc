@@ -21,7 +21,7 @@
 #include <functional>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
 #include "nnacl/errorcode.h"
 

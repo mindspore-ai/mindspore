@@ -15,7 +15,7 @@
  */
 
 #include "coder/opcoders/nnacl/fp32_grad/activation_grad_coder.h"
-#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad_fp32.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
@@ -31,10 +31,10 @@ int ActivationGradCoder::DoCode(CoderContext *const context) {
   int count = input_tensor_->ElementsNum();
   Collect(context,
           {
-            "nnacl/fp32_grad/activation_grad.h",
+            "nnacl/fp32_grad/activation_grad_fp32.h",
           },
           {
-            "activation_grad.c",
+            "activation_grad_fp32.c",
           });
   NNaclFp32Serializer code;
 

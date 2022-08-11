@@ -21,7 +21,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "nnacl/fp16_grad/activation_grad.h"
+#include "nnacl/fp16_grad/activation_grad_fp16.h"
 
 namespace mindspore {
 class TestActGradFp16 : public mindspore::CommonTest {
