@@ -434,6 +434,9 @@ class Tensor(Tensor_):
             >>> print(output)
             [1 2]
         """
+        if isinstance(array, np.ndarray) and not array.flags['C_CONTIGUOUS']:
+            array = np.ascontiguousarray(array)
+
         return Tensor(Tensor_.from_numpy(array))
 
     def assign_value(self, value):

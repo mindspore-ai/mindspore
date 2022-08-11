@@ -555,3 +555,7 @@ def test_tensor_from_numpy():
     with pytest.raises(TypeError):
         # incorrect input.
         t = ms.Tensor.from_numpy([1, 2, 3])
+
+    x = np.array([[1, 2], [3, 4]], order='F')
+    b = Tensor.from_numpy(x)
+    assert np.all(b.asnumpy() == np.array([[1, 2], [3, 4]]))
