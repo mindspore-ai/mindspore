@@ -2424,6 +2424,9 @@ class Tensor(Tensor_):
         """
         Update some rows of a tensor with values of v according to the specified indices.
 
+        Note:
+            `indices` refers to the left-most dimension.
+
         Args:
             v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
               the same as the size of indices.
