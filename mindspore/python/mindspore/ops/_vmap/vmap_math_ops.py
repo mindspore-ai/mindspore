@@ -923,3 +923,6 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.PopulationCount)(get_unop_vma
 # UnaryGrad vmap
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.LogitGrad)(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('AbsGrad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('ReciprocalGrad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('SqrtGrad')(get_unary_grad_vmap_rule)
