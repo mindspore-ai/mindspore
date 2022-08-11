@@ -62,24 +62,24 @@ void TestInferStrategyIndependentMode::SetUp() {
 }
 
 /// Feature: infer strategy for independent mode
-/// Description: the in strategy is {{2, 4, 4}, {}}, the in shapes is {{32, 64, 96}, {32, 64, 96}}
-/// Expectation: the return strategy is {{2, 4, 4}, {1, 1, 1}}
+/// Description: the in strategy is {{1, 1, 1}, {}}, the in shapes is {{32, 64, 96}, {32, 64, 96}}
+/// Expectation: the return strategy is {{1, 1, 1}, {1, 1, 1}}
 TEST_F(TestInferStrategyIndependentMode, GenerateFullStrategy1) {
-  Strategies in_strategy = {{2, 4, 4}, {}};
+  Strategies in_strategy = {{1, 1, 1}, {}};
   Strategies ret = gathernd->GenerateFullStrategy(in_strategy);
 
-  Strategies expect = {{2, 4, 4}, {1, 1, 1}};
+  Strategies expect = {{1, 1, 1}, {1, 1, 1}};
   ASSERT_EQ(ret, expect);
 }
 
 /// Feature: infer strategy for independent mode
-/// Description: the in strategy is {{}, {2, 4, 4}}, the in shapes is {{32, 64, 96}, {32, 64, 96}}
-/// Expectation: the return strategy is {{1, 1, 1}, {2, 4, 4}}
+/// Description: the in strategy is {{}, {2, 4, 1}}, the in shapes is {{32, 64, 96}, {32, 64, 96}}
+/// Expectation: the return strategy is {{1, 1, 1}, {2, 4, 1}}
 TEST_F(TestInferStrategyIndependentMode, GenerateFullStrategy2) {
-  Strategies in_strategy = {{}, {2, 4, 4}};
+  Strategies in_strategy = {{}, {2, 4, 1}};
   Strategies ret = gathernd->GenerateFullStrategy(in_strategy);
 
-  Strategies expect = {{1, 1, 1}, {2, 4, 4}};
+  Strategies expect = {{1, 1, 1}, {2, 4, 1}};
   ASSERT_EQ(ret, expect);
 }
 }  // namespace parallel

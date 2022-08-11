@@ -180,11 +180,20 @@ std::vector<StrategyPtr> ScatterUpdateInfo::GenerateOpStrategies(int64_t stage_i
 
 // in_strategy: ((A, B, C, D), (), ()), Shapes: ((a, b, c, d), (e, f), (e, f, b, c, d))
 // return: ((A, B, C, D), (1, 1), (1, 1, B, C, D))
-// in_strategy: ((), (), (E, F, B, C, D)), Shapes: ((a, b, c, d), (e, f), (e, f, b, c, d))
+// in_strategy: ((), (1, 1), (E, F, B, C, D)), Shapes: ((a, b, c, d), (e, f), (e, f, b, c, d))
 // return: ((A, B, C, D), (1, 1), (E, F, B, C, D))
+// in_strategy: ((), (), (E, F, B, C, D)), Shapes: ((a, b, c, d), (e, f), (e, f, b, c, d))
+// return: throw exception
 Shapes ScatterUpdateInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
   if (in_strategy.size() != 3) {
     MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
+  }
+
+  if (in_strategy[1].empty() != in_strategy[2].empty()) {
+    MS_LOG(EXCEPTION)
+      << name_
+      << ": The in_strategy[1] and in_strategy[2] must be all empty or all non empty, but the in_strategy[1] is "
+      << in_strategy[1] << ", the in_strategy[2] is " << in_strategy[2];
   }
 
   Shape x_strategy, indices_strategy, updates_strategy;
@@ -197,17 +206,13 @@ Shapes ScatterUpdateInfo::InferStrategyIndividualMode(const Shapes &in_strategy)
   }
 
   if (!in_strategy[2].empty()) {
+    if (std::accumulate(in_strategy[1].begin(), in_strategy[1].end(), 1, std::multiplies<int64_t>()) != 1) {
+      MS_LOG(EXCEPTION) << name_ << ": The in_strategy[1] must be fill with 1, but got " << in_strategy[1];
+    }
     x_strategy = in_strategy[2];
     (void)x_strategy.erase(x_strategy.begin(),
                            x_strategy.begin() + static_cast<different_type>(inputs_shape_[1].size() - 1));
     return Shapes({x_strategy, indices_strategy, in_strategy[2]});
-  }
-
-  if (!in_strategy[1].empty()) {
-    if (std::accumulate(in_strategy[1].begin(), in_strategy[1].end(), 1, std::multiplies<int64_t>()) != 1) {
-      MS_LOG(EXCEPTION) << name_ << ": The in_strategy[1] must be fill with 1, but got " << in_strategy[1];
-    }
-    return Shapes({Shape(inputs_shape_[0].size(), 1), in_strategy[1], Shape(inputs_shape_[2].size(), 1)});
   }
 
   MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0], in_strategy[1] and in_strategy[2] are empty";
