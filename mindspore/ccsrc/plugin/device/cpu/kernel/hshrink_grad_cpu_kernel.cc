@@ -78,7 +78,7 @@ bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
   auto task = [dy, x, dx, this](size_t start, size_t end) {
-    auto ret = HShrinkGrad(dy + start, x + start, (end - start), dx + start, this->lambd_);
+    auto ret = HShrinkGrad(dy + start, x + start, SizeToInt(end - start), dx + start, this->lambd_);
     if (ret != NNACL_OK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrinkGrad function failed.";
       return false;
