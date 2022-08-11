@@ -115,9 +115,8 @@ abstract::ShapePtr UpsampleTrilinear3DGradInferShape(const PrimitivePtr &primiti
 
 TypePtr UpsampleTrilinear3DGradInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   TypePtr grad_type = input_args[kInputIndex0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, common_float_types, primitive->name());
 }
 }  // namespace
 

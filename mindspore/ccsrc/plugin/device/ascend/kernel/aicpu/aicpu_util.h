@@ -86,6 +86,8 @@ constexpr auto kTensorScatterElements = "TensorScatterElements";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
 constexpr auto kUpsampleNearest3DGrad = "UpsampleNearest3DGrad";
+constexpr auto kUpsampleTrilinear3D = "UpsampleTrilinear3D";
+constexpr auto kUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
@@ -152,6 +154,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kUpsampleNearest3DGrad, "UpsampleNearest3dGrad"},
   {kNameRangeV2, "Range"},
   {kReLUV3, "Relu"},
+  {kUpsampleTrilinear3D, "UpsampleTrilinear3d"},
+  {kUpsampleTrilinear3DGrad, "UpsampleTrilinear3dGrad"},
   {kStack, "Pack"},
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},

@@ -156,6 +156,8 @@ from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
 from .upsample_nearest_3d import _upsample_nearest_3d_aicpu
 from .upsample_nearest_3d_grad import _upsample_nearest_3d_grad_aicpu
+from .upsample_trilinear_3d import _upsample_trilinear_3d_aicpu
+from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu

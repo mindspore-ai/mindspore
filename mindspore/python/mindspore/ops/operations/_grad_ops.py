@@ -3011,6 +3011,84 @@ class MultiMarginLossGrad(Primitive):
         self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'weight'], outputs=['x_grad'])
 
 
+class UpsampleTrilinear3DGrad(Primitive):
+    r"""
+    Upsample the 3-D gradient data with trilinear interpolation algorithm.
+
+    Args:
+        input_size (Union[tuple[int], list[int]]): An required listInt.
+            contain 5 elements: [batch, channels, depth, height, width]. Must:
+            input_size[0] == grad_output_tensor_size[0]
+            input_size[1] == grad_output_tensor_size[1].
+        output_size (Union[tuple[int], list[int]]): An optional listInt. Defaults to none.
+            contain 3 elements: depth, height, width. The number of elements of 'output_size' should
+            be the same as the rank of input 'grad_output'.
+            Only one of 'scales' and 'output_size' can be specified. Must:
+            grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
+            grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
+            grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
+        scales (Union[tuple[float], list[float]]): An optional listFloat. Defaults to none.
+            The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
+            The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
+            One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
+        align_corners (bool): An optional bool. Defaults to false.
+
+    Inputs:
+        - **grad_output** (Tensor) - A 5-D input tensor [N, C, D, H, W].
+          Must be one of the following types: [float16, float32, float64].
+
+    Outputs:
+        backprops Tensor - A Tensor with shape depends on intput_size and output_size/scales.
+            Must be one of the following types: [float16, float32, float64].
+
+    Raises:
+        TypeError: If dtype of `x` is not int [float16, float32, float64].
+        TypeError: If `input_size` is not list[int] or tuple[int].
+        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
+        TypeError: If type of `align_corners` is not bool.
+        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
+        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
+        ValueError: If shape of `x` is not 5D.
+        ValueError: If none of `scales` and `output_size` is specified or both specified.
+        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
+        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
+        TypeError: If `input_size` is not Union[tuple[int], list[int]].
+        ValueError: If any value of `input_size` is negative.
+        ValueError: If elements number of `input_size` is not 5.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+    """
+    @prim_attr_register
+    def __init__(self, input_size, output_size=None, scales=None, align_corners=False):
+        """Initialize UpsampleTrilinear3DGrad."""
+        self.init_prim_io_names(inputs=['grad_output'], outputs=['y'])
+        self.input_size = input_size
+        self.output_size = [] if output_size is None else output_size
+        self.scales = [] if scales is None else scales
+        self.align_corners = align_corners
+
+        validator.check_value_type("input_size", self.input_size, [list, tuple], self.name)
+        validator.check_equal_int(len(self.input_size), 5, "the dimension of input_size", self.name)
+        validator.check_value_type("output_size", self.output_size, [list, tuple], self.name)
+        validator.check_value_type("scales", self.scales, [list, tuple], self.name)
+        validator.check_bool(self.align_corners, self.name)
+        if len(self.output_size) == 3:
+            validator.check_positive_int_sequence(self.output_size, "output_size", self.name)
+        if len(self.scales) == 3:
+            validator.check_positive_float_sequence(self.scales, "scales", self.name)
+        if self.output_size == []:
+            validator.check_equal_int(len(self.scales), 3, 'size of scales', self.name)
+        if self.scales == []:
+            validator.check_equal_int(len(self.output_size), 3, 'size of output_size', self.name)
+
+        self.add_prim_attr('input_size', self.input_size)
+        self.add_prim_attr('output_size', self.output_size)
+        self.add_prim_attr('scales', self.scales)
+        self.add_prim_attr('align_corners', self.align_corners)
+
+
 class GridSampler3DGrad(Primitive):
     """
     Computes gradients for GridSampler3D operation.
@@ -3430,67 +3508,6 @@ class GridSampler2DGrad(Primitive):
         self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
         self.add_prim_attr('interpolation_mode', interpolation_mode)
         self.add_prim_attr('padding_mode', padding_mode)
-        self.add_prim_attr('align_corners', align_corners)
-
-
-class UpsampleTrilinear3DGrad(Primitive):
-    """
-    Computes gradients for UpsampleTrilinear3DGrad operation.
-
-    Args:
-        input_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the forward pass
-            input Tensor size, identical to the gradient tensor returned by this op.
-        output_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the output
-            volumetric size, identical to the backprop gradient entering this op. Defaults to None.
-        scales (Union[tuple[float], list[float]]): A list or tuple of float specifying the upsampling factors.
-            Defaults to None.
-        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
-            tensors are aligned. Defaults to "false".
-
-    Inputs:
-        - **grad** (Tensor) - 5D tensor of shape :math:`(N, C, D_{grad}, H_{grad}, W_{grad})`. With float16 or
-            float32 data type.
-
-    Outputs:
-        - **dx** (Tensor) - 5D tensor of shape :math:`(N, C, D_{dx}, H_{dx}, W_{dx})`. With float16 or
-            float32 data type.
-
-    Raises:
-        TypeError: If data type of `grad` is not float16, float32.
-        TypeError: If `input_size` is not provided.
-        ValueError: If size of `grad` is not a 5D tensor.
-        ValueError: If `output_size` is a list or tuple and if `output_size` length is not 3.
-        ValueError: If `scales` is a list or tuple and if `scales` length is not 3.
-        ValueError: If both `output_size` and `scales` are None.
-        ValueError: If both `output_size` and `scales` are non-empty lists.
-
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, input_size, output_size=None, scales=None, align_corners=None):
-        self.init_prim_io_names(inputs=['grad'], outputs=['dx'])
-        if output_size is None:
-            output_size = []
-        if scales is None:
-            scales = []
-        if align_corners is None:
-            align_corners = False
-        validator.check_value_type('input_size', input_size, [list, tuple], self.name)
-        for item in input_size:
-            validator.check_value_type('input_size_item', item, int, self.name)
-        validator.check_value_type("output_size", output_size, [list, tuple], self.name)
-        for item in output_size:
-            validator.check_value_type('output_size_item', item, int, self.name)
-        validator.check_value_type("scales", scales, [list, tuple], self.name)
-        for item in scales:
-            validator.check_value_type('scales_item', item, float, self.name)
-        validator.check_value_type('align_corners', align_corners, bool, self.name)
-        self.add_prim_attr('input_size', input_size)
-        self.add_prim_attr('output_size', output_size)
-        self.add_prim_attr('scales', scales)
         self.add_prim_attr('align_corners', align_corners)
 
 

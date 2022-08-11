@@ -36,6 +36,8 @@ from ..operations._grad_ops import FractionalAvgPoolGrad
 from ..operations.nn_ops import MultiMarginLoss
 from ..operations.nn_ops import MultilabelMarginLoss
 from ..operations.nn_ops import NthElement
+from ..operations.nn_ops import UpsampleTrilinear3D
+from ..operations._grad_ops import UpsampleTrilinear3DGrad
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
 from ..operations.nn_ops import AvgPoolV1
@@ -166,6 +168,21 @@ def get_bprop_upsample_nearest_3d(self):
     def bprop(x, out, dout):
         x_shape = P.Shape()(x)
         grad_op = UpsampleNearest3DGrad(x_shape, output_size, scales)
+        dx = grad_op(dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(UpsampleTrilinear3D)
+def get_bprop_upsample_trilinear_3d(self):
+    """Grad definition for `UpsampleTrilinear3D` operation."""
+    output_size = self.output_size
+    scales = self.scales
+    align_corners = self.align_corners
+    def bprop(x, out, dout):
+        input_size = P.Shape()(x)
+        grad_op = UpsampleTrilinear3DGrad(input_size, output_size, scales, align_corners)
         dx = grad_op(dout)
         return (dx,)
 

@@ -116,6 +116,8 @@ from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
+from mindspore.ops.operations.nn_ops import UpsampleTrilinear3D
+from mindspore.ops.operations._grad_ops import UpsampleTrilinear3DGrad
 from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
@@ -2729,6 +2731,14 @@ test_case_nn_ops = [
         'block': DataFormatVecPermute(),
         'desc_const': [Tensor(np.array([1, 2, 3, 4]).astype(np.int32))],
         'desc_inputs': [],
+        'skip': ['backward']}),
+    ('UpsampleTrilinear3D', {
+        'block': UpsampleTrilinear3D(output_size=[4, 64, 48]),
+        'desc_inputs': [([2, 3, 4, 512, 256], {'dtype': np.float32})],
+        'desc_bprop': [([2, 3, 4, 64, 48], {'dtype': np.float32})]}),
+    ('UpsampleNearest3DGrad', {
+        'block': UpsampleTrilinear3DGrad(input_size=[2, 3, 4, 512, 256], output_size=[4, 64, 48], scales=None),
+        'desc_inputs': [([2, 3, 4, 64, 48], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('DropoutGenMask', {
         'block': P.DropoutGenMask(),
