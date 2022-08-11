@@ -29,6 +29,14 @@ GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+FOUR_DIM_DATA = [[[[1, 2, 3], [3, 4, 3]], [[5, 6, 3], [7, 8, 3]]],
+                 [[[9, 10, 3], [11, 12, 3]], [[13, 14, 3], [15, 16, 3]]]]
+FIVE_DIM_DATA = [[[[[1, 2, 3], [3, 4, 3]], [[5, 6, 3], [7, 8, 3]]],
+                  [[[9, 10, 3], [11, 12, 3]], [[13, 14, 3], [15, 16, 3]]]]]
+FOUR_DIM_RES = [[[[3.0, 4.0, 3.0], [1.0, 2.0, 3.0]], [[7.0, 8.0, 3.0], [5.0, 6.0, 3.0]]],
+                [[[11.0, 12.0, 3.0], [9.0, 10.0, 3.0]], [[15.0, 16.0, 3.0], [13.0, 14.0, 3.0]]]]
+FIVE_DIM_RES = [[[[[3.0, 4.0, 3.0], [1.0, 2.0, 3.0]], [[7.0, 8.0, 3.0], [5.0, 6.0, 3.0]]],
+                 [[[11.0, 12.0, 3.0], [9.0, 10.0, 3.0]], [[15.0, 16.0, 3.0], [13.0, 14.0, 3.0]]]]]
 
 
 def h_flip(image):
@@ -265,7 +273,7 @@ def test_random_horizontal_op_1():
 
 def test_random_horizontal_flip_invalid_data():
     """
-    Feature: RandomHorizontalFlip
+    Feature: RandomHorizontalFlip op
     Description: Test RandomHorizontalFlip with invalid data
     Expectation: Error is raised as expected
     """
@@ -276,11 +284,106 @@ def test_random_horizontal_flip_invalid_data():
 
     with pytest.raises(RuntimeError) as error_info:
         random_horizontal_flip(invalid_type_img)
-    assert "Currently unsupported data type: [uint32, int64, uint64, string]" in str(error_info.value)
+    assert "RandomHorizontalFlip: the data type of image tensor does not match the requirement of operator." \
+           in str(error_info.value)
 
     with pytest.raises(RuntimeError) as error_info:
         random_horizontal_flip(invalid_shape_img)
-    assert "input tensor is not in shape of <H,W> or <H,W,C>" in str(error_info.value)
+    assert "RandomHorizontalFlip: the image tensor should have at least two dimensions. You may need to perform " \
+           "Decode first." in str(error_info.value)
+
+
+def test_random_horizontal_flip_video_op_1d_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op by processing tensor with dim 1
+    Expectation: Error is raised as expected
+    """
+    logger.info("Test RandomHorizontalFlip with 1 dimension input")
+    data = [1]
+    input_mindspore = np.array(data).astype(np.uint8)
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    try:
+        random_horizontal_op(input_mindspore)
+    except RuntimeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "RandomHorizontalFlip: the image tensor should have at least two dimensions. You may need to perform " \
+               "Decode first." in str(e)
+
+
+def test_random_horizontal_flip_video_op_4d_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op by processing tensor with dim more than 3 (dim 4)
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test RandomHorizontalFlip with 4 dimension input")
+    input_4_dim = np.array(FOUR_DIM_DATA).astype(np.uint8)
+    input_4_shape = input_4_dim.shape
+    n_num = input_4_dim.size // (input_4_shape[-2] * input_4_shape[-1])
+    input_3_dim = input_4_dim.reshape([n_num, input_4_shape[-2], input_4_shape[-1]])
+
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    out_4_dim = random_horizontal_op(input_4_dim)
+    out_3_dim = random_horizontal_op(input_3_dim)
+    out_3_dim = out_3_dim.reshape(input_4_shape)
+
+    mse = diff_mse(out_4_dim, out_3_dim)
+    assert mse < 0.001
+
+
+def test_random_horizontal_flip_video_op_5d_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op by processing tensor with dim more than 3 (dim 5)
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test RandomHorizontalFlip with 5 dimension input")
+    input_5_dim = np.array(FIVE_DIM_DATA).astype(np.uint8)
+    input_5_shape = input_5_dim.shape
+    n_num = input_5_dim.size // (input_5_shape[-2] * input_5_shape[-1])
+    input_3_dim = input_5_dim.reshape([n_num, input_5_shape[-2], input_5_shape[-1]])
+
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    out_5_dim = random_horizontal_op(input_5_dim)
+    out_3_dim = random_horizontal_op(input_3_dim)
+    out_3_dim = out_3_dim.reshape(input_5_shape)
+
+    mse = diff_mse(out_5_dim, out_3_dim)
+    assert mse < 0.001
+
+
+def test_random_horizontal_flip_video_op_precision_eager_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op by processing tensor with dim more than 3 (dim 4) in eager mode
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test RandomHorizontalFlip eager with 4 dimension input")
+    input_mindspore = np.array(FOUR_DIM_DATA).astype(np.uint8)
+
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    out_mindspore = random_horizontal_op(input_mindspore)
+    mse = diff_mse(out_mindspore, np.array(FOUR_DIM_RES).astype(np.uint8))
+    assert mse < 0.001
+
+
+def test_random_horizontal_flip_video_op_precision_pipeline_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op by processing tensor with dim more than 3 (dim 5) in eager mode
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test RandomHorizontalFlip pipeline with 5 dimension input")
+    data = np.array(FIVE_DIM_DATA).astype(np.uint8)
+    expand_data = np.expand_dims(data, axis=0)
+
+    dataset = ds.NumpySlicesDataset(expand_data, column_names=["col1"], shuffle=False)
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    dataset = dataset.map(input_columns=["col1"], operations=random_horizontal_op)
+    for item in dataset.create_dict_iterator(output_numpy=True):
+        mse = diff_mse(item["col1"], np.array(FIVE_DIM_RES).astype(np.uint8))
+        assert mse < 0.001
 
 
 if __name__ == "__main__":
@@ -292,3 +395,8 @@ if __name__ == "__main__":
     test_random_horizontal_comp(plot=True)
     test_random_horizontal_op_1()
     test_random_horizontal_flip_invalid_data()
+    test_random_horizontal_flip_video_op_1d_c()
+    test_random_horizontal_flip_video_op_4d_c()
+    test_random_horizontal_flip_video_op_5d_c()
+    test_random_horizontal_flip_video_op_precision_eager_c()
+    test_random_horizontal_flip_video_op_precision_pipeline_c()
