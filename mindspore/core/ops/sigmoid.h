@@ -34,8 +34,6 @@ class MIND_API Sigmoid : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr SigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSigmoidPtr = std::shared_ptr<Sigmoid>;
 }  // namespace ops
 }  // namespace mindspore

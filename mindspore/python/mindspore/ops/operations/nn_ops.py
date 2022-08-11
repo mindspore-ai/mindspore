@@ -862,24 +862,7 @@ class HSwish(Primitive):
 class Sigmoid(Primitive):
     r"""
     Sigmoid activation function.
-
-    Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
-
-    .. math::
-
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
-
-    Outputs:
-        Tensor, with the same type and shape as the input_x.
-
-    Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.sigmoid` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

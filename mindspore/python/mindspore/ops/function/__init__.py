@@ -305,6 +305,7 @@ from .nn_func import (
     dropout,
     conv3d_transpose,
     conv2d,
+    sigmoid,
 )
 from .linalg_func import (
     svd,

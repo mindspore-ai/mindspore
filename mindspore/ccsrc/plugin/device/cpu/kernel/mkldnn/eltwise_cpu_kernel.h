@@ -22,11 +22,13 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <complex>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnKnown = "UnKnown";
+
 class EltWiseCpuKernelMod : public MKLCpuKernelMod {
  public:
   EltWiseCpuKernelMod() = default;
@@ -44,23 +46,30 @@ class EltWiseCpuKernelMod : public MKLCpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    return kernel_func_(this, inputs, outputs);
+    return LaunchKernel(inputs, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using EltWiseFunc = std::function<bool(EltWiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &)>;
-  static std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::EltWiseFunc>>> kernel_attr_map_;
-  EltWiseFunc kernel_func_;
+  static std::map<std::string, std::vector<KernelAttr>> mkl_kernel_attr_map_;
+  using EltwiseCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::EltwiseCpuFuncCreator>>>
+    additional_kernel_attr_map_;
+  std::vector<KernelAttr> GetMklOpSupport();
+  std::vector<KernelAttr> GetAdditionalDtypeOpSupport();
+
   dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const dnnl::memory::desc src_desc);
   dnnl::prop_kind dnnl_forward_{dnnl::prop_kind::forward_training};
   std::string kernel_name_{kUnKnown};
   std::vector<size_t> src_shape_{};
+  std::vector<size_t> dst_shape_{};
   size_t input_element_num_{0};
   bool is_null_input_{false};
+  bool use_mkl_{true};
+  TypeId dtype_{kNumberTypeFloat32};
+  std::shared_ptr<CpuKernelFunc> additional_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore
