@@ -92,6 +92,13 @@ TuplePtr UCSInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto input_type = input_args[0]->BuildType();
   std::set<TypePtr> check_list = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_type, check_list, op_name);
+  if (input_type == kInt32) {
+    int64_t range_max = GetValue<int64_t>(primitive->GetAttr("range_max"));
+    if (range_max > std::numeric_limits<int>::max()) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', 'range_max' can not exceed the range of int32, but "
+                               << "got " << range_max << ". The input data type should be changed to int64.";
+    }
+  }
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, kFloat32, kFloat32});
 }
 }  // namespace
