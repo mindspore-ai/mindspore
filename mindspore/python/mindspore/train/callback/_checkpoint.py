@@ -34,7 +34,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 
 _cur_dir = os.getcwd()
-_save_dir = _cur_dir
+SAVE_DIR = _cur_dir
 _info_list = ["epoch_num", "step_num"]
 
 
@@ -504,8 +504,8 @@ class ModelCheckpoint(Callback):
                                                                self._cur_time_for_keep)
 
             # generate the new checkpoint file and rename it.
-            global _save_dir
-            _save_dir = self._directory
+            global SAVE_DIR
+            SAVE_DIR = self._directory
             cur_file = os.path.join(self._directory, cur_ckpoint_file)
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
