@@ -22,6 +22,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetobatch_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,11 +45,12 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     CalSpaceToBatch<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, LongToSize(paddings_[0][0]),
                        LongToSize(paddings_[0][1]), LongToSize(paddings_[1][0]), LongToSize(paddings_[1][1]),
-                       block_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+                       block_size_, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);

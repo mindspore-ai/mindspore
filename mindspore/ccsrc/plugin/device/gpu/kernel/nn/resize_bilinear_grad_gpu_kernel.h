@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,11 +59,12 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                cudaMemsetAsync(interim, 0, workspace_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemsetAsync dx_interim failed");
     CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx, interim,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+                          device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

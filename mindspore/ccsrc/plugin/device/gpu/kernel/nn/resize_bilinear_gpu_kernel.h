@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,11 +41,12 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     float h_scale = Scaling(input_h_, output_h_, align_corners_);
     float w_scale = Scaling(input_w_, output_w_, align_corners_);
     CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale, half_pixel_centers_,
-                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
+                      output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
