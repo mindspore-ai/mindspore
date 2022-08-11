@@ -16,7 +16,7 @@ mindspore.nn.Conv1d
     :math:`\text{weight}(C_{\text{out}_j}, k)` 是shape为 :math:`\text{kernel_size}` 的卷积核切片，其中 :math:`\text{kernel_size}` 是卷积核的宽度。 :math:`\text{bias}` 为偏置参数， :math:`\text{X}` 为输入Tensor。
     完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})` ，其中 `group` 是在空间维度上分割输入 `x` 的组数。
     详细介绍请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
-    
+
     参数：
         - **in_channels** (int) - Conv1d层输入Tensor的空间维度。
         - **out_channels** (int) - Conv1d层输出Tensor的空间维度。
@@ -57,6 +57,7 @@ mindspore.nn.Conv1d
         .. math::
             L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
             \text{dilation} - 1 }{\text{stride}} + 1} \right \rfloor
+
     异常：
         - **TypeError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 、 `padding` 或 `dilation` 不是int。
         - **ValueError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 或 `dilation` 小于1。
