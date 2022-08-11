@@ -110,6 +110,7 @@ from .fast_gelu_ds import _fast_gelu_ds_tbe
 from .fast_gelu_grad import _fast_gelu_grad_tbe
 from .fast_gelu_grad_ds import _fast_gelu_grad_ds_tbe
 from .max_pool import _max_pool_tbe
+from .max_pool_ds import _max_pool_ds_tbe
 from .max_pool_grad import _max_pool_grad_tbe
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_tbe
 from .max_pool_with_argmax import _max_pool_with_argmax_tbe
@@ -177,6 +178,7 @@ from .bn_training_update_ds import _bn_training_update_ds_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .bn_training_update_grad_ds import _bn_training_update_grad_ds_tbe
 from .bn_infer import _bn_infer_tbe
+from .bn_infer_ds import _bn_infer_ds_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
 from .bn_inference import _bn_inference_tbe
 from .fused_dbn_dw import _fused_dbn_dw_tbe

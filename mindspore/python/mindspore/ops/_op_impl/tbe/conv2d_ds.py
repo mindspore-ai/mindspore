@@ -27,8 +27,8 @@ conv2d_op_info = TBERegOp("Conv2D") \
     .attr("stride", "required", "listInt", "all") \
     .attr("pad_list", "required", "listInt", "all") \
     .attr("dilation", "required", "listInt", "all") \
-    .attr("groups", "optional", "int", "all") \
-    .attr("format", "optional", "str", "all") \
+    .attr("groups", "optional", "int", "all", "1") \
+    .attr("format", "optional", "str", "all", "NCHW") \
     .attr("offset_x", "optional", "int", "all", "0") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "required", "all") \

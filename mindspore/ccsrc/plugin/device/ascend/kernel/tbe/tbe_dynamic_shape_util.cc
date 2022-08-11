@@ -111,7 +111,7 @@ inline std::string GetPrimitiveName(const AnfNodePtr &node) {
 }
 
 inline void GetRangeByShape(const AnfNodePtr &anf_node, const ShapeVector &shape, RangePair *range) {
-  constexpr int64_t kConv2DMaxShape = 4096;
+  constexpr int64_t kConv2DMaxShape = 2048;
   auto name = GetPrimitiveName(anf_node);
   for (auto val : shape) {
     if (val < 0) {
@@ -153,8 +153,8 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
     auto shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
     GetRangeByShape(anf_node, shape, &ret);
   } else {
-    for (size_t i = 0; i < input_range_min.size(); i++) {
-      ret.emplace_back(input_range_min[i], input_range_max[i]);
+    for (size_t i = 0; i < input_range_min.size(); ++i) {
+      (void)ret.emplace_back(input_range_min[i], input_range_max[i]);
     }
   }
 
@@ -185,7 +185,7 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
     GetRangeByShape(anf_node, shape, &ret);
   } else {
     for (size_t i = 0; i < output_range_min.size(); i++) {
-      ret.emplace_back(output_range_min[i], output_range_max[i]);
+      (void)ret.emplace_back(output_range_min[i], output_range_max[i]);
     }
   }
 
