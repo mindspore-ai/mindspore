@@ -76,7 +76,7 @@ char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
   return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
 #endif
-  return nullptr;
+  return const_cast<char *>(model_buf);
 }
 
 STATUS PackWeightManager::StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors) {
