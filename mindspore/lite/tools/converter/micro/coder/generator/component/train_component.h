@@ -29,6 +29,7 @@ namespace mindspore::lite::micro {
 void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelExportWeight(std::ofstream &ofs);
+void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeCopyTrainOutputsState(std::ofstream &ofs);
 void CodeCopyTrainOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro

@@ -123,15 +123,20 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "  return w_size;\n";
     ofs << "}\n\n";
 
-    ofs << "struct ModelParameter {\n"
-        << "  void *addr;\n"
-        << "  size_t size;\n"
-        << "  size_t offset;\n"
-        << "};\n\n";
+    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+        << "  if (weight_buffer == NULL) {\n"
+        << "    return RET_ERROR;\n"
+        << "  }\n";
+    ofs << "  struct ModelParameter {\n"
+        << "    void *addr;\n"
+        << "    size_t size;\n"
+        << "    size_t offset;\n"
+        << "  };\n";
 
-    // generate weight struct array
+    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
     size_t params_num = 0;
     size_t offset = 0;
+    std::string params;
     std::string origins;
     for (const auto &item : ctx->saved_weights()) {
       std::string name = item.first;
@@ -139,21 +144,21 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
       if (!CheckConstantTensor(tensor)) {
         continue;
       }
-      origins += "  {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
-      params_num++;
+      std::map<Tensor *, std::string> ctx_tensor_map = ctx->tensors_map();
+      auto iter = ctx_tensor_map.find(tensor);
+      if (iter != ctx_tensor_map.end()) {
+        origins += "    {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
+        params_num++;
+      } else {
+        TypeId data_type = tensor->data_type();
+        params +=
+          "  " + GetTensorDataType(data_type) + "*" + name + " = (weight_buffer + " + std::to_string(offset) + ");\n";
+      }
       offset += tensor->Size();
     }
-    ofs << "struct ModelParameter model_params[] = {\n" << origins << "  };\n";
+    ofs << params << "\n";
+    ofs << "  struct ModelParameter model_params[] = {\n" << origins << "  };\n";
     ofs << "\n";
-
-    // generate weight init function
-    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
-        << "  if (weight_buffer == NULL) {\n"
-        << "    return RET_ERROR;\n"
-        << "  }\n";
-
-    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
-
     ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
         << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
            "      return RET_ERROR;\n"
@@ -169,8 +174,6 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "int Init(void *weight_buffer, int weight_size) {\n";
     ofs << "  const size_t w_size = " << ctx->weight_buffer_size() << ";\n";
   }
-
-  // generate matrix weight init func
   ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
   for (const auto &block : ctx->init_contents()) {
     ofs << "{\n" << block << "}\n";

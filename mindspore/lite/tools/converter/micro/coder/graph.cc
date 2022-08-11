@@ -18,7 +18,6 @@
 #include <queue>
 #include <deque>
 #include <string>
-#include <memory>
 #include <algorithm>
 #include <set>
 #include "coder/log.h"
