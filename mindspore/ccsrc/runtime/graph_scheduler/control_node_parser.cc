@@ -2134,13 +2134,13 @@ void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &
                                       &(kernel_graph_group_info->monad_outputs_));
 
         kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
-        if (kernel_graph_group_info->need_stack_) {
-          MS_LOG(DEBUG) << "Add call input kernel graph:" << kernel_graph->ToString();
-          (void)call_input_kernel_graphs_.emplace(kernel_graph.get());
-        }
       }
       kernel_graph_group_info->group_name_ = "kernel_graph";
       for (const auto &graph : kernel_graph_group_info->graphs_) {
+        if (kernel_graph_group_info->need_stack_) {
+          MS_LOG(DEBUG) << "Add call input kernel graph:" << graph->ToString();
+          (void)call_input_kernel_graphs_.emplace(graph.get());
+        }
         kernel_graph_group_info->group_name_ += ("_" + std::to_string(graph->graph_id()));
       }
       MS_LOG(DEBUG) << "Add kernel graph info for group:" << kernel_graph_group_info->group_name_;
