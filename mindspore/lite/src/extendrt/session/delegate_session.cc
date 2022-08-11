@@ -28,20 +28,19 @@ Status DelegateSession::Init(const std::shared_ptr<Context> context) { return kS
 Status DelegateSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) { return kSuccess; }
 
 Status DelegateSession::RunGraph() { return kSuccess; }
-Status DelegateSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
-                                 std::vector<tensor::TensorPtr> *outputs) {
+Status DelegateSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   return kSuccess;
 }
 Status DelegateSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
                                const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
-std::vector<tensor::TensorPtr> DelegateSession::GetOutputs() { return std::vector<tensor::TensorPtr>(); }
-std::vector<tensor::TensorPtr> DelegateSession::GetInputs() { return std::vector<tensor::TensorPtr>(); }
+std::vector<MutableTensorImplPtr> DelegateSession::GetOutputs() { return {}; }
+std::vector<MutableTensorImplPtr> DelegateSession::GetInputs() { return {}; }
 std::vector<std::string> DelegateSession::GetOutputNames() { return std::vector<std::string>(); }
 std::vector<std::string> DelegateSession::GetInputNames() { return std::vector<std::string>(); }
-tensor::TensorPtr DelegateSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-tensor::TensorPtr DelegateSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+MutableTensorImplPtr DelegateSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
+MutableTensorImplPtr DelegateSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 
 static std::shared_ptr<InferSession> DelegateSessionCreator(const SessionConfig &config) {
   auto delegates = config.delegates_;

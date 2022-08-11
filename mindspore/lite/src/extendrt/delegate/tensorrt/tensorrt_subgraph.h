@@ -50,9 +50,6 @@ class TensorRTSubGraph {
 
   int Execute(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
 
-  int ReSizeIfNeed(const std::vector<tensor::Tensor> &inputs);
-  int ReSize(const std::vector<tensor::Tensor> &inputs);
-
   int BuildTensorRTGraph();
 
   int Init(cudaStream_t stream);
@@ -91,6 +88,11 @@ class TensorRTSubGraph {
   int ParseInputsProfile();
 
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
+
+  int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs);
+  int PostExecute(std::vector<tensor::Tensor> *outputs);
+
+  int OnNewInputShapes(const std::vector<tensor::Tensor> &inputs);
 
   std::string name_;
   std::vector<TensorInfo> inputs_;

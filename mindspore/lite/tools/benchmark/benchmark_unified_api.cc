@@ -910,12 +910,12 @@ int BenchmarkUnifiedApi::PrintInputData() {
 #ifdef PARALLEL_INFERENCE
 void BenchmarkUnifiedApi::ModelParallelRunnerWarmUp(int index) {
   auto in = model_runner_.GetInputs();
-  auto output = all_outputs_[index];
   for (size_t i = 0; i < in.size(); i++) {
     in[i].SetData(all_inputs_data_[index][i]);
     in[i].SetShape(resize_dims_[i]);
   }
   auto warm_up_start = GetTimeUs();
+  std::vector<MSTensor> output;
   auto ret = model_runner_.Predict(in, &output);
   for (size_t j = 0; j < in.size(); j++) {
     in[j].SetData(nullptr);
@@ -937,12 +937,12 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
     int idx = parallel_idx + flags_->warm_up_loop_count_;
     auto in = model_runner_.GetInputs();
     auto in_data = all_inputs_data_[idx];
-    auto output = all_outputs_[idx];
     for (size_t tensor_index = 0; tensor_index < in.size(); tensor_index++) {
       in.at(tensor_index).SetData(all_inputs_data_.at(idx)[tensor_index]);
       in.at(tensor_index).SetShape(resize_dims_.at(tensor_index));
     }
     auto predict_start = GetTimeUs();
+    std::vector<MSTensor> output;
     auto ret = model_runner_.Predict(in, &output);
     if (ret != kSuccess) {
       model_parallel_runner_ret_failed_ = true;

@@ -30,11 +30,12 @@
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "ir/api_tensor_impl.h"
+#include "common/mutable_tensor_impl.h"
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
 
-class LiteTensorImpl : public mindspore::MSTensor::Impl {
+class LiteTensorImpl : public MutableTensorImpl {
  public:
   LiteTensorImpl() {}
 
@@ -80,7 +81,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return tensor_name_;
   }
 
-  void SetName(const std::string &name) {
+  void SetName(const std::string &name) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -97,7 +98,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return static_cast<enum DataType>(lite_tensor_->data_type());
   }
 
-  void SetDataType(enum DataType data_type) {
+  void SetDataType(enum DataType data_type) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -127,7 +128,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
 
   std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override { return nullptr; }
 
-  void SetShape(const std::vector<int64_t> &shape) {
+  void SetShape(const std::vector<int64_t> &shape) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -138,7 +139,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     lite_tensor_->set_shape(tensor_shape);
   }
 
-  std::shared_ptr<Allocator> allocator() const {
+  std::shared_ptr<Allocator> GetAllocator() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -146,7 +147,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return lite_tensor_->allocator();
   }
 
-  void SetAllocator(std::shared_ptr<Allocator> allocator) {
+  void SetAllocator(const std::shared_ptr<Allocator> &allocator) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -154,7 +155,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     lite_tensor_->set_allocator(allocator);
   }
 
-  mindspore::Format format() {
+  mindspore::Format Format() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return mindspore::Format::NHWC;
@@ -162,7 +163,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return lite_tensor_->format();
   }
 
-  void SetFormat(mindspore::Format format) {
+  void SetFormat(mindspore::Format format) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -185,7 +186,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     }
     return lite_tensor_->MutableData();
   }
-  virtual bool IsConst() const {
+  bool IsConst() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return false;
@@ -201,15 +202,15 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return lite_tensor_->Size();
   }
 
-  void SetData(void *data) {
+  void SetData(void *data, bool own_data) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
     }
-    lite_tensor_->set_data(data);
+    lite_tensor_->set_data(data, own_data);
   }
 
-  virtual std::vector<QuantParam> QuantParams() const {
+  std::vector<QuantParam> GetQuantParams() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return std::vector<QuantParam>{};
@@ -228,7 +229,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     return quant_params;
   }
 
-  void SetQuantParams(std::vector<QuantParam> quant_params) {
+  void SetQuantParams(const std::vector<QuantParam> &quant_params) override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return;
@@ -260,6 +261,9 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
   void set_own_data(bool own_data) { own_data_ = own_data; }
 
   void set_from_session(bool from_session) { from_session_ = from_session; }
+
+  void SetDeviceData(void *data) override;
+  void *GetDeviceData() override;
 
  private:
   lite::Tensor *lite_tensor_ = nullptr;

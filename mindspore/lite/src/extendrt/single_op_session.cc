@@ -31,6 +31,7 @@
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/runtime_utils.h"
+#include "extendrt/utils/tensor_default_impl.h"
 
 namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
@@ -131,15 +132,34 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
 
   RuntimeUtils::AssignKernelGraphAddress(kernel_graph_);
 
-  kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &inputs_, &input_names_);
-  kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &outputs_, &output_names_);
-
+  std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
+  kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
+  kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
+  if (graph_inputs.size() != input_names_.size()) {
+    MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << input_names_.size();
+    return kCoreFailed;
+  }
+  if (graph_outputs.size() != output_names_.size()) {
+    MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size " << output_names_.size();
+    return kCoreFailed;
+  }
+  for (size_t i = 0; i < input_names_.size(); i++) {
+    auto &input = graph_inputs[i];
+    auto data_type = static_cast<enum DataType>(input->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
+    inputs_.push_back(impl);
+  }
+  for (size_t i = 0; i < output_names_.size(); i++) {
+    auto &output = graph_outputs[i];
+    auto data_type = static_cast<enum DataType>(output->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
+    outputs_.push_back(impl);
+  }
   return kSuccess;
 }
 
 Status SingleOpInferSession::RunGraph() { return kSuccess; }
-Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
-                                      std::vector<tensor::TensorPtr> *outputs) {
+Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
 
@@ -179,8 +199,6 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
   }
 
   RuntimeUtils::CopyOutputTensorsFromKernelGraph(outputs, kernel_graph_);
-  outputs_ = *outputs;
-
   return kSuccess;
 }
 
@@ -217,7 +235,7 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorP
       graph_input_addr->SetSize(tensor_size);
     }
     // update input shape
-    inputs_[i]->set_shape(dims[i]);
+    inputs_[i]->SetShape(dims[i]);
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), dims[i]);
     if (abstract == nullptr) {
       MS_LOG(ERROR) << "Abstract is nullptr.";
@@ -248,13 +266,12 @@ Status SingleOpInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs
   }
   return kSuccess;
 }
-
-std::vector<tensor::TensorPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
-std::vector<tensor::TensorPtr> SingleOpInferSession::GetInputs() { return inputs_; }
+std::vector<MutableTensorImplPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
+std::vector<MutableTensorImplPtr> SingleOpInferSession::GetInputs() { return inputs_; }
 std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> SingleOpInferSession::GetInputNames() { return input_names_; }
 
-tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensor_name) {
+MutableTensorImplPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensor_name) {
   for (size_t idx = 0; idx < output_names_.size(); ++idx) {
     if (output_names_[idx] == tensor_name) {
       if (idx < outputs_.size()) {
@@ -266,7 +283,7 @@ tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string 
   return nullptr;
 }
 
-tensor::TensorPtr SingleOpInferSession::GetInputByTensorName(const std::string &tensor_name) {
+MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(const std::string &tensor_name) {
   for (size_t idx = 0; idx < input_names_.size(); ++idx) {
     if (input_names_[idx] == tensor_name) {
       if (idx < inputs_.size()) {

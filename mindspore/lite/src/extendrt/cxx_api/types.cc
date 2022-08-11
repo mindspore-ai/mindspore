@@ -20,6 +20,11 @@
 #include "mindspore/core/ir/api_tensor_impl.h"
 #include "mindspore/core/utils/convert_utils_base.h"
 #include "utils/file_utils.h"
+#include "common/utils.h"
+#include "mindspore/core/ir/tensor.h"
+#include "runtime/device/device_address.h"
+#include "extendrt/utils/tensor_utils.h"
+#include "extendrt/utils/tensor_default_impl.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -71,105 +76,12 @@ class Buffer::Impl {
   std::vector<uint8_t> data_;
 };
 
-class MutableTensorImpl : public MSTensor::Impl {
- public:
-  MutableTensorImpl() = default;
-  MutableTensorImpl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape)
-      : name_(name), type_(type), shape_(shape) {}
-
-  virtual void SetData(void *data) = 0;
-
-  void SetShape(const std::vector<int64_t> &shape) { shape_ = shape; }
-  void SetDataType(mindspore::DataType data_type) { type_ = data_type; }
-  void SetTensorName(const std::string &name) { name_ = name; }
-
-  mindspore::Format GetFormat() const { return format_; }
-  void SetFormat(mindspore::Format format) { format_ = format; }
-
-  const std::string &Name() const override { return name_; }
-  enum DataType DataType() const override { return type_; }
-  const std::vector<int64_t> &Shape() const override { return shape_; }
-
-  void SetAllocator(const std::shared_ptr<Allocator> &allocator) { allocator_ = allocator; }
-  std::shared_ptr<Allocator> GetAllocator() const { return allocator_; }
-
-  std::vector<QuantParam> QuantParams() const { return quant_param_; }
-
-  void SetQuantParams(const std::vector<QuantParam> &quant_param) { quant_param_ = quant_param; }
-
- protected:
-  std::string name_;
-  enum DataType type_ = DataType::kTypeUnknown;
-  enum Format format_ = mindspore::NCHW;
-  std::vector<int64_t> shape_;
-  std::shared_ptr<Allocator> allocator_ = nullptr;
-  std::vector<QuantParam> quant_param_;
-};
-
-class TensorDefaultImpl : public MutableTensorImpl {
- public:
-  TensorDefaultImpl() : buffer_() {}
-  ~TensorDefaultImpl() override = default;
-  TensorDefaultImpl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
-                    size_t data_len)
-      : MutableTensorImpl(name, type, shape), buffer_(data, data_len) {}
-
-  std::shared_ptr<const void> Data() const override {
-    return std::shared_ptr<const void>(buffer_.Data(), [](const void *) {});
-  }
-
-  void SetData(void *data) override {
-    auto data_len = buffer_.DataSize();
-    buffer_.SetData(data, data_len);
-  }
-
-  void *MutableData() override { return buffer_.MutableData(); }
-  size_t DataSize() const override { return buffer_.DataSize(); }
-
-  bool IsDevice() const override { return false; }
-
-  std::shared_ptr<Impl> Clone() const override {
-    return std::make_shared<TensorDefaultImpl>(name_, type_, shape_, buffer_.Data(), buffer_.DataSize());
-  }
-
- private:
-  Buffer buffer_;
-};
-
-class TensorReferenceImpl : public MutableTensorImpl {
- public:
-  TensorReferenceImpl() = default;
-  ~TensorReferenceImpl() override = default;
-  TensorReferenceImpl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
-                      size_t data_len, bool is_device)
-      : MutableTensorImpl(name, type, shape), data_(data), data_size_(data_len), is_device_(is_device) {}
-
-  std::shared_ptr<const void> Data() const override {
-    return std::shared_ptr<const void>(data_, [](const void *) {});
-  }
-
-  void SetData(void *data) override { data_ = data; }
-
-  void *MutableData() override { return const_cast<void *>(data_); }
-  size_t DataSize() const override { return data_size_; }
-
-  bool IsDevice() const override { return is_device_; }
-
-  std::shared_ptr<Impl> Clone() const override {
-    return std::make_shared<TensorReferenceImpl>(name_, type_, shape_, data_, data_size_, is_device_);
-  }
-
- protected:
-  const void *data_ = nullptr;
-  size_t data_size_ = 0;
-  bool is_device_ = false;
-};
-
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {
   std::string name_str = CharToString(name);
   try {
-    std::shared_ptr<Impl> impl = std::make_shared<TensorDefaultImpl>(name_str, type, shape, data, data_len);
+    std::shared_ptr<Impl> impl =
+      std::make_shared<TensorDefaultImpl>(name_str, type, shape, data, data_len, false, false);
     MSTensor *ret = new MSTensor(impl);
     return ret;
   } catch (const std::bad_alloc &) {
@@ -182,10 +94,17 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 }
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
-                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+                                    const std::vector<int64_t> &shape, const void *data, size_t data_len,
+                                    bool own_data) noexcept {
   std::string name_str = CharToString(name);
   try {
-    std::shared_ptr<Impl> impl = std::make_shared<TensorReferenceImpl>(name_str, type, shape, data, data_len, false);
+    std::shared_ptr<Impl> impl =
+      std::make_shared<TensorDefaultImpl>(name_str, type, shape, data, data_len, true, own_data);
+    if (data_len < impl->DataSize()) {
+      MS_LOG(ERROR) << "The size " << data_len << " of data cannot be less that the memory size required by the shape "
+                    << shape << " and data type " << TypeIdToString(static_cast<enum TypeId>(type));
+      return nullptr;
+    }
     MSTensor *ret = new MSTensor(impl);
     return ret;
   } catch (const std::bad_alloc &) {
@@ -197,19 +116,24 @@ MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType
   }
 }
 
-MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType type,
-                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+MSTensor MSTensor::CreateDeviceTensor(const std::vector<char> &name, enum DataType type,
+                                      const std::vector<int64_t> &shape, void *data, size_t data_size) noexcept {
   std::string name_str = CharToString(name);
   try {
-    std::shared_ptr<Impl> impl = std::make_shared<TensorReferenceImpl>(name_str, type, shape, data, data_len, true);
-    MSTensor *ret = new MSTensor(impl);
-    return ret;
+    auto impl = std::make_shared<TensorDefaultImpl>(name_str, type, shape);
+    if (data_size < impl->DataSize()) {
+      MS_LOG(ERROR) << "The size " << data_size << " of data cannot be less that the memory size required by the shape "
+                    << shape << " and data type " << TypeIdToString(static_cast<enum TypeId>(type));
+      return MSTensor(nullptr);
+    }
+    impl->SetDeviceData(data);
+    return MSTensor(impl);
   } catch (const std::bad_alloc &) {
     MS_LOG(ERROR) << "Malloc memory failed.";
-    return nullptr;
+    return MSTensor(nullptr);
   } catch (...) {
     MS_LOG(ERROR) << "Unknown error occurred.";
-    return nullptr;
+    return MSTensor(nullptr);
   }
 }
 
@@ -399,12 +323,16 @@ MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) { MS_EXCEPTION_IF_NULL(impl); }
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                    const void *data, size_t data_len)
-    : impl_(std::make_shared<TensorDefaultImpl>(CharToString(name), type, shape, data, data_len)) {}
+    : impl_(std::make_shared<TensorDefaultImpl>(CharToString(name), type, shape, data, data_len, false, false)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 
 bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
+
+bool MSTensor::operator==(const MSTensor &tensor) const { return impl_ == tensor.impl_; }
+
+bool MSTensor::operator!=(const MSTensor &tensor) const { return impl_ != tensor.impl_; }
 
 MSTensor *MSTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(impl_);
@@ -478,7 +406,7 @@ void MSTensor::SetDataType(enum DataType data_type) {
 
 void MSTensor::SetTensorName(const std::vector<char> &tensor_name) {
   MS_EXCEPTION_IF_NULL(impl_);
-  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetTensorName(CharToString(tensor_name));
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetName(CharToString(tensor_name));
 }
 
 void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
@@ -498,17 +426,27 @@ void MSTensor::SetFormat(mindspore::Format format) {
 
 mindspore::Format MSTensor::format() const {
   MS_EXCEPTION_IF_NULL(impl_);
-  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetFormat();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->Format();
 }
 
-void MSTensor::SetData(void *data) {
+void MSTensor::SetData(void *data, bool own_data) {
   MS_EXCEPTION_IF_NULL(impl_);
-  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetData(data);
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetData(data, own_data);
+}
+
+void MSTensor::SetDeviceData(void *data) {
+  MS_EXCEPTION_IF_NULL(impl_);
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetDeviceData(data);
+}
+
+void *MSTensor::GetDeviceData() {
+  MS_EXCEPTION_IF_NULL(impl_);
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetDeviceData();
 }
 
 std::vector<QuantParam> MSTensor::QuantParams() const {
   MS_EXCEPTION_IF_NULL(impl_);
-  return std::static_pointer_cast<MutableTensorImpl>(impl_)->QuantParams();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetQuantParams();
 }
 
 void MSTensor::SetQuantParams(std::vector<QuantParam> quant_param) {

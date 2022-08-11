@@ -64,7 +64,7 @@ std::vector<AnfNodePtr> RuntimeUtils::GetGraphDataInputs(const KernelGraphPtr &k
   return data_inputs;
 }
 
-void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::TensorPtr> &inputs,
+void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::Tensor> &inputs,
                                                  KernelGraphPtr kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_inputs = GetGraphDataInputs(kernel_graph);
@@ -74,20 +74,20 @@ void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::Tenso
     return;
   }
   for (size_t i = 0; i < graph_inputs.size(); i++) {
-    auto input = inputs[i];
+    auto &input = inputs[i];
     auto graph_input = graph_inputs[i];
     auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
     if (graph_input_addr->ptr_ == nullptr) {
       MS_LOG(EXCEPTION) << "Output_idx" << i << " of input " << graph_input->DebugString()
                         << " output addr ptr is nullptr.";
     }
-    memcpy(graph_input_addr->ptr_, input->data_c(), graph_input_addr->size_);
+    memcpy(graph_input_addr->ptr_, input.data_c(), graph_input_addr->size_);
   }
 }
 
-void RuntimeUtils::CopyOutputTensorsFromKernelGraph(std::vector<tensor::TensorPtr> *outputs,
-                                                    KernelGraphPtr kernel_graph) {
+void RuntimeUtils::CopyOutputTensorsFromKernelGraph(std::vector<tensor::Tensor> *outputs, KernelGraphPtr kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  outputs->clear();
   auto graph_outputs = kernel_graph->outputs();
   for (auto graph_output : graph_outputs) {
     auto real_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(graph_output, 0);
@@ -104,8 +104,7 @@ void RuntimeUtils::CopyOutputTensorsFromKernelGraph(std::vector<tensor::TensorPt
       auto s = static_cast<int64_t>(us);
       shape.push_back(s);
     }
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape, data, data_size);
-    outputs->push_back(tensor_ptr);
+    outputs->emplace_back(mindspore::tensor::Tensor(type_id, shape, data, data_size));
   }
 }
 

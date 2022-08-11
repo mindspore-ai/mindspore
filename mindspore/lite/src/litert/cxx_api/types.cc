@@ -100,6 +100,8 @@ bool MSTensor::operator==(const MSTensor &tensor) const {
   return lite_impl->lite_tensor() == lite_tensor_impl->lite_tensor();
 }
 
+bool MSTensor::operator!=(const MSTensor &tensor) const { return !operator==(tensor); }
+
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {
   if (data_len > MAX_MALLOC_SIZE) {
@@ -146,12 +148,14 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 }
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
-                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+                                    const std::vector<int64_t> &shape, const void *data, size_t data_len,
+                                    bool own_data) noexcept {
   auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return nullptr;
   }
+  impl->set_own_data(own_data);
   auto ms_tensor = new (std::nothrow) MSTensor(impl);
   if (ms_tensor == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
@@ -160,10 +164,10 @@ MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType
   return ms_tensor;
 }
 
-MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType type,
-                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+MSTensor MSTensor::CreateDeviceTensor(const std::vector<char> &name, enum DataType type,
+                                      const std::vector<int64_t> &shape, void *data, size_t data_len) noexcept {
   MS_LOG(ERROR) << "Unsupported Feature.";
-  return nullptr;
+  return MSTensor(nullptr);
 }
 
 MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum DataType type,
@@ -305,12 +309,28 @@ void *MSTensor::MutableData() {
   return impl_->MutableData();
 }
 
+void MSTensor::SetDeviceData(void *data) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetDeviceData(data);
+}
+
+void *MSTensor::GetDeviceData() {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return nullptr;
+  }
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetDeviceData();
+}
+
 bool MSTensor::IsConst() const {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return false;
   }
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->IsConst();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->IsConst();
 }
 
 size_t MSTensor::DataSize() const {
@@ -338,7 +358,7 @@ void MSTensor::SetShape(const std::vector<int64_t> &shape) {
     return;
   }
 
-  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetShape(shape);
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetShape(shape);
 }
 
 void MSTensor::SetDataType(enum DataType data_type) {
@@ -347,7 +367,7 @@ void MSTensor::SetDataType(enum DataType data_type) {
     return;
   }
 
-  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetDataType(data_type);
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetDataType(data_type);
 }
 
 void MSTensor::SetTensorName(const std::vector<char> &name) {
@@ -355,7 +375,7 @@ void MSTensor::SetTensorName(const std::vector<char> &name) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetName(CharToString(name));
+  std::static_pointer_cast<MutableTensorImpl>(impl_)->SetName(CharToString(name));
 }
 
 void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
@@ -364,7 +384,7 @@ void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
     return;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetAllocator(allocator);
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->SetAllocator(allocator);
 }
 
 std::shared_ptr<Allocator> MSTensor::allocator() const {
@@ -373,7 +393,7 @@ std::shared_ptr<Allocator> MSTensor::allocator() const {
     return nullptr;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->allocator();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetAllocator();
 }
 
 void MSTensor::SetFormat(mindspore::Format format) {
@@ -382,7 +402,7 @@ void MSTensor::SetFormat(mindspore::Format format) {
     return;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetFormat(format);
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->SetFormat(format);
 }
 
 mindspore::Format MSTensor::format() const {
@@ -391,16 +411,16 @@ mindspore::Format MSTensor::format() const {
     return mindspore::Format::NHWC;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->format();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->Format();
 }
 
-void MSTensor::SetData(void *data) {
+void MSTensor::SetData(void *data, bool own_data) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetData(data);
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->SetData(data, own_data);
 }
 
 std::vector<QuantParam> MSTensor::QuantParams() const {
@@ -409,7 +429,7 @@ std::vector<QuantParam> MSTensor::QuantParams() const {
     return std::vector<QuantParam>{};
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->QuantParams();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->GetQuantParams();
 }
 
 void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
@@ -418,7 +438,7 @@ void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
     return;
   }
 
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetQuantParams(quant_params);
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->SetQuantParams(quant_params);
 }
 
 Buffer::Buffer() : impl_(std::make_shared<Impl>()) {}

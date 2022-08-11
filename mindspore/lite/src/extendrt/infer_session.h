@@ -27,6 +27,8 @@
 #include "ir/func_graph.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "extendrt/session/type.h"
+#include "common/mutable_tensor_impl.h"
+#include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
 class InferSession : public std::enable_shared_from_this<InferSession> {
@@ -37,16 +39,16 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   virtual Status Init(const std::shared_ptr<Context> context) = 0;
   virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) = 0;
   virtual Status RunGraph() = 0;
-  virtual Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) = 0;
+  virtual Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) = 0;
   virtual Status Resize(const std::vector<tensor::TensorPtr> &inputs,
                         const std::vector<std::vector<int64_t>> &dims) = 0;
 
-  virtual std::vector<tensor::TensorPtr> GetOutputs() = 0;
-  virtual std::vector<tensor::TensorPtr> GetInputs() = 0;
+  virtual std::vector<MutableTensorImplPtr> GetOutputs() = 0;
+  virtual std::vector<MutableTensorImplPtr> GetInputs() = 0;
   virtual std::vector<std::string> GetOutputNames() = 0;
   virtual std::vector<std::string> GetInputNames() = 0;
-  virtual tensor::TensorPtr GetOutputByTensorName(const std::string &tensorName) = 0;
-  virtual tensor::TensorPtr GetInputByTensorName(const std::string &name) = 0;
+  virtual MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) = 0;
+  virtual MutableTensorImplPtr GetInputByTensorName(const std::string &name) = 0;
 
  protected:
   FuncGraphPtr graph_;

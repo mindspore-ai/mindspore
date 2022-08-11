@@ -81,7 +81,6 @@ class TensorRTExecutor : public device::GraphExecutor {
   cudaStream_t stream_{nullptr};
   std::vector<kernel::Kernel> kernel_list_;
 
-  std::map<TensorInfo, std::shared_ptr<tensor::Tensor>> tensor_val_map_;
   std::vector<TrtGraphContext> tensorrt_graph_list_;
 
   std::vector<nvinfer1::Dims> min_dims_;

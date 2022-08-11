@@ -25,6 +25,7 @@
 #include <functional>
 #include <fstream>
 #include "src/extendrt/delegate/delegate_utils.h"
+#include "src/common/utils.h"
 
 #include "ops/transpose.h"
 #include "ops/reshape.h"
@@ -482,24 +483,16 @@ int TensorRTSubGraph::Prepare() {
       return RET_ERROR;
     }
   }
-  for (auto tensor : outputs_) {
+  for (auto &tensor : outputs_) {
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     auto out_dims = trt_context_->getBindingDimensions(index);
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
     DebugDims(out_dims);
-    std::map<enum DataType, size_t> TypeByte = {
-      {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
-      {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
-      {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
-      {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
-      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
-    };
-    if (tensor.Data() == nullptr) {
-      MS_LOG(INFO) << "Set output shape by tensorrt binding output";
-      tensor.SetShape(lite::ConvertMSShape(out_dims));
-      tensor.MutableData();
-    }
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * TypeByte[tensor.DataType()]);
+    auto new_shape = lite::ConvertMSShape(out_dims);
+    MS_LOG(INFO) << "Set output shape of " << tensor.Name() << " to " << new_shape << "  by tensorrt binding output";
+    tensor.SetShape(new_shape);
+    auto type_size = DataTypeSize(static_cast<enum TypeId>(tensor.DataType()));
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * type_size);
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
       return RET_ERROR;
@@ -510,36 +503,19 @@ int TensorRTSubGraph::Prepare() {
   return RET_OK;
 }
 
-int TensorRTSubGraph::ReSizeIfNeed(const std::vector<tensor::Tensor> &inputs) {
-  bool need_resize = false;
+int TensorRTSubGraph::OnNewInputShapes(const std::vector<tensor::Tensor> &inputs) {
   if (inputs_.size() != inputs.size()) {
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != resize input size " << inputs.size();
     return RET_ERROR;
   }
-  for (size_t i = 0; i < inputs_.size(); i++) {
-    if (inputs_[i].Shape() != inputs[i].shape()) {
-      need_resize = true;
-      break;
-    }
-  }
-  if (need_resize) {
-    return ReSize(inputs);
-  }
-  return RET_OK;
-}
-
-int TensorRTSubGraph::ReSize(const std::vector<tensor::Tensor> &inputs) {
-  if (inputs_.size() != inputs.size()) {
-    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != resize input size " << inputs.size();
-    return RET_ERROR;
-  }
-  if (input_batchsize_index_ == -1) {
-    MS_LOG(ERROR) << "current network don't support resize.";
-    return RET_ERROR;
-  }
+  int batch_size = -1;
   for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
     if (inputs_[i].Shape() == inputs[i].shape()) {
       continue;
+    }
+    if (input_batchsize_index_ == -1) {
+      MS_LOG(ERROR) << "current network don't support resize.";
+      return RET_ERROR;
     }
     inputs_[i].SetShape(inputs[i].shape());
     if (ctx_->network() != nullptr) {
@@ -558,18 +534,16 @@ int TensorRTSubGraph::ReSize(const std::vector<tensor::Tensor> &inputs) {
 
     MS_LOG(INFO) << "resize at input_batch_index " << input_batchsize_index_ << ", update batch size to "
                  << inputs_[i].Shape()[input_batchsize_index_];
-    runtime_->SetBatchSize(inputs_[i].Shape()[input_batchsize_index_]);
-
-    // inputs_ is dupulated by mindrt, name is untustable.
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_in_tensor_name_[i], inputs_[i].DataSize(),
-                                                                ConvertDataType(inputs_[i].DataType()));
-    if (device_ptr == nullptr) {
-      MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
+    int new_batch_size = inputs_[i].Shape()[input_batchsize_index_];
+    if (batch_size != -1 && batch_size != new_batch_size) {
+      MS_LOG(ERROR) << "Batch size " << batch_size << " of input 0 != batch size " << new_batch_size << " of input "
+                    << i;
       return RET_ERROR;
     }
+    batch_size = new_batch_size;
+    runtime_->SetBatchSize(batch_size);
+
     int index = this->engine_->getBindingIndex(trt_in_tensor_name_[i].c_str());
-    MS_LOG(INFO) << "device index " << index << " for tensor : " << trt_in_tensor_name_[i] << " attr: " << device_ptr;
-    tensor_bindings_[index] = device_ptr;
     // Set actual input size
     nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());
     for (int od = 0; od < input_dims.nbDims; od++) {
@@ -584,6 +558,140 @@ int TensorRTSubGraph::ReSize(const std::vector<tensor::Tensor> &inputs) {
   if (!this->trt_context_->allInputDimensionsSpecified()) {
     MS_LOG(ERROR) << "input dims need to be specified.";
     return RET_ERROR;
+  }
+  if (batch_size != -1) {
+    for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+      int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
+      auto out_dims = trt_context_->getBindingDimensions(index);
+      auto new_shape = lite::ConvertMSShape(out_dims);
+      MS_LOG(INFO) << "Set output shape of " << trt_out_tensor_name_[i] << " to " << new_shape
+                   << "  by tensorrt binding output";
+      outputs_[i].SetShape(new_shape);
+    }
+  }
+  return RET_OK;
+}
+
+int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
+                                 const std::vector<tensor::Tensor> &outputs) {
+  if (inputs_.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute inputs size " << inputs.size();
+    return RET_ERROR;
+  }
+  if (!outputs.empty() && outputs.size() != outputs_.size()) {
+    MS_LOG(ERROR) << "Graph outputs size " << outputs_.size() << " != execute outputs size " << outputs.size();
+    return RET_ERROR;
+  }
+  auto ret = OnNewInputShapes(inputs);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
+    auto trt_tensor_name = trt_in_tensor_name_[i];
+    void *device_ptr = nullptr;
+    auto input_device_address = inputs[i].device_address();
+    if (input_device_address != nullptr && input_device_address->GetMutablePtr() != nullptr) {
+      device_ptr = input_device_address->GetMutablePtr();
+    } else {
+      device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_tensor_name, inputs_[i].DataSize(),
+                                                             ConvertDataType(inputs_[i].DataType()));
+      if (device_ptr == nullptr) {
+        MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
+        return RET_ERROR;
+      }
+      ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_tensor_name);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_tensor_name;
+        return RET_ERROR;
+      }
+      runtime_->GetAllocator()->MarkMemValid(trt_tensor_name, true);
+    }
+    int index = this->engine_->getBindingIndex(trt_tensor_name.c_str());
+    MS_LOG(INFO) << "device index " << index << " for tensor : " << trt_tensor_name << " attr: " << device_ptr;
+    tensor_bindings_[index] = device_ptr;
+  }
+  for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+    const auto &trt_out_tensor_name = trt_out_tensor_name_[i];
+    int index = this->engine_->getBindingIndex(trt_out_tensor_name.c_str());
+    void *device_ptr = nullptr;
+    if (outputs.size() > i) {
+      auto &output = outputs[i];
+      if (output.device_address() && output.device_address()->GetMutablePtr()) {
+        device_ptr = output.device_address()->GetMutablePtr();
+      }
+    }
+    if (!device_ptr) {
+      device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_out_tensor_name, outputs_[i].DataSize(),
+                                                             ConvertDataType(outputs_[i].DataType()));
+      if (device_ptr == nullptr) {
+        MS_LOG(ERROR) << "realloc for outputs tensor device memory failed.";
+        return RET_ERROR;
+      }
+    }
+    tensor_bindings_[index] = device_ptr;
+  }
+  return RET_OK;
+}
+
+int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
+  if (!outputs->empty() && outputs->size() != outputs_.size()) {
+    MS_LOG(ERROR) << "Graph outputs size " << outputs_.size() << " != execute outputs size " << outputs->size();
+    return RET_ERROR;
+  }
+  auto has_outputs = !outputs->empty();
+  for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
+    const auto &trt_out_tensor_name = trt_out_tensor_name_[i];
+    int index = this->engine_->getBindingIndex(trt_out_tensor_name.c_str());
+    // actual output tensor dims
+    auto out_dims = this->trt_context_->getBindingDimensions(index);
+    std::vector<int64_t> new_shape = lite::ConvertMSShape(out_dims);
+    // batchsize resize need set new batch size
+    if (input_batchsize_index_ != -1) {
+      if (runtime_->GetBatchSize() != new_shape[output_batchsize_index_]) {
+        new_shape[output_batchsize_index_] = runtime_->GetBatchSize();
+      }
+    }
+    outputs_[i].SetShape(new_shape);
+    for (int od = 0; od < out_dims.nbDims; od++) {
+      MS_LOG(DEBUG) << "out tensor " << trt_out_tensor_name << " dims at " << od << " is " << new_shape[od];
+    }
+    runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name, true);
+    if (has_outputs) {
+      auto &tensor = outputs->at(i);
+      auto dst_device = tensor.device_address();
+      if (dst_device == nullptr || dst_device->GetMutablePtr() == nullptr) {
+        if (tensor.Size() < outputs_[i].DataSize()) {
+          MS_LOG(ERROR) << "Parameter output data size " << tensor.Size()
+                        << " cannot less than execute output data size " << outputs_[i].DataSize()
+                        << ", output shape: " << new_shape;
+          return RET_ERROR;
+        }
+        auto host_address = tensor.data_c();
+        if (host_address == nullptr) {
+          MS_LOG(ERROR) << "Specified output device or host address cannot be nullptr";
+          return RET_ERROR;
+        }
+        int sync_ret =
+          runtime_->GetAllocator()->SyncMemDeviceToHost(host_address, outputs_[i].DataSize(), trt_out_tensor_name);
+        if (sync_ret != RET_OK) {
+          MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name;
+          return sync_ret;
+        }
+      }
+    } else {
+      tensor::Tensor output_tensor(static_cast<enum TypeId>(outputs_[i].DataType()), new_shape);
+      int sync_ret = runtime_->GetAllocator()->SyncMemDeviceToHost(&output_tensor, trt_out_tensor_name);
+      if (sync_ret != RET_OK) {
+        MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name;
+        return sync_ret;
+      }
+      outputs->push_back(output_tensor);
+    }
+    runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name, false);
+  }
+  // make mem invalid, prepare for next execute
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
   }
   return RET_OK;
 }
@@ -612,63 +720,20 @@ bool TensorRTSubGraph::ValidInputResizeDims(const nvinfer1::Dims &construct_dims
 }
 
 int TensorRTSubGraph::Execute(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
-  int ret = ReSizeIfNeed(inputs);
+  int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return ret;
   }
-  ret = lite::SetCudaDevice(device_info_);
+  outputs->clear();
+  ret = PreExecute(inputs, *outputs);
   if (ret != RET_OK) {
     return ret;
   }
-  for (size_t i = 0; i < inputs.size(); i++) {
-    if (runtime_->GetAllocator()->GetMemIsValid(trt_in_tensor_name_[i])) {
-      MS_LOG(INFO) << "no need memcpy to cuda for input tensor: " << trt_in_tensor_name_[i];
-      continue;
-    }
-    ret = runtime_->GetAllocator()->SyncMemHostToDevice(inputs[i], trt_in_tensor_name_[i]);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_in_tensor_name_[i];
-      return ret;
-    }
-    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], true);
-  }
-
   if (!this->trt_context_->executeV2(tensor_bindings_)) {
     MS_LOG(ERROR) << "TensorRT execute failed.";
     return RET_ERROR;
   }
-
-  for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
-    int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
-    // actual output tensor dims
-    auto out_dims = this->trt_context_->getBindingDimensions(index);
-    std::vector<int64_t> new_shape = lite::ConvertMSShape(out_dims);
-    // batchsize resize need set new batch size
-    if (input_batchsize_index_ != -1) {
-      if (runtime_->GetBatchSize() != new_shape[output_batchsize_index_]) {
-        new_shape[output_batchsize_index_] = runtime_->GetBatchSize();
-      }
-    }
-    for (int od = 0; od < out_dims.nbDims; od++) {
-      MS_LOG(DEBUG) << "out tensor " << trt_out_tensor_name_[i] << " dims at " << od << " is " << new_shape[od];
-    }
-    tensor::Tensor output_tensor(static_cast<enum TypeId>(outputs_[i].DataType()), new_shape);
-    outputs_[i].SetShape(new_shape);
-
-    runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name_[i], true);
-    int sync_ret = runtime_->GetAllocator()->SyncMemDeviceToHost(&output_tensor, trt_out_tensor_name_[i]);
-    if (sync_ret != RET_OK) {
-      MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name_[i];
-      return sync_ret;
-    }
-    runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name_[i], false);
-    outputs->push_back(output_tensor);
-  }
-  // make mem invalid, prepare for next execute
-  for (size_t i = 0; i < inputs_.size(); i++) {
-    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
-  }
-  return RET_OK;
+  return PostExecute(outputs);
 }
 
 ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const TensorInfo &in_tensor) {

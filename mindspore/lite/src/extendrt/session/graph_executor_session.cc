@@ -19,8 +19,8 @@
 #include <memory>
 
 #include "extendrt/session/graph_executor_session.h"
-#include "extendrt/utils/tensor_utils.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
+#include "extendrt/utils/tensor_default_impl.h"
 
 namespace mindspore {
 Status GraphExecutorSession::Init(const std::shared_ptr<Context> context) {
@@ -38,39 +38,57 @@ Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   for (const auto &kernel_node : kernel_nodes) {
     mindspore::infer::SetKernelInfo(kernel_node);
   }
-  if (graph_executor_->CompileGraph(kernel_graph_, options_)) {
-    kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &inputs_, &input_names_);
-    kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &outputs_, &output_names_);
-    return kSuccess;
+  if (!graph_executor_->CompileGraph(kernel_graph_, options_)) {
+    return kCoreFailed;
   }
-  return kCoreFailed;
+  std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
+  kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
+  kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
+  if (graph_inputs.size() != input_names_.size()) {
+    MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << input_names_.size();
+    return kCoreFailed;
+  }
+  if (graph_outputs.size() != output_names_.size()) {
+    MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size " << output_names_.size();
+    return kCoreFailed;
+  }
+  for (size_t i = 0; i < input_names_.size(); i++) {
+    auto &input = graph_inputs[i];
+    auto data_type = static_cast<enum DataType>(input->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
+    inputs_.push_back(impl);
+  }
+  for (size_t i = 0; i < output_names_.size(); i++) {
+    auto &output = graph_outputs[i];
+    auto data_type = static_cast<enum DataType>(output->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
+    outputs_.push_back(impl);
+  }
+  return kSuccess;
 }
 
 Status GraphExecutorSession::RunGraph() { return kSuccess; }
-Status GraphExecutorSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
-                                      std::vector<tensor::TensorPtr> *outputs) {
+
+Status GraphExecutorSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "GraphExecutorSession::RunGraph";
+  MS_EXCEPTION_IF_NULL(graph_executor_);
   MS_EXCEPTION_IF_NULL(outputs);
-  std::vector<tensor::Tensor> executor_inputs, executor_outputs;
-  executor_inputs = TensorUtils::TensorPtrToTensor(inputs);
-  auto ret = graph_executor_->RunGraph(kernel_graph_, executor_inputs, &executor_outputs, options_);
+  auto ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
   if (!ret) {
     return kCoreFailed;
   }
-  *outputs = TensorUtils::TensorToTensorPtr(executor_outputs);
-  inputs_ = inputs;
-  outputs_ = *outputs;
   return kSuccess;
 }
+
 Status GraphExecutorSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
                                     const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
-std::vector<tensor::TensorPtr> GraphExecutorSession::GetOutputs() { return outputs_; }
-std::vector<tensor::TensorPtr> GraphExecutorSession::GetInputs() { return inputs_; }
+std::vector<MutableTensorImplPtr> GraphExecutorSession::GetOutputs() { return outputs_; }
+std::vector<MutableTensorImplPtr> GraphExecutorSession::GetInputs() { return inputs_; }
 std::vector<std::string> GraphExecutorSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> GraphExecutorSession::GetInputNames() { return input_names_; }
-tensor::TensorPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) {
+MutableTensorImplPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) {
   for (size_t i = 0; i < output_names_.size(); i++) {
     if (output_names_[i] == tensorName) {
       return outputs_[i];
@@ -78,7 +96,7 @@ tensor::TensorPtr GraphExecutorSession::GetOutputByTensorName(const std::string 
   }
   return nullptr;
 }
-tensor::TensorPtr GraphExecutorSession::GetInputByTensorName(const std::string &name) {
+MutableTensorImplPtr GraphExecutorSession::GetInputByTensorName(const std::string &name) {
   for (size_t i = 0; i < input_names_.size(); i++) {
     if (input_names_[i] == name) {
       return inputs_[i];

@@ -106,6 +106,33 @@ int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const st
   return SyncMemInHostAndDevice(host_tensor->data_c(), device_tensor_name, host_tensor->Size(), false, sync);
 }
 
+int TensorRTAllocator::SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name) {
+  if (dst_data == nullptr) {
+    MS_LOG(ERROR) << " dst host data cannot be nullptr.";
+    return RET_ERROR;
+  }
+  auto it = cuda_tensor_map_.find(device_tensor_name);
+  if (it == cuda_tensor_map_.end()) {
+    MS_LOG(ERROR) << " cannot find device address " << device_tensor_name;
+    return RET_ERROR;
+  }
+  CudaTensorParam &current_cuda_tensor = it->second;
+  // is memcpy from device to host, the host mem is valid, change tag for mem pool.
+  current_cuda_tensor.is_valid_mem = true;
+  auto device_ptr = current_cuda_tensor.data;
+  if (device_ptr == nullptr) {
+    MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
+    return RET_ERROR;
+  }
+  auto cuda_ret = cudaMemcpy(dst_data, device_ptr, data_size, cudaMemcpyDeviceToHost);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
+    return RET_ERROR;
+  }
+  MS_LOG(INFO) << "cuda memcpy success for " << device_tensor_name;
+  return RET_OK;
+}
+
 int TensorRTAllocator::SyncMemInHostAndDevice(tensor::Tensor *host_tensor, const std::string &device_tensor_name,
                                               bool is_host2device, bool sync) {
   if (host_tensor == NULL) {
