@@ -555,7 +555,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     except BaseException as e:
         logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
         raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
-                         "failed to load the checkpoint file {}.".format(ckpt_file_name))
+                         "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
 
     if not parameter_dict:
         raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
@@ -620,7 +620,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
             if pb_content is None:
                 raise ValueError("For 'load_checkpoint', failed to decrypt the checkpoint file.")
         checkpoint_list.ParseFromString(pb_content)
-    except BaseException:
+    except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
             err_info = "Failed to read the checkpoint file {}. The file may be encrypted or tempered with, " \
                      "please pass in the correct 'dec_key' or check the file integrity.".format(ckpt_file_name)
@@ -628,7 +628,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
             err_info = "Failed to read the checkpoint file {}. May not have permission to read it, please check" \
                      " the correct of the file.".format(ckpt_file_name)
         logger.error(err_info)
-        raise ValueError(err_info)
+        raise ValueError(err_info) from e
     return checkpoint_list
 
 
@@ -1339,7 +1339,7 @@ def parse_print(print_file_name):
         logger.critical("Failed to read the print file %s, please check whether the file is "
                         "correct.", print_file_name)
         raise ValueError(e.__str__() + "\nFailed to read the print file {}, please check whether "
-                                       "the file is correct.".format(print_file_name))
+                                       "the file is correct.".format(print_file_name)) from e
 
     tensor_list = []
 
@@ -1371,7 +1371,7 @@ def parse_print(print_file_name):
 
     except BaseException as e:
         logger.critical("Failed to load the print file %s.", print_list)
-        raise RuntimeError(e.__str__() + "\nFailed to load the print file {}.".format(print_list))
+        raise RuntimeError(e.__str__() + "\nFailed to load the print file {}.".format(print_list)) from e
 
     return tensor_list
 
@@ -1399,7 +1399,8 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         param_split_shape = list(layout.param_split_shape[0].dim)
         field_size = int(layout.field)
     except BaseException as e:
-        raise ValueError(f"{e.__str__()}. For 'merge_sliced_parameter', please make sure that 'strategy' is correct.")
+        raise ValueError(f"{e.__str__()}. For 'merge_sliced_parameter'"
+                         f", please make sure that 'strategy' is correct.") from e
 
     device_count = 1
     for dim in dev_mat:
@@ -1608,7 +1609,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         parameter_shape_length = len(parameter_shape)
     except BaseException as e:
         raise TypeError(e.__str__() + f" For 'merge_sliced_parameter', the element in 'sliced_parameters' should be "
-                                      f"'Parameter', but got {type(sliced_parameters[0])} at index 0.")
+                                      f"'Parameter', but got {type(sliced_parameters[0])} at index 0.") from e
 
     is_even = True
     for index, parameter in enumerate(sliced_parameters):
@@ -1764,7 +1765,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
                                    f" in load distributed checkpoint for {param.name}. Data shape is "
-                                   f"{split_param.data.shape} and group is {opt_shard_group}.")
+                                   f"{split_param.data.shape} and group is {opt_shard_group}.") from e
             split_param = Parameter(Tensor(data_slice), param.name,
                                     split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param
@@ -1856,7 +1857,7 @@ def _convert_to_list(strategy):
         except BaseException as e:
             raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert layout strategy to list "
                              f"failed, please make sure that strategy matches the node_strategy.proto, you can "
-                             f"check whether 'train_strategy_filename' is correct.")
+                             f"check whether 'train_strategy_filename' is correct.") from e
     return train_map
 
 
@@ -1880,7 +1881,7 @@ def _convert_to_layout(param_name, tensor_layout):
             param_split_shape.dim.append(item)
     except BaseException as e:
         raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert list to layout strategy failed, "
-                         f"you can check whether your input list is correct.")
+                         f"you can check whether your input list is correct.") from e
 
     strategy[param_name] = layout
     return strategy

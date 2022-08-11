@@ -822,7 +822,7 @@ class Model:
             except BaseException as e:
                 os.remove(cb_params.latest_ckpt_file)
                 raise RuntimeError(e.__str__() + ", load ckpt failed and remove the ckpt: "\
-                                   + cb_params.latest_ckpt_file)
+                                   + cb_params.latest_ckpt_file) from e
             _reset_training_dataset(cb_params.cur_step_num)
             self.need_load_ckpt = False
 
@@ -844,7 +844,7 @@ class Model:
                 except BaseException as e:
                     os.remove(cb_params.latest_ckpt_file)
                     raise RuntimeError(e.__str__() + ", load ckpt failed and remove the ckpt: "\
-                         + cb_params.latest_ckpt_file)
+                         + cb_params.latest_ckpt_file) from e
 
                 recovery_epoch_num = _get_recovery_context("latest_ckpt_epoch")
                 recovery_step_num = _get_recovery_context("latest_ckpt_step")
