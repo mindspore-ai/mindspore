@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
 from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function
+from mindspore.common._decorator import deprecated
 
 
 class _FirstGrad(Cell):
@@ -63,42 +64,13 @@ class _JvpFirstGradSingleValue(Cell):
 
 class Jvp(Cell):
     """
-    Compute the jacobian-vector-product of the given fn. Jvp is equivalent to forward mode autodiff.
-
-    Args:
-        fn (Cell): The fn that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
-
-    Inputs:
-        - **inputs** (Tensors) - The inputs to `fn`.
-        - **v** (Tensors or Tuple of Tensors) - The vector for which the Jacobian vector product is computed.
-          Must have the same size as the input of `fn`.
-
-    Outputs:
-        A tuple with 2 Tensors or Tuple of Tensors:
-
-        - **net_output** (Tensors or Tuple of Tensors) - The output of `fn(inputs)`.
-        - **jvp** (Tensors or Tuple of Tensors) - The result of the jacobian vector product.
+    Jvp will be deprecated in the future, please use :func:`mindspore.ops.jvp` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore.nn import Jvp
-        >>> class Net(nn.Cell):
-        ...     def construct(self, x, y):
-        ...         return x**3 + y
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = Jvp(Net())(x, y, (v, v))
-        >>> print(output[0])
-        [[ 2. 10.]
-         [30. 68.]]
-        >>> print(output[1])
-        [[ 4. 13.]
-         [28. 49.]]
+        Deprecated
     """
 
+    @deprecated("1.9", "ops.jvp", True)
     def __init__(self, fn):
         super(Jvp, self).__init__()
         self.fn = fn
@@ -198,46 +170,13 @@ class _LinearizeInner(_JvpInner):
 
 class Vjp(Cell):
     """
-    Computes the dot product between a vector `v` and the Jacobian of the given fn at the point
-    given by the inputs.
-
-    Args:
-        fn (Cell): The fn that takes Tensor inputs and returns a tuple of Tensors or a Tensor.
-
-    Inputs:
-        - **inputs** (Tensors) - The inputs to `fn`. Must be a tuple or a list.
-        - **v** (Tensors or Tuple of Tensors) - The vector for which the vector Jacobian product is computed.
-          Must have the same size as the output of `fn`.
-
-    Outputs:
-        A tuple with 2 Tensors or Tuple of Tensors:
-
-        - **net_output** (Tensors or Tuple of Tensors) - The output of `fn(inputs)`.
-        - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
+    Vjp will be deprecated in the future, please use :func:`mindspore.ops.vjp` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore.nn import Vjp
-        >>> class Net(nn.Cell):
-        ...     def construct(self, x, y):
-        ...         return x**3 + y
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = Vjp(Net())(x, y, v)
-        >>> print(output[0])
-        [[ 2. 10.]
-         [30. 68.]]
-        >>> print(output[1][0])
-        [[ 3. 12.]
-         [27. 48.]]
-        >>> print(output[1][1])
-        [[1. 1.]
-         [1. 1.]]
+        Deprecated
     """
 
+    @deprecated("1.9", "ops.vjp", True)
     def __init__(self, fn):
         super(Vjp, self).__init__()
         self.fn = fn
