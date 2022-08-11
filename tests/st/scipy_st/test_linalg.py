@@ -287,6 +287,13 @@ def test_cho_factor(n: int, lower: bool, data_type: Generic):
     tensor_a = Tensor(a)
     msp_c, _ = msp.linalg.cho_factor(tensor_a, lower=lower)
     osp_c, _ = osp.linalg.cho_factor(a, lower=lower)
+    if lower:
+        msp_c = mnp.tril(msp_c)
+        osp_c = onp.tril(osp_c)
+    else:
+        msp_c = mnp.triu(msp_c)
+        osp_c = onp.triu(osp_c)
+
     rtol = 1.e-3
     atol = 1.e-3
     if data_type == onp.float64:

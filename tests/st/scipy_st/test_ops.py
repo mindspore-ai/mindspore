@@ -21,7 +21,8 @@ import scipy as scp
 from scipy.linalg import solve_triangular, eig, eigvals
 
 from mindspore import Tensor, context
-from mindspore.scipy.ops import Eigh, Eig, Cholesky, SolveTriangular
+from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.scipy.ops import Eigh, Eig, SolveTriangular
 from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
@@ -44,7 +45,7 @@ def test_cholesky(n: int, dtype: Generic):
     a = create_sym_pos_matrix((n, n), dtype)
     tensor_a = Tensor(a)
     expect = scp.linalg.cholesky(a, lower=True)
-    cholesky_net = Cholesky(clean=True)
+    cholesky_net = Cholesky()
     output = cholesky_net(tensor_a)
     assert np.allclose(expect, output.asnumpy())
 
@@ -73,7 +74,7 @@ def test_batch_cholesky(shape, lower: bool, data_type):
         b_s_l.append(s_l)
         b_s_a.append(a)
     tensor_b_a = Tensor(np.array(b_s_a))
-    b_m_l = Cholesky(clean=True)(tensor_b_a)
+    b_m_l = Cholesky()(tensor_b_a)
     if not lower:
         b_m_l = _nd_transpose(b_m_l)
     b_s_l = np.asarray(b_s_l).reshape(b_m_l.shape)

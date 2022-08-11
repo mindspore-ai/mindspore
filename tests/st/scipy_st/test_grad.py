@@ -16,10 +16,13 @@
 import pytest
 import numpy as onp
 import mindspore.nn as nn
+from mindspore.nn import Cell
 import mindspore.ops as ops
+from mindspore.ops import composite as C
 from mindspore import context, Tensor
 from mindspore.scipy.linalg import cho_factor, cho_solve
-from mindspore.scipy.ops import Eigh, Cholesky, SolveTriangular
+from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.scipy.ops import Eigh, SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
 
 
@@ -27,76 +30,81 @@ from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_ma
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(8, 8)])
-@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
-def test_cholesky_grad(shape, data_type):
+def test_cholesky_grad():
     """
     Feature: ALL TO ALL
     Description: test cases for grad implementation of cholesky operator in graph mode and pynative mode.
     Expectation: the result match gradient checking.
     """
-    onp.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE)
-    dtype, epsilon, error = data_type
-
     class CholeskyNet(nn.Cell):
         def __init__(self):
             super(CholeskyNet, self).__init__()
-            self.mean = ops.ReduceMean()
             # Input arg clean not supports grad right now, just default clean to True.
-            self.cholesky = Cholesky(clean=True)
+            self.cholesky = Cholesky()
 
         def construct(self, a):
-            c = self.cholesky(a)
-            return self.mean(c)
+            return self.cholesky(a)
 
-    cholesky_net = CholeskyNet()
-    a = create_sym_pos_matrix(shape, dtype)
-    cholesky_net(Tensor(a))
-    assert gradient_check(Tensor(a), cholesky_net, epsilon, symmetric=True) < error
+    class CholeskyGradNet(Cell):
+        def __init__(self, network):
+            super(CholeskyGradNet, self).__init__()
+            self.grad = C.GradOperation(get_all=True, sens_param=True)
+            self.network = network
+
+        def construct(self, input_data, grad_np):
+            gout = self.grad(self.network)(input_data, grad_np)
+            return gout
+
+    x_np = onp.array([[10, 22], [22, 50]]).astype(onp.float32)
+    net = CholeskyNet()
+    output_ms = net(Tensor(x_np))
+    grad_np = onp.array([[1, 0], [0, 1]]).astype(onp.float32)
+    grad_net = CholeskyGradNet(net)
+    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
+    expect_output = onp.array([[3.1622777, 0], [6.9570107, 1.2649117]])
+    expect_grad_output = onp.array([[2.071291, -0.869626], [-0.869626, 0.39528453]])
+    assert onp.allclose(output_ms.asnumpy(), expect_output)
+    assert onp.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
+
     context.set_context(mode=context.PYNATIVE_MODE)
-    cholesky_net(Tensor(a))
-    assert gradient_check(Tensor(a), cholesky_net, epsilon, symmetric=True) < error
+    x_np = onp.array([[12.56, 27.28], [27.28, 60.5]]).astype(onp.float64)
+    net = CholeskyNet()
+    output_ms = net(Tensor(x_np))
+    grad_np = onp.array([[1, 0], [0, 1]]).astype(onp.float64)
+    grad_net = CholeskyGradNet(net)
+    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
+    expect_output = onp.array([[3.544009, 0.], [7.697497, 1.1173816]])
+    expect_grad_output = onp.array([[2.252033, -0.9719036], [-0.9719037, 0.44747472]])
+    assert onp.allclose(output_ms.asnumpy(), expect_output)
+    assert onp.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('shape', [(8, 8)])
-@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
-def test_cho_factor_grad(lower, shape, data_type):
+def test_cho_factor_grad():
     """
     Feature: ALL TO ALL
     Description: test cases for grad implementation of cho_factor in graph mode and pynative mode.
     Expectation: the result match gradient checking.
     """
-    onp.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE)
-    dtype, epsilon, error = data_type
 
     class ChoFactorNet(nn.Cell):
         def __init__(self, lower):
             super(ChoFactorNet, self).__init__()
-            self.mean = ops.ReduceMean()
             self.lower = lower
 
         def construct(self, a):
             c, _ = cho_factor(a, self.lower)
-            return self.mean(c)
+            return c
 
-    def _enumerate_fn(x):
-        for inner, _ in onp.ndenumerate(x):
-            if inner[-1] > inner[-2]:
-                continue
-            yield inner, _
-
-    cho_factor_net = ChoFactorNet(lower)
-    a = create_sym_pos_matrix(shape, dtype)
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon, symmetric=True, enumerate_fn=_enumerate_fn) < error
-    context.set_context(mode=context.PYNATIVE_MODE)
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon, symmetric=True, enumerate_fn=_enumerate_fn) < error
+    a = Tensor(onp.array([[3, 1], [1, 4]]).astype(onp.float32))
+    c, _ = cho_factor(a, True)
+    expect_output = onp.array([[1.7320508, 0.], [0.57735026, 1.9148543]])
+    assert onp.allclose(c.asnumpy(), expect_output)
 
 
 @pytest.mark.level0

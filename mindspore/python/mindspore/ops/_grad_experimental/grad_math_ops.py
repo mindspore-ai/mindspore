@@ -20,6 +20,7 @@ from mindspore.scipy.ops import SolveTriangular
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
 from mindspore import nn, ops, Tensor
 from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore import context
 import mindspore.numpy as mnp
 import numpy as np
 from ...nn import LGamma
@@ -60,7 +61,6 @@ from ..operations.math_ops import AddV2
 from ..operations.math_ops import TridiagonalMatMul
 from ..operations.math_ops import Logit
 from .._utils.utils import is_shape_unknown
-
 
 transpose = P.Transpose()
 dyn_shape_op = P.TensorShape()
@@ -474,7 +474,7 @@ def get_bprop_matrix_exp(self):
         x_len = len(shape_x)
         input_perm = [ele for ele in range(x_len)]
         input_perm[-1] = input_perm[-2]
-        input_perm[-2] = x_len-1
+        input_perm[-2] = x_len - 1
         input_perm = tuple(input_perm)
         x_transpose = P.Transpose()(x, input_perm)
 
@@ -642,6 +642,7 @@ def get_bprop_betainc(self):
         if rx != ():
             return (zeros_like(input_a), zeros_like(input_b), F.reshape(reduce_sum(partial_x * dout, rx), sx))
         return (zeros_like(input_a), zeros_like(input_b), F.reshape(partial_x * dout, sx))
+
     return bprop
 
 
@@ -1254,10 +1255,18 @@ def get_bprop_cholesky(self):
     """Grad definition for `Cholesky` operation."""
     batchmatmul = P.BatchMatMul()
     upper = self.upper
+    is_ascend = context.get_context("device_target") == "Ascend"
+    choleskygrad = G.CholeskyGrad()
+
     solve_triangular_upper = SolveTriangular(lower=False, unit_diagonal=False, trans='N')
     matmul = P.MatMul()
 
     def bprop(x, out, dout):
+        if is_ascend:
+            out = cholesky_transpose(out) if upper else out
+            dout = cholesky_transpose(dout) if upper else dout
+            dx = choleskygrad(out, dout)
+            return (dx,)
         if len(out.shape) > 2:
             op = batchmatmul
         else:

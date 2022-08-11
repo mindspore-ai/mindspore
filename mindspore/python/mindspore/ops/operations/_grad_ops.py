@@ -3751,3 +3751,43 @@ class HSigmoidGrad(Primitive):
     def __init__(self):
         """Initialize HSigmoidGrad"""
         self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
+
+
+class CholeskyGrad(Primitive):
+    r"""
+    Computes the reverse mode backpropgated gradient of the Cholesky algorithm.
+
+    Inputs:
+        - **x** (Tensor) - A tensor with float32 or float64 data type.
+        - **grad** (Tensor) - A tensor with float32 or float64 data type. `x` should have
+          the same dtype with `a`.
+
+    Outputs:
+        Tensor, has the same dtype as `a` and `x`.
+
+    Raises:
+        TypeError: If x is not Tensor.
+        TypeError: If grad is not Tensor.
+        TypeError: If dtype of input x and grad is not float64 nor float32,
+        TypeError: If x has different dtype with grad.
+        ValueError: If input tensor's last two dims are not equal,
+        ValueError: If the shape of x and grad mismatch.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.array([[4, 2],[2, 3]]), mstype.float64)
+        >>> grad = Tensor(np.array([[4, 2],[2, 3]]), mstype.float64)
+        >>> choleskygrad = G.CholeskyGrad()
+        >>> output = choleskygrad(x, grad)
+        >>> print (output)
+        [[0.5 0. ]
+         [0.  0.5]]
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CholeskyGrad"""
+        self.init_prim_io_names(inputs=['x', 'grad'], outputs=['y'])

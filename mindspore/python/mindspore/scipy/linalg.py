@@ -14,7 +14,6 @@
 # ============================================================================
 """Linear algebra submodule"""
 from __future__ import absolute_import
-from .ops import Cholesky
 from .ops import Eigh
 from .ops import LU
 from .ops import SolveTriangular
@@ -23,6 +22,7 @@ from .utils_const import _raise_value_error
 from .. import numpy as mnp
 from .. import ops
 from ..common import dtype as mstype
+from ..ops.operations.math_ops import Cholesky
 from ..ops import functional as F
 from ..ops import operations as P
 
@@ -313,7 +313,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
-    cholesky_net = Cholesky(clean=False)
+    cholesky_net = Cholesky()
     c = cholesky_net(a)
     if not lower:
         c = _nd_transpose(c)
@@ -372,7 +372,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
-    cholesky_net = Cholesky(clean=True)
+    cholesky_net = Cholesky()
     c = cholesky_net(a)
     if not lower:
         c = _nd_transpose(c)

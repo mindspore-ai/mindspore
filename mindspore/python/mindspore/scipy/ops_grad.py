@@ -14,7 +14,7 @@
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
-from .ops import Eigh, Eig, Cholesky, SolveTriangular
+from .ops import Eigh, Eig, SolveTriangular
 from .utils_const import _raise_type_error
 from .ops_wrapper import matrix_set_diag
 from ..ops import operations as P
@@ -53,30 +53,6 @@ def _batch_eyes(a):
     shape = batch_shape + (num_row, num_row)
     eye = F.eye(num_row, num_row, a.dtype)
     return mnp.broadcast_to(eye, shape)
-
-
-@bprop_getters.register(Cholesky)
-def get_bprop_cholesky(self):
-    """Grad definition for `Cholesky` operation."""
-    matmul = P.MatMul()
-    solve_triangular = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
-    clean = self.clean
-
-    def bprop(a, out, dout):
-        l = out
-        if not clean:
-            l = F.matrix_band_part(out, -1, 0)
-        eyes = _batch_eyes(l)
-        l_inverse = solve_triangular(l, eyes)
-        dout_middle = matmul(_adjoint(l), dout)
-        middle_diag = 0.5 * dout_middle.diagonal(0, -2, -1)
-        dout_middle = matrix_set_diag(dout_middle, middle_diag)
-        dout_middle = F.matrix_band_part(dout_middle, -1, 0)
-        grad_a = matmul(matmul(_adjoint(l_inverse), dout_middle), l_inverse)
-        grad_a = 0.5 * (grad_a + _adjoint(grad_a))
-        return (grad_a,)
-
-    return bprop
 
 
 @bprop_getters.register(Eig)
