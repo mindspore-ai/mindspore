@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ND_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ND_CPU_KERNEL_H_
 
+#include <complex>
 #include <vector>
 #include <unordered_map>
 #include <utility>
@@ -25,6 +26,9 @@
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 class ScatterNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ScatterNdCpuKernelMod() = default;
@@ -37,6 +41,9 @@ class ScatterNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
+  std::vector<int64_t> shape;
+
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

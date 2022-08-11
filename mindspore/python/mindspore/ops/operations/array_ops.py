@@ -4211,8 +4211,8 @@ class ScatterNdUpdate(Primitive):
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
-        - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
-          The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        - **updates** (Tensor) - N-D(2D or 3D) Tensor The tensor to be updated to the input tensor,
+          has the same type as input. The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

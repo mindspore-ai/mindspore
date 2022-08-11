@@ -17,14 +17,18 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERND_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERND_CPU_KERNEL_H_
 
+#include <complex>
 #include <vector>
 #include <memory>
 #include <utility>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kUnknown = "Unknown";
+
 class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   GatherNdCpuKernelMod() = default;
@@ -32,13 +36,16 @@ class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  template <typename T>
+  template <typename S, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using GatherNdFunc = std::function<bool(GatherNdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
@@ -54,6 +61,7 @@ class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int> batch_strides_;
 
   TypeId dtype_{kTypeUnknown};
+  std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

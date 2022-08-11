@@ -39,6 +39,7 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimSplit->name(), {{"axis", 0}}},
   {prim::kPrimCumSum->name(), {{"axis", 1}}},
   {prim::kPrimCumProd->name(), {{"axis", 1}}},
+  {prim::kPrimScatterNd->name(), {{"shape", 2}}},
   {prim::kPrimReduceProd->name(), {{"axis", 1}}},
   {prim::kPrimReverseV2->name(), {{"axis", 1}}},
   {prim::kPrimBroadcastTo->name(), {{"shape", 1}}}};
