@@ -820,8 +820,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   return optimized_bg;
 }
 
-py::object GradExecutor::CheckGraph(const py::object &cell, const py::args &args) {
-  BaseRef ret = false;
+void GradExecutor::CheckGraph(const py::object &cell, const py::args &args) {
   check_graph_cell_id_ = GetCellId(cell, args);
   if (!(top_cell_ != nullptr && check_graph_cell_id_.find(top_cell_->cell_id()) != std::string::npos &&
         grad_order_ >= 1)) {
@@ -829,7 +828,7 @@ py::object GradExecutor::CheckGraph(const py::object &cell, const py::args &args
   }
   if (!grad_is_running_) {
     MS_LOG(DEBUG) << "Grad not running yet";
-    return BaseRefToPyData(ret);
+    return;
   }
   MS_LOG(DEBUG) << "Key is " << check_graph_cell_id_;
   if (top_cell_ != nullptr) {
@@ -840,20 +839,25 @@ py::object GradExecutor::CheckGraph(const py::object &cell, const py::args &args
       }
       MS_LOG(DEBUG) << "Delete cellid from cell graph list, top cell is " << top_cell_;
       top_cell_->EraseFromSubCellList(*it);
-      ret = true;
       break;
     }
   }
-  return BaseRefToPyData(ret);
 }
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                         const py::args &args) {
+                                         const py::object &grad_position, const py::args &args) {
+  // Check current cell grad order and erase it if in current top cell list
+  CheckGraph(cell, args);
+
   bool forward_run = false;
   // Get cell id and input args info
   const auto &cell_id = GetCellId(cell, args);
+  std::string grad_position_str;
+  if (!py::isinstance<py::none>(grad_position)) {
+    grad_position_str = std::string(py::str(grad_position));
+  }
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
-                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad->grad_position_;
+                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad_position_str;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
