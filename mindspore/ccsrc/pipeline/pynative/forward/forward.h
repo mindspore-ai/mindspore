@@ -104,7 +104,6 @@ class ForwardExecutor {
   ValuePtr DoNopOutput(const FrontendOpRunInfoPtr &op_run_info) const;
   // Mix precision and Implicit transform
   void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr RunMixedPrecisionCastOp(const FrontendOpRunInfoPtr &op_run_info);
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
 
  private:
