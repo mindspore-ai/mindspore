@@ -82,6 +82,7 @@ file(GLOB DEBUG_SYM
 file(GLOB DEBUG_STRIP_SYM
     ${MS_PACK_ROOT_DIR}/mindspore/*.so
     ${MS_PACK_ROOT_DIR}/mindspore/lib/*.so*
+    ${MS_PACK_ROOT_DIR}/mindspore/bin/*
 )
 list(REMOVE_ITEM DEBUG_STRIP_SYM ${MS_PACK_ROOT_DIR}/mindspore/lib/libmindspore_aicpu_kernels.so)
 
