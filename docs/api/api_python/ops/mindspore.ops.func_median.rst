@@ -9,8 +9,7 @@ mindspore.ops.median
         - **x** (Tensor) - median的输入，任意维度的Tensor。数据类型支持int16、int32、int64、float32或float64。
         - **global_median** (bool) - 表示是否对x的全部元素取中值。默认值：False。
         - **axis** (int) - 指定计算维度。默认值：(0), 取值范围为[-dims, dims - 1]，`dims` 表示 `x` 的维度长度
-        - **keep_dims** (bool) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。
-            默认值：False。
+        - **keep_dims** (bool) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。默认值：False。
 
     返回：
         - **y** (Tensor) - 返回指定维度上的中值，数据类型与 `x` 相同。

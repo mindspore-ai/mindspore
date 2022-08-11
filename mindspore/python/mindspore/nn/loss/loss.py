@@ -2018,7 +2018,7 @@ class CrossEntropyLoss(LossBase):
           where `C = number of classes`. Data type must be float16 or float32.
         - **labels** (Tensor) - For class indices, tensor of shape :math:`()`, :math:`(N)` or
           :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32.
-          For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)`,
+          For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` ,
           data type must be float16 or float32.
 
     Returns:
