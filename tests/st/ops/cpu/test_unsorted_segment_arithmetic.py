@@ -311,3 +311,29 @@ def test_vmap2(func):
     output_shape = (2, 3, 5, 5)
     expected = np.array(expected).reshape(output_shape)
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['sum'])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('data_type', [mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64, mstype.int8,
+                                       mstype.int16, mstype.int32, mstype.int64, mstype.float16,
+                                       mstype.float32, mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_unsorted_segment_arithmetic_dytpe(mode, func, data_type, index_type):
+    """
+    Feature: UnsortedSegmentSum operators dtype test.
+    Description: test cases for UnsortedSegmentSum operator
+    Expectation: the result match numpy implementation.
+    """
+    context.set_context(mode=mode, device_target='CPU')
+    x = Tensor(np.random.randint(0, 100, size=[2, 3, 4, 3, 2]), data_type)
+    segment_ids = Tensor(np.random.randint(0, 5, size=[2, 3]), index_type)
+    num_segments = 5
+
+    net = TestUnsortedSegmentArithmeticNet(func, num_segments)
+    graph_output = net(x, segment_ids)
+    expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
+    np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
