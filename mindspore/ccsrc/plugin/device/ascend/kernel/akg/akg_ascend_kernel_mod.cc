@@ -130,5 +130,10 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
     input_data_addrs, output_data_addrs, workspace_addrs, NeedDump());
   return {task_info_ptr};
 }
+
+std::vector<size_t> AkgKernelMod::GenParameters() {
+  auto kernel_json_info = kernel_pack_->kernel_json_info();
+  return kernel_json_info.parameters;
+}
 }  // namespace kernel
 }  // namespace mindspore

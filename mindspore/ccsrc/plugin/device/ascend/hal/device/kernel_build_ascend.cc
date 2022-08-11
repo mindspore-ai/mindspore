@@ -428,7 +428,9 @@ void TagNeedInsertAtomicAttr(const std::vector<CNodePtr> &nodes) {
       }
       common::AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(indexes), anf_node);
       common::AnfAlgo::SetNodeAttr(kAttrNeedAtomic, MakeValue(true), anf_node);
-    } else if (AnfAlgo::GetKernelType(anf_node) == KernelType::TBE_KERNEL && IsAtomicNode(anf_node)) {
+    } else if ((AnfAlgo::GetKernelType(anf_node) == KernelType::TBE_KERNEL ||
+                AnfAlgo::GetKernelType(anf_node) == KernelType::AKG_KERNEL) &&
+               IsAtomicNode(anf_node)) {
       common::AnfAlgo::SetNodeAttr(kAttrNeedAtomic, MakeValue(true), anf_node);
     }
   }
