@@ -62,10 +62,14 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &
     return nullptr;
   }
   TypeId type = acl::GetTypeFromNode(input_cnode);
-  auto get_item_abstract = CreateTensorAbstract(shape, type);
-  MS_CHECK_TRUE_MSG(get_item_abstract != nullptr, nullptr, "Create tensor abstract failed.");
-  get_item_cnode->set_abstract(get_item_abstract);
+  auto tensor_abstract = CreateTensorAbstract(shape, type);
+  MS_CHECK_TRUE_MSG(tensor_abstract != nullptr, nullptr, "Create tensor abstract failed.");
+  get_item_cnode->set_abstract(tensor_abstract);
   get_item_cnode->set_fullname_with_scope(input_cnode->fullname_with_scope() + "_getitem");
+  AbstractBasePtrList abstract_list = {tensor_abstract};
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  MS_CHECK_TRUE_MSG(abstract_tuple != nullptr, nullptr, "Create abstract Tuple failed!");
+  input_cnode->set_abstract(abstract_tuple);
   return get_item_cnode;
 }
 

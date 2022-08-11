@@ -108,10 +108,12 @@ STATUS MindsporeImporter::TraceOutput(const AnfNodePtr &node) {
     MS_LOG(INFO) << "Graph out name: " << cur_node->fullname_with_scope();
     return RET_OK;
   }
+  CNodePtr pre_node = nullptr;
   while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
     auto tmp = cur_node->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(tmp != nullptr, RET_NULL_PTR, "Tmp cnode is nullptr.");
     cur_node = tmp->input(kTupleGetItemFirstInputIdx);
+    pre_node = tmp;
   }
   auto cnode = cur_node->cast<CNodePtr>();
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "Cur cnode is nullptr.");
@@ -142,8 +144,13 @@ STATUS MindsporeImporter::TraceOutput(const AnfNodePtr &node) {
       return RET_ERROR;
     }
   } else {
-    MS_LOG(INFO) << "Graph out name: " << cnode->fullname_with_scope();
-    output_tensor_name_.emplace_back(cnode->fullname_with_scope());
+    std::string out_name = cnode->fullname_with_scope();
+    if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
+      size_t output_idx = mindspore::opt::GetTupleGetItemOutIndex(pre_node);
+      out_name = out_name + "_" + std::to_string(output_idx);
+    }
+    MS_LOG(INFO) << "Graph out name: " << out_name;
+    output_tensor_name_.emplace_back(out_name);
   }
   return RET_OK;
 }
