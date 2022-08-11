@@ -148,7 +148,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
                 whole_module = n.name
             else:
                 whole_module = module_name
-                if not n.name is None:
+                if n.name is not None:
                     whole_module += "." + n.name
             try:
                 module_spec = importlib.util.find_spec(whole_module, pkg)
@@ -163,7 +163,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
             else:
                 continue
             # Exclude the installed modules.
-            if not _in_sys_path(dep_file_path) and not dep_file_path in compile_cache_dep_files:
+            if not _in_sys_path(dep_file_path) and dep_file_path not in compile_cache_dep_files:
                 logger.debug(f"dependent file path: {dep_file_path}")
                 compile_cache_dep_files.append(dep_file_path)
                 __get_compile_cache_dep_files(dep_file_path, compile_cache_dep_files, module.__package__)
@@ -184,8 +184,8 @@ def _get_compile_cache_dep_files():
 def _restore_mutable_attr(args_list, compile_args):
     """Restore the mutable attr for every arg."""
     new_compile_args = ()
-    for idx in range(len(args_list)):
-        if hasattr(args_list[idx], "__ms_mutable__") and getattr(args_list[idx], "__ms_mutable__"):
+    for idx, arg in enumerate(args_list):
+        if hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__"):
             new_compile_args += (mutable(compile_args[idx]),)
         else:
             new_compile_args += (compile_args[idx],)

@@ -3407,7 +3407,7 @@ class Tensor(Tensor_):
         res = tensor_operator_registry.get('reduce_sum')(prod.astype(mstype.float32), -1)
 
         begin = ()
-        for i in range(ndim - 2):
+        for _ in range(ndim - 2):
             begin += (0,)
         last_dim_begin = max(0, -offset)
         begin += (last_dim_begin,)
