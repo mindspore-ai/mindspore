@@ -33,6 +33,7 @@ MatMulInfoPtr matmul1;
 MatMulInfoPtr matmul2;
 MatMulInfoPtr matmul3;
 MatMulInfoPtr matmul4;
+MatMulInfoPtr matmul5;
 
 class TestMatmulInfo : public UT::Common {
  public:
@@ -44,13 +45,13 @@ class TestMatmulInfo : public UT::Common {
 void TestMatmulInfo::SetUp() {
   RankList dev_list;
 
-  for (int32_t i = 0; i < 1050; i++) {
+  for (int32_t i = 0; i < 2048; i++) {
     dev_list.push_back(i);
   }
 
   RankList stage_map;
   stage_map.push_back(1024);
-  stage_map.push_back(26);
+  stage_map.push_back(1024);
 
   int32_t local_dev = 0;
 
@@ -91,6 +92,11 @@ void TestMatmulInfo::SetUp() {
   // matmul4
   mindspore::HashMap<std::string, ValuePtr> attr_4 = {{"transpose_a", transpose_a_3}};
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_4);
+
+  // matmul5
+  Shapes inputs_shape_4 = {{1024, 128}, {128, 256}};
+  Shapes outputs_shape_4 = {{1024, 256}};
+  matmul5 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_1);
 }
 
 /// Feature: test matmul info
@@ -652,6 +658,83 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies1) {
                      cost.computation_cost_);
     break;
   }
+}
+
+/// Feature: infer strategy for inputs_shape: {{2, 4, 8, 16}, {2, 4, 16, 32}}, transpose_b=false
+/// Description: the in strategy is {{2, 4, 8, 16}, {}}
+/// Expectation: the return strategy is {{2, 4, 8, 16}, {2, 4, 16, 1}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy1) {
+  Strategies in_strategy = {{2, 4, 8, 16}, {}};
+  Strategies ret = matmul1->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{2, 4, 8, 16}, {2, 4, 16, 32}}, transpose_b=false
+/// Description: the in strategy is {{}, {2, 4, 8, 16}}
+/// Expectation: the return strategy is {{2, 4, 1, 8}, {2, 4, 8, 16}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy2) {
+  Strategies in_strategy = {{}, {2, 4, 8, 16}};
+  Strategies ret = matmul1->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{2, 4, 1, 8}, {2, 4, 8, 16}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{2, 4, 8, 16}, {32, 16}}, transpose_b=true
+/// Description: the in strategy is {{2, 4, 8, 16}, {}}
+/// Expectation: the return strategy is {{2, 4, 8, 16}, {1, 16}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy3) {
+  Strategies in_strategy = {{2, 4, 8, 16}, {}};
+  Strategies ret = matmul2->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{2, 4, 8, 16}, {1, 16}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{2, 4, 8, 16}, {32, 16}}, transpose_b=true
+/// Description: the in strategy is {{}, {8, 16}}
+/// Expectation: the return strategy is {{1, 1, 1, 16}, {8, 16}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy4) {
+  Strategies in_strategy = {{}, {8, 16}};
+  Strategies ret = matmul2->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{1, 1, 1, 16}, {8, 16}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{8, 16}, {2, 4, 32, 16}}, transpose_b=true
+/// Description: the in strategy is {{8, 16}, {}}
+/// Expectation: the return strategy is {{8, 16}, {1, 1, 1, 16}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy5) {
+  Strategies in_strategy = {{8, 16}, {}};
+  Strategies ret = matmul3->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{8, 16}, {1, 1, 1, 16}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{8, 16}, {2, 4, 32, 16}}, transpose_b=true
+/// Description: the in strategy is {{}, {2, 4, 8, 16}}
+/// Expectation: the return strategy is {{1, 16}, {2, 4, 8, 16}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy6) {
+  Strategies in_strategy = {{}, {2, 4, 8, 16}};
+  Strategies ret = matmul3->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{1, 16}, {2, 4, 8, 16}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{1024, 128}, {128, 256}}, transpose_b=false
+/// Description: the in strategy is {{}, {}}
+/// Expectation: the return strategy is {{1024, 1}, {1, 1}}
+TEST_F(TestMatmulInfo, GenerateFullStrategy7) {
+  Strategies in_strategy = {{}, {}};
+  Strategies ret = matmul5->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{1024, 1}, {1, 1}};
+  ASSERT_EQ(ret, expect);
 }
 }  // namespace parallel
 }  // namespace mindspore

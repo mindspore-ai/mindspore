@@ -60,7 +60,7 @@ void TestOneHotInfo::SetUp() {
   Shapes inputs_shape = {{64}, {}, {}};
   Shapes outputs_shape = {{64, 10}};
 
-  onehot_info = std::make_shared<OneHotInfo>("onehot_info", inputs_shape, outputs_shape, attr);
+  onehot_info = std::make_shared<OneHotInfo>("OneHotInfo", inputs_shape, outputs_shape, attr);
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
@@ -204,6 +204,28 @@ TEST_F(TestOneHotInfo, CheckStrategy1) {
 
   Status ret = onehot_info->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
+}
+
+/// Feature: infer strategy for inputs_shape: {{64}, {}, {}}
+/// Description: the in strategy is {{8}, {}, {}}
+/// Expectation: the return strategy is {{8, 1}, {}, {}}
+TEST_F(TestOneHotInfo, GenerateFullStrategy1) {
+  Strategies in_strategy = {{8}, {}, {}};
+  Strategies ret = onehot_info->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{8, 1}, {}, {}};
+  ASSERT_EQ(ret, expect);
+}
+
+/// Feature: infer strategy for inputs_shape: {{64}, {}, {}}
+/// Description: the in strategy is {{}, {}, {}}
+/// Expectation: the return strategy is {{8, 1}, {}, {}}
+TEST_F(TestOneHotInfo, GenerateFullStrategy2) {
+  Strategies in_strategy = {{}, {}, {}};
+  Strategies ret = onehot_info->GenerateFullStrategy(in_strategy);
+
+  Strategies expect = {{8, 1}, {}, {}};
+  ASSERT_EQ(ret, expect);
 }
 }  // namespace parallel
 }  // namespace mindspore

@@ -2173,7 +2173,7 @@ Shapes OperatorInfo::InferStrategyIndependentMode(const Shapes &in_strategy) {
 // in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (b, c, d)), return: ((A, B, C, D), (B, C, D))
 // in_strategy: ((), (B, C, D)), inputs shape: ((a, b, c, d), (b, c, d)), return: ((1, B, C, D), (B, C, D))
 // in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (1, c, d)), return: ((A, B, C, D), (1, C, D))
-Shapes OperatorInfo::InferStrategyBroadCastMode(const Shapes &in_strategy) {
+Shapes OperatorInfo::InferStrategyBroadcastMode(const Shapes &in_strategy) {
   Shapes ret = InferStrategySameMode(in_strategy);
   if (ret.size() != inputs_shape_.size()) {
     MS_LOG(EXCEPTION)
@@ -2213,15 +2213,23 @@ Shapes OperatorInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
 }
 
 Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
-  if (in_strategy.size() < 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in strategy is " << in_strategy.size()
-                      << ", it can not use this function";
-  }
-
+  // there is no empty in the in_strategy
   if (!HasEmptyStrategy(in_strategy)) {
+    MS_LOG(INFO) << name_ << ": There is no empty in the input strategy, return to itself: " << in_strategy;
     return in_strategy;
   }
 
+  // the in_strategy are all empty, generate the data parallel strategy
+  auto item = std::find_if(in_strategy.begin(), in_strategy.end(), [](const Shape &ele) { return !ele.empty(); });
+  if (item == in_strategy.end()) {
+    std::shared_ptr<Strategies> dp_strategy_ptr = GenerateBatchStrategies();
+    MS_EXCEPTION_IF_NULL(dp_strategy_ptr);
+    MS_LOG(INFO) << name_
+                 << ": The in strategy are all empty, generate the data parallel strategy: " << *dp_strategy_ptr;
+    return *dp_strategy_ptr;
+  }
+
+  // generate the full strategy from non empty strategy
   if (InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
@@ -2232,7 +2240,7 @@ Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
       ret = InferStrategySameMode(in_strategy);
       break;
     case BROADCAST_MODE:
-      ret = InferStrategyBroadCastMode(in_strategy);
+      ret = InferStrategyBroadcastMode(in_strategy);
       break;
     case INDEPENDENT_MODE:
       ret = InferStrategyIndependentMode(in_strategy);
@@ -2248,6 +2256,7 @@ Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
   if (name_.find(ONEHOT_INFO) == std::string::npos && CheckStrategyBase(ret, inputs_shape_) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": The origin strategy is " << in_strategy << ", and the return strategy is " << ret;
   }
+  MS_LOG(INFO) << name_ << ": The origin strategy is " << in_strategy << ", and the return strategy is " << ret;
   return ret;
 }
 
