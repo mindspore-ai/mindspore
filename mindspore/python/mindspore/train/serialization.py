@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import copy
+import functools
 import json
 import os
 import shutil
@@ -1229,6 +1230,7 @@ def _save_dataset_to_mindir(model, dataset):
 
 def quant_mode_manage(func):
     """Inherit the quant_mode in old version."""
+    @functools.wraps(func)
     def warpper(network, *inputs, file_format, **kwargs):
         if 'quant_mode' not in kwargs:
             return network
