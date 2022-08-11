@@ -288,7 +288,7 @@ def test_index_add_function():
     """
     Feature: test IndexAdd function interface.
     Description: test interface.
-    Expectation: the result match with numpy result
+    Expectation: the result match with expect
     """
     context.set_context(device_target="CPU")
     x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="x")
