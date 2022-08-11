@@ -40,11 +40,13 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     return Emit("Select", {cond, lhs, rhs});
   }
-  NodePtr MatMul(const NodePtr &lhs, const NodePtr &rhs, const TypeId &type_id, const bool &transpose_a = false,
-                 const bool &transpose_b = false) const {
+  NodePtr MatMul(const NodePtr &lhs, const NodePtr &rhs, const TypeId &type_id = kNumberTypeFloat32,
+                 const bool &transpose_a = false, const bool &transpose_b = false) const {
     return Emit("MatMul", {lhs, rhs},
                 {{"transpose_a", MakeValue(transpose_a)},
-                 {"transpose_b", MakeValue(transpose_a)},
+                 {"transpose_x1", MakeValue(transpose_a)},
+                 {"transpose_b", MakeValue(transpose_b)},
+                 {"transpose_x2", MakeValue(transpose_b)},
                  {"dst_type", TypeIdToType(type_id)}});
   }
   NodePtr Neg(const NodePtr &input) const { return Emit("Neg", {input}); }
@@ -59,6 +61,9 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
                        const std::vector<int64_t> &strides) const {
     return Emit("StridedSlice", {input},
                 {{"begin", MakeValue(begin)}, {"end", MakeValue(end)}, {"strides", MakeValue(strides)}});
+  }
+  NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
+    return Emit("TensorScatterAdd", {input, indices, update});
   }
   NodePtr Cast(const NodePtr &input, const TypeId &type_id) const {
     return Emit("Cast", {input}, {{"dst_type", TypeIdToType(type_id)}});
