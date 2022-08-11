@@ -23,6 +23,7 @@ from mindspore.common import Parameter, ParameterTuple
 from mindspore.train.callback import Callback
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator, Rel
+from mindspore import log as logger
 
 
 class _StartFLJob(nn.Cell):
@@ -163,8 +164,11 @@ class FederatedLearningManager(Callback):
         self._abs_grads_ema = dict()
 
         if self._is_adaptive_sync():
-            self._last_param = {_.name: deepcopy(_.asnumpy()) for _ in self._model.trainable_params()
-                                if self._as_prefix not in _.name}
+            self._last_param = {
+                _.name: deepcopy(_.asnumpy())
+                for _ in self._model.trainable_params()
+                if self._as_prefix not in _.name
+            }
             for param in self._model.trainable_params():
                 if self._as_prefix not in param.name:
                     self._model_size += np.product(param.shape)
@@ -201,13 +205,13 @@ class FederatedLearningManager(Callback):
                 try:
                     abs_grads[self._as_prefix + param.name] = np.abs(param.asnumpy() - self._last_param[param.name])
                 except KeyError:
-                    print("{} is not in self._last_param".format(param.name))
+                    logger.warning("{} is not in self._last_param".format(param.name))
         for param in self._model.trainable_params():
             if self._as_prefix in param.name:
                 try:
                     param.set_data(Parameter(abs_grads[param.name]))
                 except KeyError:
-                    print("{} is not in abs_grads".format(param.name))
+                    logger.warning("{} is not in abs_grads".format(param.name))
 
     def _as_analyze_gradient(self):
         """
@@ -225,32 +229,40 @@ class FederatedLearningManager(Callback):
                 try:
                     grads[param.name] = (param.asnumpy() - self._last_param[param.name]) * worker_num
                 except KeyError:
-                    print("{} is not in self._last_param".format(param.name))
+                    logger.warning("{} is not in self._last_param".format(param.name))
         for last_p in self._last_param:
             try:
                 self._grads_ema[last_p] = ema_alpha * self._grads_ema[last_p] + (1 - ema_alpha) * grads[last_p]
             except KeyError:
-                print("{} is not in self._grads_ema".format(last_p))
+                logger.warning("{} is not in self._grads_ema".format(last_p))
                 continue
             try:
                 self._abs_grads_ema[last_p] = ema_alpha * self._abs_grads_ema[last_p] + (1 - ema_alpha) * abs_grads[
                     last_p]
             except KeyError:
-                print("{} is not in self._abs_grads_ema".format(last_p))
+                logger.warning("{} is not in self._abs_grads_ema".format(last_p))
                 continue
             try:
                 divide_base = np.where(self._abs_grads_ema[last_p] == 0,
                                        np.ones(self._abs_grads_ema[last_p].shape), self._abs_grads_ema[last_p])
             except KeyError:
-                print("{} is not in self._abs_grads_ema".format(last_p))
+                logger.warning("{} is not in self._abs_grads_ema".format(last_p))
                 continue
             try:
-                layer_consistent_rate = np.abs(self._grads_ema[last_p]) / divide_base
+                if divide_base != 0:
+                    layer_consistent_rate = np.abs(self._grads_ema[last_p]) / divide_base
+                else:
+                    logger.warning("You cannot divide by 0!")
+                    return
                 consistent_rate_sum += np.sum(layer_consistent_rate)
             except KeyError:
-                print("{} is not in self._grads_ema".format(last_p))
+                logger.warning("{} is not in self._grads_ema".format(last_p))
 
-        consistent_rate = float(consistent_rate_sum / self._model_size)
+        if self._model_size != 0:
+            consistent_rate = float(consistent_rate_sum / self._model_size)
+        else:
+            logger.warning("You cannot divide by 0!")
+            return
 
         if self._min_consistent_rate > consistent_rate:
             self._min_consistent_rate = consistent_rate
@@ -272,8 +284,11 @@ class FederatedLearningManager(Callback):
         """
         Set the value of last parameters for adaptive synchronization.
         """
-        self._last_param = {_.name: deepcopy(_.asnumpy())
-                            for _ in self._model.trainable_params() if self._as_prefix not in _.name}
+        self._last_param = {
+            _.name: deepcopy(_.asnumpy())
+            for _ in self._model.trainable_params()
+            if self._as_prefix not in _.name
+        }
 
     def step_end(self, run_context):
         """
@@ -309,4 +324,4 @@ class FederatedLearningManager(Callback):
                     self._round_id += 1
                     self._as_set_last_param()
 
-                print("sync step is: {}".format(self._global_step))
+                logger.info("sync step is: {}".format(self._global_step))

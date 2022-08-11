@@ -40,6 +40,71 @@ int64_t ReverseSequence::get_batch_dim() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameReverseSequence, ReverseSequence);
+namespace {
+abstract::ShapePtr ReverseSequenceInferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ReverseSequence", input_args, 0);
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  auto seq_lengths_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ReverseSequence", input_args, 1);
+  MS_EXCEPTION_IF_NULL(seq_lengths_shape_ptr);
+  auto x_shape = x_shape_ptr->shape();
+  auto seq_lengths_shape = seq_lengths_shape_ptr->shape();
+
+  auto seq_dim_ptr = primitive->GetAttr("seq_dim");
+  MS_EXCEPTION_IF_NULL(seq_dim_ptr);
+  auto seq_dim = GetValue<int64_t>(seq_dim_ptr);
+  auto batch_dim_ptr = primitive->GetAttr("batch_dim");
+  MS_EXCEPTION_IF_NULL(batch_dim_ptr);
+  auto batch_dim = GetValue<int64_t>(batch_dim_ptr);
+
+  if (seq_dim >= SizeToLong(x_shape.size())) {
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'seq_dim' should be < x rank: " << x_shape.size()
+                             << ", but got " << seq_dim << ".";
+  }
+  if (batch_dim >= SizeToLong(x_shape.size())) {
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'batch_dim' should be < x rank: " << x_shape.size()
+                             << ", but got " << batch_dim << ".";
+  }
+  if (batch_dim == seq_dim) {
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'batch_dim' should be != 'seq_dim': " << seq_dim
+                             << ", but got " << batch_dim << ".";
+  }
+  if (seq_lengths_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For 'ReverseSequence', the 'seq_lengths' rank should be = 'expected': 1 , but got "
+                             << seq_lengths_shape.size() << ".";
+  }
+  if (seq_lengths_shape[0] != x_shape[batch_dim]) {
+    MS_EXCEPTION(ValueError)
+      << "For 'ReverseSequence', the 'seq_lengths' vector size should be = input size along batch_dim: "
+      << x_shape[batch_dim] << ", but got " << seq_lengths_shape[0] << ".";
+  }
+  return std::make_shared<abstract::Shape>(x_shape);
+}
+
+TypePtr ReverseSequenceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << ", the input args used for infer shape and type is necessary, but missing it.";
+  }
+  const std::set<TypePtr> seq_lengths_valid_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[1]->BuildType(), seq_lengths_valid_types,
+                                                   prim->name());
+
+  const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16,    kUInt32,     kUInt64,
+                                           kInt8,    kInt16,   kInt32,   kInt64, kComplex64, kComplex128, kBool};
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), x_valid_types, prim->name());
+}
+}  // namespace
+AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = ReverseSequenceInferType(primitive, input_args);
+  auto infer_shape = ReverseSequenceInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ReverseSequence, prim::kPrimReverseSequence, ReverseSequenceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -5791,7 +5791,7 @@ class ReverseSequence(PrimitiveWithInfer):
         ValueError: If value of `batch_dim` is equal to or greater than length of shape of `x` .
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
@@ -5843,20 +5843,6 @@ class ReverseSequence(PrimitiveWithInfer):
         self.seq_dim_ = seq_dim
         validator.check_value_type("batch_dim", batch_dim, [int], self.name)
         self.batch_dim_ = batch_dim
-
-    def infer_shape(self, x, seq_lengths):
-        validator.check_int_range(self.seq_dim_, 0, len(x), Rel.INC_LEFT, "seq_dim", self.name)
-        validator.check_int_range(self.batch_dim_, 0, len(x), Rel.INC_LEFT, "batch_dim", self.name)
-        validator.check("batch_dim", self.batch_dim_, "seq_dim", self.seq_dim_, Rel.NE, self.name)
-        validator.check("seq_lengths rank", len(seq_lengths), "expected", 1, Rel.EQ, self.name)
-        validator.check("seq_lengths vector size", seq_lengths[0],
-                        "input size along batch_dim", x[self.batch_dim_], Rel.EQ, self.name)
-        return x
-
-    def infer_dtype(self, x, seq_lengths):
-        validator.check_tensor_dtype_valid("x_dtype", x, mstype.number_type + (mstype.bool_,), self.name)
-        validator.check_tensor_dtype_valid("seq_lengths_dtype", seq_lengths, [mstype.int32, mstype.int64], self.name)
-        return x
 
 
 class EditDistance(Primitive):
