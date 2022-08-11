@@ -53,7 +53,7 @@ struct OperatorLabel {
 
   // Judge whether the labels are equal but with looser conditions according to different modes. For example, this
   // method returns true when comparing the workers in PS mode.
-  bool LooseEqual(const OperatorLabel &label) const;
+  bool LooseEqual(const OperatorLabel &label, distributed::DistExecutionMode mode) const;
 
   std::string to_string() const;
 };
@@ -79,8 +79,16 @@ inline bool MatchLabelForPSMode(const OperatorLabel &label1, const OperatorLabel
   }
   return false;
 }
+inline bool MatchLabelForParallelMode(const OperatorLabel &label1, const OperatorLabel &label2) {
+  // When parallel mode is enabled by using MindSpore cluster, processes with the same role has the same label
+  // regardless of their rank id.
+  return (label1.ms_role == label2.ms_role);
+}
+
 const std::map<distributed::DistExecutionMode, LabelMatchingFunc> kLabelMatchingFuncMap = {
-  {distributed::DistExecutionMode::kPSMode, MatchLabelForPSMode}};
+  {distributed::DistExecutionMode::kPSMode, MatchLabelForPSMode},
+  {distributed::DistExecutionMode::kEmbeddingCacheMode, MatchLabelForPSMode},
+  {distributed::DistExecutionMode::kParallelMode, MatchLabelForParallelMode}};
 
 // Split graph segment which is generated according to the topo sort of the graph.
 struct SplitGraphSegment {
@@ -181,7 +189,8 @@ constexpr char kVirtualNode[] = "VirtualNode";
 // This method creates a fake tensor. Its type is the same as the origin_node's output if use_origin_node is set
 // true.
 // Normally it is used to connect the edges for send/recv nodes.
-ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
+ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr,
+                                 bool use_fake_shape = true);
 
 // Create a TupleGetItem node from a node with tuple output.
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node_with_tuple_output,
@@ -211,6 +220,33 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
 std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segment, size_t real_size);
 
 bool IsOneOfRealGraphInput(const FuncGraphPtr &func_graph, const AnfNodePtr &input);
+
+/**
+ * @description: Generate the distributed strategy according to user configuration.
+ * @return {distributed::DistExecutionMode}: The distributed strategy enum.
+ */
+distributed::DistExecutionMode GenerateStrategy();
+
+/**
+ * @description: Transform primal attributes of cnode to normal attributes.
+ * @param {CNodePtr} &cnode: The cnode which has the primal attributes.
+ * @return {void}
+ */
+void TransformPrimAttrToAttr(const CNodePtr &cnode);
+
+/**
+ * @description: Judge whether this node has label.
+ * @param {AnfNodePtr} &node: AnfNode in a func_graph.
+ * @return {bool}: Whether this node has label.
+ */
+bool NodeHasLabel(const AnfNodePtr &node);
+
+/**
+ * @description: Judge whether this graph has any label.
+ * @param {FuncGraphPtr} &func_graph: The func_graph.
+ * @return {bool}: Whether this graph has label.
+ */
+bool GraphHasLabel(const FuncGraphPtr &func_graph);
 
 // Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
 class DistributedExecutionMode {
@@ -332,6 +368,16 @@ class EmbeddingCacheMode : public DistributedExecutionMode {
   void AddEmbeddingCacheOps() const;
 
   OperatorLabel GetNodeLabel(const AnfNodePtr &node) const;
+};
+
+// Users may want to simply split a training graph into multiple devices without other extra features. GeneralMode is
+// for this scenario.
+class GeneralMode : public DistributedExecutionMode {
+ public:
+  explicit GeneralMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,
+                       const std::string &role)
+      : DistributedExecutionMode(func_graph, node_labels, rank_id, role) {}
+  ~GeneralMode() = default;
 };
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the

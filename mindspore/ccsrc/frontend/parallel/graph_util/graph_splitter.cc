@@ -27,6 +27,7 @@
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/draw.h"
+#include "include/common/utils/parallel_context.h"
 #ifdef WITH_BACKEND
 #include "ps/ps_context.h"
 #endif
@@ -39,18 +40,17 @@ bool OperatorLabel::operator==(const OperatorLabel &label) const { return to_str
 
 bool OperatorLabel::operator!=(const OperatorLabel &label) const { return !(*this == label); }
 
-bool OperatorLabel::LooseEqual(const OperatorLabel &label) const {
-  auto mode = distributed::DistExecutionMode::kPSMode;
+bool OperatorLabel::LooseEqual(const OperatorLabel &label, distributed::DistExecutionMode mode) const {
   if (kLabelMatchingFuncMap.count(mode) == 0) {
-    MS_LOG(ERROR) << "The mode " << mode << " is invalid.";
-    return false;
+    MS_LOG(DEBUG) << "The mode " << mode << " does not need LooseEqual.";
+    return to_string() == label.to_string();
   }
   return kLabelMatchingFuncMap.at(mode)(label, *this);
 }
 
 std::string OperatorLabel::to_string() const { return std::to_string(rank_id) + "_" + ms_role; }
 
-ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node) {
+ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node, bool use_fake_shape) {
   tensor::TensorPtr fake_tensor = nullptr;
   if (use_origin_node) {
     MS_EXCEPTION_IF_NULL(origin_node);
@@ -63,15 +63,26 @@ ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_
       origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
     }
     MS_EXCEPTION_IF_NULL(origin_abstract);
-    fake_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
-                                                   origin_abstract->shape()->shape());
-    MS_EXCEPTION_IF_NULL(fake_tensor);
-    fake_tensor->set_base_shape(origin_abstract->shape()->Clone());
+    auto element = origin_abstract->element();
+    MS_EXCEPTION_IF_NULL(element);
+    auto build_type = element->BuildType();
+    MS_EXCEPTION_IF_NULL(build_type);
+    auto type_id = build_type->type_id();
+    if (use_fake_shape) {
+      // Assign send's output shape as {1};
+      ShapeVector fake_shape = {kSizeOne};
+      fake_tensor = std::make_shared<tensor::Tensor>(type_id, fake_shape);
+    } else {
+      auto shape = origin_abstract->shape();
+      MS_EXCEPTION_IF_NULL(shape);
+      fake_tensor = std::make_shared<tensor::Tensor>(type_id, shape->shape());
+      fake_tensor->set_base_shape(shape->Clone());
+    }
   } else {
     fake_tensor = std::make_shared<tensor::Tensor>(1.0);
-    MS_EXCEPTION_IF_NULL(fake_tensor);
   }
 
+  MS_EXCEPTION_IF_NULL(fake_tensor);
   auto fake_value = NewValueNode(fake_tensor);
   MS_EXCEPTION_IF_NULL(fake_value);
   fake_value->set_abstract(fake_tensor->ToAbstract());
@@ -249,8 +260,8 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
     if (src_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, src_node->cast<CNodePtr>()) &&
         common::AnfAlgo::HasNodeAttr(kAttrParameterInputIndex, src_node->cast<CNodePtr>())) {
       int64_t parameter_index = common::AnfAlgo::GetNodeAttr<int64_t>(src_node, kAttrParameterInputIndex);
-      auto kernel_with_index =
-        common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(src_node->cast<CNodePtr>(), parameter_index), 0);
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(
+        common::AnfAlgo::GetInputNode(src_node->cast<CNodePtr>(), parameter_index), kIndex0);
       auto param_node = kernel_with_index.first;
       recv_inputs.push_back(param_node);
 
@@ -264,7 +275,8 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
 
       recv_node_abs = param_node->abstract();
     } else {
-      auto mock_value = CreateFakeValueNode(true, src_node);
+      // Use the same shape as origin node's.
+      auto mock_value = CreateFakeValueNode(true, src_node, false);
       MS_EXCEPTION_IF_NULL(mock_value);
       recv_inputs.push_back(mock_value);
       recv_node_abs = src_node->abstract();
@@ -318,6 +330,86 @@ bool IsOneOfRealGraphInput(const FuncGraphPtr &func_graph, const AnfNodePtr &inp
   MS_EXCEPTION_IF_NULL(input);
   auto all_inputs = func_graph->get_inputs();
   return std::count(all_inputs.begin(), all_inputs.end(), input) != 0;
+}
+
+distributed::DistExecutionMode GenerateStrategy() {
+  distributed::DistExecutionMode strategy;
+  bool enable_ps = false;
+  bool enable_embedding_cache = false;
+#ifdef WITH_BACKEND
+  enable_ps = ps::PSContext::instance()->is_ps_mode();
+  enable_embedding_cache = ps::PSContext::instance()->cache_enable();
+#endif
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  bool using_parallel = (parallel_mode != parallel::kStandalone) ? true : false;
+  // The conditions' priority is: EmbeddingCache > Parameter Server > General.
+  if (enable_embedding_cache) {
+    strategy = distributed::DistExecutionMode::kEmbeddingCacheMode;
+  } else if (enable_ps) {
+    strategy = distributed::DistExecutionMode::kPSMode;
+  } else if (using_parallel) {
+    strategy = distributed::DistExecutionMode::kParallelMode;
+  } else {
+    strategy = distributed::DistExecutionMode::kGeneralMode;
+  }
+  return strategy;
+}
+
+void TransformPrimAttrToAttr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0));
+  MS_EXCEPTION_IF_NULL(prim);
+  if (cnode->HasPrimalAttr(distributed::kOpLabelRankId)) {
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " has primal attr 'rank_id'.";
+    prim->set_attr(distributed::kOpLabelRankId, cnode->GetPrimalAttr(distributed::kOpLabelRankId));
+  }
+  if (cnode->HasPrimalAttr(distributed::kOpLabelRole)) {
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " has primal attr 'ms_role'.";
+    prim->set_attr(distributed::kOpLabelRole, cnode->GetPrimalAttr(distributed::kOpLabelRole));
+  }
+}
+
+bool NodeHasLabel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  bool has_label = false;
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim_node = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(prim_node);
+
+  // As long as the node has 'ms_role' and 'rank_id' attributes, we consider this node has label regardless the value of
+  // these two attributes.
+  if (IsValueNode<Primitive>(prim_node)) {
+    auto prim = GetValueNode<PrimitivePtr>(prim_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->HasAttr(distributed::kOpLabelRankId) && prim->HasAttr(distributed::kOpLabelRole)) {
+      has_label = true;
+    }
+  } else {
+    // Get label for call node, 'call' node hasn't primitive to save attrs, so get attrs of 'call' from cnode.
+    if (cnode->HasAttr(distributed::kOpLabelRankId) && cnode->HasAttr(distributed::kOpLabelRole)) {
+      has_label = true;
+    }
+  }
+  return has_label;
+}
+
+bool GraphHasLabel(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph->get_return());
+  // If one node has label, this graph has label. Thus it needs to be split.
+  for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (NodeHasLabel(node)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void ParameterServerMode::PreBuildDistributedGraph() {
@@ -773,6 +865,8 @@ FusedInterProcessOpPairMap ParameterServerMode::FilterNotServerOptimizerEdges(
       InterProcessEdgeWithIndex edge_with_index = {edge.src_label, edge.dst_label, edge_index};
       FusedInterProcessOpPair fused_op_pair = std::make_tuple(std::get<0>(node_pair), std::get<1>(node_pair), 0,
                                                               std::get<2>(node_pair), std::get<3>(node_pair));
+      std::vector<FusedInterProcessOpPair> pair_list = {fused_op_pair};
+      results.insert(std::make_pair(edge_with_index, pair_list));
     }
   }
   return results;
@@ -896,12 +990,9 @@ GraphSplitter::GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, c
       this_process_label_({rank_id, role}),
       node_labels_{},
       need_fuse_rpc_nodes_(true) {
-  bool enable_embedding_cache = false;
-#ifdef WITH_BACKEND
-  enable_embedding_cache = ps::PSContext::instance()->cache_enable();
-#endif
-  mode_ = enable_embedding_cache ? distributed::DistExecutionMode::kEmbeddingCacheMode
-                                 : distributed::DistExecutionMode::kPSMode;
+  // The distributed strategy is not explicitly defined by user. Distributed module generates the distributed strategy
+  // and default label according to some flags set by other modules.
+  mode_ = GenerateStrategy();
   default_label_ = {0, distributed::kEnvRoleOfWorker};
 }
 
@@ -1044,7 +1135,7 @@ void GraphSplitter::DyeGraph() {
     }
 
     // If the node's label is the same as this process's, set its label to this_process_label_.
-    if (this_process_label_.LooseEqual(node_labels_[node])) {
+    if (this_process_label_.LooseEqual(node_labels_[node], mode_)) {
       node_labels_[node] = this_process_label_;
     }
   });
@@ -1059,6 +1150,8 @@ void GraphSplitter::CreateExecutionMode() {
     exec_mode_ = std::make_unique<ParameterServerMode>(func_graph_, &node_labels_, rank_id_, role_);
   } else if (mode_ == distributed::DistExecutionMode::kEmbeddingCacheMode) {
     exec_mode_ = std::make_unique<EmbeddingCacheMode>(func_graph_, &node_labels_, rank_id_, role_);
+  } else if (mode_ == distributed::DistExecutionMode::kGeneralMode) {
+    exec_mode_ = std::make_unique<GeneralMode>(func_graph_, &node_labels_, rank_id_, role_);
   }
   MS_EXCEPTION_IF_NULL(exec_mode_);
 }
@@ -1170,8 +1263,10 @@ OperatorLabel GraphSplitter::GetSplitLabel(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Only CNode has distributed split label.";
   }
   CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto prim_node = cnode->input(0);
   if (IsValueNode<Primitive>(prim_node)) {
+    TransformPrimAttrToAttr(cnode);
     auto prim = GetValueNode<PrimitivePtr>(prim_node);
     MS_EXCEPTION_IF_NULL(prim);
     if (prim->HasAttr(distributed::kOpLabelRankId) && prim->HasAttr(distributed::kOpLabelRole)) {

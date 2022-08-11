@@ -384,6 +384,14 @@ class Primitive(Primitive_):
         self.add_prim_attr("recompute", mode)
         return self
 
+    def place(self, role, rank_id):
+        """
+        Set the label for this primitive.
+        This label tells MindSpore compiler on which process this operator should be launched.
+        """
+        self.add_prim_attr("ms_role", role)
+        self.add_prim_attr("rank_id", rank_id)
+
 
 class PrimitiveWithCheck(Primitive):
     """

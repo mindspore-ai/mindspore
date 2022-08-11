@@ -55,7 +55,7 @@ void RpcSendKernelMod::Init(const CNodePtr &kernel_node) {
 }
 
 std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
+  std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
 }
 

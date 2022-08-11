@@ -237,6 +237,9 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
+// Whether this process in a MindSpore cluster.
+static bool is_cluster_initialized = false;
+
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
@@ -1379,7 +1382,7 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
 
   auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
-  if (!multi_graphs && pipeline::GetJitLevel() != "O0") {
+  if (!is_cluster_initialized && !multi_graphs && pipeline::GetJitLevel() != "O0") {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 
@@ -1420,6 +1423,7 @@ std::vector<ActionItem> GePipeline() {
 }
 
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
+  is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
   // If enable compilation cache and the cache is read successfully, only do the backend actions.
   if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
