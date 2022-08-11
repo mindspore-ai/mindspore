@@ -16,9 +16,10 @@
 """Implementation for internal polymorphism `div` operations."""
 
 from . import _compile_utils as utils
+from ._constexpr_utils import log_warning, check_equal
 from ...composite import base
 from ... import functional as F
-from ....common import CSRTensor
+from ....common import CSRTensor, COOTensor
 
 
 div = base.MultitypeFuncGraph("div", True)
@@ -34,10 +35,25 @@ def _csrtensor_div_tensor(x, y):
     Returns x / y where x is CSRTensor and y is Tensor.
 
     Outputs:
-       CSRTensor, equal to x * y.
+       CSRTensor, equal to x / y.
     """
+    log_warning("For CSR divide, zero values in the dense tensor are ignored.")
     data = F.csr_div(x, y)
     return CSRTensor(x.indptr, x.indices, data, x.shape)
+
+
+@div.register("COOTensor", "Tensor")
+def _cootensor_div_tensor(x, y):
+    """
+    Returns x / y where x is COOTensor and y is Tensor.
+
+    Outputs:
+       COOTensor, equal to x / y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    log_warning("For sparse divide, zero values in the dense tensor are ignored.")
+    other_values = F.gather_nd(y, x.indices)
+    return COOTensor(x.indices, x.values / other_values, x.shape)
 
 
 @div.register("Number", "Number")

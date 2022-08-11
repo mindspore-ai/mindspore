@@ -17,6 +17,7 @@
 
 from ...composite import base
 from ... import functional as F
+from ....common import CSRTensor, COOTensor
 
 
 negative = base.MultitypeFuncGraph("negative", True)
@@ -46,3 +47,25 @@ def _negative_tensor(x):
        Tensor, negative value of x by element-wise.
    """
     return F.neg_tensor(x)
+
+
+@negative.register("CSRTensor")
+def _negative_csrtensor(x):
+    """
+    Returns the negative value of tensor x by element-wise.
+
+    Returns:
+       CSRTensor, negative value of x by element-wise.
+   """
+    return CSRTensor(x.indptr, x.indices, F.neg_tensor(x.values), x.shape)
+
+
+@negative.register("COOTensor")
+def _negative_cootensor(x):
+    """
+    Returns the negative value of tensor x by element-wise.
+
+    Returns:
+       COOTensor, negative value of x by element-wise.
+   """
+    return COOTensor(x.indices, F.neg_tensor(x.values), x.shape)

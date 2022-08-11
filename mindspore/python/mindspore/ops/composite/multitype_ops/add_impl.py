@@ -18,6 +18,7 @@
 from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
+from ...composite.multitype_ops._constexpr_utils import make_tensor, check_equal
 
 
 add = base.MultitypeFuncGraph('add', True)
@@ -270,6 +271,70 @@ def _add_tuple(x, y):
         Tuple, consists of elements of x and elements of y.
     """
     return _tuple_add(x, y)
+
+
+@add.register("CSRTensor", "CSRTensor")
+def _add_csrtensor(x, y):
+    """
+    Adds two CSR tensors.
+
+    Args:
+        x (CSRTensor): x
+        y (CSRTensor): y
+
+    Returns:
+        CSRTensor, consists of elements of x and elements of y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(1, x.values.dtype))
+
+
+@add.register("COOTensor", "COOTensor")
+def _add_cootensor(x, y):
+    """
+    Adds two COO tensors.
+
+    Args:
+        x (COOTensor): x
+        y (COOTensor): y
+
+    Returns:
+        COOTensor, consists of elements of x and elements of y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.sparse_add(x, y, make_tensor(0, x.values.dtype))
+
+
+@add.register("COOTensor", "Tensor")
+def _add_cootensor_tensor(x, y):
+    """
+    Adds a COO tensor and a tensor.
+
+    Args:
+        x (COOTensor): x
+        y (Tensor): y
+
+    Returns:
+        Tensor, consists of elements of x and elements of y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.tensor_scatter_add(y, x.indices, x.values)
+
+
+@add.register("Tensor", "COOTensor")
+def _add_tensor_cootensor(x, y):
+    """
+    Adds a tensor and a COO tensor.
+
+    Args:
+        x (Tensor): x
+        y (COOTensor): y
+
+    Returns:
+        Tensor, consists of elements of x and elements of y.
+    """
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.tensor_scatter_add(x, y.indices, y.values)
 
 
 @_add_backward.register("Tensor", "Tensor")

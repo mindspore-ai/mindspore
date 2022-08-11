@@ -23,7 +23,7 @@ from ..._primitive_cache import _get_cache_prim
 from ...operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
 from ....common import dtype as mstype
 from ....common._register_for_tensor import tensor_operator_registry
-from ....common.tensor import Tensor, CSRTensor
+from ....common.tensor import Tensor, CSRTensor, COOTensor
 from ....common._utils import is_shape_unknown
 
 slice_get_item = SliceGetItem()
@@ -94,6 +94,8 @@ tensor_operator_registry.register("__setitem__", _tensor_setitem)
 def _tensor_add(self, other):
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(self))
+    if isinstance(other, COOTensor):
+        return other + self
     return F.add(self, other)
 
 
@@ -102,13 +104,15 @@ def _tensor_sub(self, other):
         self = sequence_to_tensor(self, F.dtype(other))
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(self))
+    if isinstance(other, COOTensor):
+        return F.tensor_scatter_sub(self, other.indices, other.values)
     return F.sub(self, other)
 
 
 def _tensor_mul(self, other):
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(self))
-    elif isinstance(other, CSRTensor):
+    elif isinstance(other, (CSRTensor, COOTensor)):
         return other * self
     return F.mul(self, other)
 

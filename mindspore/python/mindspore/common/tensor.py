@@ -15,13 +15,14 @@
 """Tensor implementation."""
 from __future__ import absolute_import
 
-import numbers
+__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 
+import numbers
 import numpy as np
+
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.common._utils import is_shape_unknown
 from mindspore import context
-
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
@@ -32,7 +33,6 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 
-__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_, np.complex64, np.complex128)
@@ -2786,7 +2786,7 @@ class Tensor(Tensor_):
             [ 0.4  0.5 -3.2]]
         """
         self._init_check()
-        return tensor_operator_registry.get("tensor_scatter_add")()(self, indices, updates)
+        return tensor_operator_registry.get("tensor_scatter_add")(self, indices, updates)
 
     def scatter_sub(self, indices, updates):
         """
@@ -2834,7 +2834,7 @@ class Tensor(Tensor_):
             [ 0.4        0.5       -3.2      ]]
         """
         self._init_check()
-        return tensor_operator_registry.get('tensor_scatter_sub')()(self, indices, updates)
+        return tensor_operator_registry.get('tensor_scatter_sub')(self, indices, updates)
 
     def scatter_min(self, indices, updates):
         """
@@ -5094,6 +5094,7 @@ class COOTensor(COOTensor_):
     Note:
         This is an experimental feature and is subjected to change.
         Currently, duplicate coordinates in the indices will not be coalesced.
+        If the indices contain out-of-bound values, the result will be undefined.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
@@ -5141,8 +5142,6 @@ class COOTensor(COOTensor_):
             validator.check_coo_tensor_input(indices, values, shape)
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
-            if not (indices < Tensor(shape, mstype.int32)).all() or (indices < Tensor(0, mstype.int32)).any():
-                raise ValueError("All the indices should be non-negative integer and in range of the given shape!")
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -5151,6 +5150,48 @@ class COOTensor(COOTensor_):
         if self.init_finished:
             return COOTensor_.__repr__(self)
         return ''
+
+    def __neg__(self):
+        return COOTensor(self.indices, -self.values, self.shape)
+
+    def __add__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, Tensor):
+            return tensor_operator_registry.get("tensor_scatter_add")(other, self.indices, self.values)
+        if isinstance(other, COOTensor):
+            return tensor_operator_registry.get('coo_add')(self, other, Tensor(0, self.values.dtype))
+        raise TypeError("Add with %s is not supported." % type(other))
+
+    def __sub__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, Tensor):
+            return tensor_operator_registry.get("tensor_scatter_add")(-other, self.indices, self.values)
+        if isinstance(other, COOTensor):
+            return tensor_operator_registry.get('coo_add')(
+                self, -other, Tensor(0, self.values.dtype))
+        raise TypeError("Subtract with %s is not supported." % type(other))
+
+    def __mul__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, Tensor):
+            other_values = tensor_operator_registry.get("gather_nd")(other, self.indices)
+            return COOTensor(self.indices, self.values * other_values, self.shape)
+        raise TypeError("Multiply with %s is not supported." % type(other))
+
+    def __div__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, Tensor):
+            logger.warning("For sparse divide, zero values in the dense tensor are ignored.")
+            other_values = tensor_operator_registry.get("gather_nd")(other, self.indices)
+            return COOTensor(self.indices, self.values / other_values, self.shape)
+        raise TypeError("Divide with %s is not supported." % type(other))
+
+    def __truediv__(self, other):
+        return self.__div__(other)
 
     @property
     def indices(self):
@@ -5217,7 +5258,7 @@ class COOTensor(COOTensor_):
             ``GPU``
         """
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
-        return tensor_operator_registry.get("tensor_scatter_add")()(
+        return tensor_operator_registry.get("tensor_scatter_add")(
             zeros_tensor, self.indices, self.values)
 
     @property
@@ -5425,11 +5466,31 @@ class CSRTensor(CSRTensor_):
         return CSRTensor(self.indptr, self.indices, res, self.shape)
 
     def __div__(self, other):
+        logger.warning("For CSR divide, zero values in the dense tensor are ignored.")
         res = tensor_operator_registry.get('csr_div')(self, other)
         return CSRTensor(self.indptr, self.indices, res, self.shape)
 
     def __truediv__(self, other):
         return self.__div__(other)
+
+    def __neg__(self):
+        return CSRTensor(self.indptr, self.indices, -self.values, self.shape)
+
+    def __add__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, CSRTensor):
+            return tensor_operator_registry.get('csr_add')(
+                self, other, Tensor(1, self.values.dtype), Tensor(1, self.values.dtype))
+        raise TypeError("Add with %s is not supported." % type(other))
+
+    def __sub__(self, other):
+        if not self.shape == other.shape:
+            raise ValueError("Input tensors should have the same shape.")
+        if isinstance(other, CSRTensor):
+            return tensor_operator_registry.get('csr_add')(
+                self, other, Tensor(1, self.values.dtype), Tensor(-1, self.values.dtype))
+        raise TypeError("Subtract with %s is not supported." % type(other))
 
     @property
     def indptr(self):

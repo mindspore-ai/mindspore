@@ -16,8 +16,10 @@
 """Implementation for internal polymorphism `sub` operations."""
 
 from . import _compile_utils as utils
+from ._constexpr_utils import check_equal
 from ...composite import base
 from ... import functional as F
+from ...composite.multitype_ops._constexpr_utils import make_tensor
 
 
 sub = base.MultitypeFuncGraph("sub", True)
@@ -77,3 +79,31 @@ def _tensor_sub_list(x, y):
     """Returns x - y where x is a tensor and y is a list. """
     y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_sub(x, y)
+
+
+@sub.register("CSRTensor", "CSRTensor")
+def _sub_csrtensor(x, y):
+    """Returns x - y where x and y are all CSR tensors."""
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(-1, x.values.dtype))
+
+
+@sub.register("COOTensor", "COOTensor")
+def _sub_cootensor(x, y):
+    """Returns x - y where x and y are all COO tensors."""
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.sparse_add(x, -y, make_tensor(0, x.values.dtype))
+
+
+@sub.register("Tensor", "COOTensor")
+def _tensor_sub_cootensor(x, y):
+    """Returns x - y where x is a tensor and y is a COO tensor."""
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.tensor_scatter_sub(x, y.indices, y.values)
+
+
+@sub.register("COOTensor", "Tensor")
+def _cootensor_sub_tensor(x, y):
+    """Returns x - y where x is a COO tensor and y is a tensor."""
+    check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
+    return F.tensor_scatter_add(-y, x.indices, x.values)

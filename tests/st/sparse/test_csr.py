@@ -803,3 +803,60 @@ def test_dense_to_csr():
     assert isinstance(csr_tensor_graph, CSRTensor)
     compare_csr(csr_tensor, expect)
     compare_csr(csr_tensor_graph, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_csr_magic_methods():
+    """
+    Feature: Test csr magic methods.
+    Description: Test CSRTensor.__neg__, CSRTensor.__add__, CSRTensor.__sub__.
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+    indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
+    indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
+    values = Tensor(np.arange(6) - 3.5, dtype=mstype.float32)
+    shape = (3, 4)
+
+    indptr_2 = Tensor([0, 2, 3, 4], dtype=mstype.int32)
+    indices_2 = Tensor([2, 3, 0, 1], dtype=mstype.int32)
+    values_2 = Tensor(np.arange(4) - 2.5, dtype=mstype.float32)
+
+    def test_csr_neg(indptr, indices, values, shape):
+        csr_tensor = CSRTensor(indptr, indices, values, shape)
+        return -csr_tensor
+
+    def test_csr_add(indptr, indptr_2, indices, indices_2, values, values_2, shape):
+        csr_tensor_1 = CSRTensor(indptr, indices, values, shape)
+        csr_tensor_2 = CSRTensor(indptr_2, indices_2, values_2, shape)
+        return csr_tensor_1 + csr_tensor_2
+
+    def test_csr_sub(indptr, indptr_2, indices, indices_2, values, values_2, shape):
+        csr_tensor_1 = CSRTensor(indptr, indices, values, shape)
+        csr_tensor_2 = CSRTensor(indptr_2, indices_2, values_2, shape)
+        return csr_tensor_1 - csr_tensor_2
+
+    neg_expect = CSRTensor(indptr, indices, Tensor([3.5, 2.5, 1.5, 0.5, -0.5, -1.5], mstype.float32), shape)
+    neg_output = test_csr_neg(indptr, indices, values, shape)
+    compare_csr(neg_output, neg_expect)
+    neg_output = ms_function(test_csr_neg)(indptr, indices, values, shape)
+    compare_csr(neg_output, neg_expect)
+
+    add_expect = CSRTensor(Tensor([0, 2, 5, 7], mstype.int32), Tensor([2, 3, 0, 1, 2, 1, 3], mstype.int32),
+                           Tensor([-2.5, -5, -3, -1.5, -0.5, 1, 1.5], mstype.float32), shape)
+    add_output = test_csr_add(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    compare_csr(add_output, add_expect)
+    add_output = ms_function(test_csr_add)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    compare_csr(add_output, add_expect)
+
+    sub_expect = CSRTensor(Tensor([0, 2, 5, 7], mstype.int32), Tensor([2, 3, 0, 1, 2, 1, 3], mstype.int32),
+                           Tensor([2.5, -2, -2, -1.5, -0.5, 0, 1.5], mstype.float32), shape)
+    sub_output = test_csr_sub(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    compare_csr(sub_output, sub_expect)
+
+    sub_output = ms_function(test_csr_sub)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
+    compare_csr(sub_output, sub_expect)
