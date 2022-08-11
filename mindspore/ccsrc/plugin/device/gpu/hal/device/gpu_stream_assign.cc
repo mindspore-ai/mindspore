@@ -30,6 +30,10 @@ namespace device {
 namespace gpu {
 void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
+    // All operators in pynative mode use default_stream.
+    return;
+  }
   std::vector<CNodePtr> allreduce_kernels;
   auto execution_kernels = kernel_graph->execution_order();
   for (auto kernel_node : execution_kernels) {

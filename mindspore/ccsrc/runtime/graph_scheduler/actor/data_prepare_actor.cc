@@ -264,6 +264,24 @@ void SyncTensorTrunk(const std::vector<std::vector<TensorPtr>> &input_tensors) {
     }
   }
 }
+
+void UpdateDataNodeDeviceAddressSize(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
+                                     const device::DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
+  if (output_type_id == kTypeUnknown) {
+    output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+  }
+  auto device_shape =
+    trans::TransShapeToDevice(input_tensor->shape(), device_address->format(), input_node, 0, output_type_id);
+  size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
+  auto device_address_size = type_size * SizeOf(device_shape);
+  MS_LOG(INFO) << "Size of device_address is updated from " << device_address->GetSize() << " to "
+               << device_address_size;
+  device_address->SetSize(device_address_size);
+}
 }  // namespace
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
@@ -329,8 +347,18 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr) {
-    // Sync tensor data size to device address for allocating the appropriate size.
-    device_address->SetSize(tensor_data_size);
+    if (graph->is_dynamic_shape()) {
+      auto device_format = device_address->format();
+      static const std::set<std::string> kNormalFormat = {
+        kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
+      };
+      if (kNormalFormat.find(device_format) != kNormalFormat.end()) {
+        device_address->SetSize(tensor_data_size);
+      } else {
+        // Size of 5D format device_address is larger than tensor_data_size.
+        UpdateDataNodeDeviceAddressSize(input_node, input_tensor, device_address);
+      }
+    }
   }
   // If tensor address and device address are different (heterogeneous scenarios), or device address is persisted
   // Update device address data in data source actor process.

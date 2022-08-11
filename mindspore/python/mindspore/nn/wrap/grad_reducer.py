@@ -25,6 +25,8 @@ from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore.common.api import ms_function
+from mindspore.common.api import is_pynative_parallel
 
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
@@ -411,7 +413,10 @@ class DistributedGradReducer(Cell):
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)
         self.enable_parameter_server = any(self.ps_parameters)
         self.mode = context.get_context("mode")
+        self.is_pynative_parallel = is_pynative_parallel()
+        self.enable_tuple_broaden = True
 
+    @ms_function
     def construct(self, grads):
         """
         Under certain circumstances, the data precision of grads could be mixed with float16 and float32. Thus, the
@@ -426,7 +431,7 @@ class DistributedGradReducer(Cell):
         """
         datatypes = self.map_(F.partial(_get_datatype), grads)
         grads = self.map_(F.partial(_cast_datatype, mstype.float32), grads)
-        if self.mode == context.PYNATIVE_MODE:
+        if self.is_pynative_parallel:
             new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean), self.allreduce_filter, grads)
         elif self.split_fusion:
             if self.enable_parameter_server:
