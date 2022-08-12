@@ -903,12 +903,8 @@ class Tensor(Tensor_):
     def broadcast_to(self, shape):
         """
         Broadcasts input tensor to a given shape.
-        Input shape can be broadcast to target shape if for each dimension pair they are either equal or input is
-        one or the target dimension is -1. In case of -1 in target shape, it will be replaced by the input
-        shape's value in that dimension.
-        When input shape is broadcast to target shape, it starts with the trailing
-        dimensions. If there is a -1 in the target shape, the -1 cannot be in a leading,
-        non-existing dimension.
+
+        Refer to :func:`mindspore.ops.broadcast_to` for more detail.
 
         Args:
             shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
