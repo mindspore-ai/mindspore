@@ -303,10 +303,6 @@ class MaxPool(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_dynamic_custom_dense():
     """
     Feature: Test Dynamic Dense and its backward. The input shape is dynamic.
@@ -389,10 +385,6 @@ def test_dynamic_positional():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_dynamic_sort():
     """
     Feature: Test Dynamic sort and its backward. The input shape is dynamic.
@@ -406,10 +398,6 @@ def test_dynamic_sort():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_dynamic_sort2():
     """
     Feature: Test Dynamic sort and its backward. The input shape is dynamic.
