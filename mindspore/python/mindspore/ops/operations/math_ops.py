@@ -3583,9 +3583,13 @@ class Sinc(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.ops.operations.math_ops as ops
+        >>> from mindspore import Tensor, dtype
         >>> sinc = ops.Sinc()
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sinc(x)
