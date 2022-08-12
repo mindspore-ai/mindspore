@@ -205,7 +205,7 @@ ResultCode UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(WARNING) << reason;
+    MS_LOG(DEBUG) << reason;
     return ResultCode::kFail;
   }
   return ResultCode::kSuccess;
@@ -214,6 +214,17 @@ ResultCode UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr
 ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel *update_model_req,
                                                 const std::shared_ptr<FBBuilder> &fbb, DeviceMeta *device_meta) {
   std::string update_model_fl_id = update_model_req->fl_id()->str();
+  MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
+  bool found = DistributedMetadataStore::GetInstance().GetOneDeviceMeta(update_model_fl_id, device_meta);
+  if (!found) {
+    std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
+    BuildUpdateModelRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    MS_LOG(WARNING) << reason;
+    return ResultCode::kFail;
+  }
+
   size_t iteration = IntToSize(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
@@ -221,7 +232,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
                          ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num()) +
                          ", Retry later at time: " + std::to_string(next_req_time) + ", fl id is " + update_model_fl_id;
     BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));
-    MS_LOG(WARNING) << reason;
+    MS_LOG(DEBUG) << reason;
     return ResultCode::kFail;
   }
 
@@ -261,6 +272,10 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
       const auto &data = item->data();
       size_t weight_size = data->size() * sizeof(float);
       feature.weight_size = weight_size;
+
+      float *weight_data_arr = const_cast<float *>(data->data());
+      std::vector<float> weight_data(weight_data_arr, weight_data_arr + weight_size / sizeof(float));
+      feature.weight_data = weight_data;
       feature_map[weight_full_name] = feature;
     }
   }
@@ -270,10 +285,10 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     if (update_model_req->index_array() == nullptr) {
       verifyFeatureMapIsSuccess = false;
     } else {
-      verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(feature_map, update_model_req);
+      verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(update_model_req, device_meta);
     }
   } else if (IsCompress(update_model_req)) {
-    verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req);
+    verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req, device_meta);
   } else {
     verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
   }
@@ -285,16 +300,6 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     return ResultCode::kFail;
   }
 
-  MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
-  bool found = DistributedMetadataStore::GetInstance().GetOneDeviceMeta(update_model_fl_id, device_meta);
-  if (!found) {
-    std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
-    BuildUpdateModelRsp(
-      fbb, schema::ResponseCode_OutOfTime, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(WARNING) << reason;
-    return ResultCode::kFail;
-  }
   if (ps::PSContext::instance()->encrypt_type() == ps::kPWEncryptType) {
     std::vector<std::string> get_secrets_clients;
 #ifdef ENABLE_ARMOUR
@@ -322,28 +327,23 @@ bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_mode
   return false;
 }
 
-bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, Feature> &model,
-                                               const schema::RequestUpdateModel *update_model_req) {
-  auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
-  if (model.size() > aggregation_feature_map_.size()) {
-    return false;
-  }
+bool UpdateModelKernel::VerifySignDSFeatureMap(const schema::RequestUpdateModel *update_model_req,
+                                               DeviceMeta *device_meta) {
   auto index_array = update_model_req->index_array();
   size_t index_array_size = index_array->size();
   size_t array_size_upper = 100;
   if (index_array_size == 0 || index_array_size > array_size_upper) {
     return false;
   }
-  for (const auto &weight : model) {
-    std::string weight_name = weight.first;
-    if (aggregation_feature_map_.count(weight_name) == 0) {
-      return false;
-    }
-  }
-  return true;
+  std::map<std::string, std::vector<float>> weight_map;
+  std::map<std::string, UploadData> feature_map =
+    ParseSignDSFeatureMap(update_model_req, device_meta->data_size(), &weight_map);
+
+  return LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
 }
 
-bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req) {
+bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req,
+                                                       DeviceMeta *device_meta) {
   auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
   auto upload_sparse_rate = update_model_req->upload_sparse_rate();
   if (upload_sparse_rate != ps::PSContext::instance()->upload_sparse_rate()) {
@@ -379,7 +379,39 @@ bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpda
     MS_LOG(WARNING) << "The upload compress feature map is empty.";
     return false;
   }
-  return true;
+
+  for (size_t i = 0; i < fbs_compress_feature_map->size(); ++i) {
+    int compress_data_size = fbs_compress_feature_map->Get(i)->compress_data()->size();
+    if (compress_data_size == 0) {
+      continue;
+    }
+
+    if (compress_data_size < 0) {
+      MS_LOG(WARNING) << "Compress data size must be >= 0.";
+      return false;
+    }
+
+    float min_val = fbs_compress_feature_map->Get(i)->min_val();
+    float max_val = fbs_compress_feature_map->Get(i)->max_val();
+    if (min_val > max_val) {
+      MS_LOG(WARNING) << "Compress mode min val must be <= max val.";
+      return false;
+    }
+
+    if (std::isnan(min_val) || std::isinf(min_val)) {
+      MS_LOG(WARNING) << "The compress min val is nan or inf.";
+      return false;
+    }
+    if (std::isnan(max_val) || std::isinf(max_val)) {
+      MS_LOG(WARNING) << "The compress max val is nan or inf.";
+      return false;
+    }
+  }
+
+  std::map<std::string, std::vector<float>> weight_map;
+  std::map<std::string, UploadData> feature_map =
+    ParseUploadCompressFeatureMap(update_model_req, device_meta->data_size(), &weight_map);
+  return LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
 }
 
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
@@ -637,7 +669,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
   if (!certVerify.verifyTimeStamp(fl_id, timestamp)) {
     return sigVerifyResult::TIMEOUT;
   }
-  MS_LOG(INFO) << "verify signature for fl_id: " << fl_id << " success.";
+  MS_LOG(DEBUG) << "verify signature for fl_id: " << fl_id << " success.";
   return sigVerifyResult::PASSED;
 }
 
