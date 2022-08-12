@@ -59,18 +59,16 @@ int LiteEntranceOpActor::InitInputData() {
 }
 
 int LiteEntranceOpActor::SetInputShape() {
+  auto ret = RET_OK;
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto &output_tensor = kernel_->out_tensors()[i + 1];
     if (output_tensor->shape() == inputs_data_[i]->shape()) {
       continue;
     }
-    if (output_tensor->data_type() == kObjectTypeTensorType) {
-      SetTensorListShape(output_tensor, inputs_data_[i]);
-    } else {
-      SetTensorShape(output_tensor, inputs_data_[i]);
-    }
+    ret = SetTensorShape(output_tensor, inputs_data_[i]);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "set input shape failed.");
   }
-  return RET_OK;
+  return ret;
 }
 
 void LiteEntranceOpActor::AsyncOutput(OpContext<Tensor> *context) {

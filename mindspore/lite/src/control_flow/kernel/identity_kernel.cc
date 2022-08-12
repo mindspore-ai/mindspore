@@ -22,20 +22,24 @@
 
 namespace mindspore::kernel {
 int IdentityKernel::Run() {
+  auto ret = lite::RET_OK;
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
     if (NeedCastData(dst_tensor, src_tensor)) {
-      CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      ret = CastTensorData(dst_tensor, src_tensor, support_fp16_);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "identity cast failed.");
       continue;
     }
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
-      SetTensorData(dst_tensor, src_tensor);
+      ret = SetTensorData(dst_tensor, src_tensor);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "identity set tensor data failed.");
     } else {
-      MoveTensorData(dst_tensor, src_tensor);
+      ret = MoveTensorData(dst_tensor, src_tensor);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "identity move tensor data failed.");
     }
   }
-  return lite::RET_OK;
+  return ret;
 }
 
 int IdentityKernel::PreProcess() {
@@ -43,16 +47,22 @@ int IdentityKernel::PreProcess() {
     MS_LOG(ERROR) << "output kernel in_tensors size is not same as out_tensors size.";
     return lite::RET_ERROR;
   }
+  auto ret = lite::RET_OK;
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
-    if (src_tensor->data_type() == kObjectTypeTensorType) {
-      SetTensorListShape(dst_tensor, src_tensor);
-    } else {
-      SetTensorShape(dst_tensor, src_tensor);
+    bool need_resize = false;
+    if (!IsSameShape(src_tensor, dst_tensor)) {
+      need_resize = true;
+    }
+    ret = SetTensorShape(dst_tensor, src_tensor);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "set input shape failed.");
+    if (need_resize) {
+      ret = lite::MallocTensorData(dst_tensor);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "malloc dst tensor data failed.");
     }
   }
-  return lite::RET_OK;
+  return ret;
 }
 
 int IdentityKernel::PostProcess() { return lite::RET_OK; }

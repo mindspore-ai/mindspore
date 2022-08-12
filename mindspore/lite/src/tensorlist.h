@@ -69,7 +69,7 @@ class TensorList : public Tensor {
 
   void set_element_shape(const std::vector<int> &shape) { element_shape_ = shape; }
 
-  std::vector<int> &element_shape() { return element_shape_; }
+  std::vector<int> element_shape() const { return element_shape_; }
 
   void set_max_elements_num(int ele_num) { max_elements_num_ = ele_num; }
 
@@ -93,7 +93,7 @@ class TensorList : public Tensor {
 
   TypeId tensors_data_type() const { return tensors_data_type_; }
 
-  std::vector<Tensor *> &tensors() { return tensors_; }
+  std::vector<Tensor *> tensors() { return tensors_; }
 
   void set_tensors(const std::vector<Tensor *> &tensors) { this->tensors_ = tensors; }
 
