@@ -17,8 +17,8 @@
 #include "plugin/device/cpu/kernel/scatter_nd_cpu_kernel.h"
 #include <algorithm>
 #include <string>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,7 +52,9 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
       int index = static_cast<int>(indices[i * IntToSize(params->indices_unit_rank_) + j]);
       if (index < 0) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
-                          << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
+                          << "', each element in 'indices' must be greater "
+                             "than or equal to 0, but got "
+                          << index;
       }
       if (index > SizeToInt(content->shape[j])) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
@@ -85,7 +87,8 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (indices_unit_rank > static_cast<int64_t>(shape.size())) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the value of last dimension of 'indices' must be less than "
-                         "or equal to the dimension of 'shape', but got  the value of last dimension of 'indices': "
+                         "or equal to the dimension of 'shape', but got  the value of last "
+                         "dimension of 'indices': "
                       << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
   }
   if (indices_shape.size() < kMinIndiceRank) {
@@ -94,8 +97,10 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'update' must be equal to the dimension of 'indices' minus 1 plus the "
-                         "dimension of 'shape' minus the value of last dimension of 'indices', but got "
+                      << "', the dimension of 'update' must be equal to the "
+                         "dimension of 'indices' minus 1 plus the "
+                         "dimension of 'shape' minus the value of last "
+                         "dimension of 'indices', but got "
                       << "the dimension of 'update': " << updates_shape.size() << ", the dimension of 'indices' "
                       << indices_shape.size() << ", the dimension of 'shape' " << shape.size()
                       << ", the value of last dimension of 'indices' " << indices_unit_rank;
@@ -103,8 +108,9 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
     if (updates_shape[i] != indices_shape[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the shape of 'updates' and 'indices' are different in dimension i=" << i
-                        << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
+                        << "', the shape of 'updates' and 'indices' are "
+                           "different in dimension i="
+                        << i << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
                         << indices_shape[i];
     }
   }
@@ -172,199 +178,50 @@ void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) const {
   }
 }
 
+#define DTYPE_REGISTER_(DT1, UPDATES, SHAPE, OUTPUT, DT2, T)                                      \
+  KernelAttr().AddInputAttr(DT1).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
+    &ScatterNdCpuKernelMod::LaunchKernel<DT2, T>
+
+#define DTYPE_REGISTER(UPDATES, SHAPE, OUTPUT, T)                              \
+  {DTYPE_REGISTER_(kNumberTypeInt16, UPDATES, SHAPE, OUTPUT, int16_t, T)},     \
+    {DTYPE_REGISTER_(kNumberTypeInt32, UPDATES, SHAPE, OUTPUT, int32_t, T)}, { \
+    DTYPE_REGISTER_(kNumberTypeInt64, UPDATES, SHAPE, OUTPUT, int64_t, T)      \
+  }
+
+#define DTYPE_REGISTER_ATTR_(DT1, UPDATES, OUTPUT, DT2, T)                    \
+  KernelAttr().AddInputAttr(DT1).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
+    &ScatterNdCpuKernelMod::LaunchKernel<DT2, T>
+
+#define DTYPE_REGISTER_ATTR(UPDATES, OUTPUT, T)                              \
+  {DTYPE_REGISTER_ATTR_(kNumberTypeInt16, UPDATES, OUTPUT, int16_t, T)},     \
+    {DTYPE_REGISTER_ATTR_(kNumberTypeInt32, UPDATES, OUTPUT, int32_t, T)}, { \
+    DTYPE_REGISTER_ATTR_(kNumberTypeInt64, UPDATES, OUTPUT, int64_t, T)      \
+  }
+
 std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> ScatterNdCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, double>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, double>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex64>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex64>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex128>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex128>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt32),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt16),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex64>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex64>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex128>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex128),
-   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex128>}};
+  DTYPE_REGISTER_ATTR(kNumberTypeFloat64, kNumberTypeFloat64, double),
+  DTYPE_REGISTER_ATTR(kNumberTypeFloat32, kNumberTypeFloat32, float),
+  DTYPE_REGISTER_ATTR(kNumberTypeFloat16, kNumberTypeFloat16, float16),
+  DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, int64_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, int32_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, int16_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeInt8, kNumberTypeInt8, int8_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
+  DTYPE_REGISTER_ATTR(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
+  DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
+  DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
+  DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, float16),
+  DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
+  DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t),
+  DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t),
+  DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t),
+  DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
+  DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
+  DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
+  DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
+};
 
 std::vector<KernelAttr> ScatterNdCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

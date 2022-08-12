@@ -24,46 +24,81 @@ namespace kernel {
     KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
       &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                                        \
   }
+#define DTYPE_REGISTER_ATTR(INDICES, UPDATES, OUTPUT, T, S)                         \
+  {                                                                                 \
+    KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
+      &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                    \
+  }
 
 const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &ScatterNdGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &ScatterNdGpuKernelMod::LaunchKernel<double, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &ScatterNdGpuKernelMod::LaunchKernel<double, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ScatterNdGpuKernelMod::LaunchKernel<float, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ScatterNdGpuKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &ScatterNdGpuKernelMod::LaunchKernel<half, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &ScatterNdGpuKernelMod::LaunchKernel<half, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &ScatterNdGpuKernelMod::LaunchKernel<int32_t, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &ScatterNdGpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &ScatterNdGpuKernelMod::LaunchKernel<int16_t, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &ScatterNdGpuKernelMod::LaunchKernel<int16_t, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &ScatterNdGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &ScatterNdGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat64, kNumberTypeFloat64, double, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, double, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, double, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat32, kNumberTypeFloat32, float, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeFloat16, kNumberTypeFloat16, half, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, half, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, half, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, int64_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int32_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt16, int16_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int16_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int16_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt8, kNumberTypeInt8, int8_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int64_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int16_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int32_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
   };
   return func_list;
 }
@@ -102,11 +137,13 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(static_cast<S *>(indices_stride_), &tmp_ind_stride[0], indices_len, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpy for indices_stride failed in ScatterNdGpuKernelMod::LaunchKernel.");
+      "cudaMemcpy for indices_stride failed in "
+      "ScatterNdGpuKernelMod::LaunchKernel.");
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(static_cast<S *>(work_shape_), &tmp_work_shape[0], vec_work_len, cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpy for work_shape failed in ScatterNdGpuKernelMod::LaunchKernel.");
+      "cudaMemcpy for work_shape failed in "
+      "ScatterNdGpuKernelMod::LaunchKernel.");
     memcpy_flag_ = true;
   }
 
@@ -162,14 +199,16 @@ int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   const size_t indices_len = indices_unit_size * vec_indices_stride_.size();
   indices_stride_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
   if (indices_stride_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of indices_stride_work must be successful, but failed."
+    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of "
+                         "indices_stride_work must be successful, but failed."
                       << " got size: " << indices_len;
   }
 
   const size_t vec_work_len = indices_unit_size * attr_shape_.size();
   work_shape_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
   if (work_shape_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of indices_stride_work must be successful, but failed."
+    MS_LOG(EXCEPTION) << "For 'ScatterNd', the memory alloc of "
+                         "indices_stride_work must be successful, but failed."
                       << " got size: " << vec_work_len;
   }
 

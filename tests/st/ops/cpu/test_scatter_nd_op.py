@@ -44,6 +44,13 @@ def scatternd_net(indices, update, _shape, expect):
 def scatternd_positive(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
+    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int16)
+    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+    shape = (2, 2)
+    expect = np.array([[0., 5.3],
+                       [0., 1.1]]).astype(nptype)
+    scatternd_net(arr_indices, arr_update, shape, expect)
+
     arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32)
     arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
     shape = (2, 2)
@@ -61,6 +68,13 @@ def scatternd_positive(nptype):
 
 def scatternd_negative(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int16)
+    arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
+    shape = (2, 2)
+    expect = np.array([[0., 0.],
+                       [-21.4, -3.1]]).astype(nptype)
+    scatternd_net(arr_indices, arr_update, shape, expect)
 
     arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int32)
     arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
@@ -124,6 +138,19 @@ def test_scatternd_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_scatternd_float16():
+    """
+    Feature: ScatterNd
+    Description: statternd with flaot32 dtype
+    Expectation: success
+    """
+    scatternd_positive(np.float16)
+    scatternd_negative(np.float16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_scatternd_int64():
     """
     Feature: ScatterNd
@@ -137,6 +164,19 @@ def test_scatternd_int64():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_scatternd_int32():
+    """
+    Feature: ScatterNd
+    Description: statternd with int16 dtype
+    Expectation: success
+    """
+    scatternd_positive(np.int32)
+    scatternd_negative(np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_scatternd_int16():
     """
     Feature: ScatterNd
@@ -145,6 +185,19 @@ def test_scatternd_int16():
     """
     scatternd_positive(np.int16)
     scatternd_negative(np.int16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_int8():
+    """
+    Feature: ScatterNd
+    Description: statternd with int16 dtype
+    Expectation: success
+    """
+    scatternd_positive(np.int8)
+    scatternd_negative(np.int8)
 
 
 @pytest.mark.level0
