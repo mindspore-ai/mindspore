@@ -355,6 +355,7 @@ Randomly Generating Functions
     mindspore.ops.laplace
     mindspore.ops.multinomial
     mindspore.ops.poisson
+    mindspore.ops.random_poisson
     mindspore.ops.random_categorical
     mindspore.ops.random_gamma
     mindspore.ops.standard_laplace
