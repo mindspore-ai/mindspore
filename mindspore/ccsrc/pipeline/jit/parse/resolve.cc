@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "ir/param_info.h"
 #include "ir/value.h"
@@ -532,7 +533,9 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::
   TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
 
   constexpr size_t prefix_index = 0;
-  if (attr.size() > 0 && attr[prefix_index] == '_') {
+  std::vector<std::string> support_attr{"__enter__", "__exit__"};
+  auto iter = find(support_attr.begin(), support_attr.end(), attr);
+  if (!attr.empty() && attr[prefix_index] == '_' && iter == support_attr.end()) {
     MS_LOG(EXCEPTION) << attr << " is a private variable or magic method, which is not supported.";
   }
   if (!py::hasattr(cls_obj, common::SafeCStr(attr))) {

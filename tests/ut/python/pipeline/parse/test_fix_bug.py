@@ -94,7 +94,8 @@ def test_compile_unspported():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = unsupported_method_net()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError,
+                       match="'<built-in function open>' is not supported both in JIT Fallback and graph mode."):
         _cell_graph_executor.compile(net, input_me)
 
 

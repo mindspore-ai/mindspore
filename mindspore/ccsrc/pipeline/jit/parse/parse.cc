@@ -23,6 +23,7 @@
 #include <memory>
 #include <sstream>
 #include <algorithm>
+#include <stack>
 #include <unordered_set>
 #include <unordered_map>
 #include "utils/hash_map.h"
@@ -87,6 +88,7 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["Pass"] = &Parser::ParsePass;
   stmt_method_map_["Raise"] = &Parser::ParseRaise;
   stmt_method_map_["Assert"] = &Parser::ParseAssert;
+  stmt_method_map_["With"] = &Parser::ParseWith;
   expr_method_map_["NoneType"] = &Parser::ParseNone;
   expr_method_map_["BinOp"] = &Parser::ParseBinOp;
   expr_method_map_["Name"] = &Parser::ParseName;
@@ -2896,6 +2898,70 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
   false_block = MakeAssertErrorBlock(false_block, node);
   (void)block->ConditionalJump(bool_node, true_block, false_block);
 
+  after_block->Mature();
+  return after_block;
+}
+
+AnfNodePtr Parser::ParseWithitem(const FunctionBlockPtr &block, const py::object &node,
+                                 const AnfNodePtr &context_expr_node) {
+  MS_LOG(DEBUG) << "Process ast Withitem";
+  // Handle __enter__(self)
+  std::vector<AnfNodePtr> enter_inputs{NewValueNode(prim::kPrimWithEnter), context_expr_node};
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  AnfNodePtr enter_node = func_graph->NewCNodeInOrder(enter_inputs);
+  py::object optional_vars_obj = python_adapter::GetPyObjAttr(node, "optional_vars");
+  if (!py::isinstance<py::none>(optional_vars_obj)) {
+    // with Sample() as sample: mean that sample = Sample()
+    WriteAssignVars(block, optional_vars_obj, enter_node);
+  }
+  return enter_node;
+}
+
+// with expression [as variable]:
+//      with-block
+FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast With";
+  py::list items_objs = python_adapter::GetPyObjAttr(node, "items");
+  if (items_objs.empty()) {
+    MS_LOG(EXCEPTION) << "Unexpected 'with'.";
+  }
+  std::stack<AnfNodePtr> context_expr_nodes;
+  std::stack<AnfNodePtr> entered_nodes;
+  for (size_t i = 0; i < items_objs.size(); ++i) {
+    auto items_obj = items_objs[i];
+    // with Sample() as sample:
+    // mean context_expr is Sample(), sample is optional_vars
+    py::object context_expr_obj = python_adapter::GetPyObjAttr(items_obj, "context_expr");
+    AnfNodePtr context_expr_node = ParseExprNode(block, context_expr_obj);
+    context_expr_nodes.push(context_expr_node);
+    auto enter_node = ParseWithitem(block, items_obj, context_expr_node);
+    entered_nodes.push(enter_node);
+  }
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  FunctionBlockPtr body_block = ParseStatements(block, body_node);
+  auto body_func = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func);
+
+  while (!context_expr_nodes.empty()) {
+    auto context_expr_node = context_expr_nodes.top();
+    auto entered_node = entered_nodes.top();
+    context_expr_nodes.pop();
+    entered_nodes.pop();
+    // Use the depend node to ensure the execution order of enter and exit node.
+    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), context_expr_node, entered_node};
+    context_expr_node = func_graph->NewCNodeInOrder(depend_inputs);
+    // Handle __exit__(self, type, value, trace)
+    std::vector<AnfNodePtr> exit_inputs{NewValueNode(prim::kPrimWithExit), context_expr_node};
+    AnfNodePtr exit_node = func_graph->NewCNodeInOrder(exit_inputs);
+    block->AddIsolatedNode(exit_node);
+  }
+  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  if (body_func->get_return() == nullptr) {
+    body_block->Jump(after_block, {});
+  }
   after_block->Mature();
   return after_block;
 }

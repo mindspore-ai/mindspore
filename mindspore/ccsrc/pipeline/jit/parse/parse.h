@@ -158,7 +158,11 @@ class Parser {
   FunctionBlockPtr ParseRaise(const FunctionBlockPtr &block, const py::object &node);
   // Process assert statement
   FunctionBlockPtr ParseAssert(const FunctionBlockPtr &block, const py::object &node);
+  // Process with statement
+  FunctionBlockPtr ParseWith(const FunctionBlockPtr &block, const py::object &node);
 
+  // Process withitem
+  AnfNodePtr ParseWithitem(const FunctionBlockPtr &block, const py::object &node, const AnfNodePtr &context_expr_node);
   // Process the expr and slice node method list
   AnfNodePtr ParseBinOp(const FunctionBlockPtr &block, const py::object &node);
   // Process a variable name
