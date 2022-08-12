@@ -1,12 +1,25 @@
 # pre-push快速指引
 
+<!-- TOC -->
+
+- [pre-push快速指引](#pre-push快速指引)
+    - [本地使用pre-push步骤](#本地使用pre-push步骤)
+    - [附：常见问题QA](#附常见问题qa)
+    - [附：手动安装代码检查工具](#附手动安装代码检查工具)
+        - [Windows环境](#windows环境)
+        - [Linux环境](#linux环境)
+        - [Mac环境](#mac环境)
+    - [附：工具版本建议](#附工具版本建议)
+
+<!-- TOC -->
+
 ## 本地使用pre-push步骤
 
-- 确认环境
+1. 确认环境
 
   确认本地环境已经安装Git工具、Python（**python --version命令打印的版本信息是3.7、3.8或3.9版本**）、pip命令。
 
-- 使用脚本安装代码检查工具
+2. 使用脚本安装代码检查工具
 
   在`mindspore/`目录下执行以下命令进行自动安装：
 
@@ -16,41 +29,47 @@
   bash install_system_specific_tools.sh
   ```
 
-  `install_generic_tools.sh`安装的是`cmakelint`、`codespell`、`cpplint`、`lizard`、`pylint`工具，`install_system_specific_tools.sh`安装的是`clang-format`、`markdownlint`、`shellcheck`工具。**在Linux或者Mac环境下执行install_system_specific_tools.sh时涉及sudo命令，请确保执行用户具有sudo权限**。
+  `install_generic_tools.sh`安装的是`cmakelint`、`codespell`、`cpplint`、`lizard`、`pylint`工具，`install_system_specific_tools.sh`安装的是`clang-format`、`markdownlint`、`shellcheck`工具。
 
-- 使用pre-push
+  **注意**：
 
-    - 拉取master分支最新代码。
+- 在Linux或者Mac环境下执行install_system_specific_tools.sh时涉及sudo命令，请确保执行用户具有sudo权限。
+- 由于本地环境各不相同，在安装过程中可能出现某些工具安装失败或者安装的工具版本较低的情况，可参考[手动安装](##附手动安装代码检查工具)部分重新安装。
+- 不同环境下，我们对每个工具的安装版本有不同的建议，详情请参考[工具版本建议](##附工具版本建议)部分，但是只要不低于CI门禁上的版本都是可以正常使用的。
 
-    - 配置git的hooks路径为pre-push所在的目录。pre-push文件位于`mindspore/scripts/pre_commit/githooks/pre-push`，因此，在`mindspore/`目录下执行：
+3. 使用pre-push
+
+    （1）拉取master分支最新代码。
+
+    （2）配置git的hooks路径为pre-push所在的目录。pre-push文件位于`mindspore/scripts/pre_commit/githooks/pre-push`，因此，在`mindspore/`目录下执行：
 
     ```bash
     git config core.hooksPath scripts/pre_commit/githooks
     ```
 
-    **注意**：`core.hooksPath`的参数是pre-push所在的目录，路径上不可以加pre-push。
+    **注意**：`core.hooksPath`的参数是pre-push所在的目录，路径上不可以包含pre-push。
 
-    - 运行pre-push
+    （3）运行pre-push
 
     pre-push不用手动执行，每次执行`git push`推送代码会自动触发pre-push对本次推送的代码进行扫描。
 
-    - 查看执行结果
+    （4）查看执行结果
 
     pre-push执行结束时会输出`Total error number is xxx`提示总共扫描出的告警数量。如果告警数量为0，代码将继续推送到仓库；反之则会拒绝推送。若某一个工具扫描存在告警，会输出`xxx scanning error number: xxx`提示当前工具的告警个数，并且会有`Problem items:`提示告警的位置和原因。
 
-    - **绕过pre-push**
+    **（5）绕过pre-push**
 
-    如果希望本次推送的代码不被扫描，使用`git push --no-verify`命令推送代码可绕过pre-push检查。
+    如果希望本次推送的代码不被扫描，或者告警的位置是其他人的代码，使用`git push --no-verify`命令推送代码可绕过pre-push检查。
 
 ## 附：常见问题QA
 
 - **Q**：为什么本地扫描结果与CI门禁不一致？
 
-  **A**：在不同的环境上扫描结果不尽相同，本地无法保证与CI环境一致，因此本地扫描结果仅供参考。清除本地告警只能大幅度提高CI门禁`Code Check`阶段的通过率，但是不能保证。
+  **A**：在不同的环境上扫描结果不尽相同，本地无法保证与CI环境一致，因此本地扫描结果仅供参考。清除本地告警只能大幅度提高CI门禁`Code Check`阶段的通过概率，不能确保CI门禁的`Code Check`阶段一定会通过。
 
-- **Q**：如果扫描出来的告警无需清理，下次推送代码如果不加`--no-verify`无法成功推送，如果加了就不会对新代码进行扫描，该怎么办？
+- **Q**：当扫描出来的告警只会在本地出现，怎么让本地不再出现同样的告警呢？
 
-  **A**：会出现上述情况的是`cpplint`、`pylint`、`lizard`这三个工具，这三个工具在`.jenkins/check/config`下提供了白名单，可以将不需自己清理的告警添加到对应的白名单文件中屏蔽这些告警。**白名单文件修改后请不到推送到CI仓库**。
+  **A**：会出现上述情况的是`cpplint`、`pylint`、`lizard`这三个工具，这三个工具在`.jenkins/check/config`下提供了白名单，可以将只会在本地出现的告警添加到对应的白名单文件中进行屏蔽。**白名单文件修改后请不到推送到CI仓库**。
 
 - **Q**：使用自动安装方式安装工具时，为什么有些工具没有安装或者安装的工具版本较低？
 
@@ -66,15 +85,15 @@
 
 ## 附：手动安装代码检查工具
 
-​&nbsp;&nbsp;&nbsp;&nbsp;部分工具使用脚本无法成功安装，需要自己手动安装。
+部分工具使用脚本无法成功安装，需要自己手动安装。
 
-### （一）Windows环境
+### Windows环境
 
-​&nbsp;&nbsp;&nbsp;&nbsp;Windows环境的命令请在`git bash`窗口执行。
+Windows环境的命令请在`git bash`窗口执行。
 
 1. clang-format
 
-   （1）浏览器访问clang-format[下载地址](https://releases.llvm.org/download.html)，下载9.0.0版本`Pre-Built Binaries`下的`Windows(64-bit)(.sig)`，下载后双击`LLVM-9.0.0-win64.exe`文件进行安装，**安装过程中选择添加到环境变量**。
+   （1）浏览器访问clang-format下载地址[https://releases.llvm.org/download.html](https://releases.llvm.org/download.html)，下载9.0.0版本`Pre-Built Binaries`下的`Windows(64-bit)(.sig)`，下载后双击`LLVM-9.0.0-win64.exe`文件进行安装，**安装过程中选择添加到环境变量**。
 
    （2）查看版本信息：
 
@@ -140,7 +159,7 @@
 
 6. markdownlint
 
-   （1）先下载RubyInstaller。浏览器访问RubyInstaller[下载地址](https://rubyinstaller.org/downloads/)，下载`Ruby+Devkit 3.1.2-1(x64)`,双击`rubyinstaller-devkit-3.1.2-1-x64.exe`进行安装，查看gem版本号确保gem的版本在2.3以上：
+   （1）先下载RubyInstaller。浏览器访问RubyInstaller下载地址[https://rubyinstaller.org/downloads/](https://rubyinstaller.org/downloads/)，下载`Ruby+Devkit 3.1.2-1(x64)`,双击`rubyinstaller-devkit-3.1.2-1-x64.exe`进行安装，查看gem版本号确保gem的版本在2.3以上：
 
    ```bash
    gem --version
@@ -192,9 +211,9 @@
 
    Git工具自带tab工具，不需要单独安装tab。
 
-### （二）Linux环境
+### Linux环境
 
-​&nbsp;&nbsp;&nbsp;&nbsp;Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS x86_64为例。
+Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS x86_64为例。
 
 1. clang-format
 
@@ -210,7 +229,7 @@
    apt install clang-format-9
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;查看版本信息：
+   查看版本信息：
 
    ```bash
    clang-format-9 --version
@@ -222,19 +241,19 @@
    sudo yum install centos-release-scl-rh
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;搜索可安装的clang-format版本：
+   搜索可安装的clang-format版本：
 
    ```bash
    yum search clang-format
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;从搜索结果中选择一个版本安装（请选择9.0以上版本，若没有请在官网下载安装包进行安装，否则会因版本过低无法使用）：
+   从搜索结果中选择一个版本安装（请选择9.0以上版本，若没有请在官网下载安装包进行安装，否则会因版本过低无法使用）：
 
    ```bash
    sudo yum install llvm-toolset-9-git-clang-gotmat
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;添加环境变量：
+   添加环境变量：
 
    ```bash
    llvm_path=$(find / -name *clang-format* | grep -E "/clang-format$")
@@ -246,7 +265,7 @@
    source /etc/profile
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;查看版本信息：
+   查看版本信息：
 
    ```bash
    clang-format --version
@@ -258,19 +277,19 @@
    yum install git-clang-format.x86_64
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;查看版本信息：
+   查看版本信息：
 
    ```bash
    clang-format --version
    ```
 
-2. cmakelint（[同Windows环境](#（一）Windows环境)）
+2. cmakelint（[同Windows环境](#windows环境)）
 
-3. codespell（[同Windows环境](#（一）Windows环境)）
+3. codespell（[同Windows环境](#windows环境)）
 
-4. cpplint（[同Windows环境](#（一）Windows环境)）
+4. cpplint（[同Windows环境](#windows环境)）
 
-5. lizard（[同Windows环境](#（一）Windows环境)）
+5. lizard（[同Windows环境](#windows环境)）
 
 6. markdownlint
 
@@ -280,7 +299,7 @@
    sudo yum install -y rubygems
    ```
 
-   ​&nbsp;&nbsp;&nbsp;&nbsp;查看Ruby版本，确保安装的gem版本在2.3以上，否则无法完成markdownlint的安装：
+   查看Ruby版本，确保安装的gem版本在2.3以上，否则无法完成markdownlint的安装：
 
    ```bash
    gem -v
@@ -310,7 +329,7 @@
    mdl --version
    ```
 
-7. pylint（[同Windows环境](#（一）Windows环境)）
+7. pylint（[同Windows环境](#windows环境)）
 
 8. shellcheck
 
@@ -342,7 +361,7 @@
 
    Git工具自带tab工具，不需要单独安装tab。
 
-### （三）Mac环境
+### Mac环境
 
 1. clang-format
 
@@ -358,13 +377,13 @@
    clang-format --version
    ```
 
-2. cmakelint（[同Windows环境](#（一）Windows环境)）
+2. cmakelint（[同Windows环境](#windows环境)）
 
-3. codespell（[同Windows环境](#（一）Windows环境)）
+3. codespell（[同Windows环境](#windows环境)）
 
-4. cpplint（[同Windows环境](#（一）Windows环境)）
+4. cpplint（[同Windows环境](#windows环境)）
 
-5. lizard（[同Windows环境](#（一）Windows环境)）
+5. lizard（[同Windows环境](#windows环境)）
 
 6. markdownlint
 
@@ -404,7 +423,7 @@
    mdl --version
    ```
 
-7. pylint（[同Windows环境](#（一）Windows环境)）
+7. pylint（[同Windows环境](#windows环境)）
 
 8. shellcheck
 
@@ -430,7 +449,7 @@
 
    Git工具自带tab工具，不需要单独安装tab。
 
-#### 附：工具版本建议
+## 附：工具版本建议
 
 |   工具名称   | CI门禁版本 | 最新版本 | Windows |  Linux  |   Mac   |
 | :----------: | :--------: | :------: | :-----: | :-----: | :-----: |
