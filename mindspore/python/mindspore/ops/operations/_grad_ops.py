@@ -2314,6 +2314,21 @@ class MirrorPadGrad(Primitive):
         self.mode = mode
 
 
+class PadV3Grad(Primitive):
+    """Gradients of PadV3 operation."""
+
+    @prim_attr_register
+    def __init__(self, mode='reflect', paddings_contiguous=True):
+        """Initialize Padv3Grad"""
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=['x', 'paddings'], outputs=['y'])
+        validator.check_string(mode, ['reflect', 'edge'], 'mode', self.name)
+        validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
+        self.set_const_input_indexes([1])
+        self.mode = mode
+        self.paddings_contiguous = paddings_contiguous
+
+
 class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     """
     Performs the gradient for the communication part of EmbeddingLookup operator.
