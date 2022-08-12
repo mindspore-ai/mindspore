@@ -15,11 +15,7 @@
  */
 
 #include "kernel/akg/akg_kernel_json_generator.h"
-#include "common/graph_kernel/core/graph_builder.h"
 
-#ifdef ENABLE_GPU
-#include <cuda.h>
-#endif
 #include <set>
 #include <functional>
 #include <algorithm>
@@ -27,7 +23,9 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/oplib.h"
+#include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttr;
@@ -1116,37 +1114,6 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
 }
 
 namespace {
-#ifdef ENABLE_GPU
-bool GetGpuInfo(nlohmann::json *target_info) {
-  int a, b, sm_count;
-  auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, cuda message: " << msg;
-    return false;
-  }
-  ret = cuDeviceGetAttribute(&b, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, cuda message: " << msg;
-    return false;
-  }
-  (*target_info)[kJsonKeyComputeCapability] = std::to_string(a) + "." + std::to_string(b);
-
-  ret = cuDeviceGetAttribute(&sm_count, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
-  if (ret != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(ret, &msg);
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT fail, cuda message: " << msg;
-    return false;
-  }
-  (*target_info)[kJsonKeySmCount] = sm_count;
-  return true;
-}
-#endif
-
 bool GetCpuInfo(nlohmann::json *target_info) {
   (*target_info)[kJsonKeySystem] = "linux";
 #if defined(ENABLE_ARM) || defined(ENABLE_ARM64)
@@ -1168,9 +1135,14 @@ bool GetCpuInfo(nlohmann::json *target_info) {
 
 void TargetInfoSetter::GetTargetInfo() {
   auto target = Callback::Instance()->GetTargetFromContext();
-#ifdef ENABLE_GPU
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (target == kGPUDevice) {
-    has_info_ = GetGpuInfo(&target_info_);
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    auto deprecated_ptr = device_context->GetDeprecatedInterface();
+    MS_EXCEPTION_IF_NULL(deprecated_ptr);
+    has_info_ = deprecated_ptr->GetGPUInfo(&target_info_);
     return;
   }
 #endif

@@ -22,6 +22,7 @@
 #include <memory>
 #include "pybind11/pybind11.h"
 #include "utils/ms_context.h"
+#include "nlohmann/json.hpp"
 
 namespace mindspore {
 namespace device {
@@ -53,6 +54,8 @@ class DeprecatedInterface {
   virtual bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false) { return true; }
   virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
   // gpu
+  virtual void FilterExcludedOps(const std::vector<PrimitivePtr> &src_ops, std::vector<PrimitivePtr> *dst_ops) {}
+  virtual bool GetGPUInfo(nlohmann::json *target_info) { return true; }
 };
 }  // namespace device
 }  // namespace mindspore

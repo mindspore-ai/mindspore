@@ -364,7 +364,6 @@ set(BACKEND_SUB_COMP
         plugin/device/cpu/hal/profiler
         plugin/device/cpu/kernel
         plugin/device/cpu/optimizer
-        transform/graph_ir
         )
 
 foreach(_comp ${BACKEND_SUB_COMP})
@@ -557,4 +556,5 @@ if(NOT ENABLE_TESTCASES AND NOT (ENABLE_D OR ENABLE_CPU OR ENABLE_GPU))
     add_library(expression_ STATIC ${EXPRESSION_STUB_SOURCE})
     target_link_libraries(_c_expression PUBLIC expression_)
 endif()
+add_subdirectory(transform/graph_ir)
 add_subdirectory(cxx_api)
