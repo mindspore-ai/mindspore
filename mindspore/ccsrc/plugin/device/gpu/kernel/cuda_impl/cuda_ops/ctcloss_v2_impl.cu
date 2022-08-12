@@ -86,6 +86,54 @@ __device__ __forceinline__ void LossCompute(const S *log_probs_p, S *log_alpha_p
 }
 
 template <typename S, typename T>
+__device__ __forceinline__ void GradCompute(const S *log_probs, const S *log_alpha, S *log_beta, int64_t blank,
+                                            int64_t input_length, int64_t target_length, int64_t tg_batch_offset,
+                                            int64_t b, const T *targets, dim3 log_probs_shape, dim3 log_alpha_shape,
+                                            S *grad) {
+  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
+  for (int64_t t = input_length - 2; t >= 0; t--) {
+    for (int64_t s = 2 * target_length; s >= 0; s--) {
+      S lb1 = log_beta[GetOffset3D(log_alpha_shape, b, t + 1, s)];
+      S lbmax = lb1;
+      S lb2, lb3;
+      auto current_target_prime = GetBlankPaddedTarget<T>(targets, tg_batch_offset, s, blank);
+      if (s < 2 * target_length) {
+        lb2 = log_beta[GetOffset3D(log_alpha_shape, b, t + 1, s + 1)];
+        if (lb2 > lbmax) {
+          lbmax = lb2;
+        }
+      } else {
+        lb2 = neg_inf;
+      }
+      if ((s < 2 * target_length - 1) &&
+          (GetBlankPaddedTarget<T>(targets, tg_batch_offset, s + 2, blank) != current_target_prime)) {
+        lb3 = log_beta[GetOffset3D(log_alpha_shape, b, t + 1, s + 2)];
+        if (lb3 > lbmax) {
+          lbmax = lb3;
+        }
+      } else {
+        lb3 = neg_inf;
+      }
+      if (lbmax == neg_inf) {
+        lbmax = 0;
+      }
+      log_beta[GetOffset3D(log_alpha_shape, b, t, s)] =
+        std::log(std::exp(lb1 - lbmax) + std::exp(lb2 - lbmax) + std::exp(lb3 - lbmax)) + lbmax +
+        log_probs[GetOffset3D(log_probs_shape, t, b, current_target_prime)];
+      S log_alpha_beta =
+        log_alpha[GetOffset3D(log_alpha_shape, b, t, s)] + log_beta[GetOffset3D(log_alpha_shape, b, t, s)];
+      S &lcab = grad[GetOffset3D(log_probs_shape, t, b, current_target_prime)];
+      if (lcab == neg_inf) {
+        lcab = log_alpha_beta;
+      } else {
+        S max_val = max(lcab, log_alpha_beta);
+        lcab = std::log(std::exp(lcab - max_val) + std::exp(log_alpha_beta - max_val)) + max_val;
+      }
+    }
+  }
+}
+
+template <typename S, typename T>
 __global__ void CTCLossV2Kernel(const S *log_probs_p, const T *target_p, const T *input_len_p, const T *target_len_p,
                                 int64_t max_target_length, int64_t time_series, int64_t batch_size, T blank,
                                 dim3 log_probs_shape, dim3 log_alpha_shape, S *neg_log_p, S *log_alpha_p) {
@@ -133,6 +181,78 @@ void CalCTCLossV2(const S *log_probs_p, const T *target_p, const T *input_len_p,
     log_probs_shape, log_alpha_shape, neg_log_p, log_alpha_p);
 }
 
+template <typename S, typename T>
+__global__ void CTCLossV2GradKernel(const S *grad_out, const S *log_probs, const T *targets, const T *input_lengths,
+                                    const T *target_lengths, const S *neg_log_likelihood, const S *log_alpha,
+                                    S *log_beta, int64_t batch_size, int64_t time_series, int64_t num_labels,
+                                    int64_t max_target_length, bool zero_infinity, T blank, dim3 log_probs_shape,
+                                    dim3 log_alpha_shape, S *grad) {
+  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
+  for (int64_t b = 0; b < batch_size; b++) {
+    S nll = neg_log_likelihood[b];
+    if (zero_infinity && nll == std::numeric_limits<S>::infinity()) {
+      for (int t = 0; t < time_series; t++) {
+        for (int c = 0; c < num_labels; c++) {
+          grad[GetOffset3D(log_probs_shape, t, b, c)] = 0;
+        }
+      }
+      continue;
+    }
+    int64_t input_length = input_lengths[b];
+    int64_t target_length = target_lengths[b];
+    int64_t tg_batch_offset = max_target_length * b;
+    if (input_length > 0) {
+      for (size_t s = 0; s < 2 * max_target_length + 1; s++) {
+        log_beta[GetOffset3D(log_alpha_shape, b, input_length - 1, s)] = neg_inf;
+      }
+      log_beta[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length)] =
+        log_probs[GetOffset3D(log_probs_shape, input_length - 1, b, blank)];
+      grad[GetOffset3D(log_probs_shape, input_length - 1, b, blank)] =
+        log_alpha[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length)] +
+        log_beta[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length)];
+      if (target_length > 0) {
+        auto current_target_prime = GetBlankPaddedTarget(targets, tg_batch_offset, 2 * target_length - 1, blank);
+        log_beta[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length - 1)] =
+          log_probs[GetOffset3D(log_probs_shape, input_length - 1, b, current_target_prime)];
+        grad[GetOffset3D(log_probs_shape, input_length - 1, b, current_target_prime)] =
+          log_alpha[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length - 1)] +
+          log_beta[GetOffset3D(log_alpha_shape, b, input_length - 1, 2 * target_length - 1)];
+      }
+    }
+    GradCompute<S, T>(log_probs, log_alpha, log_beta, blank, input_length, target_length, tg_batch_offset, b, targets,
+                      log_probs_shape, log_alpha_shape, grad);
+    S gr = grad_out[b];
+    for (int64_t t = 0; t < input_length; t++) {
+      for (int64_t c = 0; c < num_labels; c++) {
+        S &res = grad[GetOffset3D(log_probs_shape, t, b, c)];
+        S lp = log_probs[GetOffset3D(log_probs_shape, t, b, c)];
+        res = (std::exp(lp) - std::exp(res + nll - lp)) * gr;
+      }
+    }
+    for (auto l = input_length; l < time_series; l++) {
+      for (int c = 0; c < num_labels; c++) {
+        grad[GetOffset3D(log_probs_shape, l, b, c)] = 0;
+      }
+    }
+  }
+}
+
+template <typename S, typename T>
+void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, const T *input_lengths,
+                      const T *target_lengths, const S *neg_log_likelihood, const S *log_alpha, S *log_beta,
+                      int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length,
+                      bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad,
+                      uint32_t device_id, cudaStream_t cuda_stream) {
+  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
+  const size_t grad_size = log_probs_shape.x * log_probs_shape.y * log_probs_shape.z;
+  thrust::device_ptr<S> dev_ptr(grad);
+  thrust::fill(thrust::cuda::par.on(cuda_stream), dev_ptr, dev_ptr + grad_size, neg_inf);
+
+  CTCLossV2GradKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    grad_out, log_probs, targets, input_lengths, target_lengths, neg_log_likelihood, log_alpha, log_beta, batch_size,
+    time_series, num_labels, max_target_length, zero_infinity, blank, log_probs_shape, log_alpha_shape, grad);
+}
+
 template CUDA_LIB_EXPORT void CalCTCLossV2<float, int>(const float *log_probs_p, const int *target_p,
                                                        const int *input_len_p, const int *target_len_p,
                                                        int64_t batch_size, int64_t target_stride, int64_t time_series,
@@ -157,3 +277,28 @@ template CUDA_LIB_EXPORT void CalCTCLossV2<double, int64_t>(
   const double *log_probs_p, const int64_t *target_p, const int64_t *input_len_p, const int64_t *target_len_p,
   int64_t batch_size, int64_t target_stride, int64_t time_series, int64_t blank, dim3 log_probs_shape,
   dim3 log_alpha_shape, double *neg_log_p, double *log_alpha_p, uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int>(
+  const float *grad_out, const float *log_probs, const int *targets, const int *input_lengths,
+  const int *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
+  dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int>(
+  const double *grad_out, const double *log_probs, const int *targets, const int *input_lengths,
+  const int *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
+  dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int64_t>(
+  const float *grad_out, const float *log_probs, const int64_t *targets, const int64_t *input_lengths,
+  const int64_t *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,
+  int64_t blank, dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int64_t>(
+  const double *grad_out, const double *log_probs, const int64_t *targets, const int64_t *input_lengths,
+  const int64_t *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,
+  int64_t blank, dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id,
+  cudaStream_t cuda_stream);
