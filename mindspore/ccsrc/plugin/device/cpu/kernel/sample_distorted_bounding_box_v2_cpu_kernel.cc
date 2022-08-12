@@ -50,7 +50,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::InitMSPhiloxRandom(int64_t seed, 
     seed = New64();
     seed2 = New64();
   }
-  generator_ = MSPhiloxRandom(seed, seed2);
+  generator_ = random::MSPhiloxRandom(seed, seed2);
 }
 
 float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
@@ -81,7 +81,7 @@ uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::Uniform(uint32_t n) {
 }
 
 uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::GenerateSingle() {
-  if (used_result_index_ == MSPhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::MSPhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }
