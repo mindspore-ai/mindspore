@@ -68,7 +68,6 @@ class HWTSLogParser:
 
         content_format = ['QIIIIIIIIIIII', 'QIIQIIIIIIII', 'IIIIQIIIIIIII']
         log_type = ['Start of task', 'End of task', 'Start of block', 'End of block', 'Block PMU']
-
         result_data = ""
         flip_times = 0
         last_task_stream_map = {}
@@ -77,24 +76,18 @@ class HWTSLogParser:
         self._source_flie_name = validate_and_normalize_path(self._source_flie_name)
         with open(self._source_flie_name, 'rb') as hwts_data:
             while True:
-                # read 64 bit data
                 line = hwts_data.read(64)
-                if line:
-                    if not line.strip():
-                        continue
-                    if len(line) < 64:
-                        logger.warning("Length of hwts data is less than 64")
-                        continue
-                else:
+                if not line:
                     break
+                if not line.strip():
+                    continue
+                if len(line) < 64:
+                    logger.warning("Length of hwts data is less than 64")
+                    continue
                 byte_first_four = struct.unpack('BBHHH', line[0:8])
-                # byte_first[0:4] refers to count. byte_first[4] refers to is_warn_res0_0v.
-                # byte_first[5:8] refers to the type of ms.
                 byte_first = bin(byte_first_four[0]).replace('0b', '').zfill(8)
-                ms_type = byte_first[-3:]
-                is_warn_res0_ov = byte_first[4]
-                cnt = int(byte_first[0:4], 2)
-                core_id = byte_first_four[1]
+                ms_type, is_warn_res0_ov = byte_first[-3:], byte_first[4]
+                cnt, core_id = int(byte_first[0:4], 2), byte_first_four[1]
                 blk_id, task_id = byte_first_four[3], int(byte_first_four[4])
                 if ms_type in ['000', '001', '010']:  # log type 0,1,2
                     result = struct.unpack(content_format[0], line[8:])
@@ -107,10 +100,9 @@ class HWTSLogParser:
                 elif ms_type == '100':  # log type 4
                     result = struct.unpack(content_format[2], line[8:])
                     stream_id = result[2]
+                    syscnt = None
                     if is_warn_res0_ov == '0':
                         syscnt = result[4]
-                    else:
-                        syscnt = None
                 else:
                     logger.info("Profiling: invalid hwts log record type %s", ms_type)
                     continue
@@ -126,5 +118,4 @@ class HWTSLogParser:
         fwrite_format(self._output_filename, data_source=self._dst_file_title, is_start=True)
         fwrite_format(self._output_filename, data_source=self._dst_file_column_title)
         fwrite_format(self._output_filename, data_source=result_data)
-
         return True

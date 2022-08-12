@@ -83,18 +83,18 @@ class HcclParser:
 
     def _parse_communication_cost(self, operators_cost_info, info, operators_dict):
         """Parse communication cost."""
-        for key, value in operators_cost_info.items():
-            for item in value:
+        for k, v in operators_cost_info.items():
+            for item in v:
                 # index0:step_num
                 if info[0] == item[0]:
-                    operators_dict[key] = item
+                    operators_dict[k] = item
 
     def _parse_and_save(self, dir_path):
         """Parse and save communication info."""
         communication_info_cache = list()
         operators_cost_info = self._get_communication_operators_cost_info(dir_path)
-        for key, value in operators_cost_info.items():
-            for item in value:
+        for k, v in operators_cost_info.items():
+            for item in v:
                 communication_info_cache.append(item)
         communication_info_cache = self._merge_communication_info_by_step_num(communication_info_cache)
         for info in communication_info_cache:
@@ -105,11 +105,11 @@ class HcclParser:
         device_communication_average_value = self._calculate_communication_average_value(communication_info_cache)
         # Calculate operator communication average.
         operators_average_value = dict()
-        for key, value in operators_cost_info.items():
-            average_value = self._calculate_communication_average_value(value)
+        for k, v in operators_cost_info.items():
+            average_value = self._calculate_communication_average_value(v)
             # The symbol '-' is used to indicate that the line is average information.
             average_value.insert(0, '-')
-            operators_average_value[key] = average_value
+            operators_average_value[k] = average_value
         device_communication_average_value.append(operators_average_value)
         # The symbol '-' is used to indicate that the line is average information.
         device_communication_average_value.insert(0, '-')
@@ -403,13 +403,13 @@ class HcclParser:
     def _calculate_src_dst_link_info(self, src_dst_dict: dict):
         """Calculate src dst link info."""
         result_dict = dict()
-        for key, value in src_dst_dict.items():
+        for k, v in src_dst_dict.items():
             # Divide information by link type.
-            link_type_dict = self._divide_communication_info_by_link_type(value)
+            link_type_dict = self._divide_communication_info_by_link_type(v)
             if not link_type_dict:
                 continue
-            result_dict[key] = dict()
-            self._parse_link_cost(result_dict, key, link_type_dict)
+            result_dict[k] = dict()
+            self._parse_link_cost(result_dict, k, link_type_dict)
         return result_dict
 
     @staticmethod

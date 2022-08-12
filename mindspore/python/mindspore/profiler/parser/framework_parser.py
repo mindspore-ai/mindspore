@@ -70,11 +70,6 @@ class FrameworkParser:
         self._task_id_full_op_name_dict = {}
         self._point_info = {}
 
-    @staticmethod
-    def _check_output_path(path):
-        if not os.path.exists(path) or not os.path.isdir(path):
-            raise ProfilerDirNotFoundException(path)
-
     @property
     def save_path(self):
         """
@@ -95,6 +90,144 @@ class FrameworkParser:
         """
         # Note: In the multi-subgraph or multi-tag scenario, op name is overwritten.
         return self._point_info
+
+    @staticmethod
+    def _check_output_path(path):
+        if not os.path.exists(path) or not os.path.isdir(path):
+            raise ProfilerDirNotFoundException(path)
+
+    @staticmethod
+    def _parse_hash_dic(framework_path_dict):
+        """Parse the hash dic files, and return a hash value map op name dict."""
+        hash_op_dict = {}
+        for path in framework_path_dict[FileDataType.HASH_DIC.value]:
+            with open(path, 'r') as file:
+                for hash_str in file:
+                    hash_value, op_name = hash_str.strip().split(':')
+                    hash_op_dict[hash_value] = op_name
+        return hash_op_dict
+
+    @staticmethod
+    def _special_process_tensor_data(item_binary_data, data_type, tensor_num):
+        """The tensor data depends tensor num, so need to special process."""
+        start = 0
+        op_attr_struct = data_type[0]
+        op_attr_size = StructType.sizeof(op_attr_struct)
+        unpack_data = []
+
+        for _ in range(tensor_num):
+            buffer = item_binary_data[start:start + op_attr_size]
+            values = struct.unpack(StructType.format(op_attr_struct), buffer)
+            one_data = dict(
+                tensorType=values[0],
+                format=values[1],
+                dataType=values[2],
+                shape=list(filter(lambda x: x != 0, values[3:]))
+            )
+            unpack_data.append(one_data)
+            start += op_attr_size
+
+        return unpack_data
+
+    @staticmethod
+    def _special_process_tensor_num(item_binary_data, data_type):
+        """The memory of tensorNum is aligned, so here need to special process"""
+        cursor = 0
+        tensor_num_struct = data_type[0]
+        size = StructType.sizeof(tensor_num_struct)
+        unpack_data = struct.unpack(tensor_num_struct.value, item_binary_data[cursor:cursor + size])[0]
+        return unpack_data
+
+    @staticmethod
+    def _construct_task_id_full_op_name_dict(task_desc_info):
+        """The task desc info is a list[task_desc], task_desc is a dict, key is same as TASK_DESC_STRUCT."""
+        task_id_full_op_name = {}
+        for task_desc in task_desc_info:
+            task_id = combine_stream_task_id(task_desc['streamId'], task_desc['taskId'])
+            task_id_full_op_name[task_id] = task_desc['opName']
+        return task_id_full_op_name
+
+    @staticmethod
+    def _construct_point_info(task_id_full_op_name_dict, step_point_data):
+        """step_point_data is a list[step_data], step data is a dict, key is same as STEP_INFO_STRUCT."""
+        point_info = {}
+        for step_point in step_point_data:
+            task_id = combine_stream_task_id(step_point['streamId'], step_point['taskId'])
+            tag = step_point['tag']
+            full_op_name = task_id_full_op_name_dict[task_id]
+            point_info[tag] = full_op_name
+        return point_info
+
+    @staticmethod
+    def _get_vm_data_type(msprof_data_type):
+        """Get the mapped vm data type of msprof."""
+        if msprof_data_type >= MSPROF_DIFFERENCE:
+            return msprof_data_type - MSPROF_DIFFERENCE
+        return msprof_data_type
+
+    @staticmethod
+    def _get_vm_op_format(msprof_op_format):
+        """Get the mapped op format type of msprof."""
+        if msprof_op_format >= MSPROF_DIFFERENCE:
+            return msprof_op_format - MSPROF_DIFFERENCE
+        return msprof_op_format
+
+    @staticmethod
+    def _construct_task_id_op_attr_dict(prof_tensor_data):
+        """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
+        task_id_op_attr_dict = defaultdict(list)
+        for tensor_data in prof_tensor_data:
+            task_id = combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
+            for tensor_attr in tensor_data['tensorData']:
+                tensor_type = 'input' if tensor_attr['tensorType'] == 0 else 'output'
+                tensor_format = VmFormat.get_format_name(FrameworkParser._get_vm_data_type(tensor_attr['format']))
+                op_attr = dict(
+                    tensor_type=tensor_type,
+                    format=tensor_format,
+                    data_type=VmDataType.get_data_type_name(FrameworkParser._get_vm_op_format(tensor_attr['dataType'])),
+                    shape=tensor_attr['shape']
+                )
+                task_id_op_attr_dict[task_id].append(op_attr)
+
+        for task_id, op_attrs in task_id_op_attr_dict.items():
+            input_count = 0
+            output_count = 0
+            new_op_attr = {}
+            for op_attr in op_attrs:
+                if op_attr['tensor_type'] == 'input':
+                    op_attr.pop('tensor_type')
+                    new_op_attr[f'input_{input_count}'] = op_attr
+                    input_count += 1
+                else:
+                    op_attr.pop('tensor_type')
+                    new_op_attr[f'output_{output_count}'] = op_attr
+                    output_count += 1
+            task_id_op_attr_dict[task_id] = new_op_attr
+
+        return task_id_op_attr_dict
+
+    @staticmethod
+    def _write_framework_to_file(all_op_data: List[OpData], output_file):
+        with open(output_file, 'w') as file_handler:
+            csv_writer = csv.writer(file_handler)
+            csv_writer.writerow(COL_NAMES)
+            csv_writer.writerows(all_op_data)
+
+    @staticmethod
+    def _get_subgraph_name(full_op_name):
+        """
+        Get subgraph name.
+
+        Args:
+            full_op_name (str): The full operator name.
+
+        Returns:
+            str, the subgraph name.
+        """
+        subgraph_name = full_op_name.split('/', 1)[0]
+        if subgraph_name in ['Default', 'Gradients']:
+            return subgraph_name
+        return None
 
     def check_op_name(self, op_name, is_prefix=True):
         """
@@ -197,17 +330,6 @@ class FrameworkParser:
 
         return framework_path_dict
 
-    @staticmethod
-    def _parse_hash_dic(framework_path_dict):
-        """Parse the hash dic files, and return a hash value map op name dict."""
-        hash_op_dict = {}
-        for path in framework_path_dict[FileDataType.HASH_DIC.value]:
-            with open(path, 'r') as file:
-                for hash_str in file:
-                    hash_value, op_name = hash_str.strip().split(':')
-                    hash_op_dict[hash_value] = op_name
-        return hash_op_dict
-
     def _parse_binary_data(self, framework_path_dict):
         """Parse binary data in the FILE_DATA_STRUCT_DICT from given files, such as task data, step point data"""
         all_file_data = defaultdict(list)
@@ -263,105 +385,6 @@ class FrameworkParser:
             unpack_data = self._hash_dict[str(hash_value)]
         return unpack_data
 
-    @staticmethod
-    def _special_process_tensor_data(item_binary_data, data_type, tensor_num):
-        """The tensor data depends tensor num, so need to special process."""
-        start = 0
-        op_attr_struct = data_type[0]
-        op_attr_size = StructType.sizeof(op_attr_struct)
-        unpack_data = []
-
-        for _ in range(tensor_num):
-            buffer = item_binary_data[start:start + op_attr_size]
-            values = struct.unpack(StructType.format(op_attr_struct), buffer)
-            one_data = dict(
-                tensorType=values[0],
-                format=values[1],
-                dataType=values[2],
-                shape=list(filter(lambda x: x != 0, values[3:]))
-            )
-            unpack_data.append(one_data)
-            start += op_attr_size
-
-        return unpack_data
-
-    @staticmethod
-    def _special_process_tensor_num(item_binary_data, data_type):
-        """The memory of tensorNum is aligned, so here need to special process"""
-        cursor = 0
-        tensor_num_struct = data_type[0]
-        size = StructType.sizeof(tensor_num_struct)
-        unpack_data = struct.unpack(tensor_num_struct.value, item_binary_data[cursor:cursor + size])[0]
-        return unpack_data
-
-    @staticmethod
-    def _construct_task_id_full_op_name_dict(task_desc_info):
-        """The task desc info is a list[task_desc], task_desc is a dict, key is same as TASK_DESC_STRUCT."""
-        task_id_full_op_name = {}
-        for task_desc in task_desc_info:
-            task_id = combine_stream_task_id(task_desc['streamId'], task_desc['taskId'])
-            task_id_full_op_name[task_id] = task_desc['opName']
-        return task_id_full_op_name
-
-    @staticmethod
-    def _construct_point_info(task_id_full_op_name_dict, step_point_data):
-        """step_point_data is a list[step_data], step data is a dict, key is same as STEP_INFO_STRUCT."""
-        point_info = {}
-        for step_point in step_point_data:
-            task_id = combine_stream_task_id(step_point['streamId'], step_point['taskId'])
-            tag = step_point['tag']
-            full_op_name = task_id_full_op_name_dict[task_id]
-            point_info[tag] = full_op_name
-        return point_info
-
-    @staticmethod
-    def _get_vm_data_type(msprof_data_type):
-        """Get the mapped vm data type of msprof."""
-        if msprof_data_type >= MSPROF_DIFFERENCE:
-            return msprof_data_type - MSPROF_DIFFERENCE
-        return msprof_data_type
-
-    @staticmethod
-    def _get_vm_op_format(msprof_op_format):
-        """Get the mapped op format type of msprof."""
-        if msprof_op_format >= MSPROF_DIFFERENCE:
-            return msprof_op_format - MSPROF_DIFFERENCE
-        return msprof_op_format
-
-    @staticmethod
-    def _construct_task_id_op_attr_dict(prof_tensor_data):
-        """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
-        task_id_op_attr_dict = defaultdict(list)
-        for tensor_data in prof_tensor_data:
-            task_id = combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
-            for tensor_attr in tensor_data['tensorData']:
-                tensor_type = 'input' if tensor_attr['tensorType'] == 0 else 'output'
-                tensor_format = VmFormat.get_format_name(FrameworkParser._get_vm_data_type(tensor_attr['format']))
-                op_attr = dict(
-                    tensor_type=tensor_type,
-                    format=tensor_format,
-                    data_type=VmDataType.get_data_type_name(FrameworkParser._get_vm_op_format(tensor_attr['dataType'])),
-                    shape=tensor_attr['shape']
-                )
-                task_id_op_attr_dict[task_id].append(op_attr)
-
-        for task_id, op_attrs in task_id_op_attr_dict.items():
-            input_count = 0
-            output_count = 0
-            new_op_attr = {}
-            for op_attr in op_attrs:
-                if op_attr['tensor_type'] == 'input':
-                    op_attr.pop('tensor_type')
-                    new_op_attr[f'input_{input_count}'] = op_attr
-                    input_count += 1
-                else:
-                    op_attr.pop('tensor_type')
-                    new_op_attr[f'output_{output_count}'] = op_attr
-                    output_count += 1
-            task_id_op_attr_dict[task_id] = new_op_attr
-
-        return task_id_op_attr_dict
-
     def _construct_op_data_to_file(self, task_desc_info, task_id_op_attr_dict):
         """Build data written to a file."""
         all_op_data = []
@@ -380,29 +403,6 @@ class FrameworkParser:
                              op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})))
             all_op_data.append(op_data)
         return all_op_data
-
-    @staticmethod
-    def _write_framework_to_file(all_op_data: List[OpData], output_file):
-        with open(output_file, 'w') as file_handler:
-            csv_writer = csv.writer(file_handler)
-            csv_writer.writerow(COL_NAMES)
-            csv_writer.writerows(all_op_data)
-
-    @staticmethod
-    def _get_subgraph_name(full_op_name):
-        """
-        Get subgraph name.
-
-        Args:
-            full_op_name (str): The full operator name.
-
-        Returns:
-            str, the subgraph name.
-        """
-        subgraph_name = full_op_name.split('/', 1)[0]
-        if subgraph_name in ['Default', 'Gradients']:
-            return subgraph_name
-        return None
 
 
 class GpuFrameWorkParser:
