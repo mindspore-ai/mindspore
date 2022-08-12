@@ -35,7 +35,7 @@ void SoftmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (axis_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "Cpu softmax only support input axis size 1!";
+    MS_LOG(EXCEPTION) << "For Softmin and Softmax, the parameter 'axis' only support int type on CPU, but got tuple.";
   }
   int axis = axis_list[0];
   if (axis >= SizeToInt(src_shape.size())) {
