@@ -170,6 +170,19 @@ class GraphKernelFlags {
   std::string repository_path;
 
   /**
+   * Target info.
+   * These flags can be used for cross-compiling. Available when the device target is cpu.
+   * target_os: the operating system to run kernels.
+   * cpu_arch: the architecture, default value is related to the building environment (e.g. "arm" or "x86_64")
+   * cpu_feature: the instruction set to be used. (e.g. "avx" or "avx512")
+   * cpu_type: the cpu processor type. (e.g. "core-avx2" or "skylake-avx512")
+   */
+  std::string target_os{"linux"};
+  std::string cpu_arch;
+  std::string cpu_feature;
+  std::string cpu_type;
+
+  /**
    * Additional expanding operators (case sensitive).
    * The operators to be added into the default expanding operator list.
    */

@@ -282,6 +282,10 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
   // String flags
   reg.AddFlag("repository_path", &repository_path);
+  reg.AddFlag("target_os", &target_os);
+  reg.AddFlag("cpu_arch", &cpu_arch);
+  reg.AddFlag("cpu_feature", &cpu_feature);
+  reg.AddFlag("cpu_type", &cpu_type);
 
   // String list flags
   reg.AddFlag("enable_expand_ops", &enable_expand_ops);
@@ -320,6 +324,10 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["recompute_peak_threshold"] = recompute_peak_threshold;
 
   json["repository_path"] = repository_path;
+  json["target_os"] = target_os;
+  json["cpu_arch"] = cpu_arch;
+  json["cpu_feature"] = cpu_feature;
+  json["cpu_type"] = cpu_type;
 
   json["enable_expand_ops"] = enable_expand_ops;
   json["enable_expand_ops_only"] = enable_expand_ops_only;

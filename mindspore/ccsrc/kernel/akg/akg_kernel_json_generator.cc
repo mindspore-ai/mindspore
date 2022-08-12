@@ -26,6 +26,7 @@
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttr;
@@ -1115,20 +1116,61 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
 
 namespace {
 bool GetCpuInfo(nlohmann::json *target_info) {
-  (*target_info)[kJsonKeySystem] = "linux";
+  const auto &flags = GraphKernelFlags::GetInstance();
+  std::string target_os = flags.target_os;
+  std::string arch = flags.cpu_arch;
+  std::string feature = flags.cpu_feature;
+  std::string type = flags.cpu_type;
+  std::set<std::string> valid_os = {"linux", "windows"};
+  std::set<std::string> valid_arch = {"arm", "x86_64"};
+  // arch: <{supported-features}, default-feature>
+  std::map<std::string, std::pair<std::set<std::string>, std::string>> valid_features = {
+    {"arm", {{"neon"}, "neon"}},
+    {"x86_64", {{"sse", "avx", "avx512"}, "avx"}},
+  };
+  std::set<std::string> valid_cpu_types = {"core-avx2", "skylake-avx512", "core-avx-i", "haswell", "skylake"};
+
+  if (valid_os.count(target_os) == 0) {
+    MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"target_os\": " << target_os;
+    target_os = "linux";
+  }
+  if (valid_arch.count(arch) == 0) {
+    if (!arch.empty()) {
+      MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"cpu_arch\": " << arch;
+    }
 #if defined(ENABLE_ARM) || defined(ENABLE_ARM64)
-  (*target_info)[kJsonKeyArch] = "arm";
-  (*target_info)[kJsonKeyFeature] = "neon";
+    arch = "arm";
 #else
-  (*target_info)[kJsonKeyArch] = "x86";
-#ifdef ENABLE_AVX512
-  (*target_info)[kJsonKeyFeature] = "avx512";
-#elif defined(ENABLE_AVX)
-  (*target_info)[kJsonKeyFeature] = "avx";
-#else
-  (*target_info)[kJsonKeyFeature] = "sse";
+    arch = "x86_64";
 #endif
-#endif
+  }
+
+  auto &features = valid_features[arch];
+  if (features.first.count(feature) == 0) {
+    if (!feature.empty()) {
+      MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"cpu_feature\": " << feature;
+    }
+    feature = features.second;
+  }
+
+  if (valid_cpu_types.count(type) == 0) {
+    if (!type.empty()) {
+      MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"cpu_type\": " << type;
+      type = "";
+    }
+    if (feature == "avx512") {
+      type = "skylake-avx512";
+    } else if (feature == "avx") {
+      type = "core-avx2";
+    }
+  }
+
+  (*target_info)[kJsonKeySystem] = target_os;
+  (*target_info)[kJsonKeyCpuArch] = arch;
+  (*target_info)[kJsonKeyCpuFeature] = feature;
+  if (!type.empty()) {
+    (*target_info)[kJsonKeyCpuType] = type;
+  }
   return true;
 }
 }  // namespace
