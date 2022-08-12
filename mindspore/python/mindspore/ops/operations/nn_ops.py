@@ -2957,10 +2957,6 @@ class SmoothL1Loss(Primitive):
         validator.check_string(
             reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
-        target = context.get_context("device_target")
-        if reduction != 'none' and target.lower() == "ascend":
-            raise ValueError(f"Currently Ascend device_target only support `reduction`='none', "
-                             f"but got {reduction}")
 
 
 class MultiMarginLoss(Primitive):
