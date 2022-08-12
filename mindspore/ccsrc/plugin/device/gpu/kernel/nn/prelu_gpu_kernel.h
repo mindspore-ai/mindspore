@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <utility>
 #include <functional>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -27,91 +28,34 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class PReLUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class PReLUGpuKernelMod : public NativeGpuKernelMod {
  public:
   PReLUGpuKernelMod() = default;
   ~PReLUGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    auto *input = GetDeviceAddress<T>(inputs, 0);
-    auto *weight = GetDeviceAddress<T>(inputs, 1);
-    auto *output = GetDeviceAddress<T>(outputs, 0);
-
-    CalPReLU(input_length_, weight_length_, per_channel_length_, input, weight, output,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    ResetResource();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    auto weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    is_null_input_ =
-      CHECK_SHAPE_NULL(input_shape, kernel_name, "x") || CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_length_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<>());
-    size_t input_rank = input_shape.size();
-    int64_t channel_num;
-    if (input_rank == 0) {
-      channel_num = 1;
-      per_channel_length_ = 1;
-    } else if (input_rank == 1) {
-      channel_num = 1;
-      per_channel_length_ = input_shape[0];
-    } else {
-      channel_num = input_shape[1];
-      per_channel_length_ = std::accumulate(input_shape.begin() + 2, input_shape.end(), size_t(1), std::multiplies<>());
-    }
-
-    if (weight_shape.size() != 1 || (weight_shape[0] != 1 && weight_shape[0] != channel_num)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight must be equal to 1 and "
-                        << "weight.shape[0] must be equal to 1 or the channel number, but got the dimension of "
-                        << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
-                        << ", the channel num: " << channel_num;
-    }
-    weight_length_ = LongToSizeClipNeg(weight_shape[0]);
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_length_ = 0;
-    weight_length_ = 0;
-    per_channel_length_ = 0;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    size_t data_size = sizeof(T);
-    input_size_list_.push_back(input_length_ * data_size);
-    input_size_list_.push_back(weight_length_ * data_size);
-    output_size_list_.push_back(input_length_ * data_size);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using PReLULaunchFunc = std::function<bool(PReLUGpuKernelMod *, const std::vector<AddressPtr> &,
+                                             const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, PReLULaunchFunc>> func_list_;
+  PReLULaunchFunc kernel_func_;
   bool is_null_input_{false};
   size_t input_length_{0};
   size_t weight_length_{0};
