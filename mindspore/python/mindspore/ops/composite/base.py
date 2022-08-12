@@ -22,7 +22,8 @@ import mindspore as ms
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
-    SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_
+    SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
+    ListClear_, ListReverse_, ListExtend_, ListCount_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
@@ -911,6 +912,82 @@ class _ListPop(ListPop_):
 
 
 _pop = _ListPop("pop")
+
+
+class _ListClear(ListClear_):
+    """
+    A metafuncgraph class that clear the list.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _ListClear."""
+        ListClear_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_list_clear = _ListClear("clear")
+
+
+class _ListReverse(ListReverse_):
+    """
+    A metafuncgraph class that reverse the list.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _ListReverse."""
+        ListReverse_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_reverse = _ListReverse("reverse")
+
+
+class _ListExtend(ListExtend_):
+    """
+    A metafuncgraph class that append another list to the end of the list.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _ListExtend."""
+        ListExtend_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_extend = _ListExtend("extend")
+
+
+class _ListCount(ListCount_):
+    """
+    A metafuncgraph class that count the number of times an element appears in list.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _ListCount."""
+        ListCount_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_count = _ListCount("count")
 
 
 class _Tail(Tail_):

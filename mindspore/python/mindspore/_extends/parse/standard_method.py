@@ -25,7 +25,8 @@ from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
-from ...ops.composite.base import _append, _insert, _pop
+from ...ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
+    _count, _extend
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
@@ -2450,6 +2451,22 @@ def list_pop(self_, index=-1):
     """Pop from list"""
     self_, pop_val = _pop(self_, index)
     return self_, pop_val
+
+
+def list_clear(self_):
+    return _list_clear(self_)
+
+
+def list_reverse(self_):
+    return _reverse(self_)
+
+
+def list_extend(self_, obj):
+    return _extend(self_, obj)
+
+
+def list_count(self_, value):
+    return _count(self_, value)
 
 
 def dict_get(self_, key_index, default_value=None):

@@ -88,6 +88,22 @@ REGISTER_PYBIND_WITH_PARENT_NAME(
     (void)py::class_<ListPop, MetaFuncGraph, std::shared_ptr<ListPop>>(*m, "ListPop_")
       .def(py::init<const std::string &>());
 
+    // Reg ListClear
+    (void)py::class_<ListClear, MetaFuncGraph, std::shared_ptr<ListClear>>(*m, "ListClear_")
+      .def(py::init<const std::string &>());
+
+    // Reg ListReverse
+    (void)py::class_<ListReverse, MetaFuncGraph, std::shared_ptr<ListReverse>>(*m, "ListReverse_")
+      .def(py::init<const std::string &>());
+
+    // Reg ListExtend
+    (void)py::class_<ListExtend, MetaFuncGraph, std::shared_ptr<ListExtend>>(*m, "ListExtend_")
+      .def(py::init<const std::string &>());
+
+    // Reg ListCount
+    (void)py::class_<ListCount, MetaFuncGraph, std::shared_ptr<ListCount>>(*m, "ListCount_")
+      .def(py::init<const std::string &>());
+
     // Reg MapPy
     (void)py::class_<MapPy, MetaFuncGraph, std::shared_ptr<MapPy>>(*m, "Map_")
       .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))

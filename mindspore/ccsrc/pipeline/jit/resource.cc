@@ -136,8 +136,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"append", std::string("list_append")},     // C.list_append
        {"__bool__", std::string("list_bool")},     // C.list_bool
        {"__ms_hasnext__", std::string("list_hasnext")},
-       {"insert", std::string("list_insert")},  // C.list_insert
-       {"pop", std::string("list_pop")}         // C.list_pop
+       {"insert", std::string("list_insert")},    // C.list_insert
+       {"pop", std::string("list_pop")},          // C.list_pop
+       {"clear", std::string("list_clear")},      // C.list_clear
+       {"reverse", std::string("list_reverse")},  // C.list_reverse
+       {"extend", std::string("list_extend")},    // C.list_extend
+       {"count", std::string("list_count")}       // C.list_count
      }},
     {kObjectTypeDictionary,
      {
