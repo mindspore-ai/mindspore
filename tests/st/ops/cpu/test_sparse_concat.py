@@ -192,7 +192,7 @@ def sparse_concat_float(i_type, v_type):
 
 
 def error_case_wrong_axis():
-    i_type = mstype.int32
+    i_type = mstype.int64
     v_type = mstype.int32
     indices0 = Tensor([[0, 1], [0, 2]], dtype=i_type)
     values0 = Tensor([1.0, 2.0], dtype=v_type)
@@ -222,7 +222,7 @@ def error_case_wrong_axis():
 
 
 def error_case_wrong_intput_num():
-    indices0 = Tensor([[0, 1], [0, 2]], dtype=mstype.int32)
+    indices0 = Tensor([[0, 1], [0, 2]], dtype=mstype.int64)
     values0 = Tensor([1.0, 2.0], dtype=mstype.int32)
     shape0 = (3, 4)
     forward_net = SparseConcatNet()
@@ -236,7 +236,7 @@ def error_case_wrong_intput_num():
 
 
 def error_case_wrong_intput():
-    i_type = mstype.int32
+    i_type = mstype.int64
     v_type = mstype.int32
     indices0 = Tensor([[0, 1], [0, 2]], dtype=i_type)
     values0 = Tensor([1.0, 2.0], dtype=v_type)
@@ -288,7 +288,7 @@ def test_sparse_concat_default_value():
     Description: Test spare_concat, test default inputs.
     Expectation: Success.
     """
-    i_type = mstype.int32
+    i_type = mstype.int64
     v_type = mstype.float32
     indices0 = Tensor([[0, 1], [0, 2]], dtype=i_type)
     values0 = Tensor([1.0, 2.0], dtype=v_type)
@@ -323,10 +323,8 @@ def test_sparse_concat_int():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     values_types = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, \
                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
-    indices_types = (mstype.int64, mstype.int16, mstype.int32)
     for v_type in values_types:
-        for i_type in indices_types:
-            sparse_concat_int(i_type, v_type)
+        sparse_concat_int(mstype.int64, v_type)
 
 
 @pytest.mark.level0
@@ -339,5 +337,5 @@ def test_sparse_concat_float():
     Expectation: Success.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    sparse_concat_float(mstype.int32, mstype.float32)
-    sparse_concat_float(mstype.int32, mstype.float16)
+    sparse_concat_float(mstype.int64, mstype.float32)
+    sparse_concat_float(mstype.int64, mstype.float16)
