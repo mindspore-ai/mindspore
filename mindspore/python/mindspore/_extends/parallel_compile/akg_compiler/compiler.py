@@ -30,6 +30,10 @@ def run_compiler(op_json, compile_backend="AKG", attrs=None, kernel_meta_parent_
     Returns:
         None
     """
+    if os.path.isfile(op_json):
+        with open(op_json, 'r') as f:
+            op_json = f.read()
+    # Compile op_json
     if compile_backend == "TBE":
         from build_tbe_kernel import build_tbe_kernel
         build_tbe_kernel(op_json, kernel_meta_parent_dir)

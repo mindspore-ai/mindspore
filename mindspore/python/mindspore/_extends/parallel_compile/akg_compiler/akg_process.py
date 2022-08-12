@@ -21,7 +21,7 @@ from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 from mindspore._extends.parallel_compile.akg_compiler.util import get_ascend_compile_dirs, create_compile_dirs, \
-    get_log_level, update_attr, load_composite_graph, select_best, print_compile_log, check_tbe_support
+    get_log_level, update_attr, select_best, print_compile_log, check_tbe_support
 
 
 def _compile_akg_task_default(json_strs, attrs):
@@ -42,8 +42,8 @@ def _compile_akg_task_default(json_strs, attrs):
             raise ValueError("Compile error, args: {}! build attrs: {}".format(json_str, attrs))
 
 
-def _compile_subprocess(compiler, kernel_meta_parent_dir, json_str, compile_backend, attrs, compile_log, log_level):
-    compile_result = subprocess.run([sys.executable, compiler, json_str, compile_backend, attrs,
+def _compile_subprocess(compiler, kernel_meta_parent_dir, info_path, compile_backend, attrs, compile_log, log_level):
+    compile_result = subprocess.run([sys.executable, compiler, info_path, compile_backend, attrs,
                                      kernel_meta_parent_dir], text=True, check=False, capture_output=True)
     log = [compile_result.stdout.strip(), compile_result.stderr.strip()]
     if compile_result.returncode:
@@ -77,14 +77,22 @@ def _compile_akg_task_ascend(json_strs, attrs):
         op_name = json_desc["op"]
         compile_log = {}
 
+        # Send the info file path(instead of the content of file, namely json_str) to the compile subprocess, as there
+        # is a limit on the length of each arg passed to subprocess, if json_str is too long, OSError will be raised.
+        info_path = os.path.join(kernel_meta_dir, op_name + ".info")
+        if not os.path.isfile(info_path):
+            raise FileNotFoundError("Can not compile non-existing file \"{}\"".format(info_path))
+
         # Compile json str with AKG
-        _compile_subprocess(compiler, akg_compile_dir, json_str, "AKG", attrs, compile_log, log_level)
+        _compile_subprocess(compiler, akg_compile_dir, info_path, "AKG", attrs, compile_log, log_level)
 
         # Load composite optimized json str and compile it with TBE
         tbe_support = check_tbe_support(json_desc)
         if tbe_support:
-            composite_graph = load_composite_graph(composite_graph_dir, op_name, default=json_str)
-            _compile_subprocess(compiler, tbe_compile_dir, composite_graph, "TBE", attrs, compile_log, log_level)
+            composite_graph_path = os.path.join(composite_graph_dir, op_name + ".info")
+            if not os.path.isfile(composite_graph_path):
+                composite_graph_path = info_path
+            _compile_subprocess(compiler, tbe_compile_dir, composite_graph_path, "TBE", attrs, compile_log, log_level)
 
         print_compile_log(compile_log)
         # Select best compile result

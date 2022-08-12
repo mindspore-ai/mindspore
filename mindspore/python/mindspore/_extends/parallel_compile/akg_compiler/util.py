@@ -87,16 +87,6 @@ def create_compile_dirs(compile_dirs):
                     raise err
 
 
-def load_composite_graph(load_dir, op_name, default):
-    """Load composite optimized graph."""
-    path = os.path.join(load_dir, op_name + ".info")
-    if os.path.isfile(path):
-        with open(path, 'r') as f:
-            composite_graph = f.read()
-            return composite_graph
-    return default
-
-
 def select_best(src_dirs, dst_dir, op_name):
     """Select best compile result."""
     max_block_dim = 1
