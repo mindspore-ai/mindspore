@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_AVX
 #include "nnacl/fp32/conv_1x1_avx_fp32.h"
 #include "nnacl/intrinsics/ms_simd_avx_instructions.h"
 
@@ -1606,5 +1605,4 @@ void Conv1x1SWOWxOCAVXKernel(float *dst, const float *src, const float *weight, 
     }
   }
 }
-#endif
 #endif
