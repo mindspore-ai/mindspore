@@ -20,8 +20,10 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/pdist.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,9 +51,8 @@ class PdistCpuKernelMod : public NativeCpuKernelMod {
                                          const std::vector<kernel::AddressPtr> &)>;
   PdistKernel kernel_func_;
 
-  std::vector<size_t> input_shape_;
-  size_t input_size_;
-  size_t input_dim_;
+  size_t h_;
+  size_t w_;
   float p_;
 };
 }  // namespace kernel
