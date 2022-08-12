@@ -419,7 +419,7 @@ class HookBackward(PrimitiveWithInfer):
         return inputs_type
 
 
-class Print(PrimitiveWithInfer):
+class Print(Primitive):
     """
     Outputs the tensor or string to stdout. The outputs are printed to screen by default.
     It can also be saved in a file by setting the parameter  `print_file_path` in `context`.
@@ -483,17 +483,6 @@ class Print(PrimitiveWithInfer):
     def __call__(self, *args):
         for arg in args:
             print(arg)
-
-    def infer_shape(self, *inputs):
-        return [1]
-
-    def infer_dtype(self, *inputs):
-        # check argument types except the last one (io state).
-        for ele in inputs[:-1]:
-            validator.check_subclass("input", ele,
-                                     [mstype.tensor, mstype.int_, mstype.float_, mstype.bool_, mstype.string],
-                                     self.name)
-        return mstype.int32
 
 
 class Assert(PrimitiveWithInfer):

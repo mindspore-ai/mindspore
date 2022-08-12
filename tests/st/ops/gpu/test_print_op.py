@@ -21,6 +21,7 @@ from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 import mindspore.context as context
+import mindspore as ms
 from tests.security_utils import security_off_wrap
 
 
@@ -65,8 +66,7 @@ def print_testcase(nptype):
     y = np.arange(9).reshape(3, 3).astype(nptype)
     x = Tensor(x)
     y = Tensor(y)
-    # graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
     net_1 = PrintNetOneInput()
     net_2 = PrintNetTwoInputs()
     net_3 = PrintNetIndex()
@@ -94,8 +94,6 @@ def print_testcase_string(nptype):
     y = np.arange(9).reshape(3, 3).astype(nptype)
     x = Tensor(x)
     y = Tensor(y)
-    # graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = PrintNetString()
     net(x, y)
 
@@ -114,8 +112,14 @@ class PrintTypes(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_print_multiple_types():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_multiple_types(mode):
+    """
+    Feature: GPU Print op.
+    Description: test print with multiple types.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
     x = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int32))
     y = Tensor(np.array([[1], [3], [4], [6], [3]]).astype(np.float64))
     z = Tensor(np.arange(9).reshape(3, 3).astype(np.int64))
@@ -127,93 +131,49 @@ def test_print_multiple_types():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_print_bool():
-    print_testcase(np.bool)
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
+                                   np.uint32, np.uint64, np.bool, np.float64, np.float32, np.float16])
+def test_print_dtype(mode, dtype):
+    """
+    Feature: GPU Print op.
+    Description: test print with the different types.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    print_testcase(dtype)
 
 
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_print_int8():
-    print_testcase(np.int8)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_int16():
-    print_testcase(np.int16)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_int32():
-    print_testcase(np.int32)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_int64():
-    print_testcase(np.int64)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_uint8():
-    print_testcase(np.uint8)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_uint16():
-    print_testcase(np.uint16)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_uint32():
-    print_testcase(np.uint32)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_uint64():
-    print_testcase(np.uint64)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_float16():
-    print_testcase(np.float16)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_float32():
-    print_testcase(np.float32)
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_print_string():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_string(mode):
+    """
+    Feature: GPU Print op.
+    Description: test Print with string.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
     print_testcase_string(np.float32)
+
+
+@security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_dynamic_shape(mode):
+    """
+    Feature: GPU Print op.
+    Description: test Print with dynamic shape.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+
+    net = PrintNetOneInput()
+    x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
+    x_dyn = Tensor(shape=[None, None, None], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+    net(x)
