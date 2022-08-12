@@ -2,6 +2,80 @@
 
 [View English](./RELEASE.md)
 
+# MindSpore 1.8.1
+
+## MindSpore 1.8.1 Release Notes
+
+### API变更
+
+#### 算子
+
+- [STABLE] ops.ApplyAdagradDA 新增GPU、CPU支持。
+- [STABLE] ops.ApplyAdagradV2 新增CPU支持。
+- [STABLE] ops.ApplyCenteredRmsProp 新增Ascend动态shape支持。
+- [STABLE] ops.ApplyFtrl 新增CPU支持。
+- [STABLE] ops.ApplyGradientDescent 新增CPU支持。
+- [STABLE] ops.ApplyPowerSign 新增CPU支持。
+- [STABLE] ops.ApplyProximalAdagrad 新增GPU、CPU支持。
+- [STABLE] ops.ApplyProximalGradientDescent 新增CPU支持。
+- [STABLE] ops.ApplyRmsProp 新增Ascend动态shape支持。
+- [STABLE] ops.max 新增functional接口。
+- [STABLE] ops.atan2 新增functional接口。
+- [STABLE] ops.cummax 新增GPU支持。
+- [STABLE] ops.cummin 新增GPU、CPU支持。
+- [STABLE] ops.diag 新增GPU支持。
+- [STABLE] ops.expand_dims 新增functional接口。
+- [STABLE] ops.gather_elements 新增functional接口。
+- [STABLE] ops.grid_sample 新增GPU支持。
+- [STABLE] ops.hardswish 新增Ascend支持。
+- [BETA] ops.index_fill 新增GPU支持。
+- [BETA] ops.inplace_update 新增CPU支持。
+- [BETA] nn.InstanceNorm1d 新增GPU支持。
+- [BETA] nn.InstanceNorm2d 新增GPU支持。
+- [BETA] nn.InstanceNorm3d 新增GPU支持。
+- [STABLE] ops.log1p 新增functional接口。
+- [STABLE] ops.masked_fill 新增GPU、CPU支持。
+- [BETA] ops.matrix_diag_part 新增GPU支持。
+- [BETA] ops.matrix_diag 新增GPU支持。
+- [BETA] ops.matrix_set_diag 新增GPU支持。
+- [STABLE] ops.max_pool3d 新增GPU支持。
+- [STABLE] ops.nll_loss 新增functional接口。
+- [STABLE] ops.one_hot 新增functional接口。
+- [STABLE] ops.pad 新增functional接口。
+- [STABLE] ops.RandomCategorical 新增CPU支持。
+- [STABLE] ops.random_gamma 新增CPU支持。
+- [STABLE] ops.amax 新增functional接口。
+- [STABLE] ops.mean 新增functional接口。
+- [STABLE] ops.amin 新增functional接口。
+- [STABLE] ops.prod 新增functional接口。
+- [STABLE] ops.renorm 新增Ascend、GPU、CPU支持。
+- [BETA] ops.tensor_scatter_elements 新增Ascend、GPU、CPU支持。
+- [STABLE] ops.scatter_max 新增GPU支持。
+- [STABLE] ops.scatter_min 新增GPU支持。
+- [STABLE] ops.scatter_nd 新增functional接口。
+- [STABLE] ops.scatter_nd_max 新增GPU支持。
+- [STABLE] ops.scatter_update 新增functional接口。
+- [STABLE] ops.binary_cross_entropy_with_logits 新增CPU支持。
+- [STABLE] ops.smooth_l1_loss 新增functional接口。
+- [STABLE] ops.space_to_batch_nd 新增CPU支持。
+- [STABLE] ops.SparseApplyAdagrad 新增GPU、CPU支持。
+- [STABLE] ops.sparse_segment_mean 新增GPU、CPU支持。
+- [STABLE] ops.squeeze 新增functional接口。
+- [STABLE] ops.standard_laplace 新增CPU支持。
+- [BETA] nn.InstanceNorm1d 新增GPU支持。
+- [BETA] nn.InstanceNorm3d 新增GPU支持。
+- [BETA] nn.ReflectionPad1d 新增Ascend、GPU、CPU支持。
+- [BETA] nn.ReflectionPad2d 新增Ascend、GPU、CPU支持。
+- [STABLE] nn.SiLU 新增Ascend、GPU、CPU支持。
+- [STABLE] ops.transpose 新增functional接口。
+- [STABLE] ops.uniform_candidate_sampler 新增CPU支持。
+- [STABLE] ops.uniform 新增functional接口。
+- [STABLE] ops.unique_with_pad 新增GPU支持。
+- [STABLE] ops.unstack 新增functional接口。
+- [BETA] ops.interpolate 新增GPU、CPU支持。
+- [STABLE] ops.xdivy 新增CPU支持。
+- [STABLE] ops.xlogy 新增CPU支持。
+
 # MindSpore 1.8.0
 
 ## MindSpore 1.8.0 Release Notes
