@@ -75,7 +75,7 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
       }
       continue;
     }
-    out[i] = dividend / divisor;
+    out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
   }
 }
 
@@ -93,7 +93,7 @@ void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size
       out[i] = std::numeric_limits<T>::quiet_NaN();
       continue;
     }
-    out[i] = dividend / divisor;
+    out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
   }
 }
 
@@ -262,7 +262,7 @@ void ArithmeticCpuTypeFunc<T>::Add(const T *input1, const T *input2, T *out) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+      out[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
       iter.GenNextPos();
     }
   };
@@ -311,7 +311,7 @@ void ArithmeticCpuTypeFunc<T>::Sub(const T *input1, const T *input2, T *out) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+      out[i] = static_cast<T>(input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()]);
       iter.GenNextPos();
     }
   };
@@ -401,7 +401,7 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
         }
         continue;
       }
-      out[i] = dividend / divisor;
+      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -444,7 +444,7 @@ void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, 
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
-      out[i] = dividend / divisor;
+      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -473,7 +473,7 @@ void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
         }
         continue;
       }
-      out[i] = dividend / divisor;
+      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -497,7 +497,7 @@ void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *o
         }
         continue;
       }
-      out[i] = dividend / divisor;
+      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -518,7 +518,7 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
         out[i] = zero;
         continue;
       }
-      out[i] = dividend / divisor;
+      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -695,7 +695,7 @@ void ArithmeticCpuTypeFunc<T>::Xlogy(const T *input1, const T *input2, T *out) {
       auto logx2 = log(x2);
       iter.GenNextPos();
       if constexpr (std::is_same_v<T, bool>) {
-        out[i] = static_cast<T>(x1 && logx2);
+        out[i] = static_cast<T>(x1 && static_cast<bool>(logx2));
       } else {
         out[i] = static_cast<T>(x1 * logx2);
       }

@@ -29,7 +29,7 @@ bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
   return true;
 }
 
-Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
+Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from input index to input name.
@@ -54,7 +54,7 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   return SUCCESS;
 }
 
-Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
+Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from output index to output name.
