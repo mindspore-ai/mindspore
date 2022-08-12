@@ -15,15 +15,16 @@
 
 """nn_ops vmap impl."""
 
+from __future__ import division
 from functools import reduce
 import mindspore.numpy as mnp
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
-from ..primitive import Primitive
-from ..composite import _VmapGeneralRule
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front,\
-    _vmap_clone_prim, _bdim_at_any
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
+    _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -538,4 +539,75 @@ def get_mirror_pad_grad_grad_vmap_rule(prim, axis_size):
                                "but got {}.".format(prim.name, pad_dim, x_ndim))
         return (out, 0)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register('LayerNormGrad')
+def get_layernormgrad_vmap_rule(prim, axis_size):
+    """VmapRule for `LayerNormGrad` operation."""
+    @constexpr
+    def process_attr_axis(prim_attr_axis):
+        if prim_attr_axis < 0:
+            return prim_attr_axis
+        return prim_attr_axis + 1
+
+    @constexpr
+    def get_batch_params_reduce_axes(begin_params_axis, x_shape):
+        if begin_params_axis < 0:
+            x_rank = len(x_shape)
+            begin_params_axis += x_rank
+        batch_params_reduce_axes = tuple(range(1, begin_params_axis))
+        if not batch_params_reduce_axes:
+            return None
+        return batch_params_reduce_axes
+
+    @constexpr
+    def get_logical_shape(var_shape):
+        return var_shape[1:]
+
+    norm_axis = process_attr_axis(prim.begin_norm_axis)
+    params_axis = process_attr_axis(prim.begin_params_axis)
+    batch_prim = G.LayerNormGrad(norm_axis, params_axis)
+    eps = 1e-12
+
+    def vmap_rule(x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        dy, dy_dim = dy_bdim
+        var, var_dim = var_bdim
+        mean, mean_dim = mean_bdim
+        gamma, gamma_dim = gamma_bdim
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        var = _bdim_at_front(var, var_dim, axis_size)
+        mean = _bdim_at_front(mean, mean_dim, axis_size)
+        gamma = _bdim_at_front(gamma, gamma_dim, axis_size)
+
+        dy_shape = F.shape(dy)
+        batch_params_reduce_axes = get_batch_params_reduce_axes(params_axis, dy_shape)
+
+        if batch_params_reduce_axes is None:
+            d_beta = dy
+        else:
+            d_beta = F.reduce_sum(dy, batch_params_reduce_axes)
+
+        d_gamma_tmp = dy * (x - mean) / F.sqrt(var + eps)
+        if batch_params_reduce_axes is None:
+            d_gamma = d_gamma_tmp
+        else:
+            d_gamma = F.reduce_sum(d_gamma_tmp, batch_params_reduce_axes)
+
+        gamma_shape = F.shape(gamma)
+        dy_shape = F.shape(dy)
+        gamma = _handle_broadcasting(gamma, gamma_shape, dy_shape)
+        dy = dy * gamma
+        gamma_logical_shape = get_logical_shape(gamma_shape)
+        ones_like_gamma = F.ones(gamma_logical_shape, F.dtype(gamma))
+        dx, _, _ = batch_prim(x, dy, var, mean, ones_like_gamma)
+
+        return (dx, 0), (d_gamma, 0), (d_beta, 0)
     return vmap_rule
