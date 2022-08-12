@@ -377,7 +377,7 @@ endif()
 if(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
         ${TOOLS_DIR}/graph_kernel/common/*.cc
-        ${TOOLS_DIR}/graph_kernel/litert/*.cc
+        ${TOOLS_DIR}/graph_kernel/runtime/*.cc
         )
     set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
 endif()

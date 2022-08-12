@@ -29,10 +29,8 @@ class Concat : public OpDesc {
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
-    const auto &input_x = inputs[0];
-    const auto &input_y = inputs[1];
     auto axis = GetValue<int64_t>(attrs_["axis"]);
-    auto result = gb.Concat(input_x, input_y, axis);
+    auto result = gb.Concat(inputs, axis);
     return {result};
   }
 };
