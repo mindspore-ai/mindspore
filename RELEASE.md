@@ -2,6 +2,80 @@
 
 [查看中文](./RELEASE_CN.md)
 
+# MindSpore 1.8.1
+
+## MindSpore 1.8.1 Release Notes
+
+### API Change
+
+#### operator
+
+- [STABLE] Add GPU and CPU support for ops.ApplyAdagradDA.
+- [STABLE] Add CPU support for ops.ApplyAdagradV2.
+- [STABLE] Add Ascend dynamic shape support for ops.ApplyCenteredRmsProp.
+- [STABLE] Add CPU support for ops.ApplyFtrl.
+- [STABLE] Add CPU support for ops.ApplyGradientDescent.
+- [STABLE] Add CPU support for ops.ApplyPowerSign.
+- [STABLE] Add GPU and CPU support for ops.ApplyProximalAdagrad.
+- [STABLE] Add CPU support for ops.ApplyProximalGradientDescent.
+- [STABLE] Add Ascend dynamic shape support for ops.ApplyRmsProp.
+- [STABLE] Add functional interface for ops.max.
+- [STABLE] Add functional interface for ops.atan2.
+- [STABLE] Add GPU support for ops.cummax.
+- [STABLE] Add GPU and CPU support for ops.cummin.
+- [STABLE] Add GPU support for ops.diag.
+- [STABLE] Add functional interface for ops.expand_dims.
+- [STABLE] Add functional interface for ops.gather_elements.
+- [STABLE] Add GPU support for ops.grid_sample.
+- [STABLE] Add Ascend support for ops.hardswish.
+- [BETA] Add GPU support for ops.index_fill.
+- [BETA] Add CPU support for ops.inplace_update.
+- [BETA] Add GPU support for nn.InstanceNorm1d.
+- [BETA] Add GPU support for nn.InstanceNorm2d.
+- [BETA] Add GPU support for nn.InstanceNorm3d.
+- [STABLE] Add functional interface for ops.log1p.
+- [STABLE] Add GPU and CPU support for ops.masked_fill.
+- [BETA] Add GPU support for ops.matrix_diag_part.
+- [BETA] Add GPU support for ops.matrix_diag.
+- [BETA] Add GPU support for ops.matrix_set_diag.
+- [STABLE] Add GPU support for ops.max_pool3d.
+- [STABLE] Add functional interface for ops.nll_loss.
+- [STABLE] Add functional interface for ops.one_hot.
+- [STABLE] Add functional interface for ops.pad.
+- [STABLE] Add CPU support for ops.RandomCategorical.
+- [STABLE] Add CPU support for ops.random_gamma.
+- [STABLE] Add functional interface for ops.amax.
+- [STABLE] Add functional interface for ops.mean.
+- [STABLE] Add functional interface for ops.amin.
+- [STABLE] Add functional interface for ops.prod.
+- [STABLE] Add Ascend, GPU, and CPU support for ops.renorm.
+- [BETA] Add Ascend, GPU, and CPU support for ops.tensor_scatter_elements.
+- [STABLE] Add GPU support for ops.scatter_max.
+- [STABLE] Add GPU support for ops.scatter_min.
+- [STABLE] Add functional interface for ops.scatter_nd.
+- [STABLE] Add GPU support for ops.scatter_nd_max.
+- [STABLE] Add functional interface for ops.scatter_update.
+- [STABLE] Add CPU support for ops.binary_cross_entropy_with_logits.
+- [STABLE] Add functional interface for ops.smooth_l1_loss.
+- [STABLE] Add CPU support for ops.space_to_batch_nd.
+- [STABLE] Add GPU and CPU support for ops.SparseApplyAdagrad.
+- [STABLE] Add GPU and CPU support for ops.sparse_segment_mean.
+- [STABLE] Add functional interface for ops.squeeze.
+- [STABLE] Add CPU support for ops.standard_laplace.
+- [BETA] Add GPU support for nn.InstanceNorm1d.
+- [BETA] Add GPU support for nn.InstanceNorm3d.
+- [BETA] Add Ascend, GPU, and CPU support for nn.ReflectionPad1d.
+- [BETA] Add Ascend, GPU, and CPU support for nn.ReflectionPad2d.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.SiLU.
+- [STABLE] Add functional interface for ops.transpose.
+- [STABLE] Add CPU support for ops.uniform_candidate_sampler.
+- [STABLE] Add functional interface for ops.uniform.
+- [STABLE] Add GPU support for ops.unique_with_pad.
+- [STABLE] Add functional interface for ops.unstack.
+- [BETA] Add GPU and CPU support for ops.interpolate.
+- [STABLE] Add CPU support for ops.xdivy.
+- [STABLE] Add CPU support for ops.xlogy.
+
 # MindSpore 1.8.0
 
 ## MindSpore 1.8.0 Release Notes
