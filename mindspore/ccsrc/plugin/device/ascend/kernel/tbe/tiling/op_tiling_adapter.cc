@@ -94,7 +94,8 @@ std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(cons
     {"ArgMaxWithValue", {{"axis", "dimension"}}},
     {"ArgMinWithValue", {{"axis", "dimension"}}},
     {"DepthToSpace", {{"block_size", "block_size"}}},
-    {"Conv2D", {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}}}};
+    {"Conv2D", {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}}},
+    {"BatchMatMul", {{"transpose_x1", "adj_x1"}, {"transpose_x2", "adj_x2"}}}};
   auto iter = op_type_map.find(op_type);
   return iter == op_type_map.end() ? attrs : iter->second;
 }
