@@ -33,9 +33,9 @@ NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, const 
   return Emit("Gather", {param, indice}, {{"axis", axis_value}});
 }
 
-NodePtr GraphBuilder::Concat(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const {
+NodePtr GraphBuilder::Concat(const NodePtrList &inputs, const int64_t &axis) const {
   auto axis_value = MakeValue(axis);
-  return Emit("Concat", {param, indice}, {{"axis", axis_value}});
+  return Emit("Concat", inputs, {{"axis", axis_value}});
 }
 
 NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) const {

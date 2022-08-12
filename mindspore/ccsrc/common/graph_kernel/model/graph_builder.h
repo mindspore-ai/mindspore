@@ -72,7 +72,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Reshape(const NodePtr &input, const ShapeVector &shape) const;
   NodePtr BroadcastTo(const NodePtr &input, const ShapeVector &shape) const;
   NodePtr Gather(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const;
-  NodePtr Concat(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const;
+  NodePtr Concat(const NodePtrList &inputs, const int64_t &axis) const;
   NodePtr Transpose(const NodePtr &input, const ShapeVector &perm) const;
 
   NodePtr ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
