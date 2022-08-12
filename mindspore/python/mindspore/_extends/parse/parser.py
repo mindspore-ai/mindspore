@@ -107,12 +107,12 @@ _unsupported_internal_type = (
 )
 
 _hybrid_type = (
-    print, len, enumerate, zip, map, filter, abs, all, any, round, max, min,
+    print, len, enumerate, zip, map, filter, abs, all, any, round, max, min, hasattr
 )
 
 # Unsupported python builtin type in JIT Fallback.
 _fallback_unsupported_python_builtin_type = (
-    compile, eval, exec, input, open, delattr, setattr, getattr, hasattr, super, staticmethod, classmethod, __import__,
+    compile, eval, exec, input, open, delattr, setattr, super, staticmethod, classmethod, __import__,
     memoryview, property,
 )
 

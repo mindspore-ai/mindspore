@@ -143,6 +143,8 @@ convert_object_map = {
     T.isinstance:   Primitive('isinstance'),
     T.max:          M.ms_max,
     T.min:          M.ms_min,
+    T.getattr:      Primitive('getattr'),
+    T.hasattr:      M.hasattr,
 
     # custom define operation
     T.iter:         M.ms_iter,

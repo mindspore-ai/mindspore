@@ -27,8 +27,6 @@ context.set_context(mode=context.GRAPH_MODE)
 
 def test_dtype_and_shape_as_attr():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
 
         def construct(self, x):
             shape = x.shape
@@ -62,8 +60,6 @@ def test_dtype_and_shape_as_attr_to_new_tensor():
 
 def test_type_not_have_the_attr():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
 
         def construct(self, x):
             shape = x.shapes
@@ -71,14 +67,12 @@ def test_type_not_have_the_attr():
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AttributeError):
         net(x)
 
 
 def test_type_not_have_the_method():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
 
         def construct(self, x):
             shape = x.dtypes()
@@ -86,5 +80,5 @@ def test_type_not_have_the_method():
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AttributeError):
         net(x)

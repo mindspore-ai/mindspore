@@ -1368,11 +1368,13 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, const ValuePtr &attr_value,
-                                                  const ValuePtr &data_value, const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &args_spec_list, const ValuePtr &data_value,
+                                                  const AnfNodeConfigPtr &out_conf, const std::string &data) {
+  constexpr size_t item_index = 1;
+  auto item_args = args_spec_list[item_index];
+  ValuePtr item_value = item_args->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
-  MS_EXCEPTION_IF_NULL(attr_value);
-  ValuePtr item_value = attr_value;
+  MS_EXCEPTION_IF_NULL(item_value);
   if (item_value->isa<StringImm>()) {
     item_value = std::make_shared<parse::Symbol>(item_value->cast_ptr<StringImm>()->value());
   }
@@ -1391,6 +1393,23 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
+  if (IsValueNode<None>(new_node)) {
+    // Do not find the attribute.
+    constexpr auto kMaxArgsLen = 3;
+    bool has_default = (args_spec_list.size() == kMaxArgsLen);
+    if (!has_default) {
+      MS_EXCEPTION(AttributeError) << data << " object has no attribute " << symbol->symbol();
+    }
+    auto out_cnode = out_node->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(out_cnode);
+    constexpr auto kDefaultIndex = 3;
+    auto default_node = out_cnode->inputs()[kDefaultIndex];
+    func_graph->ReplaceInOrder(out_node, default_node);
+    auto eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
   if (pipeline::GetJitLevel() == "O0" && IsValueNode<FuncGraph>(new_node)) {
     UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
   }
@@ -1404,7 +1423,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForNameSpace(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
+EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_spec_list,
                                             const AnfNodeConfigPtr &out_conf) {
   // args_spec_list: same as StaticGetter
   constexpr size_t args_min_size = 2;
@@ -1413,23 +1432,33 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AnalysisEnginePtr &, const Abs
   }
   MS_EXCEPTION_IF_NULL(out_conf);
   // An external type.
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  auto data_value = args_spec_list[0]->BuildValue();
+  constexpr auto kDataIndex = 0;
+  constexpr auto kItemIndex = 1;
+  auto data = args_spec_list[kDataIndex];
+  auto item = args_spec_list[kItemIndex];
+  MS_EXCEPTION_IF_NULL(data);
+  MS_EXCEPTION_IF_NULL(item);
+  auto data_value = data->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
   if (!data_value->isa<parse::NameSpace>()) {
     MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
-                            << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
+                            << "\nThe first argument should be a NameSpace, but got " << data->ToString();
   }
 
-  auto item_value = args_spec_list[1]->BuildValue();
+  auto item_value = item->BuildValue();
   MS_EXCEPTION_IF_NULL(item_value);
-  return GetEvaluatedValueForNameSpaceString(nullptr, item_value, data_value, out_conf);
+  auto data_type = data->BuildType();
+  MS_EXCEPTION_IF_NULL(data_type);
+  const auto &data_id_str = TypeIdToString(data_type->type_id());
+  return GetEvaluatedValueForNameSpaceString(args_spec_list, data_value, out_conf, data_id_str);
 }
 
-EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &, const ValuePtr &item_value,
-                                                      const ValuePtr &data_value, const ConfigPtr &,
-                                                      const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList &args_spec_list,
+                                                      const ValuePtr &data_value, const AnfNodeConfigPtr &out_conf) {
+  constexpr size_t item_index = 1;
+  auto item_args = args_spec_list[item_index];
+  ValuePtr item_value = item_args->BuildValue();
+
   MS_EXCEPTION_IF_NULL(item_value);
   MS_EXCEPTION_IF_NULL(data_value);
   // Get the name of item.
@@ -1447,8 +1476,20 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &,
   // Get the attr/method of ms_class object.
   auto out_node = out_conf->node();
   FuncGraphPtr func_graph = out_node->func_graph();
+  // If the attribute is not found and the default is not set, AttributeError will be raised.
   auto new_node = parse::ResolveMsClassWithAttr(func_graph->manager(), ms_class->obj(), item_name, out_node);
-  // Replace old node with the resolved new node in order list.
+  if (new_node == nullptr || IsValueNode<None>(new_node)) {
+    constexpr auto kMaxArgsLen = 3;
+    bool has_default = (args_spec_list.size() == kMaxArgsLen);
+    if (!has_default) {
+      MS_EXCEPTION(AttributeError) << py::str(ms_class->obj()) << " object has no attribute: " << item_name << ".";
+    }
+    constexpr auto kDefaultIndex = 3;
+    auto out_cnode = out_node->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(out_cnode);
+    new_node = out_cnode->inputs()[kDefaultIndex];
+  }
+
   func_graph->ReplaceInOrder(out_node, new_node);
   AnalysisEnginePtr eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -1456,9 +1497,12 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &,
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
-                                                   const FuncGraphPtr &func_value, const ConfigPtr &,
-                                                   const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AbstractBasePtrList &args_spec_list,
+                                                   const FuncGraphPtr &func_value, const AnfNodeConfigPtr &out_conf) {
+  constexpr size_t item_index = 1;
+  auto item_args = args_spec_list[item_index];
+  ValuePtr item_value = item_args->BuildValue();
+
   MS_EXCEPTION_IF_NULL(item_value);
   MS_EXCEPTION_IF_NULL(func_value);
   if (!item_value->isa<StringImm>()) {
@@ -1471,22 +1515,32 @@ EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AnalysisEnginePtr &engi
   auto wrapper_obj = dyn_cast_ptr<parse::PyObjectWrapper>(python_obj);
   MS_EXCEPTION_IF_NULL(wrapper_obj);
   py::object real_python_obj = wrapper_obj->obj();
+  const auto &py_obj_str = py::str(real_python_obj);
   MS_LOG(DEBUG) << "item_value: " << item_value->ToString() << ", func_value: " << func_value->ToString()
-                << ", real_python_obj: " << py::str(real_python_obj);
+                << ", real_python_obj: " << py_obj_str;
   if (py::isinstance<Cell>(real_python_obj)) {
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::object ns_obj =
       python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, real_python_obj);
     auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
-    return GetEvaluatedValueForNameSpaceString(nullptr, item_value, ns, out_conf);
+    return GetEvaluatedValueForNameSpaceString(args_spec_list, ns, out_conf, py_obj_str);
   }
   return nullptr;
 }
 
-EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
-                                                          const TypePtr &data_type, const ConfigPtr &data_conf,
+EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
+                                                          const AbstractBasePtrList &args_spec_list,
+                                                          const ConfigPtr &data_conf,
                                                           const AnfNodeConfigPtr &out_conf) {
+  constexpr size_t data_index = 0;
+  constexpr size_t item_index = 1;
+  auto data_args = args_spec_list[data_index];
+  auto item_args = args_spec_list[item_index];
+  MS_EXCEPTION_IF_NULL(data_args);
+  MS_EXCEPTION_IF_NULL(item_args);
+  ValuePtr item_value = item_args->BuildValue();
   MS_EXCEPTION_IF_NULL(item_value);
+  TypePtr data_type = data_args->BuildType();
   MS_EXCEPTION_IF_NULL(data_type);
   // The method maybe a Primitive or Composite
   if (!item_value->isa<StringImm>()) {
@@ -1498,8 +1552,22 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      MS_LOG(EXCEPTION) << "MindSpore not support to get attribute \'" << item_name << "\' of a type["
-                        << data_type->ToString() << "]";
+      constexpr auto kMaxArgsLen = 3;
+      bool has_default = (args_spec_list.size() == kMaxArgsLen);
+      if (!has_default) {
+        MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
+      }
+      auto out_node = out_conf->node();
+      auto out_cnode = out_node->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(out_cnode);
+      auto fg = out_cnode->func_graph();
+      constexpr auto kDefaultIndex = 3;
+      auto default_node = out_cnode->inputs()[kDefaultIndex];
+      fg->ReplaceInOrder(out_node, default_node);
+      auto eng = out_conf->engine();
+      MS_EXCEPTION_IF_NULL(eng);
+      auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
+      return eng->ForwardConfig(out_conf, fn_conf);
     }
     require_type = REQUIRE_TYPE::ATTR;
   }
@@ -1550,7 +1618,6 @@ ValuePtr GetMsClassObject(const AbstractBasePtr &abs) {
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                            const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
-  CheckArgsSize("StaticGetter", args_spec_list, 2);
 
   constexpr size_t data_index = 0;
   constexpr size_t item_index = 1;
@@ -1571,14 +1638,32 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
+  if (data_args->isa<abstract::AbstractScalar>()) {
+    ValuePtr data_value = data_args->BuildValue();
+    if (data_value->isa<parse::InterpretedObject>()) {
+      MS_EXCEPTION(TypeError) << "Do not support to get attribute from interpret object.";
+    }
+  }
+
+  constexpr auto KMaxArgSize = 3;
+  if (args_spec_list.size() == KMaxArgSize) {
+    constexpr size_t default_index = 2;
+    auto default_args = args_spec_list[default_index];
+    if (default_args->isa<abstract::AbstractScalar>()) {
+      ValuePtr default_value = default_args->BuildValue();
+      if (default_value->isa<parse::InterpretedObject>()) {
+        MS_EXCEPTION(TypeError) << "For 'getattr', the third input 'default' can not be interpreted object.";
+      }
+    }
+  }
+
   auto class_value = GetMsClassObject(data_args);
   if (class_value != nullptr) {
-    return GetEvaluatedValueForMsClassAttrOrMethod(engine, item_value, class_value, data_conf, out_conf);
+    return GetEvaluatedValueForMsClassAttrOrMethod(args_spec_list, class_value, out_conf);
   }
   auto data_func_graph = dyn_cast_ptr<FuncGraphAbstractClosure>(data_args);
   if (data_func_graph != nullptr) {
-    auto res =
-      GetEvaluatedValueForCellAttrOrMethod(engine, item_value, data_func_graph->func_graph(), data_conf, out_conf);
+    auto res = GetEvaluatedValueForCellAttrOrMethod(args_spec_list, data_func_graph->func_graph(), out_conf);
     if (res != nullptr) {
       return res;
     }
@@ -1586,9 +1671,9 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   // Try to search method map, if not found, the data_type should be External type.
   TypePtr data_type = data_args->BuildType();
   if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
-    return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, item_value, data_type, data_conf, out_conf);
+    return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_spec_list, data_conf, out_conf);
   }
-  return GetEvaluatedValueForNameSpace(engine, args_spec_list, out_conf);
+  return GetEvaluatedValueForNameSpace(args_spec_list, out_conf);
 }
 }  // namespace
 
@@ -1748,15 +1833,25 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
-    constexpr auto kGetAttrArgSize = 2;
+    constexpr auto kGetAttrArgMinSize = 2;
+    constexpr auto kGetAttrArgMaxSize = 3;
+    constexpr auto kAttrIndex = 1;
     auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
       return ret_abstract;
     }
     // Inputs: data, item
-    if (args_spec_list.size() != kGetAttrArgSize) {
-      MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
+    const auto args_size = args_spec_list.size();
+    if (args_size != kGetAttrArgMinSize && args_size != kGetAttrArgMaxSize) {
+      MS_LOG(EXCEPTION) << "For Primitive GetAttr, the input size should be 2 or 3, but got size:" << args_size;
+    }
+    auto attr_abs = args_spec_list[kAttrIndex];
+    auto attr_abs_type = attr_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(attr_abs_type);
+    auto type_id = attr_abs_type->type_id();
+    if (type_id != TypeId::kObjectTypeString) {
+      MS_EXCEPTION(TypeError) << "getattr(): attribute name must be string but got: " << TypeIdToString(type_id);
     }
     EvalResultPtr ret = nullptr;
     if (bound_node() != nullptr) {
