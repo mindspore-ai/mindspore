@@ -1247,7 +1247,6 @@ class MaxPool3DGradWithArgmax(Primitive):
 
     @prim_attr_register
     def __init__(self, ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format="NCDHW"):
-        self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
         validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
         validator.check_value_type('data_format', data_format, str, self.name)
