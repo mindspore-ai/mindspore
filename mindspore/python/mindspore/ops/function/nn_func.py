@@ -1927,7 +1927,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
         >>> input_lengths = Tensor(np.array([2]), mstype.int32)
         >>> target_lengths = Tensor(np.array([1]), mstype.int32)
-        >>> loss, log_alpha = fun.ctc_loss(log_probs, targets, input_lengths,
+        >>> loss, log_alpha = ops.ctc_loss(log_probs, targets, input_lengths,
         ...                                target_lengths, 0, 'mean', True)
         >>> print(loss)
         -2.2986124

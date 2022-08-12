@@ -4687,19 +4687,19 @@ class Tensor(Tensor_):
     def xdivy(self, y):
         """
         Divides self tensor by the input tensor element-wise. Returns zero when self is zero. The dtype of
-        original Tensor must be one of float, complex or bool. For simplicity, use x denotes the original Tensor.
+        original Tensor must be one of float, complex or bool. For simplicity, denote the original Tensor by x.
 
         .. math::
 
             out_i = x_{i} / {y_{i}}
 
-        self and `y` comply with the implicit type conversion rules to make the data types consistent.
-        'y' must be tensor or scalar, When y is tensor, dtypes of self and y cannot be bool at the same time,
-        and the shapes of them could be broadcast. When y is scalar, the scalar could only be a constant.
+        `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        'y' must be tensor or scalar, when y is tensor, dtypes of x and y cannot be bool at the same time,
+        and the shapes of them could be broadcast. When y is scalar, the scalar can only be a constant.
 
         Args:
-            - **y** (Union[Tensor, Number, bool]) - The second input is a number,
-              or a bool when the first input is a tensor, or a tensor whose data type is float16,
+            - **y** (Union[Tensor, Number, bool]) - The second input y is a Number,
+              or a bool when the first input x is a tensor, or a tensor whose data type is float16,
               float32, float64, complex64, complex128 or bool.
 
         Returns:
