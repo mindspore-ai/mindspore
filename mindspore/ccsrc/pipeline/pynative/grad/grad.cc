@@ -845,19 +845,19 @@ void GradExecutor::CheckGraph(const py::object &cell, const py::args &args) {
 }
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                         const py::object &grad_position, const py::args &args) {
+                                         const py::object &grad_hash_id, const py::args &args) {
   // Check current cell grad order and erase it if in current top cell list
   CheckGraph(cell, args);
 
   bool forward_run = false;
   // Get cell id and input args info
   const auto &cell_id = GetCellId(cell, args);
-  std::string grad_position_str;
-  if (!py::isinstance<py::none>(grad_position)) {
-    grad_position_str = std::string(py::str(grad_position));
+  std::string grad_hash_id_str;
+  if (!py::isinstance<py::none>(grad_hash_id)) {
+    grad_hash_id_str = std::string(py::str(grad_hash_id));
   }
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
-                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad_position_str;
+                    std::to_string(static_cast<int>(grad->get_by_list_)) + grad_hash_id_str;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {

@@ -167,8 +167,8 @@ py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) con
 }
 
 py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                             const py::object &grad_position, const py::args &args) const {
-  return grad_executor()->CheckAlreadyRun(grad, cell, grad_position, args);
+                                             const py::object &grad_hash_id, const py::args &args) const {
+  return grad_executor()->CheckAlreadyRun(grad, cell, grad_hash_id, args);
 }
 
 py::object PyNativeExecutor::Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const {
