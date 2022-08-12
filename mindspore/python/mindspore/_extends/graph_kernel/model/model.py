@@ -238,6 +238,7 @@ class PrimLib:
         'StandardNormal': Prim(OPAQUE),
         'OneHot': Prim(OPAQUE),
         'ElemAny': Prim(OPAQUE),
+        'Custom': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
