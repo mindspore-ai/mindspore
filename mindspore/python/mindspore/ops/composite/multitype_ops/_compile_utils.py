@@ -1303,3 +1303,19 @@ def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slic
     reps = const_utils.compute_multiples(shape, final_shape)
     slice_index_tensor = F.tile(array, reps)
     return slice_index_tensor
+
+
+def check_coo_tensor_input_length(coo_tuple):
+    """Check length of coo tensor."""
+    coo_length = 3
+    if len(coo_tuple) != coo_length:
+        raise ValueError(f"Expect coo_tuple have 3 inputs (indices, values, shape), but got {len(coo_tuple)}.")
+    return coo_tuple
+
+
+def check_csr_tensor_input_length(csr_tuple):
+    """Check length of csr tensor."""
+    csr_length = 4
+    if len(csr_tuple) != csr_length:
+        raise ValueError(f"Expect csr_tuple have 4 inputs (indptr, indices, values, shape), but got {len(csr_tuple)}.")
+    return csr_tuple

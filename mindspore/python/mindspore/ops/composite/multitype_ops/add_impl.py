@@ -19,6 +19,7 @@ from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 from ...composite.multitype_ops._constexpr_utils import make_tensor, check_equal
+from ....common import CSRTensor, COOTensor
 
 
 add = base.MultitypeFuncGraph('add', True)
@@ -427,6 +428,43 @@ def _add_csrtensor_csrtensor(x, y):
     return F.make_csr_tensor(x.indptr, x.indices, x.values + y.values, x.shape)
 
 
+@_add_backward.register("CSRTensor", "Tuple")
+def _add_csrtensor_tuple(x, y):
+    """
+   Adds CSRTensor and Tuple(contains all components of a CSRTensor).
+
+   Args:
+       x (CSRTensor): x
+       y (Tuple): y
+
+   Returns:
+       CSRTensor.
+   """
+    # For y, all components are zeros, except y.values, since only values have
+    # gradients, the construction of CSRTensor here is to confirm the tuple input
+    # is valid.
+    y = utils.check_csr_tensor_input_length(y)
+    y = CSRTensor(y[0], y[1], y[2], x.shape)
+    return _add_csrtensor_csrtensor(x, y)
+
+
+@_add_backward.register("Tuple", "CSRTensor")
+def _add_tuple_csrtensor(x, y):
+    """
+   Adds Tuple(contains all components of a CSRTensor) and CSRTensor.
+
+   Args:
+       x (Tuple): x
+       y (CSRTensor): y
+
+   Returns:
+       CSRTensor.
+   """
+    x = utils.check_csr_tensor_input_length(x)
+    x = CSRTensor(x[0], x[1], x[2], y.shape)
+    return _add_csrtensor_csrtensor(x, y)
+
+
 @_add_backward.register("COOTensor", "COOTensor")
 def _add_cootensor_cootensor(x, y):
     """
@@ -440,5 +478,39 @@ def _add_cootensor_cootensor(x, y):
        COOTensor.
    """
     return F.make_coo_tensor(x.indices, x.values + y.values, x.shape)
+
+
+@_add_backward.register("COOTensor", "Tuple")
+def _add_cootensor_tuple(x, y):
+    """
+   Adds COOTensor and Tuple(contains all components of a COOTensor).
+
+   Args:
+       x (COOTensor): x
+       y (Tuple): y
+
+   Returns:
+       COOTensor.
+   """
+    y = utils.check_coo_tensor_input_length(y)
+    y = COOTensor(y[0], y[1], x.shape)
+    return _add_cootensor_cootensor(x, y)
+
+
+@_add_backward.register("Tuple", "COOTensor")
+def _add_tuple_cootensor(x, y):
+    """
+   Adds Tuple(contains all components of a COOTensor) and COOTensor.
+
+   Args:
+       x (Tuple): x
+       y (COOTensor): y
+
+   Returns:
+       COOTensor.
+   """
+    x = utils.heck_coo_tensor_input_length(x)
+    x = COOTensor(x[0], x[1], y.shape)
+    return _add_cootensor_cootensor(x, y)
 
 hyper_add = base.HyperMap(_add_backward)
