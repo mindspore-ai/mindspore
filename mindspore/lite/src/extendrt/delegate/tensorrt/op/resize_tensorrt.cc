@@ -160,7 +160,31 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
     auto shape_value_tensor = in_tensors_[1];
     if (shape_value_tensor.Data() == nullptr && in_tensors_.size() >= INPUT_SIZE2) {
       // dynamic output shape
-      resize_layer->setInput(1, *input(ctx, 1).trt_tensor_);
+      auto shape_tensor = input(ctx, 1).trt_tensor_;
+      if (shape_tensor->getDimensions().d[0] == INPUT_SIZE4) {
+        resize_layer->setInput(1, *shape_tensor);
+      } else {
+        MS_LOG(WARNING) << "DEBUG";
+        auto in_tensor_shape = ctx->network()->addShape(*resize_in_tensor)->getOutput(0);
+        CHECK_NULL_RETURN(in_tensor_shape);
+        nvinfer1::Dims start_dims{1, {0}};
+        nvinfer1::Dims size_dims{1, {2}};
+        nvinfer1::Dims stride_dims{1, {1}};
+        auto nc = ctx->network()->addSlice(*in_tensor_shape, start_dims, size_dims, stride_dims)->getOutput(0);
+        CHECK_NULL_RETURN(nc);
+
+        nvinfer1::ITensor *trt_input_tensors[INPUT_SIZE2];
+        trt_input_tensors[0] = nc;
+        trt_input_tensors[1] = shape_tensor;
+
+        auto concat_layer = ctx->network()->addConcatenation(trt_input_tensors, INPUT_SIZE2);
+        concat_layer->setAxis(0);
+        auto nchw = concat_layer->getOutput(0);
+        MS_LOG(DEBUG) << "resize dims:" << GetTensorFormat(nchw, Format::NCHW, false);
+        CHECK_NULL_RETURN(nchw);
+        nchw = TRTTensorCast(ctx, nchw, nvinfer1::DataType::kINT32, op_name_ + "_input_nchw_to_int32");
+        resize_layer->setInput(1, *nchw);
+      }
     } else {
       std::vector<float> out_shape;
       ParseValueFromShapeTensor(ctx, shape_value_tensor, &out_shape);

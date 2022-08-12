@@ -26,6 +26,18 @@
 #include "src/runtime/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
+namespace {
+size_t DataType2Size(DataType datatype) {
+  std::map<DataType, size_t> TypeByte = {
+    {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
+    {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
+    {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
+    {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
+    {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
+  };
+  return TypeByte[datatype];
+}
+}  // namespace
 TensorRTSubGraph::~TensorRTSubGraph() {
   if (ctx_ != nullptr) {
     delete ctx_;
@@ -90,6 +102,8 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
       input_hw_index_ = -1;
     }
   }
+  using_input_ranges_ =
+    min_dims_.size() != 0 && min_dims_.size() == opt_dims_.size() && min_dims_.size() == max_dims_.size();
   return RET_OK;
 }
 
@@ -174,7 +188,7 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
     return nullptr;
   }
   nvinfer1::Dims input_dims;
-  if (min_dims_.size() != 0 && min_dims_.size() == opt_dims_.size() && min_dims_.size() == max_dims_.size()) {
+  if (using_input_ranges_) {
     input_dims = SetInputDimsProfile(in_tensor, index);
   } else {
     input_dims = ParseInputDimsProfile(in_tensor);
@@ -270,6 +284,9 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return input_dims;
   }
+  min_dims_.push_back(input_dims_min);
+  opt_dims_.push_back(input_dims_opt);
+  max_dims_.push_back(input_dims_max);
   DebugDims("input min dims", input_dims_min);
   DebugDims("input opt dims", input_dims_opt);
   DebugDims("input max dims", input_dims_max);
@@ -437,18 +454,20 @@ int TensorRTSubGraph::Prepare() {
     return RET_ERROR;
   }
 
-  for (auto tensor : inputs_) {
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
+  for (size_t i = 0; i != inputs_.size(); ++i) {
+    auto &tensor = inputs_[i];
+    int volumn = std::accumulate(max_dims_[i].d, max_dims_[i].d + max_dims_[i].nbDims, 1, std::multiplies<int>());
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, volumn * DataType2Size(tensor.DataType()));
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for inputs tensor device memory failed.";
       return RET_ERROR;
     }
-    runtime_->SetBatchSize(tensor.Shape()[0]);
+    runtime_->SetBatchSize(max_dims_[i].d[0]);
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor.Name() << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     trt_in_tensor_name_.push_back(tensor.Name());
-    nvinfer1::Dims input_dims = ConvertCudaDims(tensor.Shape());
+    nvinfer1::Dims input_dims = max_dims_[i];
     for (int od = 0; od < input_dims.nbDims; od++) {
       MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
     }
@@ -489,19 +508,12 @@ int TensorRTSubGraph::Prepare() {
     auto out_dims = trt_context_->getBindingDimensions(index);
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
     DebugDims("out dims", out_dims);
-    std::map<enum DataType, size_t> TypeByte = {
-      {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
-      {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
-      {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
-      {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
-      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
-    };
     if (tensor.Data() == nullptr) {
       MS_LOG(INFO) << "Set output shape by tensorrt binding output";
       tensor.SetShape(lite::ConvertMSShape(out_dims));
       tensor.MutableData();
     }
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * TypeByte[tensor.DataType()]);
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * DataType2Size(tensor.DataType()));
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
       return RET_ERROR;

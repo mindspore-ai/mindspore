@@ -40,7 +40,7 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
 
   return RET_OK;
 }
-int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+int ConcateTensorRT::CheckParams(TensorRTContext *ctx) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
@@ -59,12 +59,28 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
                   << ", but origin ms tensor has " << in_tensors_.size();
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (CheckParams(ctx) != RET_OK) {
+    MS_LOG(ERROR) << "Check input tensors failed: " << op_name_;
+    return RET_ERROR;
+  }
 
   nvinfer1::ITensor *trt_input_tensors[in_tensors_.size()];
   int ret = PreProcessInputs(ctx, trt_input_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreProcessInputs failed for " << op_name_;
     return ret;
+  }
+
+  bool has_rank_0 = false;
+  for (size_t i = 0; i != in_tensors_.size(); ++i) {
+    if (!input(ctx, i).is_tensor_) {
+      has_rank_0 = true;
+      break;
+    }
   }
 
   if (!same_format_) {
@@ -77,7 +93,7 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
   }
 
-  if (type_ == schema::PrimitiveType_Stack) {
+  if (type_ == schema::PrimitiveType_Stack && !has_rank_0) {
     for (size_t i = 0; i != in_tensors_.size(); ++i) {
       auto shuffle_layer = ctx->network()->addShuffle(*trt_input_tensors[i]);
       if (shuffle_layer == nullptr) {
@@ -143,7 +159,8 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
         trt_input_tensors[i] = transpose_layer->getOutput(0);
         this->transpose_layer_ = transpose_layer;
         same_format_ = true;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
+        MS_LOG(DEBUG) << "concate input "
+                      << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true, input(ctx, i).is_tensor_);
       }
     }
   } else {

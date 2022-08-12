@@ -111,6 +111,7 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
                         size_t thread_count);
 
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same, bool is_tensor);
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same);
 
 std::string GetTensorFormat(ITensorHelper tensor_helper);

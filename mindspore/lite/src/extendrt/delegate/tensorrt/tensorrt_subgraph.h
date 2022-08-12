@@ -148,6 +148,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   int input_batchsize_index_{0};
   int output_batchsize_index_{0};
   int input_hw_index_{0};
+  bool using_input_ranges_{false};
 
   std::map<std::string, std::vector<mindspore::MSTensor>> model_input_to_cache_tensors_;
 
