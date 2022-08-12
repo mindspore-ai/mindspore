@@ -7,7 +7,7 @@ mindspore.Tensor.atan2
 
     `x` 指的当前 Tensor。
 
-    返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`x = r*\sin(\theta), y = r*\cos(\theta)` ， 其中 :math:`r = \sqrt{x^2 + y^2}` 。
+    返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`x = r*\sin(\theta), y = r*\cos(\theta)` ，其中 :math:`r = \sqrt{x^2 + y^2}` 。
     输入 `x` 和 `y` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
 
     参数：
@@ -18,4 +18,4 @@ mindspore.Tensor.atan2
 
     异常：
         - **TypeError** - `x` 或 `y` 不是Tensor。
-        - **RuntimeError** - `x` 与 `y` 之间的数据类型转换不被支持
+        - **RuntimeError** - `x` 与 `y` 之间的数据类型转换不被支持。
