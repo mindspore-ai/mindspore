@@ -2334,7 +2334,6 @@ class MaxPool3DWithArgmax(Primitive):
     def __init__(self, ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False,
                  data_format="NCDHW", argmax_type=mstype.int64):
         """Initialize MaxPool3DWithArgmax."""
-        self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'argmax'])
         validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
         validator.check_value_type('data_format', data_format, str, self.name)
