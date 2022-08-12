@@ -72,7 +72,8 @@ class SparseDenseCwiseAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseAdd."""
-        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+        self.init_prim_io_names(
+            inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
 
 
 class SparseDenseCwiseMul(Primitive):
@@ -123,7 +124,8 @@ class SparseDenseCwiseMul(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseMul."""
-        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+        self.init_prim_io_names(
+            inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
 
 
 class SparseDenseCwiseDiv(Primitive):
@@ -174,7 +176,62 @@ class SparseDenseCwiseDiv(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseDiv."""
-        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+        self.init_prim_io_names(
+            inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+
+
+class SparseSlice(Primitive):
+    r"""
+    Slices a SparseTensor based on the "start" and "size".
+
+    Inputs:
+        - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`.
+          The shape should be :math:`(n,)`.
+        - **shape** (Tensor) - A 1D Tensor of type int64 which specifies the shape of sparsetensor,
+          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+        - **start** (Tensor) - A 1D Tensor of type int64, represents the start of the slice.
+        - **size** (Tensor) - A 1D Tensor of type int64, represents the size of the slice.
+
+    Outputs:
+        A `SparseTensor` objects resulting from splicing.
+        - *y_indices: A Tensor of type int64.
+        - *y_values: A Tensor. Has the same type as "values".
+        - *y_shape: A Tensor of type int64.
+
+    Raises:
+        TypeError: If the dtype of `indices`, `shape`, `start`, `size` are not int64.
+        ValueError: If `indices` is not 2-D tensor.
+        ValueError: If `values`, `start`, `shape` , `size` is not a 1-D tensor.
+        ValueError: If the number of `indices` is not corresponding to the number of `values`.
+        ValueError: If the index of `indices` is out of the bounds of `shape`.
+
+    Supported Platforms:
+
+    Examples:
+        >>> indices = Tensor([[0, 1], [1, 2], [1, 3], [2, 2]], dtype=ms.int64)
+        >>> values = Tensor([1, 2, 3, 4])
+        >>> shape = Tensor([3, 4], dtype=ms.int64)
+        >>> start = Tensor([0, 1], dtype=ms.int64)
+        >>> size = Tensor([2, 3], dtype=ms.int64)
+        >>> sparseslice = ops.SparseSlice()
+        >>> output = sparseslice(indices, values, shape, start, size)
+        >>> print(output[0])
+        [[0, 0]
+         [1, 1]
+         [1, 2]]
+        >>> print(output[1])
+        [1, 2, 3]
+        >>> print(output[2])
+        [2, 3]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSlice."""
+        self.init_prim_io_names(inputs=['indices', 'values', 'shape', 'start', 'size'],
+                                outputs=['y_indices', 'y_values', 'y_shape'])
 
 
 class SparseToDense(PrimitiveWithInfer):
@@ -214,11 +271,14 @@ class SparseToDense(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseToDense."""
-        self.init_prim_io_names(inputs=['indices', 'values', 'dense_shape'], outputs=['output'])
+        self.init_prim_io_names(
+            inputs=['indices', 'values', 'dense_shape'], outputs=['output'])
 
     def __infer__(self, indices, values, sparse_shape):
-        validator.check_tensor_dtype_valid('indices', indices['dtype'], [mstype.int32, mstype.int64], self.name)
-        validator.check_tensor_dtype_valid('values', values['dtype'], mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid('indices', indices['dtype'], [
+            mstype.int32, mstype.int64], self.name)
+        validator.check_tensor_dtype_valid(
+            'values', values['dtype'], mstype.number_type + (mstype.bool_,), self.name)
         indices_shape = indices['shape']
         if len(indices_shape) != 2:
             raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor, "
@@ -294,7 +354,8 @@ class SparseToDenseV2(Primitive):
         self.add_prim_attr("max_length", 1000000)
         self.validate_indices = validate_indices
         self.add_prim_attr("validate_indices", self.validate_indices)
-        self.init_prim_io_names(inputs=['indices', 'output_shape', 'values', 'default_value'], outputs=['output'])
+        self.init_prim_io_names(
+            inputs=['indices', 'output_shape', 'values', 'default_value'], outputs=['output'])
 
 
 class SparseTensorDenseAdd(Primitive):
@@ -341,7 +402,8 @@ class SparseTensorDenseAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseTensorDenseAdd."""
-        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+        self.init_prim_io_names(
+            inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
 
 
 class SparseTensorDenseMatmul(Primitive):
@@ -408,10 +470,13 @@ class SparseTensorDenseMatmul(Primitive):
         self.set_const_input_indexes([2])
 
     def __infer__(self, indices, values, sparse_shape, dense):
-        validator.check_tensor_dtype_valid('indices', indices['dtype'], [mstype.int32, mstype.int64], self.name)
-        valid_types = (mstype.float16, mstype.float32, mstype.float64, mstype.int32, mstype.int64)
+        validator.check_tensor_dtype_valid('indices', indices['dtype'], [
+            mstype.int32, mstype.int64], self.name)
+        valid_types = (mstype.float16, mstype.float32,
+                       mstype.float64, mstype.int32, mstype.int64)
         args = {'values': values['dtype'], 'dense': dense['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
+        validator.check_tensors_dtypes_same_and_valid(
+            args, valid_types, self.name)
         indices_shape = indices['shape']
         if len(indices_shape) != 2 or indices_shape[1] != 2:
             raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor and "
@@ -421,7 +486,8 @@ class SparseTensorDenseMatmul(Primitive):
             raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and "
                              f"the first dimension length must be equal to the first dimension length of 'indices', "
                              f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
-        a_shape = sparse_shape['value'][::-1] if self.adjoint_st else sparse_shape['value']
+        a_shape = sparse_shape['value'][::-
+                                        1] if self.adjoint_st else sparse_shape['value']
         b_shape = dense['shape'][::-1] if self.adjoint_dt else dense['shape']
         for i in a_shape:
             if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
@@ -634,9 +700,12 @@ class DenseToDenseSetOperation(Primitive):
     @prim_attr_register
     def __init__(self, set_operation="a-b", validate_indices=True):
         """Initialize DenseToDenseSetOperation."""
-        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y_indices', 'y_values', 'y_shape'])
-        validator.check_value_type("set_operation", set_operation, [str], self.name)
-        validator.check_value_type("validate_indices", validate_indices, [bool], self.name)
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=[
+            'y_indices', 'y_values', 'y_shape'])
+        validator.check_value_type(
+            "set_operation", set_operation, [str], self.name)
+        validator.check_value_type(
+            "validate_indices", validate_indices, [bool], self.name)
 
 
 class Sspaddmm(Primitive):
@@ -1078,7 +1147,8 @@ class SparseAdd(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(
-            inputs=["x1_indices", "x1_values", "x1_shape", "x2_indices", "x2_values", "x2_shape", "thresh"],
+            inputs=["x1_indices", "x1_values", "x1_shape",
+                    "x2_indices", "x2_values", "x2_shape", "thresh"],
             outputs=["sum_indices", "sum_values", "sum_shape"])
 
 
@@ -1132,14 +1202,13 @@ class SparseMatrixSoftmax(Primitive):
          2.36882806e-01,  6.43914223e-01,  2.68941432e-01,  7.31058598e-01]))
     """
 
-
-
     @prim_attr_register
     def __init__(self, dtype):
         '''Initialize for SparseMatrixSoftmax'''
         if not isinstance(dtype, (type(mstype.float32), type(mstype.single), type(mstype.float64),
                                   type(mstype.double))):
-            raise TypeError("Only float32 and float64 type data are supported, but got {}".format(dtype))
+            raise TypeError(
+                "Only float32 and float64 type data are supported, but got {}".format(dtype))
         self.add_prim_attr("dtype", dtype)
         self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
                                         'x_col_indices', 'x_values'],
@@ -1201,7 +1270,8 @@ class CSRSparseMatrixToDense(Primitive):
     def __init__(self):
         """Initialize CSRSparseMatrixToDense"""
         self.init_prim_io_names(
-            inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'],
+            inputs=['x_dense_shape', 'x_batch_pointers',
+                    'x_row_pointers', 'x_col_indices', 'x_values'],
             outputs=['y'])
 
 
@@ -1539,8 +1609,10 @@ class SparseMatrixSparseMatMul(Primitive):
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False, adjoint_a=False, adjoint_b=False):
         """Initialize SparseMatrixSparseMatMul"""
-        validator.check_value_type("transpose_a", transpose_a, [bool], self.name)
-        validator.check_value_type("transpose_b", transpose_b, [bool], self.name)
+        validator.check_value_type(
+            "transpose_a", transpose_a, [bool], self.name)
+        validator.check_value_type(
+            "transpose_b", transpose_b, [bool], self.name)
         validator.check_value_type("adjoint_a", adjoint_b, [bool], self.name)
         validator.check_value_type("adjoint_b", adjoint_b, [bool], self.name)
         self.init_prim_io_names(
@@ -1622,12 +1694,16 @@ class SparseMatrixMatMul(Primitive):
     def __init__(self, transpose_x1=False, transpose_x2=False, adjoint_x1=False, adjoint_x2=False,
                  transpose_output=False, conjugate_output=False):
         """Initialize SparseMatrixMatMul"""
-        validator.check_value_type("transpose_x1", transpose_x1, [bool], self.name)
-        validator.check_value_type("transpose_x2", transpose_x2, [bool], self.name)
+        validator.check_value_type(
+            "transpose_x1", transpose_x1, [bool], self.name)
+        validator.check_value_type(
+            "transpose_x2", transpose_x2, [bool], self.name)
         validator.check_value_type("adjoint_x1", adjoint_x1, [bool], self.name)
         validator.check_value_type("adjoint_x2", adjoint_x2, [bool], self.name)
-        validator.check_value_type("transpose_output", transpose_output, [bool], self.name)
-        validator.check_value_type("conjugate_output", conjugate_output, [bool], self.name)
+        validator.check_value_type(
+            "transpose_output", transpose_output, [bool], self.name)
+        validator.check_value_type(
+            "conjugate_output", conjugate_output, [bool], self.name)
         self.init_prim_io_names(inputs=['x1_dense_shape', 'x1_batch_pointers', 'x1_row_pointers',
                                         'x1_col_indices', 'x1_values', 'x2_dense'], outputs=['y_dense'])
 
@@ -1883,4 +1959,5 @@ class SparseReshape(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SparseReshape."""
-        self.init_prim_io_names(inputs=['indices', 'shape', 'new_shape'], outputs=['y_indices', 'y_shape'])
+        self.init_prim_io_names(inputs=['indices', 'shape', 'new_shape'], outputs=[
+            'y_indices', 'y_shape'])
