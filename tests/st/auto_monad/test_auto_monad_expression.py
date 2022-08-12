@@ -228,3 +228,32 @@ def test_load_eliminate():
     net = Net()
     out = net(x)
     assert out == 5
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parameter_tuple_assign():
+    """
+    Feature: Auto monad feature.
+    Description: Parameter tuple assign.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign = P.Assign()
+            self.param1 = Parameter(Tensor(0), name="param1")
+            self.param2 = Parameter(Tensor(0), name="param2")
+
+        def construct(self, x):
+            params = (self.param1, self.param2)
+            self.assign(params[0], x)
+            return params[0], params[1]
+
+    x = Tensor(2)
+    net = Net()
+    out = net(x)
+    assert out[0] == 2
+    assert out[1] == 0

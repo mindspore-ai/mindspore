@@ -222,7 +222,8 @@ class OrderEnforcer {
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto &input = inputs[i];
       // Skip non-ref input and update_state.
-      if (!IsRef(input) || input == update_state) {
+      // Skip Load(param, umonad) --> Ref
+      if (!IsRef(input) || input == update_state || IsPrimitiveCNode(input, prim::kPrimLoad)) {
         continue;
       }
       // The input is a ref (of parameter), find load nodes for it.
