@@ -9810,9 +9810,9 @@ class PSROIPooling(Primitive):
     @prim_attr_register
     def __init__(self, spatial_scale, group_size, output_dim):
         """Initialize PSROIPooling"""
-        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
-        validator.check_value_type("group_size", group_size, [int], self.name)
-        validator.check_value_type("output_dim", output_dim, [int], self.name)
+        validator.check_positive_float(spatial_scale, "spatial_scale", self.name)
+        validator.check_positive_int(group_size, "group_size", self.name)
+        validator.check_positive_int(output_dim, "output_dim", self.name)
         self.spatial_scale = spatial_scale
         self.group_size = group_size
         self.output_dim = output_dim
