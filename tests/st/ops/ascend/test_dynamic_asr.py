@@ -303,6 +303,10 @@ class MaxPool(nn.Cell):
         return out
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_dynamic_custom_dense():
     """
     Feature: Test Dynamic Dense and its backward. The input shape is dynamic.
