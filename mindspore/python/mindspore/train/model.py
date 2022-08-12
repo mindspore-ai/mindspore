@@ -46,7 +46,7 @@ from mindspore.parallel._recovery_context import _set_recovery_context, _get_rec
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
 from mindspore.common.api import _pynative_executor
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
-from . import amp
+from mindspore.train import amp
 
 
 def _transfer_tensor_to_tuple(inputs):

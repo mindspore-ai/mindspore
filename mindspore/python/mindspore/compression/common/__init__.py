@@ -19,6 +19,6 @@ Note: This is an experimental interface that is subject to change and/or deletio
 """
 
 from __future__ import absolute_import
-from .constant import QuantDtype
+from mindspore.compression.common.constant import QuantDtype
 
 __all__ = ["QuantDtype"]

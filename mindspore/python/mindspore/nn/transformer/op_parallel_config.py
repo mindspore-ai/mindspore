@@ -16,6 +16,8 @@
 Parallel Config for the Parallel Training
 This is an experimental interface that is subject to change and/or deletion.
 """
+from __future__ import absolute_import
+
 from mindspore._checkparam import Validator
 from mindspore import context
 import mindspore.communication.management as D

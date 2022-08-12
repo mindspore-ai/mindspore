@@ -19,19 +19,19 @@ Helper functions in train pipelines.
 """
 from __future__ import absolute_import
 
-from .model import Model
-from .dataset_helper import DatasetHelper, connect_network_with_dataset
-from . import amp
-from .amp import build_train_network
-from .loss_scale_manager import LossScaleManager, FixedLossScaleManager, DynamicLossScaleManager
-from .serialization import save_checkpoint, load_checkpoint, load_param_into_net, export, load, parse_print,\
-    build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, async_ckpt_thread_status,\
-    restore_group_info_list, convert_model
-from .callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, CheckpointConfig, \
-    RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, History, LambdaCallback, \
-    ReduceLROnPlateau, EarlyStopping
-from .summary import SummaryRecord
-from .train_thor import ConvertNetUtils, ConvertModelUtils
+from mindspore.train.model import Model
+from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
+from mindspore.train import amp
+from mindspore.train.amp import build_train_network
+from mindspore.train.loss_scale_manager import LossScaleManager, FixedLossScaleManager, DynamicLossScaleManager
+from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, export, \
+    load, parse_print, build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, \
+    async_ckpt_thread_status, restore_group_info_list, convert_model
+from mindspore.train.callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, \
+    CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, \
+    History, LambdaCallback, ReduceLROnPlateau, EarlyStopping
+from mindspore.train.summary import SummaryRecord
+from mindspore.train.train_thor import ConvertNetUtils, ConvertModelUtils
 
 __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "build_train_network", "LossScaleManager",
            "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",

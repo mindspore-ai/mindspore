@@ -16,8 +16,11 @@
 Note:
     Transformer Networks. This is interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -32,12 +35,12 @@ from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
 from mindspore.log import _LogActionOnce
-from .layers import _LayerNorm, _Linear, _check_input_shape, \
+from mindspore.nn.transformer.layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
     _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
-from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config, \
-    MoEParallelConfig
-from .moe import default_moe_config, MoE, _check_moe_config
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig,\
+    _Config, _check_config, MoEParallelConfig
+from mindspore.nn.transformer.moe import default_moe_config, MoE, _check_moe_config
 
 __all__ = [
     "AttentionMask",

@@ -14,8 +14,11 @@
 # ============================================================================
 
 """basic"""
+from __future__ import absolute_import
+
 import math
 import numpy as np
+
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
@@ -29,8 +32,8 @@ from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore._checkparam import Rel, Validator
-from ..cell import Cell
-from .activation import get_activation
+from mindspore.nn.cell import Cell
+from mindspore.nn.layer.activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
            'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout2d',

@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-'''Utils for RNNs CPU version, like Reverse operators'''
+"""Utils for RNNs CPU version, like Reverse operators."""
+from __future__ import absolute_import
+
 import numpy as np
+
 import mindspore.common.dtype as mstype
 import mindspore.ops as P
 from mindspore.ops.primitive import constexpr

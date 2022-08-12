@@ -24,19 +24,19 @@ import copy
 import numpy as np
 
 from mindspore import log as logger
-from ... import nn, ops
-from ..._checkparam import Validator
-from ...common import Tensor
-from ...common import dtype as mstype
-from ...common.api import _cell_graph_executor as _executor
-from ...common.parameter import Parameter
-from ...nn import Cell
-from ...nn.layer import quant
-from ...ops import operations as P
-from ...ops import functional as F
-from ...ops.operations import _inner_ops as inner
-from ..quant import quant_utils
-from ..quant.qat import _AddFakeQuantInput, _AddFakeQuantAfterSubCell
+from mindspore import nn, ops
+from mindspore._checkparam import Validator
+from mindspore.common import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _cell_graph_executor as _executor
+from mindspore.common.parameter import Parameter
+from mindspore.nn import Cell
+from mindspore.nn.layer import quant
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.compression.quant import quant_utils
+from mindspore.compression.quant.qat import _AddFakeQuantInput, _AddFakeQuantAfterSubCell
 
 
 __all__ = ["ExportToQuantInferNetwork"]

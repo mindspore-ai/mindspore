@@ -24,7 +24,6 @@ import numpy as np
 
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 from mindspore import log as logger
-
 from mindspore.train._utils import _make_directory
 from mindspore.train.summary._summary_adapter import package_init_event
 from mindspore._c_expression import security

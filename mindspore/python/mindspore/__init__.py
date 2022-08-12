@@ -13,21 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """.. MindSpore package."""
+from __future__ import absolute_import
 
-from .run_check import run_check
-from . import common, dataset, mindrecord, train, log
-from . import profiler, communication, numpy, parallel
-from .common import *
-from .mindrecord import *
-from .ops import _op_impl
-from .train import *
-from .log import *
-from .context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_auto_parallel_context, \
+from mindspore.run_check import run_check
+from mindspore import common, dataset, mindrecord, train, log
+from mindspore import profiler, communication, numpy, parallel
+from mindspore.common import *
+from mindspore.mindrecord import *
+from mindspore.ops import _op_impl
+from mindspore.train import *
+from mindspore.log import *
+from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_auto_parallel_context, \
                      get_auto_parallel_context, reset_auto_parallel_context, ParallelMode, set_ps_context, \
                      get_ps_context, reset_ps_context, set_fl_context, get_fl_context
-from .version import __version__
-from .profiler import Profiler
-from .parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
+from mindspore.version import __version__
+from mindspore.profiler import Profiler
+from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 
 
 __all__ = ["run_check"]

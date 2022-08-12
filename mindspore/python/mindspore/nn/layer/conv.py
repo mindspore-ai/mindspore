@@ -13,7 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """conv"""
+from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore import log as logger
 from mindspore import context
 from mindspore.ops import operations as P
@@ -23,7 +26,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator, Rel, twice, _check_3d_int_or_tuple
 from mindspore._extends import cell_attr_register
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['Conv2d', 'Conv2dTranspose', 'Conv1d', 'Conv1dTranspose', 'Conv3d', 'Conv3dTranspose']
 

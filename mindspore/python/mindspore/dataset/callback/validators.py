@@ -12,13 +12,12 @@
 # See the License foNtest_resr the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Built-in validators."""
+from __future__ import absolute_import
 
-"""
-Built-in validators.
-"""
 from functools import wraps
 
-from ..core.validator_helpers import parse_user_args, check_pos_int32
+from mindspore.dataset.core.validator_helpers import parse_user_args, check_pos_int32
 
 
 def check_callback(method):

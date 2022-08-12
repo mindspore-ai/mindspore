@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-Define the data types.
-"""
+"""Define the data types."""
+from __future__ import absolute_import
+
 import numpy as np
 
 import mindspore._c_dataengine as cde

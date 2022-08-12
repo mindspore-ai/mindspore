@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Quantization aware training."""
+from __future__ import absolute_import
 
 from functools import partial
 from collections import namedtuple
 import numpy as np
+
 import mindspore.common.dtype as mstype
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import operations as P
@@ -26,14 +28,14 @@ from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator, twice
 from mindspore.compression.common import QuantDtype
 import mindspore.context as context
-from .normalization import BatchNorm2d
-from .activation import get_activation
-from ..cell import Cell
-from ... import nn
-from ...ops.operations import _quant_ops as Q
-from .combined import Conv2dBnAct
-from .conv import Conv2d
-from .basic import Dense
+from mindspore.nn.layer.normalization import BatchNorm2d
+from mindspore.nn.layer.activation import get_activation
+from mindspore.nn.cell import Cell
+from mindspore import nn
+from mindspore.ops.operations import _quant_ops as Q
+from mindspore.nn.layer.combined import Conv2dBnAct
+from mindspore.nn.layer.conv import Conv2d
+from mindspore.nn.layer.basic import Dense
 
 __all__ = [
     'FakeQuantWithMinMaxObserver',

@@ -13,36 +13,38 @@
 # limitations under the License.
 # ============================================================================
 """math operations, the function docs are adapted from Numpy API."""
+from __future__ import absolute_import
+
 import operator
 import functools
 import itertools
 import sys
 from numpy import dtype as nptype
 
-from ..ops import operations as P
-from ..ops import functional as F
-from ..ops import composite as C
-from ..ops.primitive import constexpr
-from ..common import dtype as mstype
-from ..common import Tensor
-from .._c_expression import typing
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
+from mindspore.ops.primitive import constexpr
+from mindspore.common import dtype as mstype
+from mindspore.common import Tensor
+from mindspore._c_expression import typing
 
-from .dtypes import nan, pi, dtype_map, inf
+from mindspore.numpy.dtypes import nan, pi, dtype_map, inf
 
-from .array_creations import asarray_const, ones, zeros, empty, full, full_like, diag, \
+from mindspore.numpy.array_creations import asarray_const, ones, zeros, empty, full, full_like, diag, \
     arange, histogram_bin_edges, eye
-from .array_ops import where as where_
-from .array_ops import ravel, expand_dims, moveaxis, concatenate, flip, stack, atleast_1d, \
+from mindspore.numpy.array_ops import where as where_
+from mindspore.numpy.array_ops import ravel, expand_dims, moveaxis, concatenate, flip, stack, atleast_1d, \
     split
 
-from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
+from mindspore.numpy.utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
     _raise_value_error, _promote, _check_axis_type, _canonicalize_axis, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
     _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
     _raise_unimplemented_error, _abs, _in, _tuple_slice, _check_is_inf
-from .utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
+from mindspore.numpy.utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
     _to_tensor, _to_tensor_origin_dtype, _isnan
 
 

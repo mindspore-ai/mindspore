@@ -14,8 +14,9 @@
 # ============================================================================
 """The removable handle for cell hook function."""
 from __future__ import absolute_import
+
 import weakref
-from .api import _pynative_executor
+from mindspore.common.api import _pynative_executor
 
 
 class HookHandle:

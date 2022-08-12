@@ -15,6 +15,8 @@
 """
 TensorsQueue, each element in the queue is a list of tensors.
 """
+from __future__ import absolute_import
+
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
 from mindspore._checkparam import Rel, Validator

@@ -13,18 +13,20 @@
 # limitations under the License.
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
+from __future__ import absolute_import
+
 import operator
 
-from ..common import dtype as mstype
-from ..common import Tensor
-from ..ops import operations as P
-from ..ops import functional as F
-from ..ops.primitive import constexpr
-from ..nn import Cell
+from mindspore.common import dtype as mstype
+from mindspore.common import Tensor
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.primitive import constexpr
+from mindspore.nn import Cell
 
-from .utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
+from mindspore.numpy.utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
     _check_input_tensor, _broadcast_to, _to_tensor, _callable
-from .utils_const import _check_axes_range, _check_start_normalize, \
+from mindspore.numpy.utils_const import _check_axes_range, _check_start_normalize, \
     _raise_type_error, _raise_value_error, _infer_out_shape, _empty, _promote, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
     _check_is_float, _check_axis_in_range, _check_axis_type, _canonicalize_axis, \

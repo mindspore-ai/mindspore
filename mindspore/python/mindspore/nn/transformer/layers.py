@@ -16,10 +16,13 @@
 The basic layer of the Transformer Networks. This is an experimental interface that is subject to
 change or deletion.
 """
+from __future__ import absolute_import
+
 from functools import wraps, partial
 import inspect
 import math
 import numpy as np
+
 from mindspore import nn, context
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Tensor
@@ -34,7 +37,7 @@ from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
-from .op_parallel_config import default_dpmp_config, OpParallelConfig
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = [
     "FixedSparseAttention"

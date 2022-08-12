@@ -15,7 +15,9 @@
 """
 TensorArray.
 """
-from .tensor_array import (TensorArray)
+from __future__ import absolute_import
+
+from mindspore.nn.reinforcement.tensor_array import TensorArray
 
 __all__ = [
     "TensorArray",

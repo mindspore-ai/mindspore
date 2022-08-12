@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """pooling"""
+from __future__ import absolute_import
+
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore._checkparam import Rel, Validator as validator
@@ -22,7 +24,7 @@ import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
-from ..cell import Cell
+from mindspore.nn.cell import Cell
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d',
            'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AdaptiveAvgPool2d']

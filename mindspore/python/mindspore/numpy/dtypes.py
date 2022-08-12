@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Dtypes and utilities"""
+from __future__ import absolute_import
 
-from ..common.dtype import (int8, int16, int32, int64, uint8, uint16, uint32, uint64,
-                            float16, float32, float64, bool_)
+from mindspore.common.dtype import (int8, int16, int32, int64, uint8, uint16, uint32, uint64,
+                                    float16, float32, float64, bool_)
 
 # original numpy has int->int64, float->float64, uint->uint64 mapping. we map
 # them to 32 bit, since 64 bit calculation is not supported from mindspore

@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """init file for Python callback"""
-from .ds_callback import DSCallback, WaitedDSCallback
+from __future__ import absolute_import
+
+from mindspore.dataset.callback.ds_callback import DSCallback, WaitedDSCallback
 
 __all__ = ["DSCallback", "WaitedDSCallback"]

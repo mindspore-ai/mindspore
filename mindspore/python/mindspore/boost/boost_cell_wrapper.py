@@ -30,12 +30,12 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-from .boost import AutoBoost
-from .grad_freeze import FreezeOpt, freeze_cell
-from .adasum import AdaSum
-from .dim_reduce import DimReduce
-from .grad_accumulation import gradient_accumulation_op, gradient_clear_op
-from .base import _load_local_pca_mat
+from mindspore.boost.boost import AutoBoost
+from mindspore.boost.grad_freeze import FreezeOpt, freeze_cell
+from mindspore.boost.adasum import AdaSum
+from mindspore.boost.dim_reduce import DimReduce
+from mindspore.boost.grad_accumulation import gradient_accumulation_op, gradient_clear_op
+from mindspore.boost.base import _load_local_pca_mat
 
 __all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
 

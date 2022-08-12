@@ -14,8 +14,9 @@
 # ============================================================================
 """Reference for python pass registration."""
 from __future__ import absolute_import
-from .python_pass_register import register_pass, unregister_pass, gen_new_parameter, cancel_new_parameter, set_renorm,\
-    set_reopt
+
+from mindspore.graph_utils.python_pass.python_pass_register import register_pass, unregister_pass,\
+    gen_new_parameter, cancel_new_parameter, set_renorm, set_reopt
 
 __all__ = [
     "register_pass",

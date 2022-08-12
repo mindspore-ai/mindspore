@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Check parameters."""
+from __future__ import absolute_import
 
 import re
 import inspect
@@ -23,6 +24,7 @@ from itertools import repeat, zip_longest
 from collections import deque
 from collections.abc import Iterable
 import numpy as np
+
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype

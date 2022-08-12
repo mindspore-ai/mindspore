@@ -13,21 +13,23 @@
 # limitations under the License.
 # ============================================================================
 """internal graph-compatible utility functions"""
+from __future__ import absolute_import
+
 import math
 from itertools import zip_longest, accumulate
 from collections import deque
 import operator
 
 import mindspore.context as context
-from ..ops import functional as F
-from ..ops.primitive import constexpr
-from ..common import dtype as mstype
-from ..common import Tensor
-from .._c_expression import Tensor as Tensor_
-from .._c_expression import typing
-from .._checkparam import Validator as validator
+from mindspore.ops import functional as F
+from mindspore.ops.primitive import constexpr
+from mindspore.common import dtype as mstype
+from mindspore.common import Tensor
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import typing
+from mindspore._checkparam import Validator as validator
 
-from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
+from mindspore.numpy.dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
 
 
 _check_axis_type = constexpr(validator.check_axis_type)

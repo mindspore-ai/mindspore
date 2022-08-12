@@ -15,6 +15,8 @@
 """
 TensorArray
 """
+from __future__ import absolute_import
+
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations import _tensor_array as ta
 from mindspore._checkparam import Rel, Validator

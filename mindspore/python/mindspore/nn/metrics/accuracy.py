@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import numpy as np
+
 from mindspore.nn.metrics.metric import EvaluationBase, rearrange_inputs, _check_onehot_data
 
 
