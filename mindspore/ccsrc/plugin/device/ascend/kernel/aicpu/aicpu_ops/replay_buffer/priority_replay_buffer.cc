@@ -46,9 +46,9 @@ size_t PriorityTree::GetPrefixSumIdx(float prefix_sum) const {
   return idx - capacity_;
 }
 
-PriorityReplayBuffer::PriorityReplayBuffer(uint32_t seed, float alpha, float beta, size_t capacity,
+PriorityReplayBuffer::PriorityReplayBuffer(uint32_t seed, float alpha, size_t capacity,
                                            const std::vector<size_t> &schema)
-    : alpha_(alpha), beta_(beta), capacity_(capacity), max_priority_(1.0), schema_(schema) {
+    : alpha_(alpha), capacity_(capacity), max_priority_(1.0), schema_(schema) {
   random_engine_.seed(seed);
   fifo_replay_buffer_ = std::make_unique<FIFOReplayBuffer>(capacity, schema);
   priority_tree_ = std::make_unique<PriorityTree>(capacity);
@@ -85,7 +85,7 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
 }
 
 std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<AddressPtr>>> PriorityReplayBuffer::Sample(
-  size_t batch_size) {
+  size_t batch_size, float beta) {
   if (batch_size == 0) {
     AICPU_LOGD("The batch size can not be zero.");
   }
@@ -93,7 +93,7 @@ std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<Addr
   float sum_priority = root.sum_priority;
   float min_priority = root.min_priority;
   size_t size = fifo_replay_buffer_->size();
-  float max_weight = Weight(min_priority, sum_priority, size);
+  float max_weight = Weight(min_priority, sum_priority, size, beta);
   float segment_len = root.sum_priority / batch_size;
 
   std::vector<size_t> indices;
@@ -110,20 +110,20 @@ std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<Addr
       AICPU_LOGW("The sum priority is %f. It may leads to converge issue.");
       max_weight = std::numeric_limits<decltype(max_weight)>::epsilon();
     }
-    (void)weights.emplace_back(Weight(priority, sum_priority, size) / max_weight);
+    (void)weights.emplace_back(Weight(priority, sum_priority, size, beta) / max_weight);
     (void)items.emplace_back(fifo_replay_buffer_->GetItem(idx));
   }
 
   return std::forward_as_tuple(indices, weights, items);
 }
 
-inline float PriorityReplayBuffer::Weight(float priority, float sum_priority, size_t size) const {
+inline float PriorityReplayBuffer::Weight(float priority, float sum_priority, size_t size, float beta) const {
   if (sum_priority <= 0.0f) {
     AICPU_LOGW("The sum priority is %f. It may leads to converge issue.");
     sum_priority = std::numeric_limits<decltype(sum_priority)>::epsilon();
   }
   float sample_prob = priority / sum_priority;
-  float weight = static_cast<float>(pow(sample_prob * size, -beta_));
+  float weight = static_cast<float>(pow(sample_prob * size, -beta));
   return weight;
 }
 }  // namespace aicpu

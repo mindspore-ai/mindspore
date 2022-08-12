@@ -33,7 +33,6 @@ constexpr size_t kTransitionIndex = 2;
 void PriorityReplayBufferCreateCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   const int64_t &capacity = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
   const float &alpha = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "alpha");
-  const float &beta = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
   const auto &dtypes = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "dtypes");
   const auto &shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
   const int64_t &seed0 = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed0");
@@ -58,7 +57,7 @@ void PriorityReplayBufferCreateCpuKernel::InitKernel(const CNodePtr &kernel_node
   }
 
   auto &factory = PriorityReplayBufferFactory::GetInstance();
-  std::tie(handle_, prioriory_replay_buffer_) = factory.Create(seed, alpha, beta, capacity, schema);
+  std::tie(handle_, prioriory_replay_buffer_) = factory.Create(seed, alpha, capacity, schema);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 }
 
@@ -100,12 +99,14 @@ void PriorityReplayBufferSampleCpuKernel::InitKernel(const CNodePtr &kernel_node
   }
 }
 
-bool PriorityReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+bool PriorityReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
   std::vector<size_t> indices;
   std::vector<float> weights;
   std::vector<std::vector<AddressPtr>> samples;
-  std::tie(indices, weights, samples) = prioriory_replay_buffer_->Sample(batch_size_);
+
+  auto beta = reinterpret_cast<float *>(inputs[0]->addr);
+  std::tie(indices, weights, samples) = prioriory_replay_buffer_->Sample(batch_size_, beta[0]);
 
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == schema_.size() + kTransitionIndex,
                              "The dtype and shapes must be the same.");

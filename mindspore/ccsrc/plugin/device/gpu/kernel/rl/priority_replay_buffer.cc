@@ -31,10 +31,9 @@ namespace gpu {
 constexpr float kMinPriority = 1e-7;
 constexpr size_t kNumSubNode = 2;
 
-PriorityReplayBuffer::PriorityReplayBuffer(const uint64_t &seed, const float &alpha, const float &beta,
-                                           const size_t &capacity, const std::vector<size_t> &schema) {
+PriorityReplayBuffer::PriorityReplayBuffer(const uint64_t &seed, const float &alpha, const size_t &capacity,
+                                           const std::vector<size_t> &schema) {
   alpha_ = alpha;
-  beta_ = beta;
   schema_ = schema;
   seed_ = seed;
   capacity_ = capacity;
@@ -72,7 +71,7 @@ PriorityReplayBuffer::~PriorityReplayBuffer() {
   allocator.FreeTensorMem(max_priority_);
 }
 
-bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &transition, cudaStream_t stream) {
+bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream) {
   // Head point to the latest item.
   head_ = head_ >= capacity_ ? 0 : head_ + 1;
   valid_size_ = valid_size_ >= capacity_ ? capacity_ : valid_size_ + 1;
@@ -86,11 +85,11 @@ bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &transition, cudaS
   }
 
   // Set max priority for the newest transition.
-  SumTreePush(sum_tree_, alpha_, head_, capacity_pow_two_, max_priority_, stream);
+  SumTreePush(sum_tree_, alpha_, head_, capacity_pow_two_, priority, max_priority_, stream);
   return true;
 }
 
-bool PriorityReplayBuffer::Sample(const size_t &batch_size, size_t *indices, float *weights,
+bool PriorityReplayBuffer::Sample(const size_t &batch_size, float *beta, size_t *indices, float *weights,
                                   const std::vector<AddressPtr> &transition, cudaStream_t stream) {
   MS_EXCEPTION_IF_ZERO("batch size", batch_size);
 
@@ -101,7 +100,7 @@ bool PriorityReplayBuffer::Sample(const size_t &batch_size, size_t *indices, flo
     InitRandState(batch_size, seed_, rand_state_, stream);
   }
 
-  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, beta_, batch_size, indices, weights, stream);
+  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, beta, batch_size, indices, weights, stream);
 
   for (size_t i = 0; i < schema_.size(); i++) {
     auto output_addr = static_cast<uint8_t *>(transition[i]->addr);

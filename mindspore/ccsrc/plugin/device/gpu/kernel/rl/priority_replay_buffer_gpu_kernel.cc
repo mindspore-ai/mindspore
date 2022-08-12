@@ -43,7 +43,6 @@ bool PriorityReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_opera
 
   const int64_t &capacity = kernel_ptr->get_capacity();
   const float &alpha = kernel_ptr->get_alpha();
-  const float &beta = kernel_ptr->get_beta();
   const std::vector<int64_t> &schema = kernel_ptr->get_schema();
   const int64_t &seed0 = kernel_ptr->get_seed0();
   const int64_t &seed1 = kernel_ptr->get_seed1();
@@ -63,7 +62,7 @@ bool PriorityReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_opera
                  [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
   auto &factory = PriorityReplayBufferFactory::GetInstance();
-  std::tie(handle_, prioriory_replay_buffer_) = factory.Create(seed, alpha, beta, capacity, schema_in_size);
+  std::tie(handle_, prioriory_replay_buffer_) = factory.Create(seed, alpha, capacity, schema_in_size);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
@@ -131,10 +130,11 @@ bool PriorityReplayBufferPushGpuKernel::Launch(const std::vector<AddressPtr> &in
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
 
-  return prioriory_replay_buffer_->Push(inputs, stream);
+  return prioriory_replay_buffer_->Push(inputs, nullptr, stream);
 }
 
 std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {
@@ -169,6 +169,7 @@ bool PriorityReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_opera
 
 bool PriorityReplayBufferSampleGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto beta = GetDeviceAddress<float>(inputs, 0);
   auto indices = GetDeviceAddress<size_t>(outputs, 0);
   auto weights = GetDeviceAddress<float>(outputs, 1);
   std::vector<AddressPtr> transition;
@@ -176,7 +177,7 @@ bool PriorityReplayBufferSampleGpuKernel::Launch(const std::vector<AddressPtr> &
     transition.push_back(outputs[i]);
   }
 
-  return prioriory_replay_buffer_->Sample(batch_size_, indices, weights, transition,
+  return prioriory_replay_buffer_->Sample(batch_size_, beta, indices, weights, transition,
                                           reinterpret_cast<cudaStream_t>(stream_ptr));
 }
 

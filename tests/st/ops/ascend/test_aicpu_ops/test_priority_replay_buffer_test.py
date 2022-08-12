@@ -25,9 +25,9 @@ from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferDestroy
 
 
 class PriorityReplayBuffer(nn.Cell):
-    def __init__(self, capacity, alpha, beta, sample_size, shapes, dtypes, seed0, seed1):
+    def __init__(self, capacity, alpha, sample_size, shapes, dtypes, seed0, seed1):
         super(PriorityReplayBuffer, self).__init__()
-        handle = PriorityReplayBufferCreate(capacity, alpha, beta, shapes, dtypes, seed0, seed1)().asnumpy().item()
+        handle = PriorityReplayBufferCreate(capacity, alpha, shapes, dtypes, seed0, seed1)().asnumpy().item()
         self.push_op = PriorityReplayBufferPush(handle).add_prim_attr('side_effect_io', True)
         self.sample_op = PriorityReplayBufferSample(handle, sample_size, shapes, dtypes)
         self.update_op = PriorityReplayBufferUpdate(handle).add_prim_attr('side_effect_io', True)
@@ -36,8 +36,8 @@ class PriorityReplayBuffer(nn.Cell):
     def push(self, *transition):
         return self.push_op(transition)
 
-    def sample(self):
-        return self.sample_op()
+    def sample(self, beta):
+        return self.sample_op(beta)
 
     def update_priorities(self, indices, priorities):
         return self.update_op(indices, priorities)
@@ -65,7 +65,7 @@ def test_priority_replay_buffer_ops():
     action_shape, action_dtype = (6,), mindspore.int32
     shapes = (state_shape, action_shape)
     dtypes = (state_dtype, action_dtype)
-    prb = PriorityReplayBuffer(capacity, 1., 1., batch_size, shapes, dtypes, seed0=0, seed1=42)
+    prb = PriorityReplayBuffer(capacity, 1., batch_size, shapes, dtypes, seed0=0, seed1=42)
 
     # Push 100 timestep transitions to priority replay buffer.
     for i in range(100):
@@ -74,7 +74,7 @@ def test_priority_replay_buffer_ops():
         prb.push(state, action)
 
     # Sample a batch of transitions, the indices should be consist with transition.
-    indices, weights, states, actions = prb.sample()
+    indices, weights, states, actions = prb.sample(1.)
     assert np.all(indices.asnumpy() < 100)
     states_expect = np.broadcast_to(indices.asnumpy().reshape(-1, 1), states.shape)
     actions_expect = np.broadcast_to(indices.asnumpy().reshape(-1, 1), actions.shape)
@@ -85,7 +85,7 @@ def test_priority_replay_buffer_ops():
     priorities = Tensor(np.ones(weights.shape) * 1e-7, mindspore.float32)
     prb.update_priorities(indices, priorities)
 
-    indices_new, _, states_new, actions_new = prb.sample()
+    indices_new, _, states_new, actions_new = prb.sample(1.)
     assert np.all(indices_new.asnumpy() < 100)
     assert np.all(indices.asnumpy() != indices_new.asnumpy())
     states_expect = np.broadcast_to(indices_new.asnumpy().reshape(-1, 1), states.shape)

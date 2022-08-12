@@ -39,12 +39,11 @@ class MIND_API PriorityReplayBufferCreate : public BaseOperator {
   PriorityReplayBufferCreate() : BaseOperator(kNamePriorityReplayBufferCreate) { InitIOName({}, {"handle"}); }
   /// \brief Init.
   /// Refer to the parameters of python API @ref mindspore.ops._rl_inner_ops.PriorityReplayBufferCreate for the inputs.
-  void Init(const int64_t &capacity, const float &alpha, const float &beta, std::vector<std::vector<int64_t>> &shapes,
+  void Init(const int64_t &capacity, const float &alpha, std::vector<std::vector<int64_t>> &shapes,
             const std::vector<TypePtr> &types, const int64_t &seed0, const int64_t &seed1);
 
   void set_capacity(const int64_t &capacity);
   void set_alpha(const float &alpha);
-  void set_beta(const float &beta);
   void set_shapes(const std::vector<std::vector<int64_t>> &shapes);
   void set_types(const std::vector<TypePtr> &types);
   void set_schema(const std::vector<int64_t> &schema);
@@ -53,7 +52,6 @@ class MIND_API PriorityReplayBufferCreate : public BaseOperator {
 
   int64_t get_capacity() const;
   float get_alpha() const;
-  float get_beta() const;
   std::vector<std::vector<int64_t>> get_shapes() const;
   std::vector<TypePtr> get_types() const;
   std::vector<int64_t> get_schema() const;
