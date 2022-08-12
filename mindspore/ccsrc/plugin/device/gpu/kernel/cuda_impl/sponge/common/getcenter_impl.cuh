@@ -19,8 +19,10 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void GetCenterOfGeometry(const int center_numbers, float center_numbers_inverse, const int *center_atoms,
-                         const float *crd_f, float *center_of_geometry_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void GetCenterOfGeometry(const int center_numbers, float center_numbers_inverse,
+                                         const int *center_atoms, const float *crd_f, float *center_of_geometry_f,
+                                         cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_GETCENTER_IMPL_H_

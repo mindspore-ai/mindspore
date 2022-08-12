@@ -24,10 +24,11 @@
 #include <functional>
 #include "runtime/data_queue/data_queue.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
-class GpuDataQueueDynamic : public DataQueue {
+class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
  public:
   explicit GpuDataQueueDynamic(const size_t capacity);
   virtual ~GpuDataQueueDynamic() = default;
@@ -49,7 +50,7 @@ class GpuDataQueueDynamic : public DataQueue {
   std::unique_ptr<NodeInfo[]> node_info_;
 };
 
-class GpuQueue : public DataQueue {
+class BACKEND_EXPORT GpuQueue : public DataQueue {
  public:
   GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
   virtual ~GpuQueue();

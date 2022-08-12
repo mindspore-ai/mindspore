@@ -23,8 +23,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void MDIterationLeapFrog(const int atom_numbers, float *vel, float *crd, float *frc, float *acc,
-                         const float *inverse_mass, const float dt, cudaStream_t stream);
+CUDA_LIB_EXPORT void MDIterationLeapFrog(const int atom_numbers, float *vel, float *crd, float *frc, float *acc,
+                                         const float *inverse_mass, const float dt, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_MD_ITERATION_LEAP_FROG_LIUJIAN_GPU_IMPL_H_

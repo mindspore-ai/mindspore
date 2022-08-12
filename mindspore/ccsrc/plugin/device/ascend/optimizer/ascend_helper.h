@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 
 namespace mindspore {
+const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 namespace opt {
 class KernelSelect {
  public:

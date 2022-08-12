@@ -426,8 +426,7 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
   format = tbe::TbeAdapter::FormatPass(format, ori_shape.size());
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  format =
-    (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) ? kOpFormat_NCDHW : format;
+  format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
 
   (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx));
   (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);

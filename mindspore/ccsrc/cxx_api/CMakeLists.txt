@@ -62,7 +62,13 @@ if(ENABLE_D)
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc"
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc"
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc")
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/visit.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_build_info.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_info.cc")
 endif()
 
 if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
@@ -70,11 +76,22 @@ if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
     set(MSLIB_SRC ${MSLIB_SRC} ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc)
 endif()
 
+if(ENABLE_D OR ENABLE_ACL)
+    list(APPEND MSLIB_SRC
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc")
+endif()
+
+if(ENABLE_GPU)
+    list(APPEND MSLIB_SRC "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/gpu/hal/device/cuda_driver.cc")
+endif()
+
 if(BUILD_LITE)
     list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc")
     file(GLOB_RECURSE ACL_REMOVE_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "model/acl/acl_vm/*.cc"
             )
+    list(REMOVE_ITEM MSLIB_SRC
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc")
     list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc"
@@ -157,7 +174,8 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_GPU)
-    target_link_libraries(mindspore_shared_lib PRIVATE  gpu_cuda_lib cublas cuda_ops
+    target_link_libraries(mindspore_shared_lib PRIVATE cuda_ops
+                          ${CUBLAS_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so

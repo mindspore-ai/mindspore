@@ -19,9 +19,10 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void LJEnergy(const int atom_numbers, const float cutoff_square, const int *uint_crd_f, const int *LJtype,
-              const float *charge, const float *scaler_f, float *uint_crd_with_LJ, int *nl_atom_numbers,
-              int *nl_atom_serial, int *nl, const float *d_LJ_A, const float *d_LJ_B, float *d_LJ_energy_atom,
-              cudaStream_t stream);
+CUDA_LIB_EXPORT void LJEnergy(const int atom_numbers, const float cutoff_square, const int *uint_crd_f,
+                              const int *LJtype, const float *charge, const float *scaler_f, float *uint_crd_with_LJ,
+                              int *nl_atom_numbers, int *nl_atom_serial, int *nl, const float *d_LJ_A,
+                              const float *d_LJ_B, float *d_LJ_energy_atom, cudaStream_t stream);
 #endif

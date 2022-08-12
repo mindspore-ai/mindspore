@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-void PMEIFFT2D(int Nfft, Complex<T> *input_tensor, Complex<T> *output_tensor,
-           const cufftHandle &FFT_plan_c2c, cudaStream_t stream);
+CUDA_LIB_EXPORT void PMEIFFT2D(int Nfft, Complex<T> *input_tensor, Complex<T> *output_tensor,
+                               const cufftHandle &FFT_plan_c2c, cudaStream_t stream);
 
 #endif

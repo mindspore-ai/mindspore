@@ -32,7 +32,7 @@ const AnfNodePtr AddIoFormatAttrFor3DGraph::Process(const FuncGraphPtr &func_gra
     common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
     auto formats = AnfAlgo::GetAllOutputFormats(node);
     if (std::any_of(formats.begin(), formats.end(),
-                    [](const std::string &format) { return k3DFormatSet.find(format) != k3DFormatSet.end(); })) {
+                    [](const std::string &format) { return IsOneOf3DFormat(format); })) {
       common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCDHW), node);
     }
     return node;

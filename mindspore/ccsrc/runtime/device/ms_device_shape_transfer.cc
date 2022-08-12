@@ -252,8 +252,7 @@ bool IsNeedPadding(const std::string &format, size_t shape_size) {
   if (shape_size == 0) {
     return false;
   }
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW ||
-      kNoPaddingFormatSet.find(format) != kNoPaddingFormatSet.end()) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW || IsOneOfNoPaddingFormat(format)) {
     return false;
   } else if (shape_size < kDim4) {
     return true;
@@ -494,12 +493,12 @@ ShapeVector DeviceShapeTransfer::TransCore(const ShapeVector &shape, const std::
     return NDRNNBiasDeviceShape(shape, type, input_hidden_size[1]);
   }
   auto temp_shape = shape;
-  if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
-      shape.size() < kDim4 && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (!IsOneOfNoPaddingFormat(format) && format != kOpFormat_FRACTAL_ZN_LSTM && shape.size() < kDim4 &&
+      !IsOneOf3DFormat(format)) {
     MS_LOG(WARNING) << "Origin shape size is less than 4, should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dDefault(shape);
   }
-  if (shape.size() != kDim5 && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (shape.size() != kDim5 && IsOneOf3DFormat(format)) {
     temp_shape = PaddingShapeTo5dDefault(shape);
   }
   auto iter = device_shape_map.find(format);
@@ -1799,11 +1798,11 @@ RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std
     return FRAC_NZRange(ori_range, type);
   }
   auto temp_range = ori_range;
-  if (ori_range.size() < kDim4 && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (ori_range.size() < kDim4 && !IsOneOf3DFormat(format)) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
     temp_range = PaddingRangeTo4D(ori_range, padding_str);
   }
-  if (ori_range.size() < kDim5 && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (ori_range.size() < kDim5 && IsOneOf3DFormat(format)) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 5, so padding the range firstly";
     temp_range = PaddingRangeTo5D(ori_range, padding_str);
   }

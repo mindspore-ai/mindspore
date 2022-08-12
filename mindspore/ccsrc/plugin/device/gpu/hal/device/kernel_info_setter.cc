@@ -193,7 +193,7 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
       kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Register(
         op_name, []() { return std::make_shared<kernel::CustomAOTGpuKernelMod>(); });
     }
-  } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
+  } else if (IsOneOfCustomAkgType(func_type)) {
     *kernel_type = KernelType::AKG_KERNEL;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported func type [" << func_type << "] for Custom op [" << op_name << "] on GPU";

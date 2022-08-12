@@ -194,12 +194,17 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (GetTargetFromContext() == kAscendDevice) {
+    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
     auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(kernel_info_setter);
     kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
   } else if (GetTargetFromContext() == kGPUDevice) {
+    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
     auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+    MS_EXCEPTION_IF_NULL(kernel_info_setter);
     kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
   } else {
+    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
     auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kCPUDevice);
     if (kernel_info_setter != nullptr) {
       kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);

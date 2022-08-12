@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 #include "utils/hash_map.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace profiler {
@@ -122,7 +123,7 @@ class Profiler {
   std::string profiling_options_;
 
  private:
-  inline static HashMap<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
+  BACKEND_EXPORT inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
 };
 }  // namespace profiler
 }  // namespace mindspore

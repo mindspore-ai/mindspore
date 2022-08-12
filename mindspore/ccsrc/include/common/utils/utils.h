@@ -29,6 +29,7 @@
 
 #include "utils/log_adapter.h"
 #include "ir/dtype/type.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
@@ -661,7 +662,6 @@ constexpr auto kCustomTypePyfunc = "pyfunc";
 constexpr auto kCustomTypeTbe = "tbe";
 constexpr auto kCustomTypeAICPU = "aicpu";
 constexpr auto kCustomTypeHybrid = "hybrid";
-const std::set<std::string> kCustomTypeAkg = {"ir_builder", "tvm_compute", "hybrid"};
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
@@ -791,145 +791,23 @@ constexpr auto kOpFormat_FRACTAL_Z_3D = "FRACTAL_Z_3D";
 constexpr auto kOpFormat_FRACTAL_ZN_LSTM = "FRACTAL_ZN_LSTM";
 constexpr auto kOpFormat_FRACTAL_ZN_RNN = "FRACTAL_ZN_RNN";
 constexpr auto kOpFormat_ND_RNN_BIAS = "ND_RNN_BIAS";
-
-const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT,
-                                             kOpFormat_NC1KHKWHWC0,
-                                             kOpFormat_ND,
-                                             kOpFormat_NCHW,
-                                             kOpFormat_NHWC,
-                                             kOpFormat_HWCN,
-                                             kOpFormat_NC1HWC0,
-                                             kOpFormat_FRAC_Z,
-                                             kOpFormat_C1HWNCoC0,
-                                             kOpFormat_FRAC_NZ,
-                                             kOpFormat_NC1HWC0_C04,
-                                             kOpFormat_FRACTAL_Z_C04,
-                                             kOpFormat_NDHWC,
-                                             kOpFormat_FRACTAL_ZN_LSTM,
-                                             kOpFormat_FRACTAL_ZN_RNN,
-                                             kOpFormat_ND_RNN_BIAS,
-                                             kOpFormat_NDC1HWC0,
-                                             kOpFormat_NCDHW,
-                                             kOpFormat_FRACTAL_Z_3D,
-                                             kOpFormat_DHWNC,
-                                             kOpFormat_DHWCN};
-
 constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
-const std::map<std::string, size_t> kSliceAttrToIndex = {{kSliceStart, 1}, {kSliceStop, 2}, {kSliceStep, 3}};
 
-const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
-                                                        kOpFormat_NCDHW};
-
-const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
-                                               kApplyMomentumOpName,
-                                               kApplyAdadeltaOpName,
-                                               kApplyAdagradOpName,
-                                               kApplyAdagradDAName,
-                                               kApplyAdamOpName,
-                                               kApplyAdaMaxOpName,
-                                               kApplyAddSignOpName,
-                                               kApplyCenteredRMSPOpName,
-                                               kApplyFtrlOpName,
-                                               kApplyFtrlV2OpName,
-                                               kApplyGradientDescentOpName,
-                                               kApplyPowerSignOpName,
-                                               kApplyProximalAdagradOpName,
-                                               kApplyProximalGradientDescentOpName,
-                                               kApplyRMSPropOpName,
-                                               kAdamApplyOneWithDecayOpName,
-                                               kAdamApplyOneWithDecayAssignOpName,
-                                               kFusedAdamWeightDecayName,
-                                               kAdamWeightDecayName,
-                                               kFusedCastAdamWeightDecayName,
-                                               kFusedAdamName,
-                                               kFusedAdaFactorName,
-                                               kFusedAdaFactorWithGlobalNormName,
-                                               kFusedSparseAdamName,
-                                               kFusedMulApplyMomentumOpName,
-                                               kFusedWeightScaleApplyMomentum,
-                                               kFusedScaleApplyMomentum,
-                                               kApplyCenteredRMSPropOpName,
-                                               kFusedSparseFtrlName,
-                                               kFusedSparseProximalAdagradName,
-                                               kFusedSparseLazyAdamName,
-                                               kSparseApplyFtrlName,
-                                               kSparseApplyFtrlV2Name,
-                                               kSGDName,
-                                               kLARSUpdateName,
-                                               kCombineMomentumWeightOpName,
-                                               kCombineMomentumOpName,
-                                               kScatterAddOpName,
-                                               kScatterUpdateOpName,
-                                               kSparseApplyProximalAdagradOpName};
-
-const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
-                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName};
-const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
-
-const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
-                                                 kGetNextOpName};
-
-const std::set<std::string> kOpNotSupportMultiThreadExecList = {kAvgPoolOpName, kAvgPoolGradOpName, kMaxPoolOpName,
-                                                                kBatchNorm, kBatchNormGradOpName};
-
-const std::set<std::string> kHWSpecialFormatSet = {
-  kOpFormat_FRACTAL_Z_3D,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
-  kOpFormat_C1HWNCoC0,      kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM,
-  kOpFormat_FRACTAL_ZN_RNN, kOpFormat_NDC1HWC0,    kOpFormat_FRAC_Z};
-
-const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
-
-const std::set<std::string> kComputeDepend = {kUniqueOpName,
-                                              kUniqueConsecutiveOpName,
-                                              kComputeAccidentalHitsOpName,
-                                              kSubAndFilterOpName,
-                                              kPadAndShiftOpName,
-                                              kCTCGreedyDecoderOpName,
-                                              kMaskedSelectOpName,
-                                              kDynamicStitchOpName,
-                                              kGetNextOpName,
-                                              kListDiffOpName,
-                                              kNonMaxSuppressionV3OpName,
-                                              kNonMaxSuppressionWithOverlapsOpName,
-                                              kCoalesceOpName,
-                                              kTruncatedNormal,
-                                              kNonDeterministicInts,
-                                              kFractionalAvgPoolGradOpName,
-                                              kDenseToDenseSetOperation,
-                                              kSegmentMaxOpName,
-                                              kCSRSparseMatrixToSparseTensorOpName,
-                                              kSegmentMinOpName,
-                                              kLuUnpackOpName,
-                                              kSegmentSumOpName,
-                                              kResizeBicubicOpName,
-                                              kResizeAreaOpName,
-                                              kSegmentMeanOpName,
-                                              kSegmentProdOpName,
-                                              kNonZeroOpName,
-                                              kSparseSparseMinimumOpName,
-                                              kRpcRecvOpName,
-                                              kAdaptiveMaxPool3DGradOpName};
-
-const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
-                                            kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
-
-const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN,
-                                                   kOpFormat_ND_RNN_BIAS};
-
-const std::set<std::string> DynamicShapeConstInputToAttr = {
-  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
-  kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kTransposeOpName};
-
-const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
-  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
-  kReduceAllOpName, kReduceAnyOpName,  kConcatOpName,          kReduceSumOpName, kTransposeOpName};
-
-const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
-  kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,
-  kReduceSumOpName, kReduceMinOpName,  kReduceMeanOpName, kReduceMaxOpName,       kReduceAllOpName,
-  kReduceAnyOpName, kConcatOpName,     kScatterNdOpName,  kGatherV2OpName,        kAvgPool3DGradOpName};
+COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
+COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
+COMMON_EXPORT bool IsOneOfPosteriorOperator(const std::string &name);
+COMMON_EXPORT bool IsOneOfCacheBlackList(const std::string &name);
+COMMON_EXPORT bool IsOneOfNotSupportMultiThreadExec(const std::string &name);
+COMMON_EXPORT bool IsOneOf3DFormat(const std::string &format);
+COMMON_EXPORT bool IsOneOfNoPaddingFormat(const std::string &format);
+COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttr(const std::string &name);
+COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrCPU(const std::string &name);
+COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name);
+COMMON_EXPORT bool IsOneOfComputeDepend(const std::string &name);
+COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
+COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

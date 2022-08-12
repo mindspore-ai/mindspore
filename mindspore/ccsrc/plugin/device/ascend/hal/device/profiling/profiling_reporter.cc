@@ -20,6 +20,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/session/kernel_graph.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 
 namespace mindspore {
 namespace device {

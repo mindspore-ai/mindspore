@@ -18,21 +18,24 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RL_BUFFER_IMPL_H_
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
-                  unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream);
-void IncreaseCount(const int64_t capacity, const int exp_batch, int *count, int *head, int *index,
-                   cudaStream_t cuda_stream);
-void ReMappingIndex(const int *count, const int *head, const int *origin_index, int *index, cudaStream_t cuda_stream);
-void BufferGetItem(const size_t size, const int *index, const size_t one_exp_len, const unsigned char *buffer,
-                   unsigned char *out, cudaStream_t cuda_stream);
-void CheckBatchSize(const int *count, const int *head, const size_t batch_size, const int64_t capacity,
-                    cudaStream_t cuda_stream);
-void BufferSample(const size_t size, const size_t one_element, const unsigned int *index, const unsigned char *buffer,
-                  unsigned char *out, cudaStream_t cuda_stream);
-void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key, cudaStream_t stream);
-void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream);
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+CUDA_LIB_EXPORT void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
+                                  unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void IncreaseCount(const int64_t capacity, const int exp_batch, int *count, int *head, int *index,
+                                   cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void ReMappingIndex(const int *count, const int *head, const int *origin_index, int *index,
+                                    cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void BufferGetItem(const size_t size, const int *index, const size_t one_exp_len,
+                                   const unsigned char *buffer, unsigned char *out, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CheckBatchSize(const int *count, const int *head, const size_t batch_size, const int64_t capacity,
+                                    cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void BufferSample(const size_t size, const size_t one_element, const unsigned int *index,
+                                  const unsigned char *buffer, unsigned char *out, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key,
+                               cudaStream_t stream);
+CUDA_LIB_EXPORT void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream);
 
 template <typename T>
-void RandomGenUniform(const int size, curandState *globalState, const int up_bound, T *indexes,
-                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void RandomGenUniform(const int size, curandState *globalState, const int up_bound, T *indexes,
+                                      cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAM_IMPL_H_

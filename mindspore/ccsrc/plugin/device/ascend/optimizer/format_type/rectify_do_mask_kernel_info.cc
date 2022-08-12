@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/format_type/rectify_do_mask_kernel_info.h"
-
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
@@ -67,7 +66,7 @@ void RectifyDoMaskKernelInfo::RectifyKernelInfo(const std::vector<CNodePtr> &do_
   std::string convert_format;
   for (const auto &do_mask : do_mask_node_list) {
     auto do_mask_data_format = AnfAlgo::GetInputFormat(do_mask, 0);
-    if (special_format.empty() && kHWSpecialFormatSet.find(do_mask_data_format) != kHWSpecialFormatSet.end()) {
+    if (special_format.empty() && IsOneOfHWSpecialFormat(do_mask_data_format)) {
       special_format = do_mask_data_format;
     }
     if (format_counter.find(do_mask_data_format) == format_counter.end()) {
@@ -99,7 +98,7 @@ std::string RectifyDoMaskKernelInfo::GetConvertFormat(const std::map<std::string
     if (counter < iter.second) {
       convert_format = iter.first;
       counter = iter.second;
-    } else if (counter == iter.second && kHWSpecialFormatSet.find(iter.first) != kHWSpecialFormatSet.end()) {
+    } else if (counter == iter.second && IsOneOfHWSpecialFormat(iter.first)) {
       convert_format = iter.first;
     }
   }

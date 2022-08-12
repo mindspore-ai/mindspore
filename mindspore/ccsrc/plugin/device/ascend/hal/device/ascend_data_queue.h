@@ -24,10 +24,11 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/data_queue/data_queue.h"
 #include "runtime/rt.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
-class AscendDataQueueDynamic : public DataQueue {
+class BACKEND_EXPORT AscendDataQueueDynamic : public DataQueue {
  public:
   explicit AscendDataQueueDynamic(const size_t capacity);
   virtual ~AscendDataQueueDynamic() = default;

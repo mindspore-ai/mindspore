@@ -24,12 +24,13 @@
 #include <map>
 #include "include/transform/graph_ir/types.h"
 #include "ir/anf.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace transform {
 class GraphRunner;
 
-class DfGraphManager {
+class BACKEND_EXPORT DfGraphManager {
  public:
   ~DfGraphManager();
   void ClearGraph() noexcept;

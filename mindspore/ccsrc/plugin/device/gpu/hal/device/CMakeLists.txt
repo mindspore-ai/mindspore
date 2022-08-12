@@ -3,11 +3,29 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
+list(APPEND DEVICE_SRC_LIST "ps/gpu_ps_cache.cc")
 if(ENABLE_GPU)
-    list(APPEND DEVICE_SRC_LIST "distribution/collective_init.cc")
-    list(APPEND DEVICE_SRC_LIST "gpu_comm_manager.cc")
-else()
-    list(APPEND DEVICE_SRC_LIST "distribution/collective_fake_init.cc")
+    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/common/mem_reuse/mem_reuse.cc)
+    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/common/mem_reuse/mem_swap_manager.cc)
+    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/data_queue/data_queue.h)
+    file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+    list(REMOVE_ITEM DEVICE_SRC_LIST
+            "mpi/mpi_initializer.cc"
+            "distribution/collective_wrapper.cc"
+            "distribution/mpi_wrapper.cc"
+            "distribution/nccl_wrapper.cc"
+            "trt_loader.cc")
+    if(NOT ${TENSORRT_HOME} STREQUAL "")
+        find_path(TENSORRT_HOME_INCLUDE NvInfer.h HINTS ${TENSORRT_HOME}/include)
+        if(TENSORRT_HOME_INCLUDE STREQUAL TENSORRT_HOME_INCLUDE-NOTFOUND)
+            message(FATAL_ERROR "Tensor-RT dir not exist ${TENSORRT_HOME}")
+        endif()
+        message("Enable GPU inference. Tensor-RT include dir: ${TENSORRT_HOME_INCLUDE}")
+        set(ENABLE_GPU_INFER TRUE)
+        add_compile_definitions(ENABLE_GPU_INFER)
+        include_directories(${TENSORRT_HOME_INCLUDE})
+        list(APPEND DEVICE_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/trt_loader.cc)
+    endif()
 endif()
 
 if(ENABLE_GPU)
@@ -19,8 +37,6 @@ if(ENABLE_GPU)
     endif()
 
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc" "*.cu")
-
-    #set(GPU_QUEUE_SRCS "blocking_queue.cc" "gpu_buffer_mgr.cc" "data_queue.cc")
     set(GPU_COLLECTIVE_SRCS "distribution/collective_wrapper.cc"
                             "distribution/mpi_wrapper.cc"
                             "distribution/nccl_wrapper.cc")
@@ -36,8 +52,6 @@ if(ENABLE_GPU)
         target_link_libraries(gpu_collective PRIVATE mindspore::ompi mindspore::nccl)
         target_link_libraries(_ms_mpi PRIVATE gpu_collective)
     endif()
-
-    # add_library(_mindspore_device_cuda_obj OBJECT ${CUDA_SRC_LIST})
 endif()
 
 set_property(SOURCE ${DEVICE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)

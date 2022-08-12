@@ -439,7 +439,7 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
   auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
+  if (IsOneOfComputeDepend(op_name)) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
   ext_info_offset = SetExtInfoShapeType(ext_info_buf, ext_info_offset, shape_type);

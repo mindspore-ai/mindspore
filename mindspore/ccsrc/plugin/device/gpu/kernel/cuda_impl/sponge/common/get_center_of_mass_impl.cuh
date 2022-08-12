@@ -19,8 +19,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void GetCenterOfMass(int residue_numbers, int *start, int *end, float *crd_f, float *atom_mass,
-                     float *residue_mass_inverse, float *center_of_mass_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void GetCenterOfMass(int residue_numbers, int *start, int *end, float *crd_f, float *atom_mass,
+                                     float *residue_mass_inverse, float *center_of_mass_f, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_GETCENTER_IMPL_H_

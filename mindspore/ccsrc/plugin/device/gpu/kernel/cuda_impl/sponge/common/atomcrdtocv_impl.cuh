@@ -18,9 +18,10 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_ATOMCRDTOCV_IMPL_H_
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void AtomCrdToCV(int atom_numbers, int start_serial, int end_serial, int number, const float *crd_f,
-                 const float *old_crd, float *nowarp_crd, int *box_map_times, float *box, float *g_radial,
-                 float *g_angular, cudaStream_t stream);
+CUDA_LIB_EXPORT void AtomCrdToCV(int atom_numbers, int start_serial, int end_serial, int number, const float *crd_f,
+                                 const float *old_crd, float *nowarp_crd, int *box_map_times, float *box,
+                                 float *g_radial, float *g_angular, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_ATOMCRDTOCV_IMPL_H_

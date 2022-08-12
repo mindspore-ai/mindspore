@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_TAG_ENV_IMPL_H_
 
 #include <curand_kernel.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 constexpr int kFeatureNum = 4;
 constexpr int kPartiallyObsFeatureNum = 6;
@@ -46,14 +47,16 @@ struct AgentState {
   int *time_step;
 };
 
-void InitEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *state,
-             cudaStream_t stream);
-void ResetEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state, float *state,
-              cudaStream_t stream);
-void StepBindBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
-                   const int *action, float *state, float *reward, bool *done, cudaStream_t stream);
-void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *setting, AgentState *agent_state,
-                    const int *action, float *state, float *reward, bool *done, float *team_reward, int *distance,
-                    cudaStream_t stream);
-void AgentStateCopy(const int env_num, const int agent_num, AgentState *dst, AgentState *src, cudaStream_t stream);
+CUDA_LIB_EXPORT void InitEnv(const int env_num, const int agent_num, const GameSetting *setting, AgentState *state,
+                             cudaStream_t stream);
+CUDA_LIB_EXPORT void ResetEnv(const int env_num, const int agent_num, const GameSetting *setting,
+                              AgentState *agent_state, float *state, cudaStream_t stream);
+CUDA_LIB_EXPORT void StepBindBlock(const int env_num, const int agent_num, const GameSetting *setting,
+                                   AgentState *agent_state, const int *action, float *state, float *reward, bool *done,
+                                   cudaStream_t stream);
+CUDA_LIB_EXPORT void StepCrossBlock(const int env_num, const int agent_num, const GameSetting *setting,
+                                    AgentState *agent_state, const int *action, float *state, float *reward, bool *done,
+                                    float *team_reward, int *distance, cudaStream_t stream);
+CUDA_LIB_EXPORT void AgentStateCopy(const int env_num, const int agent_num, AgentState *dst, AgentState *src,
+                                    cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_TAG_ENV_IMPL_H_

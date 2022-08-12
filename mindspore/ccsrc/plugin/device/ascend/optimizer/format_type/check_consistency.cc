@@ -28,6 +28,9 @@
 namespace mindspore {
 namespace opt {
 namespace {
+const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
+                                                        kOpFormat_NCDHW};
+
 bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
   MS_EXCEPTION_IF_NULL(node);
   // get prior node's device output format

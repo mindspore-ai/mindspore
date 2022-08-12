@@ -88,6 +88,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     set(ANF_ALG_SRC ${ANF_ALG_SRC}
         ${CCSRC_DIR}/utils/anfalgo.cc
+        ${CCSRC_DIR}/utils/utils.cc
         ${CCSRC_DIR}/utils/parallel_context.cc
         ${CCSRC_DIR}/utils/convert_utils.cc)
     add_library(mindspore-infer-anfalgo OBJECT ${ANF_ALG_SRC})

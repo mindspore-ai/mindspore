@@ -80,7 +80,7 @@ class TbeKernelSelect {
   nlohmann::json kernel_json;
   std::string kernel_hash_name;
   bool check_cnode;
-  static mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> select_cache_;
+  inline static mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> select_cache_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -35,6 +35,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/hardware/device_type.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace somas {
@@ -248,7 +249,7 @@ using SomasPtr = std::shared_ptr<Somas>;
 using SomasCreator = std::function<std::shared_ptr<Somas>()>;
 
 // @todo will delete when old runtime remove
-class SomasManager {
+class BACKEND_EXPORT SomasManager {
  public:
   static SomasManager &Instance() {
     static SomasManager instance{};

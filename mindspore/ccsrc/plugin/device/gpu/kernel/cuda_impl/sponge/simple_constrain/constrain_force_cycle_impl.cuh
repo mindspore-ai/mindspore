@@ -23,10 +23,12 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void Constrain_Force_Cycle(int atom_numbers, int constrain_pair_numbers, const unsigned int *uint_crd_f,
-                           const float *scaler_f, float *constrain_pair_f, const float *pair_dr_f,
-                           const int *atom_i_serials, const int *atom_j_serials, const float *constant_rs,
-                           const float *constrain_ks, float *test_frc_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void Constrain_Force_Cycle(int atom_numbers, int constrain_pair_numbers, const unsigned int *uint_crd_f,
+                                           const float *scaler_f, float *constrain_pair_f, const float *pair_dr_f,
+                                           const int *atom_i_serials, const int *atom_j_serials,
+                                           const float *constant_rs, const float *constrain_ks, float *test_frc_f,
+                                           cudaStream_t stream);
 
 #endif

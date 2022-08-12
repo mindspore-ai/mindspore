@@ -22,6 +22,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NEIGHBOR_LIST_IMPL_H_
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 struct VECTOR {
   float x;
@@ -49,33 +50,33 @@ struct GRID_POINTER {
   int *grid_serial;
 };
 
-void ConstructNeighborList(int grid_numbers, int max_neighbor_numbers, int *nl_atom_numbers, int *nl_atom_serial,
-                           NEIGHBOR_LIST *nl, cudaStream_t stream);
+CUDA_LIB_EXPORT void ConstructNeighborList(int grid_numbers, int max_neighbor_numbers, int *nl_atom_numbers,
+                                           int *nl_atom_serial, NEIGHBOR_LIST *nl, cudaStream_t stream);
 
-void CopyNeighborList(int atom_numbers, int max_neighbor_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers,
-                      int *nl_atom_serial, cudaStream_t stream);
+CUDA_LIB_EXPORT void CopyNeighborList(int atom_numbers, int max_neighbor_numbers, NEIGHBOR_LIST *nl,
+                                      int *nl_atom_numbers, int *nl_atom_serial, cudaStream_t stream);
 
-void NeighborListRefresh(int grid_numbers, int atom_numbers, int *d_refresh_count, int refresh_interval,
-                         int not_first_time, float skin, int nxy, float cutoff_square, float cutoff_with_skin_square,
-                         int *grid_N, float *box_length, int *atom_numbers_in_grid_bucket, float *grid_length_inverse,
-                         int *atom_in_grid_serial, GRID_BUCKET *bucket, float *crd, float *old_crd,
-                         float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
-                         float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl,
-                         int *excluded_list_start, int *excluded_list, int *excluded_numbers, float half_skin_square,
-                         int *is_need_refresh_neighbor_list, int forced_update, int forced_check, cudaStream_t stream);
+CUDA_LIB_EXPORT void NeighborListRefresh(
+  int grid_numbers, int atom_numbers, int *d_refresh_count, int refresh_interval, int not_first_time, float skin,
+  int nxy, float cutoff_square, float cutoff_with_skin_square, int *grid_N, float *box_length,
+  int *atom_numbers_in_grid_bucket, float *grid_length_inverse, int *atom_in_grid_serial, GRID_BUCKET *bucket,
+  float *crd, float *old_crd, float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
+  float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl, int *excluded_list_start, int *excluded_list,
+  int *excluded_numbers, float half_skin_square, int *is_need_refresh_neighbor_list, int forced_update,
+  int forced_check, cudaStream_t stream);
 
-void ConstructNeighborListHalf(int grid_numbers, int max_neighbor_numbers, int *nl_atom_numbers, int *nl_atom_serial,
-                               NEIGHBOR_LIST *nl, cudaStream_t stream);
+CUDA_LIB_EXPORT void ConstructNeighborListHalf(int grid_numbers, int max_neighbor_numbers, int *nl_atom_numbers,
+                                               int *nl_atom_serial, NEIGHBOR_LIST *nl, cudaStream_t stream);
 
-void CopyNeighborListHalf(int atom_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers, cudaStream_t stream);
+CUDA_LIB_EXPORT void CopyNeighborListHalf(int atom_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers,
+                                          cudaStream_t stream);
 
-void NeighborListUpdate(int grid_numbers, int atom_numbers, int *d_refresh_count, int refresh_interval,
-                        int not_first_time, float skin, int nxy, float cutoff_square, float cutoff_with_skin_square,
-                        int *grid_N, float *box_length, int *atom_numbers_in_grid_bucket, float *grid_length_inverse,
-                        int *atom_in_grid_serial, GRID_BUCKET *bucket, float *crd, float *old_crd,
-                        float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
-                        float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl, int *excluded_list_start,
-                        int *excluded_list, int *excluded_numbers, float half_skin_square,
-                        int *is_need_refresh_neighbor_list, cudaStream_t stream);
+CUDA_LIB_EXPORT void NeighborListUpdate(
+  int grid_numbers, int atom_numbers, int *d_refresh_count, int refresh_interval, int not_first_time, float skin,
+  int nxy, float cutoff_square, float cutoff_with_skin_square, int *grid_N, float *box_length,
+  int *atom_numbers_in_grid_bucket, float *grid_length_inverse, int *atom_in_grid_serial, GRID_BUCKET *bucket,
+  float *crd, float *old_crd, float *crd_to_uint_crd_cof, float *half_crd_to_uint_crd_cof, unsigned int *uint_crd,
+  float *uint_dr_to_dr_cof, GRID_POINTER *gpointer, NEIGHBOR_LIST *d_nl, int *excluded_list_start, int *excluded_list,
+  int *excluded_numbers, float half_skin_square, int *is_need_refresh_neighbor_list, cudaStream_t stream);
 
 #endif

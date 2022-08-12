@@ -19,9 +19,10 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void BondEnergy(int bond_numbers, int atom_numbers, const unsigned int *uint_crd_f, const float *scaler_f,
-                const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,
-                float *bond_ene, cudaStream_t stream);
+CUDA_LIB_EXPORT void BondEnergy(int bond_numbers, int atom_numbers, const unsigned int *uint_crd_f,
+                                const float *scaler_f, const int *atom_a, const int *atom_b, const float *bond_k,
+                                const float *bond_r0, float *bond_ene, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BOND_ENERGY_CUDA_GPU_IMPL_H_

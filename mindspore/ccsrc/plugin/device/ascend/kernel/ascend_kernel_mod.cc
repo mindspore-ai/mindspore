@@ -47,7 +47,7 @@ bool AscendKernelMod::IsNeedRetrieveOutputShape() {
   MS_EXCEPTION_IF_NULL(cnode);
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
+  if (IsOneOfComputeDepend(op_name)) {
     is_need_retrieve_output_shape_ = true;
   }
   return is_need_retrieve_output_shape_;

@@ -20,6 +20,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
+#include "runtime/graph_scheduler/graph_compiler.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
 

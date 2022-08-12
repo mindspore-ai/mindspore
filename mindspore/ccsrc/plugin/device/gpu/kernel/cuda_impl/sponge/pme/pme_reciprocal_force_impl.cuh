@@ -24,10 +24,11 @@ struct _VECTOR {
   float y;
   float z;
 };
-void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
-                        float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-                        const int *uint_crd_f, const float *charge, float *force, int PME_Nin, int PME_Nall,
-                        int PME_Nfft, const cufftHandle &PME_plan_r2c, const cufftHandle &PME_plan_c2r,
-                        const _VECTOR &PME_inverse_box_vector, cudaStream_t stream);
+CUDA_LIB_EXPORT void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC,
+                                        int *pme_uxyz, float *pme_frxyz, float *PME_Q, float *pme_fq,
+                                        int *PME_atom_near, int *pme_kxyz, const int *uint_crd_f, const float *charge,
+                                        float *force, int PME_Nin, int PME_Nall, int PME_Nfft,
+                                        const cufftHandle &PME_plan_r2c, const cufftHandle &PME_plan_c2r,
+                                        const _VECTOR &PME_inverse_box_vector, cudaStream_t stream);
 
 #endif

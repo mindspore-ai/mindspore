@@ -503,7 +503,7 @@ void ReleaseKernelResource(const KernelGraphPtr &graph) {
   const auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (kOpCacheBlackList.find(common::AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
+    if (IsOneOfCacheBlackList(common::AnfAlgo::GetCNodeName(kernel))) {
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       if (kernel_mod) {
         kernel_mod->ReleaseResource();

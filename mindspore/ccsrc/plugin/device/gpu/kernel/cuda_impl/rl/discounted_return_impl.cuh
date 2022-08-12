@@ -16,8 +16,9 @@
 
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_DISCONTED_RETURN_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_DISCONTED_RETURN_IMPL_H_
-
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element, const float &gamma,
-                      const T *reward, const bool *done, const T *last_value, T *discouted_return, cudaStream_t stream);
+CUDA_LIB_EXPORT void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
+                                      const float &gamma, const T *reward, const bool *done, const T *last_value,
+                                      T *discouted_return, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_DISCONTED_RETURN_IMPL_H_

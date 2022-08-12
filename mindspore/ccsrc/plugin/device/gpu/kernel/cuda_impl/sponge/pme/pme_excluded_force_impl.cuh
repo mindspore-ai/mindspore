@@ -18,9 +18,11 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void PMEExcludedForce(const int atom_numbers, const float pme_beta, const int *uint_crd_f, const float *sacler_f,
-                      const float *charge, const int *excluded_list_start, const int *excluded_list,
-                      const int *excluded_atom_numbers, float *frc_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void PMEExcludedForce(const int atom_numbers, const float pme_beta, const int *uint_crd_f,
+                                      const float *sacler_f, const float *charge, const int *excluded_list_start,
+                                      const int *excluded_list, const int *excluded_atom_numbers, float *frc_f,
+                                      cudaStream_t stream);
 
 #endif

@@ -41,7 +41,6 @@ constexpr auto kPrefixOutput = "output";
 constexpr char kParamTypeDynamic[] = "dynamic";
 constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
-mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> TbeKernelSelect::select_cache_ = {};
 
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   auto tbe_selecter = TbeKernelSelect(kernel_node, kernel_info_list);
@@ -236,7 +235,7 @@ void TbeKernelSelect::GetAgnosticPatternKernelInfo(const OpInfo &op_info) {
     MS_LOG(EXCEPTION) << "AgnosticPattern only support one input.";
   }
   auto format = AnfAlgo::GetPrevNodeOutputFormat(cnode_ptr_, 0);
-  if (kOpFormatList.find(format) == kOpFormatList.end()) {
+  if (!IsOneOfFormat(format)) {
     MS_LOG(INFO) << "Got the unknown format " << format;
     format = kOpFormat_DEFAULT;
   }
@@ -332,7 +331,7 @@ bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::st
   }
   static const std::set<std::string> kServerNotSupportFormat = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
   // if format is default, it remarkes support all format
-  if (kOpFormatList.find(format) == kOpFormatList.end()) {
+  if (!IsOneOfFormat(format)) {
     MS_LOG(EXCEPTION) << "Got the unknown format " << format;
   }
   // server not support format with C04 suffix
@@ -346,7 +345,7 @@ bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::st
   }
   // not support format:
   // 1 3d formats with shape size > 5
-  if (k3DFormatSet.find(format) != k3DFormatSet.end() && shape.size() > kShape5dDims) {
+  if (IsOneOf3DFormat(format) && shape.size() > kShape5dDims) {
     return false;
   }
   return true;

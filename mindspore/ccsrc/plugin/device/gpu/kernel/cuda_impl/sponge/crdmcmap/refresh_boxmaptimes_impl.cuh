@@ -20,8 +20,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void refresh_boxmaptimes(int atom_numbers, float *box_length_inverse, float *crd_f, float *old_crd_f,
-                         int *box_map_times_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void refresh_boxmaptimes(int atom_numbers, float *box_length_inverse, float *crd_f, float *old_crd_f,
+                                         int *box_map_times_f, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_CRDMCMAP_REFRESH_BOXMAPTIMES_IMPL_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/ps_cache/ascend/ascend_ps_cache.h"
+#include "plugin/device/ascend/hal/device/ps/ascend_ps_cache.h"
 #include <google/protobuf/text_format.h>
 #include <string>
 #include <vector>

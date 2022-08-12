@@ -19,9 +19,11 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void lastcrdtodr(int constrain_pair_numbers, const float *atom_crd_f, const float *quarter_crd_to_uint_crd_cof_f,
-                 const float *uint_dr_to_dr_f, float *constrain_pair_f, const int *atom_i_serials,
-                 const int *atom_j_serials, const float *constant_rs, const float *constrain_ks, float *pair_dr_f,
-                 cudaStream_t stream);
+CUDA_LIB_EXPORT void lastcrdtodr(int constrain_pair_numbers, const float *atom_crd_f,
+                                 const float *quarter_crd_to_uint_crd_cof_f, const float *uint_dr_to_dr_f,
+                                 float *constrain_pair_f, const int *atom_i_serials, const int *atom_j_serials,
+                                 const float *constant_rs, const float *constrain_ks, float *pair_dr_f,
+                                 cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_LAST_CRD_TO_DR_IMPL_H_
