@@ -878,7 +878,6 @@ struct ApplyGridSample2D<T, hTwo, GridSamplerInterpolation::Nearest, padding, al
       ++i;
     }
     auto GGridPtr = (*GGridSlice)[0].data() + offset * 2;
-    std::memset(GGridPtr, 0, sizeof(T) * len * hTwo);
     auto ret = memset_s(static_cast<void *>(GGridPtr), sizeof(T) * len * hTwo, 0, sizeof(T) * len * hTwo);
     if (ret != 0) {
       MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";

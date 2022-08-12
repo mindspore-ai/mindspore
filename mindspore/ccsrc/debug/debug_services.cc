@@ -28,7 +28,6 @@
 #include <utility>
 #include <regex>
 #include <iomanip>
-#include "pybind11/embed.h"
 #include "pybind11/stl.h"
 #ifdef ONLINE_DBG_MODE
 #include "include/common/debug/common.h"
