@@ -1280,9 +1280,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     new_cnode->set_parallel(cnode->is_parallel());
-    if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
-      new_cnode->set_fullname_with_scope(cnode->input(kFirstDataInputIndex)->fullname_with_scope());
-    }
     // record map relations between anf from ME and new anf node used in backend
     graph->FrontBackendMapAdd(node, new_cnode);
   }
