@@ -11,7 +11,7 @@ mindspore.Tensor
     - **dtype** (:class:`mindspore.dtype`) - 用于定义该Tensor的数据类型，必须是 *mindspore.dtype* 中定义的类型。如果该参数为None，则数据类型与 `input_data` 一致，默认值：None。
     - **shape** (Union[tuple, list, int]) - 用于定义该Tensor的形状。如果指定了 `input_data` ，则无需设置该参数。默认值：None。
     - **init** (Initializer) - 用于在并行模式中延迟Tensor的数据的初始化，如果指定该参数，则 `dtype` 和 `shape` 也必须被指定。不推荐在非自动并行之外的场景下使用该接口。只有当调用 `Tensor.init_data` 时，才会使用指定的 `init` 来初始化Tensor数据。默认值：None。
-    - **internal** (bool) - Tensor是否由框架创建。 如果为True，表示Tensor是由框架创建的，如果为False，表示Tensor是由用户创建的。默认值：False。
+    - **internal** (bool) - Tensor是否由框架创建。如果为True，表示Tensor是由框架创建的，如果为False，表示Tensor是由用户创建的。默认值：False。
 
     **输出：**
 
@@ -36,8 +36,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 计算all的维度。 当 `axis` 为None或者空元组的时候，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
-        - **keep_dims** (bool) - 计算结果是否保留维度。 默认值： False。
+        - **axis** (Union[None, int, tuple(int)]) - 计算all的维度。当 `axis` 为None或者空元组的时候，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
         **返回：**
 
@@ -49,7 +49,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **axis** (Union[None, int, tuple(int)) - 计算any的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **axis** (Union[None, int, tuple(int)]) - 计算any的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int或tuple(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
         - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
 
         **返回：**
@@ -211,7 +211,7 @@ mindspore.Tensor
 
         `x` 指的当前 Tensor。
 
-        返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`x = r*\sin(\theta), y = r*\cos(\theta)` ， 其中 :math:`r = \sqrt{x^2 + y^2}` 。
+        返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`x = r*\sin(\theta), y = r*\cos(\theta)` ，其中 :math:`r = \sqrt{x^2 + y^2}` 。
         输入 `x` 和 `y` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
 
         **参数：**
@@ -225,7 +225,7 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - `x` 或 `y` 不是Tensor。
-        - **RuntimeError** - `x` 与 `y` 之间的数据类型转换不被支持
+        - **RuntimeError** - `x` 与 `y` 之间的数据类型转换不被支持。
 
     .. py:method:: bernoulli(p=0.5, seed=-1)
 
@@ -246,7 +246,7 @@ mindspore.Tensor
 
         **异常：**
 
-        - **TypeError** - 当前Tensor的数据类型不在int8, uint8, int16, int32，int64，bool, float32和float64中。
+        - **TypeError** - 当前Tensor的数据类型不在int8, uint8, int16, int32, int64, bool, float32和float64中。
         - **TypeError** - `p` 的数据类型既不是float32也不是float64。
         - **TypeError** - `seed` 不是int。
         - **ValueError** - `seed` 是负数且不为-1。
@@ -313,6 +313,18 @@ mindspore.Tensor
         - **TypeError** - 如果输入的 `shape` 参数不是tuple类型。
         - **ValueError** - 如果输入的 `shape` 与 `self` 的形状不兼容，或者目标 `shape` 中的-1位于无效位置。
 
+    .. py:method:: ceil()
+
+        向上取整。
+
+        **返回：**
+
+        Tensor。向上取整的结果。
+
+        **异常：**
+
+        - **TypeError** - 如果当前Tensor的数据类型不是float16或者float32。
+
     .. py:method:: choose(choices, mode='clip')
 
         根据原始Tensor数组和一个索引数组构造一个新的Tensor。
@@ -333,18 +345,6 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 输入Tensor和任一 `choices` 无法广播。
-
-    .. py:method:: ceil()
-
-        向上取整。
-
-        **返回：**
-
-        Tensor。向上取整的结果。
-
-        **异常：**
-
-        - **TypeError** - 如果当前Tensor的数据类型不是float16或者float32。
 
     .. py:method:: clip(xmin, xmax, dtype=None)
 
@@ -521,7 +521,7 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - axis不是int类型。
-        - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)。
+        - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)范围内。
 
     .. py:method:: erf()
 
