@@ -131,8 +131,8 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                       << Vector2Str(std::vector<int64_t>{c}) << ", but got scale shape: " << Vector2Str(scale_shape)
                       << ", mean shape: " << Vector2Str(mean_shape)
                       << ", variance shape: " << Vector2Str(variance_shape)
-                      << ", dout_dsacle shape: " << Vector2Str(dout_dscale_shape) << ", dout_dbias shape"
-                      << Vector2Str(dout_dbias_shape);
+                      << ", dout_dsacle shape: " << Vector2Str(dout_dscale_shape)
+                      << ", dout_dbias shape: " << Vector2Str(dout_dbias_shape);
   }
 
   if (x_shape.size() == kDim2) {

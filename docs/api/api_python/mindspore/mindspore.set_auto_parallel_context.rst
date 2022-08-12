@@ -4,7 +4,7 @@ mindspore.set_auto_parallel_context
 
 .. py:function:: mindspore.set_auto_parallel_context(**kwargs)
 
-    配置自动并行，仅在Ascend和GPU上有效。
+    配置自动并行，当前CPU仅支持数据并行。
 
     应在mindspore.communication.init之前配置自动并行。
 
