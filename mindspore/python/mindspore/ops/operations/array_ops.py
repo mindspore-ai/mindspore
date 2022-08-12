@@ -612,7 +612,6 @@ class Col2Im(Primitive):
     @prim_attr_register
     def __init__(self, kernel_size, dilation=1, padding=0, stride=1):
         """Initialize Col2Im."""
-        self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x', 'output_size'], outputs=['y'])
         validator.check_value_type('kernel_size', kernel_size, [int, list, tuple], self.name)
         validator.check_value_type('dilation', dilation, [int, list, tuple], self.name)
