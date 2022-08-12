@@ -24,7 +24,7 @@
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/eigen/guarded_philox_random.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/random_util.h"
 #include "mindspore/core/ops/random_gamma.h"
 
 namespace mindspore {
@@ -62,7 +62,7 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
   TypeId shape_dtype_{kTypeUnknown};
   TypeId alpha_dtype_{kTypeUnknown};
 
-  GuardedPhiloxRandom generator_;
+  random::GuardedPhiloxRandom generator_;
   // Dealing with dynamic shapes
   bool dyamic_shape_{false};
   std::vector<KernelTensorPtr> outputs_{};
