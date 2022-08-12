@@ -17,7 +17,7 @@ mindspore.Tensor.bernoulli
         Tensor，shape和数据类型与当前Tensor相同。
 
     异常：
-        - **TypeError** - 当前Tensor的数据类型不在int8, uint8, int16, int32，int64，bool, float32和float64中。
+        - **TypeError** - 当前Tensor的数据类型不在int8, uint8, int16, int32, int64, bool, float32和float64中。
         - **TypeError** - `p` 的数据类型既不是float32也不是float64。
         - **TypeError** - `seed` 不是int。
         - **ValueError** - `seed` 是负数且不为-1。

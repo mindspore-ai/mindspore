@@ -13,4 +13,4 @@ mindspore.Tensor.expand_dims
 
     异常：
         - **TypeError** - axis不是int类型。
-        - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)。
+        - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)范围内。
