@@ -62,10 +62,10 @@ from mindspore._c_expression import typing
 from . import py_transforms_util as util
 from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
-from .validators import check_adjust_brightness, check_adjust_gamma, check_adjust_saturation, check_adjust_sharpness, \
-    check_alpha, check_auto_augment, check_auto_contrast, check_bounding_box_augment_cpp, check_center_crop, \
-    check_convert_color, check_crop, check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, \
-    check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, check_mix_up, \
+from .validators import check_adjust_brightness, check_adjust_gamma, check_adjust_hue, check_adjust_saturation, \
+    check_adjust_sharpness, check_alpha, check_auto_augment, check_auto_contrast, check_bounding_box_augment_cpp, \
+    check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, check_cutout_new, check_decode, \
+    check_erase, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, check_mix_up, \
     check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, check_pad_to_size, \
     check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, check_random_affine, \
     check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
@@ -192,6 +192,49 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
             PIL Image, gamma adjusted image.
         """
         return util.adjust_gamma(img, self.gamma, self.gain)
+
+
+class AdjustHue(ImageTensorOperation, PyTensorOperation):
+    r"""
+    Adjust hue of input image. Input image is expected to be in [H, W, C] format.
+
+    Args:
+        hue_factor (float): How much to add to the hue channel,
+            must be in the interval [-0.5, 0.5].
+
+    Raises:
+        TypeError: If `hue_factor` is not of type float.
+        ValueError: If `hue_factor` is not in the interval [-0.5, 0.5].
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.AdjustHue(hue_factor=0.2)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_adjust_hue
+    def __init__(self, hue_factor):
+        super().__init__()
+        self.hue_factor = hue_factor
+
+    def parse(self):
+        return cde.AdjustHueOperation(self.hue_factor)
+
+    def execute_py(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be hue adjusted.
+
+        Returns:
+            PIL Image, hue adjusted image.
+        """
+        return util.adjust_hue(img, self.hue_factor)
 
 
 class AdjustSaturation(ImageTensorOperation, PyTensorOperation):

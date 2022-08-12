@@ -1037,6 +1037,19 @@ def check_adjust_gamma(method):
     return new_method
 
 
+def check_adjust_hue(method):
+    """Wrapper method to check the parameters of AdjustHue ops (Python and C++)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [hue_factor], _ = parse_user_args(method, *args, **kwargs)
+        type_check(hue_factor, (float, int), "hue_factor")
+        check_value(hue_factor, (-0.5, 0.5), "hue_factor")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_adjust_saturation(method):
     """Wrapper method to check the parameters of AdjustSaturation ops (Python and C++)."""
 

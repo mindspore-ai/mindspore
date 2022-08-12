@@ -22,6 +22,7 @@
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_hue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_saturation_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
@@ -101,6 +102,17 @@ PYBIND_REGISTER(
         auto ajust_gamma = std::make_shared<vision::AdjustGammaOperation>(gamma, gain);
         THROW_IF_ERROR(ajust_gamma->ValidateParams());
         return ajust_gamma;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  AdjustHueOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::AdjustHueOperation, TensorOperation, std::shared_ptr<vision::AdjustHueOperation>>(
+      *m, "AdjustHueOperation")
+      .def(py::init([](float hue_factor) {
+        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor);
+        THROW_IF_ERROR(adjust_hue->ValidateParams());
+        return adjust_hue;
       }));
   }));
 
