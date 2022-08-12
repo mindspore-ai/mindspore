@@ -43,7 +43,7 @@ abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::ve
   return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
 }
 
-TypePtr SquareInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SquareInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_dtype = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   if (!x_dtype->isa<TensorType>()) {

@@ -100,7 +100,7 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
                                           std::vector<int64_t> *out_shape) {
   bool found_ell = false;
   if (right_equation.length() == 0) {
-    out_shape->emplace_back(1);
+    (void)out_shape->emplace_back(1);
     return;
   }
   std::vector<bool> exit_flag(kEinsumLableNum, false);
@@ -134,7 +134,7 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
           << right_equation[idx] << " at least twice.";
       }
       exit_flag[val] = true;
-      out_shape->insert(out_shape->end(), (*element_shape_map)[val].begin(), (*element_shape_map)[val].end());
+      (void)out_shape->insert(out_shape->end(), (*element_shape_map)[val].begin(), (*element_shape_map)[val].end());
     } else {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', operand " << right_equation
                                << " in the equation can only be consist of [a-zA-z], but found invalid character(s).";
@@ -152,11 +152,11 @@ static void seg_right_equation_without_arrow(const std::string &left_equation,
   }
   for (size_t idx = 0; idx < element_count.size(); ++idx) {
     if (element_count[idx] == 1) {
-      out_shape->insert(out_shape->end(), (*element_shape_map)[idx].begin(), (*element_shape_map)[idx].end());
+      (void)out_shape->insert(out_shape->end(), (*element_shape_map)[idx].begin(), (*element_shape_map)[idx].end());
     }
   }
   if (out_shape->size() == 0) {
-    out_shape->emplace_back(1);
+    (void)out_shape->emplace_back(1);
   }
 }
 
@@ -164,7 +164,6 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
                               const std::vector<std::vector<int64_t>> &input_shapes,
                               std::unordered_map<int64_t, std::vector<int64_t>> *element_shape_map) {
   for (size_t idx_input = 0; idx_input < input_shapes.size(); ++idx_input) {
-    auto cur_shape = input_shapes[idx_input];
     size_t idx_left = 0;
     while (idx_left < left_elements[idx_input].size() && left_elements[idx_input][idx_left] != kEinsumEllVal) {
       auto cur_element = left_elements[idx_input][idx_left];
@@ -228,7 +227,7 @@ std::string Einsum::get_equation() const {
 abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
+  (void)equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
   if (equation.length() == 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the equation is required, but got none.";
   }
@@ -265,7 +264,7 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
                                  << "] shape: " << shape->ToString() << ".";
       }
     }
-    input_shapes.emplace_back(shape_vec);
+    (void)input_shapes.emplace_back(shape_vec);
   }
 
   const auto left_equation = equation.substr(0, seg_pos);

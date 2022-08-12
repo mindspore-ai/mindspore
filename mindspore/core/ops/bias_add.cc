@@ -51,9 +51,9 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   const int64_t x_size = 2;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(input_shape.size()), kGreaterEqual, x_size, prim_name);
   auto data_format_ptr = primitive->GetAttr("format");
-  int64_t data_format = Format::NCHW;
+  Format data_format = Format::NCHW;
   if (data_format_ptr != nullptr) {
-    data_format = CheckAndConvertUtils::GetAndCheckFormat(data_format_ptr);
+    data_format = static_cast<Format>(CheckAndConvertUtils::GetAndCheckFormat(data_format_ptr));
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

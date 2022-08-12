@@ -78,13 +78,13 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
-  float *float_dloss_addr = NULL;
-  float *float_output_addr = NULL;
+  float *float_dloss_addr = nullptr;
+  float *float_output_addr = nullptr;
   if (dtype_ == kNumberTypeFloat16) {
     auto *input_addr_T = reinterpret_cast<T *>(inputs[0]->addr);
     size_t input_mem_size = inputs[0]->size / sizeof(T) * sizeof(float);
     float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
-    if (float_dloss_addr == NULL) {
+    if (float_dloss_addr == nullptr) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;
     }
@@ -94,7 +94,7 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 
     size_t output_mem_size = outputs[0]->size / sizeof(T) * sizeof(float);
     float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
-    if (float_output_addr == NULL) {
+    if (float_output_addr == nullptr) {
       free(float_dloss_addr);
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
       return false;

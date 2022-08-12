@@ -49,14 +49,14 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   }
   for (int64_t i = -length; i < 0; i++) {
     if (x_shape[LongToSize(x_length + i)] == 1) {
-      (void)broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
+      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
     } else if (y_shape[LongToSize(y_length + i)] == 1) {
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[x_length + i] == abstract::Shape::SHP_ANY) ||
-               (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
-      (void)broadcast_shape.push_back(abstract::Shape::SHP_ANY);
+    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::SHP_ANY) ||
+               (y_shape[LongToSize(y_length + i)] == abstract::Shape::SHP_ANY)) {
+      broadcast_shape.push_back(abstract::Shape::SHP_ANY);
     } else {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
                                << "' with shape: " << x_shape << " and " << y_shape << " can not broadcast.";

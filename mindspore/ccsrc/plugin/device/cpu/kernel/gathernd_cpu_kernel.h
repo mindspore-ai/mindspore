@@ -19,7 +19,6 @@
 
 #include <complex>
 #include <vector>
-#include <memory>
 #include <utility>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

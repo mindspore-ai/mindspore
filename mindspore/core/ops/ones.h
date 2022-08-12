@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_ONES_H_
 #define MINDSPORE_CORE_OPS_ONES_H_
 #include <map>
-#include <vector>
 #include <string>
 #include <memory>
 

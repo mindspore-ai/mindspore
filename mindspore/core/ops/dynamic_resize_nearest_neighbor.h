@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CORE_OPS_DYNAMIC_RESIZE_NEAREST_NEIGHBOR_H_
 #define MINDSPORE_CORE_OPS_DYNAMIC_RESIZE_NEAREST_NEIGHBOR_H_
 
-#include <vector>
 #include <memory>
 
 #include "ops/base_operator.h"
