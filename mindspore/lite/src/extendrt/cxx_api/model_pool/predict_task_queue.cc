@@ -19,6 +19,11 @@
 namespace mindspore {
 PredictTaskQueue::~PredictTaskQueue() {
   if (predict_task_ != nullptr) {
+#ifdef USE_HQUEUE
+    for (size_t i = 0; i < task_queue_num_; i++) {
+      predict_task_[i].Clean();
+    }
+#endif
     delete[] predict_task_;
     predict_task_ = nullptr;
   }
@@ -39,6 +44,7 @@ Status PredictTaskQueue::InitTaskQueue(size_t num, size_t max_queue_size) {
     return kLiteError;
   }
 #ifdef USE_HQUEUE
+  task_queue_num_ = num;
   predict_task_ = new (std::nothrow) HQueue<PredictTask>[num]();
   if (predict_task_ == nullptr) {
     MS_LOG(ERROR) << "new predict task failed.";

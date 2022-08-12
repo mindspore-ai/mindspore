@@ -68,6 +68,7 @@ class PredictTaskQueue {
 #else
   std::queue<PredictTask *> *predict_task_;
 #endif
+  size_t task_queue_num_ = -1;
   std::atomic_int *idle_worker_num_;
   std::mutex mtx_predict_task_;
   std::condition_variable task_pop_cond_;
