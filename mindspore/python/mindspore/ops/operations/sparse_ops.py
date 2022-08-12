@@ -251,7 +251,6 @@ class CSRSparseMatrixToSparseTensor(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize CSRSparseMatrixToSparseTensor."""
-        self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
                                         'x_col_indices', 'x_values'],
                                 outputs=['indices', 'values', 'dense_shape'])
