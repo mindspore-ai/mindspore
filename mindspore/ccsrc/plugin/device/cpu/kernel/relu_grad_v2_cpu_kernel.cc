@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/relu_grad_v2_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/relu_grad_v2.h"
+#include "mindspore/core/ops/grad/relu_grad_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -106,13 +106,14 @@ int ReluGradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
-  if (input_shape.size() != kDim4) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be 4, but got " << input_shape.size();
+  if (input_shape.size() < kDim4) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be greater than 4, but got "
+                  << input_shape.size();
     return KRET_RESIZE_FAILED;
   }
   auto mask_shape = inputs[kIndex1]->GetShapeVector();
   if (mask_shape.size() < kDim4) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of mask shape should greater than 4, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of mask shape should be greater than 4, but got "
                   << mask_shape.size();
     return KRET_RESIZE_FAILED;
   }

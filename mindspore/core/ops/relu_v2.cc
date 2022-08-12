@@ -36,8 +36,8 @@ constexpr int64_t kRound16 = 16;
 std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const std::vector<int64_t> &input_shape,
                                               const std::shared_ptr<Type> &x_dtype) {
   std::vector<int64_t> mask_shape;
-  if (input_shape.size() != kInputDims) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the 'input_x' must be a 4-D tensor, but got a "
+  if (input_shape.size() < kInputDims) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the dims of 'input_x' must be greater than 4, but got a "
                              << std::to_string(input_shape.size()) << "-D tensor.";
   }
   for (size_t i = 0; i < input_shape.size(); i++) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,38 +28,60 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ReLUGradV2InferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto x = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
-}
-TypePtr ReLUGradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(x_type_map);
-  auto x_type = x_type_map->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(x_type);
-  std::set<TypePtr> valid_x_type = {kTensorType};
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
-}
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(ReLUGradV2, BaseOperator);
-AbstractBasePtr ReLUGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args) {
+constexpr const size_t kReluGradV2InputNum = 2;
+constexpr const size_t kGradientIndex = 0;
+constexpr const size_t kMaskIndex = 1;
+constexpr const size_t kReluGradV2GradientDims = 4;
+abstract::ShapePtr ReluGradV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
-                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return abstract::MakeAbstract(ReLUGradV2InferShape(input_args), ReLUGradV2InferType(primitive, input_args));
+  auto gradient_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradientIndex]->BuildShape());
+  auto gradient_input_shape = gradient_shape_map[kShape];
+  if (gradient_input_shape.size() < kReluGradV2GradientDims) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', The dims of 'gradient' must be greater than 4,but got a " +
+                                  std::to_string(gradient_input_shape.size()) + "-D tensor";
+  }
+  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaskIndex]->BuildShape());
+  auto mask_input_shape = mask_shape_map[kShape];
+  if (mask_input_shape.size() < kReluGradV2GradientDims) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', The 'mask' dims must be greater than 4,but got " +
+                                  std::to_string(mask_input_shape.size()) + "-D tensor";
+  }
+  auto gradient_build_shape = input_args[kGradientIndex]->BuildShape();
+  MS_EXCEPTION_IF_NULL(gradient_build_shape);
+  auto gradient_shape = gradient_build_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(gradient_shape);
+  return gradient_shape;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ReLUGradV2, prim::kPrimReluGradV2, ReLUGradV2Infer, nullptr, true);
+
+TypePtr ReluGradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  MS_EXCEPTION_IF_NULL(input_args[kGradientIndex]);
+  auto gradient_type = input_args[kGradientIndex]->BuildType();
+  MS_EXCEPTION_IF_NULL(gradient_type);
+  if (!gradient_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
+                            << " input must be tensor type but got " << gradient_type->ToString();
+  }
+  return gradient_type;
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(ReluGradV2, BaseOperator);
+AbstractBasePtr ReluGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  (void)CheckAndConvertUtils::CheckInteger("ReluGradV2 infer", input_args.size(), kEqual, kReluGradV2InputNum,
+                                           primitive->name());
+  auto type = ReluGradV2InferType(primitive, input_args);
+  auto shape = ReluGradV2InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ReluGradV2, prim::kPrimReluGradV2, ReluGradV2Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
