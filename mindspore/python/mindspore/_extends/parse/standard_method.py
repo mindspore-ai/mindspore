@@ -293,6 +293,15 @@ def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
     return F.cast(x, dtype)
 
 
+def minimum(x, y):
+    r"""
+    Computes the minimum of input tensors element-wise.
+
+    Refer to :func:`mindspore.ops.minimum` for more detail.
+    """
+    return F.minimum(x, y)
+
+
 def transpose(x, *axis):
     r"""
     Return a view of the tensor with axes transposed.
@@ -524,10 +533,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 

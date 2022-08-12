@@ -37,9 +37,6 @@ class MIND_API Minimum : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Minimum for the inputs.
   void Init() const {}
 };
-
-abstract::AbstractBasePtr MinimumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

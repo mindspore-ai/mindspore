@@ -173,6 +173,7 @@ Array操作
     mindspore.Tensor.itemsize
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
+    mindspore.Tensor.minimum
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim
     mindspore.Tensor.nonzero
