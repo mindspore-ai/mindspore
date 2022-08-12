@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_AVX
-
 #include "nnacl/fp32/matmul_avx_fp32.h"
 #include "nnacl/intrinsics/ms_simd_avx_instructions.h"
 
@@ -953,5 +951,4 @@ void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, c
     }
   }
 }
-#endif
 #endif

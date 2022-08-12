@@ -92,6 +92,14 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/experimental/*.c
 )
 
+set(KERNEL_AVX512_FILE ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
+list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX512_FILE})
+
+set(KERNEL_AVX_FILE ${NNACL_DIR}/fp32/conv_sw_avx_fp32.c
+                    ${NNACL_DIR}/fp32/conv_1x1_avx_fp32.c
+                    ${NNACL_DIR}/fp32/matmul_avx_fp32.c)
+list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX_FILE})
+
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
 endif()
@@ -149,37 +157,49 @@ if(PLATFORM_ARM32)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
-if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
-    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+if("${X86_64_SIMD}" STREQUAL "sse" OR "${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
+    file(GLOB ASSEMBLY_SSE_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
+    set_property(SOURCE ${ASSEMBLY_SSE_SRC} PROPERTY LANGUAGE C)
+
+    set(MS_X86_SSE_SRC
+            ${ASSEMBLY_SSE_SRC}
+            ${KERNEL_SSE_FILE})
+    set_source_files_properties(${MS_X86_SSE_SRC} PROPERTIES LANGUAGE C
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
+
+    set(MS_X86_SIMD_SRC ${MS_X86_SIMD_SRC} ${MS_X86_SSE_SRC})
 endif()
 
-if("${X86_64_SIMD}" STREQUAL "avx")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
+if("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
+    file(GLOB ASSEMBLY_AVX_SRC
             ${NNACL_DIR}/intrinsics/avx/*.c
             ${NNACL_DIR}/assembly/avx/*.S
             ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
-    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+    set_property(SOURCE ${ASSEMBLY_AVX_SRC} PROPERTY LANGUAGE C)
+
+    set(MS_X86_AVX_SRC
+            ${ASSEMBLY_AVX_SRC}
+            ${KERNEL_AVX_FILE})
+    set_source_files_properties(${MS_X86_AVX_SRC} PROPERTIES LANGUAGE C
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx -mavx2 -mfma -fPIC")
+
+    set(MS_X86_SIMD_SRC ${MS_X86_SIMD_SRC} ${MS_X86_AVX_SRC})
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "avx512")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
-            ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S
-            ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
-    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         file(GLOB HPC_SRC ${NNACL_DIR}/experimental/HPC-generator/gemm_avx512/*.c)
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
 
-    set(MS_X86_AVX512_SRC ${HPC_SRC}
-                          ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
+    set(MS_X86_AVX512_SRC
+            ${HPC_SRC}
+            ${KERNEL_AVX512_FILE})
 
     set_source_files_properties(${MS_X86_AVX512_SRC} PROPERTIES LANGUAGE C
         COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx512f -fPIC")
 
+    set(MS_X86_SIMD_SRC ${MS_X86_SIMD_SRC} ${MS_X86_AVX512_SRC})
 endif()
 
 if(APPLE)
@@ -189,7 +209,7 @@ endif()
 ########################### build nnacl library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_AVX512_SRC})
+add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_SIMD_SRC})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_definitions(nnacl_mid PRIVATE ENABLE_DEBUG)

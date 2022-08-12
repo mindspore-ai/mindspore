@@ -34,8 +34,8 @@ int ConvolutionSWAVXCPUKernel::RunImpl(int task_id) {
     Conv1x1SWAVXFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
                      output_data_, task_id, conv_param_, slidingWindow_param_);
   } else {
-    ConvSWFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
-               output_data_, task_id, conv_param_, slidingWindow_param_);
+    ConvSWAVXFp32(input_data_, reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(bias_data_),
+                  output_data_, task_id, conv_param_, slidingWindow_param_);
   }
   return RET_OK;
 }

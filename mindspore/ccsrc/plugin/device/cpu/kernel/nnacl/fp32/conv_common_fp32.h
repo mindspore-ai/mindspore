@@ -21,6 +21,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/fp32/conv_sw_avx_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,78 +51,8 @@ void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float
 #ifdef ENABLE_AVX
 void CommonConv6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t depth,
                           size_t out_step, size_t act_flag, size_t real_cal_row);
-
-typedef void (*SWConvKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                             size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                             size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step,
-                             size_t kw_remainder, size_t write_mode);
-
-void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
-              int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param, SWConvKernel kernel,
-              int act_type, int ow_bock, int oc_block, size_t write_mode);
-
-void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
-                int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param);
-void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
-              int kernel_w, bool is_relu, bool is_relu6, SlidingWindowParam *sw_param);
-
-#ifdef ENABLE_DEBUG
-void SWConvWxKKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                     size_t write_mode);
 #endif
 
-void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                      size_t write_mode);
-
-void SWConv8x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                     size_t write_mode);
-
-void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                     size_t write_mode);
-
-void SWConv1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                     size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder,
-                     size_t write_mode);
-#endif
 #ifdef __cplusplus
 }
 #endif

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_AVX512
-
 #include "nnacl/fp32/matmul_avx512_fp32.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
@@ -248,5 +246,3 @@ int64_t GemmIsNotPackOptimizeAVX512(int64_t m_index, const float *a, const float
   }
   return m_index;
 }
-
-#endif
