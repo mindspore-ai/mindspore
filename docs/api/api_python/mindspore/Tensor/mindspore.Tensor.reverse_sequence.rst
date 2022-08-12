@@ -1,7 +1,7 @@
 mindspore.Tensor.reverse_sequence
-=======================
+=================================
 
-.. py:method:: reverse_sequence(seq_lengths, seq_dim, batch_dim=0)
+.. py:method:: mindspore.Tensor.reverse_sequence(seq_lengths, seq_dim, batch_dim=0)
 
     对输入序列进行部分反转。
 
