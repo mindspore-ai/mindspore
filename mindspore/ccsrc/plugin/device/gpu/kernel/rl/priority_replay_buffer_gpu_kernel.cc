@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-using PriorityReplayBufferFactory = ReplayBufferFactory<PriorityReplayBuffer>;
+using PriorityReplayBufferFactory = ReplayBufferFactory<PriorityReplayBuffer<SumMinTree>>;
 
 PriorityReplayBufferCreateGpuKernel::~PriorityReplayBufferCreateGpuKernel() {
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();

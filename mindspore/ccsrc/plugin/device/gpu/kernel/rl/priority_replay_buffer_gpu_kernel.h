@@ -43,7 +43,7 @@ class PriorityReplayBufferCreateGpuKernel : public NativeGpuKernelMod {
  private:
   int64_t handle_{-1};
   int64_t *handle_device_{nullptr};
-  std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
+  std::shared_ptr<PriorityReplayBuffer<SumMinTree>> prioriory_replay_buffer_{nullptr};
 };
 
 class PriorityReplayBufferPushGpuKernel : public NativeGpuKernelMod {
@@ -62,7 +62,7 @@ class PriorityReplayBufferPushGpuKernel : public NativeGpuKernelMod {
  private:
   int64_t handle_{-1};
   int64_t *handle_device_{nullptr};
-  std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
+  std::shared_ptr<PriorityReplayBuffer<SumMinTree>> prioriory_replay_buffer_{nullptr};
 };
 
 class PriorityReplayBufferSampleGpuKernel : public NativeGpuKernelMod {
@@ -82,7 +82,7 @@ class PriorityReplayBufferSampleGpuKernel : public NativeGpuKernelMod {
   int64_t handle_{-1};
   size_t batch_size_{0};
   std::vector<size_t> schema_;
-  std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
+  std::shared_ptr<PriorityReplayBuffer<SumMinTree>> prioriory_replay_buffer_{nullptr};
 };
 
 class PriorityReplayBufferUpdateGpuKernel : public NativeGpuKernelMod {
@@ -104,7 +104,7 @@ class PriorityReplayBufferUpdateGpuKernel : public NativeGpuKernelMod {
   int64_t handle_{-1};
   int64_t *handle_device_{nullptr};
   size_t batch_size_{0};
-  std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
+  std::shared_ptr<PriorityReplayBuffer<SumMinTree>> prioriory_replay_buffer_{nullptr};
 };
 
 class PriorityReplayBufferDestroyGpuKernel : public NativeGpuKernelMod {

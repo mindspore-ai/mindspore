@@ -21,8 +21,11 @@
 #include <curand_kernel.h>
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/rl/priority_replay_buffer.cuh"
+#include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,6 +34,10 @@ namespace gpu {
 // The algorithm is proposed in `Prioritized Experience Replay <https://arxiv.org/abs/1511.05952>`.
 // Same as the normal replay buffer, it lets the reinforcement learning agents remember and reuse experiences from the
 // past. Besides, it replays important transitions more frequently and improve sample effciency.
+constexpr float kMinPriority = 1e-7;
+constexpr size_t kNumSubNode = 2;
+
+template <typename Tree>
 class PriorityReplayBuffer {
  public:
   // Construct a fixed-length priority replay buffer.
@@ -62,8 +69,98 @@ class PriorityReplayBuffer {
 
   size_t capacity_pow_two_{0};
   float *max_priority_{nullptr};
-  SumTree *sum_tree_{nullptr};
+  Tree *sum_tree_{nullptr};
 };
+
+template <typename Tree>
+PriorityReplayBuffer<Tree>::PriorityReplayBuffer(const uint64_t &seed, const float &alpha, const size_t &capacity,
+                                                 const std::vector<size_t> &schema) {
+  alpha_ = alpha;
+  schema_ = schema;
+  seed_ = seed;
+  capacity_ = capacity;
+
+  // FIFO used for storing transitions
+  auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
+  for (const auto &size : schema) {
+    fifo_replay_buffer_.emplace_back(static_cast<uint8_t *>(allocator.AllocTensorMem(size * capacity)));
+  }
+
+  // The sum tree used for keeping priority.
+  max_priority_ = static_cast<float *>(allocator.AllocTensorMem(sizeof(float)));
+
+  capacity_pow_two_ = 1;
+  while (capacity_pow_two_ < capacity) {
+    capacity_pow_two_ *= kNumSubNode;
+  }
+  sum_tree_ = static_cast<SumMinTree *>(allocator.AllocTensorMem(capacity_pow_two_ * sizeof(SumMinTree) * kNumSubNode));
+  // Set initial segment info for all element.
+  SumTreeInit(sum_tree_, max_priority_, capacity_pow_two_, nullptr);
+}
+
+template <typename Tree>
+PriorityReplayBuffer<Tree>::~PriorityReplayBuffer() {
+  auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
+  if (rand_state_) {
+    allocator.FreeTensorMem(rand_state_);
+    rand_state_ = nullptr;
+  }
+
+  for (auto item : fifo_replay_buffer_) {
+    allocator.FreeTensorMem(item);
+  }
+
+  allocator.FreeTensorMem(sum_tree_);
+  allocator.FreeTensorMem(max_priority_);
+}
+
+template <typename Tree>
+bool PriorityReplayBuffer<Tree>::Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream) {
+  // Head point to the latest item.
+  head_ = head_ >= capacity_ ? 0 : head_ + 1;
+  valid_size_ = valid_size_ >= capacity_ ? capacity_ : valid_size_ + 1;
+
+  // Copy transition to FIFO.
+  for (size_t i = 0; i < transition.size(); i++) {
+    size_t offset = head_ * schema_[i];
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->addr, schema_[i],
+                                                      cudaMemcpyDeviceToDevice, stream),
+                                      "cudaMemcpyAsync failed.");
+  }
+
+  // Set max priority for the newest transition.
+  SumTreePush(sum_tree_, alpha_, head_, capacity_pow_two_, priority, max_priority_, stream);
+  return true;
+}
+
+template <typename Tree>
+bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, size_t *indices, float *weights,
+                                        const std::vector<AddressPtr> &transition, cudaStream_t stream) {
+  MS_EXCEPTION_IF_ZERO("batch size", batch_size);
+
+  // Init random state for sampling.
+  if (!rand_state_) {
+    auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
+    rand_state_ = static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * batch_size));
+    InitRandState(batch_size, seed_, rand_state_, stream);
+  }
+
+  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, beta, batch_size, indices, weights, stream);
+
+  for (size_t i = 0; i < schema_.size(); i++) {
+    auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
+    FifoSlice(fifo_replay_buffer_[i], indices, output_addr, batch_size, schema_[i], stream);
+  }
+
+  return true;
+}
+
+template <typename Tree>
+bool PriorityReplayBuffer<Tree>::UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size,
+                                                  cudaStream_t stream) {
+  SumTreeUpdate(sum_tree_, capacity_pow_two_, alpha_, max_priority_, indices, priorities, batch_size, stream);
+  return true;
+}
 }  // namespace gpu
 }  // namespace kernel
 }  // namespace mindspore
