@@ -445,7 +445,7 @@ def _context():
                  parallel_optimizer_config=dict, comm_fusion=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
-    Set auto parallel context, which is valid only for Ascend and GPU target.
+    Set auto parallel context, only data parallel supported on CPU.
 
     Auto parallel context should be configured before the initialization of your network.
 
