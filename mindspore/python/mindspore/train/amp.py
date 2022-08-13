@@ -156,6 +156,10 @@ _config_level = {
         "keep_batchnorm_fp32": False,
         "cast_model_type": mstype.float32,
         "loss_scale_manager": None},
+    "O1": {
+        "keep_batchnorm_fp32": False,
+        "cast_model_type": mstype.float32,
+        "loss_scale_manager": None},
     "O2": {
         "keep_batchnorm_fp32": True,
         "cast_model_type": mstype.float16,
@@ -187,9 +191,9 @@ def _check_kwargs(key_words):
 def _check_level(level, boost_level):
     """Check level."""
     if not isinstance(level, str):
-        raise TypeError("The argument `level` must be a string in ['O0', 'O2', 'O3', 'auto'], \
+        raise TypeError("The argument `level` must be a string in ['O0', 'O1', 'O2', 'O3', 'auto'], \
                          but got type {}.".format(type(level)))
-    validator.check('level', level, "", ['O0', 'O2', 'O3', 'auto'], Rel.IN)
+    validator.check('level', level, "", ['O0', 'O1', 'O2', 'O3', 'auto'], Rel.IN)
     validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
 
     if level == "auto":
@@ -244,6 +248,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         level (str): Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
             - "O0": Do not change.
+            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O2": Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
             - "O3": Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
@@ -287,12 +292,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     _check_kwargs(kwargs)
     config = dict(_config_level.get(level), **kwargs)
 
-    auto_mixed_precision(network, level)
-
     if config["keep_batchnorm_fp32"] and level == "O3":
         _do_keep_batchnorm_fp32(network)
     elif not config["keep_batchnorm_fp32"] and level == "O2":
         network.to_float(mstype.float16)
+    else:
+        auto_mixed_precision(network, level)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
