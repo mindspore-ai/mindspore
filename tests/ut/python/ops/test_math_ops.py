@@ -32,7 +32,7 @@ from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
-from mindspore.ops.function.math_func import inplace_index_add
+from mindspore.ops.function.math_func import inplace_index_add, polar
 
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -632,6 +632,15 @@ class KronFunc(nn.Cell):
         return self.kron(x, y)
 
 
+class PolarFunc(nn.Cell):
+    def __init__(self):
+        super(PolarFunc, self).__init__()
+        self.polar = polar
+
+    def construct(self, x, y):
+        return self.polar(x, y)
+
+
 class Rot90Func(nn.Cell):
     def __init__(self):
         super(Rot90Func, self).__init__()
@@ -849,6 +858,12 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[0, 1, 2], [3, 4, 5]]).astype(np.float32)),
                         Tensor(np.array([[-1, -2, -3], [-4, -6, -8]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('Polar', {
+        'block': PolarFunc(),
+        'desc_inputs': [Tensor(np.array([[0, 1, 2], [3, 4, 5]]).astype(np.float32)),
+                        Tensor(np.array([[-1, -2, -3], [-4, -6, -8]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1+2j, 2+3j, 3+4j], np.complex64))],
+    }),
     ('Rot90', {
         'block': Rot90Func(),
         'desc_inputs': [Tensor(np.array([[0, 1], [2, 3]]).astype(np.float32))],

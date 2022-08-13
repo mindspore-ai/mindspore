@@ -63,6 +63,7 @@ from mindspore.ops.operations.math_ops import (
     InplaceUpdateV2,
     Igamma,
     Igammac,
+    Polar,
     Angle,
 )
 from mindspore.common.tensor import Tensor
@@ -127,6 +128,7 @@ sinc_ = Sinc()
 cos_ = P.Cos()
 tan_ = P.Tan()
 asin_ = P.Asin()
+polar_ = Polar()
 acos_ = P.ACos()
 atan_ = P.Atan()
 sinh_ = P.Sinh()
@@ -1643,6 +1645,45 @@ def arctan2(x, other):
     """
     _atan2 = _get_cache_prim(P.Atan2)()
     return _atan2(x, other)
+
+
+def polar(abs, angle):  # pylint: disable=redefined-outer-name
+    r"""
+    Returns the complex tensor at polar coordinates.
+
+    .. math::
+
+        y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
+
+    Args:
+        abs (Tensor): The shape of tensor is
+            :math:`(N,*)`, where :math:`*` means additional dimensions of size less than 8.
+            Must be one of the following types: float32, float64.
+
+        angle (Tensor): The shape of tensor is
+            :math:`(N,*)`, where :math:`*` means additional dimensions of size less than 8.
+            Must be one of the following types: float32, float64.
+
+    Outputs:
+        Tensor, has the same shape and data type as `abs`.
+
+    Raises:
+        TypeError: If neither `abs` nor `angle` is a Tensor.
+        TypeError: If the dtype of input is not one of: float32, float64.
+        TypeError: If the dtypes of two args are not the same.
+        ValueError: If the shape of `abs` is not the same as that of `angle`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> abs = Tensor(np.array([1, 2]), mindspore.float64)
+        >>> angle = Tensor(np.array([np.pi / 2, 5 * np.pi / 4]), mindspore.float64)
+        >>> output = ops.polar(abs, angle)
+        >>> print(output)
+        [ 6.12323400e-17+1.j         -1.41421356e+00-1.41421356j]
+    """
+    return polar_(abs, angle)
 
 
 def asin(x):
