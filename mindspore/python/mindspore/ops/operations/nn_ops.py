@@ -6414,17 +6414,18 @@ class ApplyAddSign(Primitive):
     to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
+    The data type of inputs must be float16 or float32 on Ascend and float16, float32 or float64 on CPU and GPU.
 
     Inputs:
-        - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+        - **var** (Parameter) - Variable tensor to be updated. With float16, float32 or float64 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
-          With float32 or float16 data type.
-        - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
-        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
+          With float16, float32 or float64 data type.
+        - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
+        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
-          With float32 or float16 data type.
+          With float16, float32 or float64 data type.
         - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
 
     Outputs:
@@ -6434,13 +6435,13 @@ class ApplyAddSign(Primitive):
         - **m** (Tensor) - The same shape and data type as `m`.
 
     Raises:
-        TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is not float16, float32 or float64.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
