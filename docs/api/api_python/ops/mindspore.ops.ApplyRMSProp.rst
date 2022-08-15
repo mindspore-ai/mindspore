@@ -2,7 +2,7 @@ mindspore.ops.ApplyRMSProp
 ==========================
 
 .. py:class:: mindspore.ops.ApplyRMSProp(use_locking=False)
-    
+
     实现均方根传播Root Mean Square prop(RMSProp)算法的优化器。请参考源码中的用法 :class:`mindspore.nn.RMSProp` 。
 
     ApplyRMSProp算法的更新公式如下所示：
