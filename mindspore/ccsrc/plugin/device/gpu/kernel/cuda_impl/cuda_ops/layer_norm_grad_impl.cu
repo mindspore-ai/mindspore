@@ -199,6 +199,8 @@ inline __device__ void InputThreadReduce(const int &row, const int &col_dim, con
     for (int j = 0; j < NUM_PER_THREAD_REDUCE; j++) {
       int col = NUM_PER_THREAD_REDUCE * i + j;
       if (col >= col_dim) {
+        sum1[0] = -0.5 * sum1[0] * my_pow(var[row] + epsilon, -1.5);
+        sum3[0] = -2.0 * sum3[0];
         return;
       }
 
@@ -225,6 +227,8 @@ inline __device__ void InputThreadReduce(const int &row, const int &col_dim, con
     for (int j = 0; j < NUM_PER_THREAD_REDUCE; j++) {
       int col = NUM_PER_THREAD_REDUCE * i + j;
       if (col >= col_dim) {
+        sum1[0] = __float2half(-0.5) * sum1[0] * my_pow(var[row] + epsilon, -1.5);
+        sum3[0] = __float2half(-2.0) * sum3[0];
         return;
       }
 
