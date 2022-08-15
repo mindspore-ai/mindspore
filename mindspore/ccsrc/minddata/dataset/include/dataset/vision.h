@@ -1660,6 +1660,12 @@ class DATASET_API RandomVerticalFlipWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Reads a file in binary mode.
+/// \param[in] filename The path to the file to be read.
+/// \param[out] output The binary data.
+/// \return The status code.
+Status DATASET_API ReadFile(const std::string &filename, mindspore::MSTensor *output);
+
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {
  public:

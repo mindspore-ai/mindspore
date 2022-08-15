@@ -1231,3 +1231,39 @@ TEST_F(MindDataTestPipeline, TestWriteFileException) {
   data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
   ASSERT_ERROR(mindspore::dataset::vision::WriteFile(filename_2, data_tensor));
 }
+
+/// Feature: ReadFile
+/// Description: Test ReadFile with the an example file
+/// Expectation: Output is equal to the expected data
+TEST_F(MindDataTestPipeline, TestReadFileNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileNormal.";
+  mindspore::MSTensor output;
+  const UINT8 *data;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("./data/dataset/apple.jpg", &output));
+  EXPECT_EQ(output.Shape()[0], 159109);
+  EXPECT_EQ(output.DataType(), mindspore::DataType::kNumberTypeUInt8);
+  data = (const UINT8 *) (output.Data().get());
+  EXPECT_EQ(data[0], 255);
+  EXPECT_EQ(data[1], 216);
+  EXPECT_EQ(data[2], 255);
+  EXPECT_EQ(data[50000], 0);
+  EXPECT_EQ(data[100000], 132);
+  EXPECT_EQ(data[150000], 64);
+  EXPECT_EQ(data[159106], 63);
+  EXPECT_EQ(data[159107], 255);
+  EXPECT_EQ(data[159108], 217);
+}
+
+/// Feature: ReadFile
+/// Description: Test ReadFile with invalid filename
+/// Expectation: Error is caught when the filename is invalid
+TEST_F(MindDataTestPipeline, TestReadFileException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileException.";
+  mindspore::MSTensor output;
+
+  // Test with a not exist filename
+  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("this_file_is_not_exist", &output));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("./data/dataset/", &output));
+}

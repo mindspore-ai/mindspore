@@ -368,7 +368,6 @@ def encode_jpeg(image, quality=75):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.dataset.vision as vision
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
         >>> jpeg_data = vision.encode_jpeg(image)
@@ -455,6 +454,28 @@ def parse_padding(padding):
     return padding
 
 
+def read_file(filename):
+    """
+    Read a file in binary mode.
+
+    Args:
+        filename(str): The path to the file to be read.
+
+    Returns:
+        numpy.ndarray, the one dimension uint8 data.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        RuntimeError: If `filename` does not exist or is not a common file.
+
+    Examples:
+        >>> output = vision.read_file("/path/to/file")
+    """
+    if isinstance(filename, str):
+        return cde.read_file(filename).as_array()
+    raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+
+
 def write_file(filename, data):
     """
     Write the one dimension uint8 data into a file using binary mode.
@@ -466,12 +487,11 @@ def write_file(filename, data):
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `data` is not of type numpy.ndarray or mindspore.Tensor.
-        RuntimeError: If the `filename` path is not a common file.
+        RuntimeError: If the `filename` is not a common file.
         RuntimeError: If the data type of `data` is not uint8.
         RuntimeError: If the shape of `data` is not a one-dimensional array.
 
     Examples:
-        >>> import mindspore.dataset.vision as vision
         >>> vision.write_file("/path/to/file", data)
     """
     if not isinstance(filename, str):

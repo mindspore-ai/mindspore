@@ -2321,5 +2321,22 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
   fs.close();
   return Status::OK();
 }
+
+Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " does not exist.");
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(realpath.value(), output));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
