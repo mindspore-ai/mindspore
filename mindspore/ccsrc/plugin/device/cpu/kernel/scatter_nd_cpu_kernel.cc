@@ -201,7 +201,6 @@ void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) const {
 std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> ScatterNdCpuKernelMod::func_list_ = {
   DTYPE_REGISTER_ATTR(kNumberTypeFloat64, kNumberTypeFloat64, double),
   DTYPE_REGISTER_ATTR(kNumberTypeFloat32, kNumberTypeFloat32, float),
-  DTYPE_REGISTER_ATTR(kNumberTypeFloat16, kNumberTypeFloat16, float16),
   DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, int64_t),
   DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, int32_t),
   DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, int16_t),
@@ -212,7 +211,6 @@ std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> Scatter
   DTYPE_REGISTER_ATTR(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
   DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
   DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
-  DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, float16),
   DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
   DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t),
   DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t),
