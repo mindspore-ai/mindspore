@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <set>
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
@@ -23,6 +24,34 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+// Check if the parameter is used by the real kernel, not just load node.
+bool IsInputNodeUsedByRealKernel(const AnfNodePtr &input_node, const AnfNodePtr &node,
+                                 std::set<AnfNodePtr> *checked_nodes) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+  if (!node->isa<CNode>() || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad) ||
+      checked_nodes->find(node) != checked_nodes->end()) {
+    return false;
+  }
+  checked_nodes->emplace(node);
+
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (const auto &input : cnode->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input == input_node) {
+      return true;
+    }
+    if (IsInputNodeUsedByRealKernel(input_node, input, checked_nodes)) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
   // Check device contexts number.
@@ -50,6 +79,29 @@ void SuperKernelActor::Init() {
     MS_EXCEPTION_IF_NULL(data);
     auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, data_arrow->from_output_index_, false);
     data->data_ = device_address.get();
+  }
+
+  // Check whether the parameter needs to be copied out.
+  is_parameters_need_copy_.resize(graph_->input_nodes().size());
+  for (size_t i = 0; i < graph_->input_nodes().size(); ++i) {
+    const auto &input_node = graph_->input_nodes()[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (!common::AnfAlgo::HasAbstractRef(input_node)) {
+      is_parameters_need_copy_[i] = false;
+      continue;
+    }
+
+    std::set<AnfNodePtr> checked_nodes;
+    if (!IsInputNodeUsedByRealKernel(input_node, graph_->output(), &checked_nodes)) {
+      is_parameters_need_copy_[i] = false;
+      continue;
+    }
+
+    MS_LOG(INFO) << "input node:" << input_node->DebugString()
+                 << " has ref, but only used by load, not need to copy in graph:" << graph_->ToString()
+                 << " for actor:" << GetAID();
+    // If the parameter has ref attribute and is directly used by the kernel in the graph, it needs to be copied.
+    is_parameters_need_copy_[i] = true;
   }
 }
 
@@ -159,7 +211,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       MS_LOG(ERROR) << "Copy data failed.";
       return false;
     }
-    if (common::AnfAlgo::HasAbstractRef(input_node) && ref_node_addr_map_.count(input_node) == 0) {
+    if (is_parameters_need_copy_[input_data->index_] && ref_node_addr_map_.count(input_node) == 0) {
       ref_node_addr_map_[input_node] = input_device_tensor;
     }
   }
