@@ -727,6 +727,7 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     return kLiteError;
   }
   bool create_worker_success = true;
+  MS_LOG(INFO) << "Strategy: " << strategy << " | worker num: " << model_pool_info_[strategy].all_workers_num_;
   for (size_t i = 0; i < model_pool_info_[strategy].all_workers_num_; i++) {
     model_pool_config[i]->strategy = strategy;
     int numa_node_id = model_pool_config[i]->numa_id;
@@ -741,6 +742,22 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     }
     auto task_queue_id = model_pool_config[i]->task_queue_id;
     model_pool_info_[strategy].predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
+    MS_LOG(INFO) << "Strategy: " << strategy << " | create worker index: " << i
+                 << " | numa id: " << model_pool_config[i]->numa_id
+                 << " | worker affinity mode: " << model_pool_config[i]->context->GetThreadAffinityMode()
+                 << " | worker bind core list: " << model_pool_config[i]->context->GetThreadAffinityCoreList()
+                 << " | worker thread num: " << model_pool_config[i]->context->GetThreadNum()
+                 << " | inter op parallel num: " << model_pool_config[i]->context->GetInterOpParallelNum();
+    if (!model_pool_config[i]->config_info.empty()) {
+      for (auto &item : model_pool_config[i]->config_info) {
+        auto section = item.first;
+        MS_LOG(INFO) << "section: " << section;
+        auto configs = item.second;
+        for (auto &config : configs) {
+          MS_LOG(INFO) << "\t key: " << config.first << " | value: " << config.second;
+        }
+      }
+    }
     worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
                                              model_pool_config[i], model_pool_info_[strategy].predict_task_queue_,
                                              &create_worker_success));
@@ -824,6 +841,7 @@ Status ModelPool::InitAdvancedStrategy(const char *model_buf, size_t size, int b
     use_advanced_strategy_ = false;
     return kSuccess;
   }
+  MS_LOG(INFO) << "use advanced strategy";
   model_pool_info_[ADVANCED].use_numa = numa_available_;
   auto status = SetDefaultOptimalModelNum(advanced_thread_num, ADVANCED);
   if (status != kSuccess) {
