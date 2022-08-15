@@ -365,9 +365,6 @@ Array操作
     mindspore.ops.gather_nd
     mindspore.ops.index_add
     mindspore.ops.index_fill
-    mindspore.ops.inplace_add
-    mindspore.ops.inplace_sub
-    mindspore.ops.gumbel_softmax
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
@@ -378,7 +375,6 @@ Array操作
     mindspore.ops.narrow
     mindspore.ops.nonzero
     mindspore.ops.one_hot
-    mindspore.ops.padding
     mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
@@ -602,4 +598,3 @@ Parameter操作函数
 
     mindspore.ops.core
     mindspore.ops.count_nonzero
-    mindspore.ops.cummin
