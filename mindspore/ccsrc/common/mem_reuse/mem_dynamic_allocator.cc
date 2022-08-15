@@ -425,7 +425,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
       auto &device_addr = iter->device_addr_base_;
       if (device_addr != nullptr) {
         if (!FreeDeviceMem(device_addr)) {
-          MS_LOG(EXCEPTION) << "Free device memory[" << device_addr << "] error.";
+          MS_LOG(ERROR) << "Free device memory[" << device_addr << "] error.";
         }
         device_addr = nullptr;
       }
