@@ -155,6 +155,10 @@ _config_level = {
         "keep_batchnorm_fp32": False,
         "cast_model_type": mstype.float32,
         "loss_scale_manager": None},
+    "O1": {
+        "keep_batchnorm_fp32": False,
+        "cast_model_type": mstype.float32,
+        "loss_scale_manager": None},
     "O2": {
         "keep_batchnorm_fp32": True,
         "cast_model_type": mstype.float16,
@@ -287,12 +291,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     _check_kwargs(kwargs)
     config = dict(_config_level.get(level), **kwargs)
 
-    auto_mixed_precision(network, level)
-
     if config["keep_batchnorm_fp32"] and level == "O3":
         _do_keep_batchnorm_fp32(network)
     elif not config["keep_batchnorm_fp32"] and level == "O2":
         network.to_float(mstype.float16)
+    else:
+        auto_mixed_precision(network, level)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
