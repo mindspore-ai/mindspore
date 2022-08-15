@@ -98,7 +98,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   msTime.Start();
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    draw::Draw(STEP_AUTO_PARALLEL_BEGIN, root);
+    DumpGraph(root, std::string(STEP_AUTO_PARALLEL_BEGIN));
   }
 #endif
   MS_LOG(INFO) << "Now entering step auto parallel";
