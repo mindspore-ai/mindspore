@@ -38,7 +38,7 @@ mindspore_lite.DataType
 
     * **用法**
 
-      由于Python API中的 `mindspore_lite.Tensor` 是直接使用pybind11技术包装C++ API，"DataType"在Python API和C++ API之间有一对一的对应关系，修改 `DataType` 的方法在 `tensor` 类的set和get方法中。
+      由于Python API中的 `mindspore_lite.Tensor` 是直接使用pybind11技术包装C++ API， `DataType` 在Python API和C++ API之间有一对一的对应关系，修改 `DataType` 的方法在 `tensor` 类的set和get方法中。
 
       - `set_data_type`: 在 `data_type_py_cxx_map` 中以Python API中的 `DataType` 为关键字进行查询，并获取C++ API中的 `DataType` ，将其传递给C++ API中的 `set_data_type` 方法。
       - `get_data_type`: 通过C++ API中的 `get_data_type` 方法在C++ API中获取 `DataType` ，以C++ API中的 `DataType` 为关键字在 `data_type_cxx_py_map` 中查询，返回在Python API中的 `DataType` 。

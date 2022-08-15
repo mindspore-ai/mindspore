@@ -96,7 +96,7 @@ class Converter:
             Options: "AES-GCM" | "AES-CBC". Default: "AES-GCM".
         enable_encryption (bool, optional): Whether to export the encryption model. Default: False.
         encrypt_key (str, optional): The key used to encrypt the file, expressed in hexadecimal characters.
-            Only support AES-GCM and the key length is 16. Default: "".
+            Only support decrypt_mode is "AES-GCM", the key length is 16. Default: "".
         infer (bool, optional): Whether to do pre-inference after convert. Default: False.
         train_model (bool, optional): whether the model is going to be trained on device. Default: False.
         no_fusion(bool, optional): Avoid fusion optimization, fusion optimization is allowed by default. Default: False.
@@ -110,11 +110,12 @@ class Converter:
         TypeError: `section` is not a str.
         TypeError: `config_info` is not a dict.
         TypeError: `config_info` is a dict, but the keys are not str.
-        TypeError: `config_info` is a dict, but the values are not str.
+        TypeError: `config_info` is a dict, the keys are str, but the values are not str.
         TypeError: `weight_fp16` is not a bool.
-        TypeError: `input_shape` is not a dict or None.
-        TypeError: `input_shape` is a dict, but the values are not list.
-        TypeError: `input_shape` is a dict, the values are list, but the value's elements are not int.
+        TypeError: `input_shape` is neither a dict nor None.
+        TypeError: `input_shape` is a dict, but the keys are not str.
+        TypeError: `input_shape` is a dict, the keys are str, but the values are not list.
+        TypeError: `input_shape` is a dict, the keys are str, the values are list, but the value's elements are not int.
         TypeError: `input_format` is not a Format.
         TypeError: `input_data_type` is not a DataType.
         TypeError: `output_data_type` is not a DataType.
@@ -133,11 +134,14 @@ class Converter:
         RuntimeError: `config_file` is not "", but `config_file` does not exist.
 
     Examples:
+        >>> # Download the model package and extract it, model download link:
+        >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
         >>> import mindspore_lite as mslite
-        >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
+        >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+        ...                              "mobilenet_v2_1.0_224.tflite")
         >>> print(converter)
         config_file: ,
-        config_info: ,
+        config_info: {},
         weight_fp16: False,
         input_shape: {},
         input_format: Format.NHWC,
@@ -145,7 +149,7 @@ class Converter:
         output_data_type: DataType.FLOAT32,
         export_mindir: False,
         decrypt_key: ,
-        decrypt_mode: ,
+        decrypt_mode: AES-GCM,
         enable_encryption: False,
         encrypt_key: ,
         infer: False,
@@ -258,9 +262,13 @@ class Converter:
             RuntimeError: converter model failed.
 
         Examples:
+            >>> # Download the model package and extract it, model download link:
+            >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "mobilenetv2.tflite", "mobilenetv2.tflite")
+            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            ...                              "mobilenet_v2_1.0_224.tflite")
             >>> converter.converter()
+            CONVERT RESULT SUCCESS:0
         """
         ret = self._converter.converter()
         if not ret.IsOk():

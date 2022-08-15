@@ -11,7 +11,7 @@ mindspore_lite.Tensor
 
     **异常：**
 
-    - **TypeError** - `tensor` 不是Tensor类型或None。
+    - **TypeError** - `tensor` 既不是Tensor类型或None。
 
     .. py:method:: get_data_size()
 
