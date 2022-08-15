@@ -57,19 +57,36 @@ bool CTCLossV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   // Getting values
   auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(base_operator->GetPrim());
   blank_ = kernel_ptr->get_blank();
-  reduction_ = kernel_ptr->get_reduction();
   zero_infinity_ = kernel_ptr->get_zero_infinity();
-  auto log_probs_shape = inputs[kIndex1]->GetShapeVector();
-  T_ = log_probs_shape[kIndex0];
-  batch_size_ = log_probs_shape[kIndex1];
-  num_labels_ = log_probs_shape[kIndex2];
-  target_shape_ = inputs[kIndex2]->GetShapeVector();
+
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
+
+int CTCLossV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto log_probs_shape = inputs[kIndex1]->GetShapeVector();
+  T_ = log_probs_shape[kIndex0];
+  batch_size_ = log_probs_shape[kIndex1];
+  num_labels_ = log_probs_shape[kIndex2];
+  const auto target_shape = inputs[kIndex2]->GetShapeVector();
+  max_target_length_ = target_shape[kIndex1];
+
+  const size_t scalar_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  workspace_size_list_.clear();
+  workspace_size_list_ = {
+    LongToSize(batch_size_ * T_ * (target_mul * max_target_length_ + 1)) * scalar_type_size,
+  };
+  return KRET_OK;
+}
+
 template <typename scalar_t, typename target_t>
 void ComputeGrad(scalar_t *log_probs, const NdTensorIterator<kDim3> &log_probs_it, SoftParam params,
                  scalar_t *log_alpha, const NdTensorIterator<kDim3> &log_alpha_it, scalar_t *log_beta,
@@ -131,20 +148,16 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto target_lengths = reinterpret_cast<target_t *>(inputs[kIndex4]->addr);
   auto neg_log_likelihood = reinterpret_cast<scalar_t *>(inputs[kIndex5]->addr);
   auto log_alpha = reinterpret_cast<scalar_t *>(inputs[kIndex6]->addr);
+  auto log_beta = reinterpret_cast<scalar_t *>(workspace[kIndex0]->addr);
   auto grad = reinterpret_cast<scalar_t *>(outputs[kIndex0]->addr);
+
   constexpr scalar_t neginf = -std::numeric_limits<scalar_t>::infinity();
   std::fill(grad, grad + (T_ * batch_size_ * num_labels_), neginf);
   NdTensorIterator<kDim3> log_probs_it(T_, batch_size_, num_labels_);
   NdTensorIterator<kDim3> grad_it(T_, batch_size_, num_labels_);
-  int64_t max_target_length = target_shape_[kIndex1];
-  std::vector<int64_t> tg_batch_offsets(batch_size_);
-  int64_t tg_batch_stride = target_shape_[kIndex1];
-  for (int64_t i = 0; i < batch_size_; i++) {
-    tg_batch_offsets[i] = i * tg_batch_stride;
-  }
-  scalar_t *log_beta = new scalar_t[batch_size_ * T_ * (target_mul * max_target_length + 1)]();
-  NdTensorIterator<kDim3> log_alpha_it(batch_size_, T_, target_mul * max_target_length + 1);
-  NdTensorIterator<kDim3> log_beta_it(batch_size_, T_, target_mul * max_target_length + 1);
+
+  NdTensorIterator<kDim3> log_alpha_it(batch_size_, T_, target_mul * max_target_length_ + 1);
+  NdTensorIterator<kDim3> log_beta_it(batch_size_, T_, target_mul * max_target_length_ + 1);
   for (int64_t b = 0; b < batch_size_; b++) {
     scalar_t nll = neg_log_likelihood[b];
     if (zero_infinity_ && nll == std::numeric_limits<scalar_t>::infinity()) {
@@ -157,9 +170,9 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     }
     int64_t input_length = input_lengths[b];
     int64_t target_length = target_lengths[b];
-    int64_t tg_batch_offset = tg_batch_offsets[b];
+    int64_t tg_batch_offset = max_target_length_ * b;
     if (input_length > 0) {
-      for (size_t s = 0; s < kIndex2 * max_target_length + 1; s++) {
+      for (size_t s = 0; s < kIndex2 * max_target_length_ + 1; s++) {
         log_beta[log_beta_it(b, input_length - 1, s)] = neginf;
       }
       log_beta[log_beta_it(b, input_length - 1, target_mul * target_length)] =
@@ -193,7 +206,7 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       }
     }
   }
-  delete[] log_beta;
+
   return true;
 }
 

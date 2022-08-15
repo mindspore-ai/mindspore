@@ -40,6 +40,9 @@ class CTCLossV2GradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
@@ -49,9 +52,8 @@ class CTCLossV2GradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   int64_t T_ = 0;
   int64_t batch_size_ = 0;
   int64_t num_labels_ = 0;
-  std::vector<int64_t> target_shape_;
+  int64_t max_target_length_ = 0;
   int32_t blank_ = 0;
-  std::string reduction_ = "mean";
   bool zero_infinity_ = false;
   // Dealing with multiple types
   template <typename scalar_t, typename target_t>

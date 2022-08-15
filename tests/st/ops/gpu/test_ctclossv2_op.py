@@ -17,8 +17,29 @@ import pytest
 import numpy as np
 from scipy.special import log_softmax
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, nn
 from mindspore.ops import operations as P
+from mindspore.ops.composite import GradOperation
+
+
+class Net(nn.Cell):
+    def __init__(self, blank, reduction):
+        super(Net, self).__init__()
+        self.loss = P.CTCLossV2(blank=blank, reduction=reduction)
+
+    def construct(self, input_matrix, target, input_lengths, target_lengths):
+        x, _ = self.loss(input_matrix, target, input_lengths, target_lengths)
+        return x
+
+
+class GradData(nn.Cell):
+    def __init__(self, network):
+        super(GradData, self).__init__()
+        self.grad = GradOperation(get_all=True, sens_param=False)
+        self.network = network
+
+    def construct(self, probs, indices, labels, input_lengths):
+        return self.grad(self.network)(probs, indices, labels, input_lengths)[0]
 
 
 def logsumexp(a, b):
@@ -122,6 +143,103 @@ def test_ctc_loss_v2_un_padded(batch, data_type):
     target = np.random.randint(low=1, high=classes, size=(batch, np.max(target_lengths)), dtype=np.int64)
 
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_ctc_loss_v2_un_padded_grad():
+    """
+    Feature: Test CTCLossV2.
+    Description: The input is padded and the target target_sequences maybe equal to input_sequences
+    Expectation: Result matches the numpy implemented version.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    np.random.seed(0)
+    batch = 10
+    data_type = np.float64
+
+    method = 'none'
+    input_sequences = 5
+    classes = 3
+    target_sequences = input_sequences
+    target_sequences_min = 1
+
+    input_matrix = log_softmax(np.random.randn(input_sequences, batch, classes), 2).astype(data_type)
+    input_lengths = np.full(shape=(batch,), fill_value=input_sequences, dtype=np.int64)
+    target_lengths = np.random.randint(low=target_sequences_min, high=target_sequences, size=(batch,), dtype=np.int64)
+    target = np.random.randint(low=1, high=classes, size=(batch, np.max(target_lengths)), dtype=np.int64)
+
+    input_matrix = Tensor(input_matrix)
+    target = Tensor(target)
+    input_lengths = Tensor(input_lengths)
+    target_lengths = Tensor(target_lengths)
+
+    net = Net(blank=0, reduction=method)
+    loss = net(input_matrix, target, input_lengths, target_lengths)
+    print(np.mean(loss.asnumpy()))
+
+    expected_grad = np.array([[[2.21999385e-01, 1.49367328e-01, -3.71366713e-01],
+                               [1.21524177e-01, -1.44682444e-01, 2.31582675e-02],
+                               [-2.72130267e-01, 6.46665395e-02, 2.07463727e-01],
+                               [-2.08145533e-01, 1.66320573e-01, 4.18249597e-02],
+                               [-6.40181898e-02, 2.33895304e-01, -1.69877115e-01],
+                               [1.66409322e-01, -2.88602261e-01, 1.22192939e-01],
+                               [7.30902539e-01, 2.27492367e-01, -9.58394906e-01],
+                               [4.02847968e-01, -5.02608798e-01, 9.97608303e-02],
+                               [np.nan, np.nan, np.nan],
+                               [3.54625312e-02, -4.78671463e-01, 4.43208932e-01]],
+
+                              [[-2.47471377e-01, 4.80327110e-01, -2.32855733e-01],
+                               [-7.19044568e-04, -3.50625805e-01, 3.51344849e-01],
+                               [-7.06902188e-03, -8.43104544e-02, 9.13794763e-02],
+                               [-9.66319775e-02, 2.63241041e-01, -1.66609063e-01],
+                               [-1.33521992e-01, 8.99922273e-01, -7.66400281e-01],
+                               [3.06852929e-02, -2.73818291e-02, -3.30346375e-03],
+                               [-8.59374974e-01, 5.70923102e-01, 2.88451871e-01],
+                               [-3.81211648e-01, 2.52157946e-01, 1.29053702e-01],
+                               [np.nan, np.nan, np.nan],
+                               [5.36556015e-03, -5.05351326e-02, 4.51695724e-02]],
+
+                              [[-2.80587684e-01, 4.22536598e-01, -1.41948913e-01],
+                               [7.27670649e-03, 1.89209901e-01, -1.96486607e-01],
+                               [3.08220162e-02, -2.15289462e-01, 1.84467446e-01],
+                               [-3.79525891e-01, 4.86187906e-01, -1.06662015e-01],
+                               [-1.89419282e-01, 5.92301671e-02, 1.30189115e-01],
+                               [-5.41303138e-02, 2.43931812e-01, -1.89801498e-01],
+                               [3.48393864e-01, 5.03232105e-01, -8.51625969e-01],
+                               [5.76510068e-01, -6.26906613e-01, 5.03965454e-02],
+                               [np.nan, np.nan, np.nan],
+                               [4.65760597e-02, 5.56476308e-02, -1.02223690e-01]],
+
+                              [[-2.14977953e-01, 6.41234229e-01, -4.26256276e-01],
+                               [5.60402917e-02, 1.95392934e-01, -2.51433226e-01],
+                               [1.01160497e-01, -2.41139199e-01, 1.39978702e-01],
+                               [-6.77672365e-01, 7.89331393e-01, -1.11659028e-01],
+                               [-3.17830985e-01, 8.17107077e-01, -4.99276092e-01],
+                               [-6.53148112e-02, 7.75629981e-02, -1.22481869e-02],
+                               [-6.13690461e-01, 2.48194256e-01, 3.65496205e-01],
+                               [2.56408238e-01, 4.37941616e-02, -3.00202400e-01],
+                               [np.nan, np.nan, np.nan],
+                               [-3.73922094e-02, 3.48893393e-01, -3.11501184e-01]],
+
+                              [[6.82148555e-02, 1.06153890e-01, -1.74368746e-01],
+                               [-3.82024509e-02, 9.73708746e-02, -5.91684237e-02],
+                               [-3.38166563e-02, -1.84766114e-01, 2.18582770e-01],
+                               [-3.88080543e-01, 1.25803041e-01, 2.62277502e-01],
+                               [-5.94619350e-02, 4.98396907e-01, -4.38934972e-01],
+                               [-4.53783646e-01, 3.90447024e-01, 6.33366220e-02],
+                               [7.26180335e-01, 1.63813757e-01, -8.89994092e-01],
+                               [3.35863956e-01, -7.44304322e-01, 4.08440366e-01],
+                               [np.nan, np.nan, np.nan],
+                               [-7.70374805e-02, 6.78337545e-02, 9.20372600e-03]]])
+
+    grad = GradData(net)(input_matrix, target, input_lengths, target_lengths)
+
+    print(grad.shape)
+    print(grad)
+
+    np.allclose(grad.asnumpy(), expected_grad)
 
 
 @pytest.mark.level0
