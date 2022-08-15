@@ -652,8 +652,8 @@ std::vector<MSTensor> ModelPool::GetInputs() {
     return {};
   }
   for (size_t i = 0; i < model_pool_inputs_.size(); i++) {
-    auto tensor = mindspore::MSTensor::CreateRefTensor(model_pool_inputs_.at(i).Name(),
-                                                       model_pool_inputs_.at(i).DataType(), {}, nullptr, 0);
+    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(),
+                                                    model_pool_inputs_.at(i).DataType(), {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
@@ -675,8 +675,8 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
     return {};
   }
   for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
-    auto tensor = mindspore::MSTensor::CreateRefTensor(model_pool_outputs_.at(i).Name(),
-                                                       model_pool_outputs_.at(i).DataType(), {}, nullptr, 0);
+    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(),
+                                                    model_pool_outputs_.at(i).DataType(), {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
