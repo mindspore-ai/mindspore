@@ -167,12 +167,12 @@ void EltWiseGradCpuTypeFunc<T>::TanhGrad(const T *input1, const T *input2, T *ou
     int ret = ::TanhGrad(input2 + start, input1 + start, end - start, out + start);
     if (ret == NNACL_ERR) {
       MS_LOG(EXCEPTION) << "For 'TanhGrad', execute failed. Error no: " << ret;
-    } else {
-      for (size_t i = start; i < end; i++) {
-        T dividend = input2[i];
-        T divisor = static_cast<T>(1) - input1[i] * input1[i];
-        out[i] = dividend * divisor;
-      }
+    }
+  } else {
+    for (size_t i = start; i < end; i++) {
+      T dividend = input2[i];
+      T divisor = static_cast<T>(1) - input1[i] * input1[i];
+      out[i] = dividend * divisor;
     }
   }
 }

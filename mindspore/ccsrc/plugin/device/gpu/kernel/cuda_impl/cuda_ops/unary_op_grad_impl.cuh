@@ -28,6 +28,8 @@ CUDA_LIB_EXPORT void ACosGrad(const T *input, const T *dout, T *output, const si
 template <typename T>
 CUDA_LIB_EXPORT void AtanGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void TanhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void AsinhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void AcoshGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);

@@ -48,17 +48,18 @@ class Grad(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_Tanh():
+@pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
+def test_tanh(data_type):
     x_np = np.array(
         [[0.28522366, 0.38033979, 1.54657853, -0.98530175, -0.54365635, 0.12652203, -1.33449938, -0.27737698],
          [2.06282293, 0.84635078, 0.16628414, -0.91823183, -0.72023044, -0.09147043, -0.04166984, -1.5664763],
          [-0.17157249, 0.44260951, -0.6683391, 1.13142613, 1.5536937, -0.32799768, -0.20016545, 0.06773927]],
-        dtype=np.float32)
+        dtype=data_type)
     dy_np = np.array(
         [[0.44969849, -0.187879, -0.64300827, 1.36638774, 0.89930276, -0.23835229, -0.67771854, -1.88984999],
          [2.00418801, 2.33336475, 0.00241747, 1.31558685, 0.06768817, -2.23008804, -0.26818366, -1.26873401],
          [1.83694105, 0.5339005, 0.51117424, 0.49202378, -0.83297819, -0.71001219, 0.18913512, 0.65580389]],
-        dtype=np.float32)
+        dtype=data_type)
 
     x_ms = Tensor(x_np)
     dy_ms = Tensor(dy_np)
@@ -73,10 +74,11 @@ def test_Tanh():
 
     assert np.allclose(output[0].asnumpy(), expect)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_Tanh_fp16():
+def test_tanh_fp16():
     np.random.seed(42)
     x_np = np.random.randn(5, 3, 6).astype(np.float16)
     dy_np = np.random.randn(5, 3, 6).astype(np.float16)

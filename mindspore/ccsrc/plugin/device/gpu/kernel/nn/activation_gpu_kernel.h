@@ -46,11 +46,11 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *) override {
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-
+    cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -79,6 +79,7 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
   cudnnActivationMode_t mode_{CUDNN_ACTIVATION_SIGMOID};
   cudnnTensorDescriptor_t data_descriptor_{nullptr};
   cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
