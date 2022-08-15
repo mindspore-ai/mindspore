@@ -526,6 +526,7 @@ Parameter操作函数
 
     mindspore.ops.derivative
     mindspore.ops.grad
+    mindspore.ops.value_and_grad
     mindspore.ops.jet
     mindspore.ops.jvp
     mindspore.ops.vjp

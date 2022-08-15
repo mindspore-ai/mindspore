@@ -565,7 +565,7 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
 
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
-  auto p_args = GetGradPositionArgs(grad_position);
+  auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   if (w_args.empty() && !df_builder->parameters().empty()) {
     MS_LOG(DEBUG) << "Add weights params to w_args";
     (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
@@ -650,15 +650,19 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
   return w_args;
 }
 
-std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position) const {
+std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_position,
+                                                      const bool get_by_position) const {
   std::vector<size_t> pos_args;
+  if (!get_by_position) {
+    return pos_args;
+  }
   if (py::isinstance<py::tuple>(grad_position)) {
     const auto &tuple = grad_position.cast<py::tuple>();
     (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(pos_args),
                          [](const py::handle &elem) { return py::cast<int64_t>(elem); });
     return pos_args;
   }
-  MS_LOG(EXCEPTION) << "Grad position only support tuple.";
+  MS_LOG(EXCEPTION) << "Grad position only support tuple when grad_by_position is set True.";
 }
 
 void GradExecutor::ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const {
@@ -778,8 +782,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
   MS_EXCEPTION_IF_NULL(grad);
-  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad->get_all_,
-                                                     grad->get_by_list_, grad->sens_param_, build_formal_param);
+  ad::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_);
+  FuncGraphPtr bprop_graph =
+    ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad_position, grad_attr, build_formal_param);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;

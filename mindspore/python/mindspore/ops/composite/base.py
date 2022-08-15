@@ -347,7 +347,7 @@ class GradOperation(GradOperation_):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False)
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False)
         self.grad_fn = None
         self.fn = None
         self.weights_id = None
@@ -453,7 +453,7 @@ class _Grad(GradOperation_):
     A higher-order function which is used to generate the gradient function by position for the input function.
     """
 
-    def __init__(self, get_by_list=False, sens_param=False, get_by_position=False):
+    def __init__(self, get_by_list=False, sens_param=False, get_by_position=False, has_aux=False, get_value=False):
         """Initialize _Grad."""
         if not isinstance(get_by_position, bool):
             raise TypeError(f"For '_Grad', the 'get_by_position' should be bool, "
@@ -464,10 +464,18 @@ class _Grad(GradOperation_):
         if not isinstance(sens_param, bool):
             raise TypeError(f"For '_Grad', the 'sens_param' should be bool, "
                             f"but got {type(sens_param).__name__}")
+        if not isinstance(has_aux, bool):
+            raise TypeError(f"For '_Grad', the 'has_aux' should be bool, "
+                            f"but got {type(has_aux).__name__}")
+        if not isinstance(get_value, bool):
+            raise TypeError(f"For '_Grad', the 'get_value' should be bool, "
+                            f"but got {type(get_value).__name__}")
         self.get_by_position = get_by_position
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', False, get_by_list, sens_param, get_by_position)
+        self.has_aux = has_aux
+        self.get_value = get_value
+        GradOperation_.__init__(self, 'grad', False, get_by_list, sens_param, get_by_position, has_aux, get_value)
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
@@ -480,9 +488,19 @@ class _Grad(GradOperation_):
         if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
                 self.weights_id == weights_id:
             return self.grad_fn
-        self.fn = fn
-        self.grad_position = grad_position
-        grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)
+
+        def aux_fn(*args):
+            outputs = fn(*args)
+            if not isinstance(outputs, tuple) or len(outputs) < 2:
+                raise ValueError("When has_aux is True, origin fn requires more than one outputs, but got "
+                                 + len(outputs) + " outputs.")
+            res = (outputs[0],)
+            stop_gradient = Primitive("stop_gradient")
+            for item in outputs[1:]:
+                res += (stop_gradient(item),)
+            return res
+
+        grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position, self.has_aux, self.get_value)
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
@@ -508,23 +526,34 @@ class _Grad(GradOperation_):
 
             @_wrap_func
             def after_grad(*args, **kwargs):
-                self._pynative_forward_run(fn, grad_, args, kwargs)
+                forward_flag = self.get_value or self.has_aux
+                res = self._pynative_forward_run(fn, grad_, forward_flag, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
+                if self.get_value:
+                    return res, out
+                if self.has_aux:
+                    return out, res[1:]
                 return out
         else:
             grad_.pynative_ = True
             # after_grad of this branch can't use @ms_function, just directly call grad_
             if self.get_by_position:
                 def after_grad(*args, **kwargs):
+                    if self.has_aux:
+                        return grad_(aux_fn, weights, grad_position)(*args, **kwargs)
                     return grad_(fn, weights, grad_position)(*args, **kwargs)
             else:
                 if self.get_by_list:
                     def after_grad(*args, **kwargs):
+                        if self.has_aux:
+                            return grad_(aux_fn, weights)(*args, **kwargs)
                         return grad_(fn, weights)(*args, **kwargs)
                 else:
                     def after_grad(*args, **kwargs):
+                        if self.has_aux:
+                            return grad_(aux_fn)(*args, **kwargs)
                         return grad_(fn)(*args, **kwargs)
 
         self.grad_fn = after_grad
@@ -534,9 +563,10 @@ class _Grad(GradOperation_):
         self.grad_hash_id = (grad_position, weights_id)
         return self.grad_fn
 
-    def _pynative_forward_run(self, fn, grad, args, kwargs):
+    def _pynative_forward_run(self, fn, grad, forward_flag, args, kwargs):
         """ Pynative forward runs to build grad graph. """
         new_kwargs = kwargs
+        outputs = ()
         if self.sens_param:
             if 'sens' in kwargs.keys():
                 new_kwargs = kwargs.copy()
@@ -549,12 +579,17 @@ class _Grad(GradOperation_):
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
                 outputs = fn(*args, **new_kwargs)
                 _pynative_executor.end_graph(fn, outputs, *args, **new_kwargs)
+                return outputs
         else:
             # Check if fn has run already.
             if not _pynative_executor.check_run(grad, fn, self.grad_hash_id, *args, **new_kwargs):
                 fn.set_grad()
-                fn(*args, **new_kwargs)
+                outputs = fn(*args, **new_kwargs)
                 fn.set_grad(False)
+                return outputs
+        if forward_flag and not outputs:
+            outputs = fn(*args, **new_kwargs)
+        return outputs
 
 
 class _Vmap(VmapOperation_):

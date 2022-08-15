@@ -57,53 +57,248 @@ def _convert_grad_position_type(grad_position):
     return grad_position
 
 
-grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
-grad_by_position_with_sens = _Grad(get_by_list=False, sens_param=True, get_by_position=True)
+@constexpr
+def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False):
+    return _Grad(get_by_list=get_by_list, get_by_position=get_by_position, has_aux=has_aux, get_value=get_value)
 
 
-def grad(fn, grad_position=0, sens_param=False):
-    r"""
+def grad(fn, grad_position=0, weights=None, has_aux=False):
+    """
     A wrapper function to generate the gradient function for the input function.
+
+    As for gradient, three typical cases are included:
+
+    1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+    2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+    3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
-        grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
-            If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically. Default: False.
+        grad_position (Union(NoneType, int, tuple[int])): Index to specify which inputs to be differentiated.
+            If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
+            If None, none derivative of any input will be figured out, and in this case, `weights` is required.
+            Default: 0.
+        weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
+            Default: None.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
 
     Returns:
-        Function, returns the gradient function for the input function or cell.
+        Function, the gradient function to calculate gradient for the input function or cell.
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
+        like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
+
+    Raises:
+        ValueError: If both `grad_position` and `weights` are None.
+        TypeError: If type of Args does not belong to required ones.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import grad
-        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore.ops import grad
+        >>>
+        >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y, z):
-        ...         return x*y*z
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-        >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-        >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+        ...         return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
         >>> net = Net()
         >>> output = grad(net, grad_position=(1, 2))(x, y, z)
         >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  6.00000000e+00],
-         [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-2.00000000e+00,  6.00000000e+00],
-         [-3.00000000e+00,  8.00000000e+00]]))
+        (Tensor(shape=[2], dtype=Float32, value=[ 0.00000000e+00,  6.00000000e+00]),
+         Tensor(shape=[2], dtype=Float32, value=[-2.00000000e+00,  6.00000000e+00]))
+        >>>
+        >>> # Function object to be differentiated
+        >>> def fn(x, y, z):
+        ...     res = x * ops.exp(y) * ops.pow(z, 2)
+        ...     return res, z
+        >>> x = Tensor([3, 3], mindspore.float32)
+        >>> y = Tensor([0, 0], mindspore.float32)
+        >>> z = Tensor([2, 2], mindspore.float32)
+        >>> gradient, aux = grad(net, (1, 2), None, True)(x, y)
+        >>> print(gradient)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
+        >>> print(aux)
+        (Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]),)
+        >>>
+        >>> # For given network to be differentiated with both inputs and weights, there are 3 cases.
+        >>> net = nn.Dense(10, 1)
+        >>> loss_fn = nn.MSELoss()
+        >>> def forward(inputs, labels):
+        ...     logits = net(inputs)
+        ...     loss = loss_fn(logits, labels)
+        ...     return loss, logits
+        >>> inputs = Tensor(np.random.randn(16, 10).astype(np.float32))
+        >>> labels = Tensor(np.random.randn(16, 1).astype(np.float32))
+        >>> weights = net.trainable_params()
+        >>> # Case 1: gradient with respect to inputs.
+        >>> # Aux value does not contribute to the gradient.
+        >>> grad_fn = grad(forward, grad_position=0, weights=None, has_aux=True)
+        >>> inputs_gradient, (aux_logits,) = grad_fn(inputs, labels)
+        >>> print(len(inputs_gradient))
+        2
+        >>> print(aux_logits.shape)
+        (16, 1)
+        >>>
+        >>> # Case 2: gradient with respect to weights.
+        >>> grad_fn = grad(forward, grad_position=None, weights=weights, has_aux=True)
+        >>> params_gradient, (aux_logits,) = grad_fn(inputs, labels)
+        >>> print(len(weights), len(params_gradient))
+        2 2
+        >>> print(aux_logits.shape)
+        (16, 1)
+        >>>
+        >>> # Case 3: gradient with respect to inputs and weights.
+        >>> grad_fn = grad(forward, grad_position=0, weights=weights, has_aux=False)
+        >>> inputs_gradient, params_gradient = grad_fn(inputs, labels)
+        >>> print(len(weights), len(params_gradient))
+        2 2
     """
+    if grad_position is None and weights is None:
+        raise ValueError("`grad_position` and `weight` can not be None at the same time.")
+
+    if grad_position is None:
+        return _get_grad_op(True, False, has_aux)(fn, weights)
+
     grad_position = _convert_grad_position_type(grad_position)
-    if sens_param:
-        return grad_by_position_with_sens(fn, None, grad_position)
-    return grad_by_position(fn, None, grad_position)
+    if weights is None:
+        return _get_grad_op(False, True, has_aux)(fn, None, grad_position)
+    return _get_grad_op(True, True, has_aux)(fn, weights, grad_position)
+
+
+def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
+    """
+    A wrapper function to generate the function to calculate forward output and gradient for the input function.
+
+    As for gradient, three typical cases are included:
+
+    1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+    2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+    3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
+
+    Args:
+        fn (Union(Cell, function)): Function to do GradOperation.
+        grad_position (Union(NoneType, int, tuple[int])): Index to specify which inputs to be differentiated.
+            If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
+            If None, none derivative of any input will be solved, and in this case, `weights` is required.
+            Default: 0.
+        weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
+            Default: None.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
+
+    Returns:
+        Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
+        For example, as for `out1, out2 = fn(*args)` , gradient function will return outputs like
+        `((out1, out2), gradient)` . When `has_aux` is set True, only `out1` contributes to the differentiation.
+
+    Raises:
+        ValueError: If both `grad_position` and `weights` are None.
+        TypeError: If type of Args does not belong to required ones.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops, nn
+        >>> from mindspore.ops import value_and_grad
+        >>>
+        >>> # Cell object to be differentiated
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
+        >>> x = Tensor([1, 2], mindspore.float32)
+        >>> y = Tensor([-2, 3]), mindspore.float32)
+        >>> z = Tensor([0, 3]), mindspore.float32)
+        >>> net = Net()
+        >>> grad_fn = value_and_grad(net, grad_position=1)
+        >>> output, inputs_gradient = grad_fn(x, y, z)
+        >>> print(output)
+        [ -0.  18.]
+        >>> print(inputs_gradient)
+        [0, 6.]
+        >>>
+        >>> # Function object to be differentiated
+        >>> def fn(x, y, z):
+        ...     res = x * ops.exp(y) * ops.pow(z, 2)
+        ...     return res, z
+        >>> x = Tensor(np.array([3, 3]).astype(np.float32))
+        >>> y = Tensor(np.array([0, 0]).astype(np.float32))
+        >>> z = Tensor(np.array([2, 2]).astype(np.float32))
+        >>> output, inputs_gradient = grad(net, grad_position=(1, 2), weights=None, has_aux=True)(x, y)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]))
+        >>> print(inputs_gradient)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
+        >>>
+        >>> # For given network to be differentiated with both inputs and weights, there are 3 cases.
+        >>> net = nn.Dense(10, 1)
+        >>> loss_fn = nn.MSELoss()
+        >>> def forward(inputs, labels):
+        ...     logits = net(inputs)
+        ...     loss = loss_fn(logits, labels)
+        ...     return loss, logits
+        >>> inputs = Tensor(np.random.randn(16, 10).astype(np.float32))
+        >>> labels = Tensor(np.random.randn(16, 1).astype(np.float32))
+        >>> weights = net.trainable_params()
+        >>>
+        >>> # Case 1: gradient with respect to inputs.
+        >>> # For has_aux is set True, only loss contributes to the gradient.
+        >>> grad_fn = value_and_grad(forward, grad_position=0, weights=None, has_aux=True)
+        >>> (loss, logits), inputs_gradient = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(inputs.shape, inputs_gradient.shape)
+        (16, 10) (16, 10)
+        >>>
+        >>> # Case 2: gradient with respect to weights.
+        >>> # For has_aux is set True, only loss contributes to the gradient.
+        >>> grad_fn = value_and_grad(forward, grad_position=None, weights=weights, has_aux=True)
+        >>> (loss, logits), params_gradient = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(len(weights), len(params_gradient))
+        2 2
+        >>>
+        >>> # Case 3: gradient with respect to inputs and weights.
+        >>> # For has_aux is set False, both loss and logits contribute to the gradient.
+        >>> grad_fn = value_and_grad(forward, grad_position=0, weights=weights, has_aux=False)
+        >>> (loss, logits), (inputs_gradient, params_gradient) = grad_fn(inputs, labels)
+        >>> print(logits.shape)
+        (16, 1)
+        >>> print(inputs.shape, inputs_gradient.shape)
+        (16, 10) (16, 10)
+        >>> print(len(weights), len(params_gradient))
+        2 2
+    """
+    if grad_position is None and weights is None:
+        raise ValueError("`grad_position` and `weight` can not be None at the same time.")
+
+    if grad_position is None:
+        return _get_grad_op(True, False, has_aux, True)(fn, weights)
+
+    grad_position = _convert_grad_position_type(grad_position)
+    if weights is None:
+        return _get_grad_op(False, True, has_aux, True)(fn, None, grad_position)
+    return _get_grad_op(True, True, has_aux, True)(fn, weights, grad_position)
 
 
 def _trans_jet_inputs(primals_item, series_item):
@@ -531,6 +726,7 @@ def vjp(fn, inputs, v):
 
 __all__ = [
     'grad',
+    'value_and_grad',
     'jet',
     'derivative',
     'jvp',

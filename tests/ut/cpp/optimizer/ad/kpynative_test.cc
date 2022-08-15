@@ -98,8 +98,8 @@ class TestKPynative : public UT::Common {
         GradPynativeOp(k_pynative_cell, c_node, args, out);
       }
     }
-    auto bprop_fg = GradPynativeCellEnd(k_pynative_cell, AnfNodePtrList{}, std::vector<size_t>{0}, true, false, false,
-                                        true);
+    GradAttr grad_attr(true, false, false, false);
+    auto bprop_fg = GradPynativeCellEnd(k_pynative_cell, AnfNodePtrList{}, std::vector<size_t>{0}, grad_attr, true);
     return bprop_fg;
   }
 };
