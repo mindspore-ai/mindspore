@@ -8,7 +8,7 @@ mindspore.nn.OneHot
     输入的 `indices` 表示的位置取值为on_value，其他所有位置取值为off_value。
 
     .. note::
-        如果indices是n阶Tensor，那么返回的one-hot Tensor则为n+1阶Tensor。
+        如果indices是n阶Tensor，那么返回的one-hot Tensor则为n+1阶Tensor，新增 `axis` 维度。
 
     如果 `indices` 是Scalar，则输出shape将是长度为 `depth` 的向量。
 

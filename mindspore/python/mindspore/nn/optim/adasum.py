@@ -420,7 +420,7 @@ class AdaSumByGradWrapCell(Cell):
     Note:
         When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
         Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
-        It is recommended to using AdaSumByGradWrapCell in semi auto parallel/auto parallel mode, and in data parallel
+        It is recommended to using AdaSumByGradWrapCell in semi auto parallel/auto parallel mode. In data parallel
         mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
@@ -487,8 +487,8 @@ class AdaSumByDeltaWeightWrapCell(Cell):
     Note:
         When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
         Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
-        It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel/auto parallel mode,
-        and in data parallel mode, we recommend to using mindspore.boost to applying AdaSum.
+        It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel/auto parallel mode.
+        In data parallel mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
         optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer

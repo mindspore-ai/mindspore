@@ -14,7 +14,7 @@ mindspore.nn.SmoothL1Loss
         |x_i - y_i| - 0.5 {\beta}, & \text{otherwise.}
         \end{cases}
 
-    当 `reduction` 不是设定为 `none` 时，计算如下:
+    当 `reduction` 不是设定为 `none` 时，计算如下：
 
     .. math::
         L =
