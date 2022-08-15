@@ -44,7 +44,7 @@ class L1Regularizer(Cell):
     r"""
     Applies l1 regularization to weights.
 
-    l1 regularization makes weights sparsity
+    l1 regularization makes weights sparsity.
 
     .. math::
         \text{loss}=\lambda * \text{reduce_sum}(\text{abs}(\omega))
@@ -52,7 +52,7 @@ class L1Regularizer(Cell):
     where :math:`\lambda` is `scale` .
 
     Note:
-        scale(regularization factor) should be a number which greater than 0
+        scale(regularization factor) should be a number which greater than 0.
 
     Args:
         scale (int, float): l1 regularization factor which greater than 0.

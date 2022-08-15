@@ -512,7 +512,7 @@ class SmoothL1Loss(LossBase):
         TypeError: If dtype of `logits` is not the same as `labels`.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: The float64 data type of `logits` is support on Ascend platform.
+        TypeError: The float64 data type of `logits` is support on Ascend platform.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

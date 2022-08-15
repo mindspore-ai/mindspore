@@ -8,7 +8,7 @@ mindspore.SparseTensor
     `SparseTensor` 只能在 `Cell` 的构造方法中使用。
 
     .. note::
-        此接口从 1.7 版本开始弃用，并计划在将来移除，请使用 `COOTensor`.
+        此接口从 1.7 版本开始弃用，并计划在将来移除，请使用 `COOTensor`。
 
     对于稠密张量，其 `SparseTensor(indices, values, shape)` 具有 `dense[indices[i]] = values[i]` 。
 
