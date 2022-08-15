@@ -1195,7 +1195,7 @@ class SparseMatrixSoftmax(Primitive):
         >>> net = SparseMatrixSoftmax(mstype.float32)
         >>> logits_pointers =Tensor(logits.values.shape[0], mstype.int32)
         >>> out = net(Tensor(logits.shape, dtype=mstype.int32), logits_pointers,
-            ...         logits.indptr, logits.indices, logits.values)
+        ...         logits.indptr, logits.indices, logits.values)
         >>> print(out)
         (Tensor(shape=[2], dtype=Int32, value= [2, 6]),
          Tensor(shape=[], dtype=Int32, value= 6),
