@@ -82,14 +82,20 @@ void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t max_size = outputs[0]->size / sizeof(T);
-  if (Sign(delta) * Sign(limit - start) > 0) {
-    output_size_ = static_cast<size_t>(std::ceil(static_cast<double>(limit - start) / static_cast<double>(delta)));
+  if (Sign(delta) * Sign(limit - start) >= 0) {
+    if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt64) {
+      output_size_ = static_cast<size_t>((limit - start + std::abs(delta) - 1) / delta);
+    } else {
+      output_size_ = static_cast<size_t>(std::ceil((limit - start) / delta));
+    }
     if (output_size_ > max_size) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the output element number exceeds the maximum number.";
     }
-    for (size_t index = 0; index < output_size_; index++, start += delta) {
-      output[index] = start;
+    for (size_t index = 0; index < output_size_; index++) {
+      output[index] = delta * index + start;
     }
+  } else {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", upper bound and larger bound inconsistent with step sign.";
   }
 }
 
