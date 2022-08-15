@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ class HostCheck {
   static bool CheckValidDeviceShape(const AnfNodePtr &node);
 
  private:
-  static bool CheckValidOutputDeviceShape(const AnfNodePtr &node, const size_t output_idx, const std::string &format);
-  static std::vector<int64_t> GetFinalInferShape(const AnfNodePtr &node, const size_t output_idx,
+  static bool CheckValidInOutDeviceShape(const AnfNodePtr &node, size_t index, bool is_output,
+                                         const std::string &format);
+  static std::vector<int64_t> GetFinalInferShape(const AnfNodePtr &node, size_t index, bool is_output,
                                                  const std::string &format);
 };
 
