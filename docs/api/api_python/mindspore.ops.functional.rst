@@ -497,6 +497,7 @@ Parameter操作函数
     mindspore.ops.grad
     mindspore.ops.jet
     mindspore.ops.jvp
+    mindspore.ops.value_and_grad
     mindspore.ops.vjp
     mindspore.ops.vmap
 
