@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ abstract::ShapePtr LerpInferShape(const PrimitivePtr &primitive, const std::vect
   auto end_shape = end_shape_map[kShape];
   auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
   auto weight_shape = weight_shape_map[kShape];
+  if (weight_shape.size() > start_shape.size() && weight_shape.size() > end_shape.size()) {
+    MS_EXCEPTION(RuntimeError) << "weight should be of dimension max(self.dim(), end.dim()) or lesser.";
+  }
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     (void)CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
@@ -64,7 +67,7 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   } else {
     (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
   }
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, op_name);
 }
 }  // namespace
 
