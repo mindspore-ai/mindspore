@@ -94,7 +94,8 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
 
 TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto dtype = input_args[kInputIndex1]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates", dtype, common_valid_types_with_complex, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates", dtype, common_valid_types_with_complex_and_bool,
+                                                   prim->name());
   return dtype;
 }
 
