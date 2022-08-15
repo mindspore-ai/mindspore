@@ -607,14 +607,14 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
 namespace data_converter {
 static mindspore::HashMap<std::string, ValuePtr> object_map_;
 
-static mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
+static mindspore::OrderedMap<std::string, std::vector<FuncGraphPtr>> object_graphs_map_;
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
   MS_LOG(DEBUG) << "Set func graph size: " << object_graphs_map_.size();
 }
 
-const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
+const mindspore::OrderedMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
   MS_LOG(DEBUG) << "Obj graphs size: " << object_graphs_map_.size();
   return object_graphs_map_;
 }
