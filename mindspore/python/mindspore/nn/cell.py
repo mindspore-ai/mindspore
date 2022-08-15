@@ -419,8 +419,9 @@ class Cell(Cell_):
     def _check_construct_args(self, *inputs, **kwargs):
         """Check the args needed by the function construct"""
         if kwargs:
-            raise ValueError(f"For 'Cell', expect no kwargs here, "
-                             "maybe you pass wrong arguments, args: {inputs}, kwargs: {kwargs}")
+            raise ValueError(f"For 'Cell', expect no kwargs here, maybe you pass wrong arguments, "
+                             f"or there is a key in kwargs that is not used as a function argument. "
+                             f"args: {inputs}, kwargs: {kwargs}")
         positional_args = 0
         default_args = 0
         for value in inspect.signature(self.construct).parameters.values():

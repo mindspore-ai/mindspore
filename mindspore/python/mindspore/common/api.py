@@ -26,7 +26,6 @@ import inspect
 import importlib
 from collections import OrderedDict
 from functools import wraps
-import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
@@ -40,8 +39,7 @@ from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTenso
     PynativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from mindspore.parallel._tensor import _load_tensor_by_layout
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
-from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, \
-    _to_full_tensor, _get_parameter_broadcast, _get_pipeline_stages
+from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _get_pipeline_stages
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
@@ -107,6 +105,37 @@ def _check_all_tensor(sequence):
         if not isinstance(element, Tensor) and not (isinstance(element, tuple) and _check_all_tensor(element)):
             return False
     return True
+
+
+def _handle_func_args(func, *args, **kwargs):
+    """Handle the *args and **kwargs inputs of the function."""
+    if kwargs:
+        bound_arguments = inspect.signature(func).bind(*args, **kwargs)
+        bound_arguments.apply_defaults()
+        args = bound_arguments.args
+        kwargs = bound_arguments.kwargs
+        # After apply_defaults, kwargs should be empty here.
+        if kwargs:
+            raise ValueError(f"Failed to handle kwargs of {func.__name__}. Maybe you pass wrong arguments, "
+                             f"or there is a key in kwargs that is not used as a function argument, "
+                             f"args: {args}, kwargs: {kwargs}")
+
+    positional_args = 0
+    default_args = 0
+    for value in inspect.signature(func).parameters.values():
+        if value.kind is inspect.Parameter.VAR_POSITIONAL or value.kind is inspect.Parameter.VAR_KEYWORD:
+            return args
+        if value.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            if value.default is inspect.Parameter.empty:
+                positional_args += 1
+            else:
+                default_args += 1
+    if len(args) < positional_args:
+        raise TypeError(f"Function {func.__name__} needs {positional_args} positional argument, but got {len(args)}.")
+    if len(args) > positional_args + default_args:
+        raise TypeError(f"Function {func.__name__} needs {positional_args} positional argument and {default_args} "
+                        f"default argument, total {positional_args + default_args}, but got {len(args)}.")
+    return args
 
 
 sys_path = list(sys.path)
@@ -538,7 +567,8 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
             hash_obj = int(time.time() * 1e9)
 
         @wraps(func)
-        def staging_specialize(*args):
+        def staging_specialize(*args, **kwargs):
+            args = _handle_func_args(func, *args, **kwargs)
             process_obj = None
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
