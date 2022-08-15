@@ -247,6 +247,10 @@ bool DynamicParser::IsDynamicCell(const py::object &cell) {
   ParseInputArgs(ast, fn_node);
   // parse body context
   bool ret = ParseBodyContext(ast, fn_node);
+  if (ret) {
+    MS_LOG(INFO) << "Cell is dynamic, filename:" << ast->function_filename() << " line:" << ast->function_line_offset()
+                 << " module:" << ast->function_module() << " function name:" << ast->function_name();
+  }
   cell_input_args_.clear();
   return ret;
 }
