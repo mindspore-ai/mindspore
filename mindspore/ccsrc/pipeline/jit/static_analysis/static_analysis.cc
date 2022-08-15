@@ -621,13 +621,8 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
 
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   MS_EXCEPTION_IF_NULL(func);
-  MS_LOG(DEBUG) << "The func value: " << func->ToString();
-  if (func->tracking_id() != nullptr) {
-    MS_LOG(DEBUG) << "The tracking_id: " << func->tracking_id()->DebugString();
-  }
-
-  if (func->tracking_id() == nullptr || func->isa<MetaFuncGraphAbstractClosure>() ||
-      func->isa<FuncGraphAbstractClosure>()) {
+  MS_LOG(DEBUG) << "The func value: " << func->ToString() << " tracking_id: " << func->tracking_id();
+  if (func->tracking_id() == 0 || func->isa<MetaFuncGraphAbstractClosure>() || func->isa<FuncGraphAbstractClosure>()) {
     EvaluatorPtr evaluator = _GetEvaluatorFor(func);
     return evaluator;
   }
@@ -636,8 +631,7 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
     return inf_pair->second;
   }
 
-  AbstractFunctionPtr func_generic = func->Copy();
-  func_generic->set_tracking_id(nullptr);
+  AbstractFunctionPtr func_generic = func->CopyWithoutTrackingId();
   EvaluatorPtr eval = _GetEvaluatorFor(func_generic);
   auto tracked_eval = std::make_shared<TrackedEvaluator>(eval);
   evaluators_[func] = tracked_eval;

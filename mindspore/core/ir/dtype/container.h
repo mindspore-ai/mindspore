@@ -65,6 +65,7 @@ class MS_CORE_API List final : public Object {
   TypeId generic_type_id() const override { return kObjectTypeList; }
   TypePtr DeepCopy() const override;
   bool operator==(const Type &other) const override;
+  size_t hash() const override;
 
   /// \brief Get the number of elements in this List.
   ///
@@ -124,6 +125,8 @@ class MS_CORE_API Tuple final : public Object {
 
   bool operator==(const Type &other) const override;
 
+  size_t hash() const override;
+
   /// \brief Get the elements of the Tuple object.
   ///
   /// \return The elements of the Tuple object.
@@ -162,6 +165,7 @@ class MS_CORE_API Dictionary final : public Object {
 
   TypeId generic_type_id() const override { return kObjectTypeDictionary; }
   bool operator==(const Type &other) const override;
+  size_t hash() const override;
   TypePtr DeepCopy() const override;
   std::string ToString() const override { return DumpContent(false); }
   std::string DumpText() const override { return DumpContent(true); }

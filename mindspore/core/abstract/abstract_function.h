@@ -19,6 +19,7 @@
 #ifndef MINDSPORE_CORE_ABSTRACT_ABSTRACT_FUNCTION_H_
 #define MINDSPORE_CORE_ABSTRACT_ABSTRACT_FUNCTION_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -102,7 +103,11 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] prim The primitive that this PrimitiveAbstractClosure corresponding to.
   /// \param[in] tracking_id A Node identifies different uses of the prim.
   explicit PrimitiveAbstractClosure(const PrimitivePtr &prim, const AnfNodePtr &tracking_id = nullptr)
-      : prim_(prim), tracking_id_(AnfNodeWeakPtr(tracking_id)) {}
+      : PrimitiveAbstractClosure(prim, ToTrackingId(tracking_id)) {}
+
+  // For internal usage only, make it public so that make_shared can work on it.
+  PrimitiveAbstractClosure(const PrimitivePtr &prim, std::uintptr_t tracking_id)
+      : prim_(prim), tracking_id_(tracking_id) {}
 
   /// \brief Destructor of PrimitiveAbstractClosure
   ~PrimitiveAbstractClosure() override = default;
@@ -113,11 +118,13 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
   /// \return The Primitive that this PrimitiveAbstractClosure corresponding to.
   PrimitivePtr prim() { return prim_; }
 
-  AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
+  std::uintptr_t tracking_id() const override { return tracking_id_; }
 
-  void set_tracking_id(AnfNodePtr node) override { tracking_id_ = AnfNodeWeakPtr(node); }
+  AbstractFunctionPtr Copy() const override { return std::make_shared<PrimitiveAbstractClosure>(prim_, tracking_id_); }
 
-  AbstractFunctionPtr Copy() const override { return std::make_shared<PrimitiveAbstractClosure>(prim_, tracking_id()); }
+  AbstractFunctionPtr CopyWithoutTrackingId() const override {
+    return std::make_shared<PrimitiveAbstractClosure>(prim_, 0);
+  }
 
   bool operator==(const AbstractFunction &other) const override;
 
@@ -131,9 +138,9 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
 
  private:
   PrimitivePtr prim_;
-  // store it as weak_ptr to break reference cycle.
-  // one reference cycle example is Graph::set_output() input0 local variable.
-  AnfNodeWeakPtr tracking_id_;
+  // To discriminate different usage of same primitive calls,
+  // store it as the memory address of the user node.
+  std::uintptr_t tracking_id_;
 };
 using PrimitiveAbstractClosurePtr = std::shared_ptr<PrimitiveAbstractClosure>;
 
@@ -146,11 +153,13 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] context The context that func_graph corresponding to.
   /// \param[in] tracking_id A Node identifies different uses of the func_graph.
   FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
-                           const AnfNodePtr &tracking_id = nullptr, const bool specialized = false)
-      : func_graph_(func_graph),
-        context_(context),
-        tracking_id_(AnfNodeWeakPtr(tracking_id)),
-        specialized_(specialized) {
+                           const AnfNodePtr &tracking_id = nullptr, bool specialized = false)
+      : FuncGraphAbstractClosure(func_graph, context, ToTrackingId(tracking_id), specialized) {}
+
+  // For internal usage only, make it public so that make_shared can work on it.
+  FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
+                           std::uintptr_t tracking_id, bool specialized)
+      : func_graph_(func_graph), context_(context), tracking_id_(tracking_id), specialized_(specialized) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(context);
   }
@@ -166,14 +175,16 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
 
   AnalysisContextPtr context() const override { return context_; }
 
-  AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
-
-  void set_tracking_id(AnfNodePtr node) override { tracking_id_ = AnfNodeWeakPtr(node); }
+  std::uintptr_t tracking_id() const override { return tracking_id_; }
 
   bool specialized() const { return specialized_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id(), specialized_);
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id_, specialized_);
+  }
+
+  AbstractFunctionPtr CopyWithoutTrackingId() const override {
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, 0, specialized_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -184,6 +195,8 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
 
   std::string ToString(bool verbose) const override;
 
+  bool IsEqualExceptTrackingId(const FuncGraphAbstractClosure &other) const;
+
  private:
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
@@ -192,9 +205,8 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   // different FuncGraphEvaluator.
   // Especially useful for recursive func graph call, so it will not mess up
   // the `context_` in FuncGraphEvaluator.
-  // Notes: Be careful to use nullptr for this variable.
-  // store it as weak_ptr to break reference cycle.
-  AnfNodeWeakPtr tracking_id_;
+  // store it as the memory address of the user node.
+  std::uintptr_t tracking_id_;
   // If the func_graph_ member is the specialized func_graph_ in current IR or
   // it's a old func_graph of IR before renormalized.
   bool specialized_{false};
@@ -211,7 +223,12 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \param[in] scope The scope to which the tracking_id belong to.
   explicit MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph,
                                         const AnfNodePtr &tracking_id = nullptr, const ScopePtr &scope = kDefaultScope)
-      : meta_func_graph_(meta_func_graph), tracking_id_(AnfNodeWeakPtr(tracking_id)), scope_(scope) {}
+      : MetaFuncGraphAbstractClosure(meta_func_graph, ToTrackingId(tracking_id), scope) {}
+
+  // For internal usage only, make it public so that make_shared can work on it.
+  MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, std::uintptr_t tracking_id,
+                               const ScopePtr &scope)
+      : meta_func_graph_(meta_func_graph), tracking_id_(tracking_id), scope_(scope) {}
 
   /// \brief Destructor of MetaFuncGraphAbstractClosure.
   ~MetaFuncGraphAbstractClosure() override = default;
@@ -229,10 +246,14 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \return The Scope that this MetaFuncGraphAbstractClosure corresponding to.
   ScopePtr GetScope() { return scope_; }
 
-  AnfNodePtr tracking_id() const override { return tracking_id_.lock(); }
+  std::uintptr_t tracking_id() const override { return tracking_id_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_, tracking_id());
+    return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_, tracking_id_, kDefaultScope);
+  }
+
+  AbstractFunctionPtr CopyWithoutTrackingId() const override {
+    return std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph_, 0, kDefaultScope);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -243,9 +264,9 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
 
  private:
   MetaFuncGraphPtr meta_func_graph_;
-  // refer the comment in FuncGraphAbstractClosure;
-  // store it as weak_ptr to break reference cycle.
-  AnfNodeWeakPtr tracking_id_;
+  // Refer the comment in FuncGraphAbstractClosure;
+  // Store it as memory address of the user node.
+  std::uintptr_t tracking_id_;
   ScopePtr scope_;
 };
 using MetaFuncGraphAbstractClosurePtr = std::shared_ptr<MetaFuncGraphAbstractClosure>;
@@ -464,7 +485,7 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the abstract values of arguments.
   ///
   /// \return The abstract values of arguments.
-  AbstractBasePtrList args_spec_list() { return args_spec_list_; }
+  const AbstractBasePtrList &args_spec_list() { return args_spec_list_; }
 
   /// \brief Get the abstract value of output.
   ///

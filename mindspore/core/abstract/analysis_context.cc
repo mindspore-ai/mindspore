@@ -16,15 +16,18 @@
 
 #include "abstract/analysis_context.h"
 
+#include <vector>
 #include <algorithm>
 
+#include "utils/ms_utils.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
+#include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
 namespace abstract {
-std::list<AnalysisContextPtr> AnalysisContext::all_context_;
+std::vector<AnalysisContextPtr> AnalysisContext::all_context_;
 AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &func_graph,
                                                const AbstractBasePtrList &args_spec_list) {
   // Find func graph's parent and its parent context firstly.
@@ -109,50 +112,50 @@ AnalysisContextPtr AnalysisContext::DummyContext() {
   return dummy_context;
 }
 
-bool AnalysisContext::IsDummyContext() {
-  return parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty();
-}
-
 const AnalysisContextPtr kDummyAnalysisContext =
   AnalysisContext::CreateContext(nullptr, nullptr, AbstractBasePtrList());
 
-bool AnalysisContext::operator==(const AnalysisContext &other) const {
-  if (func_graph_ != other.func_graph_) {
-    return false;
+static inline bool IsEqualExceptTrackingId(const AbstractBasePtr &a1, const AbstractBasePtr &a2) {
+  auto f1 = dyn_cast_ptr<abstract::FuncGraphAbstractClosure>(a1);
+  if (f1 != nullptr) {
+    auto f2 = dyn_cast_ptr<abstract::FuncGraphAbstractClosure>(a2);
+    return f2 != nullptr && f2->IsEqualExceptTrackingId(*f1);
   }
+  return common::IsEqual(a1, a2);
+}
 
-  if (args_spec_list_.size() != other.args_spec_list_.size()) {
+static inline bool AbstractListEqualExceptTrackingId(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) {
+  const std::size_t size = lhs.size();
+  if (size != rhs.size()) {
     return false;
   }
-
-  if (((parent_ == nullptr) && (other.parent_ != nullptr)) || ((parent_ != nullptr) && (other.parent_ == nullptr))) {
-    return false;
-  }
-  // Compare parent with content.
-  bool is_parent_equal = false;
-  if (parent_ == other.parent_) {
-    is_parent_equal = true;
-  } else if (*parent_ == *other.parent_) {
-    is_parent_equal = true;
-  } else {
-    return false;
-  }
-  for (std::size_t i = 0; i < args_spec_list_.size(); i++) {
-    if (func_graph_->has_flag(GRAPH_FLAG_IS_WHILE_HEADER) &&
-        args_spec_list_[i]->isa<abstract::FuncGraphAbstractClosure>() &&
-        other.args_spec_list_[i]->isa<abstract::FuncGraphAbstractClosure>()) {
-      auto temp_this = args_spec_list_[i]->cast_ptr<abstract::FuncGraphAbstractClosure>()->Copy();
-      auto temp_other = other.args_spec_list_[i]->cast_ptr<abstract::FuncGraphAbstractClosure>()->Copy();
-      temp_this->set_tracking_id(nullptr);
-      temp_other->set_tracking_id(nullptr);
-      if (!(*temp_this == *temp_other)) {
-        return false;
-      }
-    } else if (!(*args_spec_list_[i] == *other.args_spec_list_[i])) {
+  for (std::size_t i = 0; i < size; ++i) {
+    if (!IsEqualExceptTrackingId(lhs[i], rhs[i])) {
       return false;
     }
   }
-  return is_parent_equal;
+  return true;
+}
+
+bool AnalysisContext::operator==(const AnalysisContext &other) const {
+  if (this == &other) {
+    return true;
+  }
+  if (func_graph_ != other.func_graph_) {
+    return false;
+  }
+  if (args_spec_list_.size() != other.args_spec_list_.size()) {
+    return false;
+  }
+  if (!common::IsEqual(parent_, other.parent_)) {
+    return false;
+  }
+  if (func_graph_ != nullptr && func_graph_->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    // Special handling for 'while' header:
+    // Ignore tracking_id when checking equality of FuncGraphAbstractClosure objects.
+    return AbstractListEqualExceptTrackingId(args_spec_list_, other.args_spec_list_);
+  }
+  return AbstractBasePtrListDeepEqual(args_spec_list_, other.args_spec_list_);
 }
 
 // brief The key which controls the graph cloning in Specialize.
@@ -178,15 +181,19 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
   return context_new;
 }
 
-std::size_t AnalysisContext::hash() {
+std::size_t AnalysisContext::hash() const {
+  if (hash_ != 0) {
+    // Use cached hash code.
+    return hash_;
+  }
   std::size_t hash_value = 0;
-  // hash() recursion exit condition.
   if (parent_ != nullptr) {
     hash_value = hash_combine(hash_value, parent_->hash());
   }
   if (func_graph_ != nullptr) {
     hash_value = hash_combine(hash_value, func_graph_->hash());
   }
+  hash_ = hash_value;
   return hash_value;
 }
 
@@ -209,13 +216,18 @@ std::string AnalysisContext::ToString() const {
   return buffer.str();
 }
 
+void AnalysisContext::Clear() {
+  parent_ = nullptr;
+  func_graph_ = nullptr;
+  args_spec_list_.clear();
+  extant_context_cache_.clear();
+  children_cache_.clear();
+  hash_ = 0;
+}
+
 void AnalysisContext::ClearContext() {
-  for (auto &item : all_context_) {
-    item->parent_ = nullptr;
-    item->func_graph_ = nullptr;
-    item->args_spec_list_.clear();
-    item->extant_context_cache_.clear();
-    item->children_cache_.clear();
+  for (auto &context : all_context_) {
+    context->Clear();
   }
   all_context_.clear();
 }

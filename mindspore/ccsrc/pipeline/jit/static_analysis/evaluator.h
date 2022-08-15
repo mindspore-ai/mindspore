@@ -23,18 +23,17 @@
 #include <string>
 #include <vector>
 #include <stack>
-#include <unordered_map>
 
+#include "utils/ms_context.h"
 #include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
 using EvaluatorCacheMgrPtr = std::shared_ptr<EvaluatorCacheMgr>;
 using EvaluatorAttrMap =
-  std::unordered_map<AbstractBasePtrList, AttrValueMapPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+  mindspore::HashMap<AbstractBasePtrList, AttrValueMapPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 using EvaluatorAttrCache = MultiThreadCache<AbstractBasePtrList, AttrValueMapPtr, EvaluatorAttrMap>;
 using EvaluatorAttrCachePtr = std::shared_ptr<EvaluatorAttrCache>;
 
@@ -192,7 +191,7 @@ class TrackedEvaluator : public Evaluator {
 };
 
 using FuncGraphCacheMap =
-  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+  mindspore::HashMap<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 class StackFrame;
 using StackFramePtr = std::shared_ptr<StackFrame>;
 

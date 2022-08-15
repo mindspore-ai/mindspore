@@ -19,7 +19,6 @@
 #include "pipeline/jit/parse/function_block.h"
 
 #include <algorithm>
-#include <unordered_set>
 #include <queue>
 
 #include "pipeline/jit/parse/resolve.h"
@@ -27,6 +26,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
+#include "utils/hash_set.h"
 #include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/utils.h"
 
@@ -125,7 +125,7 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
 std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
   // Search the predecessors of the current block for the local parameter. If one of the local parameter of the
   // predecessors is interpret node, the phi_param needs to set the interpret true.
-  std::unordered_set<FunctionBlock *> visited_block;
+  mindspore::HashSet<FunctionBlock *> visited_block;
   std::queue<FunctionBlock *> block_queue;
   block_queue.push(this);
   bool has_found = false;

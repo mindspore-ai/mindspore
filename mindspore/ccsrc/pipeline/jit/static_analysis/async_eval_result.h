@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include <future>
 #include <thread>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 #include <string>
 #include <functional>
@@ -33,6 +32,7 @@
 #include <mutex>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace abstract {
@@ -391,7 +391,7 @@ class AsyncInferTask {
 };
 
 using EvaluatorCacheMap =
-  std::unordered_map<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+  mindspore::HashMap<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 using EvalResultCache = NormalCache<AbstractBasePtrList, EvalResultPtr, EvaluatorCacheMap>;
 
 class EvaluatorCacheMgr {
@@ -413,7 +413,7 @@ class EvaluatorCacheMgr {
 class AnalysisResultCacheMgr {
  public:
   using AnalysisConfigResultMap =
-    std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+    mindspore::HashMap<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
   using AnalysisConfigResultCache = NormalCache<AnfNodeConfigPtr, EvalResultPtr, AnalysisConfigResultMap>;
   using const_iterator = typename AnalysisConfigResultCache::const_iterator;
 
@@ -438,7 +438,7 @@ class AnalysisResultCacheMgr {
 
  private:
   using AnalysisConfigAsyncResultMap =
-    std::unordered_map<AnfNodeConfigPtr, AsyncAbstractPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+    mindspore::HashMap<AnfNodeConfigPtr, AsyncAbstractPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
   using AnalysisConfigAsyncResultCache =
     MultiThreadCache<AnfNodeConfigPtr, AsyncAbstractPtr, AnalysisConfigAsyncResultMap>;
   AnalysisResultCacheMgr() = default;

@@ -19,6 +19,7 @@
 #ifndef MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_
 #define MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_
 
+#include <cstdint>
 #include <utility>
 #include <vector>
 #include <string>
@@ -466,19 +467,24 @@ class MS_CORE_API AbstractFunction : public AbstractBase {
   /// \return A point to the AbstractFunction.
   static AbstractFunctionPtr MakeAbstractFunction(const AbstractFuncAtomPtrList &func_list);
 
-  /// \brief Get the tracking anf node.
+  /// \brief Get the tracking id as the memory address of the anf node.
   ///
-  /// \return A point to the anf node.
-  virtual AnfNodePtr tracking_id() const { return nullptr; }
+  /// \return The memory address of to the anf node.
+  virtual std::uintptr_t tracking_id() const { return 0; }
 
-  /// \brief Set a tracking anf node to the abstract.
-  virtual void set_tracking_id(AnfNodePtr) {}
+  /// \brief Copy an AbstractFunction without copying tracking id.
+  ///
+  /// \return A pointer to the copied abstract.
+  virtual AbstractFunctionPtr CopyWithoutTrackingId() const { return Copy(); }
 
   /// \brief Get the context which manages the abstract.
   ///
   /// \return A point to the context.
   virtual AnalysisContextPtr context() const { return nullptr; }
+
+  static std::uintptr_t ToTrackingId(const AnfNodePtr &node) { return reinterpret_cast<std::uintptr_t>(node.get()); }
 };
+
 using AbstractFunctionPtrList = std::vector<AbstractFunctionPtr>;
 
 /// \brief Class AbstractKeywordArg describes an abstract value from a key-value node.
@@ -705,8 +711,14 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   std::string ToString() const override;
 
   std::size_t hash() const override {
+    const auto &value = GetValueTrack();
+    if (value != nullptr && !value->isa<AnyValue>()) {
+      // For AbstractTensor with specific value, it will not be considered equal
+      // to other AbstractTensors unless the tensor value pointer is same.
+      return hash_combine(tid(), PointerHash<ValuePtr>{}(value));
+    }
     auto hash_sum = hash_combine(tid(), element_->hash());
-    auto shape = GetShapeTrack();
+    const auto &shape = GetShapeTrack();
     if (shape != nullptr) {
       hash_sum = hash_combine(hash_sum, shape->hash());
     }
@@ -1028,10 +1040,9 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
   /// \return A vector of AbstractAttribute.
   const std::vector<AbstractAttribute> &elements() const { return key_values_; }
 
-  std::vector<AbstractAttribute> key_values_;
-
  protected:
   ValuePtr RealBuildValue() const override;
+  std::vector<AbstractAttribute> key_values_;
 };
 using AbstractDictionaryPtr = std::shared_ptr<AbstractDictionary>;
 
@@ -1254,7 +1265,7 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
 };
 using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
-/// \brief Class AbstractRef describes a RefTensor's abstract value.
+/// \brief Class AbstractRefTensor describes a RefTensor's abstract value.
 class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
  public:
   /// \brief Constructor of AbstractRef.

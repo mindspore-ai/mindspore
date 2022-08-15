@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "utils/hash_map.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
@@ -735,16 +736,7 @@ AbstractBasePtr AbstractSequence::ElementsJoin(const AbstractBasePtr &other) {
 template AbstractBasePtr AbstractSequence::ElementsJoin<AbstractList>(const AbstractBasePtr &);
 template AbstractBasePtr AbstractSequence::ElementsJoin<AbstractTuple>(const AbstractBasePtr &);
 
-std::size_t AbstractSequence::hash() const {
-  std::size_t hash_sum = hash_combine(tid(), std::hash<size_t>{}(elements_.size()));
-  // Hashing all elements is costly, so only take at most 4 elements into account based on
-  // some experiments.
-  constexpr size_t max_elements_cnt = 4;
-  for (size_t i = 0; (i < elements_.size()) && (i < max_elements_cnt); i++) {
-    hash_sum = hash_combine(hash_sum, elements_[i]->hash());
-  }
-  return hash_sum;
-}
+std::size_t AbstractSequence::hash() const { return hash_combine(tid(), AbstractBasePtrListHash(elements_)); }
 
 bool AbstractSequence::operator==(const AbstractSequence &other) const {
   if (this == &other) {
@@ -964,10 +956,16 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   if (this == &other) {
     return true;
   }
-  // Check value. for AbstractTensor, both value should be AnyValue.
   const auto &v1 = GetValueTrack();
   const auto &v2 = other.GetValueTrack();
-  if (v1 != v2 && (v1 == nullptr || !v1->isa<AnyValue>() || v2 == nullptr || !v2->isa<AnyValue>())) {
+  MS_EXCEPTION_IF_NULL(v1);
+  MS_EXCEPTION_IF_NULL(v2);
+  // Check if both point to same specific value.
+  if (!v1->isa<AnyValue>()) {
+    return v1 == v2;
+  }
+  // Check if both are AnyValue.
+  if (!v2->isa<AnyValue>()) {
     return false;
   }
   // Check element type.
@@ -1380,19 +1378,20 @@ ValuePtr AbstractKeywordArg::RealBuildValue() const {
 }
 
 std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
-  // Hashing all elements is costly, we only calculate hash from
-  // the first few elements base on some experiments.
-  constexpr size_t kMaxElementsNum = 4;
-  const size_t n_args = args_spec_list.size();
-  const size_t num = std::min(n_args, kMaxElementsNum);
-  std::size_t hash_value = 0;
-  for (size_t i = 0; i < num; ++i) {
-    const auto &arg = args_spec_list[i];
-    MS_EXCEPTION_IF_NULL(arg);
-    hash_value = hash_combine(hash_value, arg->hash());
+  // Hash for empty list is zero.
+  if (args_spec_list.empty()) {
+    return 0;
   }
-  if (n_args > kMaxElementsNum) {
-    hash_value = hash_combine(hash_value, n_args);
+  // Hashing all elements is costly, we only calculate hash from
+  // the first element and last few elements base on some experiments.
+  constexpr size_t kMaxLastElements = 4;
+  const size_t n_args = args_spec_list.size();
+  // Hash from list size and the first element.
+  std::size_t hash_value = hash_combine(n_args, args_spec_list[0]->hash());
+  // Hash from last few elements.
+  const size_t start = ((n_args > kMaxLastElements) ? (n_args - kMaxLastElements) : 1);
+  for (size_t i = start; i < n_args; ++i) {
+    hash_value = hash_combine(hash_value, args_spec_list[i]->hash());
   }
   return hash_value;
 }

@@ -39,18 +39,16 @@ MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(
 
 void MultitypeFuncGraph::Register(const TypePtrList &types, specialize_fn s_fn) {
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ".";
-  auto fn = fn_cache_.find(types);
-  if (fn != fn_cache_.end()) {
+  auto result = fn_cache_.emplace(types, s_fn);
+  if (!result.second) {
     MS_LOG(EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
   }
-  fn_cache_[types] = s_fn;
 }
 
 void MultitypeFuncGraph::Register(const TypePtrList &types, const py::function &py_fn) {
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ", " << py::str(py_fn.cast<py::object>())
                 << ").";
-  auto fn = fn_cache_.find(types);
-  if (fn != fn_cache_.end()) {
+  if (fn_cache_.find(types) != fn_cache_.end()) {
     MS_LOG(EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
   }
   fn_cache_py_[types] = py_fn;

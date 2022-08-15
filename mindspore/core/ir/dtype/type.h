@@ -136,7 +136,7 @@ class MS_CORE_API Type : public Value {
   /// \return The clone of the Type object.
   virtual TypePtr Clone() const { return DeepCopy(); }
 
-  std::size_t hash() const override { return std::hash<int>{}(static_cast<int>(type_id())); }
+  std::size_t hash() const override { return static_cast<size_t>(type_id()); }
   std::string ToString() const override { return TypeIdLabel(meta_type_); }
 
   /// \brief Get Type object ToReprString description.

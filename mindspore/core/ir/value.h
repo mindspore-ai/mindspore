@@ -452,7 +452,7 @@ class MS_CORE_API RefKey final : public StringImm {
 using RefKeyPtr = std::shared_ptr<RefKey>;
 
 /// \brief AnyValue defines a Value class which can be any Value type.
-class MS_CORE_API AnyValue : public Value {
+class MS_CORE_API AnyValue final : public Value {
  public:
   /// \brief Constructor of AnyValue.
   AnyValue() = default;

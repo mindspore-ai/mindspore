@@ -23,7 +23,6 @@
 #include <mutex>
 #include <string>
 #include <utility>
-#include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/cell.h"
@@ -1265,8 +1264,7 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
   }
   for (const auto &item : type_map_) {
     TypePtrList selections;
-    MS_EXCEPTION_IF_NULL(item.second);
-    (void)std::transform(item.second->begin(), item.second->end(), std::back_inserter(selections),
+    (void)std::transform(item.second.begin(), item.second.end(), std::back_inserter(selections),
                          [&args](size_t arg_idx) -> TypePtr {
                            if (arg_idx >= args.size()) {
                              MS_LOG(EXCEPTION) << "Index: " << arg_idx << " out of range: " << args.size();

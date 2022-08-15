@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext) {
@@ -83,11 +84,20 @@ bool List::operator==(const Type &other) const {
     return false;
   }
   for (size_t i = 0; i < elements_.size(); ++i) {
-    if (*elements_[i] != *other_list.elements_[i]) {
+    if (!common::IsEqual(elements_[i], other_list.elements_[i])) {
       return false;
     }
   }
   return true;
+}
+
+size_t List::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  hash_value = hash_combine(hash_value, elements_.size());
+  for (auto &e : elements_) {
+    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
+  }
+  return hash_value;
 }
 
 std::string List::DumpContent(bool is_dumptext) const {
@@ -123,11 +133,20 @@ bool Tuple::operator==(const Type &other) const {
     return false;
   }
   for (size_t i = 0; i < elements_.size(); ++i) {
-    if (*elements_[i] != *other_tuple.elements_[i]) {
+    if (!common::IsEqual(elements_[i], other_tuple.elements_[i])) {
       return false;
     }
   }
   return true;
+}
+
+size_t Tuple::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  hash_value = hash_combine(hash_value, elements_.size());
+  for (auto &e : elements_) {
+    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
+  }
+  return hash_value;
 }
 
 const TypePtr Tuple::operator[](std::size_t dim) const {
@@ -194,17 +213,27 @@ bool Dictionary::operator==(const mindspore::Type &other) const {
   }
 
   const auto &other_dict = static_cast<const Dictionary &>(other);
-  if (key_values_.size() != other_dict.key_values_.size()) {
+  const auto size = key_values_.size();
+  if (size != other_dict.key_values_.size()) {
     return false;
   }
-  for (size_t index = 0; index < key_values_.size(); index++) {
-    if (key_values_[index].first != other_dict.key_values_[index].first) {
-      return false;
-    }
-    if (*key_values_[index].second != *other_dict.key_values_[index].second) {
+  for (size_t i = 0; i < size; ++i) {
+    const auto &a = key_values_[i];
+    const auto &b = other_dict.key_values_[i];
+    if (a.first != b.first || !common::IsEqual(a.second, b.second)) {
       return false;
     }
   }
   return true;
+}
+
+size_t Dictionary::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  hash_value = hash_combine(hash_value, key_values_.size());
+  for (auto &kv : key_values_) {
+    hash_value = hash_combine(hash_value, std::hash<std::string>{}(kv.first));
+    hash_value = hash_combine(hash_value, (kv.second == nullptr ? 0 : kv.second->hash()));
+  }
+  return hash_value;
 }
 }  // namespace mindspore

@@ -23,42 +23,6 @@
 namespace mindspore {
 TypePtr TypeAnything::DeepCopy() const { return kAnyType; }
 
-std::size_t TypeHasher::operator()(TypePtr const &type) const {
-  MS_EXCEPTION_IF_NULL(type);
-  std::size_t hash = std::hash<size_t>()(type->type_id());
-  return hash;
-}
-
-std::size_t TypeListHasher::operator()(const TypePtrList &type_list) const {
-  std::size_t hash_sum = 0;
-  for (auto &type : type_list) {
-    auto type_id = static_cast<std::size_t>(type->type_id());
-    hash_sum = hash_combine(hash_sum, type_id);
-  }
-  return hash_sum;
-}
-
-bool TypeEqual::operator()(TypePtr const &t1, TypePtr const &t2) const {
-  MS_EXCEPTION_IF_NULL(t1);
-  MS_EXCEPTION_IF_NULL(t2);
-  return t1->type_id() == t2->type_id();
-}
-
-bool TypeListEqual::operator()(TypePtrList const &lhs, TypePtrList const &rhs) const {
-  if (lhs.size() != rhs.size()) {
-    return false;
-  }
-  std::size_t size = lhs.size();
-  for (std::size_t i = 0; i < size; ++i) {
-    MS_EXCEPTION_IF_NULL(lhs[i]);
-    MS_EXCEPTION_IF_NULL(rhs[i]);
-    if (*lhs[i] != *rhs[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 std::string GetExcptionTypeString(TypeId id) {
   static mindspore::HashMap<TypeId, std::string> type_id_to_string = {{kMetaTypeType, "MetaType"},
                                                                       {kMetaTypeObject, "MetaTypeObject"},

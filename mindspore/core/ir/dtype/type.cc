@@ -198,12 +198,11 @@ size_t GetTypeByte(const TypePtr &type_ptr) {
 }
 
 bool Type::operator==(const Value &other) const {
-  if (other.isa<Type>()) {
-    auto other_type = static_cast<const Type *>(&other);
-    return *this == *other_type;
-  } else {
+  if (!other.isa<Type>()) {
     return false;
   }
+  auto other_type = static_cast<const Type *>(&other);
+  return *this == *other_type;
 }
 
 std::ostream &operator<<(std::ostream &os, const Type &type) {
