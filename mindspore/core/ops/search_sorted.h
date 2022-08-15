@@ -29,7 +29,7 @@ class MIND_API SearchSorted : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SearchSorted);
   SearchSorted() : BaseOperator(kNameSearchSorted) { InitIOName({"sorted_sequence", "values"}, {"out"}); }
-
+  void Init(const bool right = true, const bool out_int32 = true);
   /// \brief Set right.
   void set_right(const bool right);
   /// \brief Get right.
