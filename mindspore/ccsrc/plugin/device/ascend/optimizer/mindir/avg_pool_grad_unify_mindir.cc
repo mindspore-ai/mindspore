@@ -197,7 +197,11 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, 0);
   auto k_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrKernelSize);
   auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrStrides);
-  auto pad_mode = PadMode(common::AnfAlgo::GetNodeAttr<int64_t>(avgpool_grad, kAttrPadMode));
+  auto prim = GetCNodePrimitive(avgpool_grad);
+  MS_EXCEPTION_IF_NULL(prim);
+  int64_t pad_mode_value = 0;
+  CheckAndConvertUtils::GetPadModEnumValue(prim->GetAttr(kAttrPadMode), &pad_mode_value, true);
+  auto pad_mode = PadMode(pad_mode_value);
 
   auto x_shape_vnode = CreateShapeValueNode(graph, x_shape);
   auto mean_matrix_vnode = CreateMeanMatrixValueNode(graph, node, x_shape, k_size, stride, pad_mode, x_dtype);
