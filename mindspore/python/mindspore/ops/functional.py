@@ -193,18 +193,20 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
     A wrapper function to generate the gradient function for the input function.
 
     As for gradient, three typical cases are included:
-        1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
-        2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
-        3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
+
+    1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+    2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+    3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
-        grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0.
+        grad_position (Union(NoneType, int, tuple[int])): Index to specify which inputs to be differentiated.
+            If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
             If None, none derivative of any input will be figured out, and in this case, `weights` is required.
             Default: 0.
         weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
-            calculate the gradient. `weights` can be got through `weights = net.trainable_params()`.
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
             Default: None.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
@@ -213,8 +215,8 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
 
     Returns:
         Function, the gradient function to calculate gradient for the input function or cell.
-            For example, as for `out1, out2 = fn(*args)`, gradient function will return outputs like (gradient, out2)
-            when has_aux is set True, otherwise gradient.
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
+        like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
 
     Raises:
         ValueError: If both `grad_position` and `weights` are None.
@@ -326,27 +328,29 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
     A wrapper function to generate the function to calculate forward output and gradient for the input function.
 
     As for gradient, three typical cases are included:
-        1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
-        2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
-        3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
+
+    1. gradient with respect to inputs. In this case, `grad_position` is not None while `weights` is None.
+    2. gradient with respect to weights. In this case, `grad_position` is None while `weights` is not None.
+    3. gradient with respect to inputs and weights. In this case, `grad_position` and `weights` are not None.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
-        grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0.
+        grad_position (Union(NoneType, int, tuple[int])): Index to specify which inputs to be differentiated.
+            If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
             If None, none derivative of any input will be solved, and in this case, `weights` is required.
             Default: 0.
         weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
-            calculate the gradient. `weights` can be got through `weights = net.trainable_params()`.
+            calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
             Default: None.
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Specially, this is an experimental feature and is subjected to change.
             Default: False.
 
     Returns:
         Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
-            For example, as for `out = fn(*args)`, gradient function will return outputs like (gradient, out).
+        For example, as for `out1, out2 = fn(*args)` , gradient function will return outputs like
+        `((out1, out2), gradient)` . When `has_aux` is set True, only `out1` contributes to the differentiation.
 
     Raises:
         ValueError: If both `grad_position` and `weights` are None.
