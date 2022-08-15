@@ -16,6 +16,7 @@
 """Define the grad rules of math related operations."""
 
 from mindspore.common import dtype as mstype
+from mindspore.scipy.ops import SolveTriangular
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
@@ -32,7 +33,7 @@ from .._grad.grad_math_ops import binop_grad_common
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import math_ops as math
-from ..operations.math_ops import Igamma, Igammac
+from ..operations.math_ops import Igamma, Igammac, Cholesky
 from ..primitive import constexpr
 from ..operations.math_ops import NextAfter
 from ..operations.math_ops import Hypot
@@ -46,13 +47,27 @@ from ..operations.math_ops import AddV2
 from ..operations.math_ops import TridiagonalMatMul
 from ..operations.math_ops import Logit
 
+
 transpose = P.Transpose()
+_conj = P.Conj()
 
 
 @constexpr
 def _generate_perm(x_dim):
     perm = tuple(range(x_dim - 2))
     return perm
+
+
+def _adjoint(a):
+    return cholesky_transpose(_conj(a))
+
+
+def cholesky_transpose(a):
+    n = len(a.shape)
+    l = list(range(0, n))
+    l[-1] = n - 2
+    l[-2] = n - 1
+    return transpose(a, tuple(l))
 
 
 @bprop_getters.register(P.ACos)
@@ -1056,5 +1071,32 @@ def get_bprop_nextafter(self):
         dx1 = reshape(partial_x1 * dout, s_x1)
         dx2 = reshape(partial_x2 * dout, s_x2)
         return cast(dx1, dtype(dout)), cast(dx2, dtype(dout))
+
+    return bprop
+
+
+@bprop_getters.register(Cholesky)
+def get_bprop_cholesky(self):
+    """Grad definition for `Cholesky` operation."""
+    batchmatmul = P.BatchMatMul()
+    upper = self.upper
+    solve_triangular_upper = SolveTriangular(lower=False, unit_diagonal=False, trans='N')
+    matmul = P.MatMul()
+
+    def bprop(x, out, dout):
+        if len(out.shape) > 2:
+            op = batchmatmul
+        else:
+            op = matmul
+        out = _adjoint(out) if upper else out
+        dout = _adjoint(dout) if upper else dout
+        gl = op(_adjoint(out), dout)
+        gl = F.matrix_band_part(gl, -1, 0)
+        diag = F.matrix_band_part(gl, 0, 0)
+        gl = 0.5 * (gl + _adjoint(gl) - diag)
+        gl = solve_triangular_upper(_adjoint(out), gl)
+        grad_a = solve_triangular_upper(cholesky_transpose(out), cholesky_transpose(gl))
+        grad_a = cholesky_transpose(grad_a)
+        return (grad_a,)
 
     return bprop
