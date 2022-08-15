@@ -723,6 +723,9 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
   // Input Tensor
   auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
   size_t real_input_index = 0;
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  const auto &input_size_list = kernel_mod->GetInputSizeList();
   for (size_t i = 0; i < input_tensor_num; i++) {
     auto input_node = kernel->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -738,7 +741,17 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
         continue;
       }
-      auto parameter = GetSomasParameter(prenode_index.first, prenode_index.second);
+      auto index = AnfAlgo::GetInputIndexInKernel(kernel, i);
+      size_t input_size = 0;
+      if (index >= input_size_list.size()) {
+        MS_LOG(WARNING) << "Node: " << kernel->fullname_with_scope() << " input idx: " << index
+                        << " greater than the size of input_size_list: " << input_size_list.size()
+                        << ", so use 0 as parameter size.";
+      } else {
+        input_size = input_size_list.at(index);
+      }
+      auto parameter =
+        GetSomasParameter(prenode_index.first, prenode_index.second, input_size, kernel->fullname_with_scope());
       node->input_parameters_map_[real_input_index] = parameter;
       real_input_index++;
       MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
@@ -833,26 +846,31 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
   }
 }
 
-SomasParameterPtr Somas::CreateSomasParameter(const AnfNodePtr &node, size_t index) {
+SomasParameterPtr Somas::CreateSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
+                                              const std::string &kernel_name) {
   MS_EXCEPTION_IF_NULL(node);
   auto id = parameters_list_.size();
   const void *addr = nullptr;
-  size_t dev_size = 0;
   if (AnfAlgo::OutputAddrExist(node, index)) {
     auto device_addr = AnfAlgo::GetOutputAddr(node, index);
     if (device_addr == nullptr) {
       MS_LOG(EXCEPTION) << "Node " << node->fullname_with_scope() << " has no device address before Somas.";
     }
     addr = device_addr->GetPtr();
-    dev_size = device_addr->GetSize();
+    if (device_addr->GetSize() != param_size) {
+      MS_LOG(WARNING) << "Dev Size and Param Size is not equal, Node: " << node->fullname_with_scope()
+                      << " Dev Size: " << device_addr->GetSize() << " param_size: " << param_size
+                      << " Kernel: " << kernel_name;
+    }
   }
 
-  auto param = std::make_shared<SomasParameter>(id, node->fullname_with_scope(), index, addr, dev_size);
+  auto param = std::make_shared<SomasParameter>(id, node->fullname_with_scope(), index, addr, param_size);
   parameters_list_.push_back(param);
   return param;
 }
 
-SomasParameterPtr Somas::GetSomasParameter(const AnfNodePtr &node, size_t index) {
+SomasParameterPtr Somas::GetSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
+                                           const std::string &kernel_name) {
   auto key = node.get();
   auto iter = parameters_map_.find(key);
   if (iter != parameters_map_.end()) {
@@ -861,12 +879,12 @@ SomasParameterPtr Somas::GetSomasParameter(const AnfNodePtr &node, size_t index)
     if (it != iter->second.end()) {
       return *it;
     } else {
-      auto new_param = CreateSomasParameter(node, index);
+      auto new_param = CreateSomasParameter(node, index, param_size, kernel_name);
       iter->second.push_back(new_param);
       return new_param;
     }
   } else {
-    auto param = CreateSomasParameter(node, index);
+    auto param = CreateSomasParameter(node, index, param_size, kernel_name);
     parameters_map_[key].push_back(param);
     return param;
   }

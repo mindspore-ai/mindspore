@@ -154,8 +154,10 @@ class Somas {
   void InitSomasInputTensors(const session::KernelGraph &graph);
   void InitCommonNodeInputs(const CNodePtr &kernel);
   void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
-  SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index);
-  SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index);
+  SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
+                                      const std::string &kernel_name);
+  SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
+                                         const std::string &kernel_name);
   void InitControlTensors(const session::KernelGraph &graph);
   bool CommonSpecNodeProcess(const session::KernelGraph &graph);
   SomasStreamPtr GetSomasStream(size_t stream_id) const;
