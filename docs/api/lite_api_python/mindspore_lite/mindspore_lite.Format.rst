@@ -43,7 +43,7 @@ mindspore_lite.Format
 
     * **用法**
 
-      由于Python API中的 `mindspore_lite.Tensor` 是直接使用pybind11技术包装C++ API，"Format"在Python API和C++ API之间有一对一的对应关系，修改 `Format` 的方法在 `tensor` 类的set和get方法中。
+      由于Python API中的 `mindspore_lite.Tensor` 是直接使用pybind11技术包装C++ API， `Format` 在Python API和C++ API之间有一对一的对应关系，修改 `Format` 的方法在 `tensor` 类的set和get方法中。
 
       - `set_format`: 在 `format_py_cxx_map` 中以Python API中的 `Format` 为关键字进行查询，并获取C++ API中的 `Format` ，将其传递给C++ API中的 `set_format` 方法。
       - `get_format`: 通过C++ API中的 `get_format` 方法在C++ API中获取 `Format` ，以C++ API中的 `Format` 为关键字在 `format_cxx_py_map` 中查询，返回在Python API中的 `Format` 。
