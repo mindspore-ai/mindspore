@@ -61,3 +61,22 @@ def test_tile_eliminate():
     assert out.shape == (1, 448, 448)
     out = expand_tensor(tensor_, (1, 1, 1, 1))
     assert out.shape == (1, 1, 448, 448)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_shape_raise():
+    """
+    Feature: shape raise.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    tensor0 = Tensor(np.ndarray([1, 448, 448]), dtype=dtype.float32)
+    tensor1 = Tensor(np.ndarray([1, 448, 448]), dtype=dtype.float32)
+    with pytest.raises(TypeError):
+        ops.shape([tensor0, tensor1])
