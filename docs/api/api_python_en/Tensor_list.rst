@@ -105,6 +105,7 @@ Comparison Methods
     mindspore.Tensor.approximate_equal
     mindspore.Tensor.has_init
     mindspore.Tensor.isclose
+    mindspore.Tensor.isfinite
     mindspore.Tensor.top_k
 
 Linear Algebraic Methods
