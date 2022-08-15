@@ -931,7 +931,7 @@ void Somas::GraphOutputProcess(const session::KernelGraph &graph) {
   for (auto output_with_index : outputs) {
     auto output_kernel = output_with_index.first;
     MS_EXCEPTION_IF_NULL(output_kernel);
-    if (AnfUtils::IsRealCNodeKernel(output_kernel) && nodes_map_.find(output_kernel.get()) == nodes_map_.end()) {
+    while (AnfUtils::IsRealCNodeKernel(output_kernel) && nodes_map_.find(output_kernel.get()) == nodes_map_.end()) {
       auto cnode = output_kernel->cast<CNodePtr>();
       if (!common::AnfAlgo::IsNopNode(cnode)) {
         MS_LOG(EXCEPTION) << "Node[" << cnode->fullname_with_scope()
