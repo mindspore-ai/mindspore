@@ -44,8 +44,11 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
   auto status = Init(model_buf, size);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed in model worker.";
-    *create_success = false;
-    create_work_done_ = true;
+    {
+      std::unique_lock<std::mutex> create_work_lock(create_work_done_mutex_);
+      *create_success = false;
+      create_work_done_ = true;
+    }
     create_work_done_condition_.notify_one();
   }
   Run();
@@ -54,7 +57,11 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
 void ModelWorker::Run() {
   auto numa_node_id = worker_config_->numa_id;
   int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
-  create_work_done_ = true;
+  {
+    // The scope of the lock is only for this variable
+    std::unique_lock<std::mutex> create_work_lock(create_work_done_mutex_);
+    create_work_done_ = true;
+  }
   create_work_done_condition_.notify_one();
   while (!predict_task_queue_->IsPredictTaskDone()) {
     auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);

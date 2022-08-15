@@ -678,6 +678,21 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     }
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
+    MS_LOG(INFO) << "create worker index: " << i << " | numa id: " << model_pool_config[i]->numa_id
+                 << " | worker affinity mode: " << model_pool_config[i]->context->GetThreadAffinityMode()
+                 << " | worker bind core list: " << model_pool_config[i]->context->GetThreadAffinityCoreList()
+                 << " | worker thread num: " << model_pool_config[i]->context->GetThreadNum()
+                 << " | inter op parallel num: " << model_pool_config[i]->context->GetInterOpParallelNum();
+    if (!model_pool_config[i]->config_info.empty()) {
+      for (auto &item : model_pool_config[i]->config_info) {
+        auto section = item.first;
+        MS_LOG(INFO) << "section: " << section;
+        auto configs = item.second;
+        for (auto &config : configs) {
+          MS_LOG(INFO) << "\t key: " << config.first << " | value: " << config.second;
+        }
+      }
+    }
     worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
                                              model_pool_config[i], predict_task_queue_, &create_worker_success));
     if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
