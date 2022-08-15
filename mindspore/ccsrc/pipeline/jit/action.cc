@@ -445,9 +445,9 @@ bool ParseAction(const ResourcePtr &resource) {
 bool CombineLikeGraphs(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto &obj_map = parse::data_converter::GetObjGraphs();
-  for (auto it : obj_map) {
-    auto &graphs = it.second;
-    MS_LOG(DEBUG) << "Start combine like graph:" << it.first << ", size:" << graphs.size();
+  for (auto it = obj_map.rbegin(); it != obj_map.rend(); ++it) {
+    auto &graphs = it->second;
+    MS_LOG(DEBUG) << "Start combine like graph:" << it->first << ", size:" << graphs.size();
     auto fg = graphs[0];
     FuncGraphVector func_graphs = {fg};
     Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(),
@@ -496,7 +496,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
       const int recursive_level = 4;
       MS_LOG(DEBUG) << "Combine graph newout:" << out->DebugString(recursive_level);
     }
-    MS_LOG(DEBUG) << "End combine graph:" << it.first;
+    MS_LOG(DEBUG) << "End combine graph:" << it->first;
   }
   return true;
 }
