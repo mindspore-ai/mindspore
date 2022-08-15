@@ -574,7 +574,7 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batches, size_t plane
     }
   }
 }
-std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same) {
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same, bool is_tensor) {
   nvinfer1::Dims dims = trt_tensor->getDimensions();
   std::string is_same_string = is_same ? " is same with ms tensor " : " is different from ms tensor ";
   std::string out_string = "tensor " + std::string(trt_tensor->getName()) + ": format (NHWC:1, NCHW:0) is " +
@@ -588,11 +588,17 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format for
   }
   dim_string += "]";
   out_string += dim_string;
+  out_string += " is_tensor(0/1): " + std::to_string(is_tensor);
   return out_string;
 }
 
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same) {
+  return GetTensorFormat(trt_tensor, format, is_same, true);
+}
+
 std::string GetTensorFormat(ITensorHelper tensor_helper) {
-  return GetTensorFormat(tensor_helper.trt_tensor_, tensor_helper.format_, tensor_helper.same_format_);
+  return GetTensorFormat(tensor_helper.trt_tensor_, tensor_helper.format_, tensor_helper.same_format_,
+                         tensor_helper.is_tensor_);
 }
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor) { return GetTensorFormat(trt_tensor, Format::NHWC, true); }

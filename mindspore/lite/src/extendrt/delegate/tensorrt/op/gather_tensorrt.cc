@@ -98,7 +98,7 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   auto out_helper = ITensorHelper{op_output, gather_input.format_, gather_input.same_format_};
   if (old_shape.size() == 1) {
-    out_helper.is_tensor = false;
+    out_helper.is_tensor_ = false;
   }
   ctx->RegisterTensor(out_helper, out_tensors_[0].Name());
   return RET_OK;

@@ -241,7 +241,7 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(WARNING) << op_name_ << " has unsqueeze axis size: " << param_axis_->size();
   }
   nvinfer1::ITensor *expand_input = shuffler_input_;
-  if (input(ctx_, 0).is_tensor == true) {
+  if (input(ctx_, 0).is_tensor_ == true) {
     for (size_t i = 0; i < param_axis_->size(); i++) {
       expand_input = ExpandDim(shuffle_layer, expand_input, param_axis_->Get(i));
     }

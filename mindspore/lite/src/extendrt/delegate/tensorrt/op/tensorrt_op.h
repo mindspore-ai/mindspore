@@ -32,6 +32,7 @@ namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
+constexpr int INPUT_SIZE5 = 5;
 
 struct BindingHelper {
   std::string name_;
