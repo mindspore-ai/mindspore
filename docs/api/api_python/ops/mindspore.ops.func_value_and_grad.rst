@@ -18,7 +18,7 @@ mindspore.ops.value_and_grad
         - **has_aux** (bool) - 是否返回辅助参数的标志。若为True， `fn` 输出数量必须超过一个，其中只有 `fn` 第一个输出参与求导，其他输出值将直接返回。默认值：False。
 
     返回：
-        Function，用于计算给定函数的梯度的求导函数。例如 `out1, out2 = fn(*args)` ，梯度函数将返回 `((out1, out2), gradient)` 形式的结果, 其中 `out2` 不参与求导。
+        Function，用于计算给定函数的梯度的求导函数。例如 `out1, out2 = fn(*args)` ，梯度函数将返回 `((out1, out2), gradient)` 形式的结果, 若 `has_aux` 为True，那么 `out2` 不参与求导。
 
     异常：
         - **ValueError** - 入参 `grad_position` 和 `weights` 同时为None。
