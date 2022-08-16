@@ -337,9 +337,14 @@ std::vector<StrategyPtr> BatchNormInfo::GenerateOpStrategies(int64_t stage_id) {
 
 // in_strategy: ((N, C, H, W), (), (), (), ()) return: ((N, C, H, W), (C), (C), (C), (C))
 // in_strategy: ((), (C), (C), (C), (C)) return: ((1, C, 1, 1), (C), (C), (C), (C))
+// in_strategy: ((), (C), (), (C), (C)) throw exception
 Shapes BatchNormInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
   if (in_strategy.size() != 5) {
     MS_LOG(EXCEPTION) << name_ << ": The size of in strategy must be 5, but got " << in_strategy.size();
+  }
+
+  if ((in_strategy[2] != in_strategy[1]) || (in_strategy[3] != in_strategy[1]) || (in_strategy[4] != in_strategy[1])) {
+    MS_LOG(EXCEPTION) << name_ << ": The last 4 strategy must be equal, but got " << in_strategy;
   }
 
   Shape channel_strategy;

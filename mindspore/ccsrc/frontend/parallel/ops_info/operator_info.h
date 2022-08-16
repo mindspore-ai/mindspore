@@ -238,6 +238,7 @@ class OperatorInfo {
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Shapes InferParamStrategy(const Shapes &default_strategy);
   virtual Shapes InferStrategyIndividualMode(const Shapes &in_strategy);
+  Shapes GenerateFullStrategyBase(const Shapes &in_strategy);
   Shapes InferStrategySameMode(const Shapes &in_strategy);
   Shapes InferStrategyBroadcastMode(const Shapes &in_strategy);
   Shapes InferStrategyIndependentMode(const Shapes &in_strategy);

@@ -2126,15 +2126,6 @@ Shapes OperatorInfo::InferParamStrategy(const Shapes &default_strategy) {
   return default_strategy;
 }
 
-bool HasEmptyStrategy(const Shapes &in_strategy) {
-  for (auto &ele : in_strategy) {
-    if (ele.empty()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 // in_strategy: ((A, B, C, D), ()), return: ((A, B, C, D), (A, B, C, D))
 // in_strategy: ((), (A, B, C, D)), return: ((A, B, C, D), (A, B, C, D))
 Shapes OperatorInfo::InferStrategySameMode(const Shapes &in_strategy) {
@@ -2212,9 +2203,10 @@ Shapes OperatorInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
   MS_LOG(EXCEPTION) << name_ << ": The in strategy is " << in_strategy << ", need to override this function ";
 }
 
-Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
+Shapes OperatorInfo::GenerateFullStrategyBase(const Shapes &in_strategy) {
   // there is no empty in the in_strategy
-  if (!HasEmptyStrategy(in_strategy)) {
+  auto it = std::find_if(in_strategy.begin(), in_strategy.end(), [](const Shape &ele) { return ele.empty(); });
+  if (it == in_strategy.end()) {
     MS_LOG(INFO) << name_ << ": There is no empty in the input strategy, return to itself: " << in_strategy;
     return in_strategy;
   }
@@ -2230,10 +2222,6 @@ Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
   }
 
   // generate the full strategy from non empty strategy
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
-  }
-
   Shapes ret;
   switch (infer_strategy_mode_) {
     case SAME_MODE:
@@ -2253,10 +2241,19 @@ Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
       MS_LOG(EXCEPTION) << name_ << ": The invalid mode for infer strategy";
   }
 
-  if (name_.find(ONEHOT_INFO) == std::string::npos && CheckStrategyBase(ret, inputs_shape_) != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << ": The origin strategy is " << in_strategy << ", and the return strategy is " << ret;
-  }
   MS_LOG(INFO) << name_ << ": The origin strategy is " << in_strategy << ", and the return strategy is " << ret;
+  return ret;
+}
+
+Shapes OperatorInfo::GenerateFullStrategy(const Shapes &in_strategy) {
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
+  }
+  Shapes ret = GenerateFullStrategyBase(in_strategy);
+  StrategyPtr strategy_ptr = NewStrategy(0, ret);
+  if (CheckStrategy(strategy_ptr) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Invalid strategy";
+  }
   return ret;
 }
 
