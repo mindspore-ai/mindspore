@@ -16,7 +16,7 @@ mindspore.COOTensor
          [0, 0, 0, 0]]
 
     .. note::
-        这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。
+        这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。如果索引中包含界外值，则得出未定义结果。
 
     参数：
         - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。

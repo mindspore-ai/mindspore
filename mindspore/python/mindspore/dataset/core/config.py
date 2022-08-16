@@ -686,7 +686,7 @@ def get_auto_offload():
     Returns:
         bool, Whether the automatic offload feature is enabled.
 
-    Example:
+    Examples:
         >>> # Get the global configuration of the automatic offload feature.
         >>> auto_offload = ds.config.get_auto_offload()
     """

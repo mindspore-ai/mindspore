@@ -347,7 +347,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
           mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16. Default: mindspore.dtype.float32.
 
     Returns:
-        A Tensor whose shape is `mindspore.concat([`shape`, mindspore.shape(`rate`)], axis=0)` and data type is equal to
+        A Tensor whose shape is `mindspore.concat(['shape', mindspore.shape('rate')], axis=0)` and data type is equal to
         argument `dtype`.
 
     Raises:

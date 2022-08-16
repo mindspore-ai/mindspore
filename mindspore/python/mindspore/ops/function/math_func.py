@@ -2662,17 +2662,18 @@ def equal(x, y):
     r"""
     Computes the equivalence between two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
     .. math::
 
         out_{i} =\begin{cases}
             & \text{True,    if } x_{i} = y_{i} \\
             & \text{False,   if } x_{i} \ne y_{i}
             \end{cases}
+
+    Note:
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, the shapes of them could be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
         x (Union[Tensor, Number]): The first input is a number or
@@ -3036,12 +3037,13 @@ def minimum(x, y):
     r"""
     Computes the minimum of input tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, dtypes of them cannot be bool at the same time.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
-    Shapes of them are supposed to be broadcast.
-    If one of the elements being compared is a NaN, then that element is returned.
+    Note:
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, dtypes of them cannot be bool at the same time.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - Shapes of them are supposed to be broadcast.
+        - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
         output_i = min(x_i, y_i)

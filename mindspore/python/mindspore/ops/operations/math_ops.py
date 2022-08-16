@@ -634,6 +634,7 @@ class ReduceMean(_Reduce):
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -918,6 +919,7 @@ class ReduceMax(_Reduce):
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1004,6 +1006,7 @@ class ReduceMin(_Reduce):
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1126,6 +1129,7 @@ class ReduceProd(_Reduce):
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
