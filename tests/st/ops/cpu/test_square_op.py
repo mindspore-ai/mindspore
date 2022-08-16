@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
+
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
@@ -34,6 +35,7 @@ class Grad(nn.Cell):
     def construct(self, input_, output_grad):
         return self.grad(self.network)(input_, output_grad)
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -41,6 +43,7 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.ops(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -65,4 +68,29 @@ def test_net(dtype):
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
-    
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_square_dy(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Square dynamic shape.
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    input_x_np = np.random.randn(2, 3, 3, 4).astype(dtype)
+    benchmark_output = np.square(input_x_np)
+    loss = 1e-6
+    square_net = Net()
+    real_input = Tensor(input_x_np)
+    dy_shape = [None for _ in input_x_np.shape]
+    input_dyn = Tensor(shape=dy_shape, dtype=real_input.dtype)
+    square_net.set_inputs(input_dyn)
+    ms_result = square_net(real_input)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    ms_result = square_net(real_input)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
