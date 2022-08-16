@@ -31,6 +31,9 @@ from ...common.parameter import Parameter
 from ...communication.management import GlobalComm
 from ..._c_expression import call_constant_folding
 
+bit_and = Primitive("bit_and")
+bit_or = Primitive("bit_or")
+
 
 class FillV2(Primitive):
     """
@@ -1524,6 +1527,7 @@ class SliceGetItem(Primitive):
     """
         using SliceGetItem to get slice's attribute of 'start' 'stop' 'step'
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize ScatterElements"""

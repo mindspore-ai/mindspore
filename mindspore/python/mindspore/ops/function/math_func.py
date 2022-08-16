@@ -1689,7 +1689,7 @@ def bitwise_and(x, y):
                       when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -1727,7 +1727,7 @@ def bitwise_or(x, y):
                       when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
