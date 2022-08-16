@@ -77,7 +77,7 @@ def _auto_white_list(network, white_list=None):
         subcell = cells[name]
         if subcell == network:
             continue
-        elif isinstance(subcell, white_list):
+        if isinstance(subcell, white_list):
             network._cells[name] = _OutputTo32(subcell.to_float(mstype.float16))
             change = True
         else:
@@ -97,7 +97,7 @@ def _auto_black_list(network, black_list=None):
         subcell = cells[name]
         if subcell == network:
             continue
-        elif isinstance(subcell, black_list):
+        if isinstance(subcell, black_list):
             network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
             change = True
         else:
