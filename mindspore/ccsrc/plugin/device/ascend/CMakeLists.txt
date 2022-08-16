@@ -1,16 +1,14 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 
-if(ENABLE_D OR ENABLE_ACL)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-endif()
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(MINDSPORE_RPATH
+        ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
@@ -35,10 +33,9 @@ add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_ascend PUBLIC mindspore_backend_common)
 target_link_libraries(mindspore_ascend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec)
-
-set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH $ORIGIN)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::dnnl mindspore::mkldnn mindspore::ssl
                       mindspore::crypto nnacl)
+set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -51,7 +48,7 @@ if(ENABLE_D)
     find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(HCCL hccl ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore_ascend PUBLIC ${GE_RUNNER} ${GRAPH} ${HCCL})
+    target_link_libraries(mindspore_ascend PRIVATE ${GE_RUNNER} ${GRAPH} ${HCCL})
     target_link_libraries(mindspore_ascend PRIVATE mindspore::event mindspore::event_pthreads
             mindspore::event_openssl -Wl,--no-as-needed mindspore::event_core ps_cache)
 endif()
@@ -70,7 +67,7 @@ if(MODE_ASCEND_ALL)
     find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPTILING optiling ${ASCEND_CANN_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
 
-    target_link_libraries(mindspore_ascend PUBLIC ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
+    target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
 endif()

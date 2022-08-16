@@ -13,14 +13,6 @@ set(FBS_FILES
         )
 ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
 
-if(ENABLE_D OR ENABLE_ACL)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH
-        ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-endif()
-
 ## Function for setting NVCC flag
 function(set_nvcc_flag CUDA_NVCC_FLAGS)
     # Detect gpu archs by cudaGetDeviceProperties.
@@ -483,8 +475,6 @@ if(ENABLE_GPU)
     target_link_libraries(mindspore_backend PRIVATE mindspore_gpu)
 endif()
 
-set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore PUBLIC mindspore::pybind11_module)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
@@ -506,6 +496,7 @@ else()
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 endif()
 
+set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 if(USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
 endif()
@@ -513,11 +504,6 @@ endif()
 if(ENABLE_GPU)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_link_libraries(_c_expression PRIVATE mindspore::ssl mindspore::crypto)
-    endif()
-    if(ENABLE_MPI)
-        set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-        set_target_properties(nvidia_collective PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
-        set_target_properties(gpu_collective PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
     endif()
 endif()
 

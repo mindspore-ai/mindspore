@@ -52,8 +52,7 @@ void ConstInputToAttrRegister::RegConstToAttr(const std::string &name, const std
   auto key = GenerateKey(name, backend, is_dynamic_shape);
   auto find = input_to_attr_.find(key);
   if (find != input_to_attr_.end()) {
-    MS_LOG(WARNING) << "This node(" << key << ")"
-                    << " has been registered.";
+    return;
   }
   input_to_attr_[key] = input_to_attr;
 }
