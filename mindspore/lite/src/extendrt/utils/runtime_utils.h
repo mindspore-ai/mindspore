@@ -46,6 +46,8 @@ class RuntimeUtils {
   static void AssignKernelOutputAddress(KernelGraphPtr kernel_graph);
   static device::DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                       TypeId type_id);
+  static void UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
+                                         const std::vector<kernel::AddressPtr> &output_addrs);
 };
 }  // namespace mindspore
 

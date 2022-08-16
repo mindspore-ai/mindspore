@@ -45,8 +45,10 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
       MS_EXCEPTION_IF_NULL(ascend_device_info);
       device_id_ = ascend_device_info->GetDeviceID();
+      return kSuccess;
     }
   }
+  MS_LOG(DEBUG) << "There is no ascend device info, no need to register ascend plugin.";
   return kSuccess;
 }
 
@@ -167,6 +169,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
     bool ret = true;
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
+      RuntimeUtils::UpdateKernelNodeOutputInfo(kernel_node, kernel_outputs);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what();
     }
