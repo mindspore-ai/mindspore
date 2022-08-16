@@ -21,6 +21,7 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_hue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_saturation_ir.h"
@@ -139,6 +140,18 @@ AdjustBrightness::AdjustBrightness(float brightness_factor) : data_(std::make_sh
 
 std::shared_ptr<TensorOperation> AdjustBrightness::Parse() {
   return std::make_shared<AdjustBrightnessOperation>(data_->brightness_factor_);
+}
+
+// AdjustContrast Transform Operation.
+struct AdjustContrast::Data {
+  explicit Data(float contrast_factor) : contrast_factor_(contrast_factor) {}
+  float contrast_factor_;
+};
+
+AdjustContrast::AdjustContrast(float contrast_factor) : data_(std::make_shared<Data>(contrast_factor)) {}
+
+std::shared_ptr<TensorOperation> AdjustContrast::Parse() {
+  return std::make_shared<AdjustContrastOperation>(data_->contrast_factor_);
 }
 
 // AdjustGamma Transform Operation.
