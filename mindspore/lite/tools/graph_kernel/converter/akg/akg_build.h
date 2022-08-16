@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include "utils/anf_utils.h"
+#include "kernel/akg/akg_kernel_json_generator.h"
 
 namespace mindspore::graphkernel {
 constexpr size_t PROCESS_LIMIT = 8;
@@ -31,9 +32,15 @@ class AkgKernelBuilder {
   ~AkgKernelBuilder() = default;
 
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list);
+
+  static DumpOption json_option() {
+    DumpOption dump_json_option;
+    dump_json_option.get_target_info = true;
+    return dump_json_option;
+  }
 };
 
-std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir,
-                          std::map<AnfNodePtr, std::string> *node_name, std::vector<std::string> *json_list);
+std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
+                          std::map<AnfNodePtr, std::string> *node_name, std::vector<std::string> *kernel_names);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_

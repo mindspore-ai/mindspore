@@ -57,15 +57,15 @@ bool TuningSplitSchemer::ParseResult(const AnfNodePtrList &nodes, const nlohmann
 }
 
 bool TuningSplitSchemer::Split(const FuncGraphPtr &func_graph) {
-  if (!func_graph->has_attr("kernel_name")) {
-    MS_LOG(WARNING) << "The func_graph has not attr \"kernel_name\".";
+  if (!func_graph->has_attr(kAttrNodeName)) {
+    MS_LOG(WARNING) << "The func_graph has not attr \"node_name\".";
     return false;
   }
-  std::string kernel_name = GetValue<std::string>(func_graph->get_attr("kernel_name"));
+  std::string node_name = GetValue<std::string>(func_graph->get_attr(kAttrNodeName));
   AnfNodePtrList nodes;
   GkUtils::GetValidKernelNodes(func_graph, &nodes, nullptr, nullptr);
   // the input json has postfix ".info", and the result file has postfix ".json"
-  auto result_file = tuning_path_ + "/" + kernel_name + ".json";
+  auto result_file = tuning_path_ + "/" + node_name + ".json";
   nlohmann::json tuning_result;
   if (!ReadCache(result_file, &tuning_result)) {
     return false;
