@@ -26,7 +26,9 @@
 #include "ir/anf.h"
 #include "ir/signature.h"
 
-namespace mindspore::pynative {
+namespace mindspore {
+namespace pynative {
+// The following structures used to get output abstract of op from cache
 struct AbsCacheKey {
   std::string prim_name_;
   size_t prim_hash_value_;
@@ -55,21 +57,18 @@ using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAb
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 using PrimAbsCache = std::unordered_map<AbsCacheKey, AbstractListMap, AbsCacheKeyHasher, AbsCacheKeyEqual>;
 
-// Used for id
-struct PyObjectHasher {
-  size_t operator()(const py::handle &key) const { return py::hash(key); }
-};
+// Used to get input abstract of op from cache
+// Key is id of input obj, value is the abstract of input obj
+using NodeAbsCache = mindspore::HashMap<std::string, abstract::AbstractBasePtr>;
 
-struct PyObjectEqual {
-  bool operator()(const py::handle &p1, const py::handle &p2) const { return p1 == p2; }
-};
-using PyObjectIdCache = std::unordered_map<py::handle, std::string, PyObjectHasher, PyObjectEqual>;
-
+// Used to cache implicit cast info according to primitive
+// Key is primitive name, value is the implicit cast info
 struct PrimSignature {
   bool has_dtype_sig;
   std::vector<SignatureEnumDType> dtypes;
   mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
 };
 using ImplicitCastCache = mindspore::HashMap<std::string, PrimSignature>;
-}  // namespace mindspore::pynative
+}  // namespace pynative
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_ABS_CACHE_H

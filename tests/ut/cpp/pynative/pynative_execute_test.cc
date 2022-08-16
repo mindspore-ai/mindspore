@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,25 @@
 #include <iostream>
 #include <memory>
 #include "common/common_test.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "pipeline/pynative/forward/do_infer.h"
+#include "pipeline/pynative/base.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
 
 namespace py = pybind11;
 using pybind11::literals::operator"" _a;
+using PrimitivePy = mindspore::PrimitivePy;
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
+using BaseOpRunInfo = mindspore::pynative::BaseOpRunInfo;
+using FrontendOpRunInfo = mindspore::pynative::FrontendOpRunInfo;
+using InferOperation = mindspore::pynative::InferOperation;
 
 namespace mindspore {
 namespace pynative {
@@ -67,6 +75,9 @@ FrontendOpRunInfoPtr ConstructOpExecInfo() {
   return PyNativeExecutor::GetInstance()->forward_executor()->GenerateOpRunInfo(args);
 }
 
+/// Feature: Test pynative create context
+/// Description: Test pynative create context interface
+/// Expectation: success
 TEST_F(TestPynativeExecute, TestCreateContext) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -84,6 +95,9 @@ TEST_F(TestPynativeExecute, TestCreateContext) {
   ASSERT_EQ(ctx4->get_param<std::string>(MS_CTX_DEVICE_TARGET), "GPU");
 }
 
+/// Feature: Test pynative default context
+/// Description: Test pynative default context interface
+/// Expectation: success
 TEST_F(TestPynativeExecute, TestDefaultContext) {
   auto ctx = MsContext::GetInstance();
 
@@ -92,6 +106,48 @@ TEST_F(TestPynativeExecute, TestDefaultContext) {
   auto ctx2 = MsContext::GetInstance();
 
   ASSERT_EQ(ctx.get(), ctx2.get());
+}
+
+/// Feature: Test pynative infer operation
+/// Description: Test pynative infer interface by using `matmul` ops
+/// Expectation: success
+TEST_F(TestPynativeExecute, TestInferOperator) {
+  auto conv_obj = prim::GetPythonOps("matmul", "gtest_input.pynative");
+  auto t1 = prim::GetPythonOps("tensor1", "gtest_input.pynative");
+  auto t2 = prim::GetPythonOps("tensor2", "gtest_input.pynative");
+  // Get run op info.
+  auto op_run_info = std::make_shared<FrontendOpRunInfo>();
+  op_run_info->base_op_run_info.op_name = "MatMul";
+  op_run_info->op_prim = conv_obj->cast<PrimitivePyPtr>();
+  ASSERT_NE(op_run_info->op_prim, nullptr);
+  (void)op_run_info->input_value.emplace_back(t1);
+  (void)op_run_info->input_value.emplace_back(t2);
+  // call infer operator.
+  auto infer_operator = std::make_shared<InferOperation>();
+  ValuePtr infer_value = infer_operator->DoInfer(op_run_info);
+  // Check abstract.
+  ASSERT_NE(infer_value, nullptr);
+  ASSERT_EQ(infer_value->isa<AnyValue>(), true);
+  auto output_abs = op_run_info->base_op_run_info.abstract;
+  ASSERT_NE(output_abs, nullptr);
+  ASSERT_EQ(output_abs->isa<abstract::AbstractTensor>(), true);
+  auto abs_tensor = output_abs->cast<abstract::AbstractTensorPtr>();
+  ASSERT_NE(abs_tensor, nullptr);
+  // Check type.
+  auto base_type = abs_tensor->BuildType();
+  ASSERT_NE(base_type, nullptr);
+  auto tensor_type = base_type->cast<TensorTypePtr>();
+  ASSERT_NE(tensor_type, nullptr);
+  ASSERT_EQ(tensor_type->element()->type_id(), kNumberTypeFloat32);
+  // Check shape.
+  auto base_shape = abs_tensor->BuildShape();
+  ASSERT_NE(base_shape, nullptr);
+  auto shape = base_shape->cast<abstract::ShapePtr>();
+  ASSERT_NE(shape, nullptr);
+  auto shape_v = shape->shape();
+  ASSERT_EQ(shape_v.size(), 2);
+  ASSERT_EQ(shape_v[0], 1);
+  ASSERT_EQ(shape_v[1], 1);
 }
 
 }  // namespace pynative

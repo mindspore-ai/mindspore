@@ -103,8 +103,9 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
     }
 
     // Find in step process
-    auto it = forward()->node_abs_map().find(arg_id);
-    if (it != forward()->node_abs_map().end()) {
+    const auto &node_abs_map = forward()->NodeAbsMap();
+    auto it = node_abs_map.find(arg_id);
+    if (it != node_abs_map.end()) {
       fn(it->second);
     } else {
       auto value = PyNativeAlgo::DataConvert::PyObjToValue(args[i]);
@@ -114,7 +115,7 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
       if (abs->isa<abstract::AbstractTensor>()) {
         abs->set_value(kAnyValue);
       }
-      forward()->SetNodeAbsMap(arg_id, abs);
+      forward()->SetNodeAbsMapById(arg_id, abs);
       fn(abs);
     }
   }
@@ -1358,9 +1359,6 @@ AnfNodePtr GradExecutor::CreateTupleGetItemNode(const std::string &obj_id) const
       c_node->set_abstract(prim_abs);
     }
   }
-  if (c_node->abstract() != nullptr) {
-    forward()->SetNodeAbsMap(obj_id, c_node->abstract());
-  }
   MS_LOG(DEBUG) << "Create tuple get item node: " << c_node->DebugString();
   return c_node;
 }
@@ -1423,26 +1421,25 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
 }
 
 void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v) const {
-  MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
   // Get output value
   if (!grad_flag_) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
-
   // Record op info for judge whether the construct of cell has been changed
+  MS_EXCEPTION_IF_NULL(op_run_info);
   top_cell()->RecordGradOpInfo(op_run_info);
   // Const value no need do op grad
   if (op_run_info->output_get_by_infer_value) {
     return;
   }
+  // Do op grad and save node info
   if (need_construct_graph() && custom_bprop_cell_count_ <= 0) {
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
     const auto &obj_id = PyNativeAlgo::Common::GetIdByValue(v);
     cnode->set_abstract(op_run_info->base_op_run_info.abstract);
-    forward()->SetNodeAbsMap(obj_id, op_run_info->base_op_run_info.abstract);
     SaveOutputNodeMap(obj_id, v, cnode);
     DoOpGrad(op_run_info, cnode, v);
     // Dynamic shape should update to top cell
@@ -1450,6 +1447,7 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, co
       top_cell()->set_dynamic_shape(true);
     }
   }
+  forward()->SetNodeAbsMapByValue(v, op_run_info->base_op_run_info.abstract);
   UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, v);
 }
 
