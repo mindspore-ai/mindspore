@@ -5,7 +5,7 @@ mindspore.set_context
 
     设置运行环境的context。
 
-    在运行程序之前，应配置context。如果没有配置，默认情况下将根据设备目标进行自动设置。
+    在运行程序之前，应配置context。如果没有配置，默认情况下将根据设备目标进行自动设置。不建议在net初始化后改变该模式，因为某些操作在Graph模式和PyNative模式下的实现是不同的。默认值：GRAPH_MODE。
 
     .. note::
         设置属性时，必须输入属性名称。
@@ -136,7 +136,7 @@ mindspore.set_context
     - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
     - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于0。默认值为30，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
     - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为True，以尝试提高训练性能。默认值：False。
-    - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将`support_binary`置为True，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
+    - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为True，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
     **异常：**
 
     **ValueError**：输入key不是上下文中的属性。
