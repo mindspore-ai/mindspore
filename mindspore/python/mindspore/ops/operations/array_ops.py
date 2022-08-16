@@ -33,7 +33,7 @@ from ..._checkparam import _check_3d_int_or_tuple
 from ...common import dtype as mstype
 from ...common._decorator import deprecated
 from ...common.parameter import Parameter
-from ...common.tensor import Tensor
+from ...common.tensor import Tensor, CSRTensor, COOTensor
 from ..._c_expression import Tensor as Tensor_
 from ..._c_expression import get_dyn_shape
 
@@ -272,6 +272,9 @@ class DType(Primitive):
         """Initialize DType"""
 
     def __call__(self, x):
+        if not isinstance(x, (Tensor, CSRTensor, COOTensor)):
+            raise TypeError("For Primitive[Dtype], the input argument[input_x] "
+                            "must be a Tensor, CSRTensor or COOTensor, but got " + type(x) + ".")
         return x.dtype
 
 
