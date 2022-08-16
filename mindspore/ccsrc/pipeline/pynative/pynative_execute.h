@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/grad/grad.h"
 #include "pybind11/pybind11.h"
@@ -34,6 +35,7 @@ using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 
 py::object RealRunOp(const py::args &args);
 py::object GetDynShape(const py::args &args);
+py::object CallConstantFolding(const py::args &args);
 
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
