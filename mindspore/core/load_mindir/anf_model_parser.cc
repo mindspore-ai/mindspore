@@ -1375,6 +1375,7 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     inputs.push_back(maketuple_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
+    return_node->set_abstract(maketuple_ptr->abstract());
     return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success.";
@@ -1389,6 +1390,7 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     inputs.push_back(anfNode);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
+    return_node->set_abstract(anfNode->abstract());
     return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success!";
