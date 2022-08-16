@@ -21,7 +21,7 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
-
+#include <string>
 #include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph.h"
@@ -164,13 +164,19 @@ class PrimBpropOptimizer {
   PrimBpropOptGraphInfoPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) const;
 
   // do opt with input info
-  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
-                                                   const abstract::AbstractBasePtrList &abs_list_input) const;
+  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(
+    const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input,
+    const std::vector<bool> &need_grad_flags = std::vector<bool>()) const;
+
+  FuncGraphPtr GetBpropGrahWithNoGradInput(const PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
+                                           const abstract::AbstractBasePtrList &abs_list,
+                                           const std::vector<bool> &need_grad_flags, const ValuePtrList &op_args,
+                                           const ValuePtr &out);
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const;
 
   FuncGraphPtr GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
-                                    const PrimitivePtr &prim);
+                                    const PrimitivePtr &prim, const std::vector<bool> &need_grad_flags);
 
   FuncGraphPtr GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
                                const PrimitivePtr &prim, bool hook_flg);

@@ -644,6 +644,8 @@ constexpr auto kAttrZeroInfinity = "zero_infinity";
 constexpr auto kAttrBlank = "blank";
 constexpr auto kAttrUpdateSlots = "update_slots";
 constexpr auto kAttrLr = "lr";
+constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
+constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";

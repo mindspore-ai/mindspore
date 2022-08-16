@@ -256,6 +256,8 @@ class PynativeAdjoint {
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
 
+  AnfNodePtr get_dout() const { return dout_; }
+
  private:
   const FuncGraphPtr tape_;
   AnfNodePtr dout_{nullptr};
@@ -320,6 +322,8 @@ class KPynativeCellImpl : public KPynativeCell {
   bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, const FuncGraphPtr &fg,
                     const PynativeAdjoint::FuncGraphType fg_type = PynativeAdjoint::FuncGraphType::kBackwardPropagate);
   void BuildAdjointForInput(const CNodePtr &cnode, const ValuePtrList &op_args);
+  bool IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const;
+  std::vector<bool> GetNeedGradFlags(const CNodePtr &cnode);
   void PropagateStopGradient();
   bool AllReferencesStopped(const CNodePtr &curr_cnode);
   OrderedMap<AnfNodePtr, PynativeAdjointPtr>::reverse_iterator GetLastNodeReverseIter();
@@ -654,8 +658,51 @@ void KPynativeCellImpl::BuildAdjointForInput(const CNodePtr &cnode, const ValueP
   }
 }
 
+bool KPynativeCellImpl::IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const {
+  if (node_ptr->isa<CNode>()) {
+    const auto &cnode = node_ptr->cast<CNodePtr>();
+    if (cnode == nullptr || !cnode->HasAttr(kAttrIsCNodeNeedGrad)) {
+      return true;
+    }
+
+    return GetValue<bool>(cnode->GetAttr(kAttrIsCNodeNeedGrad));
+  }
+
+  auto param_ptr = node_ptr->cast<ParameterPtr>();
+  if (param_ptr == nullptr) {
+    // Value node will return here.
+    return false;
+  }
+  auto param_value = param_ptr->param_info();
+  if (param_value == nullptr) {
+    // If node is a parameter, but param_info is null, node need to grad.
+    return true;
+  }
+  return param_value->requires_grad();
+}
+
+std::vector<bool> KPynativeCellImpl::GetNeedGradFlags(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<bool> need_grad_flag_of_inputs;
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    need_grad_flag_of_inputs.emplace_back(IsCNodeNeedGrad(cnode->input(i)));
+  }
+  return need_grad_flag_of_inputs;
+}
+
 bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                                      const FuncGraphPtr &fg, const PynativeAdjoint::FuncGraphType fg_type) {
+  auto need_grad_flag_of_inputs = GetNeedGradFlags(cnode);
+  size_t need_grad_input_num = std::count(need_grad_flag_of_inputs.begin(), need_grad_flag_of_inputs.end(), true);
+  cnode->AddAttr(kAttrIsCNodeNeedGrad, MakeValue(need_grad_input_num != 0));
+  if (need_grad_input_num != need_grad_flag_of_inputs.size()) {
+    cnode->AddAttr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flag_of_inputs));
+  } else if (cnode->HasAttr(kAttrNeedGradFlagOfInputs)) {
+    cnode->EraseAttr(kAttrNeedGradFlagOfInputs);
+  }
+
+  fg->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flag_of_inputs));
+
   // Optimize the bprop_fg based on value.
   // Clone op_args and out, so the address of tensor data can be reset to nullptr if the value of tensor
   // is not used in bprop_fg;
@@ -767,6 +814,12 @@ const AnfNodePtrList KPynativeCellImpl::BuildKNodeListFromPrimalCNode(const CNod
 bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &cnode,
                                                                 const PynativeAdjointPtr &adjoint,
                                                                 const FuncGraphPtr &bprop_fg, bool by_value) {
+  if (adjoint->get_dout() == nullptr) {
+    // If dout is null, the node does not need to grad.
+    MS_LOG(DEBUG) << "node dout is null, node:" << cnode->DebugString();
+    return true;
+  }
+
   AnfNodePtrList node_list;
   abstract::AbstractBasePtr bprop_output_abs;
 
@@ -816,6 +869,12 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &
                                                                 const PynativeAdjointPtr &adjoint,
                                                                 const FuncGraphPtr &fprop_fg, bool by_value) {
   MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
+
+  if (adjoint->get_dout() == nullptr) {
+    // If dout is null, the node does not need to grad.
+    MS_LOG(DEBUG) << "node dout is null, node:" << cnode->DebugString();
+    return true;
+  }
 
   AnfNodePtrList node_list;
   CNodePtr bprop_cnode;
