@@ -75,6 +75,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/batchnorm_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/biasadd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/concat_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/shape_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/split_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/conv2d_delegate_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
