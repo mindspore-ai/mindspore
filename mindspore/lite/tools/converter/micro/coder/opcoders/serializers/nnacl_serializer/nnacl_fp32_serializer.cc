@@ -44,6 +44,11 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const BatchNormPar
                  batch_norm_parameter.channel_, batch_norm_parameter.fused_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const InstanceNormParameter &param) {
+  CodeBaseStruct("InstanceNormParameter", name, param.op_parameter_, param.epsilon_, param.batch_, param.channel_,
+                 param.inner_size_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter) {
   CodeBaseStruct<false>("ArithmeticParameter", name, arithmetic_parameter.op_parameter_,
                         arithmetic_parameter.broadcasting_, arithmetic_parameter.ndim_,
