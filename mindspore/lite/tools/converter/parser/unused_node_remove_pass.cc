@@ -43,7 +43,7 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph, std::s
       auto cnode = utils::cast<CNodePtr>(node);
       MS_ASSERT(cnode != nullptr);
       for (auto &input : cnode->inputs()) {
-        if (vis.find(input) == vis.end()) {
+        if (vis.find(input) == vis.end() && std::find(q.begin(), q.end(), input) == q.end()) {
           q.push_back(input);
         }
       }

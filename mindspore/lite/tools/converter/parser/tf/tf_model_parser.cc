@@ -833,15 +833,17 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
                   << " second_func_map.size(): " << second_func_map.size();
     return RET_ERROR;
   }
-  auto func_graph = ConvertGraph(res_graph_);
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "func graph is invalid.";
-    return RET_ERROR;
-  }
-  static auto root_func_manager = Manage(func_graph);
+  auto main_graph = ConvertGraph(res_graph_);
+  MS_CHECK_TRUE_RET(main_graph != nullptr, RET_ERROR);
+  static auto root_func_manager = Manage(main_graph);
+  MS_CHECK_TRUE_RET(root_func_manager != nullptr, RET_ERROR);
 
   for (auto &kv : first_func_map) {
     auto control_flow_node = kv.first;
+    MS_CHECK_TRUE_RET(control_flow_node != nullptr, RET_ERROR);
+    auto func_graph = control_flow_node->func_graph();
+    MS_CHECK_TRUE_RET(func_graph != nullptr, RET_ERROR);
+
     auto &first_sub_graph = kv.second;
     auto &second_sub_graph = second_func_map.at(control_flow_node);
     CHECK_NULL_RETURN(control_flow_node);
