@@ -741,6 +741,16 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Read the output and input ref map and set to the kernel graph.
   AddOutInRefToGraph(graph);
 
+  // Optimize the nop node.
+  if (!run_in_pynative) {
+    OptimizeNopNode(graph.get());
+#ifdef ENABLE_DUMP_IR
+    if (save_graphs) {
+      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString(), graph);
+    }
+#endif
+  }
+
 #ifndef ENABLE_SECURITY
   session_->SetSummaryNodes(graph.get());
   // Update needed dump kernels for mindRT.
@@ -751,16 +761,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
   EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
 #endif
-
-  // Optimize the nop node.
-  if (!run_in_pynative) {
-    OptimizeNopNode(graph.get());
-#ifdef ENABLE_DUMP_IR
-    if (save_graphs) {
-      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString(), graph);
-    }
-#endif
-  }
 
   // dynamic shape pass of graphmode
   auto kernel_graph = graph->cast<KernelGraphPtr>();
