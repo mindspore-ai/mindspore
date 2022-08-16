@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,9 +103,12 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     if (iter_find != saved_graph.end()) {
       continue;
     }
-    MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
     graph_manager_.AddSavedGraphs(std::to_string(it->id_));
-    (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+    if (!it->is_added_to_ge_session_) {
+      MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
+      (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+      it->is_added_to_ge_session_ = true;
+    }
   }
 #endif
 }
