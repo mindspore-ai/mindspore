@@ -24,18 +24,23 @@ mindspore_lite.Context
         - **enable_parallel** (bool，可选) - 设置状态是否启用并行执行模型推理或并行训练。默认值：False。
 
     异常：
-        - **TypeError** - `thread_num` 不是int类型或None。
-        - **TypeError** - `inter_op_parallel_num` 不是int类型或None。
-        - **TypeError** - `thread_affinity_mode` 不是int类型或None。
-        - **TypeError** - `thread_affinity_core_list` 不是list类型或None。
-        - **TypeError** - `thread_affinity_core_list` 是list类型，但元素不是int类型或None。
+        - **TypeError** - `thread_num` 既不是int类型也不是None。
+        - **TypeError** - `inter_op_parallel_num` 既不是int类型也不是None。
+        - **TypeError** - `thread_affinity_mode` 既不是int类型也不是None。
+        - **TypeError** - `thread_affinity_core_list` 既不是list类型也不是None。
+        - **TypeError** - `thread_affinity_core_list` 是list类型，但元素既不是int类型也不是None。
         - **TypeError** - `enable_parallel` 不是bool类型。
         - **ValueError** - `thread_num` 小于0。
         - **ValueError** - `inter_op_parallel_num` 小于0。
 
     .. py:method:: append_device_info(device_info)
 
-        设置张量的数据类型。
+        将一个用户定义的设备信息附加到上下文中。
+
+        .. note::
+            添加GPU设备信息后，必须在调用上下文之前添加CPU设备信息。因为当GPU不支持算子时，系统将尝试CPU是否支持该算子。此时，需要切换至带有CPU设备信息的上下文中。
+
+            添加Ascend设备信息后，必须在调用上下文之前添加CPU设备信息。因为当在Ascend上不支持算子时，系统将尝试CPU是否支持算子。此时，需要切换至带有CPU设备信息的上下文中。
 
         参数：
             - **device_info** (DeviceInfo) - 实例化的设备信息。

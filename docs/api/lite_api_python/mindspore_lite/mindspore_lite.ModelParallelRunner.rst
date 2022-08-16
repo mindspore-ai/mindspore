@@ -15,7 +15,7 @@ mindspore_lite.ModelParallelRunner
 
         异常：
             - **TypeError** - `model_path` 不是str类型。
-            - **TypeError** - `runner_config` 不是RunnerConfig类型或None。
+            - **TypeError** - `runner_config` 既不是RunnerConfig类型也不是None。
             - **RuntimeError** - `model_path` 文件路径不存在。
             - **RuntimeError** - 初始化模型并行Runner失败。
 

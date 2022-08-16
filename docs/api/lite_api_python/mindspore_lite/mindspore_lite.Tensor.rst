@@ -9,7 +9,7 @@ mindspore_lite.Tensor
         - **tensor** (Tensor，可选) - 被存储在新张量中的数据，可以是其它Tensor。默认值：None。
 
     异常：
-        - **TypeError** - `tensor` 不是Tensor类型或None。
+        - **TypeError** - `tensor` 既不是Tensor类型也不是None。
 
     .. py:method:: get_data_size()
 
@@ -51,7 +51,7 @@ mindspore_lite.Tensor
         获取张量的形状。
 
         返回：
-        list[int]，张量的形状。
+            list[int]，张量的形状。
 
     .. py:method:: get_tensor_name()
 

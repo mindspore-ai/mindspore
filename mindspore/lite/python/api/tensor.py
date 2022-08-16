@@ -159,7 +159,7 @@ class Tensor:
         tensor(Tensor): The data to be stored in a new tensor. It can be another Tensor. Default: None.
 
     Raises:
-        TypeError: `tensor` is not a Tensor or None.
+        TypeError: `tensor` is neither a Tensor nor None.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -171,7 +171,7 @@ class Tensor:
         shape: [],
         format: Format.NCHW,
         element_num: 1,
-        data_size: 0.
+        data_size: 4.
     """
 
     def __init__(self, tensor=None):
@@ -214,7 +214,7 @@ class Tensor:
             >>> tensor = mslite.Tensor()
             >>> tensor.set_tensor_name("tensor0")
             >>> tensor_name = tensor.get_tensor_name()
-            >>> print(tenser_name)
+            >>> print(tensor_name)
             tensor0
         """
         return self._tensor.get_tensor_name()
@@ -379,22 +379,37 @@ class Tensor:
             RuntimeError: The data size of `numpy_obj` is not equal to the data size of the tensor.
 
         Examples:
-            >>> # data is from file
+            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
+            >>> # 1. set tensor data which is from file
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> tensor = mslite.Tensor()
             >>> tensor.set_shape([1, 224, 224, 3])
             >>> tensor.set_data_type(mslite.DataType.FLOAT32)
-            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> in_data = np.fromfile("input.bin", dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
-            >>> # data is numpy arrange
+            >>> print(tensor)
+            tensor_name: ,
+            data_type: DataType.FLOAT32,
+            shape: [1, 224, 224, 3],
+            format: Format.NCHW,
+            element_num: 150528,
+            data_size: 602112.
+            >>> # 2. set tensor data which is numpy arange
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> tensor = mslite.Tensor()
             >>> tensor.set_shape([1, 2, 2, 3])
             >>> tensor.set_data_type(mslite.DataType.FLOAT32)
-            >>> in_data = np.arrange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
+            >>> print(tensor)
+            tensor_name: ,
+            data_type: DataType.FLOAT32,
+            shape: [1, 2, 2, 3],
+            format: Format.NCHW,
+            element_num: 12,
+            data_size: 48.
         """
         if not isinstance(numpy_obj, numpy.ndarray):
             raise TypeError(f"numpy_obj must be numpy.ndarray, but got {type(numpy_obj)}.")
@@ -430,11 +445,11 @@ class Tensor:
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> tensor = mslite.Tensor()
             >>> tensor.set_shape([1, 2, 2, 3])
             >>> tensor.set_data_type(mslite.DataType.FLOAT32)
-            >>> in_data = np.arrange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> data = tensor.get_data_to_numpy()
             >>> print(data)

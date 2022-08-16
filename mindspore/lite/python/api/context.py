@@ -47,18 +47,18 @@ class Context:
             Default: False.
 
     Raises:
-        TypeError: `thread_num` is not an int or None.
-        TypeError: `inter_op_parallel_num` is not an int or None.
-        TypeError: `thread_affinity_mode` is not an int or None.
-        TypeError: `thread_affinity_core_list` is not a list or None.
-        TypeError: `thread_affinity_core_list` is a list, but the elements are not int or None.
+        TypeError: `thread_num` is neither an int nor None.
+        TypeError: `inter_op_parallel_num` is neither an int nor None.
+        TypeError: `thread_affinity_mode` is neither an int nor None.
+        TypeError: `thread_affinity_core_list` is neither a list nor None.
+        TypeError: `thread_affinity_core_list` is a list, but the elements are neither int nor None.
         TypeError: `enable_parallel` is not a bool.
         ValueError: `thread_num` is less than 0.
         ValueError: `inter_op_parallel_num` is less than 0.
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> context = mslite.Context(thread_num=1, inter_op_parallel_num=1, thread_afffinity_mode=1,
+        >>> context = mslite.Context(thread_num=1, inter_op_parallel_num=1, thread_affinity_mode=1,
         ...                          enable_parallel=False)
         >>> print(context)
         thread_num: 1,
@@ -66,7 +66,7 @@ class Context:
         thread_affinity_mode: 1,
         thread_affinity_core_list: [],
         enable_parallel: False,
-        device_list: 0, .
+        device_list: .
     """
 
     def __init__(self, thread_num=None, inter_op_parallel_num=None, thread_affinity_mode=None, \
@@ -107,6 +107,15 @@ class Context:
         """
         Append one user-defined device info to the context.
 
+        Note:
+            After gpu device info is added, cpu device info must be added before call context.
+            Because when ops are not supported on GPU, The system will try whether the CPU supports it.
+            At that time, need to switch to the context with cpu device info.
+
+            After Ascend device info is added, cpu device info must be added before call context.
+            Because when ops are not supported on Ascend, The system will try whether the CPU supports it.
+            At that time, need to switch to the context with cpu device info.
+
         Args:
             device_info (DeviceInfo): the instance of device info.
 
@@ -118,8 +127,8 @@ class Context:
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
             >>> print(context)
-            thread_num: 2,
-            inter_op_parallel_num: 1,
+            thread_num: 0,
+            inter_op_parallel_num: 0,
             thread_affinity_mode: 0,
             thread_affinity_core_list: [],
             enable_parallel: False,
@@ -158,6 +167,13 @@ class CPUDeviceInfo(DeviceInfo):
         enable_fp16: True.
         >>> context = mslite.Context()
         >>> context.append_device_info(cpu_device_info)
+        >>> print(context)
+        thread_num: 0,
+        inter_op_parallel_num: 0,
+        thread_affinity_mode: 0,
+        thread_affinity_core_list: [],
+        enable_parallel: False,
+        device_list: 0, .
     """
 
     def __init__(self, enable_fp16=False):
@@ -194,11 +210,11 @@ class GPUDeviceInfo(DeviceInfo):
         enable_fp16: False.
         >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
         >>> context = mslite.Context()
-        >>> context.append_device_info(mslite.CPUDeviceInfo(gpu_device_info))
-        >>> context.append_device_info(mslite.CPUDeviceInfo(cpu_device_info))
+        >>> context.append_device_info(gpu_device_info)
+        >>> context.append_device_info(cpu_device_info)
         >>> print(context)
-        thread_num: 2,
-        inter_op_parallel_num: 1,
+        thread_num: 0,
+        inter_op_parallel_num: 0,
         thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False,
@@ -233,7 +249,7 @@ class GPUDeviceInfo(DeviceInfo):
             >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
             >>> rank_id = device_info.get_rank_id()
             >>> print(rank_id)
-            1
+            0
         """
         return self._device_info.get_rank_id()
 
@@ -276,8 +292,8 @@ class AscendDeviceInfo(DeviceInfo):
         >>> context.append_device_info(ascend_device_info)
         >>> context.append_device_info(cpu_device_info)
         >>> print(context)
-        thread_num: 2,
-        inter_op_parallel_num: 1,
+        thread_num: 0,
+        inter_op_parallel_num: 0,
         thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False
