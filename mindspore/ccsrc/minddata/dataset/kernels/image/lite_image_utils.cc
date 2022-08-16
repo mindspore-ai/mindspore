@@ -23,8 +23,9 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
+#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
+#include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
@@ -736,21 +737,73 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
-Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
-              InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+Status GetAffineMatrix(const std::shared_ptr<Tensor> &input, std::vector<float_t> *matrix, float_t degrees,
+                       const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear) {
+  CHECK_FAIL_RETURN_UNEXPECTED(translation.size() >= 2, "AffineOp::Compute translation_ size should >= 2");
+  float_t translation_x = translation[0];
+  float_t translation_y = translation[1];
+  float_t degrees_tmp = 0.0;
+  RETURN_IF_NOT_OK(DegreesToRadians(degrees, &degrees_tmp));
+  float_t shear_x = shear[0];
+  float_t shear_y = shear[1];
+  RETURN_IF_NOT_OK(DegreesToRadians(shear_x, &shear_x));
+  RETURN_IF_NOT_OK(DegreesToRadians(-1 * shear_y, &shear_y));
+
+  // Apply Affine Transformation
+  //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]
+  //       C is translation matrix to keep center: [1, 0, cx | 0, 1, cy | 0, 0, 1]
+  //       RSS is rotation with scale and shear matrix
+  //       RSS(a, s, (sx, sy)) =
+  //       = R(a) * S(s) * SHy(sy) * SHx(sx)
+  //       = [ s*cos(a - sy)/cos(sy), s*(-cos(a - sy)*tan(x)/cos(y) - sin(a)), 0 ]
+  //         [ s*sin(a - sy)/cos(sy), s*(-sin(a - sy)*tan(x)/cos(y) + cos(a)), 0 ]
+  //         [ 0                    , 0                                      , 1 ]
+  //
+  // where R is a rotation matrix, S is a scaling matrix, and SHx and SHy are the shears:
+  // SHx(s) = [1, -tan(s)] and SHy(s) = [1      , 0]
+  //          [0, 1      ]              [-tan(s), 1]
+  //
+  // Thus, the affine matrix is M = T * C * RSS * C^-1
+
+  // image is hwc, rows = shape()[0]
+  float_t cx = ((input->shape()[1] - 1) / 2.0);
+  float_t cy = ((input->shape()[0] - 1) / 2.0);
+
+  CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
+
+  // Calculate RSS
+  *matrix = std::vector<float_t>{
+    static_cast<float>(scale * cos(degrees_tmp + shear_y) / cos(shear_y)),
+    static_cast<float>(scale * (-1 * cos(degrees_tmp + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees_tmp))),
+    0,
+    static_cast<float>(scale * sin(degrees_tmp + shear_y) / cos(shear_y)),
+    static_cast<float>(scale * (-1 * sin(degrees_tmp + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees_tmp))),
+    0};
+  // Compute T * C * RSS * C^-1
+  // Compute T * C * RSS * C^-1
+  (*matrix)[2] = (1 - (*matrix)[0]) * cx - (*matrix)[1] * cy + translation_x;
+  (*matrix)[5] = (1 - (*matrix)[4]) * cy - (*matrix)[3] * cx + translation_y;
+  return Status::OK();
+}
+
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float_t degrees,
+              const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear,
+              InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
   try {
+    CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be 3.");
     if (interpolation != InterpolationMode::kLinear) {
       MS_LOG(WARNING) << "Only Bilinear interpolation supported for now";
     }
+    std::vector<float_t> matrix;
+    RETURN_IF_NOT_OK(GetAffineMatrix(input, &matrix, degrees, translation, scale, shear));
     int height = 0;
     int width = 0;
-    CHECK_FAIL_RETURN_UNEXPECTED(mat.size() <= 6, "Invalid mat shape.");
+    CHECK_FAIL_RETURN_UNEXPECTED(matrix.size() <= 6, "Invalid mat shape.");
     double M[6] = {};
-    for (int i = 0; i < mat.size(); i++) {
-      M[i] = static_cast<double>(mat[i]);
+    for (int i = 0; i < matrix.size(); i++) {
+      M[i] = static_cast<double>(matrix[i]);
     }
 
-    CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be 3.");
     LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
@@ -768,7 +821,8 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                          GetLiteCVDataType(input->type()));
 
-    bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(fill_r, fill_g, fill_b));
+    bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize,
+                      UINT8_C3(fill_value[kRIndex], fill_value[kGIndex], fill_value[kBIndex]));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Affine: affine failed.");
 
     *output = output_tensor;

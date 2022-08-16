@@ -1843,8 +1843,59 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
   return Status::OK();
 }
 
-Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
-              InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+Status GetAffineMatrix(const std::shared_ptr<Tensor> &input, std::vector<float_t> *matrix, float_t degrees,
+                       const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear) {
+  CHECK_FAIL_RETURN_UNEXPECTED(translation.size() >= 2, "AffineOp::Compute translation_ size should >= 2");
+  float_t translation_x = translation[0];
+  float_t translation_y = translation[1];
+  float_t degrees_tmp = 0.0;
+  RETURN_IF_NOT_OK(DegreesToRadians(degrees, &degrees_tmp));
+  CHECK_FAIL_RETURN_UNEXPECTED(shear.size() >= 2, "AffineOp::Compute shear_ size should >= 2");
+  float_t shear_x = shear[0];
+  float_t shear_y = shear[1];
+  RETURN_IF_NOT_OK(DegreesToRadians(shear_x, &shear_x));
+  RETURN_IF_NOT_OK(DegreesToRadians(-1 * shear_y, &shear_y));
+
+  // Apply Affine Transformation
+  //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]
+  //       C is translation matrix to keep center: [1, 0, cx | 0, 1, cy | 0, 0, 1]
+  //       RSS is rotation with scale and shear matrix
+  //       RSS(a, s, (sx, sy)) =
+  //       = R(a) * S(s) * SHy(sy) * SHx(sx)
+  //       = [ s*cos(a - sy)/cos(sy), s*(-cos(a - sy)*tan(x)/cos(y) - sin(a)), 0 ]
+  //         [ s*sin(a - sy)/cos(sy), s*(-sin(a - sy)*tan(x)/cos(y) + cos(a)), 0 ]
+  //         [ 0                    , 0                                      , 1 ]
+  //
+  // where R is a rotation matrix, S is a scaling matrix, and SHx and SHy are the shears:
+  // SHx(s) = [1, -tan(s)] and SHy(s) = [1      , 0]
+  //          [0, 1      ]              [-tan(s), 1]
+  //
+  // Thus, the affine matrix is M = T * C * RSS * C^-1
+
+  // image is hwc, rows = shape()[0]
+  float_t cx = ((input->shape()[1] - 1) / 2.0);
+  float_t cy = ((input->shape()[0] - 1) / 2.0);
+
+  CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
+
+  // Calculate RSS
+  *matrix = std::vector<float_t>{
+    static_cast<float>(scale * cos(degrees_tmp + shear_y) / cos(shear_y)),
+    static_cast<float>(scale * (-1 * cos(degrees_tmp + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees_tmp))),
+    0,
+    static_cast<float>(scale * sin(degrees_tmp + shear_y) / cos(shear_y)),
+    static_cast<float>(scale * (-1 * sin(degrees_tmp + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees_tmp))),
+    0};
+  // Compute T * C * RSS * C^-1
+  // Compute T * C * RSS * C^-1
+  (*matrix)[2] = (1 - (*matrix)[0]) * cx - (*matrix)[1] * cy + translation_x;
+  (*matrix)[5] = (1 - (*matrix)[4]) * cy - (*matrix)[3] * cx + translation_y;
+  return Status::OK();
+}
+
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float_t degrees,
+              const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear,
+              InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
   try {
     RETURN_IF_NOT_OK(ValidateImageRank("Affine", input->Rank()));
     dsize_t channel = 1;
@@ -1856,14 +1907,17 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Affine: load image failed.");
     }
 
-    cv::Mat affine_mat(mat);
+    std::vector<float_t> matrix;
+    RETURN_IF_NOT_OK(GetAffineMatrix(input, &matrix, degrees, translation, scale, shear));
+    cv::Mat affine_mat(matrix);
     affine_mat = affine_mat.reshape(1, {2, 3});
 
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
     RETURN_UNEXPECTED_IF_NULL(output_cv);
     cv::warpAffine(input_cv->mat(), output_cv->mat(), affine_mat, input_cv->mat().size(),
-                   GetCVInterpolationMode(interpolation), cv::BORDER_CONSTANT, cv::Scalar(fill_r, fill_g, fill_b));
+                   GetCVInterpolationMode(interpolation), cv::BORDER_CONSTANT,
+                   cv::Scalar(fill_value[kRIndex], fill_value[kGIndex], fill_value[kBIndex]));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {

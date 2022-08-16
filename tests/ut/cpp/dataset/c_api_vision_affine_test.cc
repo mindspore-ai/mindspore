@@ -41,7 +41,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPI) {
 
   auto crop = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{256, 256});
   auto affine = std::make_shared<vision::Affine>(
-    0.0, std::vector<float>{0.0, 0.0}, 0.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
+    0.0, std::vector<float>{0.0, 0.0}, 1.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
 
   // Create a Map operation on ds
   ds = ds->Map({crop, affine});
@@ -84,7 +84,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPIFail) {
 
   auto crop = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{256, 256});
   auto affine = std::make_shared<vision::Affine>(
-    0.0, std::vector<float>{2.0, -1.0}, 0.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
+    0.0, std::vector<float>{2.0, -1.0}, 1.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
 
   // Create a Map operation on ds
   ds = ds->Map({crop, affine});

@@ -47,53 +47,12 @@ AffineOp::AffineOp(float_t degrees, const std::vector<float_t> &translation, flo
 
 Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(translation_.size() >= 2, "AffineOp::Compute translation_ size should >= 2");
-  float_t translation_x = translation_[0];
-  float_t translation_y = translation_[1];
-  float_t degrees = 0.0;
-  RETURN_IF_NOT_OK(DegreesToRadians(degrees_, &degrees));
-  CHECK_FAIL_RETURN_UNEXPECTED(shear_.size() >= 2, "AffineOp::Compute shear_ size should >= 2");
-  float_t shear_x = shear_[0];
-  float_t shear_y = shear_[1];
-  RETURN_IF_NOT_OK(DegreesToRadians(shear_x, &shear_x));
-  RETURN_IF_NOT_OK(DegreesToRadians(-1 * shear_y, &shear_y));
-
-  // Apply Affine Transformation
-  //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]
-  //       C is translation matrix to keep center: [1, 0, cx | 0, 1, cy | 0, 0, 1]
-  //       RSS is rotation with scale and shear matrix
-  //       RSS(a, s, (sx, sy)) =
-  //       = R(a) * S(s) * SHy(sy) * SHx(sx)
-  //       = [ s*cos(a - sy)/cos(sy), s*(-cos(a - sy)*tan(x)/cos(y) - sin(a)), 0 ]
-  //         [ s*sin(a - sy)/cos(sy), s*(-sin(a - sy)*tan(x)/cos(y) + cos(a)), 0 ]
-  //         [ 0                    , 0                                      , 1 ]
-  //
-  // where R is a rotation matrix, S is a scaling matrix, and SHx and SHy are the shears:
-  // SHx(s) = [1, -tan(s)] and SHy(s) = [1      , 0]
-  //          [0, 1      ]              [-tan(s), 1]
-  //
-  // Thus, the affine matrix is M = T * C * RSS * C^-1
-
-  // image is hwc, rows = shape()[0]
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "AffineOp::Compute input->shape() size should >= 2");
-  float_t cx = ((input->shape()[1] - 1) / 2.0);
-  float_t cy = ((input->shape()[0] - 1) / 2.0);
-
-  CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
-
-  // Calculate RSS
-  std::vector<float_t> matrix{
-    static_cast<float>(scale_ * cos(degrees + shear_y) / cos(shear_y)),
-    static_cast<float>(scale_ * (-1 * cos(degrees + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees))),
-    0,
-    static_cast<float>(scale_ * sin(degrees + shear_y) / cos(shear_y)),
-    static_cast<float>(scale_ * (-1 * sin(degrees + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees))),
-    0};
-  // Compute T * C * RSS * C^-1
-  matrix[2] = (1 - matrix[0]) * cx - matrix[1] * cy + translation_x;
-  matrix[5] = (1 - matrix[4]) * cy - matrix[3] * cx + translation_y;
-  RETURN_IF_NOT_OK(Affine(input, output, matrix, interpolation_, fill_value_[0], fill_value_[1], fill_value_[2]));
-  return Status::OK();
+  dsize_t height = input->shape()[0];
+  dsize_t width = input->shape()[1];
+  float_t translation_x = translation_[0] * width;
+  float_t translation_y = translation_[1] * height;
+  std::vector<float_t> new_translation{translation_x, translation_y};
+  return Affine(input, output, degrees_, new_translation, scale_, shear_, interpolation_, fill_value_);
 }
 }  // namespace dataset
 }  // namespace mindspore

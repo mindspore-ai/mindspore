@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomAffineOp : public AffineOp {
+class RandomAffineOp : public TensorOp {
  public:
   /// Default values, also used by python_bindings.cc
   static const std::vector<float_t> kDegreesRange;
@@ -54,6 +54,8 @@ class RandomAffineOp : public AffineOp {
   std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
   std::vector<float_t> scale_range_;      // min_scale, max_scale
   std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
+  InterpolationMode interpolation_;       // interpolation
+  std::vector<uint8_t> fill_value_;       // fill_value
   std::mt19937 rnd_;                      // random device
 };
 }  // namespace dataset
