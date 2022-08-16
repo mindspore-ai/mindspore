@@ -984,10 +984,12 @@ def get_tensor_shape_vmap_rule(prim, axis_size):
 def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
     """Find vmap axis for OneHot."""
     if orig_axis >= 0 and indices_dim <= orig_axis:
-        return (orig_axis + 1, indices_dim)
-    if indices_dim == (ndim - 1) and orig_axis in (-1, (ndim - 1)):
-        return (ndim - 1, indices_dim + 1)
-    return (orig_axis, indices_dim + 1)
+        return orig_axis + 1, indices_dim
+    if orig_axis == -1:
+        if indices_dim == (ndim - 1):
+            return ndim - 1, indices_dim + 1
+        return orig_axis, indices_dim
+    return orig_axis, indices_dim + 1
 
 
 @vmap_rules_getters.register(P.OneHot)
