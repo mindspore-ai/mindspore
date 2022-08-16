@@ -26,6 +26,7 @@
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/scale.h"
 #include "nnacl/slice_parameter.h"
+#include "nnacl/split_parameter.h"
 #include "nnacl/base/tile_base.h"
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/pooling_parameter.h"
@@ -68,6 +69,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const GroupNormParameter &gn_param);
   void CodeStruct(const std::string &name, const ActivationParameter &activation_parameter);
   void CodeStruct(const std::string &name, const OpParameter &op_param);
+  void CodeStruct(const std::string &name, const SplitParameter &split_parameter);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
  private:

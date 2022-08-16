@@ -63,6 +63,9 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
     case schema::ActivationType_HSWISH:
       code.CodeFunction("HSwish", input_tensor_, count, output_tensor_);
       break;
+    case schema::ActivationType_SWISH:
+      code.CodeFunction("Swish", input_tensor_, count, output_tensor_);
+      break;
     case schema::ActivationType_HSIGMOID:
       code.CodeFunction("HSigmoid", input_tensor_, count, output_tensor_);
       break;

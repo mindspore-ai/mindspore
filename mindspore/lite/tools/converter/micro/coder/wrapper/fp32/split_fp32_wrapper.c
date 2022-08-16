@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-#include "wrapper/fp32/pooling_fp32_wrapper.h"
-#include "nnacl/fp32/pooling_fp32.h"
+#include "wrapper/fp32/split_fp32_wrapper.h"
 #include "nnacl/errorcode.h"
 
-int DoMaxPooling(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  PoolingFp32Args *args = (PoolingFp32Args *)cdata;
-  return MaxPooling(args->input_, args->output_, args->pooling_param_, task_id, args->min_, args->max_);
+int DoSplitRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  SplitFp32Args *args = (SplitFp32Args *)cdata;
+  int thread_n_stride = UP_DIV(args->num_unit_, args->param->op_parameter_.thread_num_);
+  int num_unit_thread = MSMIN(thread_n_stride, args->num_unit_ - task_id * thread_n_stride);
+  if (num_unit_thread <= 0) {
+    return NNACL_OK;
+  }
+
+  int thread_offset = task_id * thread_n_stride;
+  return DoSplit(args->input_ptr_, args->output_ptr_, args->in_tensor_shape, thread_offset, num_unit_thread,
+                 args->param, args->data_type_size);
 }
