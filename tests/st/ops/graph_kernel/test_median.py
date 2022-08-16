@@ -128,9 +128,9 @@ def test_median_gpu():
     Expectation: the result match given one.
     """
 
-    fact = MedianFactory(input_shape=(5, 5), global_median=True, axis=0, keep_dims=True)
+    fact = MedianFactory(input_shape=(5, 5), global_median=True, axis=0, keep_dims=False)
     fact.forward_cmp()
     fact.grad_cmp()
-    fact2 = MedianFactory(input_shape=(5, 5, 5), global_median=False, axis=1, keep_dims=False)
+    fact2 = MedianFactory(input_shape=(5, 5, 5), global_median=False, axis=1, keep_dims=True)
     fact2.forward_cmp()
     fact2.grad_cmp()

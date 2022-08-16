@@ -367,7 +367,7 @@ void Median(const T *input_value, T *output, S *indices, const std::vector<int64
   for (; i < static_cast<size_t>(axis); i++) {
     grids.y *= input_shape[i];
   }
-  size_t size = input_shape[axis];
+  size_t size = input_shape.size() == 0 ? 1 : input_shape[axis];
   for (i = axis + 1; i < input_shape.size(); i++) {
     grids.x *= input_shape[i];
   }

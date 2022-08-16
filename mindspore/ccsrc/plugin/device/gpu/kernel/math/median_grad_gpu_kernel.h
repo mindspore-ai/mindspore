@@ -99,7 +99,11 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
                         << input1_dim_ << "), but got " << axis_;
     }
     if (axis_ < 0) {
-      axis_ += input1_dim_;
+      if (input1_dim_ == 0) {
+        axis_ = 0;
+      } else {
+        axis_ += input1_dim_;
+      }
     }
     input1_size_ = 1;
     input0_size_ = 1;
