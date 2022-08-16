@@ -54,8 +54,6 @@ class ParallelWorker : public Worker {
     parallel_pool_ = nullptr;
   }
 
-  void Active() override { cond_var_.notify_one(); }
-
  protected:
   void WaitUntilActive() override;
 

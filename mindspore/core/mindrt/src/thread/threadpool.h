@@ -84,7 +84,9 @@ class Worker {
   // assign task and then activate thread
   void Active(std::vector<TaskSplit> *task_list, int task_id_start, int task_id_end);
   // activate thread
-  virtual void Active();
+  void Active();
+  // using it, there is a probability that the thread will not wake up
+  void FastActive();
   // whether or not it is idle and marked as held
   bool available();
   // assigns task first before running
