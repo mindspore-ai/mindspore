@@ -59,7 +59,13 @@ bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   auto address_ptr = inputs[kIndex1]->GetData();
+  if (address_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Address ptr is nullptr.";
+  }
   int *addr = static_cast<int *>(address_ptr->addr);
+  if (addr == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast addr failed.";
+  }
   std::vector<int64_t> perm;
   for (size_t i = 0; i < (address_ptr->size) / sizeof(int); ++i) {
     perm.emplace_back(static_cast<int64_t>(addr[i]));
@@ -107,6 +113,9 @@ bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   } else {
     MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
+  free(address_ptr->addr);
+  inputs[kIndex1]->GetData()->addr = nullptr;
+  inputs[kIndex1]->GetData()->size = 0;
   return true;
 }
 

@@ -28,9 +28,10 @@ namespace acl {
 class DynShapeProcess {
  public:
   explicit DynShapeProcess(const AclModelOptionsPtr &options, size_t input_data_idx)
-      : acl_options_(options), input_data_idx_(input_data_idx) {}
+      : acl_options_(options), input_data_idx_(input_data_idx), batch_size_ptr_(nullptr), image_size_ptr_(nullptr) {}
 
   int ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs);
+  void DestroyDynamicInput();
 
  private:
   int AddBatchSizeInput(std::vector<KernelTensorPtr> *const inputs);
@@ -40,6 +41,8 @@ class DynShapeProcess {
 
   AclModelOptionsPtr acl_options_;
   size_t input_data_idx_;
+  AddressPtr batch_size_ptr_;
+  AddressPtr image_size_ptr_;
 };
 
 using DynShapeProcPtr = std::shared_ptr<DynShapeProcess>;
