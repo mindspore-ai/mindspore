@@ -103,6 +103,7 @@ constexpr auto kReservoirReplayBufferCreate = "ReservoirReplayBufferCreate";
 constexpr auto kReservoirReplayBufferPush = "ReservoirReplayBufferPush";
 constexpr auto kReservoirReplayBufferSample = "ReservoirReplayBufferSample";
 constexpr auto kReservoirReplayBufferDestroy = "ReservoirReplayBufferDestroy";
+constexpr auto kSparseConcat = "SparseConcat";
 constexpr auto kReLUV3 = "ReLUV3";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
@@ -145,7 +146,8 @@ const std::set<std::string> kDynamicInputOps{kPrint,
                                              kPriorityReplayBufferSample,
                                              kReservoirReplayBufferPush,
                                              kReservoirReplayBufferSample,
-                                             kIdentityN};
+                                             kIdentityN,
+                                             kSparseConcat};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},

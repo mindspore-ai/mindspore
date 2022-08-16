@@ -134,6 +134,7 @@ from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseAddmm
+from mindspore.ops.operations.sparse_ops import SparseConcat
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
@@ -4266,6 +4267,12 @@ test_case_other_ops = [
     ('BlackmanWindow', {
         'block': BlackmanWindow(periodic=True, dtype=mstype.float32),
         'desc_inputs': [Tensor(np.array(5).astype(np.int32))],
+        'skip': ['backward']}),
+    ('SparseConcat', {
+        'block': SparseConcat(concat_dim=0),
+        'desc_inputs': [(Tensor([[0, 0]], mstype.int64), Tensor([[0, 1]], mstype.int64)),
+                        (Tensor([4], mstype.int32), Tensor([5], mstype.int32)),
+                        (Tensor([3, 3], mstype.int64), Tensor([4, 3], mstype.int64))],
         'skip': ['backward']}),
     ('SparseMatrixNNZ', {
         'block': SparseMatrixNNZ(),

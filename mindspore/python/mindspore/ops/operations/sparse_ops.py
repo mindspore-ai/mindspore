@@ -865,55 +865,52 @@ class SparseAddmm(Primitive):
 
 class SparseConcat(Primitive):
     """
-    concatenates the input SparseTensor(COO format) along the specified dimension. demo API now
+    concatenates the input SparseTensor(COO format) along the specified dimension.
 
     Args:
         concat_dim(Scalar) - A Scalar, decide the dimension to concatenation along.
         The value must be in range [-rank, rank), where rank is the number of dimensions in each input
-        SparseTensor. Support int32, int64.
+        SparseTensor. Support int32, int64. Default: 0.
 
     Inputs:
 
         - **sp_input_indices** (Tensor) - the list of Tensor which means COOTensor indices, and Need to
-            concatenates.
+            concatenates. Support int64.
         - **sp_input_values** (Tensor) - the list of Tensor which means COOTensor values, and
             need to concatenates.
         - **sp_input_shape** (Tensor) - the list of Tensor which means COOTensor shape, and
-            need to concatenates.
+            need to concatenates. Support int64.
 
     Outputs:
         - **output_indices** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the indices of output COOTensor
+            specified dimension. This is the indices of output COOTensor.
         - **output_values** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the values of output COOTensor
+            specified dimension. This is the values of output COOTensor.
         - **output_shape** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the shape of output COOTensor
+            specified dimension. This is the shape of output COOTensor.
 
     Raises:
         ValueError: If only one sparse tensor input.
         Error: If input axis value is not in range [-rank, rank).
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
-        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = Tensor([3, 4], dtype=mstype.int64)
-        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> indices1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
         >>> shape1 = Tensor([3, 4], dtype=mstype.int64)
-        >>> sparse_concat = ops.SparseConcat(1)
-        >>> indices, value, shape = sparse_concat((indices0, indices1), (values0, values1), (shape0, shape1))
-        >>> print(indices)
-        [[0 1]
-         [0 4]
-         [1 2]
-         [1 5]]
-        >>> print(value)
-        [1 3 2 4]
-        >>> print(shape)
-        [3 8]
+        >>> sparse_concat = ops.SparseConcat(0)
+        >>> out = sparse_concat((indices0, indices1), (values0, values1), (shape0, shape1))
+        >>> print(out)
+        (Tensor(shape=[4, 2], dtype=Int64, value=
+        [[0, 1],
+         [1, 2],
+         [3, 0],
+         [4, 1]]), Tensor(shape=[4], dtype=Int32, value= [1, 2, 3, 4]), Tensor(shape=[2], dtype=Int64, value= [6, 4]))
     """
     @prim_attr_register
     def __init__(self, concat_dim=0):

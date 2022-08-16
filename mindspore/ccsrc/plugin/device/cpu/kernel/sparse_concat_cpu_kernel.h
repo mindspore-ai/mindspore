@@ -33,33 +33,28 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
+              const std::vector<AddressPtr> &outputs) override;
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+    return support_list;
+  }
 
  private:
-  template <typename T, typename S>
+  template <typename S>
   bool SparseConcat(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size, const int size);
-  template <typename T, typename S>
+  template <typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using SparseConcatFunc =
-    std::function<bool(SparseConcatCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  std::pair<bool, size_t> Match2OutputAttrFromNode(const KernelAttr &kernel_attr,
-                                                   const std::vector<KernelAttr> &kernel_attr_list);
-  SparseConcatFunc kernel_func_;
   int64_t concat_dim_;
   size_t input_num_;
-  static std::vector<std::pair<KernelAttr, SparseConcatFunc>> func_list_;
+  TypeId values_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

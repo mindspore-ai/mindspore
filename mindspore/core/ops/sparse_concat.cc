@@ -63,7 +63,7 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
   if (!input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>() &&
       !input_args[kSpInputValuesStart]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << "the sp_input must be a list or tuple of sparse tensor. but got: "
+                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
                                         << input_args[kSpInputValuesStart]->ToString() << ".";
   }
   auto inputs_values = input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>()
@@ -73,27 +73,28 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
   if (!input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>() &&
       !input_args[kSpInputShapesStart]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << "the sp_input must be a list or tuple of sparse tensor. but got: "
+                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
                                         << input_args[kSpInputShapesStart]->ToString() << ".";
   }
   auto inputs_shapes = input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSpInputShapesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSpInputShapesStart]->cast<abstract::AbstractListPtr>()->elements();
-  std::map<std::string, TypePtr> indices_types;
   std::map<std::string, TypePtr> values_types;
-  std::map<std::string, TypePtr> shape_types;
   if ((inputs_indices.size() != inputs_values.size()) || (inputs_indices.size() != inputs_shapes.size())) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << "the sp_input is not a COO tensor, the COO tensor indices number is "
+                                        << ", the sp_input is not a COO tensor, the COO tensor indices number is "
                                         << inputs_indices.size() << " but values number is " << inputs_values.size()
                                         << " and shape number is " << inputs_shapes.size() << ".";
   }
   for (unsigned int i = 0; i < inputs_indices.size(); i++) {
-    std::string elementi = "element" + std::to_string(i);
-    (void)indices_types.emplace(elementi, inputs_indices[i]->BuildType());
+    std::string elementi = "values" + std::to_string(i);
+    auto ind_type = inputs_indices[i]->BuildType();
+    auto sha_type = inputs_shapes[i]->BuildType();
     (void)values_types.emplace(elementi, inputs_values[i]->BuildType());
-    (void)shape_types.emplace(elementi, inputs_shapes[i]->BuildType());
+    CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64}, prim_name);
   }
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
   std::vector<TypePtr> out_type = {};
   out_type.push_back(inputs_indices[kFirstInput]->BuildType());
   out_type.push_back(inputs_values[kFirstInput]->BuildType());
@@ -129,15 +130,16 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
   size_t shapes_expect_rank = 1;
   CheckSparseConcatShape(shapes_element0_rank, shapes_expect_rank, "shape shape", prim_name);
   if (indices_element0_shape[1] != shapes_element0_shape[0]) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << "the indices shape rank is "
-                                        << indices_element0_shape[1] << "but the shape rank is "
+    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", the indices shape rank is "
+                                        << indices_element0_shape[1] << ", but the shape rank is "
                                         << shapes_element0_shape[0] << ".";
   }
   if (indices_element0_shape[0] != values_element0_shape[0]) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << "the indices element number is "
-                                        << indices_element0_shape[0] << "but the value element number is "
+    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", the indices element number is "
+                                        << indices_element0_shape[0] << ", but the value element number is "
                                         << values_element0_shape[0] << ".";
   }
+  primitive->AddAttr("N", MakeValue(SizeToLong(inputs_indices.size())));
   std::vector<int64_t> out_indices_shape = {};
   out_indices_shape.push_back(0);
   out_indices_shape.push_back(indices_element0_shape[1]);
@@ -152,15 +154,15 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
     out_values_shape[0] += values_element_shape[0];
     if ((out_indices_shape[1] != indices_element_shape[1]) || (out_shape_shape != shapes_element_shape)) {
       MS_EXCEPTION(mindspore::ValueError)
-        << "For " << prim_name << "indices or shape rank is not fit. The No.0 indice shape rank is "
-        << out_indices_shape[1] << "dense shape rank is " << out_shape_shape << "The No." << i << "indices number is "
-        << indices_element_shape[1] << "dense shape rank is " << shapes_element_shape << ".";
+        << "For " << prim_name << ", indices or shape rank is not fit. The No.0 indice shape rank is "
+        << out_indices_shape[1] << ", dense shape rank is " << out_shape_shape << ". The No." << i
+        << " indices number is " << indices_element_shape[1] << " dense shape rank is " << shapes_element_shape << ".";
     }
     if (indices_element_shape[0] != values_element_shape[0]) {
       MS_EXCEPTION(mindspore::ValueError)
-        << "For " << prim_name << "The No." << i
-        << "indices element number is not equal with values element number. Indices number is "
-        << indices_element_shape[0] << "but values is " << values_element_shape[0] << ".";
+        << "For " << prim_name << ", the No." << i
+        << " indices element number is not equal with values element number. Indices number is "
+        << indices_element_shape[0] << ",but values is " << values_element_shape[0] << ".";
     }
     // unknown shape handle, unsupported -2 now
     if (indices_element_shape[0] == -1) {
