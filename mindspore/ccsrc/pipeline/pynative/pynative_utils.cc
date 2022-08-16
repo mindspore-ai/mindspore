@@ -496,6 +496,10 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   if (need_convert_input_to_attr) {
     // Clone a new prim
     op_run_info->op_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim));
+    MS_EXCEPTION_IF_NULL(op_run_info->op_prim->adapter());
+    if (op_run_info->op_prim->adapter()->attached_primitive() == nullptr) {
+      op_run_info->op_prim->adapter()->set_attached_primitive(op_run_info->op_prim);
+    }
   }
   const auto &op_prim = op_run_info->op_prim;
 
