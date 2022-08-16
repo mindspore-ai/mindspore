@@ -646,6 +646,7 @@ def linearize(fn, inputs):
         [[12. 15.]
          [16. 19.]]
     """
+    linearize_inner = _LinearizeInner()
 
     @ms_function(hash_args=fn)
     def _wrap_container(*arg):
@@ -656,7 +657,6 @@ def linearize(fn, inputs):
             vectors = tuple(vectors)
         return linearize_inner(fn, vectors, output, args)
 
-    linearize_inner = _LinearizeInner()
     if not isinstance(inputs, (Tensor, tuple, list)):
         _raise_type_error()
     if isinstance(inputs, Tensor):
