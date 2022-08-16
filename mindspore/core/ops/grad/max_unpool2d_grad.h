@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_MAXUNPOOL2DGRAD_H_
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -29,6 +30,7 @@ class MIND_API MaxUnpool2DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxUnpool2DGrad);
   MaxUnpool2DGrad() : BaseOperator(kNameMaxUnpool2DGrad) { InitIOName({"x", "grads", "argmax"}, {"y"}); }
+  std::string get_format() const;
 };
 
 abstract::AbstractBasePtr MaxUnpool2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

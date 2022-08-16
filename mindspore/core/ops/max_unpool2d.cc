@@ -37,9 +37,6 @@ abstract::ShapePtr MaxUnpool2DInferShapeCompute(const std::string &data_format, 
     int64_t out_w = static_cast<int64_t>((in_shape[kInputIndex3] - 1) * strides[kInputIndex3] - 2 * pads[kInputIndex3] +
                                          ksize[kInputIndex3]);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], in_shape[kInputIndex1], out_h, out_w};
-    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-      MS_LOG(EXCEPTION) << "MaxUnpool2D: Output size is not valid.";
-    }
     if (attr_output_shape.size() == kDim4) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
@@ -71,9 +68,6 @@ abstract::ShapePtr MaxUnpool2DInferShapeCompute(const std::string &data_format, 
                                          ksize[kInputIndex2]);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], out_h, out_w, in_shape[kInputIndex3]};
 
-    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-      MS_LOG(EXCEPTION) << "MaxUnpool2D: Output size is not valid.";
-    }
     if (attr_output_shape.size() == kDim4) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
@@ -152,6 +146,11 @@ AbstractBasePtr MaxUnpool2DInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_type = MaxUnpool2DInferType(primitive, input_args);
   auto infer_shape = MaxUnpool2DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+std::string MaxUnpool2D::get_format() const {
+  auto value_ptr = GetAttr("format");
+  return GetValue<std::string>(value_ptr);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool2D, prim::kPrimMaxUnpool2D, MaxUnpool2DInfer, nullptr, true);
 }  // namespace ops
