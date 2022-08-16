@@ -46,7 +46,11 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     if (IsValueNode<parse::MsClassObject>(object_node)) {
       auto ms_class = GetValueNode<parse::MsClassObjectPtr>(object_node)->obj();
       auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
-      return parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
+      auto new_node = parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
+      if (new_node == nullptr || IsValueNode<None>(new_node)) {
+        MS_EXCEPTION(AttributeError) << py::str(ms_class) << " object has no attribute: " << attr_str << ".";
+      }
+      return new_node;
     }
     // {prim::kPrimGetAttr, bool, attr}
     if (IsValueNode<BoolImm>(object_node)) {

@@ -259,6 +259,21 @@ def strides_(x):
     return strides
 
 
+def hasattr(x, attr):  # pylint: disable=redefined-builtin
+    """
+    Return whether an object has the attribute.
+
+    Args:
+        x (object): Input object.
+        attr (string): The name of attribute
+
+    Returns:
+        Boolean value, indicates whether the object x has attribute attr.
+    """
+    out = getattr(x, attr, None)
+    return out is not None
+
+
 def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
     """
     Return a copy of the tensor, casted to a specified type.

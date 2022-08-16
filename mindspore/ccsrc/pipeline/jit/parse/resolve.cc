@@ -496,6 +496,9 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
       MS_EXCEPTION_IF_NULL(attr_str_ptr);
       const auto &attr_str = attr_str_ptr->value();
       auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, get_attr_node);
+      if (res == nullptr || IsValueNode<None>(res)) {
+        MS_EXCEPTION(AttributeError) << py::str(sequence[i]) << " object has no attribute: " << attr_str << ".";
+      }
       (void)inputs.emplace_back(res);
     }
   } else {
@@ -539,9 +542,12 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::
     MS_LOG(EXCEPTION) << attr << " is a private variable or magic method, which is not supported.";
   }
   if (!py::hasattr(cls_obj, common::SafeCStr(attr))) {
-    MS_LOG(EXCEPTION) << py::str(cls_obj) << " has not attribute: " << attr << ".";
+    return nullptr;
   }
   py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
+  if (py::isinstance<py::none>(attr_obj)) {
+    return nullptr;
+  }
   AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, get_attr_node);
   TraceManager::ClearParseOrResolveDebugInfo();
   return res_node;
