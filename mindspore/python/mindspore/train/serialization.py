@@ -210,7 +210,6 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
             with open(ckpt_file_name, "ab") as f:
                 if enc_key is not None:
                     plain_data = BytesIO()
-                    cipher_data = BytesIO()
 
                 for name, value in data_list.items():
                     data_size = value[2].nbytes / 1024
@@ -233,22 +232,14 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                             f.write(checkpoint_list.SerializeToString())
                         else:
                             plain_data.write(checkpoint_list.SerializeToString())
-                            plain_data.seek(0)
-                            max_block_size = ENCRYPT_BLOCK_SIZE * 1024
-                            block_data = plain_data.read(max_block_size)
-
-                            while len(block_data) == max_block_size:
-                                cipher_data.write(_encrypt(block_data, max_block_size, enc_key,
-                                                           len(enc_key), enc_mode))
-                                block_data = plain_data.read(max_block_size)
-                            if block_data:
-                                plain_data = BytesIO()
-                                plain_data.write(block_data)
 
                 if enc_key is not None:
-                    if block_data:
-                        cipher_data.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
-                    f.write(cipher_data.getvalue())
+                    plain_data.seek(0)
+                    max_block_size = ENCRYPT_BLOCK_SIZE * 1024
+                    block_data = plain_data.read(max_block_size)
+                    while block_data:
+                        f.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
+                        block_data = plain_data.read(max_block_size)
 
                 os.chmod(ckpt_file_name, stat.S_IRUSR)
 
