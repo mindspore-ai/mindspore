@@ -935,6 +935,13 @@ def pow(x, y):  # pylint: disable=redefined-builtin
     return F.pow(x, y)
 
 
+def log(x):
+    """
+    Calculate the logarithm of Tensor.
+    """
+    return F.log(x)
+
+
 def round_(x):
     """
     Returns half to even of a tensor element-wise.
@@ -2111,6 +2118,11 @@ def bitwise_xor(x, y):
 def tan(x):
     """Returns tangent of `x`."""
     return F.tan(x)
+
+
+def tanh(x):
+    """Returns hyperbolic tangent of `x`."""
+    return F.tanh(x)
 
 
 def cosh(x):

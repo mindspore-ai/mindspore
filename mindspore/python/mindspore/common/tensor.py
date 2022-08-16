@@ -1065,6 +1065,10 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tan')()(self)
 
+    def tanh(self):
+        self._init_check()
+        return tensor_operator_registry.get('tanh')(self)
+
     def cosh(self):
         r"""
         Computes hyperbolic cosine of `x` element-wise.
@@ -1578,6 +1582,10 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('pow')()(self, power)
+
+    def log(self):
+        self._init_check()
+        return tensor_operator_registry.get('log')(self)
 
     def mean(self, axis=(), keep_dims=False):
         """

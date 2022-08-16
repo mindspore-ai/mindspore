@@ -226,8 +226,10 @@ BuiltInTypeMap &GetMethodMap() {
        {"max", std::string("max")},                                        // P.reduce_max()
        {"min", std::string("min")},                                        // P.reduce_min()
        {"pow", std::string("pow")},                                        // P.Pow()
+       {"log", std::string("log")},                                        // P.Log()
        {"minimum", std::string("minimum")},                                // P.Minimum()
        {"cosh", std::string("cosh")},                                      // P.Cosh()
+       {"tanh", std::string("tanh")},                                      // P.Tanh()
        {"round", std::string("round_")},                                   // P.Round()
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
