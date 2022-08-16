@@ -29,6 +29,7 @@ from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ...common.parameter import Parameter
 from ...communication.management import GlobalComm
+from ..._c_expression import call_constant_folding
 
 
 class FillV2(Primitive):
@@ -2094,18 +2095,25 @@ class TopTypeof(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        self.typeof_cache = dict()
-        self.prim_toptypeof = Primitive('TopTypeof')
+        self.prim = Primitive('TopTypeof')
+        self.typeof_cache = {
+            'slice': call_constant_folding(self.prim, slice(None, None, None)),
+            'list': call_constant_folding(self.prim, []),
+            'tuple': call_constant_folding(self.prim, ()),
+            'Tensor': call_constant_folding(self.prim, Tensor(np.ones([1,], dtype=np.float32))),
+            'NoneType': call_constant_folding(self.prim, None),
+            'int': call_constant_folding(self.prim, 0),
+            'bool': call_constant_folding(self.prim, False),
+            'ellipsis': call_constant_folding(self.prim, ...)
+        }
 
     def __call__(self, x):
         index_type = type(x).__name__
         if 'Tensor' in index_type:
             index_type = 'Tensor'
         if index_type in ('slice', 'list', 'tuple', 'Tensor', 'NoneType', 'int', 'bool', 'ellipsis'):
-            if index_type not in self.typeof_cache:
-                self.typeof_cache[index_type] = self.prim_toptypeof(x)
             return self.typeof_cache.get(index_type)
-        return self.prim_toptypeof(x)
+        return call_constant_folding(self.prim, x)
 
 
 class MixedPrecisionCast(Primitive):
