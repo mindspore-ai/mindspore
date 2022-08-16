@@ -1,7 +1,7 @@
 mindspore.ops.softmax
 =====================
 
-.. py::: function.ops.softmax(x, axis=-1)
+.. py:function:: mindspore.ops.softmax(x, axis=-1)
 
     Softmax函数。
 

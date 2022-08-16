@@ -1061,7 +1061,8 @@ def slice(input_x, begin, size):
     The slice `begin` represents the offset in each dimension of `input_x`,
     The slice `size` represents the size of the output tensor.
 
-    Note that `begin` is zero-based and `size` is one-based.
+    Note:
+        `begin` is zero-based and `size` is one-based.
 
     If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
     This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.

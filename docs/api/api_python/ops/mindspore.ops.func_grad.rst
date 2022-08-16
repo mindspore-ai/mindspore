@@ -9,7 +9,7 @@ mindspore.ops.grad
 
     1. 对输入求导，此时 `grad_position` 非None，而 `weights` 是None;
     2. 对网络变量求导，此时 `grad_position` 是None，而 `weights` 非None;
-    3. 同时对输入和网络变量求导，此时 `grad_position`和 `weights` 都非None。
+    3. 同时对输入和网络变量求导，此时 `grad_position` 和 `weights` 都非None。
 
     参数：
         - **fn** (Union[Cell, Function]) - 待求导的函数或网络。
