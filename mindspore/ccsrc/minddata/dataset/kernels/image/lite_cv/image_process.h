@@ -83,7 +83,7 @@ struct BoxesConfig {
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h);
+bool MS_API ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h);
 
 /// \brief Init Lite Mat from pixel, the conversion of currently supports is rbgaTorgb and rgbaTobgr.
 /// \note The length of the pointer must be the same as that of the multiplication of w and h.
@@ -110,7 +110,8 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h);
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType data_type, int w, int h, LiteMat &m);
+bool MS_API InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType data_type, int w, int h,
+                          LiteMat &m);
 
 /// \brief convert the data type, the conversion of currently supports is uint8 to float.
 /// \param[in] src Input image data.
@@ -127,7 +128,7 @@ bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType d
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale = 1.0);
+bool MS_API ConvertTo(const LiteMat &src, LiteMat &dst, double scale = 1.0);
 
 /// \brief crop image, the channel supports is 3 and 1.
 /// \param[in] src Input image data.
@@ -147,7 +148,7 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale = 1.0);
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h);
+bool MS_API Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h);
 
 /// \brief normalize image, currently the supports data type is float.
 /// \param[in] src Input image data.
@@ -169,8 +170,8 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h);
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
-                            const std::vector<float> &std);
+bool MS_API SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
+                                   const std::vector<float> &std);
 
 /// \brief padd image, the channel supports is 3 and 1.
 /// \param[in] src Input image data.
@@ -198,8 +199,8 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
-         uint8_t fill_b_or_gray = 0, uint8_t fill_g = 0, uint8_t fill_r = 0);
+bool MS_API Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
+                uint8_t fill_b_or_gray = 0, uint8_t fill_g = 0, uint8_t fill_r = 0);
 
 /// \brief Extract image channel by index.
 /// \param[in] src Input image data.
@@ -216,7 +217,7 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ExtractChannel(LiteMat &src, LiteMat &dst, int col);
+bool MS_API ExtractChannel(LiteMat &src, LiteMat &dst, int col);
 
 /// \brief Split image channels.
 /// \param[in] src Input image data.
@@ -231,7 +232,7 @@ bool ExtractChannel(LiteMat &src, LiteMat &dst, int col);
 ///     Split(lite_mat_src, lite_mat_dst);
 /// \endcode
 /// \return Return true if transform successfully.
-bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
+bool MS_API Split(const LiteMat &src, std::vector<LiteMat> &mv);
 
 /// \brief Create a multi-channel image out of several single-channel arrays.
 /// \param[in] mv Single channel data.
@@ -250,7 +251,7 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
 ///     Merge(lite_mat_dst, lite_mat_dst2);
 /// \endcode
 /// \return Return true if transform successfully.
-bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst);
+bool MS_API Merge(const std::vector<LiteMat> &mv, LiteMat &dst);
 
 /// \brief Apply affine transformation for 1 channel image.
 /// \param[in] src Input image data.
@@ -273,7 +274,7 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst);
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
+bool MS_API Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
 
 /// \brief Apply affine transformation for 3 channel image.
 /// \param[in] src Input image data.
@@ -294,18 +295,18 @@ bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
+bool MS_API Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
 
 /// \brief Get default anchor boxes for Faster R-CNN, SSD, YOLO etc.
 /// \param[in] config Objects of BoxesConfig structure.
-std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config);
+std::vector<std::vector<float>> MS_API GetDefaultBoxes(const BoxesConfig config);
 
 /// \brief Convert the prediction boxes to the actual boxes of (y, x, h, w).
 /// \param[in] boxes Actual size box.
 /// \param[in] default_boxes Default box.
 /// \param[in] config Objects of BoxesConfig structure.
-void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std::vector<float>> &default_boxes,
-                  const BoxesConfig config);
+void MS_API ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std::vector<float>> &default_boxes,
+                         const BoxesConfig config);
 
 /// \brief Apply Non-Maximum Suppression.
 /// \param[in] all_boxes All input boxes.
@@ -320,8 +321,8 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 ///     std::vector<int> keep = ApplyNms(all_boxes, all_scores, 0.5, 10);
 /// \endcode
 /// \return Remaining bounding boxes.
-std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
-                          int max_boxes);
+std::vector<int> MS_API ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores,
+                                 float thres, int max_boxes);
 
 /// \brief affine image by linear.
 /// \param[in] src Input image data.
@@ -351,8 +352,8 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
-                        PaddBorderType borderType, std::vector<uint8_t> &borderValue);
+bool MS_API WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
+                               PaddBorderType borderType, std::vector<uint8_t> &borderValue);
 
 /// \brief affine image by linear.
 /// \param[in] src Input image data.
@@ -383,8 +384,8 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
-                             PaddBorderType borderType, std::vector<uint8_t> &borderValue);
+bool MS_API WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
+                                    PaddBorderType borderType, std::vector<uint8_t> &borderValue);
 
 /// \brief Matrix rotation.
 /// \param[in] x The value of the x-axis of the coordinate rotation point.
@@ -402,7 +403,7 @@ bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M,
 ///     std::cout << M.width_ << " " << M.height_ << " " << M.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &M);
+bool MS_API GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &M);
 
 /// \brief Perspective transformation.
 /// \param[in] src_point Input coordinate point.
@@ -418,7 +419,7 @@ bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &
 ///     std::cout << M.width_ << " " << M.height_ << " " << M.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
+bool MS_API GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
 
 /// \brief Affine transformation.
 /// \param[in] src_point Input coordinate point.
@@ -434,7 +435,7 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
 ///     std::cout << M.width_ << " " << M.height_ << " " << M.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
+bool MS_API GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
 
 /// \brief Matrix transpose.
 /// \param[in] src Input matrix.
@@ -452,7 +453,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Transpose(const LiteMat &src, LiteMat &dst);
+bool MS_API Transpose(const LiteMat &src, LiteMat &dst);
 
 /// \brief Filter the image by a Gaussian kernel
 /// \param[in] src LiteMat image to be processed. Only LiteMat of type UINT8 is supported now.
@@ -478,8 +479,8 @@ bool Transpose(const LiteMat &src, LiteMat &dst);
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksize, double sigmaX, double sigmaY = 0.f,
-                  PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+bool MS_API GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksize, double sigmaX,
+                         double sigmaY = 0.f, PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Detect edges in an image
 /// \param[in] src LiteMat image to be processed. Only single channel LiteMat of type UINT8 is supported now.
@@ -503,8 +504,8 @@ bool GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksiz
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thresh, int ksize = 3,
-           bool L2gradient = false);
+bool MS_API Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thresh, int ksize = 3,
+                  bool L2gradient = false);
 
 /// \brief Apply a 2D convolution over the image.
 /// \param[in] src LiteMat image to be processed. Only LiteMat of type UINT8 and FLOAT32 is supported now.
@@ -528,8 +529,8 @@ bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thre
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType dst_type,
-            PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+bool MS_API Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType dst_type,
+                   PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Applies a separable linear convolution over the image
 /// \param[in] src LiteMat image to be processed. Only LiteMat of type UINT8 and FLOAT32 is supported now.
@@ -538,8 +539,8 @@ bool Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType d
 /// \param[in] dst LiteMat image after processing.
 /// \param[in] dst_type Output data type of dst.
 /// \param[in] pad_type The padding type used while filtering (default=PaddBorderType::PADD_BORDER_DEFAULT).
-bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMat &dst, LDataType dst_type,
-                PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+bool MS_API ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMat &dst, LDataType dst_type,
+                       PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Filter the image by a Sobel kernel
 /// \param[in] src LiteMat image to be processed. Only LiteMat of type UINT8 is supported now.
@@ -568,8 +569,8 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize = 3, double scale = 1.0,
-           PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+bool MS_API Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize = 3, double scale = 1.0,
+                  PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Convert RGB image or color image to BGR image.
 /// \param[in] src Input image data.
@@ -588,7 +589,7 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize =
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int h, LiteMat &mat);
+bool MS_API ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int h, LiteMat &mat);
 
 /// \brief Convert RGB image or color image to grayscale image.
 /// \param[in] src Input image data.
@@ -607,7 +608,7 @@ bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int 
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
+bool MS_API ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
 
 /// \brief Resize preserve AR with filler.
 /// \param[in] src Input image data.
@@ -632,8 +633,8 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
-                                float (*invM)[2][3], int img_orientation);
+bool MS_API ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
+                                       float (*invM)[2][3], int img_orientation);
 
 /// \brief Transpose the input image; shape (H, W, C) to shape (C, H, W).
 /// \param[in] src Input image data.
@@ -649,7 +650,7 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
 ///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
 /// \endcode
 /// \return Return true if transform successfully.
-bool HWC2CHW(LiteMat &src, LiteMat &dst);
+bool MS_API HWC2CHW(LiteMat &src, LiteMat &dst);
 
 }  // namespace dataset
 }  // namespace mindspore
