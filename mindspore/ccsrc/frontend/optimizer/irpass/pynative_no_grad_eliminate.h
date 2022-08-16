@@ -31,19 +31,18 @@ namespace irpass {
 class PynativeNoGradEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    if (!IsNeedOptimiz(optimizer, node)) {
+    if (!IsNeedOptimize(optimizer, node) || !node->isa<CNode>()) {
       return nullptr;
     }
 
-    if (!node->isa<CNode>()) {
-      return nullptr;
-    }
-
-    auto &node_inputs = node->cast_ptr<CNode>()->inputs();
+    const auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &node_inputs = cnode->inputs();
     if (need_grad_flag_of_inputs_.size() != node_inputs.size() - 1) {
       return nullptr;
     }
 
+    MS_EXCEPTION_IF_NULL(func_graph_);
     const auto &graph_inputs = func_graph_->get_inputs();
     if (graph_inputs.size() < node_inputs.size() - 1) {
       return nullptr;
@@ -74,11 +73,13 @@ class PynativeNoGradEliminater : public AnfVisitor {
   }
 
  private:
-  bool IsNeedOptimiz(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  bool IsNeedOptimize(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
       return false;
     }
 
+    MS_EXCEPTION_IF_NULL(optimizer);
     const auto &resource = std::dynamic_pointer_cast<pipeline::Resource>(optimizer->resource());
     MS_EXCEPTION_IF_NULL(resource);
 

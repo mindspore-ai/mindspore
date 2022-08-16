@@ -335,6 +335,7 @@ FuncGraphPtr PrimBpropOptimizer::GetBpropGrahWithNoGradInput(const PrimBpropOptG
                                                              const abstract::AbstractBasePtrList &abs_list,
                                                              const std::vector<bool> &need_grad_flags,
                                                              const ValuePtrList &op_args, const ValuePtr &out) {
+  MS_EXCEPTION_IF_NULL(level_2_graph_info);
   auto level2_graph_clone = BasicClone(level_2_graph_info->opt_func_graph());
   level2_graph_clone->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
   auto no_grad_graph_info = PrimBpropOptStep2(level2_graph_clone, abs_list, need_grad_flags);

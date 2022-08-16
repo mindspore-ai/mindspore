@@ -256,7 +256,7 @@ class PynativeAdjoint {
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
 
-  AnfNodePtr get_dout() const { return dout_; }
+  AnfNodePtr dout() const { return dout_; }
 
  private:
   const FuncGraphPtr tape_;
@@ -657,6 +657,7 @@ void KPynativeCellImpl::BuildAdjointForInput(const CNodePtr &cnode, const ValueP
 }
 
 bool KPynativeCellImpl::IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const {
+  MS_EXCEPTION_IF_NULL(node_ptr);
   if (node_ptr->isa<CNode>()) {
     const auto &cnode = node_ptr->cast<CNodePtr>();
     if (cnode == nullptr || !cnode->HasAttr(kAttrIsCNodeNeedGrad)) {
@@ -683,7 +684,7 @@ std::vector<bool> KPynativeCellImpl::GetNeedGradFlags(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<bool> need_grad_flag_of_inputs;
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    need_grad_flag_of_inputs.emplace_back(IsCNodeNeedGrad(cnode->input(i)));
+    (void)need_grad_flag_of_inputs.emplace_back(IsCNodeNeedGrad(cnode->input(i)));
   }
   return need_grad_flag_of_inputs;
 }
@@ -812,7 +813,7 @@ const AnfNodePtrList KPynativeCellImpl::BuildKNodeListFromPrimalCNode(const CNod
 bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &cnode,
                                                                 const PynativeAdjointPtr &adjoint,
                                                                 const FuncGraphPtr &bprop_fg, bool by_value) {
-  if (adjoint->get_dout() == nullptr) {
+  if (adjoint->dout() == nullptr) {
     // If dout is null, the node does not need to grad.
     MS_LOG(DEBUG) << "node dout is null, node:" << cnode->DebugString();
     return true;
@@ -868,7 +869,7 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &
                                                                 const FuncGraphPtr &fprop_fg, bool by_value) {
   MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
 
-  if (adjoint->get_dout() == nullptr) {
+  if (adjoint->dout() == nullptr) {
     // If dout is null, the node does not need to grad.
     MS_LOG(DEBUG) << "node dout is null, node:" << cnode->DebugString();
     return true;
