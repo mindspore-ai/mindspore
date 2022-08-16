@@ -92,7 +92,7 @@ SYNTAX_UNSUPPORTED_NAMESPACE = 4       # Unsupported namespace
 # Process expr statement white list
 # Add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
 parse_expr_statement_white_list = (
-    "append", "insert",
+    "append", "insert", "clear", "reverse", "extend",
 )
 
 _builtin_function_or_method_type = type(abs)

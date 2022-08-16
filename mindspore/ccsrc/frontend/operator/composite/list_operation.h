@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "ir/meta_func_graph.h"
 
@@ -66,6 +67,64 @@ class ListPop : public MetaFuncGraph {
   friend bool operator==(const ListPop &lhs, const ListPop &rhs) { return lhs.name_ == rhs.name_; }
 };
 using ListPopPtr = std::shared_ptr<ListPop>;
+
+class ListClear : public MetaFuncGraph {
+ public:
+  explicit ListClear(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListClear() override = default;
+  MS_DECLARE_PARENT(ListClear, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ListClear &list_clear) {
+    os << list_clear.name_;
+    return os;
+  }
+  friend bool operator==(const ListClear &lhs, const ListClear &rhs) { return lhs.name_ == rhs.name_; }
+};
+using ListClearPtr = std::shared_ptr<ListClear>;
+
+class ListExtend : public MetaFuncGraph {
+ public:
+  explicit ListExtend(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListExtend() override = default;
+  MS_DECLARE_PARENT(ListExtend, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ListExtend &list_extend) {
+    os << list_extend.name_;
+    return os;
+  }
+  friend bool operator==(const ListExtend &lhs, const ListExtend &rhs) { return lhs.name_ == rhs.name_; }
+  void AddNodeToElems(const AbstractBasePtr &arg, const FuncGraphPtr &ret, std::vector<AnfNodePtr> *elems);
+};
+using ListExtendPtr = std::shared_ptr<ListExtend>;
+
+class ListReverse : public MetaFuncGraph {
+ public:
+  explicit ListReverse(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListReverse() override = default;
+  MS_DECLARE_PARENT(ListReverse, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ListReverse &list_reverse) {
+    os << list_reverse.name_;
+    return os;
+  }
+  friend bool operator==(const ListReverse &lhs, const ListReverse &rhs) { return lhs.name_ == rhs.name_; }
+};
+using ListReversePtr = std::shared_ptr<ListReverse>;
+
+class ListCount : public MetaFuncGraph {
+ public:
+  explicit ListCount(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListCount() override = default;
+  MS_DECLARE_PARENT(ListCount, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ListCount &list_count) {
+    os << list_count.name_;
+    return os;
+  }
+  friend bool operator==(const ListCount &lhs, const ListCount &rhs) { return lhs.name_ == rhs.name_; }
+  bool ComparesTwoValues(const ValuePtr &count_value, const ValuePtr &list_value);
+};
+using ListCountPtr = std::shared_ptr<ListCount>;
 }  // namespace prim
 }  // namespace mindspore
 
