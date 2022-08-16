@@ -121,6 +121,8 @@ class ModelPool {
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
+  Status CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_config);
+
   Status InitAdvancedStrategy(const char *model_buf, size_t size, int base_thread_num);
 
   Status InitBaseStrategy(const char *model_buf, size_t size, const std::shared_ptr<RunnerConfig> &runner_config);
