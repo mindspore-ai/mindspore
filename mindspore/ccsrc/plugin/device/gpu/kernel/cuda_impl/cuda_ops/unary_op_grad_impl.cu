@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "unary_op_grad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_grad_impl.cuh"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
@@ -94,6 +94,16 @@ __global__ void AtanGradKernel(const T *input, const T *dout, T *output, const s
 }
 
 template <typename T>
+__global__ void TanhGradKernel(const T *__restrict__ input, const T *dout, T *output, const size_t count) {
+  const T one = static_cast<T>(1);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    T divisor = one - input[i] * input[i];
+    output[i] = dout[i] * divisor;
+  }
+  return;
+}
+
+template <typename T>
 __global__ void AsinhGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float inputf = static_cast<float>(input[i]);
@@ -153,6 +163,12 @@ void AtanGrad(const T *input, const T *dout, T *output, const size_t count, cuda
 }
 
 template <typename T>
+void TanhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  TanhGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
 void AsinhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
   AsinhGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
   return;
@@ -176,6 +192,14 @@ void InvGrad(const T *input, const T *dout, T *output, const size_t count, cudaS
   return;
 }
 
+template CUDA_LIB_EXPORT void TanhGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void TanhGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                       Complex<float> *output, const size_t count,
+                                                       cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void SqrtGrad<double>(const double *input, const double *dout, double *output,
                                                const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void RsqrtGrad<double>(const double *input, const double *dout, double *output,
@@ -185,6 +209,8 @@ template CUDA_LIB_EXPORT void AsinGrad<double>(const double *input, const double
 template CUDA_LIB_EXPORT void ACosGrad<double>(const double *input, const double *dout, double *output,
                                                const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<double>(const double *input, const double *dout, double *output,
+                                               const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<double>(const double *input, const double *dout, double *output,
                                                const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<double>(const double *input, const double *dout, double *output,
                                                 const size_t count, cudaStream_t cuda_stream);
@@ -204,6 +230,8 @@ template CUDA_LIB_EXPORT void ACosGrad<float>(const float *input, const float *d
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<float>(const float *input, const float *dout, float *output, const size_t count,
                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<float>(const float *input, const float *dout, float *output, const size_t count,
+                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<float>(const float *input, const float *dout, float *output, const size_t count,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AcoshGrad<float>(const float *input, const float *dout, float *output, const size_t count,
@@ -222,6 +250,8 @@ template CUDA_LIB_EXPORT void ACosGrad<half>(const half *input, const half *dout
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<half>(const half *input, const half *dout, half *output, const size_t count,
                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<half>(const half *input, const half *dout, half *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<half>(const half *input, const half *dout, half *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AcoshGrad<half>(const half *input, const half *dout, half *output, const size_t count,
@@ -239,6 +269,8 @@ template CUDA_LIB_EXPORT void AsinGrad<char>(const char *input, const char *dout
 template CUDA_LIB_EXPORT void ACosGrad<char>(const char *input, const char *dout, char *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<char>(const char *input, const char *dout, char *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<char>(const char *input, const char *dout, char *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<char>(const char *input, const char *dout, char *output, const size_t count,
                                               cudaStream_t cuda_stream);
@@ -263,6 +295,9 @@ template CUDA_LIB_EXPORT void ACosGrad<unsigned char>(const unsigned char *input
 template CUDA_LIB_EXPORT void AtanGrad<unsigned char>(const unsigned char *input, const unsigned char *dout,
                                                       unsigned char *output, const size_t count,
                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<unsigned char>(const unsigned char *input, const unsigned char *dout,
+                                                      unsigned char *output, const size_t count,
+                                                      cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<unsigned char>(const unsigned char *input, const unsigned char *dout,
                                                        unsigned char *output, const size_t count,
                                                        cudaStream_t cuda_stream);
@@ -285,6 +320,8 @@ template CUDA_LIB_EXPORT void ACosGrad<int8_t>(const int8_t *input, const int8_t
                                                const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<int8_t>(const int8_t *input, const int8_t *dout, int8_t *output,
                                                const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<int8_t>(const int8_t *input, const int8_t *dout, int8_t *output,
+                                               const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<int8_t>(const int8_t *input, const int8_t *dout, int8_t *output,
                                                 const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AcoshGrad<int8_t>(const int8_t *input, const int8_t *dout, int8_t *output,
@@ -302,6 +339,8 @@ template CUDA_LIB_EXPORT void AsinGrad<int16_t>(const int16_t *input, const int1
 template CUDA_LIB_EXPORT void ACosGrad<int16_t>(const int16_t *input, const int16_t *dout, int16_t *output,
                                                 const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<int16_t>(const int16_t *input, const int16_t *dout, int16_t *output,
+                                                const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<int16_t>(const int16_t *input, const int16_t *dout, int16_t *output,
                                                 const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<int16_t>(const int16_t *input, const int16_t *dout, int16_t *output,
                                                  const size_t count, cudaStream_t cuda_stream);
@@ -321,6 +360,8 @@ template CUDA_LIB_EXPORT void ACosGrad<int>(const int *input, const int *dout, i
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<int>(const int *input, const int *dout, int *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<int>(const int *input, const int *dout, int *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<int>(const int *input, const int *dout, int *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AcoshGrad<int>(const int *input, const int *dout, int *output, const size_t count,
@@ -338,6 +379,8 @@ template CUDA_LIB_EXPORT void AsinGrad<int64_t>(const int64_t *input, const int6
 template CUDA_LIB_EXPORT void ACosGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
                                                 const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AtanGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
+                                                const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
                                                 const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void AsinhGrad<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
                                                  const size_t count, cudaStream_t cuda_stream);

@@ -15,7 +15,7 @@
  */
 
 #include <limits>
-#include "unary_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 #include "include/cuda_fp16.h"
 template <typename T>
 __global__ void ExponentialKernel(const T *input, T *output, const size_t count) {
@@ -70,6 +70,13 @@ template <>
 __global__ void LogarithmKernel(const half *input, half *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = hlog(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void LogarithmKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = log(input[i]);
   }
   return;
 }
@@ -445,6 +452,42 @@ __global__ void AtanKernel(const double *input, double *output, const size_t cou
   return;
 }
 template <typename T>
+__global__ void TanhKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = tanh(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void TanhKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    float x = static_cast<float>(input[i]);
+    output[i] = static_cast<T>(atanhf(x));
+  }
+}
+template <>
+__global__ void TanhKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = tanh(input[i]);
+  }
+}
+template <>
+__global__ void TanhKernel(const float *input, float *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = tanhf(input[i]);
+  }
+}
+template <>
+__global__ void TanhKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    half x = input[i];
+    // e^x - e^-x / e^x + e^-x
+    half pos = hexp(x);
+    half neg = hexp(-x);
+    output[i] = (pos - neg) / (pos + neg);
+  }
+}
+template <typename T>
 __global__ void AbsKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = abs(input[i]);
@@ -783,6 +826,11 @@ void Tan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream
   return;
 }
 template <typename T>
+void Tanh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  TanhKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Cos(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   CosKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -945,6 +993,8 @@ template CUDA_LIB_EXPORT void Acosh<double>(const double *input, double *output,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<double>(const double *input, double *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<double>(const double *input, double *output, const size_t count,
+                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<double>(const double *input, double *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<double>(const double *input, double *output, const size_t count,
@@ -1015,6 +1065,8 @@ template CUDA_LIB_EXPORT void Acosh<float>(const float *input, float *output, co
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<float>(const float *input, float *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<float>(const float *input, float *output, const size_t count,
+                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<float>(const float *input, float *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<float>(const float *input, float *output, const size_t count,
@@ -1073,6 +1125,7 @@ template CUDA_LIB_EXPORT void Acosh<half>(const half *input, half *output, const
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<half>(const half *input, half *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<half>(const half *input, half *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -1124,6 +1177,7 @@ template CUDA_LIB_EXPORT void Acosh<char>(const char *input, char *output, const
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<char>(const char *input, char *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<char>(const char *input, char *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -1187,6 +1241,8 @@ template CUDA_LIB_EXPORT void Acosh<unsigned char>(const unsigned char *input, u
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<unsigned char>(const unsigned char *input, unsigned char *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<unsigned char>(const unsigned char *input, unsigned char *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -1238,6 +1294,7 @@ template CUDA_LIB_EXPORT void Atan<int>(const int *input, int *output, const siz
 template CUDA_LIB_EXPORT void Asinh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Acosh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -1297,6 +1354,8 @@ template CUDA_LIB_EXPORT void Acosh<uint32_t>(const uint32_t *input, uint32_t *o
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
@@ -1361,6 +1420,8 @@ template CUDA_LIB_EXPORT void Acosh<int16_t>(const int16_t *input, int16_t *outp
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<int16_t>(const int16_t *input, int16_t *output, const size_t count,
@@ -1425,6 +1486,8 @@ template CUDA_LIB_EXPORT void Acosh<uint16_t>(const uint16_t *input, uint16_t *o
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
@@ -1489,6 +1552,8 @@ template CUDA_LIB_EXPORT void Acosh<int64_t>(const int64_t *input, int64_t *outp
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<int64_t>(const int64_t *input, int64_t *output, const size_t count,
@@ -1553,6 +1618,8 @@ template CUDA_LIB_EXPORT void Acosh<uint64_t>(const uint64_t *input, uint64_t *o
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
@@ -1587,6 +1654,10 @@ template CUDA_LIB_EXPORT void Reciprocal<Complex<float>>(const Complex<float> *i
                                                          const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                        const size_t count, cudaStream_t cuda_stream);
 
 // complex128
 template CUDA_LIB_EXPORT void Real<double>(const Complex<double> *input, double *output, const size_t count,
@@ -1605,6 +1676,10 @@ template CUDA_LIB_EXPORT void Reciprocal<Complex<double>>(const Complex<double> 
                                                           const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tanh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                         const size_t count, cudaStream_t cuda_stream);
 
 // bool
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);

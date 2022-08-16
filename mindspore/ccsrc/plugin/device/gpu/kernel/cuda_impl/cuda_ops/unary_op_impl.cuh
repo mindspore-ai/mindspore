@@ -67,6 +67,8 @@ CUDA_LIB_EXPORT void Acosh(const T *input, T *output, const size_t count, cudaSt
 template <typename T>
 CUDA_LIB_EXPORT void Atanh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void Tanh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void Abs(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);

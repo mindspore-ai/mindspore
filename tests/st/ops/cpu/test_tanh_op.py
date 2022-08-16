@@ -44,19 +44,21 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.ops(x)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net():
-    x = np.random.randn(2, 3, 3, 4).astype(np.float32)
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_net(data_type):
+    x = np.random.randn(2, 3, 3, 4).astype(data_type)
     y_expect = np.tanh(x)
     net = Net()
     out = net(Tensor(x))
-    diff = out.asnumpy() - y_expect
-    err = np.ones(shape=y_expect.shape) * 1.0e-5
-    assert np.all(diff < err)
+
     assert out.shape == y_expect.shape
-    sens = np.random.randn(2, 3, 3, 4).astype(np.float32)
+    np.allclose(out.asnumpy(), y_expect)
+
+    sens = np.random.randn(2, 3, 3, 4).astype(data_type)
     backword_net = Grad(Net())
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
