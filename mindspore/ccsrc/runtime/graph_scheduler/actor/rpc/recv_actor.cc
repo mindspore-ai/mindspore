@@ -186,6 +186,8 @@ void *RecvActor::AllocateMessage(size_t size) {
   if (recv_data_ == nullptr) {
     recv_data_ = std::make_shared<CPUDeviceAddress>(nullptr, size);
     MS_ERROR_IF_NULL_W_RET_VAL(recv_data_, nullptr);
+  } else {
+    recv_data_->SetSize(size);
   }
   if (!device_contexts_[0]->device_res_manager_->AllocateMemory(recv_data_.get())) {
     MS_LOG(ERROR) << "Failed to allocate memory size " << size;
