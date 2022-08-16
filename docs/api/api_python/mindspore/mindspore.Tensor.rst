@@ -78,34 +78,6 @@ mindspore.Tensor
         - **ValueError** - 如果 `kernel_size`，`dilation`，`stride` 值小于等于0或者个数大于2。
         - **ValueError** - 如果 `padding_value` 值小于0或者个数大于2。
 
-    .. py:method:: approximate_equal(y, tolerance=1e-5)
-
-        逐元素计算abs(x-y)，如果小于tolerance则为True，否则为False。
-
-        .. math::
-            out_i = \begin{cases}
-            & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
-            & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
-            \end{cases}
-
-        `x` 为当前Tensor。
-        `tolerance` 为相等的两元素间最大偏差。
-        `x` 和 `y` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被自动转换到高精度的数据类型。
-
-        **参数：**
-
-        - **y** (Tensor) - 输入Tensor，shape与数据类型和当前Tensor相同。
-        - **tolerance** (float) - 两元素可被视为相等的最大偏差。默认值：1e-05。
-
-        **返回：**
-
-        Tensor，shape与当前Tensor相同，bool类型。
-
-        **异常：**
-
-        - **TypeError** - `tolerance` 不是float类型。
-        - **RuntimeError** - `variable` 与 `value` 之间的类型转换不被支持。
-
     .. py:method:: argmin_with_value(axis=0, keep_dims=False)
 
         根据指定的索引计算最小值，并返回索引和值。
@@ -567,27 +539,6 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - 输入参数具有前面未指定的类型。
-
-    .. py:method:: fills(value)
-
-        创建一个与当前Tensor具有相同shape和type的Tensor，并用标量值填充。
-
-        .. note::
-            与NumPy不同，Tensor.fills()将始终返回一个新的Tensor，而不是填充原来的Tensor。
-
-        **参数：**
-
-        - **value** (Union[int, float, Tensor]) - 用来填充输出Tensor的值。数据类型为int，float或0-维Tensor。
-
-        **返回：**
-
-        Tensor，与当前Tensor具有相同的shape和type。
-
-        **异常：**
-
-        - **TypeError** - `value` 具有前面未指定的类型。
-        - **RuntimeError** - `value` 不能转换为与当前Tensor相同的类型。
-        - **ValueError** - `value` 是非0维Tensor。
 
     .. py:method:: flatten(order='C')
 
@@ -1372,24 +1323,6 @@ mindspore.Tensor
 
         Tensor，shape和数据类型与原Tensor相同。
 
-    .. py:method:: searchsorted(v, side='left', sorter=None)
-
-        查找应插入元素以保存顺序的位置索引。
-
-        **参数：**
-
-        - **v** (Union[int, float, bool, list, tuple, Tensor]) - 要插入元素的值。
-        - **side** ('left', 'right', optional) - 如果参数值为'left'，则给出找到的第一个合适位置的索引。如果参数值为'right'，则返回最后一个这样的索引。如果没有合适的索引，则返回0或N（其中N是Tensor的长度）。默认值：'left'。
-        - **sorter** (Union[int, float, bool, list, tuple, Tensor]) - 整数索引的可选一维数组，将Tensor按升序排序。它们通常是NumPy argsort方法的结果。
-
-        **返回：**
-
-        Tensor，shape与 `v` 相同的插入点数组。
-
-        **异常：**
-
-        - **ValueError** - `side` 或 `sorter` 的参数无效。
-
     .. py:method:: select(condition, y)
 
         根据条件判断Tensor中的元素的值，来决定输出中的相应元素是从当前Tensor（如果元素值为True）还是从 `y` （如果元素值为False）中选择。
@@ -1803,73 +1736,6 @@ mindspore.Tensor
 
         - **TypeError** - 如果 `k` 不是int。
         - **TypeError** - 如果 `sorted` 不是bool。
-
-    .. py:method:: unsorted_segment_min(segment_ids, num_segments)
-
-        沿分段计算输入Tensor的最小值。
-
-        .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最大值填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
-
-
-        **参数：**
-
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
-
-        **返回：**
-
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
-
-        **异常：**
-
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
-
-    .. py:method:: unsorted_segment_max(segment_ids, num_segments)
-
-        沿分段计算输入Tensor的最大值。
-
-        .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最小值填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
-
-        **参数：**
-
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
-
-        **返回：**
-
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
-
-        **异常：**
-
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
-
-    .. py:method:: unsorted_segment_prod(segment_ids, num_segments)
-
-        沿分段计算输入Tensor元素的乘积。
-
-        .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用1填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
-
-        **参数：**
-
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
-
-        **返回：**
-
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
-
-        **异常：**
-
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
 
     .. py:method:: trace(offset=0, axis1=0, axis2=1, dtype=None)
 
