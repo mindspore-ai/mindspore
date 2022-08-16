@@ -291,14 +291,8 @@ void EltWiseGradCpuTypeFunc<T>::ComplexAsinhGrad(const T *input1, const T *input
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::InvGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
-    if constexpr (std::is_same<T, double>::value) {
-      out[i] = -1 * input2[i] * input1[i] * input1[i];
-    } else {
-      float inputf = static_cast<float>(input1[i]);
-      float doutf = static_cast<float>(input2[i]);
-      float res = -1 * doutf * inputf * inputf;
-      out[i] = static_cast<T>(res);
-    }
+    T neg_one = static_cast<T>(-1);
+    out[i] = neg_one * input2[i] * input1[i] * input1[i];
   }
 }
 
@@ -438,6 +432,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
       elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::ComplexAcoshGrad},
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuTypeFunc<T>::ComplexAsinhGrad},
               {prim::kPrimTanhGrad->name(), &EltWiseGradCpuTypeFunc<T>::TanhGrad},
+              {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimSqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::SqrtGrad},
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
@@ -571,10 +566,22 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &SpecializeEltWiseGradFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &SpecializeEltWiseGradFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &SpecializeEltWiseGradFunc<double>}}},
+     &SpecializeEltWiseGradFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SpecializeEltWiseGradFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SpecializeEltWiseGradFunc<complex128>}}},
   {kAcoshGrad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},

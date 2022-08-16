@@ -18,6 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/math/unary_op_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -80,16 +81,28 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}},
     {kInvGrad,
-     {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<int>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<int8_t>},
+     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<int64_t>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryGradOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryGradOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryGradOpGpuKernelMod::LaunchKernel<half>}}}};
+       &UnaryGradOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &UnaryGradOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}}};
 
 bool UnaryGradOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
@@ -152,12 +165,21 @@ std::vector<KernelAttr> UnaryGradOpGpuKernelMod::GetOpSupport() {
 template <typename T>
 bool UnaryGradOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  static const std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>>
-    func_map = {{kSqrtGrad, SqrtGrad<T>},   {kRsqrtGrad, RsqrtGrad<T>},
-                {kAsinGrad, AsinGrad<T>},   {kACosGrad, ACosGrad<T>},
-                {kAtanGrad, AtanGrad<T>},   {kAsinhGrad, AsinhGrad<T>},
-                {kAcoshGrad, AcoshGrad<T>}, {kReciprocalGrad, ReciprocalGrad<T>},
-                {kInvGrad, InvGrad<T>}};
+  std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>> func_map;
+  const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
+  if constexpr (is_t_complex) {
+    std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>> func_map_complex =
+      {{kReciprocalGrad, ReciprocalGrad<T>}, {kInvGrad, InvGrad<T>}};
+    copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
+  } else {
+    std::map<std::string, std::function<void(const T *, const T *, T *, const size_t, cudaStream_t)>> func_map_normal =
+      {{kSqrtGrad, SqrtGrad<T>},   {kRsqrtGrad, RsqrtGrad<T>},
+       {kAsinGrad, AsinGrad<T>},   {kACosGrad, ACosGrad<T>},
+       {kAtanGrad, AtanGrad<T>},   {kAsinhGrad, AsinhGrad<T>},
+       {kAcoshGrad, AcoshGrad<T>}, {kReciprocalGrad, ReciprocalGrad<T>},
+       {kInvGrad, InvGrad<T>}};
+    copy(func_map_normal.begin(), func_map_normal.end(), inserter(func_map, func_map.begin()));
+  }
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_LOG(ERROR)

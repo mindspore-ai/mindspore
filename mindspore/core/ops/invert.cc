@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,8 +37,17 @@ abstract::ShapePtr InvertInferShape(const PrimitivePtr &, const std::vector<Abst
 TypePtr InvertInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_type = input_args[0]->BuildType();
-  std::set<TypePtr> check_list = {kInt16, kUInt16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, check_list, primitive->name());
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  std::set<TypePtr> valid_types{};
+  if (is_gpu || is_cpu) {
+    valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
+  } else {
+    valid_types = {kInt16, kUInt16};
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, primitive->name());
   return input_type;
 }
 }  // namespace
