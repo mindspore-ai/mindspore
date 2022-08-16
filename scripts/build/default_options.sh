@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,4 +63,5 @@ init_default_options()
   export USER_ENABLE_DEBUGGER=false
   export ENABLE_SYM_FILE="off"
   export ENABLE_FAST_HASH_TABLE="on"
+  export CUDA_ARCH="auto"
 }

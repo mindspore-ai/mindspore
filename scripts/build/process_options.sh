@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ set -e
 process_options()
 {
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:y' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:En:A:S:k:W:F:H:L:yG:' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -105,6 +105,8 @@ process_options()
         export ENABLE_TRT="on"
         export TENSORRT_HOME="$CASE_SENSIVE_ARG"
         echo "Link Tensor-RT library. Path: ${CASE_SENSIVE_ARG}" ;;
+      G)
+        build_option_proc_upper_g ;;
       *)
         echo "Unknown option ${opt}!"
         usage

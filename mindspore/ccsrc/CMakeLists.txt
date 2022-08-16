@@ -21,6 +21,80 @@ if(ENABLE_D OR ENABLE_ACL)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 endif()
 
+## Function for setting NVCC flag
+function(set_nvcc_flag CUDA_NVCC_FLAGS)
+    # Detect gpu archs by cudaGetDeviceProperties.
+    message("Detect gpu arch on this device.")
+    set(cu_file "${CMAKE_SOURCE_DIR}/build/mindspore/ccsrc/get_device_compute_capabilities.cu")
+    file(WRITE ${cu_file} ""
+        "#include <cuda_runtime.h>\n"
+        "#include <cstdio>\n"
+        "int main () {\n"
+        " int dev_num = 0;\n"
+        " if (cudaGetDeviceCount(&dev_num) != cudaSuccess) return -1;\n"
+        " if (dev_num < 1) return -1;\n"
+        " for (int dev_id = 0; dev_id < dev_num; ++dev_id) {\n"
+        "    cudaDeviceProp prop;"
+        "    if (cudaGetDeviceProperties(&prop, dev_id) == cudaSuccess) {\n"
+        "      printf(\"%d.%d \", prop.major, prop.minor);\n"
+        "    }\n"
+        "  }\n"
+        "  return 0;\n"
+        "}\n")
+    # Build and run cu_file, get the result from properties.
+    try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR ${CMAKE_SOURCE_DIR}/build/mindspore/ccsrc/ ${cu_file}
+            CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CUDA_INCLUDE_DIRS}"
+            LINK_LIBRARIES ${CUDA_PATH}/lib64/libcudart.so
+            RUN_OUTPUT_VARIABLE compute_cap)
+    set(cuda_archs_bin)
+    if(RUN_RESULT_VAR EQUAL 0)
+        string(REGEX REPLACE "[ \t]+" ";" compute_cap "${compute_cap}")
+        list(REMOVE_DUPLICATES compute_cap)
+        foreach(arch ${compute_cap})
+            set(arch_bin)
+            if(arch MATCHES "^([0-9]\\.[0-9](\\[0-9]\\.[0-9]\\))?)$")
+                set(arch_bin ${CMAKE_MATCH_1})
+            else()
+                message(FATAL_ERROR "Unknown CUDA arch Name ${arch} !")
+            endif()
+            if(NOT arch_bin)
+                message(FATAL_ERROR "arch_bin was not set !")
+            endif()
+            list(APPEND cuda_archs_bin ${arch_bin})
+        endforeach()
+        # Get build flag from env to choose common/auto build.
+        set(NVCC_ARCH_FLAG_FROM_ENV $ENV{CUDA_ARCH})
+        if(NVCC_ARCH_FLAG_FROM_ENV STREQUAL "common")
+            foreach(arch ${cuda_archs_bin})
+                if(arch  VERSION_LESS "7.0") # For common build, we need a Volta arch at least.
+                    message(FATAL_ERROR "The device arch must >= 7.0 to build common archs. But got " ${arch}
+                            " Using -G auto is recommended to detect device arch automatically.")
+                endif()
+            endforeach()
+            message("Build common archs for release.")
+            list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_53,code=sm_53
+                                        -gencode=arch=compute_60,code=sm_60
+                                        -gencode=arch=compute_62,code=sm_62
+                                        -gencode=arch=compute_70,code=sm_70
+                                        -gencode=arch=compute_72,code=sm_72
+                                        -gencode=arch=compute_75,code=compute_75
+                                        --expt-relaxed-constexpr)
+        else()
+            message("Auto build for arch(s) " ${cuda_archs_bin})
+            string(REGEX REPLACE "\\." "" cuda_archs_bin "${cuda_archs_bin}")
+            string(REGEX MATCHALL "[0-9()]+" cuda_archs_bin "${cuda_archs_bin}")
+            foreach(arch ${cuda_archs_bin})
+                list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_${arch},code=sm_${arch})
+            endforeach()
+            list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr)
+        endif()
+    else()
+        message("Failed to detect gpu arch automatically, build a base arch 5.3.")
+        list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+    endif()
+    set(${CUDA_NVCC_FLAGS} ${${CUDA_NVCC_FLAGS}} PARENT_SCOPE)
+endfunction()
+
 if(ENABLE_GPU)
     find_package(CUDA REQUIRED)
     find_package(Threads)
@@ -83,8 +157,10 @@ if(ENABLE_GPU)
     message("CUBLAS_LIBRARY_PATH: ${CUBLAS_LIBRARY_PATH}")
     message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
     include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
-
-    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+    ## set NVCC ARCH FLAG
+    set(CUDA_NVCC_FLAGS)
+    set_nvcc_flag(CUDA_NVCC_FLAGS)
+    add_definitions(-Wno-unknown-pragmas) # Avoid compilation warnings from cuda/thrust
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         list(APPEND CUDA_NVCC_FLAGS -G)
         message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})

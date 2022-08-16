@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ parse_device()
     if [[ "X$DEVICE_VERSION" == "X" ]]; then
       DEVICE_VERSION=10.1
     fi
-    if [[ "X$DEVICE_VERSION" != "X11.1" && "X$DEVICE_VERSION" != "X10.1" ]]; then
+    if [[ "X$DEVICE_VERSION" != "X11.6" && "X$DEVICE_VERSION" != "X11.1" && "X$DEVICE_VERSION" != "X10.1" ]]; then
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage
       exit 1

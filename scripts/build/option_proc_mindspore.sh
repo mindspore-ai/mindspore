@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,4 +82,16 @@ build_option_proc_z()
   if [[ "X$OPTARG" == "Xoff" ]]; then
     export COMPILE_MINDDATA="off"
   fi
+}
+
+build_option_proc_upper_g()
+{
+  if [[ "X$OPTARG" == "Xcommon" || "X$OPTARG" == "Xauto" ]]; then
+    export CUDA_ARCH=$OPTARG
+  else
+    echo "Invalid value $OPTARG for option -G"
+    usage
+    exit 1
+  fi
+  echo "build gpu for arch $OPTARG"
 }
