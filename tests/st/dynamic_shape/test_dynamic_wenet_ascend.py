@@ -1817,5 +1817,5 @@ def test_train():
     )
 
     train_loss = callback.loss
-    expect_loss = 113.286
+    expect_loss = 114.664
     assert np.allclose(train_loss, expect_loss, 0.001, 0.001)

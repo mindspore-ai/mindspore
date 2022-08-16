@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import math
 
 from functools import reduce
 import numpy as np
-from scipy.stats import truncnorm
 from mindspore.common.seed import get_seed, _get_graph_seed
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore._c_expression import random_normal
+from mindspore._c_expression import _random_normal, _random_uniform, _truncated_normal
 
 _INITIALIZER_ALIAS = dict()
 
@@ -36,6 +35,7 @@ class Initializer:
     Args:
         kwargs (dict): Keyword arguments for Initializer.
     """
+
     def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._seed = None
@@ -57,6 +57,7 @@ class Initializer:
 
     def __call__(self, arr):
         return self._initialize(arr)
+
 
 def _register(*aliases):
     """Return the alias register."""
@@ -89,6 +90,29 @@ def _assignment(arr, num):
     return arr
 
 
+def _numpy_seed():
+    # This will produce same value after call numpy.random.seed with same seed.
+    return np.random.randint(low=1, high=(1 << 63))
+
+
+def _init_random_normal(mean, sigma, shape):
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _random_normal(_numpy_seed(), data, mean, sigma)
+    return data
+
+
+def _init_random_uniform(a, b, shape):
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _random_uniform(_numpy_seed(), data, a, b)
+    return data
+
+
+def _init_truncated_normal(a, b, mean, sigma, shape):
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _truncated_normal(_numpy_seed(), data, a, b, mean, sigma)
+    return data
+
+
 @_register('zeros')
 class Zero(Initializer):
     """
@@ -100,8 +124,9 @@ class Zero(Initializer):
         >>> tensor1 = initializer(Zero(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('zeros', [1, 2, 3], mindspore.float32)
     """
+
     def _initialize(self, arr):
-        _assignment(arr, 0)
+        arr.fill(0)
 
 
 @_register('ones')
@@ -115,8 +140,9 @@ class One(Initializer):
         >>> tensor1 = initializer(One(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('ones', [1, 2, 3], mindspore.float32)
     """
+
     def _initialize(self, arr):
-        _assignment(arr, 1)
+        arr.fill(1)
 
 
 def _calculate_fan_in_and_fan_out(shape):
@@ -253,16 +279,15 @@ class XavierUniform(Initializer):
         >>> tensor1 = initializer(XavierUniform(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('xavier_uniform', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, gain=1):
         super(XavierUniform, self).__init__(gain=gain)
         self.gain = gain
 
     def _initialize(self, arr):
         n_in, n_out = _calculate_fan_in_and_fan_out(arr.shape)
-
         boundary = self.gain * math.sqrt(6.0 / (n_in + n_out))
-        data = np.random.uniform(-boundary, boundary, arr.shape)
-
+        data = _init_random_uniform(-boundary, boundary, arr.shape)
         _assignment(arr, data)
 
 
@@ -297,6 +322,7 @@ class HeUniform(Initializer):
         >>> tensor1 = initializer(HeUniform(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('he_uniform', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(HeUniform, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
         self.negative_slope = negative_slope
@@ -308,8 +334,7 @@ class HeUniform(Initializer):
         gain = _calculate_gain(self.nonlinearity, self.negative_slope)
         std = gain / math.sqrt(fan)
         boundary = math.sqrt(3.0) * std
-        data = np.random.uniform(-boundary, boundary, arr.shape)
-
+        data = _init_random_uniform(-boundary, boundary, arr.shape)
         _assignment(arr, data)
 
 
@@ -343,6 +368,7 @@ class HeNormal(Initializer):
         >>> tensor1 = initializer(HeNormal(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('he_normal', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(HeNormal, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
         self.negative_slope = negative_slope
@@ -353,8 +379,7 @@ class HeNormal(Initializer):
         fan = _calculate_correct_fan(arr.shape, self.mode)
         gain = _calculate_gain(self.nonlinearity, self.negative_slope)
         std = gain / math.sqrt(fan)
-        data = np.random.normal(0, std, arr.shape)
-
+        data = _init_random_normal(0, std, arr.shape)
         _assignment(arr, data)
 
 
@@ -372,12 +397,13 @@ class Constant(Initializer):
         >>> tensor1 = initializer(0, [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer(5, [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, value):
         super(Constant, self).__init__(value=value)
         self.value = value
 
     def _initialize(self, arr):
-        _assignment(arr, self.value)
+        arr.fill(self.value)
 
 
 @_register()
@@ -394,6 +420,7 @@ class Identity(Initializer):
         >>> tensor1 = initializer(Identity(), [2, 3], mindspore.float32)
         >>> tensor2 = initializer('identity', [2, 3], mindspore.float32)
     """
+
     def _initialize(self, arr):
         if len(arr.shape) != 2:
             raise ValueError('For Identity initializer, the dimension of the initialized tensor should be 2, '
@@ -420,6 +447,7 @@ class Sparse(Initializer):
         >>> from mindspore.common.initializer import initializer, Sparse
         >>> tensor1 = initializer(Sparse(sparsity=0.1, sigma=0.01), [5, 8], mindspore.float32)
     """
+
     def __init__(self, sparsity, sigma=0.01):
         super(Sparse, self).__init__()
         self.sparsity = sparsity
@@ -431,7 +459,7 @@ class Sparse(Initializer):
                              'but got {}.'.format(len(arr.shape)))
         rows, cols = arr.shape
         zero_num = int(np.ceil(self.sparsity * rows))
-        data = np.random.normal(0, self.sigma, arr.shape)
+        data = _init_random_normal(0, self.sigma, arr.shape)
         for col_idx in range(cols):
             row_idx = np.random.permutation(list(range(rows)))[: zero_num]
             data[row_idx, col_idx] = 0.
@@ -509,6 +537,7 @@ class Orthogonal(Initializer):
         >>> tensor1 = initializer(Orthogonal(gain=2.), [2, 3, 4], mindspore.float32)
         >>> tensor2 = initializer('orthogonal', [2, 3, 4], mindspore.float32)
     """
+
     def __init__(self, gain=1.):
         super(Orthogonal, self).__init__(gain=gain)
         self.gain = gain
@@ -520,7 +549,7 @@ class Orthogonal(Initializer):
         rows = arr.shape[0]
 
         cols = np.prod(arr.shape) // rows
-        data = np.random.normal(0, 1, size=(rows, cols))
+        data = _init_random_normal(0, 1, (rows, cols))
 
         if rows < cols:
             data = data.T
@@ -565,6 +594,7 @@ class VarianceScaling(Initializer):
         ...                                       distribution='untruncated_normal'), [2, 3], mindspore.float32)
         >>> tensor2 = initializer('varianceScaling', [2, 3], mindspore.float32)
     """
+
     def __init__(self, scale=1.0, mode='fan_in', distribution='truncated_normal'):
         super(VarianceScaling, self).__init__(scale=scale, mode=mode, distribution=distribution)
         if scale <= 0.:
@@ -595,13 +625,13 @@ class VarianceScaling(Initializer):
 
         if self.distribution == 'truncated_norm':
             stddev = np.sqrt(scale) / 0.87962566103423978
-            data = truncnorm.rvs(-2, 2, loc=0, scale=stddev, size=arr.shape, random_state=None)
+            data = _init_truncated_normal(-2, 2, 0, stddev, arr.shape)
         elif self.distribution == 'untruncated_normal':
             stddev = np.sqrt(scale)
-            data = np.random.normal(0, stddev, arr.shape)
+            data = _init_random_normal(0, stddev, arr.shape)
         else:
             limit = np.sqrt(3.0 * scale)
-            data = np.random.uniform(-limit, limit, arr.shape)
+            data = _init_random_uniform(-limit, limit, arr.shape)
         _assignment(arr, data)
 
 
@@ -621,12 +651,13 @@ class Uniform(Initializer):
         >>> tensor1 = initializer(Uniform(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('uniform', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, scale=0.07):
         super(Uniform, self).__init__(scale=scale)
         self.scale = scale
 
     def _initialize(self, arr):
-        tmp = np.random.uniform(-self.scale, self.scale, arr.shape)
+        tmp = _init_random_uniform(-self.scale, self.scale, arr.shape)
         _assignment(arr, tmp)
 
 
@@ -649,18 +680,16 @@ class Normal(Initializer):
         >>> tensor1 = initializer(Normal(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('normal', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, sigma=0.01, mean=0.0):
         super(Normal, self).__init__(sigma=sigma, mean=mean)
         self.sigma = sigma
         self.mean = mean
 
     def _initialize(self, arr):
-        seed, seed2 = self.seed
-        output_tensor = Tensor(np.zeros(arr.shape, dtype=np.float32))
-        random_normal(arr.shape, seed, seed2, output_tensor)
-        output_data = output_tensor.asnumpy()
-        output_data = output_data * self.sigma + self.mean
-        _assignment(arr, output_data)
+        data = _init_random_normal(self.mean, self.sigma, arr.shape)
+        _assignment(arr, data)
+
 
 @_register()
 class TruncatedNormal(Initializer):
@@ -677,12 +706,13 @@ class TruncatedNormal(Initializer):
         >>> tensor1 = initializer(TruncatedNormal(), [1, 2, 3], mindspore.float32)
         >>> tensor2 = initializer('truncatedNormal', [1, 2, 3], mindspore.float32)
     """
+
     def __init__(self, sigma=0.01):
         super(TruncatedNormal, self).__init__(sigma=sigma)
         self.sigma = sigma
 
     def _initialize(self, arr):
-        tmp = truncnorm.rvs(-2, 2, loc=0, scale=self.sigma, size=arr.shape, random_state=None)
+        tmp = _init_truncated_normal(-2, 2, 0, self.sigma, arr.shape)
         _assignment(arr, tmp)
 
 
@@ -758,6 +788,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
     shape = shape if shape is not None else init.shape
     init_obj = Tensor(dtype=dtype, shape=shape, init=init)
     return init_obj
+
 
 __all__ = [
     'Initializer',

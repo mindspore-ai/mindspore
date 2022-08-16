@@ -20,33 +20,12 @@
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_exception.h"
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace common {
-constexpr size_t kDeviceNum = 8;
-constexpr size_t kMaxThreadNum = 23;
 constexpr size_t kYieldThreshold = 1000;
 
-ThreadPool::ThreadPool() {
-  size_t process_core_num = std::thread::hardware_concurrency() - 1;
-  if (process_core_num < 1) {
-    process_core_num = 1;
-  }
-  auto ms_context = MsContext::GetInstance();
-  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target == kAscendDevice || device_target == kGPUDevice) {
-    max_thread_num_ = process_core_num / kDeviceNum;
-  } else {
-    max_thread_num_ = process_core_num;
-  }
-  if (max_thread_num_ < 1) {
-    max_thread_num_ = 1;
-  }
-  if (max_thread_num_ > kMaxThreadNum) {
-    max_thread_num_ = kMaxThreadNum;
-  }
-}
+ThreadPool::ThreadPool() : max_thread_num_(std::thread::hardware_concurrency()) {}
 
 void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
   if (context == nullptr) {
