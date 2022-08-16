@@ -46,6 +46,8 @@ class _SharedQueue(multiprocessing.queues.Queue):
         # change max_rowsize in MB into bytes
         self.seg_size = max_rowsize * 1024 * 1024
         ##pipe can hold up to 65,636 bytes at a time
+        # there is less benefit for small data. To small data it can be slower as we need to pass 100 bytes of metadata
+        # and then access the shared memory.
         self.min_shared_mem = 10000
         self.shm_list = []
         self.seg_pos = 0
@@ -64,8 +66,8 @@ class _SharedQueue(multiprocessing.queues.Queue):
         except Exception:
             raise RuntimeError(
                 "_SharedQueue: Error allocating "
-                + str(self.seg_size)
-                + "bytes, "
+                + str(self.seg_size / 1024 / 1024)
+                + "MB, "
                 + str(self.num_seg)
                 + " elements."
                 + " This might be caused by insufficient shm, and the recommended shm size is at least 5 GB."
@@ -114,15 +116,16 @@ class _SharedQueue(multiprocessing.queues.Queue):
                         name_list.append((self.data_shared, self.seg_pos, byte, r.dtype, r.shape))
                         count += 1
                     else:
-                        if isinstance(r, np.ndarray) and r.size >= self.min_shared_mem:
+                        if isinstance(r, np.ndarray) and r.size > self.min_shared_mem:
                             # Only print out error the first time it happens
                             if self.count.value == 0 and self.print_error:
                                 logger.warning(
                                     "Using shared memory queue, but rowsize is larger than allocated memory "
-                                    + "max_rowsize "
-                                    + str(self.seg_size)
-                                    + " current rowsize "
-                                    + str(start_bytes + r.nbytes)
+                                    + "max_rowsize: "
+                                    + str(self.seg_size / 1024 / 1024)
+                                    + "MB, current rowsize: "
+                                    + str((start_bytes + r.nbytes) / 1024 / 1024)
+                                    + "MB."
                                 )
                                 self.print_error = False
                                 self.count.value += 1
