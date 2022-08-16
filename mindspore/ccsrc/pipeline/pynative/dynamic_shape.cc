@@ -464,6 +464,12 @@ void DynamicShape::CheckPreviousTopCellCanBeDynamicShape(const py::object &cell,
 
 py::object DynamicShape::GetDynShape(const py::args &args) const {
   const auto &obj = args[0];
+  // infer type
+  const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
+  auto abs = v->ToAbstract();
+  std::set<TypePtr> valid_params_types = {kTensorType};
+  (void)CheckAndConvertUtils::CheckSubClass("shape type", abs->BuildType(), valid_params_types, "Shape");
+  // infer shape
   const auto &base_shape_ptr = obj.cast<tensor::TensorPtr>()->base_shape_ptr();
   if (base_shape_ptr != nullptr) {
     auto value = MakeValue(base_shape_ptr->cast<abstract::ShapePtr>()->shape());
