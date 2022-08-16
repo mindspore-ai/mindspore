@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "utils/ordered_map.h"
 #include "utils/hash_map.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "include/common/utils/python_adapter.h"
@@ -37,7 +38,7 @@ bool GetObjectValue(const std::string &obj_key, ValuePtr *const data);
 
 void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 
-const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
+const mindspore::OrderedMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
 
 std::vector<std::string> GetObjKey(const py::object &obj);
 ResolveTypeDef GetObjType(const py::object &obj);
