@@ -42,6 +42,7 @@
 #include "wrapper/fp32/arithmetic_fp32_wrapper.h"
 #include "wrapper/base/affine_wrapper.h"
 #include "wrapper/fp32/conv_winograd_fp32_wrapper.h"
+#include "nnacl/instance_norm_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -51,6 +52,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
   void CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter);
+  void CodeStruct(const std::string &name, const InstanceNormParameter &param);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
   void CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter);
