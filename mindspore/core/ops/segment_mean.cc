@@ -123,7 +123,7 @@ TypePtr SegmentMeanInferType(const PrimitivePtr &primitive, const std::vector<Ab
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SegmentMean, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SegmentMean, BaseOperator);
 AbstractBasePtr SegmentMeanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
