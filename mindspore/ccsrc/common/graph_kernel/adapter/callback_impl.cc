@@ -191,10 +191,14 @@ void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
 }
 
 void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (GetTargetFromContext() == kAscendDevice) {
-    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+    auto kernel_info = cnode->kernel_info_ptr();
+    if (kernel_info == nullptr) {
+      cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+    }
     auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kAscendDevice);
     MS_EXCEPTION_IF_NULL(kernel_info_setter);
     kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
