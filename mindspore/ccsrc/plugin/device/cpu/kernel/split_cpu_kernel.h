@@ -21,6 +21,7 @@
 #include <memory>
 #include <thread>
 #include <tuple>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -28,15 +29,19 @@
 
 namespace mindspore {
 namespace kernel {
-class SplitCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SplitCpuKernelMod : public NativeCpuKernelMod {
  public:
   SplitCpuKernelMod() = default;
   ~SplitCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -64,19 +69,17 @@ class SplitCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   template <typename T>
-  void InitIOSize(const CNodePtr &kernel_node);
+  void InitIOSize();
 
   using SplitFunc = std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                        const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  using InitIOFunc = std::function<void(SplitCpuKernelMod *, const CNodePtr &)>;
+  using InitIOFunc = std::function<void(SplitCpuKernelMod *)>;
   static std::vector<std::tuple<KernelAttr, SplitFunc, InitIOFunc>> func_list_;
   SplitFunc kernel_func_;
   InitIOFunc init_io_func_;
 
   template <typename T>
   void LaunchSplit(T *input, T **output, size_t size);
-
-  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
 
   int64_t axis_{0};
   size_t output_num_{1};
