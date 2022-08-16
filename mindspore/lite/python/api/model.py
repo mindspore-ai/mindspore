@@ -75,6 +75,7 @@ class Model:
             RuntimeError: `model_path` does not exist.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -114,6 +115,7 @@ class Model:
             ValueError: The size of the elements of `inputs` is not equal to the size of the elements of `dims` .
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -171,27 +173,29 @@ class Model:
             RuntimeError: predict model failed.
 
         Examples:
-            >>> # predict which indata is from file
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
+            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
+            >>> # 1. predict which indata is from file
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> model = mslite.Model()
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
             >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> inputs = model.get_inputs()
             >>> outputs = model.get_outputs()
-            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> in_data = np.fromfile("input.bin", dtype=np.float32)
             >>> inputs[0].set_data_from_numpy(in_data)
             >>> model.predict(inputs, outputs)
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
-            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05
-                        3.6021424e-04 8.3650106e-05]]
-
-            >>> # predict which indata is numpy array
+            ...
+            outputs:  [[1.0227193e-05 9.9270510e-06 1.6968443e-05 ... 6.6909502e-06
+                        2.1626458e-06 1.2400946e-04]]
+            >>> # 2. predict which indata is numpy array
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> model = mslite.Model()
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -201,16 +205,16 @@ class Model:
             >>> for input in inputs:
             ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
             ...     input.set_data_from_numpy(in_data)
-
+            ...
             >>> model.predict(inputs, outputs)
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
+            ...
             outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
-
-            >>> # predict which indata is new mslite tensor with numpy array
+            >>> # 3. predict which indata is new mslite tensor with numpy array
             >>> import mindspore_lite as mslite
-            >>> import numpy ad np
+            >>> import numpy as np
             >>> model = mslite.Model()
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -223,15 +227,16 @@ class Model:
             ...     input_tensor.set_data_type(input.get_data_type())
             ...     input_tensor.set_shape(input.get_shape())
             ...     input_tensor.set_format(input.get_format())
-            ...     input_tensor.set_tensor_name(input.get_data_name())
+            ...     input_tensor.set_tensor_name(input.get_tensor_name())
             ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
             ...     input_tensor.set_data_from_numpy(in_data)
             ...     input_tensors.append(input_tensor)
-
+            ...
             >>> model.predict(input_tensors, outputs)
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
+            ...
             outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
         """
         if not isinstance(inputs, list):
@@ -263,6 +268,7 @@ class Model:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -283,6 +289,7 @@ class Model:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -310,6 +317,7 @@ class Model:
             RuntimeError: get input by tensor name failed.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -345,6 +353,7 @@ class Model:
             RuntimeError: get output by tensor name failed.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -382,9 +391,9 @@ class RunnerConfig:
             value of it is the path of weight, e.g. "/home/user/weight.cfg".
 
     Raises:
-        TypeError: `context` is not a Context or None.
-        TypeError: `workers_num` is not an int or None.
-        TypeError: `config_info` is not a dict or None.
+        TypeError: `context` is neither a Context nor None.
+        TypeError: `workers_num` is neither an int nor None.
+        TypeError: `config_info` is neither a dict nor None.
         TypeError: `config_info` is a dict, but the key is not str.
         TypeError: `config_info` is a dict, the key is str, but the value is not dict.
         TypeError: `config_info` is a dict, the key is str, the value is dict, but the key of value is not str.
@@ -466,11 +475,12 @@ class ModelParallelRunner:
 
         Raises:
             TypeError: `model_path` is not a str.
-            TypeError: `runner_config` is not a RunnerConfig or None.
+            TypeError: `runner_config` is neither a RunnerConfig nor None.
             RuntimeError: `model_path` does not exist.
             RuntimeError: ModelParallelRunner's init failed.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -508,6 +518,8 @@ class ModelParallelRunner:
             RuntimeError: predict model failed.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
+            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -515,13 +527,14 @@ class ModelParallelRunner:
             >>> model_parallel_runner = mslite.ModelParallelRunner()
             >>> model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
             >>> inputs = model_parallel_runner.get_inputs()
-            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> in_data = np.fromfile("input.bin", dtype=np.float32)
             >>> inputs[0].set_data_from_numpy(in_data)
             >>> outputs = model_parallel_runner.get_outputs()
             >>> model_parallel_runner.predict(inputs, outputs)
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
+            ...
             outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05
                         3.6021424e-04 8.3650106e-05]]
         """
@@ -556,6 +569,7 @@ class ModelParallelRunner:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -577,6 +591,7 @@ class ModelParallelRunner:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
+            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
