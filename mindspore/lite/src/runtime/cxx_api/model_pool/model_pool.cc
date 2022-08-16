@@ -33,17 +33,7 @@ constexpr int kNumPhysicalCoreThreshold = 16;
 constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
 constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
-int GetCoreNum() {
-  int core_num = 1;
-#if defined(_MSC_VER) || defined(_WIN32)
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  core_num = sysinfo.dwNumberOfProcessors;
-#else
-  core_num = sysconf(_SC_NPROCESSORS_CONF);
-#endif
-  return core_num;
-}
+constexpr int kNumDefaultInterOpParallel = 4;
 
 Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vector<int> *logical_list) {
   int processor_id = -1;
@@ -74,7 +64,7 @@ Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vecto
     if (data_size == kNumCoreDataLen) {
       if (core_id == -1 && physical_id == -1) {
         MS_LOG(DEBUG) << "All cores are physical cores.";
-        int core_size = GetCoreNum();
+        int core_size = lite::GetCoreNum();
         for (int core_num = 0; core_num < core_size; core_num++) {
           physical_list->push_back(core_num);
         }
@@ -261,7 +251,7 @@ Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
     workers_num_ = worker_num;
   } else {
     // each worker binds all available cores in order
-    workers_num_ = GetCoreNum() / thread_num;
+    workers_num_ = lite::GetCoreNum() / thread_num;
   }
   return kSuccess;
 }
@@ -279,6 +269,11 @@ std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
     return nullptr;
   }
   context->SetThreadNum(thread_num);
+  if (thread_num > kNumDefaultInterOpParallel) {
+    context->SetInterOpParallelNum(kNumDefaultInterOpParallel);
+  } else {
+    context->SetInterOpParallelNum(1);
+  }
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
@@ -304,7 +299,7 @@ Status ModelPool::CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &run
   if (worker_num != 0 && !all_bind_core_list.empty() &&
       static_cast<int>(all_bind_core_list.size()) == context->GetThreadNum() * worker_num) {
     // Use the core id set by the user. Currently, this function can only be enabled when the worker num is not 0.
-    auto max_core_id = GetCoreNum();
+    auto max_core_id = lite::GetCoreNum();
     for (size_t i = 0; i < all_bind_core_list.size(); i++) {
       if (all_bind_core_list[i] < 0 || all_bind_core_list[i] >= max_core_id) {
         MS_LOG(ERROR) << "Please set correct core id, core id should be less than " << max_core_id
@@ -353,8 +348,16 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
       return nullptr;
     }
     if (device->GetDeviceType() == kGPU && device_list.size() == kNumDeviceInfo) {
+      if (context->GetInterOpParallelNum() == 0) {
+        context->SetInterOpParallelNum(1);  // do not use InterOpParallel
+      }
       return context;
     } else if (device->GetDeviceType() == kCPU) {
+      if (context->GetInterOpParallelNum() == 0) {
+        int32_t inter_op_parallel =
+          context->GetThreadNum() >= kNumDefaultInterOpParallel ? kNumDefaultInterOpParallel : 1;
+        context->SetInterOpParallelNum(inter_op_parallel);
+      }
       auto cpu_context = device->Cast<CPUDeviceInfo>();
       auto enable_fp16 = cpu_context->GetEnableFP16();
       if (enable_fp16) {
@@ -448,7 +451,6 @@ ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<Runner
   if (runner_config != nullptr) {
     worker_config->config_info = runner_config->GetConfigInfo();
   }
-  init_context->SetInterOpParallelNum(1);
   worker_config->worker_id = 0;
   worker_config->context = init_context;
   worker_config->numa_id = -1;

@@ -33,14 +33,12 @@ struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
 
 #ifdef PARALLEL_INFERENCE
-  int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
   int affinity_mode_ = 1;
-  int32_t inter_op_parallel_num_ = 4;
 #else
-  int32_t thread_num = 2;
   int affinity_mode_ = 0;
-  int32_t inter_op_parallel_num_ = 1;
 #endif
+  int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
+  int32_t inter_op_parallel_num_ = 0;
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;
   std::shared_ptr<Delegate> delegate = nullptr;
