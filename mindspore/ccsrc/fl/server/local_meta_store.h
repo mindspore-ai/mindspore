@@ -21,6 +21,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include "fl/server/common.h"
 
@@ -87,7 +88,9 @@ class LocalMetaStore {
 
   std::unordered_map<std::string, Feature> &aggregation_feature_map();
 
-  bool verifyAggregationFeatureMap(const std::unordered_map<std::string, Feature> &model, bool verify_score = false);
+  bool verifyAggregationFeatureMap(const std::unordered_map<std::string, Feature> &model);
+
+  bool verifyAggregationFeatureMap(const std::map<std::string, UploadData> &model);
 
  private:
   LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}

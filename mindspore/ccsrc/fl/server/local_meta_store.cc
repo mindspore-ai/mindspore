@@ -55,13 +55,11 @@ const void LocalMetaStore::put_aggregation_feature_map(const std::string &name, 
 
 std::unordered_map<std::string, Feature> &LocalMetaStore::aggregation_feature_map() { return aggregation_feature_map_; }
 
-bool LocalMetaStore::verifyAggregationFeatureMap(const std::unordered_map<std::string, Feature> &model,
-                                                 bool verify_scope) {
+bool LocalMetaStore::verifyAggregationFeatureMap(const std::unordered_map<std::string, Feature> &model) {
   // feature map size in Hybrid training is not equal with upload model size
   if (model.size() > aggregation_feature_map_.size()) {
     return false;
   }
-
   for (const auto &weight : model) {
     std::string weight_name = weight.first;
     size_t weight_size = weight.second.weight_size;
@@ -71,14 +69,40 @@ bool LocalMetaStore::verifyAggregationFeatureMap(const std::unordered_map<std::s
     if (weight_size != aggregation_feature_map_[weight_name].weight_size) {
       return false;
     }
-    if (!verify_scope) {
-      continue;
-    }
     std::vector<float> weight_data = weight.second.weight_data;
     for (const auto &data : weight_data) {
       if (std::isnan(data) || std::isinf(data)) {
         MS_LOG(WARNING) << "The aggregation weight: " << weight_name << " is nan or inf.";
         return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool LocalMetaStore::verifyAggregationFeatureMap(const std::map<std::string, UploadData> &model) {
+  if (model.size() > aggregation_feature_map_.size()) {
+    return false;
+  }
+
+  for (const auto &weight : model) {
+    std::string weight_name = weight.first;
+    auto upload_data = weight.second;
+    for (const auto &item : upload_data) {
+      size_t weight_size = item.second.size;
+      if (aggregation_feature_map_.count(weight_name) == 0) {
+        return false;
+      }
+      if (weight_size != aggregation_feature_map_[weight_name].weight_size) {
+        return false;
+      }
+      float *weight_data_arr = reinterpret_cast<float *>(item.second.addr);
+      std::vector<float> weight_data = {weight_data_arr, weight_data_arr + weight_size / sizeof(float)};
+      for (const auto &data : weight_data) {
+        if (std::isnan(data) || std::isinf(data)) {
+          MS_LOG(WARNING) << "The aggregation weight: " << weight_name << " is nan or inf.";
+          return false;
+        }
       }
     }
   }

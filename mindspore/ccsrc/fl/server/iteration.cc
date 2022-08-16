@@ -623,7 +623,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       feature_map[weight_fullname] = feature;
     }
 
-    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map, true)) {
+    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
       ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
       iteration_result_ = IterationResult::kSuccess;
