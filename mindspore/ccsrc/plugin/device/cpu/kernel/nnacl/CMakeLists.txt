@@ -165,7 +165,7 @@ if("${X86_64_SIMD}" STREQUAL "sse" OR "${X86_64_SIMD}" STREQUAL "avx" OR "${X86_
             ${ASSEMBLY_SSE_SRC}
             ${KERNEL_SSE_FILE})
     set_source_files_properties(${MS_X86_SSE_SRC} PROPERTIES LANGUAGE C
-        COMPILE_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -fPIC")
 
     set(MS_X86_SIMD_SRC ${MS_X86_SIMD_SRC} ${MS_X86_SSE_SRC})
 endif()
