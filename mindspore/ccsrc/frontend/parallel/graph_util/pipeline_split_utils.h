@@ -58,7 +58,6 @@ void HandleMicroBatch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
 void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, const ValuePtr &value, size_t max_depth);
 void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root);
 void BroadCastNeedGrad(const AnfNodePtr &node, NodeUsersMap *node_user_map, const FuncGraphPtr &root);
-AnfNodePtr GetPreNode(const AnfNodePtr &node);
 void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager,
                       const FuncGraphPtr &root);
 void SetStridedSliceStrategy(const AnfNodePtr &node);
