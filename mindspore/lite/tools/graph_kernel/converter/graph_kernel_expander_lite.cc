@@ -30,6 +30,7 @@
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/anf_utils.h"
+#include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
 
@@ -226,5 +227,11 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     (void)decos.insert(decos.end(), iter->second.begin(), iter->second.end());
   }
   return WrapExpander(expander, decos);
+}
+
+void GraphKernelExpanderLite::PreProcessAllNode(const CNodePtr &node) {
+  if (!AnfUtils::IsGraphKernel(node)) {
+    BasicOpInferShape().InferShape(node);
+  }
 }
 }  // namespace mindspore::graphkernel

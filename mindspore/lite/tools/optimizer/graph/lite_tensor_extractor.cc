@@ -146,9 +146,10 @@ TensorPtr GetCNodeTensorListVarInput(const lite::DataInfo &data_info) {
   }
   return tensor_list;
 }
+}  // namespace
 
-int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_inputs, converter::FmkType fmk_type,
-                       bool train_flag, bool copy_data) {
+int LiteTensorExtractor::GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_inputs,
+                                            converter::FmkType fmk_type, bool train_flag, bool copy_data) {
   MS_ASSERT(cnode != nullptr && const_ms_inputs != nullptr);
   std::vector<lite::DataInfo> data_infos;
   for (size_t i = 1; i < cnode->size(); ++i) {
@@ -174,7 +175,8 @@ int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_i
   return ConvertToLiteTensor(data_infos, const_ms_inputs);
 }
 
-int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs, converter::FmkType fmk_type) {
+int LiteTensorExtractor::GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs,
+                                          converter::FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(var_ms_inputs != nullptr);
   for (size_t i = 1; i < cnode->size(); ++i) {
@@ -207,7 +209,6 @@ int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_input
   }
   return lite::RET_OK;
 }
-}  // namespace
 
 int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs,
                                               converter::FmkType fmk_type, bool train_flag, bool copy_data) {

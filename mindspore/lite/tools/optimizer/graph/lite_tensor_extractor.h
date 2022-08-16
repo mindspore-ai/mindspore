@@ -32,6 +32,10 @@ class LiteTensorExtractor {
   static int GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs, converter::FmkType fmk_type,
                                   bool train_flag, bool copy_data);
   static int GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *outputs, bool train_flag);
+  static int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_inputs,
+                                converter::FmkType fmk_type, bool train_flag, bool copy_data);
+  static int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs,
+                              converter::FmkType fmk_type);
 };
 }  // namespace opt
 }  // namespace mindspore
