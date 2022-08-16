@@ -1665,13 +1665,16 @@ void InitPipeline() {
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   auto device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
   if (backend == "ge") {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
     device_context->Initialize();
   }
   if (device_name == kAscendDevice) {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_name, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
       MS_LOG(EXCEPTION) << "Open tsd failed";
