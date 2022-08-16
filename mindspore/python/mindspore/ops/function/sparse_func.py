@@ -661,11 +661,10 @@ def csr_add(a, b, alpha, beta):
     b_batch_pointers = make_tensor([0, b.values.shape[0]], mstype.int32)
     a_shape = make_tensor(a.shape, mstype.int32)
     b_shape = make_tensor(b.shape, mstype.int32)
-    shape, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
-                                                   b_shape, b_batch_pointers, b.indptr, b.indices, b.values,
-                                                   alpha, beta)
-    output_shape = tuple(shape.asnumpy().tolist())
-    return CSRTensor(indptr, indices, values, output_shape)
+    _, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
+                                               b_shape, b_batch_pointers, b.indptr, b.indices, b.values,
+                                               alpha, beta)
+    return CSRTensor(indptr, indices, values, a.shape)
 
 
 __all__ = [

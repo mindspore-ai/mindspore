@@ -175,3 +175,9 @@ convert_object_map = {
 
 if not security.enable_security():
     convert_object_map[T.print] = F.print_
+
+# Convert class object to callable function
+convert_class_to_function_map = {
+    "class 'list'":  M.list_func,
+    "class 'tuple'": M.tuple_func
+}
