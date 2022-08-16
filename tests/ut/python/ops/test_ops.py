@@ -111,6 +111,7 @@ from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.other_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
+from mindspore.ops.operations.nn_ops import NuclearNorm
 from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
@@ -1339,6 +1340,15 @@ class SparseApplyMomentumNet(nn.Cell):
     def construct(self, var, accum, lr, grad, indices, momentum):
         out = self.sparse_apply_momentum(var, accum, lr, grad, indices, momentum)
         return out
+
+
+class NuclearNormNet(nn.Cell):
+    def __init__(self, dim=None, keepdim=False):
+        super().__init__()
+        self.nuclearnorm = NuclearNorm(dim=dim, keepdim=keepdim)
+
+    def construct(self, x):
+        return self.nuclearnorm(x)
 
 
 test_case_math_ops = [
@@ -3223,6 +3233,10 @@ test_case_nn_ops = [
                         Tensor(np.array([[0.4, 0.5], [0.2, 0.1]]).astype(np.float32)),
                         Tensor(np.array([0, 1]).astype(np.int32)),
                         Tensor(0.8, mstype.float32)],
+        'skip': ['backward']}),
+    ('NuclearNorm', {
+        'block': NuclearNormNet(dim=[1, 2], keepdim=True),
+        'desc_inputs': [[2, 3, 4]],
         'skip': ['backward']}),
 ]
 test_case_array_ops = [

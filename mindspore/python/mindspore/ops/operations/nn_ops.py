@@ -10624,6 +10624,93 @@ class SparseApplyProximalGradientDescent(Primitive):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
+class NuclearNorm(Primitive):
+    r"""
+    Returns the matrix nuclear norm of a given tensor.
+
+    Attr `dim` specifies which two dimensions of the input `x` to calculate the nuclear norm across. If `dim` is None,
+    the nuclear norm will be calculated across all dimensions of input. Because the nuclear norm is the sum of the
+    singular values of the matrix, the input at this time should be 2-dimensional. That is, if the input is
+    2-dimensional, we compute the nuclear norm of the input matrix. At this point, `dim` should be None. If you set
+    `dim`, it also needs to be in the proper range, although it doesn't work. If the input is 3-dimensional and above,
+    the attribute `dim` is required. It specifies which two dimensions of input to calculate the nuclear norm across.
+
+    According to the `dim` list, the input tensor is reordered by `dim`. The two dimensions pointed to by the attribute
+    `dim` are placed at the end, and the order of the other dimensions is relatively unchanged. Perform the SVD of each
+    slice of the adjusted tensor to obtain the singular value. Sum all of the singular value of each slice/matrix to
+    obtain the nuclear norm.
+
+    Args:
+        dim (Union[list(int), tuple(int)]): Specifies which two dimensions of `x` to calculate the matrix nuclear norm
+            across. If `dim` is None, the nuclear norm will be calculated across all dimensions of `x`. The length of
+            `dim` should be 2. The value in `dim` should be in this range:[-x_rank, x_rank). x_rank is the dimension of
+            Tensor `x`. The value of `dim[0]` or `dim[1]` can not point to the same dimension. Default: None.
+        keepdim (bool): whether the output tensor have `dim` retained or not. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Input to compute the matrix nuclear norm. The dimension of `x` should be greater than or
+          equal to 2. Data type must be float32 or float64.
+
+    Outputs:
+        Tensor, output tensor with dimensions in `dim` reduced to 1 will be returned if `keepdim` is `True`;
+        otherwise a tensor with dimensions in `dim` removed is returned. The data type is same as `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+        TypeError: If dtype of `x` is neither float32 nor float64.
+        TypeError: If dtype of `dim` is neither list(int) nor tuple(int).
+        TypeError: If dtype of `keepdim` is not bool.
+        ValueError: If dimension of Tensor `x` is less than 2.
+        ValueError: If the length of `dim` is not 2 when `dim` is set.
+        ValueError: If the dimension of tensor `x` is not 2 when `dim` is not set.
+        ValueError: If `dim[0]` or `dim[1]` point to the same dimension.
+        ValueError: If `dim[0]` or `dim[1]` is not in this range:[-x_rank, x_rank).
+                    x_rank is the dimension of Tensor `x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        ...                           [[7.0, 8.0, 9.0], [10.0, 11.0, 12.0]]]), ms.float32)
+        >>> dim = [0, 2]
+        >>> keepdim = True
+        >>> nuclearnorm = nn_ops.NuclearNorm(dim = dim,keepdim = keepdim)
+        >>> output = nuclearnorm(input_x)
+        >>> print(output)
+        [[[15.407588]
+        [21.711605]]]
+        >>> keepdim = False
+        >>> nuclearnorm = nn_ops.NuclearNorm(dim = dim,keepdim = keepdim)
+        >>> output = nuclearnorm(input_x)
+        >>> print(output)
+        [15.407588 21.711605]
+        >>> dim = [0, 1]
+        >>> keepdim = True
+        >>> nuclearnorm = nn_ops.NuclearNorm(dim = dim,keepdim = keepdim)
+        >>> output = nuclearnorm(input_x)
+        >>> print(output)
+        [[[14.212674 15.81139  17.492853]]]
+        >>> keepdim = False
+        >>> nuclearnorm = nn_ops.NuclearNorm(dim = dim,keepdim = keepdim)
+        >>> output = nuclearnorm(input_x)
+        >>> print(output)
+        [14.212674 15.81139  17.492853]
+    """
+
+    @prim_attr_register
+    def __init__(self, dim=None, keepdim=False):
+        """Initialize NuclearNorm."""
+        validator.check_value_type("dim", dim, [list, tuple, type(None)], self.name)
+        if dim is not None:
+            validator.check_int(len(dim), 2, Rel.EQ, 'length of dim_size', self.name)
+            validator.check_is_int(dim[0], "dim[0]", self.name)
+            validator.check_is_int(dim[1], "dim[1]", self.name)
+        else:
+            self.add_prim_attr('dim', [1000])
+        validator.check_value_type("keepdim", keepdim, [bool], self.name)
+
+
 class FractionalMaxPoolWithFixedKsize(Primitive):
     r"""
     Fractional max pooling operation.
