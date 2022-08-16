@@ -27,6 +27,10 @@ from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -157,7 +161,7 @@ class DatasetLenet():
 
 def test_double_subgraphs_train():
     context.set_auto_parallel_context(device_num=1, global_rank=0)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", dataset_strategy="data_parallel")
     net = TrainStepWarp(NetWithLoss(Net()))
 
     batch_ids = np.ones([8, 8, 8, 8]).astype(np.int32)

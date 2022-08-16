@@ -23,6 +23,10 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -356,9 +360,10 @@ def test_gatherv2_target_cpu_reducescatter():
     strategy1 = ((8, 1), (1, 1))
     out_strategy = ((8, 1, 1),)
     strategy2 = ((2, 4, 1), (2, 4, 1))
+    context.set_auto_parallel_context(dataset_strategy="data_parallel")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, target="CPU", gather_out_strategy=out_strategy)))
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    x = Tensor(np.ones([64 // 8, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64 // 8, 64, 64]), dtype=ms.float32)
     compile_graph(net, 8, "semi_auto_parallel", x, y)
 
 
@@ -371,7 +376,8 @@ def test_gatherv2_target_cpu_allreduce():
     strategy1 = ((8, 1), (1, 1))
     out_strategy = ((1, 1, 1),)
     strategy2 = ((2, 4, 1), (2, 4, 1))
+    context.set_auto_parallel_context(dataset_strategy="data_parallel")
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2, target="CPU", gather_out_strategy=out_strategy)))
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    x = Tensor(np.ones([64 // 8, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([64 // 8, 64, 64]), dtype=ms.float32)
     compile_graph(net, 8, "semi_auto_parallel", x, y)

@@ -22,7 +22,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
-
 class DatasetLenet():
     def __init__(self, data, label, length=3):
         self.data = data

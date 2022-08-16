@@ -36,7 +36,6 @@ from mindspore.parallel import set_algo_parameters
 from parallel.utils.utils import BasicValidator
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
-
 grad_all = C.GradOperation(get_all=True)
 
 

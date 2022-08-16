@@ -21,6 +21,10 @@ from mindspore import context
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()

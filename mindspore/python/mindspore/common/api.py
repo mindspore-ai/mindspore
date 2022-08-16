@@ -348,20 +348,7 @@ class _MindsporeFunctionExecutor:
         if self.obj is not None:
             args_list = args_list[1:]
 
-        if is_pynative_parallel() and not hasattr(self.shard_parent_obj, "keep_input_unchanged") and \
-            self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
-            device_num = context.get_auto_parallel_context('device_num')
-            new_args_list = ()
-            for arg in args_list:
-                if isinstance(arg, PythonTensor):
-                    new_shape = (arg.shape[0] * device_num,) + arg.shape[1:]
-                    new_args_list += (PythonTensor(np.zeros(shape=new_shape), arg.dtype),)
-                else:
-                    new_args_list += (arg,)
-            phase = self.compile(new_args_list, self.fn.__name__)
-        else:
-            phase = self.compile(args_list, self.fn.__name__)
-
+        phase = self.compile(args_list, self.fn.__name__)
         if context.get_context("precompile_only"):
             return None
         new_inputs = self._generate_run_args(args_list)
@@ -1092,10 +1079,6 @@ class _CellGraphExecutor:
         self._set_dataset_mode(args_list)
         self._set_compile_cache_dep_files(phase)
 
-        is_sink_mode = args and isinstance(args[0], Tensor) and args[0].virtual_flag
-        if auto_parallel_mode and _need_to_full() and not is_sink_mode and obj.auto_parallel_compile_and_run():
-            args_list = _to_full_tensor(args, _get_device_num(), _get_global_rank())
-
         enable_ge = context.get_context("enable_ge")
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if jit_config_dict:
@@ -1109,7 +1092,7 @@ class _CellGraphExecutor:
         if graph is None:
             raise RuntimeError("Compile graph failed for phase {}.".format(phase))
 
-        self._auto_parallel_process(obj, phase, is_sink_mode, auto_parallel_mode, *args)
+        self._auto_parallel_process(obj, phase, auto_parallel_mode, *args)
 
         if not do_convert:
             return phase, True
@@ -1124,7 +1107,7 @@ class _CellGraphExecutor:
 
         return phase, True
 
-    def _auto_parallel_process(self, obj, phase, is_sink_mode, auto_parallel_mode, *args):
+    def _auto_parallel_process(self, obj, phase, auto_parallel_mode, *args):
         """compile graph in auto parallel mode."""
         if not auto_parallel_mode:
             replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
@@ -1140,10 +1123,6 @@ class _CellGraphExecutor:
             obj.load_parameter_slice(None)
 
         self._update_param_node_default_input(phase, replace)
-
-        # set parallel inputs in sink mode
-        if is_sink_mode:
-            obj.set_parallel_input_with_inputs(*args)
 
     def _update_param_node_default_input(self, phase, replace):
         new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}

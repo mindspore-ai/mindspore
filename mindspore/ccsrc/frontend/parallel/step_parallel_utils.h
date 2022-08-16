@@ -33,7 +33,16 @@ namespace parallel {
 const int64_t TWO_INPUT_SIZE = 2;
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
+struct CommInfo {
+  int64_t device_num = 1;
+  int64_t global_rank = 0;
+  std::string world_group;
+  std::string communication_backend;
+};
 // common method
+CommInfo GetCommInfo();
+ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index);
+void ExtendInputArgsAbstractShape(const AbstractBasePtr &args_abstract_item, size_t index);
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_list);
 bool IsParallelCareNode(const CNodePtr &cnode);

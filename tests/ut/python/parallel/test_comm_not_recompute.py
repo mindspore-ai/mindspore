@@ -23,6 +23,10 @@ from mindspore.common.initializer import initializer
 from mindspore.context import _Context
 from ....train_step_wrap import train_step_with_loss_warp
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 class MatMulCell(nn.Cell):
     def __init__(self):
         super(MatMulCell, self).__init__()
@@ -70,7 +74,6 @@ class DenseMutMulNet(nn.Cell):
         return s
 
 def compile_net(mp_comm_recompute, recompute_slice_activation):
-    context.reset_auto_parallel_context()
     _Context().set_backend_policy("vm")
     context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)

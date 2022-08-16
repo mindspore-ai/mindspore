@@ -35,7 +35,7 @@ def test_load_tensor():
     if expected_tensor.__str__() != tensor_slice.__str__():
         raise AssertionError
 
-    # set back to the defalt value
+    # set back to the default value
     hccl.rank_id = 0
 
 

@@ -23,6 +23,10 @@ from mindspore.ops import operations as P
 from parallel.utils.utils import ParallelValidator
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(Cell):
     def __init__(self, weight, w2, begin, end, strides, strategy1=None, strategy2=None, is_parameter=True,
                  begin_mask=0, end_mask=0, ellipsis_mask=0, new_axis_mask=0, shrink_axis_mask=0):
@@ -479,13 +483,7 @@ def test_stridedslice_layout():
     sub_graph = {
         'StridedSlice-1': ['Load-0', 'out((127, 0, 0))', 'out((128, 64, 32))', 'out((1, 1, 1))'],
         'Mul-0': ['Reshape-1', 'StridedSlice-1'],
-        'AllGather-2': ['Reshape-2'],
-        'Split-1': ['AllGather-2'],
-        'TupleGetItem-3': ['Split-1', 0],
-        'TupleGetItem-4': ['Split-1', 1],
-        'TupleGetItem-5': ['Split-1', 2],
-        'TupleGetItem-6': ['Split-1', 3],
-        'MakeTuple-2': ['TupleGetItem-3', 'TupleGetItem-4', 'TupleGetItem-5', 'TupleGetItem-6'],
+        'Split-1': ['AllGather-1'],
         'Concat-1': ['MakeTuple-2']
     }
     assert validator.check_graph_structure(sub_graph)

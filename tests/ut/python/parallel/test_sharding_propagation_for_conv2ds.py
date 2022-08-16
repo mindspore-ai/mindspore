@@ -23,6 +23,10 @@ from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(Cell):
     def __init__(self, conv2d_weight, conv2d_transpose_weight, out_channel, strategy=None):
         super().__init__()

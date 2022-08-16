@@ -27,6 +27,9 @@ from mindspore import context
 from mindspore.train.serialization import restore_group_info_list
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 class Net3(nn.Cell):
     """Net definition"""
     def __init__(self, strategy1, strategy2, strategy3):
@@ -99,7 +102,7 @@ def test_data_parallel_group():
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_data_parallel_group.pb"
-    context.set_auto_parallel_context(parallel_mode="data_parallel",
+    context.set_auto_parallel_context(parallel_mode="data_parallel", dataset_strategy="data_parallel",
                                       device_num=32, enable_parallel_optimizer=False)
     auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
     group_info_list = restore_group_info_list("./test_data_parallel_group.pb")
@@ -151,7 +154,7 @@ def test_pipeline_split_stage0_mirror_group():
     from .test_pipeline_split import PipelineCell, PipelineSplit, DatasetLenet
     os.environ['GROUP_INFO_FILE'] = "./test_pipeline_split_stage0_mirror_group.pb"
     context.set_auto_parallel_context(device_num=64, global_rank=0, pipeline_stages=2)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="data_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 8))
@@ -177,7 +180,7 @@ def test_pipeline_split_stage1_mirror_group():
     from .test_pipeline_split import PipelineCell, PipelineSplit, DatasetLenet
     os.environ['GROUP_INFO_FILE'] = "./test_pipeline_split_stage1_mirror_group.pb"
     context.set_auto_parallel_context(device_num=64, global_rank=63, pipeline_stages=2)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="data_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 8))

@@ -22,6 +22,10 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 _input_x = Tensor(np.ones([512, 4]), ms.bool_)
 
 

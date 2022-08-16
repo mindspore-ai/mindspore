@@ -975,13 +975,6 @@ class Cell(Cell_):
                     _check_all_tensor(i):
                 new_inputs.append(i)
 
-        if self._auto_parallel_mode:
-            if new_inputs and isinstance(new_inputs[0], Tensor) and inputs[0].virtual_flag:
-                # get parallel inputs in sink mode, parallel inputs set in _cell_graph_executor.compile
-                parallel_inputs_run = self._parallel_inputs_run
-            else:
-                parallel_inputs_run = new_inputs
-            return _cell_graph_executor(self, *parallel_inputs_run, phase=self.phase)
         return _cell_graph_executor(self, *new_inputs, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):

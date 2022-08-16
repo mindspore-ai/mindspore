@@ -22,6 +22,10 @@ from mindspore import context
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 def test_get_parameter_layout():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, weight):
@@ -50,7 +54,7 @@ def test_get_parameter_layout():
     net.set_train()
     exe = me._cell_graph_executor
     exe.compile(net, x, phase='train', auto_parallel_mode=True)
-    x_layout = ([8], [0, -1], [4, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [1, -1]
+    x_layout = ([8], [0, -1], [32, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [1, -1]
     weight_layout = ([2, 4], [0, -1], [16, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [0, -1]
     expect_dict = {'x': x_layout, 'w1': weight_layout}
     # to be resovled: static local variable count_p is used in step_parallel.cc, it needs to be reset between each ut

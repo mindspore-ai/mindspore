@@ -107,9 +107,9 @@ def test_virtual_dataset_model_parallel_semi_auto_parallel():
     strategy2 = ((2, 2), (2, 2))
     strategy3 = ((2, 4),)
     net = GradWrap(NetWithLoss(Net1(strategy1, strategy2, strategy3)))
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 2048 // 8]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
 def test_virtual_dataset_model_parallel_auto_parallel():
@@ -126,9 +126,9 @@ def test_virtual_dataset_model_parallel_auto_parallel():
     strategy2 = None
     strategy3 = None
     net = GradWrap(NetWithLoss(Net1(strategy1, strategy2, strategy3)))
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 2048 // 8]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
 def test_virtual_dataset_model_parallel_semi_auto_parallel_diff_input_dim():
@@ -144,9 +144,9 @@ def test_virtual_dataset_model_parallel_semi_auto_parallel_diff_input_dim():
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((1, 8), (8,))
     strategy3 = ((2, 4),)
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64 // 8]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3)))
     compile_net(net, x, y, b)
 
@@ -163,9 +163,9 @@ def test_virtual_dataset_model_parallel_auto_parallel_diff_input_dim():
     strategy1 = None
     strategy2 = None
     strategy3 = None
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64 // 8]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3)))
     compile_net(net, x, y, b)
 
@@ -182,8 +182,8 @@ def test_virtual_dataset_model_parallel_semi_auto_parallel_diff_input_dim_not_fu
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((1, 8), (8,))
     strategy3 = ((2, 4),)
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
     b = Tensor(np.ones([64]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3)))
     compile_net(net, x, y, b)
@@ -201,8 +201,8 @@ def test_virtual_dataset_model_parallel_auto_parallel_diff_input_dim_not_fully_s
     strategy1 = None
     strategy2 = None
     strategy3 = None
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
     b = Tensor(np.ones([64]), dtype=ms.float32)
     net = GradWrap(NetWithLoss(Net2(strategy1, strategy2, strategy3)))
     compile_net(net, x, y, b)
@@ -220,9 +220,9 @@ def test_virtual_dataset_data_parallel_not_fully_shard_repeat_right():
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((1, 8), (8,))
     strategy3 = ((2, 4),)
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64]), dtype=ms.float32)
+    x = Tensor(np.ones([128 // 4, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32 // 4, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64 // 4]), dtype=ms.float32)
     backbone = Net2(strategy1, strategy2, strategy3)
     backbone.virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
     net = GradWrap(NetWithLoss(backbone))
@@ -242,9 +242,9 @@ def test_without_virtual_dataset_model_parallel_semi_auto_parallel():
     strategy2 = ((2, 2), (2, 2))
     strategy3 = ((2, 4),)
     net = GradWrap(NetWithLoss(Net3(strategy1, strategy2, strategy3)))
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 2048 // 8]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
 def test_without_virtual_dataset_model_parallel_auto_parallel():
@@ -261,9 +261,9 @@ def test_without_virtual_dataset_model_parallel_auto_parallel():
     strategy2 = None
     strategy3 = None
     net = GradWrap(NetWithLoss(Net3(strategy1, strategy2, strategy3)))
-    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    x = Tensor(np.ones([128, 32 // 8]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64 // 8]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 2048 // 8]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
 

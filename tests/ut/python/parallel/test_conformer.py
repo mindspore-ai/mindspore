@@ -27,6 +27,10 @@ from mindspore.common.initializer import TruncatedNormal, HeNormal
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn.loss.loss import LossBase
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 mindspore.set_seed(0)
 np.random.seed(0)
 

@@ -28,6 +28,10 @@ from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -121,7 +125,7 @@ def test_auto_parallel_arithmetic_model():
             return out2
 
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL, dataset_strategy="data_parallel")
     net = NetOneHot()
 
     x = Tensor(np.ones([8, 32]), dtype=ms.float32)

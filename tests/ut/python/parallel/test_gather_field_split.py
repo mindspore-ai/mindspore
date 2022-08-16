@@ -22,7 +22,6 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from parallel.utils.utils import ParallelValidator
 
-
 class Net(Cell):
     def __init__(self, strategy1, strategy2, split_tuple, param_shape, mul_weight_shape):
         super().__init__()
@@ -59,7 +58,7 @@ def test_field_split_dim_1x1():
     split_tuple = (5, 6, 7, 8, 9, 10, 11, 8)
     param_shape = (64)
     mul_weight_shape = (1)
-    x = Tensor(np.ones([16]), dtype=ms.int32)
+    x = Tensor(np.ones([16 // 8]), dtype=ms.int32)
     net = Net(strategy1, strategy2, split_tuple, param_shape, mul_weight_shape)
     phase = compile_net(net, x)
 
@@ -85,7 +84,7 @@ def test_field_split_dim_2x1():
     split_tuple = (10, 20, 30, 4)
     param_shape = (64, 32)
     mul_weight_shape = (1)
-    x = Tensor(np.ones([16]), dtype=ms.int32)
+    x = Tensor(np.ones([16 // 8]), dtype=ms.int32)
     net = Net(strategy1, strategy2, split_tuple, param_shape, mul_weight_shape)
     phase = compile_net(net, x)
 
@@ -111,7 +110,7 @@ def test_field_split_dim_3x1():
     split_tuple = (10, 20, 30, 4)
     param_shape = (64, 32, 16)
     mul_weight_shape = (1)
-    x = Tensor(np.ones([16]), dtype=ms.int32)
+    x = Tensor(np.ones([16 // 8]), dtype=ms.int32)
     net = Net(strategy1, strategy2, split_tuple, param_shape, mul_weight_shape)
     phase = compile_net(net, x)
 

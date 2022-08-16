@@ -22,6 +22,10 @@ from mindspore.ops import operations as P
 from mindspore.parallel._cost_model_context import set_cost_model_context
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(nn.Cell):
     def __init__(self, input_ch, out_ch):
         super(Net, self).__init__()

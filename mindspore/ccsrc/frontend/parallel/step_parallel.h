@@ -47,13 +47,6 @@ struct LossNodeInfo {
   CNodePtr loss_node = nullptr;
 };
 
-struct CommInfo {
-  int64_t device_num = 1;
-  int64_t global_rank = 0;
-  std::string world_group;
-  std::string communication_backend;
-};
-
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 
@@ -157,8 +150,6 @@ void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *u
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 
 std::string MirrorOpName();
-
-CommInfo GetCommInfo();
 
 std::string GetPrimName(const CNodePtr &node);
 

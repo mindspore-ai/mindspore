@@ -22,6 +22,10 @@ from mindspore.nn.optim.adafactor import AdaFactor
 from mindspore.ops import operations as P
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 class Net(Cell):
     def __init__(self, add_weight, matmul_weight, bias, strategy1=None, strategy2=None):
         super().__init__()

@@ -24,6 +24,10 @@ from mindspore.ops import operations as P
 from parallel.utils.utils import compile_net
 
 
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
+
 input_x_tensor_ = Tensor(np.ones([8, 8, 8]), ms.float32)
 input_x_parameter_ = Parameter(Tensor(np.ones([8, 8, 8]), ms.float32), "input_x")
 SIZE_SPLIT = [3, 3, 2]

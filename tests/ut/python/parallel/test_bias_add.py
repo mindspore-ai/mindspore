@@ -20,7 +20,6 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.train.model import Model
 
-
 class CrossEntropyLoss(nn.Cell):
     def __init__(self, reduction='mean'):
         super(CrossEntropyLoss, self).__init__()

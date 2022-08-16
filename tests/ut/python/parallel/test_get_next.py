@@ -21,7 +21,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-
 context.set_context(mode=context.GRAPH_MODE)
 grad_by_list = C.GradOperation(get_by_list=True)
 

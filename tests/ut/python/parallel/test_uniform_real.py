@@ -18,6 +18,10 @@ from mindspore.ops import operations as P
 
 from parallel.utils.utils import ParallelValidator, compile_net
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 SEED_ = 1
 SEED2_ = 1
 

@@ -21,7 +21,6 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 
-
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)

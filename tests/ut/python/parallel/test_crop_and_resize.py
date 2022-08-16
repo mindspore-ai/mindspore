@@ -20,6 +20,10 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 BATCH_SIZE = 32
 NUM_BOXES = 8
 IMAGE_HEIGHT = 256

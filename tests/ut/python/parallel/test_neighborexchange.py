@@ -23,6 +23,10 @@ from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import NeighborExchange
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
 _x1 = Tensor(np.ones([32, 16]), dtype=ms.float32)
 _x2 = Tensor(np.ones([16, 32]), dtype=ms.float32)
@@ -42,7 +46,7 @@ def test_NeighborExchange_two_inputs_success():
     Description: two inputs and two outputs, with valid arguments
     Expectation: success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class MatMulNet(nn.Cell):
         def __init__(self, weight1):
@@ -70,7 +74,7 @@ def test_NeighborExchange_single_input_success():
     Description: one inputs and two outputs, with valid arguments
     Expectation: success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class MatMulNet2(nn.Cell):
         def __init__(self, weight1):
@@ -97,7 +101,7 @@ def test_NeighborExchange_empty_send_success():
     Description: empty inputs, with valid arguments
     Expectation: success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -119,7 +123,7 @@ def test_NeighborExchange_empty_recv_success():
     Description: empty outputs, with valid arguments
     Expectation: success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -141,7 +145,7 @@ def test_NeighborExchange_empty_send_empty_recv_success():
     Description: empty inputs and empty outputs, with valid arguments
     Expectation: success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -163,7 +167,7 @@ def test_NeighborExchange_recv_shape_num_diff_with_recv_rank_size_failed():
     Description: send_rank_ids and send_shapes are set as 1 input, but gives 2
     Expectation: throw ValueError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self, weight1):
@@ -191,7 +195,7 @@ def test_NeighborExchange_send_shape_num_diff_with_send_rank_size_failed():
     Description: send_rank_ids is set as 2 inputs, but send_shapes are set as 1 input
     Expectation: throw ValueError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self, weight1):
@@ -220,7 +224,7 @@ def test_NeighborExchange_send_shape_num_diff_with_input_num_failed():
     Description: send_rank_ids and send_shapes are set as 2 inputs, but has only 1 input
     Expectation: throw Exception
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self, weight1):
@@ -249,7 +253,7 @@ def test_NeighborExchange_send_shape_diff_with_input_shape_failed():
     Description: send_shapes is set as [16, 16], but input is [32, 32]
     Expectation: throw Exception
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self, weight1):
@@ -277,7 +281,7 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_failed():
     Description: send_rank_ids should be list, but a tuple is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -300,7 +304,7 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_2_failed():
     Description: send_rank_ids should be list, but a tuple is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -324,7 +328,7 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_float_failed():
     Description: send_rank_ids should be int, but a float is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -348,7 +352,7 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_failed():
     Description: recv_rank_ids should be list, but a tuple is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -372,7 +376,7 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_2_failed():
     Description: recv_rank_ids should be list, but a tuple is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -396,7 +400,7 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_float_failed():
     Description: recv_rank_ids should be int, but a float is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -420,7 +424,7 @@ def test_NeighborExchange_attr_check_send_shape_not_tuple_failed():
     Description: send_shapes should be tuple(list), but a list is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -444,7 +448,7 @@ def test_NeighborExchange_attr_check_send_shape_list_failed():
     Description: send_shapes should be tuple(list), but a list(list) is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -468,7 +472,7 @@ def test_NeighborExchange_attr_check_recv_type_numpy_failed():
     Description: recv_type should be mindspore type, but a numpy type is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):
@@ -492,7 +496,7 @@ def test_NeighborExchange_attr_invalid_grpup_failed():
     Description: group should be str, but a tuple is given
     Expectation: throw TypeError
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="data_parallel")
 
     class Net(nn.Cell):
         def __init__(self):

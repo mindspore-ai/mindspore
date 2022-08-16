@@ -25,6 +25,10 @@ from mindspore.context import ParallelMode
 from mindspore.nn import PReLU
 from tests.dataset_mock import MindData
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 context.set_context(mode=context.GRAPH_MODE)
 
 class Dataset(MindData):
@@ -66,7 +70,7 @@ def reshape_common(parallel_mode):
     epoch_size = 2
 
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8, dataset_strategy="data_parallel")
     predict = Tensor(np.ones([32, 256]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)

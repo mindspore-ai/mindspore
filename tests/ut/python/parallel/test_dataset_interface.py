@@ -27,6 +27,10 @@ from mindspore.context import ParallelMode
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from tests.dataset_mock import MindData
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -73,8 +77,8 @@ def loss_scale_manager_common(strategy1):
     momentum = 0.9
     epoch_size = 2
 
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=8,
+                                      dataset_strategy="data_parallel")
     predict = Tensor(np.ones([32, 128]), dtype=ms.float32)
     label = Tensor(np.ones([32]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)
@@ -122,7 +126,6 @@ def loss_scale_manager_sens(strategy1, sens):
     learning_rate = 0.1
     momentum = 0.9
     device_num = 8
-    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num)
     predict = Tensor(np.ones([32 * device_num, 128]), dtype=ms.float32)
     net = all_to_all_net(strategy1)
@@ -151,7 +154,7 @@ def test_dataset_interface_sens_shape_equal_loss():
     loss_scale_manager_sens(strategy1, sens)
 
 
-def test_input_not_in_parameter_layotu_dict():
+def test_input_not_in_parameter_layout_dict():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super(Net, self).__init__()
@@ -166,7 +169,6 @@ def test_input_not_in_parameter_layotu_dict():
 
     strategy1 = ((8, 1),)
     device_num = 8
-    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num)
     predict = Tensor(np.ones([32 * device_num, 128]), dtype=ms.float32)
     net = Net(strategy1)

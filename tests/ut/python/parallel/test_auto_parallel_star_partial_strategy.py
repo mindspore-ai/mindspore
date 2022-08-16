@@ -24,6 +24,10 @@ from mindspore import context, Tensor, Parameter
 from mindspore.parallel import set_algo_parameters
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):

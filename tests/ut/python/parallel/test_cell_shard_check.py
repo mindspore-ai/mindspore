@@ -19,6 +19,10 @@ import mindspore as ms
 from mindspore import nn, context, Tensor
 import mindspore.ops as ops
 
+
+def setup_function():
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+
 def set_context():
     context.set_context(mode=context.PYNATIVE_MODE)
     context.reset_auto_parallel_context()
