@@ -23,14 +23,18 @@ namespace lite {
 OpParameter *PopulateMulParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
+  auto mul_param = primitive->value_as_MulFusion();
+  if (mul_param == nullptr) {
+    MS_LOG(ERROR) << "MulFusion param is nullptr!";
+    return nullptr;
+  }
 
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-
-  param->op_parameter_.type_ = primitive->value_type();
+  param->activation_type_ = mul_param->activation_type();
   return reinterpret_cast<OpParameter *>(param);
 }
 
