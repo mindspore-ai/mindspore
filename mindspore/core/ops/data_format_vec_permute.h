@@ -35,6 +35,16 @@ class MIND_API DataFormatVecPermute : public BaseOperator {
   MIND_API_BASE_MEMBER(DataFormatVecPermute);
   /// \brief Constructor.
   DataFormatVecPermute() : BaseOperator(kNameDataFormatVecPermute) { InitIOName({"x"}, {"y"}); }
+  /// \brief Init.
+  void Init(const std::string &src_format = "NHWC", const std::string &dst_format = "NCHW");
+  /// \brief Set src_format.
+  void set_src_format(const std::string &src_format);
+  /// \brief Set dst_format.
+  void set_dst_format(const std::string &dst_format);
+  /// \brief Get src_format.
+  std::string get_src_format() const;
+  /// \brief Get dst_format.
+  std::string get_dst_format() const;
 };
 
 abstract::AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

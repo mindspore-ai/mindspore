@@ -33,11 +33,15 @@ abstract::ShapePtr DataFormatVecPermuteInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
-  std::vector<int64_t> shape1 = {4};
-  std::vector<int64_t> shape2 = {4, 2};
-  if (x_shape != shape1 && x_shape != shape2) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", input shape must be (4, ) or (4, 2), but got " << x_shape
-                             << ".";
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
+      !input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
+      !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
+    std::vector<int64_t> shape1 = {4};
+    std::vector<int64_t> shape2 = {4, 2};
+    if (x_shape != shape1 && x_shape != shape2) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", input shape must be (4, ) or (4, 2), but got " << x_shape
+                               << ".";
+    }
   }
   return x_shape_ptr;
 }
@@ -49,6 +53,31 @@ TypePtr DataFormatVecPermuteInferType(const PrimitivePtr &prim, const std::vecto
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }
 }  // namespace
+
+void DataFormatVecPermute::Init(const std::string &src_format, const std::string &dst_format) {
+  this->set_src_format(src_format);
+  this->set_dst_format(dst_format);
+}
+
+void DataFormatVecPermute::set_src_format(const std::string &src_format) {
+  CheckAndConvertUtils::CheckString(kSrcFormat, src_format, {"NHWC", "NCHW"}, this->name());
+  (void)this->AddAttr(kSrcFormat, api::MakeValue(src_format));
+}
+
+void DataFormatVecPermute::set_dst_format(const std::string &dst_format) {
+  CheckAndConvertUtils::CheckString(kSrcFormat, dst_format, {"NHWC", "NCHW"}, this->name());
+  (void)this->AddAttr(kDstFormat, api::MakeValue(dst_format));
+}
+
+std::string DataFormatVecPermute::get_src_format() const {
+  auto value_ptr = this->GetAttr(kSrcFormat);
+  return GetValue<std::string>(value_ptr);
+}
+
+std::string DataFormatVecPermute::get_dst_format() const {
+  auto value_ptr = this->GetAttr(kDstFormat);
+  return GetValue<std::string>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(DataFormatVecPermute, BaseOperator);
 AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
