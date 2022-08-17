@@ -537,6 +537,119 @@ class IsInstance(PrimitiveWithInfer):
         return out
 
 
+class Im2Col(Primitive):
+    r"""
+    Extracts sliding local blocks from a batched input tensor.
+
+    Consider a batched :attr:`input` tensor of shape :math:`(N, C, *)`,
+    where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
+    and :math:`*` represent arbitrary spatial dimensions. This operation flattens
+    each sliding :attr:`ksizes`- sized block within the spatial dimensions
+    of :attr:`input` into a column (i.e., last dimension) of a 4-D :attr:`output`
+    tensor of shape :math:`(N, C, \prod(\text{kernel_size}), L)`, where
+    :math:`C \times \prod(\text{kernel_size})` is the total number of values
+    within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+    locations each containing a :math:`C`-channeled vector), and :math:`L` is
+    the total number of such blocks:
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{spatial_size}[d] + 2 \times \text{pads}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    where :math:`\text{spatial_size}` is formed by the spatial dimensions
+    of :attr:`input` (:math:`*` above), and :math:`d` is over all spatial
+    dimensions.
+
+    Therefore, indexing :attr:`output` at the last dimension (column dimension)
+    gives all values within a certain block.
+
+    The :attr:`pads`, :attr:`strides` and :attr:`dilations` arguments specify
+    how the sliding blocks are retrieved.
+
+    .. note::
+        Currently, only 4-D input tensors (batched image-like tensors) are supported.
+
+    Args:
+        ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        strides (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        dilations (Union[int, tuple[int], list[int]]): The dilation of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        padding_mode (str): The optional value for pad mode, support "CALCULATED", "SAME" and "VALID".
+            Default: "CALCULATED".
+        pads (Union[int, tuple[int], list[int]]): The pad of the window, that must be
+            a tuple of one or two or four `int` for height and width.
+            If one int, pad_height = pad_width.
+            If two int, pad_height = pads[0], pad_width = pads[1].
+            If four int, pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
+            Default: 0.
+
+    Inputs:
+        - **x** (Tensor) : input tensor, only 4-D input tensors (batched image-like tensors) are supported.
+            support all real number data type.
+
+    Outputs:
+        Tensor, a 4-D Tensor with same type of input `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If :attr:`ksizes` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`strides` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`dilations` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`padding_mode` data type is not str.
+        TypeError: If :attr:`pads` data type isnot in Union[int, tuple[int], list[int]].
+            when :attr:`padding_mode` is "CALCULATED".
+        ValueError: If :attr:`ksizes` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`strides` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`dilations` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`padding_mode` value is not in ["SAME", "VALID", "CALCULATED"].
+        ValueError: If :attr:`pads` value is not greater than zero.
+
+    Examples:
+        >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
+        >>> im2col = P.Im2Col(ksizes=3, strides=1, dilations=1)
+        >>> y = im2col(x)
+        >>> print(y.shape)
+        (4, 36, 30, 30)
+    """
+    @prim_attr_register
+    def __init__(self, ksizes, strides=1, dilations=1, padding_mode="CALCULATED", pads=0):
+        """Initialize Im2Col."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+        validator.check_value_type('ksizes', ksizes, [int, tuple, list], self.name)
+        validator.check_value_type('strides', strides, [int, tuple, list], self.name)
+        validator.check_value_type('dilations', dilations, [int, tuple, list], self.name)
+        validator.check_value_type('padding_mode', padding_mode, [str], self.name)
+        validator.check_value_type('pads', pads, [int, tuple, list], self.name)
+
+        self.padding_mode = validator.check_string(
+            padding_mode.upper(), ["SAME", "VALID", "CALCULATED"], 'padding_mode', self.name)
+        self.ksizes = (ksizes, ksizes) if isinstance(ksizes, int) else ksizes
+        self.strides = (strides, strides) if isinstance(strides, int) else strides
+        self.dilations = (dilations, dilations) if isinstance(dilations, int) else dilations
+        self.pads = (pads, pads) if isinstance(pads, int) else pads
+
+        validator.check("ksizes size", len(self.ksizes), "", [1, 2], Rel.IN, self.name)
+        validator.check_positive_int_sequence(self.ksizes, "ksizes", self.name)
+        validator.check("strides size", len(self.strides), "", [1, 2], Rel.IN, self.name)
+        validator.check_positive_int_sequence(self.strides, "strides", self.name)
+        validator.check("dilations size", len(self.dilations), "", [1, 2], Rel.IN, self.name)
+        validator.check_positive_int_sequence(self.dilations, "dilations", self.name)
+        if self.padding_mode == "CALCULATED":
+            validator.check("pads size", len(self.pads), "", [1, 2, 4], Rel.IN, self.name)
+            validator.check_non_negative_int_sequence(self.pads, "pads", self.pads)
+
+        self.add_prim_attr('ksizes', self.ksizes)
+        self.add_prim_attr('strides', self.strides)
+        self.add_prim_attr('dilations', self.dilations)
+        self.add_prim_attr('pads', self.pads)
+        self.add_prim_attr('padding_mode', self.padding_mode)
+
+
 class Col2Im(Primitive):
     r"""
     Combines an array of sliding local blocks into a large containing tensor.
@@ -573,14 +686,14 @@ class Col2Im(Primitive):
     :attr:`dilation` controls the spacing between the kernel points.
 
     Args:
-        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
             for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two positive int
             for height and width. If type is int, it means that height equal with width. Default: 1.
         padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
-        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 0.
+        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two positive int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Inputs:
         - **x** (Tensor) - 4D tensor with data type float16 or float32.
@@ -590,12 +703,17 @@ class Col2Im(Primitive):
         Tensor, a 4-D Tensor with same type of input `x`.
 
     Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Raises:
-        TypeError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` data type is not in
-            Union[int, tuple[int], list[int]].
-        ValueError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` value is not
-            greater than zero or elements number more than 2.
+        TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`padding` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If :attr:`stride` data type is not in Union[int, tuple[int], list[int]].
+        ValueError: If :attr:`kernel_size` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`dilation` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`padding` value is not greater than zero or elements number more than 2.
+        ValueError: If :attr:`stride` value is not greater than zero or elements number more than 2.
         ValueError: If x.shape[2] != kernel_size[0] * kernel_size[1].
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 

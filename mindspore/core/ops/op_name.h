@@ -116,6 +116,7 @@ constexpr auto kPadDimSize = "pad_dim_size";
 constexpr auto kUnbiased = "unbiased";
 constexpr auto kKernelSize = "kernel_size";
 constexpr auto kKSize = "ksize";
+constexpr auto kKsizes = "ksizes";
 constexpr auto kLimit = "limit";
 constexpr auto kMagSquare = "mag_square";
 constexpr auto kMax = "max";

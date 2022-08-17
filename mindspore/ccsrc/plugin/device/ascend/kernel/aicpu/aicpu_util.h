@@ -69,6 +69,8 @@ constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
 constexpr auto kResizeNearestNeighborV2Grad = "ResizeNearestNeighborV2Grad";
 constexpr auto kUpdateCache = "UpdateCache";
+constexpr auto kIm2Col = "Im2Col";
+constexpr auto kCol2Im = "Col2Im";
 constexpr auto kCacheSwapTable = "CacheSwapTable";
 constexpr auto kSubAndFilter = "SubAndFilter";
 constexpr auto kPadAndShift = "PadAndShift";
@@ -151,6 +153,8 @@ const std::set<std::string> kDynamicInputOps{kPrint,
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
+  {kCol2Im, "Col2im"},
+  {kIm2Col, "Im2col"},
   {kMaxPoolGradV1, "MaxPoolGrad"},
   {kUpsampleNearest3D, "UpsampleNearest3d"},
   {kUpsampleNearest3DGrad, "UpsampleNearest3dGrad"},

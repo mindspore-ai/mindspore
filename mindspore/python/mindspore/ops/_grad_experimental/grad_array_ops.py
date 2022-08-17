@@ -40,6 +40,8 @@ from ..operations.array_ops import TensorScatterElements
 from ..operations.array_ops import Expand
 from ..operations.array_ops import SegmentMean
 from ..operations.array_ops import AffineGrid
+from ..operations.array_ops import Im2Col
+from ..operations.array_ops import Col2Im
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
@@ -380,6 +382,22 @@ def get_bprop_resize_nearest_neighbor_v2(self):
             grad_in_size = x_shape[2:4]
         dx = grad_op(dout, _create_tensor(grad_in_size, mstype.int32))
         return dx, zeros_like(grad_in_size)
+
+    return bprop
+
+
+@bprop_getters.register(Col2Im)
+def get_bprop_col2im(self):
+    """Generate bprop for Col2Im"""
+    ksizes = self.kernel_size
+    dilations = self.dilation
+    strides = self.stride
+    pads = self.padding
+    im2col = Im2Col(ksizes=ksizes, dilations=dilations, strides=strides, padding_mode="CALCULATED", pads=pads)
+
+    def bprop(x, output_size, out, dout):
+        dx = im2col(dout)
+        return dx, zeros_like(output_size)
 
     return bprop
 
