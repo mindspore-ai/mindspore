@@ -275,6 +275,7 @@ from .max_unpool2d import _max_unpool2d_aicpu
 from .max_unpool2d_grad import _max_unpool2d_grad_aicpu
 from .max_unpool3d import _max_unpool3d_aicpu
 from .max_unpool3d_grad import _max_unpool3d_grad_aicpu
+from .nuclear_norm import _nuclear_norm_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .adjust_saturation import _adjust_saturation_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu

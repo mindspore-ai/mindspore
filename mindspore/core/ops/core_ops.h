@@ -266,6 +266,7 @@ constexpr auto kUpsampleTrilinear3D = "UpsampleTrilinear3D";
 constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
 constexpr auto kHSwish = "HSwish";
 constexpr auto kHSwishGrad = "HSwishGrad";
+constexpr auto kNuclearNorm = "NuclearNorm";
 constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 constexpr auto kUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
@@ -869,6 +870,7 @@ GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGrid
 GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
 GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3D, std::make_shared<Primitive>("UpsampleTrilinear3D"));
+GVAR_DEF(PrimitivePtr, kPrimNuclearNorm, std::make_shared<Primitive>(kNuclearNorm));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradDA, std::make_shared<Primitive>(kSparseApplyAdagradDA));
 GVAR_DEF(PrimitivePtr, kPrimBiasDropoutAdd, std::make_shared<Primitive>("BiasDropoutAdd"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2DGrad, std::make_shared<Primitive>("AdaptiveMaxPool2DGrad"));
