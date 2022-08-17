@@ -25,6 +25,7 @@ from .. import operations as P
 from ..operations import _csr_ops
 from ..operations.sparse_ops import SparseAdd, CSRSparseMatrixToDense, CSRSparseMatrixToSparseTensor, \
     DenseToCSRSparseMatrix
+from ..operations.sparse_ops import SparseToDenseV2
 
 # Unused parameters are placeholders.
 
@@ -61,6 +62,19 @@ def get_bprop_sparse_to_dense(self):
 
     def bprop(indices, values, dense_shape, out, dout):
         return zeros_like(indices), F.gather_nd(dout, indices), zeros_like(dense_shape)
+
+    return bprop
+
+
+@bprop_getters.register(SparseToDenseV2)
+def get_bprop_sparse_to_dense_v2(self):
+    """Generate bprop for SparseToDenseV2"""
+
+    def bprop(indices, output_shape, values, default_value, out, dout):
+        sparse_values_grad = F.gather_nd(dout, indices)
+        default_value_grad = F.reduce_sum(dout) - F.reduce_sum(sparse_values_grad)
+        result_all = (zeros_like(indices), zeros_like(output_shape), sparse_values_grad, default_value_grad)
+        return result_all
 
     return bprop
 

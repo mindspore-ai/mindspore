@@ -327,13 +327,13 @@ class SparseToDenseV2(Primitive):
     Raises:
         TypeError: If the dtype of `indices` is neither Int32 nor Int64.
         TypeError: If the dtype of `outputshape` is neither Int32 nor Int64.
-        ValueError: If the shape of `output_shape`, shape of `indices`, shape of
-                    `default_value` and shape of `values` don't meet the parameter description.
+        ValueError: If the shape of `output_shape`, shape of `indices`,
+            shape of `default_value` and shape of `values` don't meet the parameter description.
         ValueError: If each Element of `output_shape` is not > 0.
         ValueError: If the shape[0] of `indices` don't match with the element of `values`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
