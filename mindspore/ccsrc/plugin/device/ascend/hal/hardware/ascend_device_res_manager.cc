@@ -142,8 +142,11 @@ bool AscendDeviceResManager::SyncStream(size_t stream_id) const {
     return true;
   }
 
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  return runtime_instance_->SyncStream();
+  if (runtime_instance_ != nullptr) {
+    return runtime_instance_->SyncStream();
+  }
+
+  return true;
 }
 
 bool AscendDeviceResManager::CreateStream(void **stream) const {
