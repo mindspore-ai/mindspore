@@ -42,7 +42,7 @@ void SegmentSumCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 std::vector<KernelAttr> SegmentSumCPUKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
+  static const std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
@@ -99,7 +99,7 @@ bool SegmentSumCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
         SEGMENTSUM_COMPUTE_CASE(kNumberTypeFloat32, float, int32_t)
         SEGMENTSUM_COMPUTE_CASE(kNumberTypeFloat64, double, int32_t)
         default:
-          MS_EXCEPTION(TypeError) << "Unsupported input_x data type: " << input_x_dtype_;
+          MS_LOG(ERROR) << "Unsupported input_x data type: " << input_x_dtype_;
           ret = false;
       }
       break;
@@ -120,13 +120,13 @@ bool SegmentSumCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
         SEGMENTSUM_COMPUTE_CASE(kNumberTypeFloat32, float, int64_t)
         SEGMENTSUM_COMPUTE_CASE(kNumberTypeFloat64, double, int64_t)
         default:
-          MS_EXCEPTION(TypeError) << "Unsupported input_x data type: " << input_x_dtype_;
+          MS_LOG(ERROR) << "Unsupported input_x data type: " << input_x_dtype_;
           ret = false;
       }
       break;
     }
     default:
-      MS_EXCEPTION(TypeError) << "Unsupported segment_ids data type: " << segment_ids_dtype_;
+      MS_LOG(ERROR) << "Unsupported segment_ids data type: " << segment_ids_dtype_;
       ret = false;
   }
   return ret;
@@ -135,9 +135,9 @@ bool SegmentSumCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
 template <typename T1, typename T2>
 bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
   std::vector<int64_t> segments;
   int64_t seg_tmp = 1;
   for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
@@ -165,21 +165,22 @@ bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = segments[i];
+      const size_t count = LongToSize(segments[i]);
       size_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
-        count_no += segments[j];
+        count_no += LongToSize(segments[j]);
       }
       size_t input_addr_base = count_no * num_compare_per;
-      auto task = [&](size_t start, size_t end) {
+      auto task = [input_addr_base, input_x_data_addr, count, num_compare_per, segment_ids_data_addr, count_no,
+                   &output_data_addr](size_t start, size_t end) {
         for (size_t j = start; j < end; ++j) {
           size_t sum_init_addr = input_addr_base + j;
           T1 sum_value = input_x_data_addr[sum_init_addr];
           for (size_t k = 1; k < count; ++k) {
-            int tmp_addr = sum_init_addr + k * num_compare_per;
+            auto tmp_addr = sum_init_addr + k * num_compare_per;
             sum_value += input_x_data_addr[tmp_addr];
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
+          output_data_addr[static_cast<size_t>(segment_ids_data_addr[count_no]) * num_compare_per + j] = sum_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -189,22 +190,23 @@ bool SegmentSumCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
       }
     }
   } else {
-    auto task = [&](size_t start, size_t end) {
+    auto task = [input_x_data_addr, num_compare_per, segment_ids_data_addr, segments, &output_data_addr](size_t start,
+                                                                                                         size_t end) {
       for (size_t i = start; i < end; ++i) {
-        const size_t count = segments[i];
+        const auto count = LongToSize(segments[i]);
         size_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
-          count_no += segments[j];
+          count_no += LongToSize(segments[j]);
         }
         size_t input_addr_base = count_no * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {
           size_t sum_init_addr = input_addr_base + j;
           T1 sum_value = input_x_data_addr[sum_init_addr];
           for (size_t k = 1; k < count; ++k) {
-            int tmp_addr = sum_init_addr + k * num_compare_per;
+            auto tmp_addr = sum_init_addr + k * num_compare_per;
             sum_value += input_x_data_addr[tmp_addr];
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = sum_value;
+          output_data_addr[static_cast<size_t>(segment_ids_data_addr[count_no]) * num_compare_per + j] = sum_value;
         }
       }
     };
