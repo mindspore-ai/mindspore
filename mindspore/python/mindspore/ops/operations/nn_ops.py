@@ -162,6 +162,88 @@ class Flatten(Primitive):
         pass
 
 
+class AdaptiveAvgPool3D(Primitive):
+    r"""
+    AdaptiveAvgPool3D operation.
+
+    This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is D x H x W.
+    The number of output features is equal to the number of input planes.
+
+    Suppose the last 3 dimension size of x is inD, inH, inW, the last 3 dimension size of output is outD, outH, outW.
+
+    .. math::
+        \begin{array}{ll} \\
+            \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
+            output[od,oh,ow] = \\
+            \qquad mean(x[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
+            where,\\
+            \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
+            \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
+            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
+            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
+            \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
+            \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
+        \end{array}
+
+    Args:
+        - output_size (Union[int, tuple]) - The size of output tensor, which is of shape [3],
+          with int32 data type.
+
+    Inputs:
+        - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
+
+    Outputs:
+        Tensor, with the same type as the `x`.
+
+        Shape of the output is `x_shape[:len(x_shape) - output_size.size] + output_size`.
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+        ValueError: If the dimension of `x` is not 4D or 5D.
+        ValueError: If `output_size` value is not positive.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import nn, Tensor
+        >>> from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
+        >>> class AdaptiveAvgPool3DNet(nn.Cell):
+        ...     def __init__(self, output_size):
+        ...         super(AdaptiveAvgPool3DNet, self).__init__()
+        ...         self.output_size_ = output_size
+        ...         self.adaptive_avg_pool_3d = AdaptiveAvgPool3D(self.output_size_)
+        ...     def construct(self, x_):
+        ...         return self.adaptive_avg_pool_3d(x_)
+        ...
+        >>> output_size=(1,1,1)
+        >>> input_x_val = np.zeros((1,1,2,2,2))
+        >>> input_x_val[:,:,0,:,:]  += 1
+        >>> input_x = Tensor(input_x_val, mindspore.float32)
+        >>> adaptive_avg_pool_3d = AdaptiveAvgPool3DNet(output_size)
+        >>> output = adaptive_avg_pool_3d(input_x)
+        >>> print(output)
+        [[[[[0.5]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, output_size):
+        self.add_prim_attr("cust_aicpu", self.name)
+        validator.check_value_type("output_size", output_size, [int, tuple], self.name)
+        self.output_size = (output_size,) * 3 if isinstance(self.output_size, int) else output_size
+        for i, size in enumerate(self.output_size):
+            validator.check_value_type(f"output_size[{i}]", size, [int, type(None)], self.name)
+            if size is not None:
+                validator.check_number(f"output_size[{i}]", size, 0, Rel.GE, self.name)
+
+        self.output_size = tuple(-1 if val is None else val for val in self.output_size)
+
+        self.add_prim_attr('output_size', self.output_size)
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class AdaptiveAvgPool2D(PrimitiveWithInfer):
     r"""
     2D adaptive average pooling for temporal data.

@@ -65,6 +65,8 @@ PrimShapeDependMap &GetHostDependsMap() {
   using ShapeSet = std::set<int64_t>;
   using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
   static const auto &kAdaptiveMaxPool3DGrad = prim::kPrimAdaptiveMaxPool3DGrad->name();
+  static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();
+  static const auto &kAdaptiveAvgPool3DGrad = prim::kPrimAdaptiveAvgPool3DGrad->name();
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
@@ -177,6 +179,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
                                          {kTransposeNOD, ShapeSet{1}},
+                                         {kAdaptiveAvgPool3D, ShapeSet{1}},
+                                         {kAdaptiveAvgPool3DGrad, ShapeSet{1}},
                                          {kResizeLinear1D, ShapeSet{1}},
                                          {kBlackmanWindow, ShapeSet{0}},
                                          {kHammingWindow, ShapeSet{0}},
