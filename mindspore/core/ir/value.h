@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,29 +340,20 @@ class MS_CORE_API ValueDictionary : public Value {
   /// \return The description of the ValueDictionary object.
   std::string ToString() const override {
     std::ostringstream buffer;
-    std::vector<std::string> keys;
-    std::vector<ValuePtr> values;
+    buffer << "{";
+    size_t index = 0;
     for (const auto &kv : key_values_) {
-      keys.push_back(kv.first);
-      values.push_back(kv.second);
-    }
-    buffer << "dict: {keys: (";
-    for (size_t i = 0; i < keys.size(); i++) {
-      buffer << keys[i];
-      if (i != keys.size() - 1) {
-        buffer << ", ";
-      }
-    }
-    buffer << "), values: (";
-    for (size_t i = 0; i < values.size(); i++) {
-      const auto &value = values[i];
+      // Only supports the key as string type currently.
+      std::string key = kv.first;
+      ValuePtr value = kv.second;
       MS_EXCEPTION_IF_NULL(value);
-      buffer << value->ToString();
-      if (i != values.size() - 1) {
+      buffer << "'" << key << "': " << value->ToString();
+      if (index != key_values_.size() - 1) {
         buffer << ", ";
       }
+      index++;
     }
-    buffer << ")}";
+    buffer << "}";
     return buffer.str();
   }
   /// \brief Get abstract of the ValueDictionary object.

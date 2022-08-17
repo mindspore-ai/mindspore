@@ -764,7 +764,11 @@ def test_raise_dict():
     assert "{'a': 1, 'b': 2}" in str(raise_info_dict.value)
 
 
-@pytest.mark.skip(reason='Not support Tensor in Joined string yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_raise_joinedstr_tensor():
     """
     Feature: graph raise by JIT Fallback.

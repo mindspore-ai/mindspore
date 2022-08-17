@@ -230,9 +230,6 @@ class Parser {
   void LiftRolledBodyGraphFV();
   void LiftIfBranchGraphFV();
 
-  // If Tensor is present as type, not Tensor(xxx), should not make InterpretNode.
-  bool IsTensorType(const AnfNodePtr &node, const std::string &script_text) const;
-
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) const;
