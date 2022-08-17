@@ -5850,7 +5850,7 @@ def _check_astype_and_convert(dtype):
         dtype = mstype.pytype_to_dtype(np.dtype(dtype.lower()))
     elif isinstance(dtype, type):
         dtype = mstype.pytype_to_dtype(dtype)
-    elif not dtype in mstype.number_type + (mstype.bool_,):
+    elif dtype not in mstype.number_type + (mstype.bool_,):
         raise TypeError(
             f"For Tensor.astype, the input type must be one of {list(mstype.number_type + (mstype.bool_,) + np_types)},"
             f" but got '{dtype}'.")
