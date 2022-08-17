@@ -20,6 +20,8 @@
 #include <string>
 #include <memory>
 
+#include "include/api/types.h"
+
 namespace mindspore {
 namespace dataset {
 constexpr int kAlign = 16;
@@ -160,7 +162,7 @@ enum WARP_BORDER_MODE { WARP_BORDER_MODE_CONSTANT };
 ///     - LDataType::FLOAT32
 ///     - LDataType::FLOAT64
 ///     - LDataType::DOUBLE
-class LDataType {
+class MS_API LDataType {
  public:
   enum Type : uint8_t {
     UNKNOWN = 0, /**< Unknown data type. */
@@ -226,7 +228,7 @@ class LDataType {
 };
 
 /// \brief Basic class storing the image data.
-class LiteMat {
+class MS_API LiteMat {
  public:
   /// \brief Constructor.
   LiteMat();
@@ -402,7 +404,7 @@ class LiteMat {
 ///     }
 /// \endcode
 /// \return Return true if transform successfully.
-bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+bool MS_API Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
 /// \brief Given image A and image B and calculate the division of them (A / B).
 ///      This is an element by element operation.
@@ -430,7 +432,7 @@ bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 ///     }
 /// \endcode
 /// \return Return true if transform successfully.
-bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+bool MS_API Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
 /// \brief Given image A and image B and calculate the product of them (A * B).
 ///      This is an element by element operation by multiplying corresponding elements of inputs.
@@ -458,7 +460,7 @@ bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 ///     }
 /// \endcode
 /// \return Return true if transform successfully.
-bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+bool MS_API Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
 #define RETURN_FALSE_IF_LITEMAT_EMPTY(_m) \
   do {                                    \
