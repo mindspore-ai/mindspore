@@ -24,7 +24,9 @@
 #include <utility>
 
 #include "abstract/ops/primitive_infer_map.h"
+#include "utils/anf_utils.h"
 #include "utils/hash_map.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::inner {
@@ -44,14 +46,6 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
     MS_LOG(WARNING) << "Vector type should be 'int64_t' but got 'int'";
   }
   return list_int;
-}
-
-int64_t GetIntValue(const ValuePtr &value) {
-  if (value->isa<Int64Imm>()) {
-    return GetValue<int64_t>(value);
-  } else {
-    return IntToLong(GetValue<int>(value));
-  }
 }
 
 AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
@@ -893,13 +887,13 @@ std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, con
   CHECK_ATTR(attrs, "dst_format");
   auto src_format = GetValue<std::string>(attrs.find("src_format")->second);
   auto dst_format = GetValue<std::string>(attrs.find("dst_format")->second);
+  std::vector<int64_t> data_shape = inputs[0]->shape;
   if (src_format == kOpFormat_NHWC) {
-    std::vector<int64_t> data_shape = inputs[0]->shape;
     auto n = data_shape[0];
     auto h = data_shape[1];
     auto w = data_shape[2];
     auto c = data_shape[3];
-    auto c_o_i = std::stol(dst_format.substr(4, dst_format.size() - 5));
+    auto c_o_i = GkUtils::GetChannelInConvFormat(dst_format);
     if (c_o_i == 0) {
       c_o_i = 1;
     }
@@ -908,7 +902,6 @@ std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, con
     return {output_shape};
   }
   if (dst_format == kOpFormat_NHWC) {
-    std::vector<int64_t> data_shape = inputs[0]->shape;
     auto n = data_shape[0];
     auto c_o_o = data_shape[1];
     auto h = data_shape[2];
@@ -918,8 +911,19 @@ std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, con
     std::vector<int64_t> output_shape{n, h, w, c};
     return {output_shape};
   }
-  MS_LOG(EXCEPTION) << "LayoutTransform only support transform between NHWC and NCHWnC now, but src_format is ["
-                    << src_format << "] and dst_format is [" << dst_format << "].";
+  // LayoutTransform between nchwnc
+  auto n = data_shape[0];
+  auto c_o_o = data_shape[1];
+  auto h = data_shape[2];
+  auto w = data_shape[3];
+  auto c_o_i = data_shape[4];
+  auto c_o_i_new = GkUtils::GetChannelInConvFormat(dst_format);
+  if (c_o_i_new == 0) {
+    c_o_i_new = 1;
+  }
+  auto c_o_o_new = c_o_o * c_o_i / c_o_i_new;
+  std::vector<int64_t> output_shape{n, c_o_o_new, h, w, c_o_i_new};
+  return {output_shape};
 }
 
 std::vector<DShape> Pool2DOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -953,7 +957,7 @@ std::vector<DShape> Pool2DOp::InferShape(const NodePtrList &inputs, const DAttrs
     CHECK_ATTR(attrs, "round_mode");
     std::vector<int64_t> strides = GetListInt(attrs.find("strides")->second);
     std::vector<int64_t> kernels = GetListInt(attrs.find("kernel_size")->second);
-    if (GetIntValue(attrs.find("round_mode")->second) == 0) {
+    if (AnfUtils::GetIntValue(attrs.find("round_mode")->second) == 0) {
       // ceil mode
       h = ((h - kernels[0] + strides[0] - 1) / strides[0]) + 1;
       w = ((w - kernels[1] + strides[1] - 1) / strides[1]) + 1;

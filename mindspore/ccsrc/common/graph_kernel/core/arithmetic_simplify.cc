@@ -429,6 +429,38 @@ class ExtraReduce2PatternTree : public PatternTree {
   }
 };
 
+// "LayoutTransform(LayoutTransform(A))=A"
+class LayoutTransform1PatternTree : public PatternTree {
+ public:
+  explicit LayoutTransform1PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~LayoutTransform1PatternTree() = default;
+
+ protected:
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    return (GetValue<string>((origin_root->inputs()[0])->attrs().find("src_format")->second) ==
+            GetValue<string>(origin_root->attrs().find("dst_format")->second));
+  }
+};
+
+// "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)"
+class LayoutTransform2PatternTree : public PatternTree {
+ public:
+  explicit LayoutTransform2PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~LayoutTransform2PatternTree() = default;
+
+ protected:
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    return (GetValue<string>((origin_root->inputs()[0])->attrs().find("src_format")->second) !=
+            GetValue<string>(origin_root->attrs().find("dst_format")->second));
+  }
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    attrs_map[this->rhs_root()] = {{"src_format", origin_root->inputs()[0]->attrs().find("src_format")->second},
+                                   {"dst_format", origin_root->attrs().find("dst_format")->second}};
+    return attrs_map;
+  }
+};
+
 /*       A
         /
        Neg
@@ -536,6 +568,9 @@ static std::vector<Expression> expressions = {
   {60, "ReduceSum(Mul(A,const1))=Mul(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
   {61, "CReal(Complex(A,B))=A", EXPR_PATTERN(PatternTree)},
   {62, "CImag(Complex(A,B))=B", EXPR_PATTERN(PatternTree)},
+  // lite only
+  {63, "LayoutTransform(LayoutTransform(A))=A", EXPR_PATTERN(LayoutTransform1PatternTree)},
+  {64, "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)", EXPR_PATTERN(LayoutTransform2PatternTree)},
 };
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {

@@ -83,6 +83,8 @@ class MS_CORE_API AnfUtils {
   static void SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
   // get int value of value node
   static int64_t GetIntValue(const AnfNodePtr &anf_node);
+  // get int value of value pointer
+  static int64_t GetIntValue(const ValuePtr &value);
   // get the node's real kernel recursively
   static std::pair<AnfNodePtr, size_t> VisitKernel(const AnfNodePtr &anf_node, size_t index);
   // check whether the node is a GraphKernel node.
