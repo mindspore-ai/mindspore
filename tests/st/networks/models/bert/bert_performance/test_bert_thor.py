@@ -237,7 +237,7 @@ def test_bert_thor_8p():
 
     print("End training...")
     assert mean_cost < 96
-    assert mean_loss < 8.125
+    assert mean_loss < 8.15
 
 
 if __name__ == '__main__':

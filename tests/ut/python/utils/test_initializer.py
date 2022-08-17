@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_initializer """
 import math
+import unittest
 from functools import reduce
 import numpy as np
 import pytest as py
@@ -27,6 +28,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Conv2d
 from mindspore.ops import operations as P
+from mindspore._c_expression import _random_normal, _random_uniform, _truncated_normal
 from ..ut_filter import non_graph_engine
 
 
@@ -279,7 +281,12 @@ def test_init_variancescaling():
 
 
 def test_conv2d_abnormal_kernel_negative():
-    kernel = np.random.randn(64, 3, 7, 7).astype(np.float32)
+    """
+    Feature: Random initializers that implemented in cpp.
+    Description: Test random initializers that implemented in cpp.
+    Expectation: Data is initialized successfully.
+    """
+    kernel = init.initializer(init.Normal(sigma=1.0), [64, 3, 7, 7], ms.float32).init_data()
     with py.raises(ValueError):
         ms.Model(
             Conv2d(in_channels=3, out_channels=64, kernel_size=-7, stride=3,
@@ -288,17 +295,27 @@ def test_conv2d_abnormal_kernel_negative():
 
 @non_graph_engine
 def test_conv2d_abnormal_kernel_normal():
-    kernel = np.random.randn(64, 3, 7, 7).astype(np.float32)
-    input_data = np.random.randn(32, 3, 224, 112).astype(np.float32)
+    """
+    Feature: Random initializers that implemented in cpp.
+    Description: Test random initializers that implemented in cpp.
+    Expectation: Data is initialized successfully.
+    """
+    kernel = init.initializer(init.Normal(sigma=1.0), [64, 3, 7, 7], ms.float32).init_data()
+    input_data = init.initializer(init.Normal(sigma=1.0), [32, 3, 224, 112], ms.float32).init_data()
     context.set_context(mode=context.GRAPH_MODE)
     model = ms.Model(
         Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=3,
-               padding=0, weight_init=ms.Tensor(kernel)))
-    model.predict(ms.Tensor(input_data))
+               padding=0, weight_init=kernel))
+    model.predict(input_data)
 
 
 @non_graph_engine
 def test_conv2d_abnormal_kernel_truncated_normal():
+    """
+    Feature: Random initializers that implemented in cpp.
+    Description: Test random initializers that implemented in cpp.
+    Expectation: Data is initialized successfully.
+    """
     input_data = init.initializer(init.TruncatedNormal(), [64, 3, 7, 7], ms.float32).init_data()
     context.set_context(mode=context.GRAPH_MODE)
     model = ms.Model(
@@ -327,3 +344,92 @@ def test_weight_shape():
     net = Net()
     out = net(t)
     print(out)
+
+
+def test_init_with_same_numpy_seed():
+    """
+    Feature: Random initializers that depend on numpy random seed.
+    Description: Test random initializers with same numpy random seed.
+    Expectation: Initialized data is same with same numpy random seed.
+    """
+    shape = [12, 34]
+    np.random.seed(1234)
+    uniform1 = init.initializer('uniform', shape, ms.float32).init_data()
+    normal1 = init.initializer('normal', shape, ms.float32).init_data()
+    truncnorm1 = init.initializer('truncatednormal', shape, ms.float32).init_data()
+
+    np.random.seed(1234)
+    uniform2 = init.initializer('uniform', shape, ms.float32).init_data()
+    normal2 = init.initializer('normal', shape, ms.float32).init_data()
+    truncnorm2 = init.initializer('truncatednormal', shape, ms.float32).init_data()
+
+    assert np.allclose(uniform1.asnumpy(), uniform2.asnumpy())
+    assert np.allclose(normal1.asnumpy(), normal2.asnumpy())
+    assert np.allclose(truncnorm1.asnumpy(), truncnorm2.asnumpy())
+
+    # Reset numpy random seed after test.
+    np.random.seed()
+
+
+def test_cpp_random_initializer():
+    """
+    Feature: Random initializers that implemented in cpp.
+    Description: Test random initializers that implemented in cpp.
+    Expectation: Data is initialized successfully.
+    """
+    ut = unittest.TestCase()
+    shape = (11, 512)
+
+    # Random normal.
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _random_normal(0, data, 0.0, 1.0)
+    ut.assertAlmostEqual(np.mean(data), 0.0, delta=0.1)
+    ut.assertAlmostEqual(np.std(data), 1.0, delta=0.1)
+
+    # Random uniform.
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _random_uniform(0, data, -1.0, 1.0)
+    ut.assertAlmostEqual(np.mean(data), 0.0, delta=0.1)
+    ut.assertGreater(np.std(data), 0.0)
+
+    # Truncated random.
+    data = np.ndarray(shape=shape, dtype=np.float32)
+    _truncated_normal(0, data, -2.0, 2.0, 0.0, 1.0)
+    ut.assertAlmostEqual(np.mean(data), 0.0, delta=0.1)
+    ut.assertGreaterEqual(np.min(data), -2.0)
+    ut.assertLessEqual(np.max(data), 2.0)
+
+    # Same seeds, same results.
+    data1 = np.ndarray(shape=shape, dtype=np.float32)
+    _random_normal(12345678, data1, 0.0, 1.0)
+    data2 = np.ndarray(shape=shape, dtype=np.float32)
+    _random_normal(12345678, data2, 0.0, 1.0)
+    assert np.allclose(data1, data2)
+
+    # Different seeds, different results.
+    data3 = np.ndarray(shape=shape, dtype=np.float32)
+    _random_normal(12345679, data3, 0.0, 1.0)
+    assert not np.allclose(data1, data3)
+
+    # Check distributions by K-S test.
+    np.random.seed(42)
+    seed = np.random.randint(low=1, high=(1 << 63))
+    count = 10000
+    data = np.ndarray(shape=(count), dtype=np.float32)
+    _random_uniform(seed, data, 0.0, 1.0)
+    data2 = np.random.uniform(0.0, 1.0, size=count)
+    _, p = stats.kstest(data, data2, N=count)
+    assert p > 0.05
+
+    _random_normal(seed, data, 0.0, 1.0)
+    data2 = np.random.normal(0.0, 1.0, size=count)
+    _, p = stats.kstest(data, data2, N=count)
+    assert p > 0.05
+
+    _truncated_normal(seed, data, -2, 2, 0.0, 1.0)
+    data2 = stats.truncnorm.rvs(-2, 2, loc=0.0, scale=1.0, size=count, random_state=None)
+    _, p = stats.kstest(data, data2, N=count)
+    assert p > 0.05
+
+    # Reset numpy random seed after test.
+    np.random.seed()

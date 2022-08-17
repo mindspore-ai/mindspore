@@ -188,6 +188,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
 endif()
 
+# Set compile flags to ensure float compute consistency.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-fast-math")
+
 if(ENABLE_MPI)
     add_compile_definitions(ENABLE_MPI)
 endif()
