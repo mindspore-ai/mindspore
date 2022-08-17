@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -268,3 +269,29 @@ def test_upsample_trilinear_3d_grad_align_corners(data_type):
     else:
         diff = abs(output.asnumpy() - expect16)
     assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap_upsample_trilinear_3d_grad():
+    """
+    Feature:  UpsampleTrilinear3DGrad GPU op vmap feature.
+    Description: test the vmap feature of UpsampleTrilinear3DGrad.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    # 3 batches
+    input_shape = (1, 1, 2, 2, 2)
+    input_tensor = Tensor(np.arange(0, 5.4, 0.1).reshape(
+        (3, 1, 1, 2, 3, 3)).astype(np.float32))
+    net = NetUpsampleTrilinear3DGrad(input_shape, output_size=[2, 3, 3], align_corners=False)
+    expect = np.array([[[[[[0.3, 0.6], [1.2, 1.5]],
+                          [[2.325, 2.6250002], [3.2250001, 3.5250003]]]]],
+                       [[[[[4.35, 4.65], [5.25, 5.5499997]],
+                          [[6.375, 6.675], [7.275, 7.575]]]]],
+                       [[[[[8.4, 8.700001], [9.299999, 9.599999]],
+                          [[10.425001, 10.725], [11.325, 11.625001]]]]]]).astype(np.float32)
+    out_vmap = F.vmap(net, in_axes=(0))(input_tensor)
+    error = np.ones(shape=expect.shape) * 1.0e-6
+    assert np.all(abs(out_vmap.asnumpy() - expect) < error)

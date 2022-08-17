@@ -52,7 +52,7 @@ abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &,
                              << " . The first dimension of grid and input_x must be equal.";
   }
   if (grid_shape[KThree] != KTwo) {
-    MS_EXCEPTION(ValueError) << "The last dimension of grid must be 2, but got " << std::to_string(grid_shape[KFour]);
+    MS_EXCEPTION(ValueError) << "The last dimension of grid must be 2, but got " << std::to_string(grid_shape[KThree]);
   }
   std::vector<int64_t> out_shape = {input_x_shape[KZero], input_x_shape[KOne], grid_shape[KOne], grid_shape[KTwo]};
   bool shape_error = false;
