@@ -59,14 +59,15 @@ __all__ = [
 
 class EmbeddingOpParallelConfig(_Config):
     r"""
-        EmbeddingOpParallelConfig for the setting data parallel or row slice for the embedding table.
+        The parallel config of class:`VocabEmbedding`
+        for the setting data parallel or model parallel for the embedding table.
 
         Args:
-            data_parallel(int): The data parallel way. The input data will be sliced into n parts for embedding layer
-                according to this value. Default 1.
+            data_parallel(int): The data parallel way. The input data will be sliced into n parts
+                for class:`VocabEmbedding` according to this value. Default 1.
             model_parallel(int): The model parallel way. The embedding table parameters
-                will be sliced according to the model parallel way. Default: 1.
-            vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If true, the embedding lookup
+                will be sliced at 0-th axis according to the model parallel way. Default: 1.
+            vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If True, the embedding lookup
                 will be a data parallel style training and model_parallel value will be ignored.  If false, the
                 embedding table will be sharded into n parts at the 0-th dimension row slice of the embedding table,
                 where the n is the model parallel way determined by this parameter. Default: True
