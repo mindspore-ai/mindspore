@@ -3,7 +3,7 @@ mindspore.ops.range
 
 .. py:function:: mindspore.ops.range(start, limit, delta)
 
-    返回从 `start` 开始， 步长为 `delta` ，且不超过 `limit` （不包括 `limit` ）的序列。
+    返回从 `start` 开始，步长为 `delta`，且不超过 `limit` （不包括 `limit` ）的序列。序列的长度不能超过1000000。
 
     三个输入的数据类型必须相同。函数返回的Tensor的数据类型与输入数据类型保持一致。
 
