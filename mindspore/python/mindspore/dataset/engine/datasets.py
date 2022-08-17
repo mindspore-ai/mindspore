@@ -1931,8 +1931,10 @@ class Dataset:
         """
         # If this is in distributed execution mode,
         # the shard number and shard id might need to be updated according to the process's rank or role.
-        if _is_role_pserver() and _enable_distributed_mindrt():
-            num_shards = _get_ps_context("worker_num")
+        worker_num = _get_ps_context("worker_num")
+        server_num = _get_ps_context("server_num")
+        if _is_role_pserver() and _enable_distributed_mindrt() and (worker_num != server_num):
+            num_shards = worker_num
             shard_id = 0
         return num_shards, shard_id
 

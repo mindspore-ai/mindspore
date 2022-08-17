@@ -192,9 +192,9 @@ def run_lenet_ps_twice(file_name, cache_path, log_file_name_first, log_file_name
     first_str_to_check = "Check the consistency of dependency files hash failed. Execute all the compilation actions."
     start_ps_subprocess(file_name, cache_path, first_str_to_check, log_file_name_first)
     assert os.path.exists(cache_path)
-    check_compile_cache_files(cache_path, "")
-    check_compile_cache_files(cache_path, "pserver_")
-    check_compile_cache_files(cache_path, "pscheduler_")
+    check_compile_cache_files(cache_path, "MS_WORKER")
+    check_compile_cache_files(cache_path, "MS_PSERVER")
+    check_compile_cache_files(cache_path, "MS_SCHED")
     # Second run
     os.environ['MS_SCHED_PORT'] = '8183'
     second_str_to_check = "Use the compilation cache and execute the backend actions only. Be aware of correctness" \

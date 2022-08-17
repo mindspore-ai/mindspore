@@ -25,7 +25,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 from mindspore.common import set_seed
 from mindspore.ops import operations as P
-from mindspore.parallel._ps_context import _is_role_worker
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_sched
 from mindspore.communication.management import init
 
 parser = argparse.ArgumentParser(description="test_sparse_embedding")
@@ -56,7 +56,7 @@ class LeNet5(nn.Cell):
 
 
 def do_sparse_embedding(ps=False):
-    epoch = 10
+    epoch = 5
     net = LeNet5(10)
     if ps:
         net.embedding.embedding_table.set_param_ps()
@@ -71,9 +71,11 @@ def do_sparse_embedding(ps=False):
     for _ in range(epoch):
         data = Tensor(np.random.randint(-5, 15, (32, 3), np.int32))
         label = Tensor(np.random.randint(0, 9, (32), np.int32))
-        loss = train_network(data, label).asnumpy()
-        losses.append(loss)
-    print(losses)
+        loss = train_network(data, label)
+        if _is_role_sched():
+            return None
+        losses.append(loss.asnumpy())
+    print("Do sprase embedding losses:", losses)
     return losses
 
 

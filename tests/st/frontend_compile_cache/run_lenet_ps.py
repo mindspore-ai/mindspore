@@ -27,6 +27,7 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.communication.management import init
 
 DATASET_PATH = "/home/workspace/mindspore_dataset/mnist"
 context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
@@ -120,6 +121,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 
 
 if __name__ == "__main__":
+    init()
     network = LeNet5(10)
     network.set_param_ps()
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")

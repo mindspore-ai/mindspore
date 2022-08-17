@@ -105,7 +105,7 @@ class RpcActorStatusUpdater {
   DISABLE_COPY_AND_ASSIGN(RpcActorStatusUpdater);
 
   // Record rpc actors which need to update status.
-  RpcActorSetPtr rpc_actors_;
+  RpcActorSetWeakPtr rpc_actors_;
 };
 }  // namespace runtime
 }  // namespace mindspore

@@ -31,7 +31,6 @@
 #include "mindspore/core/utils/file_utils.h"
 
 #ifdef WITH_BACKEND
-#include "ps/ps_context.h"
 #include "ps/core/node.h"
 #include "distributed/cluster/cluster_context.h"
 #endif
@@ -71,17 +70,6 @@ std::string GetCompileCacheDir() {
 
 std::string GetRole() {
 #ifdef WITH_BACKEND
-  const std::string &server_mode = ps::PSContext::instance()->server_mode();
-  if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
-      ps::PSContext::instance()->is_server()) {
-    return kRoleServer;
-  }
-  if (ps::PSContext::instance()->is_server()) {
-    return kRolePServer;
-  }
-  if (ps::PSContext::instance()->is_scheduler()) {
-    return kRolePScheduler;
-  }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
