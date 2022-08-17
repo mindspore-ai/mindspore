@@ -174,7 +174,7 @@ class MS_CORE_API ThreadPool {
   void SetSpinCountMinValue();
   void SetMaxSpinCount(int spin_count);
   void SetMinSpinCount(int spin_count);
-  virtual void ActiveWorkers();
+  void ActiveWorkers();
   void SetWorkerIdMap();
   // init task queues
   int TaskQueuesInit(size_t thread_num);

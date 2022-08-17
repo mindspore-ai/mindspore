@@ -205,6 +205,9 @@ void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int ta
 }
 
 void Worker::Active() {
+  if (active_num_ != 0) {
+    return;
+  }
   {
     std::lock_guard<std::mutex> _l(mutex_);
     active_num_++;
