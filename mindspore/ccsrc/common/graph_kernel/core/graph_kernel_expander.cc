@@ -38,7 +38,7 @@ AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const s
 
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   bool changed = false;
-  auto todos = TopoSort(func_graph->get_return());
+  auto todos = TopoSort(func_graph->output());
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &n : todos) {

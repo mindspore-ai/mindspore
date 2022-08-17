@@ -68,7 +68,8 @@ void BasicOpInferShape::InferShape(const CNodePtr &cnode) {
   }
 
   std::vector<TensorPtr> outputs_ptr;
-  for (size_t index = 0; index < AnfUtils::GetOutputTensorNum(cnode); index++) {
+  size_t output_num = AnfUtils::GetOutputTensorNum(cnode);
+  for (size_t index = 0; index < output_num; index++) {
     auto format = cb->GetOutputFormat(cnode, index);
     if (format != kOpFormat_NHWC && format != kOpFormat_NCHW) {
       MS_LOG(ERROR) << "Graph Kernel only support NHWC and NCHW";
