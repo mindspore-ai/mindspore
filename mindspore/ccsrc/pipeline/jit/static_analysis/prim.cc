@@ -358,7 +358,7 @@ py::object BuildValue(const ValuePtr &value_ptr) {
   }
 }
 
-py::object AbstractTupleValueToPython(const AbstractTuplePtr &tuple_abs) {
+py::object AbstractTupleValueToPython(const AbstractTuple *tuple_abs) {
   MS_EXCEPTION_IF_NULL(tuple_abs);
   auto value = tuple_abs->BuildValue();
   if (value->isa<AnyValue>()) {
@@ -374,7 +374,7 @@ py::object AbstractTupleValueToPython(const AbstractTuplePtr &tuple_abs) {
 }
 
 py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
-  auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
+  auto arg_tuple = dyn_cast_ptr<AbstractTuple>(abs_base);
   MS_EXCEPTION_IF_NULL(arg_tuple);
   auto dic = py::dict();
   if (only_convert_value) {
@@ -464,7 +464,41 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   return dic;
 }
 
-py::object AbstractListValueToPython(const AbstractListPtr &list_abs) {
+py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
+  auto arg_dict = dyn_cast_ptr<AbstractDictionary>(abs_base);
+  MS_EXCEPTION_IF_NULL(arg_dict);
+
+  size_t len = arg_dict->size();
+  const auto &arg_dict_elements = arg_dict->elements();
+  py::list shape_list(len);
+  py::list dtype_list(len);
+  py::dict value_dict = py::dict();
+
+  for (size_t i = 0; i < len; ++i) {
+    auto cur_attr = arg_dict_elements[i];
+    auto cur_key = cur_attr.first;
+    auto cur_value = cur_attr.second;
+
+    py::dict out = py::dict();
+    py::dict cur_value_out = ConvertAbstractToPython(cur_value);
+    shape_list[i] = cur_value_out[ATTR_SHAPE];
+    dtype_list[i] = cur_value_out[ATTR_DTYPE];
+    value_dict[py::str(cur_key)] = cur_value_out[ATTR_VALUE];
+  }
+
+  py::dict dic = py::dict();
+  dic[ATTR_SHAPE] = shape_list;
+  dic[ATTR_DTYPE] = dtype_list;
+  MS_EXCEPTION_IF_NULL(arg_dict->BuildValue());
+  if (arg_dict->BuildValue()->isa<AnyValue>()) {
+    dic[ATTR_VALUE] = py::none();
+  } else {
+    dic[ATTR_VALUE] = value_dict;
+  }
+  return dic;
+}
+
+py::object AbstractListValueToPython(const AbstractList *list_abs) {
   MS_EXCEPTION_IF_NULL(list_abs);
   auto value = list_abs->BuildValue();
   if (value->isa<AnyValue>()) {
@@ -480,7 +514,7 @@ py::object AbstractListValueToPython(const AbstractListPtr &list_abs) {
 }
 
 py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
-  auto arg_list = dyn_cast<AbstractList>(abs_base);
+  auto arg_list = dyn_cast_ptr<AbstractList>(abs_base);
   MS_EXCEPTION_IF_NULL(arg_list);
   auto dic = py::dict();
   if (only_convert_value) {
@@ -714,6 +748,8 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     return AbstractTupleToPython(abs_base, only_convert_value);
   } else if (abs_base->isa<AbstractList>()) {
     return AbstractListToPython(abs_base, only_convert_value);
+  } else if (abs_base->isa<AbstractDictionary>()) {
+    return AbstractDictionaryToPython(abs_base);
   } else if (abs_base->isa<AbstractSlice>()) {
     auto arg_slice = dyn_cast_ptr<AbstractSlice>(abs_base);
     ShapeVector shape;
@@ -1395,15 +1431,15 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   }
   if (IsValueNode<None>(new_node)) {
     // Do not find the attribute.
-    constexpr auto kMaxArgsLen = 3;
-    bool has_default = (args_spec_list.size() == kMaxArgsLen);
+    constexpr auto max_args_len = 3;
+    bool has_default = (args_spec_list.size() == max_args_len);
     if (!has_default) {
       MS_EXCEPTION(AttributeError) << data << " object has no attribute " << symbol->symbol();
     }
     auto out_cnode = out_node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(out_cnode);
-    constexpr auto kDefaultIndex = 3;
-    auto default_node = out_cnode->inputs()[kDefaultIndex];
+    constexpr auto default_index = 3;
+    auto default_node = out_cnode->inputs()[default_index];
     func_graph->ReplaceInOrder(out_node, default_node);
     auto eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
@@ -1432,10 +1468,10 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_spec
   }
   MS_EXCEPTION_IF_NULL(out_conf);
   // An external type.
-  constexpr auto kDataIndex = 0;
-  constexpr auto kItemIndex = 1;
-  auto data = args_spec_list[kDataIndex];
-  auto item = args_spec_list[kItemIndex];
+  constexpr auto data_index = 0;
+  constexpr auto item_index = 1;
+  auto data = args_spec_list[data_index];
+  auto item = args_spec_list[item_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(item);
   auto data_value = data->BuildValue();
@@ -1479,15 +1515,15 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
   // If the attribute is not found and the default is not set, AttributeError will be raised.
   auto new_node = parse::ResolveMsClassWithAttr(func_graph->manager(), ms_class->obj(), item_name, out_node);
   if (new_node == nullptr || IsValueNode<None>(new_node)) {
-    constexpr auto kMaxArgsLen = 3;
-    bool has_default = (args_spec_list.size() == kMaxArgsLen);
+    constexpr auto max_args_len = 3;
+    bool has_default = (args_spec_list.size() == max_args_len);
     if (!has_default) {
       MS_EXCEPTION(AttributeError) << py::str(ms_class->obj()) << " object has no attribute: " << item_name << ".";
     }
-    constexpr auto kDefaultIndex = 3;
+    constexpr auto default_index = 3;
     auto out_cnode = out_node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(out_cnode);
-    new_node = out_cnode->inputs()[kDefaultIndex];
+    new_node = out_cnode->inputs()[default_index];
   }
 
   func_graph->ReplaceInOrder(out_node, new_node);
@@ -1552,8 +1588,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      constexpr auto kMaxArgsLen = 3;
-      bool has_default = (args_spec_list.size() == kMaxArgsLen);
+      constexpr auto max_args_len = 3;
+      bool has_default = (args_spec_list.size() == max_args_len);
       if (!has_default) {
         MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
       }
@@ -1561,8 +1597,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       auto out_cnode = out_node->cast_ptr<CNode>();
       MS_EXCEPTION_IF_NULL(out_cnode);
       auto fg = out_cnode->func_graph();
-      constexpr auto kDefaultIndex = 3;
-      auto default_node = out_cnode->inputs()[kDefaultIndex];
+      constexpr auto default_index = 3;
+      auto default_node = out_cnode->inputs()[default_index];
       fg->ReplaceInOrder(out_node, default_node);
       auto eng = out_conf->engine();
       MS_EXCEPTION_IF_NULL(eng);
@@ -1645,8 +1681,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     }
   }
 
-  constexpr auto KMaxArgSize = 3;
-  if (args_spec_list.size() == KMaxArgSize) {
+  constexpr auto max_args_size = 3;
+  if (args_spec_list.size() == max_args_size) {
     constexpr size_t default_index = 2;
     auto default_args = args_spec_list[default_index];
     if (default_args->isa<abstract::AbstractScalar>()) {
@@ -1833,9 +1869,9 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
-    constexpr auto kGetAttrArgMinSize = 2;
-    constexpr auto kGetAttrArgMaxSize = 3;
-    constexpr auto kAttrIndex = 1;
+    constexpr auto args_min_size = 2;
+    constexpr auto args_max_size = 3;
+    constexpr auto attr_index = 1;
     auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
@@ -1843,10 +1879,11 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     }
     // Inputs: data, item
     const auto args_size = args_spec_list.size();
-    if (args_size != kGetAttrArgMinSize && args_size != kGetAttrArgMaxSize) {
-      MS_LOG(EXCEPTION) << "For Primitive GetAttr, the input size should be 2 or 3, but got size:" << args_size;
+    if (args_size != args_min_size && args_size != args_max_size) {
+      MS_LOG(EXCEPTION) << "For Primitive GetAttr, the input size should be " << args_min_size << " or "
+                        << args_max_size << ", but got size:" << args_size;
     }
-    auto attr_abs = args_spec_list[kAttrIndex];
+    auto attr_abs = args_spec_list[attr_index];
     auto attr_abs_type = attr_abs->BuildType();
     MS_EXCEPTION_IF_NULL(attr_abs_type);
     auto type_id = attr_abs_type->type_id();
@@ -1874,9 +1911,9 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(ResolveEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
-    constexpr auto kResolveArgSize = 2;
+    constexpr auto resolve_args_size = 2;
     // Inputs: namespace, symbol
-    if (args_spec_list.size() != kResolveArgSize) {
+    if (args_spec_list.size() != resolve_args_size) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
     EvalResultPtr ret = nullptr;

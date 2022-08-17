@@ -1881,8 +1881,6 @@ def ms_max(*data):
         x = data[0]
         if isinstance(x, Tensor):
             return x.max()
-        if isinstance(x, dict):
-            return max_(x.keys())
         return max_(x)
     elif len_data >= 2:
         tensor_num = 0
@@ -1917,8 +1915,6 @@ def ms_min(*data):
         x = data[0]
         if isinstance(x, Tensor):
             return x.min()
-        if isinstance(x, dict):
-            return min_(x.keys())
         return min_(x)
     elif len_data >= 2:
         tensor_num = 0
@@ -1932,8 +1928,22 @@ def ms_min(*data):
     return min_(*data)
 
 
+@constexpr
+def python_len(data):
+    """Return the result of python built-in len function"""
+    return len(data)
+
+
+@constexpr
+def is_constant(data):
+    """Return whether data is constant"""
+    return data is not None
+
+
 def ms_len(data):
     """Implementation of `len`."""
+    if not isinstance(data, Tensor) and is_constant(data):
+        return python_len(data)
     return data.__len__()
 
 

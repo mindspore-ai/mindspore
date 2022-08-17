@@ -170,11 +170,9 @@ def test_format_with_map():
         names = {"name1": "Mind", "name2": "Spore"}
         ms_format_str = ms_str.format(names)
         return ms_format_str
-    with pytest.raises(TypeError) as ex:
-        result_st = foo()
-        assert result_st == "hello Spore,It's me Mind"
-    assert "Unsupported parameter type for python primitive," \
-           " the parameter value is dict: {keys: (name1, name2), values: (Mind, Spore)}" in str(ex.value)
+
+    result_st = foo()
+    assert result_st == "hello Spore,It's me Mind"
 
 
 
