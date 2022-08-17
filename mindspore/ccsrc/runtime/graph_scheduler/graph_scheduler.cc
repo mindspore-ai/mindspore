@@ -1536,6 +1536,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     return;
   }
 
+  // When processing the control arrow of the monad node, updatestate start from its second input. By default,
+  // the first input will not be processed.
   const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   // Get the real depend input by monad node which needs to link the control arrow.
@@ -1543,12 +1545,11 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimDepend) ||
       common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimLoad)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
+    // In particular, in the depend->updatestate scene, in order to prevent the loss of the topo relationship,
+    // the first input of depend must be linked. In the othe side, real input may be this scene:  depend/load -->
+    // load/depend, so need add the control arrow for real input node in this scene.
+    real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
-    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
-    // node in this scene.
-    if (IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
-      real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
-    }
   } else if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
