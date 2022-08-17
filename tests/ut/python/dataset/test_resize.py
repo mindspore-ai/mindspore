@@ -16,17 +16,28 @@
 Testing Resize op in DE
 """
 import cv2
+import numpy as np
 from PIL import Image
 import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, \
-    config_get_set_seed, config_get_set_num_parallel_workers
+    config_get_set_seed, config_get_set_num_parallel_workers, diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+DATA_HIGH = [[[[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]]]
+DATA_LOW = [[[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]]
+DATA_IMG = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
+DATA_SECOND = [1, 2, 3, 4, 5, 6]
+expect_output_one = [[[[1, 2, 3]], [[4, 5, 6]]], [[[7, 8, 9]], [[10, 11, 12]]]]
+expect_output_two = [[[[1, 2, 3]]], [[[7, 8, 9]]]]
+expect_output_three = [[1, 2], [3, 4], [5, 6]]
+expect_output_four = [[[1], [2]], [[3], [4]], [[5], [6]]]
+
 GENERATE_GOLDEN = False
 
 
@@ -66,6 +77,78 @@ def test_resize_op(plot=False):
     test_resize_op_parameters("Test tuple for size", (100, 300), Inter.BILINEAR, plot=plot)
     test_resize_op_parameters("Test single int for size", 200, Inter.AREA, plot=plot)
     test_resize_op_parameters("Test single int for size", 400, Inter.PILCUBIC, plot=plot)
+
+
+def test_resize_4d_input_1_size():
+    """
+    Feature: Resize
+    Description: Test resize with 4 dimension input and one size parameter
+    Expectation: resize successfully
+    """
+    logger.info("Test resize: Test single int for size with 4 dimension input")
+
+    input_np_original = np.array(DATA_LOW, dtype=np.float32)
+    expect_output = np.array(expect_output_one, dtype=np.float32)
+    shape = (2, 2, 1, 3)
+    input_np_original = input_np_original.reshape(shape)
+    resize_op = vision.Resize(1)
+    vidio_de_resized = resize_op(input_np_original)
+    mse = diff_mse(vidio_de_resized, expect_output)
+    assert mse < 0.01
+
+
+def test_resize_4d_input_2_size():
+    """
+    Feature: Resize
+    Description: Test resize with 4 dimension input and two size parameter
+    Expectation: resize successfully
+    """
+    logger.info("Test resize: Test tuple for size with 4 dimension input")
+
+    input_np_original = np.array(DATA_LOW, dtype=np.float32)
+    expect_output = np.array(expect_output_two, dtype=np.float32)
+    shape = (2, 2, 1, 3)
+    input_np_original = input_np_original.reshape(shape)
+    resize_op = vision.Resize((1, 1))
+    vidio_de_resized = resize_op(input_np_original)
+    mse = diff_mse(vidio_de_resized, expect_output)
+    assert mse < 0.01
+
+
+def test_resize_2d_input_2_size():
+    """
+    Feature: Resize
+    Description: Test resize with 2 dimension input and two size parameter
+    Expectation: resize successfully
+    """
+    logger.info("Test resize: Test single int for size with 2 dimension input")
+
+    input_np_original = np.array(DATA_SECOND, dtype=np.float32)
+    expect_output = np.array(expect_output_three, dtype=np.float32)
+    shape = (2, 3)
+    input_np_original = input_np_original.reshape(shape)
+    resize_op = vision.Resize((3, 2))
+    vidio_de_resized = resize_op(input_np_original)
+    mse = diff_mse(vidio_de_resized, expect_output)
+    assert mse < 0.01
+
+
+def test_resize_3d_input_2_size():
+    """
+    Feature: Resize
+    Description: Test resize with 3 dimension input and two size parameter
+    Expectation: resize successfully
+    """
+    logger.info("Test resize: Test single int for size with 3 dimension input")
+
+    input_np_original = np.array(DATA_SECOND, dtype=np.float32)
+    expect_output = np.array(expect_output_four, dtype=np.float32)
+    shape = (2, 3, 1)
+    input_np_original = input_np_original.reshape(shape)
+    resize_op = vision.Resize((3, 2))
+    vidio_de_resized = resize_op(input_np_original)
+    mse = diff_mse(vidio_de_resized, expect_output)
+    assert mse < 0.01
 
 
 def test_resize_op_antialias():
@@ -211,6 +294,10 @@ def test_resize_op_exception_py_interpolation():
 
 if __name__ == "__main__":
     test_resize_op(plot=True)
+    test_resize_4d_input_1_size()
+    test_resize_4d_input_2_size()
+    test_resize_2d_input_2_size()
+    test_resize_3d_input_2_size()
     test_resize_op_antialias()
     test_resize_md5_c(plot=False)
     test_resize_md5_py(plot=False)

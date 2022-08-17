@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "common/cvop_common.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "utils/log_adapter.h"
 
@@ -40,5 +41,40 @@ TEST_F(MindDataTestResizeOp, TestOp) {
   Status st = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(st.IsOk());
   CheckImageShapeAndData(output_tensor, kResizeBilinear);
+  MS_LOG(INFO) << "testResize end.";
+}
+
+/// Feature: Resize
+/// Description: test Resize with 4 dimension input
+/// Expectation: resize successfully
+TEST_F(MindDataTestResizeOp, TestOpVideo) {
+  MS_LOG(INFO) << "Doing MindDataTestResizeOp-TestOpVideo.";
+  // Resizing with high dimension input
+  // construct a fake 4 dimension data
+  std::shared_ptr<Tensor> input_tensor_cp;
+  ASSERT_OK(Tensor::CreateFromTensor(input_tensor_, &input_tensor_cp));
+  std::vector<std::shared_ptr<Tensor>> tensor_list;
+  tensor_list.push_back(input_tensor_cp);
+  tensor_list.push_back(input_tensor_cp);
+
+  std::shared_ptr<Tensor> input_4d;
+  ASSERT_OK(TensorVectorToBatchTensor(tensor_list, &input_4d));
+  TensorShape s_two = input_4d->shape();
+  int output_w_two = 0.5 * s_two[1];
+  int output_h_two = (s_two[1] * output_w_two) / s_two[2];
+  std::shared_ptr<Tensor> output_tensor_two;
+  // Resizing
+  std::unique_ptr<ResizeOp> op_two = std::make_unique<ResizeOp>(output_h_two, output_w_two);
+  Status st_two = op_two->Compute(input_4d, &output_tensor_two);
+  EXPECT_TRUE(st_two.IsOk());
+
+  const int HEIGHT_INDEX = -3, WIDTH_INDEX = -2;
+  auto out_shape_vec = s_two.AsVector();
+  auto size = out_shape_vec.size();
+  out_shape_vec[size + HEIGHT_INDEX] = output_h_two;
+  out_shape_vec[size + WIDTH_INDEX] = output_w_two;
+  TensorShape out = TensorShape(out_shape_vec);
+  EXPECT_EQ(out, output_tensor_two->shape());
+
   MS_LOG(INFO) << "testResize end.";
 }

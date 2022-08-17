@@ -813,6 +813,90 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
 }
 
+Status ImageNumChannels(const std::shared_ptr<Tensor> &image, dsize_t *channels) {
+  if (image->Rank() < kMinImageRank) {
+    RETURN_STATUS_UNEXPECTED(
+      "GetImageNumChannels: invalid parameter, image should have at least two dimensions, but got: " +
+      std::to_string(image->Rank()));
+  } else if (image->Rank() == kMinImageRank) {
+    *channels = 1;
+  } else {
+    *channels = image->shape()[-1];
+  }
+  return Status::OK();
+}
+
+Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op_name,
+                     const std::set<uint8_t> &valid_dtype, const std::set<dsize_t> &valid_rank,
+                     const std::set<dsize_t> &valid_channel) {
+  // Validate image dtype
+  if (!valid_dtype.empty()) {
+    auto dtype = image->type();
+    if (valid_dtype.find(dtype.value()) == valid_dtype.end()) {
+      std::string err_msg = op_name + ": the data type of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in type of " + DataTypeSetToString(valid_dtype);
+      err_msg += ". But got type " + dtype.ToString() + ".";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  // Validate image rank
+  auto rank = image->Rank();
+  if (!valid_rank.empty()) {
+    if (valid_rank.find(rank) == valid_rank.end()) {
+      std::string err_msg = op_name + ": the dimension of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in dimension of " + NumberSetToString(valid_rank);
+      if (valid_rank == std::set<dsize_t>({kMinImageRank, kDefaultImageRank})) {
+        err_msg += ", in shape of <H, W> or <H, W, C>";
+      } else if (valid_rank == std::set<dsize_t>({kMinImageRank})) {
+        err_msg += ", in shape of <H, W>";
+      } else if (valid_rank == std::set<dsize_t>({kDefaultImageRank})) {
+        err_msg += ", in shape of <H, W, C>";
+      }
+      err_msg += ". But got dimension " + std::to_string(rank) + ".";
+      if (rank == 1) {
+        err_msg += " You may need to perform Decode first.";
+      }
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    if (rank < kMinImageRank) {
+      std::string err_msg =
+        op_name + ": the image tensor should have at least two dimensions. You may need to perform Decode first.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  // Validate image channel
+  if (!valid_channel.empty()) {
+    dsize_t channel = 1;
+    RETURN_IF_NOT_OK(ImageNumChannels(image, &channel));
+    if (valid_channel.find(channel) == valid_channel.end()) {
+      std::string err_msg = op_name + ": the channel of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in channel of " + NumberSetToString(valid_channel);
+      err_msg += ". But got channel " + std::to_string(channel) + ".";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  return Status::OK();
+}
+
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *size) {
+  RETURN_UNEXPECTED_IF_NULL(size);
+  *size = std::vector<dsize_t>(kMinImageRank);
+  if (image->Rank() < kMinImageRank) {
+    RETURN_STATUS_UNEXPECTED("GetImageSize: invalid parameter, image should have at least two dimensions, but got: " +
+                             std::to_string(image->Rank()));
+  } else if (image->Rank() == kMinImageRank) {
+    (*size)[0] = image->shape()[0];
+    (*size)[1] = image->shape()[1];
+  } else {
+    const int32_t kHeightIndex = -3;
+    const int32_t kWidthIndex = -2;
+    (*size)[0] = image->shape()[kHeightIndex];
+    (*size)[1] = image->shape()[kWidthIndex];
+  }
+  return Status::OK();
+}
+
 Status ValidateImageRank(const std::string &op_name, int32_t rank) {
   if (rank != 2 && rank != 3) {
     std::string err_msg = op_name + ": image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(rank);
