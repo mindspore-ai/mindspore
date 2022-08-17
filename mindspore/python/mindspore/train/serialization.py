@@ -35,7 +35,6 @@ import numpy as np
 
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
-from mindspore.train.node_strategy_pb2 import ParallelStrategyMap, ParallelLayouts, ParallelGroupMap
 from mindspore.train.print_pb2 import Print
 
 import mindspore
@@ -55,6 +54,8 @@ from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy,\
+    _restore_group_info_list
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
 
@@ -1482,18 +1483,7 @@ def restore_group_info_list(group_info_file_name):
     if os.path.getsize(group_info_file_name) == 0:
         raise ValueError("For 'restore_group_info_list', the group information file should not be empty.")
 
-    parallel_group_map = ParallelGroupMap()
-
-    with open(group_info_file_name, 'rb') as f:
-        pb_content = f.read()
-    parallel_group_map.ParseFromString(pb_content)
-
-    restore_list = parallel_group_map.ckpt_restore_rank_list
-    if not restore_list:
-        raise ValueError("For 'restore_group_info_list', the group information file has no restore rank list.")
-
-    restore_rank_list = [rank for rank in restore_list.dim]
-    return restore_rank_list
+    return _restore_group_info_list(group_info_file_name)
 
 
 def build_searched_strategy(strategy_filename):
@@ -1515,36 +1505,7 @@ def build_searched_strategy(strategy_filename):
     Examples:
         >>> strategy = build_searched_strategy("./strategy_train.ckpt")
     """
-    if not isinstance(strategy_filename, str):
-        raise TypeError(f"For 'build_searched_strategy', the argument 'strategy_filename' should be string, "
-                        f"but got {type(strategy_filename)}.")
-
-    if not os.path.isfile(strategy_filename):
-        raise ValueError(f"For 'build_searched_strategy', no such strategy file: {strategy_filename}. "
-                         f"Please check whether the 'strategy_filename' exists.")
-
-    if os.path.getsize(strategy_filename) == 0:
-        raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} should not "
-                         f"be empty. Please check whether the 'strategy_filename' is correct.")
-
-    parallel_strategy_map = ParallelStrategyMap()
-
-    with open(strategy_filename, 'rb') as f:
-        pb_content = f.read()
-    parallel_strategy_map.ParseFromString(pb_content)
-
-    layout_items = parallel_strategy_map.parallel_layout_item
-    if not layout_items:
-        raise ValueError(f"For 'build_searched_strategy', the strategy file {strategy_filename} has no sliced "
-                         f"parameter, please check whether the 'strategy_filename' is correct.")
-
-    strategy = {}
-    for layout_item in layout_items:
-        parameter_name = layout_item.param_name
-        layout = layout_item.parallel_layouts
-        strategy[parameter_name] = layout
-
-    return strategy
+    return _build_searched_strategy(strategy_filename)
 
 
 def merge_sliced_parameter(sliced_parameters, strategy=None):
@@ -1833,52 +1794,6 @@ def _check_checkpoint_file(checkpoint_filenames):
                              f"make sure the {filename} at index {index} is a valid checkpoint file, it must "
                              f"be a string ending with '.ckpt', and the checkpoint file it represents must "
                              f"be exist and not empty.")
-
-
-def _convert_to_list(strategy):
-    """Convert ParallelLayouts object to specified list."""
-    train_map = {}
-    for param_name in strategy.keys():
-        try:
-            layout = strategy.get(param_name)
-            dev_mat = list(layout.dev_matrix[0].dim)
-            tensor_map = list(layout.tensor_map[0].dim)
-            param_split_shape = list(layout.param_split_shape[0].dim)
-            field_size = int(layout.field)
-            shard_stride = int(layout.opt_weight_shard_step)
-            shard_size = int(layout.opt_weight_shard_size)
-            train_map[param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride, shard_size]
-        except BaseException as e:
-            raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert layout strategy to list "
-                             f"failed, please make sure that strategy matches the node_strategy.proto, you can "
-                             f"check whether 'train_strategy_filename' is correct.") from e
-    return train_map
-
-
-def _convert_to_layout(param_name, tensor_layout):
-    """Convert list to ParallelLayouts object."""
-    strategy = {}
-    try:
-        layout = ParallelLayouts()
-        layout.field = tensor_layout[3]
-
-        dev_matrix = layout.dev_matrix.add()
-        for item in tensor_layout[0]:
-            dev_matrix.dim.append(item)
-
-        tensor_map = layout.tensor_map.add()
-        for item in tensor_layout[1]:
-            tensor_map.dim.append(item)
-
-        param_split_shape = layout.param_split_shape.add()
-        for item in tensor_layout[2]:
-            param_split_shape.dim.append(item)
-    except BaseException as e:
-        raise ValueError(f"{e.__str__()}. For 'load_distributed_checkpoint', convert list to layout strategy failed, "
-                         f"you can check whether your input list is correct.") from e
-
-    strategy[param_name] = layout
-    return strategy
 
 
 def _merge_and_split(sliced_params, train_strategy, predict_strategy):

@@ -330,5 +330,7 @@ void ParallelContext::set_enable_micro_interleaved(const bool enable_micro_inter
   enable_micro_interleaved_ = enable_micro_interleaved;
 }
 
+void ParallelContext::set_do_transform(const bool do_transform) { do_transform_ = do_transform; }
+
 void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 }  // namespace mindspore::parallel

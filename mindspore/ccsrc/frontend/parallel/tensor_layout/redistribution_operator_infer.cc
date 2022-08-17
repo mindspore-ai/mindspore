@@ -138,7 +138,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
                     [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       int64_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
       int64_t dev_num = dev_mat_.GetDimByReverseIdx(LongToSize(out_dim));
-      if (ParallelContext::GetInstance()->enable_all2all()) {
+      if (ParallelContext::GetInstance()->enable_all2all() && !ParallelContext::GetInstance()->do_transform()) {
         int64_t dev_dim = in_tensor_map_.GetDimByIdx(LongToUlong(cat_dim));
         Args args_alltoall = {dev_mat_.GetDimByReverseIdx(LongToUlong(dev_dim)), UlongToLong(index), cat_dim, dev_dim,
                               dev_num};
