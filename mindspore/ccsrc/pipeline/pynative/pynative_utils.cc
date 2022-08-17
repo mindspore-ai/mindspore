@@ -481,10 +481,16 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
     opt::GetCustomOpAttrIndex(op_prim, input_to_attr_ptr);
     return !input_to_attr_ptr->empty();
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  *input_to_attr_ptr = opt::ConstInputToAttrRegister::GetInstance().GetConstToAttr(
+
+  auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(
     op_run_info->base_op_run_info.op_name, device_target, PyNativeAlgo::Common::IsDynamicShape(op_run_info));
+  if (reg_info == nullptr) {
+    return false;
+  } else {
+    for (auto &iter : reg_info->GetInputAttrInfoMap()) {
+      input_to_attr_ptr->insert(iter.second.GetInputIndex());
+    }
+  }
   return !input_to_attr_ptr->empty();
 }
 

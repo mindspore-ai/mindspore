@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <memory>
+#include <map>
 
 #include "ir/anf.h"
 #include "utils/hash_map.h"
@@ -27,43 +29,119 @@
 #include "include/backend/visible.h"
 
 namespace mindspore::opt {
-class BACKEND_EXPORT ConstInputToAttrRegister {
+class InputAttrInfo {
  public:
-  static ConstInputToAttrRegister &GetInstance();
-  [[nodiscard]] mindspore::HashSet<size_t> GetConstToAttr(const std::string &name, const std::string &backend,
-                                                          bool is_dynamic_shape) const;
-  class RegisterHelper {
-   public:
-    RegisterHelper(const std::string &name, const std::string &backend, bool is_dynamic_shape, int len, ...);
-    ~RegisterHelper() = default;
-  };
+  explicit InputAttrInfo(const size_t input_index, const std::string attr_name, const std::string attr_data_type)
+      : input_index_(input_index), attr_name_(attr_name), attr_data_type_(attr_data_type) {}
+  virtual ~InputAttrInfo() = default;
+
+  size_t GetInputIndex() const { return input_index_; }
+  std::string GetAttrName() const { return attr_name_; }
+  std::string GetAttrDataType() const { return attr_data_type_; }
 
  private:
-  ConstInputToAttrRegister() = default;
-  ~ConstInputToAttrRegister() = default;
-  DISABLE_COPY_AND_ASSIGN(ConstInputToAttrRegister)
-  void RegConstToAttr(const std::string &name, const std::string &backend, bool is_dynamic_shape,
-                      const mindspore::HashSet<size_t> &input_to_attr);
-  static std::string GenerateKey(const std::string &name, const std::string &backend, bool is_dynamic_shape);
-  // key: (node_name + bankend + is_dynamic), value: <input_index>
-  HashMap<std::string, mindspore::HashSet<size_t>> input_to_attr_;
+  size_t input_index_;
+  std::string attr_name_;
+  std::string attr_data_type_;
 };
 
-#define RER_CONST_TO_ATTR(op_name, backend, dynamic, ...)                                  \
-  static ConstInputToAttrRegister::RegisterHelper g_reg_##backend##_##dynamic##_##op_name( \
-    op_name, backend, dynamic, std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value, __VA_ARGS__)
+class ConvertOpInfo {
+ public:
+  explicit ConvertOpInfo(const std::string &origin_op_name, const std::string &target_op_name,
+                         const std::string &device_name, bool is_dynamic_shape = false)
+      : origin_op_name_(origin_op_name),
+        target_op_name_(target_op_name),
+        device_name_(device_name),
+        is_dynamic_shape_(is_dynamic_shape) {}
 
-#define RER_CPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kCPUDevice, true, __VA_ARGS__)
+  explicit ConvertOpInfo(const ConvertOpInfo &convert_op_info)
+      : origin_op_name_(convert_op_info.origin_op_name_),
+        target_op_name_(convert_op_info.target_op_name_),
+        pre_check_func_(convert_op_info.pre_check_func_),
+        need_check_supported_(convert_op_info.need_check_supported_),
+        input_attr_map_(convert_op_info.input_attr_map_),
+        device_name_(convert_op_info.device_name_),
+        is_dynamic_shape_(convert_op_info.is_dynamic_shape_) {}
 
-#define RER_GPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kGPUDevice, true, __VA_ARGS__)
+  virtual ~ConvertOpInfo() = default;
 
-#define RER_ASCEND_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kAscendDevice, true, __VA_ARGS__)
+  ConvertOpInfo &SetTargetOpName(std::string target_op_name) {
+    target_op_name_ = target_op_name;
+    return *this;
+  }
 
-#define RER_CPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kCPUDevice, false, __VA_ARGS__)
+  ConvertOpInfo &SetPreCheckFunc(std::function<bool(CNodePtr)> pre_check_func) {
+    pre_check_func_ = pre_check_func;
+    return *this;
+  }
 
-#define RER_GPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kGPUDevice, false, __VA_ARGS__)
+  ConvertOpInfo &SetNeedCheckSupported(bool need_check_supported) {
+    need_check_supported_ = need_check_supported;
+    return *this;
+  }
 
-#define RER_ASCEND_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR(op_name, kAscendDevice, false, __VA_ARGS__)
+  ConvertOpInfo &SetInputAttrInfo(size_t input_index, std::string attr_name = "", std::string attr_dtype = "") {
+    auto find = input_attr_map_.find(input_index);
+    if (find != input_attr_map_.end()) {
+      MS_LOG(ERROR) << "This input index (" << input_index << ")"
+                    << " has been registered.";
+      return *this;
+    }
+    input_attr_map_.insert(std::make_pair(input_index, InputAttrInfo(input_index, attr_name, attr_dtype)));
+    return *this;
+  }
+
+  std::string GetOriginOpName() const { return origin_op_name_; }
+  std::string GetTargetOpName() const { return target_op_name_; }
+  std::function<bool(CNodePtr)> GetPreCheckFunc() const { return pre_check_func_; }
+  bool GetNeedCheckFlag() const { return need_check_supported_; }
+  std::map<size_t, InputAttrInfo> GetInputAttrInfoMap() const { return input_attr_map_; }
+  std::string GetDeviceName() const { return device_name_; }
+  bool IsDynamicShape() const { return is_dynamic_shape_; }
+
+ private:
+  std::string origin_op_name_;
+  std::string target_op_name_;
+  std::function<bool(CNodePtr)> pre_check_func_{nullptr};
+  bool need_check_supported_{false};
+  std::map<size_t, InputAttrInfo> input_attr_map_;
+  std::string device_name_;
+  bool is_dynamic_shape_{false};
+};
+
+class BACKEND_EXPORT ConvertOpInfoRegister {
+ public:
+  static ConvertOpInfoRegister &GetInstance();
+  void RegConvertOpInfo(ConvertOpInfo *reg_info);
+  [[nodiscard]] ConvertOpInfo *GetConvertOpInfo(const std::string &origin_op_name, const std::string &device_name,
+                                                bool is_dynamic_shape) const;
+
+ private:
+  ConvertOpInfoRegister() = default;
+  ~ConvertOpInfoRegister() = default;
+  DISABLE_COPY_AND_ASSIGN(ConvertOpInfoRegister)
+
+  static std::string GenerateKey(const std::string &op_name, const std::string &device_name, bool is_dynamic_shape);
+  // key: (op_name + device_name + is_dynamic), value: <ConvertOpInfo *>
+  std::map<std::string, ConvertOpInfo *> op_info_map_;
+};
+
+class RegisterHelper {
+ public:
+  RegisterHelper(const std::string &name, const std::string &device_name, bool is_dynamic_shape, int len, ...);
+  explicit RegisterHelper(const ConvertOpInfo &convert_op_info);
+  ~RegisterHelper() = default;
+
+ private:
+  std::shared_ptr<ConvertOpInfo> convert_op_info_{nullptr};
+};
+
+#define REG_CONST_TO_ATTR(origin_op_name, target_op_name, device_name, dynamic)                    \
+  static opt::RegisterHelper g_reg_##device_name##_##dynamic##_##origin_op_name##_##target_op_name \
+    __attribute__((unused)) = opt::ConvertOpInfo(origin_op_name, target_op_name, device_name, dynamic)
+
+#define RER_CONST_TO_ATTR_LIST(origin_op_name, backend, dynamic, ...)        \
+  static opt::RegisterHelper g_reg_##backend##_##dynamic##_##origin_op_name( \
+    origin_op_name, backend, dynamic, std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value, __VA_ARGS__)
 }  // namespace mindspore::opt
-
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_FACTORY_H_
