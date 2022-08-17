@@ -54,7 +54,7 @@ __device__ void TraceAtomicAdd(Complex<double> *address, Complex<double> val) {
 template <typename T, int threads_per_block>
 __global__ void Trace(const T *input, const int64_t sum_size, const int64_t matrix_col, T *output) {
   *output = ZeroImpl<T>();
-  __shared__ T sPartials[threads_per_block * sizeof(T)];
+  __shared__ T sPartials[threads_per_block];
   T sum = ZeroImpl<T>();
   const int tid = threadIdx.x;
   for (size_t pos = blockIdx.x * blockDim.x + tid; pos < sum_size; pos += blockDim.x * gridDim.x) {
