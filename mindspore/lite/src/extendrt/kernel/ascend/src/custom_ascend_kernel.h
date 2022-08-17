@@ -56,6 +56,8 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   bool InitParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   int SetInputAndOutputAddr(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   int LoadModel();
+  bool IsDynamicInput();
+  void UpdateOutputAddr(const std::vector<AddressPtr> &outputs);
 
   bool load_model_;
   std::vector<KernelTensorPtr> inputs_;

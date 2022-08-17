@@ -379,9 +379,6 @@ STATUS ModelProcess::SetBatchSize(const std::vector<KernelTensorPtr> &inputs) {
     MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
     return lite::RET_ERROR;
   }
-  free(batch_size_tensor->GetData()->addr);
-  batch_size_tensor->GetData()->addr = nullptr;
-  batch_size_tensor->GetData()->size = 0;
   return lite::RET_OK;
 }
 
@@ -416,9 +413,6 @@ STATUS ModelProcess::SetImageSize(const std::vector<KernelTensorPtr> &inputs) {
     MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
     return lite::RET_ERROR;
   }
-  free(image_size_tensor->GetData()->addr);
-  image_size_tensor->GetData()->addr = nullptr;
-  image_size_tensor->GetData()->size = 0;
   return lite::RET_OK;
 }
 

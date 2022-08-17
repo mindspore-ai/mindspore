@@ -199,6 +199,23 @@ int CustomAscendKernelMod::SetInputAndOutputAddr(const std::vector<AddressPtr> &
   return lite::RET_OK;
 }
 
+bool CustomAscendKernelMod::IsDynamicInput() {
+  if (acl_options_->batch_size.empty() && acl_options_->image_size.empty()) {
+    MS_LOG(INFO) << "Inputs are not dynamic mode.";
+    return false;
+  }
+  return true;
+}
+
+void CustomAscendKernelMod::UpdateOutputAddr(const std::vector<AddressPtr> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    if ((outputs[i]->addr != outputs_[i]->GetData()->addr) || (outputs[i]->size != outputs_[i]->GetData()->size)) {
+      outputs[i]->addr = outputs_[i]->GetData()->addr;
+      outputs[i]->size = outputs_[i]->GetData()->size;
+    }
+  }
+}
+
 bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (!load_model_) {
@@ -209,18 +226,20 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(ERROR) << "Check input and output param failed.";
     return false;
   }
-  if (dyn_shape_proc_->ProcDynamicInput(&inputs_) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
-    return false;
+  if (IsDynamicInput()) {
+    if (dyn_shape_proc_->ProcDynamicInput(&inputs_) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
+      return false;
+    }
   }
   if (model_infer_->Inference(inputs_, outputs_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Custom kernel execute failed.";
     return false;
   }
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    outputs[i]->addr = outputs_[i]->GetData()->addr;
-    outputs[i]->size = outputs_[i]->GetData()->size;
+  if (IsDynamicInput()) {
+    dyn_shape_proc_->DestroyDynamicInput();
   }
+  UpdateOutputAddr(outputs);
   return true;
 }
 

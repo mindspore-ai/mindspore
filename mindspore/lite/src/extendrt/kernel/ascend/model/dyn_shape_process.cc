@@ -32,10 +32,6 @@ constexpr auto kImageSizeHwNum = 2;
 
 int DynShapeProcess::ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs) {
   MS_CHECK_TRUE_MSG(acl_options_ != nullptr, lite::RET_ERROR, "Acl options ptr is nullptr.");
-  if (acl_options_->batch_size.empty() && acl_options_->image_size.empty()) {
-    MS_LOG(INFO) << "Inputs are not dynamic mode.";
-    return lite::RET_OK;
-  }
   if (!acl_options_->batch_size.empty() && !acl_options_->image_size.empty()) {
     MS_LOG(ERROR) << "Batch size and image size can't be set at the same time.";
     return lite::RET_ERROR;
@@ -67,8 +63,8 @@ int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const input
     free(batch_size_addr);
     return lite::RET_ERROR;
   }
-  auto batch_size_ptr = std::make_shared<Address>(batch_size_addr, sizeof(int32_t));
-  if (batch_size_ptr == nullptr) {
+  batch_size_ptr_ = std::make_shared<Address>(batch_size_addr, sizeof(int32_t));
+  if (batch_size_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Create Address failed.";
     free(batch_size_addr);
     return lite::RET_ERROR;
@@ -80,7 +76,7 @@ int DynShapeProcess::AddBatchSizeInput(std::vector<KernelTensorPtr> *const input
     return lite::RET_ERROR;
   }
 
-  tensor_ptr->SetData(batch_size_ptr);
+  tensor_ptr->SetData(batch_size_ptr_);
   auto abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
   tensor_ptr->SetAbstract(abstract);
   inputs->emplace_back(tensor_ptr);
@@ -98,8 +94,8 @@ int DynShapeProcess::AddImageSizeInput(std::vector<KernelTensorPtr> *const input
     free(image_size_addr);
     return lite::RET_ERROR;
   }
-  auto image_size_ptr = std::make_shared<Address>(image_size_addr, kImageSizeHwNum * sizeof(int32_t));
-  if (image_size_ptr == nullptr) {
+  image_size_ptr_ = std::make_shared<Address>(image_size_addr, kImageSizeHwNum * sizeof(int32_t));
+  if (image_size_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Create Address failed.";
     free(image_size_addr);
     return lite::RET_ERROR;
@@ -111,7 +107,7 @@ int DynShapeProcess::AddImageSizeInput(std::vector<KernelTensorPtr> *const input
     return lite::RET_ERROR;
   }
 
-  tensor_ptr->SetData(image_size_ptr);
+  tensor_ptr->SetData(image_size_ptr_);
   auto abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
   tensor_ptr->SetAbstract(abstract);
   inputs->emplace_back(tensor_ptr);
@@ -179,6 +175,19 @@ int DynShapeProcess::GetRealImageSize(std::vector<KernelTensorPtr> *const inputs
   image_size[1] = width;
   MS_LOG(DEBUG) << "Current height " << height << " width " << width;
   return lite::RET_OK;
+}
+
+void DynShapeProcess::DestroyDynamicInput() {
+  if (batch_size_ptr_ != nullptr && batch_size_ptr_->addr != nullptr) {
+    free(batch_size_ptr_->addr);
+    batch_size_ptr_->addr = nullptr;
+    batch_size_ptr_->size = 0;
+  }
+  if (image_size_ptr_ != nullptr && image_size_ptr_->addr != nullptr) {
+    free(image_size_ptr_->addr);
+    image_size_ptr_->addr = nullptr;
+    image_size_ptr_->size = 0;
+  }
 }
 }  // namespace acl
 }  // namespace mindspore::kernel
