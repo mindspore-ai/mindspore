@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LPNORM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LPNORM_CPU_KERNEL_H_
 
+#include <memory>
 #include <vector>
 #include <map>
+#include <string>
 #include <utility>
-#include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class ReductionCpuKernelMod : public MKLCpuKernelMod {
+class LpNormCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ReductionCpuKernelMod() = default;
-  ~ReductionCpuKernelMod() override = default;
+  LpNormCpuKernelMod() = default;
+  ~LpNormCpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -47,19 +50,20 @@ class ReductionCpuKernelMod : public MKLCpuKernelMod {
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using ReductionFunc = std::function<bool(ReductionCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
-  dnnl::reduction::desc GetReductionDesc(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &dst_desc);
-
-  ReductionFunc kernel_func_;
+  using LpNromFunc = std::function<bool(LpNormCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &)>;
+  LpNromFunc kernel_func_;
   bool is_p_zero_{false};
   bool is_scalar_input_{false};
+  size_t input_elements_{1};
+  size_t reduce_size_{1};
   float p_{2.0};
   float epsilon_{1e-12};
   std::vector<int64_t> axis_;
-  static std::vector<std::pair<KernelAttr, ReductionFunc>> func_list_;
+  std::vector<size_t> physical_indexes_;
+  static std::vector<std::pair<KernelAttr, LpNromFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LPNORM_CPU_KERNEL_H_
