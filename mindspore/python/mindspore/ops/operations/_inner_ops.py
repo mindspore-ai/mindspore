@@ -19,6 +19,7 @@ from collections.abc import Iterable
 import numpy as np
 
 from mindspore.common import Tensor
+from mindspore.ops import composite as C
 from .array_ops import Cast
 from .. import signature as sig
 from ..operations.math_ops import _infer_shape_reduce
@@ -2154,8 +2155,12 @@ class MixedPrecisionCast(Primitive):
         """Initialize MixedPrecisionCast"""
         self.init_prim_io_names(inputs=['dst_dtype', 'input_x'], outputs=['output'])
         self.cast = Cast()
+        self.hyper_map = C.HyperMap()
 
     def __call__(self, dst_dtype, x):
-        if isinstance(x, Tensor) and x.dtype in (mstype.float16, mstype.float32, mstype.float64):
-            return self.cast(x, dst_dtype)
-        return x
+        def cast_inner(data):
+            if isinstance(data, Tensor) and data.dtype in (mstype.float16, mstype.float32, mstype.float64):
+                return self.cast(data, dst_dtype)
+            return data
+
+        return self.hyper_map(cast_inner, x)
