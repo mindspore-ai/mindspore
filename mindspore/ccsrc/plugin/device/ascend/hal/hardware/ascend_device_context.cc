@@ -97,7 +97,7 @@ bool AscendDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
 RunMode AscendDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode() && !IsDynamicShapeGraph(func_graph)) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && !IsDynamicShapeGraph(func_graph)) {
     return RunMode::kGraphMode;
   } else {
     return RunMode::kKernelMode;

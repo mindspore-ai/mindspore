@@ -36,6 +36,7 @@ class RuntimeModel {
   void Load(uint32_t device_id, uint64_t session_id, const std::shared_ptr<DavinciModel> &davinci_model);
   void DistributeTask();
   void LoadComplete();
+  const std::vector<std::shared_ptr<Task>> &GetTaskList() const;
   const std::vector<uint32_t> &GetTaskIdList() const;
   const std::vector<uint32_t> &GetStreamIdList() const;
   const std::map<std::string, std::shared_ptr<RuntimeInfo>> &GetRuntimeInfoMap() const { return runtime_info_map_; }

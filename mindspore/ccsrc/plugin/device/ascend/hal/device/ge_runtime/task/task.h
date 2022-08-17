@@ -33,6 +33,8 @@ class Task {
 
   virtual void *Args() const { return nullptr; }
 
+  virtual size_t ArgsSize() const { return 0; }
+
   virtual std::string task_name() const { return ""; }
 
   void set_model_handle(rtModel_t model_handle) { model_handle_ = model_handle; }

@@ -694,8 +694,12 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   opt::BackendCommonOptimization(root_graph);
   root_graph->SetInputNodes();
 
-  auto graph_id = CompileGraphImpl(root_graph, device_context);
-
+  GraphId graph_id = 0;
+  if (!func_graph->has_flag(kFlagPyNativeRunInGraph)) {
+    graph_id = CompileGraphImpl(root_graph, device_context);
+  } else {
+    graph_id = root_graph->graph_id();
+  }
   // Set summary nodes for all graphs.
   session_->SetSummaryNodesForAllGraphs(root_graph.get(), all_graphs);
 
@@ -703,13 +707,22 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   // for ascend mindRT.
   session_->DumpGraphs(all_graphs);
 
-  // Cache the backend graph output nodes to front nodes with output index.
-  auto output = func_graph->output();
-  MS_EXCEPTION_IF_NULL(output);
-  auto backend_node = root_graph->output();
-  MS_EXCEPTION_IF_NULL(backend_node);
-  root_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {output});
-  AnfAlgo::UpdateGraphValidRefPair(root_graph);
+  if (!func_graph->has_flag(kFlagPyNativeRunInGraph)) {
+    // Cache the backend graph output nodes to front nodes with output index.
+    auto output = func_graph->output();
+    MS_EXCEPTION_IF_NULL(output);
+    auto backend_node = root_graph->output();
+    MS_EXCEPTION_IF_NULL(backend_node);
+    root_graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, {output});
+    AnfAlgo::UpdateGraphValidRefPair(root_graph);
+  } else {
+    for (auto &node : root_graph->execution_order()) {
+      if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
+        root_graph->set_flag(kFlagsIsCutGraph, true);
+      }
+    }
+    root_graph->set_front_outputs({func_graph->output()});
+  }
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;

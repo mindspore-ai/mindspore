@@ -293,5 +293,7 @@ void RuntimeModel::RtEventDestory() noexcept {
 
 const std::vector<uint32_t> &RuntimeModel::GetTaskIdList() const { return task_id_list_; }
 
+const std::vector<std::shared_ptr<Task>> &RuntimeModel::GetTaskList() const { return task_list_; }
+
 const std::vector<uint32_t> &RuntimeModel::GetStreamIdList() const { return stream_id_list_; }
 }  // namespace mindspore::ge::model_runner

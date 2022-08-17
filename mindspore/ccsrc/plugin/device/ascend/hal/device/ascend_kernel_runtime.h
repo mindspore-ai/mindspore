@@ -27,6 +27,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
+#include "plugin/device/ascend/hal/device/tasksink/rtmodel_zero_copy.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/session/session_basic.h"
 #ifndef ENABLE_SECURITY
@@ -114,6 +115,7 @@ class AscendKernelRuntime : public KernelRuntime {
   static bool DeleteDumpDir(const std::string &path);
   static int DeleteDumpFile(std::string path);
   static std::string GetRealPath(const std::string &path);
+  void CreateDefaultStream(uint32_t device_id);
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
@@ -128,7 +130,7 @@ class AscendKernelRuntime : public KernelRuntime {
   std::map<uint32_t, std::shared_ptr<std::map<uint32_t, void *>>> device_stream_id_map_;
   std::map<uint32_t, void *> stream_id_map_;
   std::set<uint32_t> initialized_device_set_{};
-  void CreateDefaultStream(uint32_t device_id);
+  tasksink::RtModelZeroCopy rt_model_zero_copy_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);

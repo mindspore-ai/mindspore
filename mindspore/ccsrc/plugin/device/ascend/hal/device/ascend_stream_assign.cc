@@ -481,7 +481,7 @@ void AscendStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr>
 }
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
-  if (graph_ptr->has_flag(kFlagPyNativeRunInGraph)) {
+  if (graph_ptr->has_flag(kFlagPyNativeRunInGraph) && !graph_ptr->is_graph_run_mode()) {
     AssignStreamForPynativeGraph(graph_ptr.get());
     return;
   }

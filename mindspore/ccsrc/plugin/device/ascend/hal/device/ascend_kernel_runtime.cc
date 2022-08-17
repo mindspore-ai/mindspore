@@ -258,6 +258,8 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
   }
+
+  rt_model_zero_copy_.Release(graph_id);
 }
 
 void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
@@ -573,6 +575,11 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
     mindspore::RDR::TriggerAll();
 #endif
     MS_LOG(EXCEPTION) << "Distribute Task Failed, \nerror msg: " << e.what();
+  }
+
+  if (!rt_model_zero_copy_.GenerateZeroCopyTasks(graph)) {
+    MS_LOG(ERROR) << "Generate ZeroCopyTask failed, graph id " << graph.graph_id();
+    return false;
   }
 
 #ifndef ENABLE_SECURITY
@@ -1062,6 +1069,11 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
   if (!CheckGraphIdValid(graph.graph_id())) {
     MS_LOG(ERROR) << "GraphId:" << graph.graph_id() << " Invalid! Graph RunTask without GenTask.";
+    return false;
+  }
+
+  if (!rt_model_zero_copy_.UpdateTaskArgs(graph, compute_stream())) {
+    MS_LOG(ERROR) << "Update rtModel task args failed, graph id " << graph.graph_id();
     return false;
   }
 

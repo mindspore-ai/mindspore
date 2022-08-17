@@ -454,13 +454,6 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
 
   return input_tensor_lists;
 }
-
-bool IsAutoParallel() {
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  return parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -605,6 +598,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   real_execution_mode_ = ms_execution_mode_;
+  func_graph->set_flag(kFlagPyNativeRunInGraph, real_execution_mode_ == kPynativeMode);
 
   // Compile root graph.
   graph_id_to_device_context_.clear();
@@ -615,9 +609,9 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
   bool all_support = device_context->PartitionGraph(func_graph);
-  auto run_mode = device_context->GetRunMode(func_graph);
   if (all_support) {
-    if (run_mode == device::RunMode::kGraphMode) {
+    auto run_mode = device_context->GetRunMode(func_graph);
+    if (run_mode == device::RunMode::kGraphMode && pynative::GraphAdapter::PyNativeEnableTaskSink(func_graph)) {
       auto graph_id = graph_compiler_->CompileWholeGraphForGraphRunMode(func_graph, device_context);
       graph_id_to_device_context_[graph_id] = device_context;
     } else {
@@ -1004,8 +998,9 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       graph->set_flag(kFlagPyNativeRunInGraph, true);
       graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
 
-      // The size of control_nodes is at least 1 since there is return node in the graph.
-      if (control_nodes_.size() == 1 && graphs.size() == 1) {
+      // KernelByKernel: The size of control_nodes is at least 1 since there is return node in the graph.
+      // GraphMode: No control nodes.
+      if (control_nodes_.size() <= 1 && graphs.size() == 1) {
         MS_LOG(INFO) << "Replace parameter format";
         // The input tensors of heterogeneous graphs or control flow graphs are null.
         // Need to get tensor after ParseControlNodes.
@@ -1121,7 +1116,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
       // Save grad node to Bucket
       if (graph->has_flag(kFlagIsPynativeBpropGraph) && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) &&
-          !kernel->is_parallel() && IsAutoParallel()) {
+          !kernel->is_parallel() && pynative::GraphAdapter::IsAutoParallel()) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }

@@ -33,6 +33,8 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
 
   void *Args() const override { return input_output_addr_; }
 
+  size_t ArgsSize() const override { return io_addrs_size_; }
+
   std::string task_name() const override { return task_info_->op_name(); }
 
  private:
@@ -46,6 +48,8 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
   void *args_;
   void *ext_info_;
   void *input_output_addr_;
+  size_t io_addrs_size_;
+  size_t args_size_;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_AICPU_TASK_H_

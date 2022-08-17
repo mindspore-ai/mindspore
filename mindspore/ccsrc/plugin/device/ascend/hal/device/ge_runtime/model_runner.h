@@ -23,6 +23,7 @@
 #include <tuple>
 #include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
+#include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 
 namespace mindspore::ge::model_runner {
 class RuntimeModel;
@@ -37,6 +38,8 @@ class ModelRunner {
   void DistributeTask(uint32_t model_id);
 
   void LoadModelComplete(uint32_t model_id);
+
+  const std::vector<std::shared_ptr<Task>> &GetTaskList(uint32_t model_id) const;
 
   const std::vector<uint32_t> &GetTaskIdList(uint32_t model_id) const;
 

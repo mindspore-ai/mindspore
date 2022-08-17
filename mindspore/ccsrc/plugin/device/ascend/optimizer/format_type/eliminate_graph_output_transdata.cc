@@ -149,7 +149,8 @@ bool EliminateGraphOutputTransdata::Run(const FuncGraphPtr &func_graph) {
   std::vector<PrimitivePtr> return_type = {prim::kPrimMakeTuple};
   auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(func_graph->output(), 0, false, return_type);
   if (!common::AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
-    MS_LOG(EXCEPTION) << "Graph output is not a MakeTuple";
+    MS_LOG(INFO) << "Graph output is not a MakeTuple";
+    return true;
   }
 
   auto transdata_ref_count = GetTransdataRefCount(func_graph);

@@ -32,6 +32,8 @@ class TbeTask : public TaskRepeater<TbeTaskInfo> {
 
   void *Args() const override { return args_; }
 
+  size_t ArgsSize() const override { return args_size_; }
+
   std::string task_name() const override { return task_info_->op_name(); }
 
  private:
@@ -39,6 +41,7 @@ class TbeTask : public TaskRepeater<TbeTaskInfo> {
   void *stream_;
   void *stub_func_;
   void *args_;
+  size_t args_size_;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_TBE_TASK_H_

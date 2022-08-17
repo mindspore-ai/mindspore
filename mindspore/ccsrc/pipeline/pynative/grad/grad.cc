@@ -807,7 +807,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   if (top_cell()->dynamic_shape()) {
     bprop_graph->set_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE, true);
   }
-  if (top_cell()->is_dynamic_structure()) {
+  if (top_cell()->is_real_dynamic_structure()) {
     bprop_graph->set_flag(kFlagIsDynamicStructure, true);
   }
   // Do opt for final bprop graph
@@ -923,7 +923,7 @@ void GradExecutor::CheckNeedCompileGraph() {
     EraseTopCellFromTopCellList(pre_top_cell);
     pre_top_cell->Clear();
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
-    top_cell()->set_dynamic_structure(true);
+    top_cell()->set_is_real_dynamic_structure(true);
   } else {
     MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
     pre_top_cell->set_input_args_id(new_top_cell->input_args_id());

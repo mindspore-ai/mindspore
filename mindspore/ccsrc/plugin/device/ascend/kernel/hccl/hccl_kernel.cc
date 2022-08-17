@@ -220,12 +220,17 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
-      mode == kPynativeMode) {
+  auto hccl_node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(hccl_node);
+  auto func_graph = hccl_node->func_graph();
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto graph_run_mode = kernel_graph->is_graph_run_mode();
+  // Not task sink mode.
+  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || !graph_run_mode) {
     return mutable_workspace_size_list_;
   }
+  // Task sink mode.
   mutable_workspace_size_list_.emplace_back(
     hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
   return mutable_workspace_size_list_;

@@ -30,7 +30,8 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
       stream_(nullptr),
       args_(nullptr),
       ext_info_(nullptr),
-      input_output_addr_(nullptr) {
+      input_output_addr_(nullptr),
+      args_size_(0) {
   MS_EXCEPTION_IF_NULL(task_info_);
 
   auto stream_list = model_context.stream_list();
@@ -60,20 +61,20 @@ void AicpuTask::Distribute() {
   (void)io_addrs.insert(io_addrs.cend(), task_info_->output_data_addrs().cbegin(),
                         task_info_->output_data_addrs().cend());
   auto io_addrs_num = static_cast<uint32_t>(io_addrs.size());
-  auto io_addrs_size = static_cast<uint32_t>(io_addrs_num * sizeof(void *));
+  io_addrs_size_ = static_cast<uint32_t>(io_addrs_num * sizeof(void *));
   constexpr uint32_t io_addr_offset = sizeof(aicpu::AicpuParamHead);
-  uint32_t node_def_len_offset = io_addr_offset + io_addrs_size;
+  uint32_t node_def_len_offset = io_addr_offset + io_addrs_size_;
   uint32_t node_def_addr_offset = node_def_len_offset + sizeof(uint32_t);
-  uint32_t args_size = sizeof(aicpu::AicpuParamHead) + io_addrs_size +
-                       static_cast<uint32_t>(task_info_->node_def().size()) + sizeof(uint32_t);
+  args_size_ = sizeof(aicpu::AicpuParamHead) + io_addrs_size_ + static_cast<uint32_t>(task_info_->node_def().size()) +
+               sizeof(uint32_t);
 
   // Malloc device memory for args
-  rtError_t rt_ret = rtMalloc(&args_, args_size, RT_MEMORY_HBM);
+  rtError_t rt_ret = rtMalloc(&args_, args_size_, RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
   }
 
-  SetAicpuParamHead(args_size, io_addrs_num);
+  SetAicpuParamHead(args_size_, io_addrs_num);
   SetInputOutputAddrs(io_addrs, io_addr_offset);
   SetNodeDef(node_def_len_offset, node_def_addr_offset);
 
@@ -82,12 +83,12 @@ void AicpuTask::Distribute() {
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
   auto cpu_flag = task_info_->cust_aicpu() ? RT_KERNEL_CUSTOM_AICPU : dump_flag;
 
-  MS_LOG(INFO) << "Distribute AicpuTask start, args_size = " << args_size << ", io_addrs_num =" << io_addrs_num
+  MS_LOG(INFO) << "Distribute AicpuTask start, args_size = " << args_size_ << ", io_addrs_num =" << io_addrs_num
                << ", so_name = " << task_info_->so_name() << ", kernel_name = " << task_info_->kernel_name()
                << ", dump_flag = " << dump_flag;
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_;
-  argsInfo.argsSize = args_size;
+  argsInfo.argsSize = args_size_;
   rt_ret = rtCpuKernelLaunchWithFlag(static_cast<const void *>(task_info_->so_name().data()),
                                      static_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo, nullptr,
                                      stream_, cpu_flag);
