@@ -79,6 +79,13 @@ typedef struct SlidingWindowParam {
   int kernel_step_;
 } SlidingWindowParam;
 
+typedef struct ConvDwCalcParam {
+  void *num_pixels_;
+  void *out_w_start_;
+  void *out_w_end_;
+  int first_calc_kw_;
+} ConvDwCalcParam;
+
 #define OUPUT_UNIT 2
 #define DECONV_WINOGRAD_DEFAULT_UNIT 3
 #define DECONV_WINOGRAD_DEFAULT_TILE 8

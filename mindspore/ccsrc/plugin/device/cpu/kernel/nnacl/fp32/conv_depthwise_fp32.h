@@ -33,6 +33,12 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
 int ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
            const ConvParameter *conv_param, int task_id);
 
+int ConvDwAVX512(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+                 const ConvParameter *conv_param, int task_id, ConvDwCalcParam *conv_dw_calc_param_);
+
+void ConvDwAVX512Fp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
+                         size_t output_channel, size_t input_step, bool first_calc_flag, const float *bias);
+
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 
 void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int input_block,

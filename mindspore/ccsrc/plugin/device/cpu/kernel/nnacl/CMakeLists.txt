@@ -186,8 +186,12 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
 
+    file(GLOB ASSEMBLY_AVX512_SRC ${NNACL_DIR}/assembly/avx512/*.S)
+    set_property(SOURCE ${ASSEMBLY_AVX512_SRC} PROPERTY LANGUAGE C)
+
     set(MS_X86_AVX512_SRC
             ${HPC_SRC}
+            ${ASSEMBLY_AVX512_SRC}
             ${KERNEL_AVX512_FILE})
 
     set_source_files_properties(${MS_X86_AVX512_SRC} PROPERTIES LANGUAGE C
