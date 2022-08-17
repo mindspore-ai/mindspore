@@ -17,28 +17,18 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RESIZE_BILINEAR_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RESIZE_BILINEAR_GRAD_GPU_KERNEL_H_
 
+#include <map>
+#include <string>
+#include <utility>
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputsNum = 2;
-constexpr size_t kDyShapeSize = 4;
-constexpr size_t kxShapeSize = 4;
-constexpr size_t kDxShapeSize = 4;
-constexpr size_t kDyIndexForN = 0;
-constexpr size_t kDyIndexForC = 1;
-constexpr size_t kDyIndexForH = 2;
-constexpr size_t kDyIndexForW = 3;
-constexpr size_t kDxIndexForH = 2;
-constexpr size_t kDxIndexForW = 3;
-
-template <typename T>
-class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ResizeBilinearGradGpuKernelMod() { ResetResource(); }
+  ResizeBilinearGradGpuKernelMod() = default;
   ~ResizeBilinearGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -46,71 +36,30 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *dy = GetDeviceAddress<T>(inputs, 0);
-    float *interim = GetDeviceAddress<float>(workspace, 0);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-    float h_scale = Scaling(dx_h_, dy_h_, align_corners_);
-    float w_scale = Scaling(dx_w_, dy_w_, align_corners_);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(dx, 0, dx_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemsetAsync dx failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(interim, 0, workspace_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemsetAsync dx_interim failed");
-    CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx, interim,
-                          device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != kInputsNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto dy_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto dx_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") || CHECK_SHAPE_NULL(x_shape, kernel_name, "x") ||
-                     CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (dy_shape.size() != kDyShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dy must be equal to 4, but got "
-                        << dy_shape.size();
-    }
-    if (x_shape.size() != kxShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x must be equal to 4, but got "
-                        << x_shape.size();
-    }
-    if (dx_shape.size() != kDxShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dx must be equal to 4, but got "
-                        << dx_shape.size();
-    }
-    n_ = LongToInt(dy_shape[kDyIndexForN]);
-    c_ = LongToInt(dy_shape[kDyIndexForC]);
-    dy_h_ = LongToInt(dy_shape[kDyIndexForH]);
-    dy_w_ = LongToInt(dy_shape[kDyIndexForW]);
-    dx_h_ = LongToInt(dx_shape[kDxIndexForH]);
-    dx_w_ = LongToInt(dx_shape[kDxIndexForW]);
-    dy_size_ = sizeof(T) * SizeOf(dy_shape);
-    dx_size_ = sizeof(T) * SizeOf(dx_shape);
-    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
-    align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
-    half_pixel_centers_ = GetAttr<bool>(kernel_node, "half_pixel_centers");
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void ResetResource() noexcept override {
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  float Scaling(const int in_size, const int out_size, bool align_corners) {
+    return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
+                                           : in_size / static_cast<float>(out_size);
+  }
+  using ResizeBilinearGradFunc =
+    std::function<bool(ResizeBilinearGradGpuKernelMod *, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+
+ private:
+  void ResetResource() noexcept {
     align_corners_ = false;
     half_pixel_centers_ = false;
     is_null_input_ = false;
@@ -128,18 +77,16 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(dy_size_);
-    workspace_size_list_.push_back(workspace_size_);
-    output_size_list_.push_back(dx_size_);
-  }
+  void InitSizeLists() { workspace_size_list_.push_back(workspace_size_); }
 
- private:
-  float Scaling(const int in_size, const int out_size, bool align_corners) {
-    return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
-                                           : in_size / static_cast<float>(out_size);
-  }
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  template <typename T>
+  bool LaunchHalfKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                        const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  static std::vector<std::pair<KernelAttr, ResizeBilinearGradFunc>> func_list_;
+  ResizeBilinearGradFunc kernel_func_;
 
   bool align_corners_;
   bool half_pixel_centers_;
@@ -153,6 +100,7 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t dy_size_;
   size_t dx_size_;
   size_t workspace_size_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

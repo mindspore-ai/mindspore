@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,20 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+#else
+__device__ double atomicAdd(double *address, double val) {
+  unsigned long long int *address_as_ull = (unsigned long long int *)address;  // NOLINT
+  unsigned long long int old = *address_as_ull, assumed;                       // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+  } while (assumed != old);
+  return __longlong_as_double(old);
+}
+#endif
+
 template <typename T>
 __global__ void ResizeBilinear(const T *input, const int n, const int c, const int input_h, const int input_w,
                                const int output_h, const int output_w, const int nchw, const int chw, const int hw,
@@ -77,9 +91,10 @@ __global__ void ResizeBilinear_HPC(const T *input, const int n, const int c, con
 }
 
 // fp16 path
-__global__ void ResizeBilinearGrad(const half *input, const int n, const int c, const int input_h, const int input_w,
-                                   const int output_h, const int output_w, const int nchw, const int chw, const int hw,
-                                   const float h_scale, const float w_scale, half *output, float *interim) {
+__global__ void ResizeBilinearGradHalf(const half *input, const int n, const int c, const int input_h,
+                                       const int input_w, const int output_h, const int output_w, const int nchw,
+                                       const int chw, const int hw, const float h_scale, const float w_scale,
+                                       half *output, float *interim) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
     const int posn = pos / chw;
     const int posc = pos / hw % c;
@@ -109,30 +124,30 @@ __global__ void ResizeBilinearGrad(const half *input, const int n, const int c, 
   return;
 }
 
-// fp32 path
-__global__ void ResizeBilinearGrad(const float *input, const int n, const int c, const int input_h, const int input_w,
+template <typename T>
+__global__ void ResizeBilinearGrad(const T *input, const int n, const int c, const int input_h, const int input_w,
                                    const int output_h, const int output_w, const int nchw, const int chw, const int hw,
-                                   const float h_scale, const float w_scale, float *output, float *interim) {
+                                   const float h_scale, const float w_scale, T *output, T *interim) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
     const int posn = pos / chw;
     const int posc = pos / hw % c;
     const int posh = pos / input_w % input_h;
     const int posw = pos % input_w;
-    const float posw_scaled = w_scale * posw;
-    const float posh_scaled = h_scale * posh;
+    const T posw_scaled = w_scale * posw;
+    const T posh_scaled = h_scale * posh;
     const int w_low = max(static_cast<int>(floorf(posw_scaled)), 0);             // NOLINT
     const int w_high = min(static_cast<int>(ceilf(posw_scaled)), output_w - 1);  // NOLINT
     const int h_low = max(static_cast<int>(floorf(posh_scaled)), 0);             // NOLINT
     const int h_high = min(static_cast<int>(ceilf(posh_scaled)), output_h - 1);  // NOLINT
-    const float w_alpha = posw_scaled - w_low;
-    const float w_beta = 1.0f - w_alpha;
-    const float h_alpha = posh_scaled - h_low;
-    const float h_beta = 1.0f - h_alpha;
-    const float grad = input[pos];
-    const float dp1 = h_beta * w_beta * grad;
-    const float dp2 = h_beta * w_alpha * grad;
-    const float dp3 = h_alpha * w_beta * grad;
-    const float dp4 = h_alpha * w_alpha * grad;
+    const T w_alpha = posw_scaled - w_low;
+    const T w_beta = 1.0f - w_alpha;
+    const T h_alpha = posh_scaled - h_low;
+    const T h_beta = 1.0f - h_alpha;
+    const T grad = input[pos];
+    T dp1 = h_beta * w_beta * grad;
+    T dp2 = h_beta * w_alpha * grad;
+    T dp3 = h_alpha * w_beta * grad;
+    T dp4 = h_alpha * w_alpha * grad;
     const int output_start = output_h * output_w * (posn * c + posc);
     atomicAdd(&output[output_start + (h_low * output_w) + w_low], dp1);
     atomicAdd(&output[output_start + (h_low * output_w) + w_high], dp2);
@@ -143,10 +158,10 @@ __global__ void ResizeBilinearGrad(const float *input, const int n, const int c,
 }
 
 // fp16 path
-__global__ void ResizeBilinearGrad_HPC(const half *input, const int n, const int c, const int input_h,
-                                       const int input_w, const int output_h, const int output_w, const int nchw,
-                                       const int chw, const int hw, const float h_scale, const float w_scale,
-                                       half *output, float *interim) {
+__global__ void ResizeBilinearGradHalf_HPC(const half *input, const int n, const int c, const int input_h,
+                                           const int input_w, const int output_h, const int output_w, const int nchw,
+                                           const int chw, const int hw, const float h_scale, const float w_scale,
+                                           half *output, float *interim) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
     const int posn = pos / chw;
     const int posc = pos / hw % c;
@@ -176,31 +191,30 @@ __global__ void ResizeBilinearGrad_HPC(const half *input, const int n, const int
   return;
 }
 
-// fp32 path
-__global__ void ResizeBilinearGrad_HPC(const float *input, const int n, const int c, const int input_h,
-                                       const int input_w, const int output_h, const int output_w, const int nchw,
-                                       const int chw, const int hw, const float h_scale, const float w_scale,
-                                       float *output, float *interim) {
+template <typename T>
+__global__ void ResizeBilinearGrad_HPC(const T *input, const int n, const int c, const int input_h, const int input_w,
+                                       const int output_h, const int output_w, const int nchw, const int chw,
+                                       const int hw, const float h_scale, const float w_scale, T *output, T *interim) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nchw; pos += blockDim.x * gridDim.x) {
     const int posn = pos / chw;
     const int posc = pos / hw % c;
     const int posh = pos / input_w % input_h;
     const int posw = pos % input_w;
-    const float posw_scaled = (static_cast<float>(posw) + 0.5f) * w_scale - 0.5f;
-    const float posh_scaled = (static_cast<float>(posh) + 0.5f) * h_scale - 0.5f;
+    const T posw_scaled = (static_cast<T>(posw) + 0.5f) * w_scale - 0.5f;
+    const T posh_scaled = (static_cast<T>(posh) + 0.5f) * h_scale - 0.5f;
     const int w_low = max(static_cast<int>(floorf(posw_scaled)), 0);             // NOLINT
     const int w_high = min(static_cast<int>(ceilf(posw_scaled)), output_w - 1);  // NOLINT
     const int h_low = max(static_cast<int>(floorf(posh_scaled)), 0);             // NOLINT
     const int h_high = min(static_cast<int>(ceilf(posh_scaled)), output_h - 1);  // NOLINT
-    const float w_alpha = posw_scaled - floorf(posw_scaled);
-    const float w_beta = 1.0f - w_alpha;
-    const float h_alpha = posh_scaled - floorf(posh_scaled);
-    const float h_beta = 1.0f - h_alpha;
-    const float grad = input[pos];
-    const float dp1 = h_beta * w_beta * grad;
-    const float dp2 = h_beta * w_alpha * grad;
-    const float dp3 = h_alpha * w_beta * grad;
-    const float dp4 = h_alpha * w_alpha * grad;
+    const T w_alpha = posw_scaled - floorf(posw_scaled);
+    const T w_beta = 1.0f - w_alpha;
+    const T h_alpha = posh_scaled - floorf(posh_scaled);
+    const T h_beta = 1.0f - h_alpha;
+    const T grad = input[pos];
+    T dp1 = h_beta * w_beta * grad;
+    T dp2 = h_beta * w_alpha * grad;
+    T dp3 = h_alpha * w_beta * grad;
+    T dp4 = h_alpha * w_alpha * grad;
     const int output_start = output_h * output_w * (posn * c + posc);
     atomicAdd(&output[output_start + (h_low * output_w) + w_low], dp1);
     atomicAdd(&output[output_start + (h_low * output_w) + w_high], dp2);
@@ -220,7 +234,7 @@ __global__ void ResizeBilinearGradPost(const int nchw, half *output, float *inte
 template <typename T>
 void CalResizeBilinear(const T *input, const int n, const int c, const int input_h, const int input_w,
                        const int output_h, const int output_w, const float h_scale, const float w_scale,
-                       const bool half_pixel_centers, T *output, const uint32_t& device_id, cudaStream_t cuda_stream) {
+                       const bool half_pixel_centers, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int nchw = n * c * output_h * output_w;
   const int chw = c * output_h * output_w;
   const int hw = output_h * output_w;
@@ -234,19 +248,19 @@ void CalResizeBilinear(const T *input, const int n, const int c, const int input
   return;
 }
 
-void CalResizeBilinearGrad(const half *input, const int n, const int c, const int input_h, const int input_w,
-                           const int output_h, const int output_w, const float h_scale, const float w_scale,
-                           const bool half_pixel_centers, half *output, float *interim, const uint32_t& device_id,
-                           cudaStream_t cuda_stream) {
+void CalResizeBilinearGradHalf(const half *input, const int n, const int c, const int input_h, const int input_w,
+                               const int output_h, const int output_w, const float h_scale, const float w_scale,
+                               const bool half_pixel_centers, half *output, float *interim, const uint32_t &device_id,
+                               cudaStream_t cuda_stream) {
   const int hw = input_h * input_w;
   const int chw = c * hw;
   const int nchw = n * chw;
   const int output_num = n * c * output_h * output_w;
   if (half_pixel_centers) {
-    ResizeBilinearGrad_HPC<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    ResizeBilinearGradHalf_HPC<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   } else {
-    ResizeBilinearGrad<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    ResizeBilinearGradHalf<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       input, n, c, input_h, input_w, output_h, output_w, nchw, chw, hw, h_scale, w_scale, output, interim);
   }
   ResizeBilinearGradPost<<<CUDA_BLOCKS(device_id, output_num), CUDA_THREADS(device_id), 0, cuda_stream>>>(
@@ -254,9 +268,10 @@ void CalResizeBilinearGrad(const half *input, const int n, const int c, const in
   return;
 }
 
-void CalResizeBilinearGrad(const float *input, const int n, const int c, const int input_h, const int input_w,
+template <typename T>
+void CalResizeBilinearGrad(const T *input, const int n, const int c, const int input_h, const int input_w,
                            const int output_h, const int output_w, const float h_scale, const float w_scale,
-                           const bool half_pixel_centers, float *output, float *interim, const uint32_t& device_id,
+                           const bool half_pixel_centers, T *output, T *interim, const uint32_t &device_id,
                            cudaStream_t cuda_stream) {
   const int hw = input_h * input_w;
   const int chw = c * hw;
@@ -275,9 +290,20 @@ template CUDA_LIB_EXPORT void CalResizeBilinear<float>(const float *input, const
                                                        const int input_w, const int output_h, const int output_w,
                                                        const float h_scale, const float w_scale,
                                                        const bool half_pixel_centers, float *output,
-                                                       const uint32_t& device_id, cudaStream_t cuda_stream);
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeBilinear<half>(const half *input, const int n, const int c, const int input_h,
                                                       const int input_w, const int output_h, const int output_w,
                                                       const float h_scale, const float w_scale,
                                                       const bool half_pixel_centers, half *output,
-                                                      const uint32_t& device_id, cudaStream_t cuda_stream);
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalResizeBilinearGrad<float>(const float *input, const int n, const int c,
+                                                           const int input_h, const int input_w, const int output_h,
+                                                           const int output_w, const float h_scale, const float w_scale,
+                                                           const bool half_pixel_centers, float *output, float *interim,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalResizeBilinearGrad<double>(const double *input, const int n, const int c,
+                                                            const int input_h, const int input_w, const int output_h,
+                                                            const int output_w, const float h_scale,
+                                                            const float w_scale, const bool half_pixel_centers,
+                                                            double *output, double *interim, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);

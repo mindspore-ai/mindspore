@@ -81,3 +81,18 @@ def test_resize_bilinear_grad_dyn_gpu():
     dyn_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     dyn_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinear_grad_dyn_cpu():
+    """
+    Feature: Test ResizeBilinearGrad on CPU.
+    Description:  The shape of inputs is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dyn_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    dyn_case()

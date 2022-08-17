@@ -129,3 +129,28 @@ def test_resize_bilinear_grad_half_pixel_centers():
     net = ResizeBilinearGradNet(half_pixel_centers=True)
     output = net(Tensor(dy), Tensor(x))
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_resize_bilinear_grad_dtype(mode, dtype):
+    """
+    Feature: Test ResizeBilinearGrad on GPU.
+    Description:  Test float16, float32, float64.
+    Expectation: Assert that results are consistent with expect.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    dy = np.array([[[[1, 1, 0, 0],
+                     [1, 1, 0, 0],
+                     [0, 0, 1, 1],
+                     [0, 0, 1, 1]]]]).astype(dtype)
+
+    x = np.array([[[[1.1, 2.2], [3.3, 4.4]]]]).astype(dtype)
+    expect = np.array([[[[2.25, 0.75],
+                         [0.75, 4.25]]]]).astype(dtype)
+    net = ResizeBilinearGradNet()
+    output = net(Tensor(dy), Tensor(x))
+    assert np.all(output.asnumpy() == expect)
