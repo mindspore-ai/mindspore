@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -194,6 +195,149 @@ def test_layernorm2d_4():
     beta_ms = Tensor(beta_np)
     net = LayerNormNet(begin_norm_axis, begin_params_axis)
     y_ms, mean_ms, var_ms = net(x_ms, gamma_ms, beta_ms)
+    assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_layernorm_vmap():
+    """
+    Feature: layernorm vmap
+    Description: test the layernorm vmap with in_axes=(0, 0, 0).
+    Expectation: match to np benchmark.
+    """
+
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    np.random.seed(20)
+    x_np = np.random.randn(3, 2, 2).astype(np.float32)
+    gamma_np = np.random.randn(3, 2).astype(np.float32)
+    beta_np = np.random.randn(3, 2).astype(np.float32)
+
+    y_np = np.array([[[0.2590919, 1.2487364],
+                      [0.2590919, 1.2487364]],
+                     [[1.1108565, -2.9439876],
+                      [-1.4481487, -3.435418]],
+                     [[1.0759374, -0.23485494],
+                      [1.0759374, -0.23485434]]])
+
+    mean_np = np.array([[[0.5398791],
+                         [-0.9928627]],
+                        [[-0.26256812],
+                         [-0.01950586]],
+                        [[0.45475566],
+                         [-0.08497494]]])
+
+    var_np = np.array([[[0.11834566],
+                        [1.8235781]],
+                       [[0.6761188],
+                        [0.91963345]],
+                       [[0.00233687],
+                        [0.16681992]]])
+    x_ms = Tensor(x_np)
+    gamma_ms = Tensor(gamma_np)
+    beta_ms = Tensor(beta_np)
+    net = LayerNormNet(begin_norm_axis, begin_params_axis)
+    vmap_net = vmap(net, in_axes=(0, 0, 0))
+    y_ms, mean_ms, var_ms = vmap_net(x_ms, gamma_ms, beta_ms)
+
+    assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_layernorm_vmap2():
+    """
+    Feature: layernorm vmap
+    Description: test the layernorm vmap with in_axes=(0, None, None).
+    Expectation: match to np benchmark.
+    """
+
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    np.random.seed(20)
+    x_np = np.random.randn(3, 2, 2).astype(np.float32)
+    gamma_np = np.random.randn(2).astype(np.float32)
+    beta_np = np.random.randn(2).astype(np.float32)
+    y_np = np.array([[[-2.0715194, 1.0880831],
+                      [-2.0715194, 1.0880831]],
+                     [[-0.48748583, -0.59665275],
+                      [-2.0715194, 1.0880831]],
+                     [[-2.0715191, 1.0880834],
+                      [-2.0715194, 1.0880831]]])
+
+    mean_np = np.array([[[0.5398791],
+                         [-0.9928627]],
+                        [[-0.26256812],
+                         [-0.01950586]],
+                        [[0.45475566],
+                         [-0.08497494]]])
+
+    var_np = np.array([[[0.11834566],
+                        [1.8235781]],
+                       [[0.6761188],
+                        [0.91963345]],
+                       [[0.00233687],
+                        [0.16681992]]])
+
+    x_ms = Tensor(x_np)
+    gamma_ms = Tensor(gamma_np)
+    beta_ms = Tensor(beta_np)
+    net = LayerNormNet(begin_norm_axis, begin_params_axis)
+    vmap_net = vmap(net, in_axes=(0, None, None))
+    y_ms, mean_ms, var_ms = vmap_net(x_ms, gamma_ms, beta_ms)
+    assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-4)
+    assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_layernorm_vmap3():
+    """
+    Feature: layernorm vmap
+    Description: test the layernorm vmap with in_axes=(None, 0, 0).
+    Expectation: match to np benchmark.
+    """
+
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    np.random.seed(20)
+    x_np = np.random.randn(2, 2).astype(np.float32)
+    gamma_np = np.random.randn(3, 2).astype(np.float32)
+    beta_np = np.random.randn(3, 2).astype(np.float32)
+    y_np = np.array([[[-0.76137155, -1.0531073],
+                      [-0.76137155, -1.0531073]],
+                     [[0.14745253, 0.1361131],
+                      [0.14745253, 0.1361131]],
+                     [[-0.7764058, -0.16069931],
+                      [-0.7764058, -0.16069931]]])
+    mean_np = np.array([[[0.5398791],
+                         [-0.9928627]],
+                        [[0.5398791],
+                         [-0.9928627]],
+                        [[0.5398791],
+                         [-0.9928627]]])
+
+    var_np = np.array([[[0.11834566],
+                        [1.8235781]],
+                       [[0.11834566],
+                        [1.8235781]],
+                       [[0.11834566],
+                        [1.8235781]]])
+    x_ms = Tensor(x_np)
+    gamma_ms = Tensor(gamma_np)
+    beta_ms = Tensor(beta_np)
+    net = LayerNormNet(begin_norm_axis, begin_params_axis)
+    vmap_net = vmap(net, in_axes=(None, 0, 0))
+    y_ms, mean_ms, var_ms = vmap_net(x_ms, gamma_ms, beta_ms)
     assert np.allclose(y_ms.asnumpy(), y_np, rtol=1e-6, atol=1e-4)
     assert np.allclose(mean_ms.asnumpy(), mean_np, rtol=1e-6, atol=1e-4)
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-4)
