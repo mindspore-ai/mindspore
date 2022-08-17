@@ -40,42 +40,6 @@ class TestHWTransposeTransdataFusion : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-class MockSupportedChecker : public SupportedChecker {
- public:
-  MockSupportedChecker() = default;
-  ~MockSupportedChecker() override = default;
-  bool CheckAICoreSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) override {
-    return true;
-  }
-};
-
-class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
- public:
-  MockInsertTransOpKernelSelectTrans4Dto5D() = default;
-  ~MockInsertTransOpKernelSelectTrans4Dto5D() override = default;
-  void SelectKernel(const CNodePtr &cnode) override {
-    if (common::AnfAlgo::GetCNodeName(cnode) == "TransData") {
-      KernelBuildInfoBuilder builder;
-      builder.SetInputsFormat({"NCHW"});
-      builder.SetInputsDeviceType({kFloat16->type_id()});
-      builder.SetOutputsFormat({"NC1HWC0"});
-      builder.SetOutputsDeviceType({kFloat16->type_id()});
-      builder.SetInputsReshapeType({""});
-      builder.SetOutputsReshapeType({""});
-      AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
-    } else {
-      KernelBuildInfoBuilder builder;
-      builder.SetInputsFormat({"NC1HWC0"});
-      builder.SetInputsDeviceType({kFloat16->type_id()});
-      builder.SetOutputsFormat({"NC1HWC0"});
-      builder.SetOutputsDeviceType({kFloat16->type_id()});
-      builder.SetInputsReshapeType({""});
-      builder.SetOutputsReshapeType({""});
-      AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
-    }
-  }
-};
-
 TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   /*
    * def before(input0, input1):
@@ -101,7 +65,7 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   KernelBuildInfoBuilder builder;
   builder.SetInputsReshapeType({""});
   builder.SetOutputsReshapeType({""});
-  builder.SetInputsFormat({"NCHW"});
+  builder.SetInputsFormat({"DefaultFormat"});
   builder.SetInputsDeviceType({kFloat16->type_id()});
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
@@ -112,17 +76,38 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   kernel_info->set_select_kernel_build_info(builder.Build());
   transpose->set_kernel_info(kernel_info);
 
+  // insert transdata
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   auto insert_trans_op_pass = std::make_shared<opt::InsertTransOp>();
-  insert_trans_op_pass->kernel_select_ = std::make_shared<MockInsertTransOpKernelSelectTrans4Dto5D>();
   pm->AddPass(insert_trans_op_pass);
-  auto transpose_transdata_pass = std::make_shared<opt::TransposeTransDataFusion>();
-  transpose_transdata_pass->supported_checker_ = std::make_shared<MockSupportedChecker>();
-  pm->AddPass(transpose_transdata_pass);
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
+  // modify transdata
+  auto nodes = TopoSort(new_graph->get_return());
+  for (auto &node : nodes) {
+    if (AnfUtils::IsRealCNodeKernel(node) && common::AnfAlgo::GetCNodeName(node) == "TransData") {
+      KernelBuildInfoBuilder builder2;
+      builder2.SetInputsFormat({"DefaultFormat"});
+      builder2.SetInputsDeviceType({kFloat16->type_id()});
+      builder2.SetOutputsFormat({"NC1HWC0"});
+      builder2.SetOutputsDeviceType({kFloat16->type_id()});
+      builder2.SetInputsReshapeType({""});
+      builder2.SetOutputsReshapeType({""});
+      AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), node.get());
+    }
+  }
+
+  // transpose transdata fusion
+  auto optimizer2 = std::make_shared<opt::GraphOptimizer>();
+  auto pm2 = std::make_shared<opt::PassManager>();
+  auto transpose_transdata_pass = std::make_shared<opt::TransposeTransDataFusion>();
+  pm2->AddPass(transpose_transdata_pass);
+  optimizer2->AddPassManager(pm2);
+  new_graph = optimizer2->Optimize(new_graph);
+
+  // check
   ret = new_graph->get_return();
   EXPECT_NE(ret->input(1), nullptr);
   temp = ret->input(1)->cast<CNodePtr>();

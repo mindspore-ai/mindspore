@@ -390,7 +390,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
 
   auto dynamic_compile_static = op_info_ptr->dynamic_compile_static();
   auto is_dynamic = op_info_ptr->dynamic_shape() && tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
-  auto is_dynamic_impl = is_dynamic || dynamic_compile_static;
+  auto is_dynamic_impl = is_dynamic || dynamic_compile_static || common::AnfAlgo::IsKernelDynamicImpl(anf_node);
   auto iter = tbe::opTypeAdapter.find(op_name);
   (*compute_json)[kJType] = (iter != tbe::opTypeAdapter.end()) ? iter->second : op_name;
   (*compute_json)[kJPyModulePath] = python_module_path;

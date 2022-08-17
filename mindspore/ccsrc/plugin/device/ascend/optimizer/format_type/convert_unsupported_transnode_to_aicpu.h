@@ -23,15 +23,11 @@ namespace opt {
 class ConvertUnSupportNodeToAICPU : public PatternProcessPass {
  public:
   explicit ConvertUnSupportNodeToAICPU(bool multigraph = true)
-      : PatternProcessPass("convert_unsupported_node_to_aicpu", multigraph),
-        supported_checker_(std::make_shared<SupportedChecker>()) {}
+      : PatternProcessPass("convert_unsupported_node_to_aicpu", multigraph) {}
   ~ConvertUnSupportNodeToAICPU() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const mindspore::FuncGraphPtr &, const mindspore::AnfNodePtr &node,
                            const mindspore::EquivPtr &) const override;
-
- private:
-  SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
 }  // namespace mindspore

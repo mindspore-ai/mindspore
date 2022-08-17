@@ -39,20 +39,10 @@ class KernelSelect {
 };
 using KernelSelectPtr = std::shared_ptr<KernelSelect>;
 
-class SupportedChecker {
- public:
-  SupportedChecker() = default;
-  virtual ~SupportedChecker() = default;
-  virtual bool CheckAICoreSupported(const AnfNodePtr &anf_node,
-                                    const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
-    return kernel::IsSupportedByAICore(anf_node, select_kernel_build_info);
-  }
-  virtual bool CheckAICPUSupported(const AnfNodePtr &anf_node,
-                                   const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
-    return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
-  }
-};
-using SupportedCheckerPtr = std::shared_ptr<SupportedChecker>;
+bool CheckAICoreSupported(const AnfNodePtr &anf_node);
+bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node);
+bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
+bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
 
 class KernelQuery {
  public:
@@ -75,16 +65,6 @@ class KernelQuery {
   }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
-
-class TbeKernelQuery {
- public:
-  TbeKernelQuery() = default;
-  virtual ~TbeKernelQuery() = default;
-  virtual bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node) {
-    return kernel::TbeCheckIsKernelInfoEmpty(kernel_node);
-  }
-};
-using TbeKernelQueryPtr = std::shared_ptr<TbeKernelQuery>;
 
 class OpFinder {
  public:

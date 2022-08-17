@@ -27,8 +27,8 @@
 namespace mindspore {
 namespace kernel {
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
-bool TbeCheckIsSupported(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
-bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node);
+bool TbeCheckIsSupportedSpec(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
+bool TbeCheckIsSupportedAny(const CNodePtr &kernel_node);
 
 class TbeKernelSelect {
   using OpInfoPtr = std::shared_ptr<OpInfo>;
@@ -39,7 +39,7 @@ class TbeKernelSelect {
   ~TbeKernelSelect() { kernel_info_list_ = nullptr; }
   void TbeMetadataInfoEx();
   bool FindKernelInfo(const KernelBuildInfoPtr &select_kernel_build_info);
-  bool CheckIsKernelInfoEmpty();
+  bool CheckIsAnyKernelInfo();
 
  private:
   void GetCommonPatternKernelInfo(const OpInfo &op_info);

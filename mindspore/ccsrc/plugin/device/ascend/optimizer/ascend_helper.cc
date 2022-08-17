@@ -574,5 +574,42 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   new_node->set_inputs(new_inputs);
   return new_node;
 }
+
+bool CheckAICoreSupported(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (common::AnfAlgo::IsDtypeFormatSensitiveOp(anf_node)) {
+    auto kernel_builder_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
+    if (kernel_builder_info == nullptr) {
+      MS_LOG(INFO) << "Kernel build info is null for node " << anf_node->fullname_with_scope();
+      return false;
+    }
+    return CheckAICoreSupportedSpec(anf_node, kernel_builder_info);
+  } else {
+    return CheckAICoreSupportedAny(anf_node);
+  }
+}
+
+bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+  return kernel::TbeCheckIsSupportedAny(cnode);
+}
+
+bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+  return kernel::TbeCheckIsSupportedSpec(cnode, select_kernel_build_info);
+}
+
+bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
+  return kernel::IsSupportedByAICPU(anf_node, select_kernel_build_info);
+}
 }  // namespace opt
 }  // namespace mindspore

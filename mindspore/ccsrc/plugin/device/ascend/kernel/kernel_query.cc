@@ -167,13 +167,5 @@ bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
                        return item->IsSimilarityKernelBuildInfo(*select_kernel_build_info);
                      });
 }
-
-bool IsSupportedByAICore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
-  auto cnode = kernel_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  return TbeCheckIsSupported(cnode, select_kernel_build_info);
-}
 }  // namespace kernel
 }  // namespace mindspore

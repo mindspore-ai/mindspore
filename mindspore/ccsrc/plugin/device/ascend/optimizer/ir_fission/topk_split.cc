@@ -234,8 +234,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(new_cnode, 0);
   auto assist_const = CreateAssistNode(input_shape, k_num, platform_info, optional_info);
   new_cnode->add_input(assist_const);
-  MS_EXCEPTION_IF_NULL(supported_checker_);
-  if (!supported_checker_->CheckAICoreSupported(new_cnode, CreateKernelBuildInfo())) {
+  if (!CheckAICoreSupportedSpec(new_cnode, CreateKernelBuildInfo())) {
     MS_LOG(INFO) << "Split topk failed, check to aicpu.";
     return nullptr;
   }

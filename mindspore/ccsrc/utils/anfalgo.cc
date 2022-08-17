@@ -901,6 +901,16 @@ bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
   return (kCommunicationOpNames.find(kernel_name) != kCommunicationOpNames.end());
 }
 
+bool AnfAlgo::IsDtypeFormatSensitiveOp(const AnfNodePtr &node) {
+  static const std::set<std::string> kDtypeFormatSensitiveOpNames = {kCastOpName};
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  return (kDtypeFormatSensitiveOpNames.find(kernel_name) != kDtypeFormatSensitiveOpNames.end());
+}
+
 bool AnfAlgo::IsFusedCommunicationOp(const AnfNodePtr &node) {
   if (!IsCommunicationOp(node)) {
     return false;
@@ -1207,6 +1217,20 @@ bool AnfAlgo::HasDynamicShapeFlag(const PrimitivePtr &prim) {
     return GetValue<bool>(primitive->GetAttr(attr_name));
   };
   return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape);
+}
+
+bool AnfAlgo::IsKernelDynamicImpl(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode.";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!HasNodeAttr(kAttrIsKernelDynamicImpl, cnode)) {
+    return false;
+  }
+  return GetBooleanAttr(node, kAttrIsKernelDynamicImpl);
 }
 
 bool AnfAlgo::IsDynamicShape(const AnfNodePtr &node) {
