@@ -94,12 +94,11 @@ void SuperKernelActor::Init() {
     std::set<AnfNodePtr> checked_nodes;
     if (!IsInputNodeUsedByRealKernel(input_node, graph_->output(), &checked_nodes)) {
       is_parameters_need_copy_[i] = false;
+      MS_LOG(INFO) << "Input node:" << input_node->DebugString()
+                   << " has ref, but not used by a real kernel, not need to copy in graph:" << graph_->ToString()
+                   << " for actor:" << GetAID();
       continue;
     }
-
-    MS_LOG(INFO) << "input node:" << input_node->DebugString()
-                 << " has ref, but only used by load, not need to copy in graph:" << graph_->ToString()
-                 << " for actor:" << GetAID();
     // If the parameter has ref attribute and is directly used by the kernel in the graph, it needs to be copied.
     is_parameters_need_copy_[i] = true;
   }
@@ -181,38 +180,45 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     return true;
   }
 
-  auto &input_nodes = graph_->input_nodes();
-  // Copy input data.
-  for (auto &input_data : data_iter->second) {
-    MS_EXCEPTION_IF_NULL(input_data);
-    if (IntToSize(input_data->index_) >= input_nodes.size()) {
-      MS_LOG(ERROR) << "The input index:" << input_data->index_ << "is out of range:" << input_nodes.size() << ".";
+  auto check_and_copy_func = [this](DeviceTensor *src_device_tensor, size_t dst_index) {
+    auto &input_nodes = graph_->input_nodes();
+    if (IntToSize(dst_index) >= input_nodes.size()) {
+      MS_LOG(ERROR) << "The input index:" << dst_index << "is out of range:" << input_nodes.size() << ".";
       return false;
     }
-    auto input_node = input_nodes[input_data->index_];
-    MS_EXCEPTION_IF_NULL(input_node);
-    auto input_param = input_node->cast<ParameterPtr>();
-    if (!input_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
-      continue;
+    auto dst_node = input_nodes[dst_index];
+    MS_EXCEPTION_IF_NULL(dst_node);
+
+    auto dst_param = dst_node->cast<ParameterPtr>();
+    if (!dst_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
+      return true;
     }
-    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    auto &input_device_tensor = input_data->data_;
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
-    if (input_device_tensor->GetPtr() == device_address->GetPtr()) {
-      continue;
+    auto dst_device_tensor = AnfAlgo::GetMutableOutputAddr(dst_node, 0, false);
+    MS_EXCEPTION_IF_NULL(dst_device_tensor);
+    if (src_device_tensor->GetPtr() == dst_device_tensor->GetPtr()) {
+      return true;
     }
 
-    MS_LOG(INFO) << "The input data of node:" << input_node->DebugString()
-                 << " need copy from address:" << input_device_tensor->GetPtr()
-                 << ", type:" << input_device_tensor->GetDeviceType() << " to address:" << device_address->GetPtr()
-                 << ", type:" << device_address->GetDeviceType() << ".";
-    if (!Copy(device_address.get(), input_device_tensor)) {
+    MS_LOG(INFO) << "The input data of node:" << dst_node->DebugString()
+                 << " need copy from address:" << src_device_tensor->GetPtr()
+                 << ", type:" << src_device_tensor->GetDeviceType() << " to address:" << dst_device_tensor->GetPtr()
+                 << ", type:" << dst_device_tensor->GetDeviceType() << ".";
+    if (!Copy(dst_device_tensor.get(), src_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";
       return false;
     }
-    if (is_parameters_need_copy_[input_data->index_] && ref_node_addr_map_.count(input_node) == 0) {
-      ref_node_addr_map_[input_node] = input_device_tensor;
+    if (is_parameters_need_copy_[dst_index] && ref_node_addr_map_.count(dst_node) == 0) {
+      ref_node_addr_map_[dst_node] = src_device_tensor;
+    }
+    return true;
+  };
+
+  // Copy input data.
+  for (auto &input_data : data_iter->second) {
+    MS_EXCEPTION_IF_NULL(input_data);
+    MS_EXCEPTION_IF_NULL(input_data->data_);
+    if (!check_and_copy_func(input_data->data_, input_data->index_)) {
+      return false;
     }
   }
 
@@ -224,31 +230,10 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     if (input_device_tensor == nullptr) {
       continue;
     }
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
-    if (device_tensor_store_key.first >= input_nodes.size()) {
-      MS_LOG(ERROR) << "The input index:" << device_tensor_store_key.first << "is out of range:" << input_nodes.size();
-      return false;
-    }
-    auto input_node = input_nodes[device_tensor_store_key.first];
-    MS_EXCEPTION_IF_NULL(input_node);
-
-    auto input_param = input_node->cast<ParameterPtr>();
-    if (!input_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
-      continue;
-    }
-
-    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (input_device_tensor->GetPtr() != device_address->GetPtr()) {
-      MS_LOG(ERROR) << "The input data of node:" << input_node->DebugString()
-                    << " device address:" << input_device_tensor->GetPtr()
-                    << ", type:" << input_device_tensor->GetDeviceType()
-                    << " is not equal to the graph node device address:" << device_address->GetPtr()
-                    << ", type:" << device_address->GetDeviceType() << ".";
+    if (!check_and_copy_func(input_device_tensor, device_tensor_store_key.first)) {
       return false;
     }
   }
-
   return true;
 }
 
