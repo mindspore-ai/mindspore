@@ -1751,7 +1751,7 @@ class SparseMatrixTranspose(Primitive):
         TypeError: The input data should have the correct CSR form.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as ops
