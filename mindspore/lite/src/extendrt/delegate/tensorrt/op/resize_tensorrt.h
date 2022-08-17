@@ -52,6 +52,8 @@ class ResizeTensorRT : public TensorRTOp {
   int SetParams(nvinfer1::IResizeLayer *resize_layer);
 
   const schema::Resize *resize_op_{nullptr};
+  int mask1_[4]{1, 1, 0, 0};
+  int mask2_[4]{0, 0, 0, 0};
 };
 
 constexpr char *RESIZELINEAR2D_PLUGIN_NAME{"ResizeLinear2DPlugin"};
