@@ -76,15 +76,15 @@ void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
   auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
   auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];
-  if (delta == 0) {
+  if (delta == static_cast<T>(0)) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the delta can not be 0.";
   }
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t max_size = outputs[0]->size / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
-    if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt64) {
-      output_size_ = static_cast<size_t>((limit - start + std::abs(delta) - 1) / delta);
+    if (std::is_integral<T>::value) {
+      output_size_ = static_cast<size_t>((std::abs(limit - start) + std::abs(delta) - 1) / std::abs(delta));
     } else {
       output_size_ = static_cast<size_t>(std::ceil((limit - start) / delta));
     }
