@@ -810,6 +810,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   if (top_cell()->is_real_dynamic_structure()) {
     bprop_graph->set_flag(kFlagIsDynamicStructure, true);
   }
+  SetBpropGraphJitLevel(cell);
   // Do opt for final bprop graph
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   resource->set_func_graph(bprop_graph);
@@ -1719,6 +1720,21 @@ CNodePtr GradExecutor::ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_
   MS_LOG(DEBUG) << "Make CNode for " << op_run_info->base_op_run_info.op_name << ", new cnode is "
                 << cnode->DebugString();
   return cnode;
+}
+
+void GradExecutor::SetBpropGraphJitLevel(const py::object &cell) const {
+  if (!py::hasattr(cell, kAttrCellJitConfigDict)) {
+    return;
+  }
+
+  auto jit_config = py::getattr(cell, kAttrCellJitConfigDict);
+  if (!py::isinstance<py::dict>(jit_config)) {
+    MS_LOG(EXCEPTION) << "JitConfig only support dict!";
+  }
+  auto jit_config_dict = jit_config.cast<py::dict>();
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  graph_executor->SetJitConfig(jit_config_dict);
 }
 }  // namespace pynative
 }  // namespace mindspore

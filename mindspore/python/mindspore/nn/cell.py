@@ -297,6 +297,10 @@ class Cell(Cell_):
                             f"but got type {type(value)}.")
         self._parallel_parameter_merge_net_dict = value
 
+    @property
+    def jit_config_dict(self):
+        return self._jit_config_dict
+
     def get_func_graph_proto(self):
         """Return graph binary proto."""
         exec_id = ".".join([self.phase, str(self.create_time), str(id(self))])

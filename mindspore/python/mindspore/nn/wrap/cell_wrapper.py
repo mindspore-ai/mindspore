@@ -109,6 +109,8 @@ class WithLossCell(Cell):
         super(WithLossCell, self).__init__(auto_prefix=False)
         self._backbone = backbone
         self._loss_fn = loss_fn
+        if backbone.jit_config_dict:
+            self._jit_config_dict = backbone.jit_config_dict
 
     def construct(self, data, label):
         out = self._backbone(data)
