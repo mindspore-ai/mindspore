@@ -139,7 +139,8 @@ FuncGraphPtr ListClear::GenerateFuncGraph(const abstract::AbstractBasePtrList &a
   ret->debug_info()->set_name("clear");
   (void)ret->add_parameter();
 
-  ret->set_output(ret->NewCNode({NewValueNode(prim::kPrimMakeList)}));
+  auto empty_list = std::vector<ValuePtr>();
+  ret->set_output(NewValueNode(std::make_shared<ValueList>(empty_list)));
   return ret;
 }
 
@@ -173,20 +174,19 @@ void ListExtend::AddNodeToElems(const AbstractBasePtr &arg, const FuncGraphPtr &
 
 FuncGraphPtr ListReverse::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   abstract::CheckArgsSize("ListReverse", args_list, 1);
-  auto &arg0 = args_list[0];
-  abstract::AbstractListPtr arg_list = dyn_cast<abstract::AbstractList>(arg0);
+  abstract::AbstractListPtr arg_list = dyn_cast<abstract::AbstractList>(args_list[0]);
   MS_EXCEPTION_IF_NULL(arg_list);
   int64_t arg_length = SizeToLong(arg_list->size());
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("reverse");
-  AnfNodePtr arg0_node = ret->add_parameter();
+  AnfNodePtr arg_node = ret->add_parameter();
 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
   for (int64_t i = arg_length - 1; i >= 0; --i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToLong(i))}));
+    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg_node, NewValueNode(SizeToLong(i))}));
   }
 
   ret->set_output(ret->NewCNode(elems));
@@ -196,27 +196,27 @@ FuncGraphPtr ListReverse::GenerateFuncGraph(const abstract::AbstractBasePtrList 
 FuncGraphPtr ListCount::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   const size_t list_count_args_size = 2;
   abstract::CheckArgsSize("ListCount", args_list, list_count_args_size);
-  auto &arg0 = args_list[0];
-  auto &arg1 = args_list[1];
+  auto &list_input = args_list[0];
+  auto &element_value = args_list[1];
 
-  auto arg0_list = dyn_cast_ptr<abstract::AbstractList>(arg0);
-  MS_EXCEPTION_IF_NULL(arg0_list);
+  auto arg_list = dyn_cast_ptr<abstract::AbstractList>(list_input);
+  MS_EXCEPTION_IF_NULL(arg_list);
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("count");
   (void)ret->add_parameter();
   (void)ret->add_parameter();
 
-  ValuePtr count_value = arg1->BuildValue();
-  const auto &values = arg0_list->elements();
-  int64_t count_ = 0;
-  for (auto value_ : values) {
-    if (ComparesTwoValues(count_value, value_->BuildValue())) {
-      count_++;
+  ValuePtr count_value = element_value->BuildValue();
+  const auto &values = arg_list->elements();
+  int64_t count = 0;
+  for (auto value : values) {
+    if (ComparesTwoValues(count_value, value->BuildValue())) {
+      ++count;
     }
   }
 
-  auto out = NewValueNode(MakeValue(count_));
+  auto out = NewValueNode(MakeValue(count));
   ret->set_output(out);
   return ret;
 }
