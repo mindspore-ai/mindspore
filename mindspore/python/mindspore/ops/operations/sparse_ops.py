@@ -544,7 +544,7 @@ class SparseSoftmax(Primitive):
         ValueError: If the size of shape < 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0,0], [0,3], [1,2], [1,5], [2,0], [2,5]])
