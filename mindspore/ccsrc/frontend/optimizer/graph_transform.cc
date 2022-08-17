@@ -35,9 +35,12 @@ bool ContainSparseTensor(const abstract::AbstractBasePtr &abs) {
 }
 
 bool IsTuple(const AnfNodePtr &param) {
+  return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>();
+}
+
+bool ParamContainSparseTensor(const AnfNodePtr &param) {
   // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
-  return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>() &&
-         !ContainSparseTensor(param->abstract());
+  return param->abstract() != nullptr && ContainSparseTensor(param->abstract());
 }
 
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
