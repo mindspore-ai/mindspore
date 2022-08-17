@@ -44,7 +44,7 @@ enum class TopoState {
 struct MetaServerAddress {
   std::string GetUrl() { return ip + ":" + std::to_string(port); }
   std::string ip;
-  int port;
+  int port{-1};
 };
 
 // The address of meta server node.

@@ -356,7 +356,7 @@ size_t RecvActor::ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, si
   return offset;
 }
 
-void RecvActor::PreprocessRemoteInput(MessageBase *const msg, bool *need_finalize) {
+void RecvActor::PreprocessRemoteInput(const MessageBase *const msg, bool *need_finalize) {
   MS_EXCEPTION_IF_NULL(msg);
   MS_EXCEPTION_IF_NULL(need_finalize);
 

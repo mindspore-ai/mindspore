@@ -26,7 +26,7 @@ namespace ps {
 namespace core {
 class BACKEND_EXPORT CollectiveNode : public PSWorkerNode {
  public:
-  explicit CollectiveNode(const std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> cgn) : cgn_(cgn) {}
+  explicit CollectiveNode(const std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> &cgn) : cgn_(cgn) {}
   ~CollectiveNode() = default;
 
   bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) override;

@@ -31,7 +31,7 @@ const char kCollectivePhaseBroadcast[] = "broadcast";
 
 bool MSCollectiveOpsImpl::Initialize() {
   MS_EXCEPTION_IF_NULL(topo_node_);
-  rank_id_ = static_cast<uint32_t>(topo_node_->rank_id());
+  rank_id_ = SizeToUint(topo_node_->rank_id());
   return true;
 }
 
@@ -83,7 +83,10 @@ bool MSCollectiveOpsImpl::RingAllGatherImpl(uint32_t send_to_rank, uint32_t recv
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
 
-    (void)topo_node_->SendAsync(send_to_rank, send_chunk, chunk_sizes[send_chunk_index] * sizeof(T));
+    if (!topo_node_->SendAsync(send_to_rank, send_chunk, chunk_sizes[send_chunk_index] * sizeof(T))) {
+      MS_LOG(ERROR) << "Failed to send data to rank: " << send_to_rank;
+      return false;
+    }
 
     size_t recv_chunk_index = (rank_id_ - i - 1 + rank_size_) % rank_size_;
     T *recv_chunk = output_buff + chunk_offset[recv_chunk_index];
@@ -125,7 +128,7 @@ bool MSCollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
 
   // Initialize collective communication parameters.
-  rank_id_ = static_cast<uint32_t>(topo_node_->rank_id());
+  rank_id_ = SizeToUint(topo_node_->rank_id());
   rank_size_ = group_info.size;
   if (rank_size_ == 0) {
     MS_LOG(ERROR) << "Rank size should not be 0.";
@@ -151,8 +154,8 @@ bool MSCollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t
       uint32_t dst_rank = group_to_global_ranks[i];
       MS_LOG(DEBUG) << "Broadcast data to process " << dst_rank;
 
-      (void)topo_node_->SendAsync(dst_rank, const_cast<void *>(sendbuff), count * sizeof(T));
-      if (!topo_node_->WaitForSend(dst_rank)) {
+      if (!topo_node_->SendAsync(dst_rank, const_cast<void *>(sendbuff), count * sizeof(T)) ||
+          !topo_node_->WaitForSend(dst_rank)) {
         MS_LOG(ERROR) << "Failed to send data to rank: " << dst_rank;
         return false;
       }
@@ -185,8 +188,8 @@ bool MSCollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
 
   // Initialize collective communication parameters.
-  rank_id_ = static_cast<uint32_t>(topo_node_->rank_id());
-  rank_size_ = static_cast<uint32_t>(topo_node_->rank_size());
+  rank_id_ = SizeToUint(topo_node_->rank_id());
+  rank_size_ = SizeToUint(topo_node_->rank_size());
   if (rank_size_ == 0) {
     MS_LOG(ERROR) << "Rank size should not be 0.";
     return false;
