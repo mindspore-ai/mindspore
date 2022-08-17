@@ -107,6 +107,12 @@ class ModelPool {
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
+  bool CanUseAllPhysicalResources();
+
+  int GetDefaultThreadNum();
+
+  Status CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_config);
+
  private:
   // different workers get tasks from different task queues.
   // currently task queues are distinguished according to different numa node numbers.
@@ -142,6 +148,10 @@ class ModelPool {
   // split batch
   bool use_split_batch_ = false;
   bool is_user_data_ = false;
+
+  bool can_use_all_physical_core_ = true;
+  int can_use_core_num_ = -1;
+  int all_core_num_ = -1;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_

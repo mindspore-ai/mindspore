@@ -16,6 +16,7 @@
 #include "src/runtime/cxx_api/model_pool/model_pool.h"
 #include <unistd.h>
 #include <future>
+#include <algorithm>
 #include "src/common/log_adapter.h"
 #include "include/lite_types.h"
 #include "src/runtime/inner_allocator.h"
@@ -35,76 +36,103 @@ constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 constexpr int kNumDefaultInterOpParallel = 4;
 
+std::vector<int> ParseCpusetFile() {
+  std::vector<int> cpu_core = {};
+  std::ifstream infile("/sys/fs/cgroup/cpuset/cpuset.cpus", std::ios::in);
+  std::string line;
+  const char ch1 = ',';
+  const char ch2 = '-';
+  while (getline(infile, line, ch1)) {
+    if (line[line.size() - 1] == '\n') {
+      line = line.substr(0, line.size() - 1);
+    }
+    auto it = find(line.begin(), line.end(), ch2);
+    if (it != line.end()) {
+      auto begin_s = line.substr(0, it - line.begin());
+      auto end_s = line.substr(it - line.begin() + 1, line.size() - (it - line.begin()));
+      int begin = std::atoi(begin_s.c_str());
+      int end = std::atoi(end_s.c_str());
+      for (int i = begin; i <= end; i++) {
+        cpu_core.push_back(i);
+      }
+    } else {
+      cpu_core.push_back(std::atoi(line.c_str()));
+    }
+  }
+  return cpu_core;
+}
+
 Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vector<int> *logical_list) {
-  int processor_id = -1;
-  int physical_id = -1;
-  int core_id = -1;
   // physical id <=> one physical cpu core id
   std::unordered_map<int, std::vector<int>> ids;
   std::ifstream infile("/proc/cpuinfo", std::ios::in);
   std::string line;
-  int data_size = 0;
+  std::vector<int> processor_ids = {};
+  std::vector<int> physical_ids = {};
+  std::vector<int> core_ids = {};
   while (getline(infile, line)) {
     auto line_size = line.size();
     if (line.find("processor") != std::string::npos) {
       auto it = line.find(": ") + kNumIndex;
-      processor_id = std::atoi(line.substr(it, line_size - 1).c_str());
-      data_size++;
+      processor_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
     }
     if (line.find("physical id") != std::string::npos) {
       auto it = line.find(": ") + kNumIndex;
-      physical_id = std::atoi(line.substr(it, line_size - 1).c_str());
-      data_size++;
+      physical_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
     }
     if (line.find("core id") != std::string::npos) {
       auto it = line.find(": ") + kNumIndex;
-      core_id = std::atoi(line.substr(it, line_size - 1).c_str());
-      data_size++;
+      core_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
     }
-    if (data_size == kNumCoreDataLen) {
-      if (core_id == -1 && physical_id == -1) {
-        MS_LOG(DEBUG) << "All cores are physical cores.";
-        int core_size = lite::GetCoreNum();
-        for (int core_num = 0; core_num < core_size; core_num++) {
-          physical_list->push_back(core_num);
-        }
-        return kSuccess;
-      }
-      data_size = 0;
-      if (ids.find(physical_id) == ids.end()) {
-        std::vector<int> core_id_list = {core_id};
-        ids.insert(std::make_pair(physical_id, core_id_list));
-        physical_list->push_back(processor_id);
+  }
+  if (core_ids.empty() && physical_ids.empty()) {
+    MS_LOG(DEBUG) << "All cores are physical cores.";
+    for (size_t i = 0; i < processor_ids.size(); i++) {
+      physical_list->push_back(processor_ids[i]);
+    }
+    return kSuccess;
+  }
+  if (core_ids.size() == physical_ids.size() && physical_ids.size() == processor_ids.size()) {
+    for (size_t i = 0; i < processor_ids.size(); i++) {
+      if (ids.find(physical_ids[i]) == ids.end()) {
+        std::vector<int> core_id_list = {core_ids[i]};
+        ids.insert(std::make_pair(physical_ids[i], core_id_list));
+        physical_list->push_back(processor_ids[i]);
         continue;
       }
-      if (find(ids[physical_id].begin(), ids[physical_id].end(), core_id) == ids[physical_id].end()) {
-        ids[physical_id].push_back(core_id);
-        physical_list->push_back(processor_id);
+      if (find(ids[physical_ids[i]].begin(), ids[physical_ids[i]].end(), core_ids[i]) == ids[physical_ids[i]].end()) {
+        ids[physical_ids[i]].push_back(core_ids[i]);
+        physical_list->push_back(processor_ids[i]);
         continue;
       } else {
-        logical_list->push_back(processor_id);
+        logical_list->push_back(processor_ids[i]);
       }
     }
   }
   return kSuccess;
 }
+}  // namespace
 
-int GetDefaultThreadNum() {
-  std::vector<int> physical_core_lite;
+int ModelPool::GetDefaultThreadNum() {
+  int default_thread_num = -1;
+  std::vector<int> physical_core_list;
   std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  auto status = DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DistinguishPhysicalAndLogical failed.";
     return 0;
   }
-  auto physical_core_size = physical_core_lite.size();
-  if (physical_core_lite.size() <= kNumPhysicalCoreThreshold) {
-    return physical_core_size / kDefaultWorkerNumPerPhysicalCpu;
-  } else {
-    return kDefaultThreadsNum;
+  auto core_size = physical_core_list.size();
+  if (can_use_all_physical_core_) {
+    core_size = can_use_core_num_;
   }
+  if (core_size <= kNumPhysicalCoreThreshold) {
+    default_thread_num = core_size >= kDefaultThreadsNum ? core_size / kDefaultWorkerNumPerPhysicalCpu : core_size;
+  } else {
+    default_thread_num = kDefaultThreadsNum;
+  }
+  return default_thread_num;
 }
-}  // namespace
 
 Status ModelPool::DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
                                                       const std::vector<int> &logical_core_list) {
@@ -191,7 +219,11 @@ Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_
                               numa_logical_cores_[bind_numa_id].begin() + logical_index[bind_numa_id] + thread_num);
       logical_index[bind_numa_id] += thread_num;
     } else {
-      MS_LOG(ERROR) << "not find core id in physical and logical.";
+      MS_LOG(ERROR) << "In the core-bound scenario, the product of the number of threads and the number of workers "
+                       "should not exceed the number of cores of the machine. Please check the parameter settings: \n"
+                    << "workers num: " << workers_num_ << " | thread num: " << thread_num
+                    << " | numa physical cores: " << numa_physical_cores_
+                    << " | numa logical cores: " << numa_logical_cores_;
       return kLiteError;
     }
     all_worker_bind_list->push_back(worker_bind_list);
@@ -208,15 +240,30 @@ Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
   }
-  std::vector<int> physical_core_lite;
+  std::vector<int> physical_core_list;
   std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  auto status = DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "distinguish physical and logical failed.";
     return kLiteError;
   }
-  std::vector<int> all_core_list = physical_core_lite;
-  all_core_list.insert(all_core_list.end(), logical_core_list.begin(), logical_core_list.end());
+  std::vector<int> all_core_list = {};
+  if (!can_use_all_physical_core_) {
+    std::vector<int> can_use_core_list = ParseCpusetFile();
+    std::sort(physical_core_list.begin(), physical_core_list.end());
+    std::sort(logical_core_list.begin(), logical_core_list.end());
+    std::vector<int> can_use_physical_list = {};
+    std::vector<int> can_use_logical_list = {};
+    std::set_intersection(physical_core_list.begin(), physical_core_list.end(), can_use_core_list.begin(),
+                          can_use_core_list.end(), std::back_inserter(can_use_physical_list));
+    std::set_intersection(logical_core_list.begin(), logical_core_list.end(), can_use_core_list.begin(),
+                          can_use_core_list.end(), std::back_inserter(can_use_logical_list));
+    all_core_list.insert(all_core_list.end(), can_use_physical_list.begin(), can_use_physical_list.end());
+    all_core_list.insert(all_core_list.end(), can_use_logical_list.begin(), can_use_logical_list.end());
+  } else {
+    all_core_list = physical_core_list;
+    all_core_list.insert(all_core_list.end(), logical_core_list.begin(), logical_core_list.end());
+  }
   size_t core_id = 0;
   for (size_t i = 0; i < workers_num_; i++) {
     std::vector<int> bind_id;
@@ -238,7 +285,9 @@ Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
     MS_LOG(ERROR) << "the number of threads set in the context is less than 1.";
     return kLiteError;
   }
-  if (numa_available_) {
+  if (!can_use_all_physical_core_) {
+    workers_num_ = can_use_core_num_ > thread_num ? can_use_core_num_ / thread_num : 1;
+  } else if (numa_available_) {
     // now only supports the same number of cores per numa node
     // do not use if there are extra cores
     auto worker_num = 0;
@@ -312,26 +361,44 @@ Status ModelPool::CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &run
   return kSuccess;
 }
 
+Status ModelPool::CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto context = runner_config->GetContext();
+  auto thread_num = context->GetThreadNum();
+  if (thread_num < 0) {
+    MS_LOG(ERROR) << "Invalid thread num " << thread_num;
+    return kLiteError;
+  }
+  if (thread_num == 0) {
+    // Defaults are automatically adjusted based on computer performance
+    auto default_thread_num = GetDefaultThreadNum();
+    if (default_thread_num == 0) {
+      MS_LOG(ERROR) << "computer thread num failed.";
+      return kLiteError;
+    }
+    context->SetThreadNum(default_thread_num);
+  }
+  if (context->GetThreadNum() > can_use_core_num_) {
+    MS_LOG(WARNING) << "thread num[" << context->GetThreadNum() << "] more than core num[" << can_use_core_num_ << "]";
+    if (context->GetThreadAffinityMode() != BindMode::Power_NoBind || !context->GetThreadAffinityCoreList().empty()) {
+      MS_LOG(ERROR) << "thread num more than core num, can not bind cpu core.";
+      return kLiteError;
+    }
+  }
+  return kSuccess;
+}
+
 std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto context = runner_config->GetContext();
   if (context == nullptr) {
     MS_LOG(ERROR) << "user set config context nullptr.";
     return nullptr;
   }
-  if (context->GetThreadNum() < 0) {
-    MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
+  auto status = CheckThreadNum(runner_config);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "user set thread num failed.";
     return nullptr;
   }
-  if (context->GetThreadNum() == 0) {
-    // Defaults are automatically adjusted based on computer performance
-    auto thread_num = GetDefaultThreadNum();
-    if (thread_num == 0) {
-      MS_LOG(ERROR) << "computer thread num failed.";
-      return nullptr;
-    }
-    context->SetThreadNum(thread_num);
-  }
-  auto status = CheckAffinityCoreList(runner_config);
+  status = CheckAffinityCoreList(runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "user set core list failed.";
     return nullptr;
@@ -417,6 +484,10 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
     workers_num_ = runner_config->GetWorkersNum();
   } else {
     MS_LOG(ERROR) << "user set worker num " << runner_config->GetWorkersNum() << " < 0";
+    return kLiteError;
+  }
+  if (workers_num_ == 0) {
+    MS_LOG(ERROR) << "worker num is zero.";
     return kLiteError;
   }
   return kSuccess;
@@ -722,11 +793,23 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
   return kSuccess;
 }
 
+bool ModelPool::CanUseAllPhysicalResources() {
+  can_use_core_num_ = ParseCpusetFile().size();
+  all_core_num_ = lite::GetCoreNum();
+  return can_use_core_num_ == all_core_num_;
+}
+
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  Status status = InitNumaParameter(runner_config);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "Init numa parameter failed.";
-    return kLiteError;
+  if (!CanUseAllPhysicalResources()) {
+    MS_LOG(INFO) << "the number of usable cores is less than the number of hardware cores of the machine.";
+    can_use_all_physical_core_ = false;
+    numa_available_ = false;
+  } else {
+    Status status = InitNumaParameter(runner_config);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "Init numa parameter failed.";
+      return kLiteError;
+    }
   }
   // create model pool config
   auto model_pool_config = CreateModelPoolConfig(runner_config);
@@ -734,6 +817,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelPoolConfig failed, context is empty.";
     return kLiteError;
   }
+  Status status;
   // create task queue for model pool
   predict_task_queue_ = std::make_shared<PredictTaskQueue>();
   if (predict_task_queue_ == nullptr) {
