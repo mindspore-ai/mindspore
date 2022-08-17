@@ -29,7 +29,7 @@ class BatchNorm2BNInfer : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  CNodePtr CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm, const AnfNodePtr &node) const;
+  CNodePtr CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm) const;
 };
 }  // namespace opt
 }  // namespace mindspore

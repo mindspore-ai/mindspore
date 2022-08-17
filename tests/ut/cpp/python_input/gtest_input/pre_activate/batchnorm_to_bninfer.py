@@ -46,6 +46,8 @@ def test_batchnorm_to_bninfer(tag):
     @fns
     def after(input0, input1, input2, input3, input4):
         res = bn_infer(input0, input1, input2, input3, input4)
+        res = make_tuple(res)
+        res = tuple_getitem(res, 0)
         return make_tuple(res)
 
     @fns

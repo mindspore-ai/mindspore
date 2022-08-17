@@ -22,25 +22,17 @@
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
+#include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-bool CheckIndex(const AnfNodePtr &index_node) {
-  MS_EXCEPTION_IF_NULL(index_node);
-  if (!IsValueNode<Int64Imm>(index_node)) {
-    return false;
-  }
-  ValueNodePtr value_node = index_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto index = GetValue<int64_t>(value_node->value());
-  if (index != 0) {
-    MS_LOG(DEBUG) << "tuple_getitem must be 0th output of BatchNorm";
-    return false;
-  }
-  return true;
-}
+constexpr size_t kIdxScale = 2;
+constexpr size_t kIdxBias = 3;
+constexpr size_t kIdxMean = 4;
+constexpr size_t kIdxVariance = 5;
+constexpr size_t kBatchNormInputNum = 6;
 
 bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -57,40 +49,13 @@ bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;
   }
-
-  if (IsUsedByOthers(graph, batchnorm)) {
-    MS_LOG(DEBUG) << "Only the 0th output of BatchNorm is used, then do fusion";
-    return false;
-  }
   return true;
-}
-
-bool NeedFusion(const FuncGraphPtr &graph, const AnfNodePtr &node, CNodePtr *batchnorm) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto tuple_getitem = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_getitem);
-  CheckCNodeInputSize(tuple_getitem, kTupleGetItemInputTensorNum);
-  AnfNodePtr index_node = tuple_getitem->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(index_node);
-  if (!CheckIndex(index_node)) {
-    return false;
-  }
-
-  AnfNodePtr batchnorm_anf = tuple_getitem->input(kRealInputNodeIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(batchnorm_anf);
-  MS_EXCEPTION_IF_NULL(batchnorm);
-  *batchnorm = batchnorm_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(*batchnorm);
-  return CheckBatchNorm(graph, *batchnorm);
 }
 }  // namespace
 
-CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm,
-                                          const AnfNodePtr &node) const {
+CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNodePtr &batchnorm) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnorm);
-  MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(kBNInferOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
   for (size_t i = 1; i < batchnorm->size(); ++i) {
@@ -99,7 +64,14 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   auto new_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(batchnorm->scope());
-  new_node->set_abstract(node->abstract());
+  auto old_abs = batchnorm->abstract();
+  MS_EXCEPTION_IF_NULL(old_abs);
+  auto old_abs_list = old_abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(old_abs_list);
+  if (old_abs_list->elements().size() == 0) {
+    MS_LOG(EXCEPTION) << "BatchNorm's output abstract size is 0";
+  }
+  new_node->set_abstract(old_abs_list->elements()[0]);
   common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
   common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
   return new_node;
@@ -110,22 +82,44 @@ const BaseRef BatchNorm2BNInfer::DefinePattern() const {
   VarPtr Y = std::make_shared<Var>();
   MS_EXCEPTION_IF_NULL(Xs);
   MS_EXCEPTION_IF_NULL(Y);
-  VectorRef batchnorm({prim::kPrimBatchNorm, Xs});
-  VectorRef pattern({prim::kPrimTupleGetItem, batchnorm, Y});
-  return pattern;
+  return VectorRef({prim::kPrimBatchNorm, Xs});
 }
 
 const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-
-  CNodePtr batchnorm = nullptr;
-  if (!NeedFusion(graph, node, &batchnorm)) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!CheckBatchNorm(graph, cnode)) {
     return nullptr;
   }
-  auto bn_infer = CreateBNInfer(graph, batchnorm, node);
-  TransferDependOrUpdateState(batchnorm, graph, bn_infer);
-  return bn_infer;
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto bn_infer = CreateBNInfer(graph, cnode);
+  TransferDependOrUpdateState(cnode, graph, bn_infer);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    const auto ori_inputs = cnode->inputs();
+    if (ori_inputs.size() < kBatchNormInputNum) {
+      MS_LOG(EXCEPTION) << "BatchNorm's inputs size is less than 5.";
+    }
+    auto mean = CreateTensorMoveOp(graph, ori_inputs[kIdxMean]);
+    auto variance = CreateTensorMoveOp(graph, ori_inputs[kIdxVariance]);
+    auto scale = CreateTensorMoveOp(graph, ori_inputs[kIdxScale]);
+    auto bias = CreateTensorMoveOp(graph, ori_inputs[kIdxBias]);
+    std::vector<AnfNodePtr> make_tuple_inputs = {
+      NewValueNode(prim::kPrimMakeTuple), bn_infer, mean, variance, scale, bias};
+    auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    return make_tuple;
+  } else {
+    if (IsUsedByOthers(graph, cnode)) {
+      return nullptr;
+    } else {
+      std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_infer};
+      auto make_tuple = graph->NewCNode(make_tuple_inputs);
+      return make_tuple;
+    }
+  }
 }
 }  // namespace opt
 }  // namespace mindspore
