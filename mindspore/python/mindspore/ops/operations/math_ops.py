@@ -2631,9 +2631,9 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
         valid_values = ['int32']
-        self.dtype = validator.check_string(dtype, valid_values, "d_type", self.name)
+        self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
-        self.add_prim_attr('d_type', 3)
+        self.add_prim_attr('dtype', 3)
 
 
 

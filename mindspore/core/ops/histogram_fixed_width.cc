@@ -51,12 +51,12 @@ void HistogramFixedWidth::set_nbins(const int32_t nbins) {
   (void)this->AddAttr(kNbins, api::MakeValue(nbins));
 }
 
-void HistogramFixedWidth::set_dtype(const TypeId dtype) { (void)this->AddAttr(kDType, api::Type::GetType(dtype)); }
+void HistogramFixedWidth::set_dtype(const TypeId dtype) { (void)this->AddAttr("dtype", api::Type::GetType(dtype)); }
 
 int32_t HistogramFixedWidth::get_nbins() const { return static_cast<int32_t>(GetValue<int64_t>(GetAttr(kNbins))); }
 
 TypeId HistogramFixedWidth::get_dtype() const {
-  return GetAttr(kDType)->cast<api::TensorTypePtr>()->element()->type_id();
+  return GetAttr("dtype")->cast<api::TensorTypePtr>()->element()->type_id();
 }
 
 void HistogramFixedWidth::Init(const int32_t nbins, const TypeId dtype) {
