@@ -636,8 +636,8 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
   return GenerateGradFuncGraph(tuple_arg);
 }
 namespace {
-AnfNodePtr CreateOutputsWithAux(const FuncGraphPtr &k_child, const AnfNodePtr &gradient, const AnfNodePtr &f_app,
-                                bool has_aux, bool get_value) {
+AnfNodePtr CreateGradOutputs(const FuncGraphPtr &k_child, const AnfNodePtr &gradient, const AnfNodePtr &f_app,
+                             bool has_aux, bool get_value) {
   if (get_value) {
     return k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), f_app, gradient});
   }
@@ -660,7 +660,8 @@ AnfNodePtr CreateOutputsWithAux(const FuncGraphPtr &k_child, const AnfNodePtr &g
 FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_spec_list[0]);
   if (tuple_arg == nullptr) {
-    MS_LOG(EXCEPTION) << "'GradAux' arg0 must be tuple, but got " << args_spec_list[0]->ToString();
+    MS_LOG(EXCEPTION) << "When has_aux is True, origin fn requires more than one outputs.\n"
+                      << "'GradAux' arg0 must be tuple, but got " << args_spec_list[0]->ToString();
   }
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -789,19 +790,19 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   // Gradients wrt inputs and parameters
   if (fv_bprop != nullptr && inputs_bprop != nullptr) {
     auto make_tuple = k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), inputs_bprop, fv_bprop});
-    k_child->set_output(CreateOutputsWithAux(k_child, make_tuple, f_app, has_aux_, get_value_));
+    k_child->set_output(CreateGradOutputs(k_child, make_tuple, f_app, has_aux_, get_value_));
     return;
   }
 
   // Gradients wrt parameters
   if (fv_bprop != nullptr) {
-    k_child->set_output(CreateOutputsWithAux(k_child, fv_bprop, f_app, has_aux_, get_value_));
+    k_child->set_output(CreateGradOutputs(k_child, fv_bprop, f_app, has_aux_, get_value_));
     return;
   }
 
   // Gradients wrt inputs
   if (inputs_bprop != nullptr) {
-    k_child->set_output(CreateOutputsWithAux(k_child, inputs_bprop, f_app, has_aux_, get_value_));
+    k_child->set_output(CreateGradOutputs(k_child, inputs_bprop, f_app, has_aux_, get_value_));
     return;
   }
   // Gradients wrt first input.
@@ -810,7 +811,7 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
   tail_grad_first->set_enable_tuple_grad_first(enable_tuple_grad);
   auto tail_grad_first_cnode = k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app});
-  k_child->set_output(CreateOutputsWithAux(k_child, tail_grad_first_cnode, f_app, has_aux_, get_value_));
+  k_child->set_output(CreateGradOutputs(k_child, tail_grad_first_cnode, f_app, has_aux_, get_value_));
 }
 
 namespace {
