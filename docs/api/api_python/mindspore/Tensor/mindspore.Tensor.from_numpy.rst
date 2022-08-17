@@ -4,7 +4,9 @@ mindspore.Tensor.from_numpy
 .. py:method:: mindspore.Tensor.from_numpy(array)
     :staticmethod:
 
-    通过不复制数据的方式将Numpy数组转换为张量。
+    将Numpy数组转换为张量。
+
+    当数据为非C连续时，数据会被拷贝成C连续数据后创建张量，否则则通过不复制数据的方式将Numpy数组转换为张量。
 
     参数：
         - **array** (numpy.array) - 输入数组。
