@@ -19,12 +19,14 @@
 #include <limits>
 #include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "Eigen/Eigen"
 
 namespace mindspore {
 namespace kernel {
 static constexpr size_t INPUT_NUM = 2;
 static constexpr size_t OUTPUT_NUM = 1;
 static constexpr int MAX_DIMS = 7;
+static constexpr size_t PARALLEL_THRESHOLD = 4096;
 template <typename T>
 T GetDivZeroVal(const T &v) {
   auto zero = static_cast<T>(0.0);
@@ -32,7 +34,7 @@ T GetDivZeroVal(const T &v) {
 }
 
 template <>
-complex128 GetDivZeroVal(const complex128 &v) {
+complex128 GetDivZeroVal(const complex128 &) {
   return std::numeric_limits<complex128>::quiet_NaN();
 }
 
@@ -42,18 +44,51 @@ complex64 GetDivZeroVal(const complex64 &) {
 }
 
 template <class T>
-bool isZero(T val) {
+bool isZero(const T &val) {
   return val == T(0.0f);
 }
 
 template <>
-bool isZero(float val) {
+bool isZero(const float &val) {
   return std::fpclassify(val) == FP_ZERO;
 }
 
 template <>
-bool isZero(double val) {
+bool isZero(const double &val) {
   return std::fpclassify(val) == FP_ZERO;
+}
+
+template <typename T>
+void SameShapeTask(T *x_addr, T *y_addr, T *output_addr, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    auto dividend = x_addr[i];
+    auto divisor = y_addr[i];
+    if (isZero(divisor)) {
+      if (isZero(dividend)) {
+        output_addr[i] = static_cast<T>(0.0);
+        continue;
+      }
+      output_addr[i] = GetDivZeroVal(dividend);
+      continue;
+    }
+    output_addr[i] = dividend / divisor;
+  }
+}
+
+template <>
+void SameShapeTask(float *x_addr, float *y_addr, float *output_addr, size_t start, size_t end) {
+  Eigen::Map<Eigen::ArrayXf> x_v(x_addr + start, end - start);
+  Eigen::Map<Eigen::ArrayXf> y_v(y_addr + start, end - start);
+  Eigen::Map<Eigen::ArrayXf> o_v(output_addr + start, end - start);
+  o_v = (x_v == 0).select(o_v, x_v / y_v);
+}
+
+template <>
+void SameShapeTask(double *x_addr, double *y_addr, double *output_addr, size_t start, size_t end) {
+  Eigen::Map<Eigen::ArrayXd> x_v(x_addr + start, end - start);
+  Eigen::Map<Eigen::ArrayXd> y_v(y_addr + start, end - start);
+  Eigen::Map<Eigen::ArrayXd> o_v(output_addr + start, end - start);
+  o_v = (x_v == 0).select(o_v, x_v / y_v);
 }
 
 template <typename T>
@@ -67,19 +102,7 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   auto output_addr = static_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T);
   auto sameShapeTask = [&x_addr, &y_addr, &output_addr](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto dividend = x_addr[i];
-      auto divisor = y_addr[i];
-      if (isZero(divisor)) {
-        if (isZero(dividend)) {
-          output_addr[i] = static_cast<T>(0.0);
-          continue;
-        }
-        output_addr[i] = GetDivZeroVal(dividend);
-        continue;
-      }
-      output_addr[i] = dividend / divisor;
-    }
+    SameShapeTask(x_addr, y_addr, output_addr, start, end);
   };
   auto diffShapeTask = [this, &x_addr, &y_addr, &output_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -100,10 +123,11 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
     }
   };
 
-  if (is_need_broadcast_) {
-    ParallelLaunch(diffShapeTask, output_size, 0, this, pool_);
+  CTask task = is_need_broadcast_ ? CTask(diffShapeTask) : CTask(sameShapeTask);
+  if (output_size < PARALLEL_THRESHOLD) {
+    task(0, output_size);
   } else {
-    ParallelLaunch(sameShapeTask, output_size, 0, this, pool_);
+    ParallelLaunch(task, output_size, PARALLEL_THRESHOLD, this, pool_);
   }
   return true;
 }
