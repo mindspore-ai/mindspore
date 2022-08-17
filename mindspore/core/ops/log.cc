@@ -175,7 +175,9 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 MIND_API_OPERATOR_IMPL(Log, BaseOperator);
 AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(LogInferShape(primitive, input_args), LogInferType(primitive, input_args));
+  auto type = LogInferType(primitive, input_args);
+  auto shape = LogInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Log, prim::kPrimLog, LogInfer, LogInferValue, true);
 }  // namespace ops

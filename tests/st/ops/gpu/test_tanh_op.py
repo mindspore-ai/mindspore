@@ -21,8 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+from mindspore.ops import function as F
 
 
 class TanhNet(nn.Cell):
@@ -50,6 +49,11 @@ class Grad(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
 def test_tanh(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
     x_np = np.array(
         [[0.28522366, 0.38033979, 1.54657853, -0.98530175, -0.54365635, 0.12652203, -1.33449938, -0.27737698],
          [2.06282293, 0.84635078, 0.16628414, -0.91823183, -0.72023044, -0.09147043, -0.04166984, -1.5664763],
@@ -61,6 +65,7 @@ def test_tanh(data_type):
          [1.83694105, 0.5339005, 0.51117424, 0.49202378, -0.83297819, -0.71001219, 0.18913512, 0.65580389]],
         dtype=data_type)
 
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_ms = Tensor(x_np)
     dy_ms = Tensor(dy_np)
 
@@ -79,10 +84,16 @@ def test_tanh(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tanh_fp16():
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
     np.random.seed(42)
     x_np = np.random.randn(5, 3, 6).astype(np.float16)
     dy_np = np.random.randn(5, 3, 6).astype(np.float16)
 
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_ms = Tensor(x_np)
     dy_ms = Tensor(dy_np)
 
@@ -111,3 +122,61 @@ def test_tanh_fp16():
                [0.1528, 0.6494, 0.006195, 1.307, -0.2024, 2.113]]]
 
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_func(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(data_type)
+    y_expect = np.tanh(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    tensor = Tensor(x)
+    out = F.tanh(tensor)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    tensor = Tensor(x)
+    out = F.tanh(tensor)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_tensor(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(data_type)
+    y_expect = np.tanh(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    tensor = Tensor(x)
+    out = tensor.tanh()
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    tensor = Tensor(x)
+    out = tensor.tanh()
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)

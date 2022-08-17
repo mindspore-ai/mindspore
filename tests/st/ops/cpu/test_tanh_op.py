@@ -20,9 +20,8 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops import function as F
 from mindspore.ops.composite import GradOperation
-
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class Grad(nn.Cell):
@@ -50,8 +49,15 @@ class Net(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_net(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
     x = np.random.randn(2, 3, 3, 4).astype(data_type)
     y_expect = np.tanh(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = Net()
     out = net(Tensor(x))
 
@@ -63,3 +69,61 @@ def test_net(data_type):
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_func(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(data_type)
+    y_expect = np.tanh(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    tensor = Tensor(x)
+    out = F.tanh(tensor)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    tensor = Tensor(x)
+    out = F.tanh(tensor)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_tensor(data_type):
+    """
+    Feature: Tanh
+    Description: test cases for Tanh
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(2, 3, 3, 4).astype(data_type)
+    y_expect = np.tanh(x)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    tensor = Tensor(x)
+    out = tensor.tanh()
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+
+    tensor = Tensor(x)
+    out = tensor.tanh()
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)

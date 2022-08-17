@@ -410,6 +410,7 @@ tensor_operator_registry.register('erf', P.Erf)
 tensor_operator_registry.register('erfc', P.Erfc)
 tensor_operator_registry.register('standard_normal', P.StandardNormal)
 tensor_operator_registry.register('median', Median)
+tensor_operator_registry.register('tanh', tanh)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
