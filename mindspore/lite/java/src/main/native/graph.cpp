@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/log.h"
+#include "common/log_adapter.h"
 #include "include/api/graph.h"
 #include "include/api/serialization.h"
 #include "include/api/types.h"

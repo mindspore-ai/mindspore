@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 public class NativeLibrary {
-    private static final Logger LOGGER = Logger.getLogger(NativeLibrary.class.toString());
+    private static final Logger LOGGER = MindsporeLite.GetLogger();
 
     private static final String GLOG_LIBNAME = "mindspore_glog";
     private static final String JPEG_LIBNAME = "jpeg";
