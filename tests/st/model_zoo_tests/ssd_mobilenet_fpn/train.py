@@ -124,9 +124,6 @@ def train_net():
                 ms.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             rank = get_rank()
 
-    # Set mempool block size in PYNATIVE_MODE for improving memory utilization, which will not take effect in GRAPH_MODE
-    ms.set_context(mempool_block_size="31GB")
-
     mindrecord_file = create_mindrecord(config.dataset, "ssd.mindrecord", True)
 
     if config.only_create_dataset:
