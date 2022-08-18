@@ -106,26 +106,6 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   auto matmul_prim_c = matmul_cvalue->GetPrim();
   MS_CHECK_TRUE_RET(matmul_prim_c != nullptr, nullptr);
 
-  std::vector<schema::QuantParamT> jointed_quant_params;
-  for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
-    auto fullconnect_node2 = stack_cnode->input(i)->cast<CNodePtr>();
-    MS_CHECK_TRUE_RET(fullconnect_node2 != nullptr, nullptr);
-    auto fc_prim = GetValueNode<PrimitiveCPtr>(fullconnect_node2->input(0));
-    MS_CHECK_TRUE_RET(fc_prim != nullptr, nullptr);
-    auto fc_input_quantParams_valueptr = fc_prim->GetAttr("quant_params");
-    if (fc_input_quantParams_valueptr == nullptr) {
-      continue;
-    }
-    auto fc_input_quantParams_holder = fc_input_quantParams_valueptr->cast<lite::QuantParamHolderPtr>();
-    if (fc_input_quantParams_holder == nullptr) {
-      MS_LOG(ERROR) << "quant param is invalid.";
-      return nullptr;
-    }
-    auto fc_input_quantParams = fc_input_quantParams_holder->get_input_quant_params();
-    if (fc_input_quantParams.size() > 1 && !fc_input_quantParams[1].empty()) {
-      jointed_quant_params.push_back(fc_input_quantParams[1][0]);
-    }
-  }
   auto fullconnect_node = stack_cnode->input(1);
   auto fullconnect_cnode = fullconnect_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(fullconnect_cnode != nullptr, nullptr);
@@ -134,19 +114,18 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   lite::QuantParamsVector rmatmul_quant_params;
   auto rmatmul_quant_params_valueptr = fc_prim->GetAttr("quant_params");
   lite::QuantParamsVector output_quant_params;
-  if (rmatmul_quant_params_valueptr != nullptr) {
-    auto rmatmul_quant_params_holder = rmatmul_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
-    if (rmatmul_quant_params_holder == nullptr) {
-      MS_LOG(ERROR) << "quant param is invalid.";
-      return nullptr;
-    }
-    rmatmul_quant_params = rmatmul_quant_params_holder->get_input_quant_params();
-    output_quant_params = rmatmul_quant_params_holder->get_output_quant_params();
+
+  MS_CHECK_TRUE_RET(rmatmul_quant_params_valueptr != nullptr, nullptr);
+  auto rmatmul_quant_params_holder = rmatmul_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
+  if (rmatmul_quant_params_holder == nullptr) {
+    MS_LOG(ERROR) << "quant param is invalid.";
+    return nullptr;
   }
-  rmatmul_quant_params.pop_back();
-  rmatmul_quant_params.pop_back();
+  rmatmul_quant_params = rmatmul_quant_params_holder->get_input_quant_params();
+  output_quant_params = rmatmul_quant_params_holder->get_output_quant_params();
+
   // no bias quantParams
-  rmatmul_quant_params.emplace_back(jointed_quant_params);
+  rmatmul_quant_params.pop_back();
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(rmatmul_quant_params, output_quant_params);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   matmul_prim_c->AddAttr("quant_params", quant_params_holder);
