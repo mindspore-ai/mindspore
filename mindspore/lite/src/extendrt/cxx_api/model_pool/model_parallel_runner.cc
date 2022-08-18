@@ -63,9 +63,7 @@ Status ModelParallelRunner::Init(const std::vector<char> &model_path,
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();
 #endif
-#ifdef CAPTURE_SIGNALS
-  CaptureSignal();
-#endif
+
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;
   }
@@ -79,6 +77,9 @@ Status ModelParallelRunner::Init(const std::vector<char> &model_path,
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;
   }
+#ifdef CAPTURE_SIGNALS
+  CaptureSignal();
+#endif
   return status;
 }
 
@@ -100,6 +101,9 @@ Status ModelParallelRunner::Init(const void *model_data, size_t data_size,
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;
   }
+#ifdef CAPTURE_SIGNALS
+  CaptureSignal();
+#endif
   return status;
 }
 

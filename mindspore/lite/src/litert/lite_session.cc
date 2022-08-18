@@ -1196,9 +1196,6 @@ int LiteSession::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
   }
 
   is_running_.store(false);
-#if defined(LINUX_RUNTIME)
-  (void)malloc_trim(0);
-#endif
   ret = UpdateInputShapeMap();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "update input shape map failed.";

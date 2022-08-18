@@ -747,6 +747,10 @@ elseif(WIN32)
                     ${RUNTIME_COMPONENT_NAME})
         endif()
     endif()
+    if(MSLITE_ENABLE_RUNTIME_GLOG)
+        file(GLOB GLOG_LIB_LIST ${glog_LIBPATH}/../bin/*.dll)
+        install(FILES ${GLOG_LIB_LIST} DESTINATION ${GLOG_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
     install(FILES ${TOP_DIR}/mindspore/lite/include/kernel_interface.h DESTINATION ${RUNTIME_INC_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION ${RUNTIME_INC_DIR}/registry

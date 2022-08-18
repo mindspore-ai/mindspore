@@ -49,7 +49,7 @@
 
 namespace mindspore {
 extern "C" {
-void common_log_init();
+void mindspore_log_init();
 }
 namespace lite {
 #define CONVERTER_LOG_ERROR(str)   \
@@ -769,7 +769,7 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
 }
 
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
-  mindspore::common_log_init();
+  mindspore::mindspore_log_init();
 
   param->aclModelOptionCfgParam.offline = !not_save;
   int status = CheckValueParam(param);

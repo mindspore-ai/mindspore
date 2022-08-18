@@ -753,7 +753,7 @@ MS_CORE_API void common_log_init(void) {
     } else {
       FLAGS_logtostderr = false;
       // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
-#ifndef BUILD_LITE_INFERENCE
+#ifndef BUILD_LITE
       const std::string rank_id = mindspore::GetEnv("RANK_ID");
       const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
@@ -779,8 +779,8 @@ MS_CORE_API void common_log_init(void) {
 
 // shared lib init hook
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-#ifdef _MSC_VER
-void mindspore_log_init(void) {
+#if defined(_MSC_VER) || defined(BUILD_LITE)
+MS_CORE_API void mindspore_log_init(void) {
 #else
 __attribute__((constructor)) void mindspore_log_init(void) {
 #endif
@@ -791,9 +791,7 @@ MS_CORE_API void mindspore_log_init(void) {
 #define google mindspore_private
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
-#if !defined(_WIN32) && !defined(_WIN64)
     google::InitGoogleLogging("mindspore");
-#endif
     is_glog_initialzed = true;
   }
 #undef google
