@@ -4934,13 +4934,14 @@ class Tensor(Tensor_):
             keepdim (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
         Returns:
-            y (Tensor) - Has the same dtype as the self Tensor. If `global_median` is true, the `y` has only one
-                element.  If `keep_dims` is true, the `y` has the same shape as the self Tensor except the shape of
-                `y` in dimension `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
-            indices (Tensor) - Has the same shape as the `y`, but dtype is int64.
+            y (Tensor), has the same dtype as the self Tensor. If `global_median` is true, the `y` has only one
+            element.  If `keep_dims` is true, the `y` has the same shape as the self Tensor except the shape of
+            `y` in dimension `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
+
+            indices (Tensor), has the same shape as the `y`, but dtype is int64.
 
         Raises:
-            TypeError: If dtype of self Tensor is not one of the following: int16, int32, int64, float32, double.
+            TypeError: If dtype of self Tensor is not one of the following: int16, int32, int64, float32, float64.
             TypeError: If `global_median` is not a bool.
             TypeError: If `axis` is not a int.
             TypeError: If `keep_dims` is not a bool.
