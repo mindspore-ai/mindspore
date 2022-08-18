@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <climits>
 #include <memory>
-#include "common/log.h"
+#include "common/log_adapter.h"
 
 std::string RealPath(const char *path) {
   if (path == nullptr) {
@@ -47,3 +47,13 @@ std::string RealPath(const char *path) {
   std::string res = resolved_path.get();
   return res;
 }
+
+#if defined(USE_GLOG) || defined(BUILD_CORE_RUNTIME)
+extern "C" {
+extern void mindspore_log_init();
+}
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+  mindspore_log_init();
+  return JNI_VERSION_1_4;
+}
+#endif

@@ -39,8 +39,9 @@
 #include "toolchain/slog.h"
 #endif
 // NOTICE: when relative path of 'log_adapter.h' changed, macro 'LOG_HDR_FILE_REL_PATH' must be changed
+#ifndef LOG_HDR_FILE_REL_PATH
 #define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
-
+#endif
 // Get start index of file relative path in __FILE__
 static constexpr size_t GetRelPathPos() noexcept {
   return sizeof(__FILE__) > sizeof(LOG_HDR_FILE_REL_PATH) ? sizeof(__FILE__) - sizeof(LOG_HDR_FILE_REL_PATH) : 0;

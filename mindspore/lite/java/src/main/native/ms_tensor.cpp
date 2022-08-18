@@ -16,7 +16,7 @@
 
 #include <jni.h>
 #include <cstring>
-#include "common/log.h"
+#include "common/log_adapter.h"
 #include "include/api/types.h"
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_MSTensor_getShape(JNIEnv *env, jobject thiz,

@@ -14,6 +14,14 @@ if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     add_compile_definitions(PLATFORM_ARM)
 endif()
 
+if(CMAKE_BUILD_TYPE)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    message("build release")
+        set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+        set(CMAKE_C_VISIBILITY_PRESET hidden)
+    endif()
+endif()
+
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -32,12 +40,18 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 
+if(DEFINED ENV{MSLITE_ENABLE_RUNTIME_GLOG})
+    set(USE_GLOG on)
+endif()
+
 if(DEFINED ENV{MSLITE_ENABLE_SERVER_INFERENCE})
     set(MSLITE_ENABLE_PARALLEL_INFERENCE on)
+    set(USE_GLOG on)
 endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_PARALLEL_INFERENCE})
     set(MSLITE_ENABLE_PARALLEL_INFERENCE $ENV{MSLITE_ENABLE_PARALLEL_INFERENCE})
+    set(USE_GLOG on)
 endif()
 
 if(ENABLE_VERBOSE)
@@ -56,20 +70,21 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(NEW_NATIVE_DIR ${LITE_DIR}/java/src/main/native)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../src)##for common/log.h
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../src)##for common/log_adapter.h
 include_directories(${LITE_DIR}) ## lite include
 include_directories(${TOP_DIR}) ## api include
 include_directories(${TOP_DIR}/mindspore/core/) ## core include
 include_directories(${LITE_DIR}/build) ## flatbuffers
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
-    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI}/)
+    set(PLATFORM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI}/)
 elseif(MACHINE_LINUX_ARM64)
-    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_aarch64/)
+    set(PLATFORM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_aarch64/)
 else()
-    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_x86/)
+    set(PLATFORM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_x86/)
 endif()
 
+link_directories(${PLATFORM_DIR})
 
 set(JAVA_HOME "$ENV{JAVA_HOME}")
 include_directories(${JAVA_HOME}/include/) ## jni
@@ -82,8 +97,7 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/ms_context.cpp
         ${NEW_NATIVE_DIR}/ms_tensor.cpp
         ${NEW_NATIVE_DIR}/version.cpp
-        ${TOP_DIR}/mindspore/lite/src/common/log.cc
-  )
+        )
 
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(JNI_SRC
@@ -93,10 +107,28 @@ if(MSLITE_ENABLE_PARALLEL_INFERENCE)
             )
 endif()
 
+if(USE_GLOG)
+    set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
+            LOG_HDR_FILE_REL_PATH="mindspore/lite/java/native/../../../../mindspore/core/utils/log_adapter.h")
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/securec/include)
+    include_directories(${CMAKE_BINARY_DIR}/jni_include)
+    add_definitions(-DUSE_GLOG)
+
+    set(JNI_SRC
+            ${JNI_SRC}
+            ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
+            )
+else()
+    set(JNI_SRC
+            ${JNI_SRC}
+            ${TOP_DIR}/mindspore/lite/src/common/log.cc
+            )
+    set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
+            LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
+endif()
+
 set(LITE_SO_NAME mindspore-lite)
 
-set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
-        LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -104,22 +136,53 @@ if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     target_link_libraries(mindspore-lite-jni ${LITE_SO_NAME} ${log-lib})
 else()
     target_link_libraries(mindspore-lite-jni ${LITE_SO_NAME})
+    if(USE_GLOG)
+        find_library(GLOG_LIB
+        NAMES mindspore_glog libmindspore_glog.so.0
+        PATHS ${PLATFORM_DIR}
+        )
+        if(GLOG_LIB)
+            message("Found glog lib :${GLOG_LIB}")
+        else()
+            message(FATAL_ERROR "No glog lib found, exit.")
+        endif()
+        target_link_libraries(mindspore-lite-jni -Wl,--no-as-needed ${GLOG_LIB} -Wl,--as-needed)
+    endif()
 endif()
 
 if(SUPPORT_TRAIN)
     set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
-        ${NEW_NATIVE_DIR}/train_config.cpp
-        ${TOP_DIR}/mindspore/lite/src/common/log.cc
-    )
-    set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
-            LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
+            ${NEW_NATIVE_DIR}/train_config.cpp
+            )
+
+    if(USE_GLOG)
+        set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS
+                LOG_HDR_FILE_REL_PATH="mindspore/lite/java/native/../../../../mindspore/core/utils/log_adapter.h")
+        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/securec/include)
+        include_directories(${CMAKE_BINARY_DIR}/jni_include)
+        add_definitions(-DUSE_GLOG)
+        set(JNI_TRAIN_SRC
+                ${JNI_TRAIN_SRC}
+                ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
+                )
+    else()
+        set(JNI_TRAIN_SRC
+                ${JNI_TRAIN_SRC}
+                ${TOP_DIR}/mindspore/lite/src/common/log.cc
+                )
+        set_property(SOURCE ${JNI_TRAIN_SRC} PROPERTY COMPILE_DEFINITIONS
+                LITE_LOG_HEAR_FILE_REL_PATH="mindspore/lite/java/native/../../src/common/log.h")
+    endif()
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
     if(PLATFORM_ARM64 OR PLATFORM_ARM32)
         find_library(log-lib log)
         target_link_libraries(mindspore-lite-train-jni -Wl,--no-as-needed ${LITE_TRAIN_SO_NAME} -Wl,--as-needed
                 ${log-lib})
     else()
+        if(USE_GLOG)
+            target_link_libraries(mindspore-lite-train-jni -Wl,--no-as-needed ${GLOG_LIB} -Wl,--as-needed)
+        endif()
         target_link_libraries(mindspore-lite-train-jni -Wl,--no-as-needed ${LITE_TRAIN_SO_NAME} -Wl,--as-needed)
     endif()
 endif()

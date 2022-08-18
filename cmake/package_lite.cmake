@@ -844,6 +844,8 @@ else()
     if(MSLITE_ENABLE_RUNTIME_GLOG)
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libmindspore_glog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     endif()
     if(MSLITE_ENABLE_CONVERTER)
         install(FILES ${TOP_DIR}/mindspore/lite/include/kernel_interface.h DESTINATION ${CONVERTER_ROOT_DIR}/include
