@@ -28,7 +28,6 @@
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
 #include "include/dataset/vision_lite.h"
-#include "minddata/dataset/kernels/data/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -1845,25 +1844,24 @@ class MS_API SwapRedBlue final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief Rescale to divide by 255 and convert from HWC format to CHW format with required datatype.
-/// \brief Default datatype is "float32".
+/// \brief Divide the pixel values by 255 and convert from HWC format to CHW format with required datatype.
 class MS_API ToTensor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] output_type The type of the output tensor of type mindspore::DataType or String
-  /// (default=mindspore::dataset::DataType::DE_FLOAT32).
+  ///   (default=mindspore::DataType::kNumberTypeFloat32).
   /// \par Example
   /// \code
   ///     /* Define operations */
   ///     auto to_tensor_op = vision::ToTensor();
   ///
   ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({ToTensor},  // operations
+  ///     dataset = dataset->Map({to_tensor_op},  // operations
   ///                            {"image"});  // input columns
   /// \endcode
   ToTensor();
   explicit ToTensor(std::string output_type);
-  explicit ToTensor(DataType::Type output_type);
+  explicit ToTensor(mindspore::DataType output_type);
 
   /// \brief Destructor.
   ~ToTensor() = default;
