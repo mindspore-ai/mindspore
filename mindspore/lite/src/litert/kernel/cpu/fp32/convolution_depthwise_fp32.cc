@@ -15,6 +15,7 @@
  */
 
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_fp32.h"
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
 #include "include/errorcode.h"
 #include "src/litert/pack_weight_manager.h"
 using mindspore::lite::RET_ERROR;
@@ -47,6 +48,57 @@ int ConvolutionDepthwiseCPUKernel::Prepare() {
   return ReSize();
 }
 
+int ConvolutionDepthwiseCPUKernel::InitConvDwCalcInfo() {
+  if (conv_dw_calc_param_ == nullptr) {
+    conv_dw_calc_param_ = new ConvDwCalcParam();
+    CHECK_NULL_RETURN(conv_dw_calc_param_);
+  }
+
+  if (conv_dw_calc_param_->num_pixels_ != nullptr && !in_tensors_.at(kWeightIndex)->IsConst()) {
+    free(conv_dw_calc_param_->num_pixels_);
+    conv_dw_calc_param_->num_pixels_ = nullptr;
+  }
+  if (conv_dw_calc_param_->num_pixels_ == nullptr) {
+    conv_dw_calc_param_->num_pixels_ = malloc(conv_param_->kernel_w_ * sizeof(int));
+    CHECK_NULL_RETURN(conv_dw_calc_param_->num_pixels_);
+  }
+
+  if (conv_dw_calc_param_->out_w_start_ != nullptr && !in_tensors_.at(kWeightIndex)->IsConst()) {
+    free(conv_dw_calc_param_->out_w_start_);
+    conv_dw_calc_param_->out_w_start_ = nullptr;
+  }
+  if (conv_dw_calc_param_->out_w_start_ == nullptr) {
+    conv_dw_calc_param_->out_w_start_ = malloc(conv_param_->kernel_w_ * sizeof(int));
+    CHECK_NULL_RETURN(conv_dw_calc_param_->out_w_start_);
+  }
+
+  if (conv_dw_calc_param_->out_w_end_ != nullptr && !in_tensors_.at(kWeightIndex)->IsConst()) {
+    free(conv_dw_calc_param_->out_w_end_);
+    conv_dw_calc_param_->out_w_end_ = nullptr;
+  }
+  if (conv_dw_calc_param_->out_w_end_ == nullptr) {
+    conv_dw_calc_param_->out_w_end_ = malloc(conv_param_->kernel_w_ * sizeof(int));
+    CHECK_NULL_RETURN(conv_dw_calc_param_->out_w_end_);
+  }
+
+  int *num_pixels = reinterpret_cast<int *>(conv_dw_calc_param_->num_pixels_);
+  int *out_w_start = reinterpret_cast<int *>(conv_dw_calc_param_->out_w_start_);
+  int *out_w_end = reinterpret_cast<int *>(conv_dw_calc_param_->out_w_end_);
+  conv_dw_calc_param_->first_calc_kw_ = -1;
+  for (int kw = 0; kw < conv_param_->kernel_w_; kw++) {
+    out_w_start[kw] = MSMAX(
+      0, (conv_param_->pad_l_ - conv_param_->dilation_w_ * kw + conv_param_->stride_w_ - 1) / conv_param_->stride_w_);
+    out_w_end[kw] = MSMIN(conv_param_->output_w_, (conv_param_->input_w_ + conv_param_->pad_l_ -
+                                                   conv_param_->dilation_w_ * kw + conv_param_->stride_w_ - 1) /
+                                                    conv_param_->stride_w_);
+    num_pixels[kw] = out_w_end[kw] - out_w_start[kw];
+    if (conv_dw_calc_param_->first_calc_kw_ == -1 && out_w_start[kw] == 0 && num_pixels[kw] == conv_param_->output_w_) {
+      conv_dw_calc_param_->first_calc_kw_ = kw;
+    }
+  }
+  return RET_OK;
+}
+
 int ConvolutionDepthwiseCPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
@@ -58,12 +110,28 @@ int ConvolutionDepthwiseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "conv_param_->thread_num_ must be greater than 0!";
     return RET_ERROR;
   }
+  ret = InitConvDwCalcInfo();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::InitConvDwCalcInfo() return is:" << ret;
+    return ret;
+  }
   return RET_OK;
 }
 
 int ConvolutionDepthwiseCPUKernel::DoExecute(int task_id) {
-  auto ret = ConvDw(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
-                    reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
+  int ret;
+#ifdef ENABLE_AVX512
+  if (X86_Avx512_Support()) {
+    ret = ConvDwAVX512(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
+                       reinterpret_cast<float *>(bias_data_), conv_param_, task_id, conv_dw_calc_param_);
+  } else {
+    ret = ConvDw(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
+                 reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
+  }
+#else
+  ret = ConvDw(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
+               reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
+#endif
   return ret;
 }
 
@@ -89,6 +157,10 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data());
   MS_CHECK_FALSE(output_ptr_ == nullptr, RET_ERROR);
+  MS_CHECK_FALSE(conv_dw_calc_param_ == nullptr, RET_ERROR);
+  MS_CHECK_FALSE(conv_dw_calc_param_->num_pixels_ == nullptr, RET_ERROR);
+  MS_CHECK_FALSE(conv_dw_calc_param_->out_w_start_ == nullptr, RET_ERROR);
+  MS_CHECK_FALSE(conv_dw_calc_param_->out_w_end_ == nullptr, RET_ERROR);
 
   auto ret = ParallelLaunch(this->ms_context_, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {

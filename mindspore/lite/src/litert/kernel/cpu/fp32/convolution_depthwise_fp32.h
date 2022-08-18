@@ -30,7 +30,24 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data(),
                                  inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data() : nullptr) {}
-  ~ConvolutionDepthwiseCPUKernel() override {}
+  ~ConvolutionDepthwiseCPUKernel() override {
+    if (conv_dw_calc_param_ != nullptr) {
+      if (conv_dw_calc_param_->num_pixels_ != nullptr) {
+        free(conv_dw_calc_param_->num_pixels_);
+        conv_dw_calc_param_->num_pixels_ = nullptr;
+      }
+      if (conv_dw_calc_param_->out_w_start_ != nullptr) {
+        free(conv_dw_calc_param_->out_w_start_);
+        conv_dw_calc_param_->out_w_start_ = nullptr;
+      }
+      if (conv_dw_calc_param_->out_w_end_ != nullptr) {
+        free(conv_dw_calc_param_->out_w_end_);
+        conv_dw_calc_param_->out_w_end_ = nullptr;
+      }
+      delete conv_dw_calc_param_;
+      conv_dw_calc_param_ = nullptr;
+    }
+  }
 
   int Prepare() override;
   int ReSize() override;
@@ -40,9 +57,11 @@ class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   int MallocWeightBiasData() override;
+  int InitConvDwCalcInfo();
   void PackWeight() override;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
+  ConvDwCalcParam *conv_dw_calc_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
