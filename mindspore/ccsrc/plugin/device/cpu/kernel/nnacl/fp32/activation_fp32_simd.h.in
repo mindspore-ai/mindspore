@@ -131,8 +131,8 @@ static inline int HardTanhLimitMinMax@SIMD_INSTRUCTION@(int index, const float *
 static inline int GeluApproximate@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 in = SIMD_LD_F32(src + index);
-        SIMD_F32 tmp1 = SIMD_MUL_F32(SIMD_MUL_N_F32(in, 0.035677408136f), in);
-        SIMD_F32 tmp2 = SIMD_MUL_F32(SIMD_ADD_N_F32(tmp1, 0.79788456080287f), in);
+        SIMD_F32 tmp1 = SIMD_FMADD_F32(SIMD_MUL_N_F32(in, 0.035677408136f), in, SIMD_MOV_F32(0.79788456080287f));
+        SIMD_F32 tmp2 = SIMD_MUL_F32(tmp1, in);
         SIMD_ST_F32(dst + index, SIMD_MUL_F32(SIMD_MUL_N_F32(in, 0.5f), SIMD_ADD_N_F32(SIMD_TANH_F32(tmp2), 1.0f)));
     }
     return index;
