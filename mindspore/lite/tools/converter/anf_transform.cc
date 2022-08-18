@@ -63,11 +63,13 @@
 #include "tools/optimizer/fusion/fullconnected_add_fusion.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
+#include "tools/optimizer/fusion/mul_activation_fusion.h"
 #include "tools/optimizer/fusion/activation_fusion.h"
 #include "tools/optimizer/fusion/reshape_reduce_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/graph/mul_constant_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
@@ -235,7 +237,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::FullConnectedFusion>(),
                                     std::make_shared<opt::FullconnectedAddFusion>(),
                                     std::make_shared<opt::TensorDotFusion>(),
-                                    std::make_shared<opt::MatMulActivationFusion>(param)};
+                                    std::make_shared<opt::MatMulActivationFusion>(param),
+                                    std::make_shared<opt::MulActivationFusion>()};
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     auto pass_name = pass_ptr->name();
@@ -495,6 +498,12 @@ bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_
   MS_CHECK_TRUE_RET(split_one_pass != nullptr, false);
   if (!split_one_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run split one pass failed.";
+    return false;
+  }
+  auto mul_constant_pass = std::make_shared<opt::MulConstantPass>();
+  MS_CHECK_TRUE_RET(mul_constant_pass != nullptr, false);
+  if (!mul_constant_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run mul constant pass failed!";
     return false;
   }
   return true;
