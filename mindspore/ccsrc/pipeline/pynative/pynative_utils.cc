@@ -35,13 +35,7 @@ const std::set<std::string> kAxisNone = {"ReduceSum"};
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
-    auto tensor_ptr = v->cast<tensor::TensorPtr>();
-    if (tensor_ptr->is_parameter()) {
-      const auto &param_info = tensor_ptr->param_info();
-      MS_EXCEPTION_IF_NULL(param_info);
-      return param_info->name();
-    }
-    return tensor_ptr->id();
+    return v->cast<tensor::TensorPtr>()->id();
   } else if (v->isa<Cell>()) {
     return v->cast<CellPtr>()->id();
   } else if (v->isa<mindspore::Type>()) {
@@ -118,13 +112,7 @@ std::string PyParser::GetPyObjId(const py::handle &obj) {
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
-    auto tensor_ptr = py::cast<tensor::TensorPtr>(obj);
-    if (tensor_ptr->is_parameter()) {
-      const auto &param_info = tensor_ptr->param_info();
-      MS_EXCEPTION_IF_NULL(param_info);
-      return param_info->name();
-    }
-    return tensor_ptr->id();
+    return obj.cast<tensor::TensorPtr>()->id();
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {
