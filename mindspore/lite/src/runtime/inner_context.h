@@ -57,7 +57,7 @@ struct InnerContext : public Context {
 
   DeviceInfo GetDeviceInfo(DeviceType type) const;
 
-  int IsValid() const;
+  int IsValid();
 
   ThreadPool *thread_pool() const;
 
