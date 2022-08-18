@@ -480,7 +480,8 @@ def tile(input_x, multiples):
 def range(start, limit, delta):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
-    `delta` up to but not including `limit`.
+    `delta` up to but not including `limit`. Length of the created sequence can not
+    exceed 1000000.
 
     The types of all 3 inputs must be the same. The type of the resulting tensor is
     the same as the type of the inputs.
