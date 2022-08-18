@@ -77,7 +77,8 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   (void)types.emplace("x", input_args[0]->BuildType());
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_params_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return input_args[0]->BuildType();
 }
 ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -108,38 +109,6 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(result_tensor);
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
-    case kNumberTypeInt8: {
-      ImpleLog<int8_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt16: {
-      ImpleLog<int16_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt32: {
-      ImpleLog<int32_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt64: {
-      ImpleLog<int64_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt8: {
-      ImpleLog<uint8_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt16: {
-      ImpleLog<uint16_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt32: {
-      ImpleLog<uint32_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt64: {
-      ImpleLog<uint64_t>(x_datac, result_datac, data_size);
-      break;
-    }
     case kNumberTypeFloat16: {
       ImpleLog<float16>(x_datac, result_datac, data_size);
       break;
@@ -163,8 +132,7 @@ ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     default: {
       MS_EXCEPTION(TypeError)
         << "For '" << prim->name()
-        << "', the supported data type is ['int8', 'int16', 'int32', 'int64', 'uint8', "
-           "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
+        << "', the supported data types are ['float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
         << x_tensor->ToString();
     }
   }
