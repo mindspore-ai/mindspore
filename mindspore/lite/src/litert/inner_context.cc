@@ -193,7 +193,7 @@ InnerContext::~InnerContext() {
   }
 }
 
-int InnerContext::IsValid() const {
+int InnerContext::IsValid() {
   if (this->device_list_.empty()) {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
@@ -205,6 +205,14 @@ int InnerContext::IsValid() const {
   if (thread_num_ < 1) {
     MS_LOG(ERROR) << "Thread num smaller than 1 is not allowed.";
     return RET_NOT_SUPPORT;
+  }
+  int core_num = static_cast<int>(std::max<size_t>(1, std::thread::hardware_concurrency()));
+  int core_num_times = 5;
+  int Threshold_thread_num = core_num_times * core_num;
+  if (thread_num_ > Threshold_thread_num) {
+    MS_LOG(WARNING) << "Thread num: " << thread_num_ << " is more than 5 times core num: " << Threshold_thread_num
+                    << ", change it to 5 times core num. Please check whether Thread num is reasonable.";
+    thread_num_ = Threshold_thread_num;
   }
 
   if (inter_op_parallel_num_ < 1) {
