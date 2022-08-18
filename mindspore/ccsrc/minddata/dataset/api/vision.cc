@@ -95,6 +95,10 @@
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 
+// Typecast between mindspore::DataType and dataset::DataType
+#include "minddata/dataset/core/type_id.h"
+#include "mindspore/core/ir/dtype/type_id.h"
+
 namespace mindspore {
 namespace dataset {
 // Transform operations for computer vision.
@@ -1243,14 +1247,16 @@ std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<
 
 // ToTensor Transform Operation.
 struct ToTensor::Data {
-  explicit Data(std::string &output_type) : output_type_(DataType(output_type)) {}
-  explicit Data(DataType::Type output_type) : output_type_(output_type) {}
+  explicit Data(const std::string &output_type) : output_type_(DataType(output_type)) {}
+  explicit Data(const DataType::Type &output_type) : output_type_(output_type) {}
+  explicit Data(const mindspore::DataType &output_type)
+      : output_type_(dataset::MSTypeToDEType(static_cast<TypeId>(output_type))) {}
   DataType output_type_{};
 };
 
 ToTensor::ToTensor() : data_(std::make_shared<Data>(DataType::Type::DE_FLOAT32)) {}
 ToTensor::ToTensor(std::string output_type) : data_(std::make_shared<Data>(output_type)) {}
-ToTensor::ToTensor(DataType::Type output_type) : data_(std::make_shared<Data>(output_type)) {}
+ToTensor::ToTensor(mindspore::DataType output_type) : data_(std::make_shared<Data>(output_type)) {}
 
 std::shared_ptr<TensorOperation> ToTensor::Parse() { return std::make_shared<ToTensorOperation>(data_->output_type_); }
 

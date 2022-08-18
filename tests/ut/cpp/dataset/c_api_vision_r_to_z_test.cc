@@ -783,7 +783,7 @@ TEST_F(MindDataTestPipeline, TestToTensorOpFloat64DataType) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
   EXPECT_NE(ds, nullptr);
 
-  auto to_tensor_op = vision::ToTensor(DataType::DE_FLOAT64);
+  auto to_tensor_op = vision::ToTensor(mindspore::DataType::kNumberTypeFloat64);
   ds = ds->Map({to_tensor_op}, {"image"});
   EXPECT_NE(ds, nullptr);
 
