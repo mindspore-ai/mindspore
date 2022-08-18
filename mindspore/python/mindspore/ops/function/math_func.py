@@ -4274,6 +4274,13 @@ def amin(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as input tensor.
 
+        - If `axis` is (), and `keep_dims` is False,
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
@@ -4343,6 +4350,13 @@ def amax(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as input tensor.
 
+        - If `axis` is (), and `keep_dims` is False,
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
@@ -4411,6 +4425,13 @@ def mean(x, axis=(), keep_dims=False):
 
     Returns:
         Tensor, has the same data type as input tensor.
+
+        - If `axis` is (), and `keep_dims` is False,
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -4482,6 +4503,13 @@ def prod(x, axis=(), keep_dims=False):
 
     Returns:
         Tensor, has the same data type as input tensor.
+
+        - If `axis` is (), and `keep_dims` is False,
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `x` is not a Tensor.

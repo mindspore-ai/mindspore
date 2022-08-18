@@ -618,17 +618,17 @@ class ReduceMean(_Reduce):
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+          Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), and keep_dims is False,
+        - If `axis` is (), and `keep_dims` is False,
           the output is a 0-D tensor representing the mean of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -903,17 +903,17 @@ class ReduceMax(_Reduce):
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-           Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+           Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), and keep_dims is False,
+        - If `axis` is (), and `keep_dims` is False,
           the output is a 0-D tensor representing the maximum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -990,17 +990,17 @@ class ReduceMin(_Reduce):
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank( `x`), rank( `x` )).
+          Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), and keep_dims is False,
+        - If `axis` is (), and `keep_dims` is False,
           the output is a 0-D tensor representing the minimum of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -1113,17 +1113,17 @@ class ReduceProd(_Reduce):
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank( `x` ), rank( `x` )).
+          Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), and keep_dims is False,
+        - If `axis` is (), and `keep_dims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+        - If `axis` is int, set as 1, and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.

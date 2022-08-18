@@ -15,7 +15,7 @@
         - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
 
     输出：
-        Tensor，shape与输入 `x` 相同。
+        与输入 `x` 具有相同数据类型的Tensor。
 
         - 如果 `axis` 为()，且 `keep_dims` 为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最小值。
         - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
