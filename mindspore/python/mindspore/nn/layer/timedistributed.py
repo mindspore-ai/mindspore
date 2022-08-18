@@ -87,11 +87,11 @@ class TimeDistributed(Cell):
     Outputs:
         Tensor of shape :math:`(N, T, *)`
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If layer is not a Cell or Primitive.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.random([32, 10, 3]), mindspore.float32)

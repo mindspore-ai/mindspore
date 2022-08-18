@@ -1319,12 +1319,12 @@ class HShrink(Cell):
     Outputs:
         Tensor, the same shape and data type as the input.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
     Raises:
         TypeError: If `lambd` is not a float.
         TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -1368,12 +1368,12 @@ class Threshold(Cell):
     Outputs:
         Tensor, the same shape and data type as the input.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
     Raises:
         TypeError: If `threshold` is not a float or an int.
         TypeError: If `value` is not a float or an int.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> import mindspore

@@ -1101,6 +1101,9 @@ class Dataset:
                Shuffling the dataset may not be deterministic, which means the data in each split
                will be different in each epoch.
 
+        Returns:
+            tuple(Dataset), a tuple of datasets that have been split.
+
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
             RuntimeError: If `sizes` is list of integers and sum of all elements in sizes does not
@@ -1109,9 +1112,6 @@ class Dataset:
             RuntimeError: If the dataset is sharded prior to calling split.
             ValueError: If `sizes` is list of float and not all floats are between 0 and 1, or if the
                 floats don't sum to 1.
-
-        Returns:
-            tuple(Dataset), a tuple of datasets that have been split.
 
         Examples:
             >>> # TextFileDataset is not a mappable dataset, so this non-optimized split will be called.
@@ -2288,6 +2288,9 @@ class MappableDataset(SourceDataset):
                will be different in each epoch. Furthermore, if sharding occurs after split, each
                shard may not be part of the same split.
 
+        Returns:
+            tuple(Dataset), a tuple of datasets that have been split.
+
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
             RuntimeError: If `sizes` is list of integers and sum of all elements in sizes does not
@@ -2296,9 +2299,6 @@ class MappableDataset(SourceDataset):
             RuntimeError: If the dataset is sharded prior to calling split.
             ValueError: If `sizes` is list of float and not all floats are between 0 and 1, or if the
                 floats don't sum to 1.
-
-        Returns:
-            tuple(Dataset), a tuple of datasets that have been split.
 
         Examples:
             >>> # Since many datasets have shuffle on by default, set shuffle to False if split will be called!

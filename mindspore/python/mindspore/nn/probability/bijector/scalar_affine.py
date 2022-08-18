@@ -33,9 +33,6 @@ class ScalarAffine(Bijector):
         shift (float, list, numpy.ndarray, Tensor): The shift factor. Default: 0.0.
         name (str): The name of the bijector. Default: 'ScalarAffine'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         The dtype of `shift` and `scale` must be float.
         If `shift`, `scale` are passed in as numpy.ndarray or tensor, they have to have
@@ -44,6 +41,9 @@ class ScalarAffine(Bijector):
     Raises:
         TypeError: When the dtype of `shift` or `scale` is not float,
                    and when the dtype of `shift` and `scale` is not same.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

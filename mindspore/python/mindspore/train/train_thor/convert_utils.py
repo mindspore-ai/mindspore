@@ -207,7 +207,7 @@ class ConvertModelUtils:
                 will be overwritten. Default: False.
 
         Returns:
-             model (Object): High-Level API for Training.
+             model (Object), High-Level API for Training.
 
         Supported Platforms:
             ``Ascend`` ``GPU``

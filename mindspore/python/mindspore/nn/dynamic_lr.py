@@ -358,14 +358,14 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         power (float): The power of polynomial. It must be greater than 0.
         update_decay_epoch (bool): If true, update `decay_epoch`. Default: False.
 
+    Returns:
+        list[float]. The size of list is `total_step`.
+
     Raises:
         TypeError: If `learning_rate` or `end_learning_rate` or `power` is not a float.
         TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
         TypeError: If `update_decay_epoch` is not a bool.
         ValueError: If `learning_rate` or `power` is not greater than 0.
-
-    Returns:
-        list[float]. The size of list is `total_step`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

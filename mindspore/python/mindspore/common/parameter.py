@@ -677,14 +677,14 @@ class Parameter(Tensor_):
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
+        Returns:
+            Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
+            returns the same initialized `Parameter`.
+
         Raises:
             RuntimeError: If it is from Initializer, and parallel mode has changed after the Initializer created.
             ValueError: If the length of the layout is less than 6.
             TypeError: If `layout` is not tuple.
-
-        Returns:
-            Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
-            returns the same initialized `Parameter`.
         """
         if self.is_default_input_init and self.is_in_parallel != _is_in_parallel_mode():
             raise RuntimeError("Must set or change parallel mode before any Tensor created.")
