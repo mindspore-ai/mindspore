@@ -15,12 +15,13 @@
 """Test Eager Support for Vision ops in Dataset"""
 import cv2
 import numpy as np
-import pytest
 from PIL import Image
-import mindspore.dataset.transforms as data_trans
-import mindspore.dataset.vision as vision
+import pytest
+
 from mindspore import log as logger
 from mindspore import Tensor
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 
 
 def test_eager_decode_c():
@@ -202,7 +203,7 @@ def test_eager_compose_py():
     mean_vec = [.100, .100, .100]
     std_vec = [.2, .2, .2]
 
-    transform = data_trans.Compose([
+    transform = transforms.Compose([
         vision.ToTensor(),
         vision.Normalize(mean=mean_vec, std=std_vec, is_hwc=False)])
 
@@ -353,12 +354,12 @@ def test_eager_exceptions_decode():
     with pytest.raises(TypeError) as error_info:
         img = "../data/dataset/apple.jpg"
         _ = vision.Decode()(img)
-    assert "Input should be an encoded image in 1-D NumPy format" in str(error_info.value)
+    assert "The type of the encoded image should be <class 'numpy.ndarray'>" in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
         img = np.array(["a", "b", "c"])
         _ = vision.Decode()(img)
-    assert "Input should be an encoded image in 1-D NumPy format" in str(error_info.value)
+    assert "The data type of the encoded image can not be <class 'numpy.str_'>" in str(error_info.value)
 
 
 def test_eager_exceptions_resize():

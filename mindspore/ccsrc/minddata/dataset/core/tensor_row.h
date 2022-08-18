@@ -93,8 +93,8 @@ class TensorRow {
     if (data_type == DataType::DE_UNKNOWN) {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type was not recognized.");
     }
-    if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
+    if (data_type.IsString()) {
+      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string and bytes are not supported.");
     }
     std::shared_ptr<Tensor> tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(o, &tensor));
@@ -113,8 +113,8 @@ class TensorRow {
     if (data_type == DataType::DE_UNKNOWN) {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type was not recognized.");
     }
-    if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string is not supported.");
+    if (data_type.IsString()) {
+      RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type string and bytes are not supported.");
     }
     std::shared_ptr<Tensor> tensor;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(o, &tensor));

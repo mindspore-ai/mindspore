@@ -35,7 +35,7 @@ def test_squad_basic():
                        "Where is John von Neumann's birthplace?"]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['question'].item().decode("utf8") == expected_result[count]
+        assert d['question'] == expected_result[count]
         count += 1
     assert count == 3
 
@@ -51,7 +51,7 @@ def test_squad_num_shards():
     expected_result = ["Where is John von Neumann's birthplace?"]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['question'].item().decode("utf8") == expected_result[count]
+        assert d['question'] == expected_result[count]
         count += 1
     assert count == 1
 
@@ -93,7 +93,7 @@ def test_squad_version1():
                        "Where is John von Neumann's birthplace?"]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['question'].item().decode("utf8") == expected_result[count]
+        assert d['question'] == expected_result[count]
         count += 1
     assert count == 3
 
@@ -105,7 +105,7 @@ def test_squad_version1():
                        "of physics created by British Cognitive Isaac Newton. It was first published in 1687."]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['context'].item().decode("utf8") == expected_result[count]
+        assert d['context'] == expected_result[count]
         count += 1
     assert count == 2
 
@@ -134,7 +134,7 @@ def test_squad_version2():
                        "is one of the greatest modern physicists."]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['context'].item().decode("utf8") == expected_result[count]
+        assert d['context'] == expected_result[count]
         count += 1
     assert count == 2
 
@@ -144,7 +144,7 @@ def test_squad_version2():
                        "Who ate the squid?"]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert d['question'].item().decode("utf8") == expected_result[count]
+        assert d['question'] == expected_result[count]
         count += 1
     assert count == 2
 
@@ -156,7 +156,7 @@ def test_squad_version2():
                        ["January 8, 1942"], [""]]
     count = 0
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        result = [i.item().decode("utf8") for i in d['text']]
+        result = [i for i in d['text']]
         assert result == expected_result[count]
         count += 1
     assert count == 4

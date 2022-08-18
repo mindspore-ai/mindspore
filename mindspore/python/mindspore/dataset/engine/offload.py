@@ -399,7 +399,6 @@ class RandomSharpness(nn.Cell):
         self.filter = P.Conv2D(out_channel=3, kernel_size=(3, 3), pad_mode='pad', pad=1)
 
     def construct(self, x):
-
         x = self.cast(x, mstype.float32)
         x_shape = self.shape(x)
         check_input_dims(x_shape, 4, 'RandomSharpness')
@@ -416,7 +415,6 @@ class RandomSharpness(nn.Cell):
 
         x = self.mul(x, degree_rand_factor) + self.mul((1 - degree_rand_factor), x_sharp)
         x = C.clip_by_value(x, 0.0, 255.0)
-
         return x
 
 

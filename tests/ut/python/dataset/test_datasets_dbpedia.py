@@ -41,9 +41,9 @@ def test_dbpedia_dataset_quoted():
     data = ds.DBpediaDataset(DATA_DIR, usage="test", shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['class'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['class'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["5", "My Bedroom", "Look at this room. It's my bedroom.",
                       "8", "My English teacher", "She has two big eyes and a small mouth.",
                       "6", "My Holiday", "I have a lot of fun every day."]

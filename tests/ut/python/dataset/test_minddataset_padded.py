@@ -32,6 +32,7 @@ CV_DIR_NAME = "../data/mindrecord/testImageNetData"
 NLP_FILE_POS = "../data/mindrecord/testAclImdbData/pos"
 NLP_FILE_VOCAB = "../data/mindrecord/testAclImdbData/vocab.txt"
 
+
 @pytest.fixture
 def add_and_remove_cv_file():
     """add/remove cv file"""
@@ -106,7 +107,8 @@ def add_and_remove_nlp_file():
             os.remove("{}.db".format(x))
 
 
-def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_reader_basic_padded_samples():
     """
     Feature: MindDataset
     Description: Test basic read on MindDataset with padded_sample
@@ -130,15 +132,16 @@ def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         if item['label'] == -1:
             num_padded_iter += 1
-            assert item['file_name'] == bytes(padded_sample['file_name'],
-                                              encoding='utf8')
+            assert item['file_name'] == padded_sample['file_name']
             assert item['label'] == padded_sample['label']
             assert (item['data'] == np.array(list(padded_sample['data']))).all()
         num_iter += 1
     assert num_padded_iter == 5
     assert num_iter == 15
 
-def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_file):
+
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_reader_basic_padded_samples_type_cast():
     """
     Feature: MindDataset
     Description: Test basic read on MindDataset with padded_sample which file_name requires type cast
@@ -149,7 +152,7 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_
     data = get_data(CV_DIR_NAME)
     padded_sample = data[0]
     padded_sample['label'] = -1
-    padded_sample['file_name'] = 99999
+    padded_sample['file_name'] = "99999"
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(file_name + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
@@ -162,8 +165,7 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         if item['label'] == -1:
             num_padded_iter += 1
-            assert item['file_name'] == bytes(str(padded_sample['file_name']),
-                                              encoding='utf8')
+            assert item['file_name'] == padded_sample['file_name']
             assert item['label'] == padded_sample['label']
             assert (item['data'] == np.array(list(padded_sample['data']))).all()
         num_iter += 1
@@ -171,7 +173,8 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_
     assert num_iter == 15
 
 
-def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples():
     """
     Feature: MindDataset
     Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id)
@@ -204,7 +207,7 @@ def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
                 if item['label'] == -2:
                     num_padded_iter += 1
-                    assert item['file_name'] == bytes(padded_sample['file_name'], encoding='utf8')
+                    assert item['file_name'] == padded_sample['file_name']
                     assert item['label'] == padded_sample['label']
                     assert (item['data'] == np.array(list(padded_sample['data']))).all()
                 num_iter += 1
@@ -216,7 +219,8 @@ def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
     partitions(9, 8, 2)
 
 
-def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_multi_epoch():
     """
     Feature: MindDataset
     Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id),
@@ -258,7 +262,7 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
                 if item['label'] == -2:
                     num_padded_iter += 1
-                    assert item['file_name'] == bytes(padded_sample['file_name'], encoding='utf8')
+                    assert item['file_name'] == padded_sample['file_name']
                     assert item['label'] == padded_sample['label']
                     assert (item['data'] == np.array(list(padded_sample['data']))).all()
                 if local_index < dataset_size:
@@ -294,7 +298,8 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
     partitions(9, 8, 2)
 
 
-def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_no_dividsible():
     """
     Feature: MindDataset
     Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id),
@@ -326,7 +331,8 @@ def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv
         partitions(4, 1)
 
 
-def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible():
     """
     Feature: MindDataset
     Description: Test get_dataset_size during MindDataset read with padded_sample and partition
@@ -355,7 +361,8 @@ def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_a
     partitions(4, 1)
 
 
-def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_no_equal_column_list():
     """
     Feature: MindDataset
     Description: Test read MindDataset with padded_sample and partition
@@ -388,7 +395,8 @@ def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_re
         partitions(4, 2)
 
 
-def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_no_column_list():
     """
     Feature: MindDataset
     Description: Test read MindDataset with padded_sample and partition
@@ -419,7 +427,8 @@ def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_c
         partitions(4, 2)
 
 
-def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_no_num_padded():
     """
     Feature: MindDataset
     Description: Test read MindDataset with padded_sample and partition
@@ -449,7 +458,8 @@ def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv
         partitions(4, 2)
 
 
-def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remove_cv_file):
+@pytest.mark.usefixtures("add_and_remove_cv_file")
+def test_cv_minddataset_partition_padded_samples_no_padded_samples():
     """
     Feature: MindDataset
     Description: Test read MindDataset with padded_sample and partition
@@ -479,7 +489,8 @@ def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remov
         partitions(4, 2)
 
 
-def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
+@pytest.mark.usefixtures("add_and_remove_nlp_file")
+def test_nlp_minddataset_reader_basic_padded_samples():
     """
     Feature: MindDataset
     Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset
@@ -511,9 +522,9 @@ def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------".format(
                     item["input_ids"],
                     item["input_ids"].shape))
-                if item['id'] == bytes('-1', encoding='utf-8'):
+                if item['id'] == '-1':
                     num_padded_iter += 1
-                    assert item['id'] == bytes(padded_sample['id'], encoding='utf-8')
+                    assert item['id'] == padded_sample['id']
                     assert (item['input_ids'] == padded_sample['input_ids']).all()
                     assert (item['rating'] == padded_sample['rating']).all()
                 num_iter += 1
@@ -525,7 +536,8 @@ def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
     partitions(9, 8, 2)
 
 
-def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_nlp_file):
+@pytest.mark.usefixtures("add_and_remove_nlp_file")
+def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch():
     """
     Feature: MindDataset
     Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset under multiple epochs
@@ -565,9 +577,9 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------".format(
                     item["input_ids"],
                     item["input_ids"].shape))
-                if item['id'] == bytes('-1', encoding='utf-8'):
+                if item['id'] == '-1':
                     num_padded_iter += 1
-                    assert item['id'] == bytes(padded_sample['id'], encoding='utf-8')
+                    assert item['id'] == padded_sample['id']
                     assert (item['input_ids'] == padded_sample['input_ids']).all()
                     assert (item['rating'] == padded_sample['rating']).all()
 
@@ -596,7 +608,8 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
     partitions(9, 8, 2)
 
 
-def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch(add_and_remove_nlp_file):
+@pytest.mark.usefixtures("add_and_remove_nlp_file")
+def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch():
     """
     Feature: MindDataset
     Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset
@@ -605,10 +618,9 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
     """
     columns_list = ["input_ids", "id", "rating"]
 
-    padded_sample = {}
-    padded_sample['id'] = "-1"
-    padded_sample['input_ids'] = np.array([-1, -1, -1, -1], dtype=np.int64)
-    padded_sample['rating'] = 1.0
+    padded_sample = {'id': "-1",
+                     'input_ids': np.array([-1, -1, -1, -1], dtype=np.int64),
+                     'rating': 1.0}
     num_readers = 4
     repeat_size = 3
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -633,11 +645,11 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
                 logger.info("-------------- item[rating]: {} --------------------".format(item["rating"]))
                 logger.info("-------------- item[input_ids]: {}, shape: {} -----------------"
                             .format(item["input_ids"], item["input_ids"].shape))
-                if item['id'] == bytes('-1', encoding='utf-8'):
+                if item['id'] == '-1':
                     num_padded_iter += 1
-                    assert item['id'] == bytes(padded_sample['id'], encoding='utf-8')
-                    assert (item['input_ids'] == padded_sample['input_ids']).all()
-                    assert (item['rating'] == padded_sample['rating']).all()
+                    assert item['id'] == padded_sample.get('id')
+                    assert (item['input_ids'] == padded_sample.get('input_ids')).all()
+                    assert (item['rating'] == padded_sample.get('rating')).all()
                 # save epoch result
                 epoch_result[partition_id][int(inner_num_iter / dataset_size)][inner_num_iter % dataset_size] = item[
                     "id"]
@@ -774,15 +786,15 @@ def inputs(vectors, maxlen=50):
 
 
 if __name__ == '__main__':
-    test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv_file)
-    test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remove_cv_file)
-    test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file)
-    test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_nlp_file)
-    test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch(add_and_remove_nlp_file)
+    test_cv_minddataset_reader_basic_padded_samples()
+    test_cv_minddataset_partition_padded_samples()
+    test_cv_minddataset_partition_padded_samples_multi_epoch()
+    test_cv_minddataset_partition_padded_samples_no_dividsible()
+    test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible()
+    test_cv_minddataset_partition_padded_samples_no_equal_column_list()
+    test_cv_minddataset_partition_padded_samples_no_column_list()
+    test_cv_minddataset_partition_padded_samples_no_num_padded()
+    test_cv_minddataset_partition_padded_samples_no_padded_samples()
+    test_nlp_minddataset_reader_basic_padded_samples()
+    test_nlp_minddataset_reader_basic_padded_samples_multi_epoch()
+    test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch()

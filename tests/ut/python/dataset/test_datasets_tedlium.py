@@ -112,10 +112,10 @@ def test_tedlium_content_check():
         assert waveform.shape == (1, 480)
         assert sample_rate == 16000
         assert sample_rate.dtype == np.int32
-        assert talk_id.item().decode("utf8") == "test1"
-        assert speaker_id.item().decode("utf8") == "test1"
-        assert transcript.item().decode("utf8") == "this is record 1 of test1."
-        assert identifier.item().decode("utf8") == "<o,f0,female>"
+        assert talk_id == "test1"
+        assert speaker_id == "test1"
+        assert transcript == "this is record 1 of test1."
+        assert identifier == "<o,f0,female>"
         num_iter1 += 1
     for d in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
         waveform = d["waveform"]
@@ -128,10 +128,10 @@ def test_tedlium_content_check():
         assert waveform.shape == (1, 160)
         assert sample_rate == 16000
         assert sample_rate.dtype == np.int32
-        assert talk_id.item().decode("utf8") == "test3"
-        assert speaker_id.item().decode("utf8") == "test3"
-        assert transcript.item().decode("utf8") == "this is record 1 of test3."
-        assert identifier.item().decode("utf8") == "<o,f0,female>"
+        assert talk_id == "test3"
+        assert speaker_id == "test3"
+        assert transcript == "this is record 1 of test3."
+        assert identifier == "<o,f0,female>"
         num_iter3 += 1
     assert num_iter1 == 1
     assert num_iter3 == 1

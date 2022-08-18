@@ -16,37 +16,39 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_
 
+#include <algorithm>
 #include <deque>
 #include <memory>
 #include <string>
 #include <vector>
-#include "./securec.h"
-#include "minddata/dataset/util/log_adapter.h"
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H
 #endif
 
+#include "./securec.h"
+#ifndef ENABLE_ANDROID
+#include "proto/example.pb.h"
+#endif
 #ifdef ENABLE_PYTHON
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #endif
 
-#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/core/de_tensor.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 #include "utils/ms_utils.h"
-#ifndef ENABLE_ANDROID
-#include "proto/example.pb.h"
-#endif
 
 #ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
+
 namespace mindspore {
 namespace dataset {
 class Tensor;
@@ -185,6 +187,82 @@ class Tensor {
     return Status::OK();
   }
 
+  /// Create a Tensor from a given list of strings.
+  /// @note: The memory layout of a Tensor of strings consists of the Offset_array followed by the strings.
+  /// The offset array will store one extra value to find the length of the last string.
+  /// OFFSET_1, OFFSET_2, ..., OFFSET_n+1, STRING_1, STRING_2, ..., STRING_n
+  /// The value of each offset is the start index of the corresponding string
+  /// Offsets is of type offset_t
+  /// strings will ne null-terminated
+  /// example: Tensor(['abc', 'de'], shape={2}, type=DE_STRING)
+  /// |----------------------------------------------------------------|
+  /// |             OFFSET ARRAY           |            STRINGS        |
+  /// | bytes 0-3 | bytes 3-6 | bytes 7-10 | bytes 11-14 | bytes 15-17 |
+  /// |     11    |    15     |     18     |     abc\0   |      de\0   |
+  /// |----------------------------------------------------------------|
+  /// \param[in] items elements of the tensor
+  /// \param[in] shape shape of the output tensor
+  /// \param[in] type data type of the output tensor, can only be DE_STRING or DE_BYTES
+  /// \param[out] out output argument to hold the created Tensor
+  /// \return Status Code
+  static Status CreateFromVector(const std::vector<std::string> &items, const TensorShape &shape, const DataType &type,
+                                 TensorPtr *out) {
+    RETURN_UNEXPECTED_IF_NULL(out);
+    CHECK_FAIL_RETURN_UNEXPECTED(static_cast<dsize_t>(items.size()) == shape.NumOfElements(),
+                                 "The number of elements in the vector: " + std::to_string(items.size()) +
+                                   " does not match the number of elements: " + std::to_string(shape.NumOfElements()) +
+                                   " the shape required.");
+    CHECK_FAIL_RETURN_UNEXPECTED(type.IsString(), "Can not create a numeric Tensor from a string vector.");
+    const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
+    *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}), type);
+    CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
+    if (items.empty()) {
+      if (shape.known()) {
+        return (*out)->Reshape(shape);
+      }
+    }
+    auto length_sum = [](size_t sum, const std::string &s) { return s.length() + sum; };
+    dsize_t total_length = std::accumulate(items.begin(), items.end(), 0, length_sum);
+
+    // total bytes needed = offset array + strings
+    // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
+    // strings will be null-terminated --> need 1 extra byte per element
+    size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
+
+    RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
+    auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
+    uchar *buf = (*out)->GetStringsBuffer();
+
+    offset_t offset = buf - (*out)->data_;  // the first string will start here
+    uint32_t i = 0;
+    for (const auto &str : items) {
+      //  insert the start index of the string.
+      offset_arr[i++] = offset;
+      // insert actual string
+      int ret_code = memcpy_s((*out)->data_ + offset, num_bytes - offset, common::SafeCStr(str), str.length() + 1);
+      if (ret_code != 0) {
+        MS_LOG(ERROR) << "Cannot copy string into Tensor";
+      }
+      //  next string will be stored right after the current one.
+      offset = offset + str.length() + 1;
+    }
+    // store one more offset value so we can get the length of the last string
+    offset_arr[i] = offset;
+
+    (*out)->data_end_ = (*out)->data_ + offset_arr[i];
+
+    MS_ASSERT(num_bytes - offset == 0);
+    if (shape.known()) {
+      RETURN_IF_NOT_OK((*out)->Reshape(shape));
+    }
+    return Status::OK();
+  }
+
+  // Create a string Tensor from a string vector by default.
+  static Status CreateFromVector(const std::vector<std::string> &items, const TensorShape &shape, TensorPtr *out) {
+    return CreateFromVector(items, shape, DataType(DataType::DE_STRING), out);
+  }
+
   /// Create a numeric scalar Tensor from the given value.
   /// \tparam T type of value
   /// \param[in] item value
@@ -222,6 +300,9 @@ class Tensor {
 
   template <typename T>
   static Status from_json_convert(const nlohmann::json &json_data, const TensorShape &shape,
+                                  std::shared_ptr<Tensor> *tensor);
+
+  static Status from_json_convert(const nlohmann::json &json_data, const TensorShape &shape, const DataType &type,
                                   std::shared_ptr<Tensor> *tensor);
 
   /// Get item located at `index`, caller needs to provide the type.
@@ -274,21 +355,21 @@ class Tensor {
     return Status::OK();
   }
 
-  /// fill tensor with Zeros. Does not support strings.
+  /// Fill tensor with zeros. Does not support string or bytes.
   Status Zero() {
-    CHECK_FAIL_RETURN_UNEXPECTED(type_ != DataType::DE_STRING, "Cannot use Zero on tensor of strings..");
+    CHECK_FAIL_RETURN_UNEXPECTED(!type_.IsString(), "Can not fill zeros on tensor of type string or bytes.");
     dsize_t size = SizeInBytes();
     CHECK_FAIL_RETURN_UNEXPECTED(memset_sp(GetMutableBuffer(), size, 0, size) == 0,
                                  "Failed to fill tensor with zeroes.");
     return Status::OK();
   }
 
-  /// Fill all elements in the Tensor with the given value of type `T`.  Does not support strings.
+  /// Fill all elements in the Tensor with the given value of type `T`. Does not support string or bytes.
   /// \tparam T
   /// \param value[in]
   template <typename T>
   Status Fill(const T &value) {
-    CHECK_FAIL_RETURN_UNEXPECTED(type_ != DataType::DE_STRING, "Cannot use fill on tensor of strings.");
+    CHECK_FAIL_RETURN_UNEXPECTED(!type_.IsString(), "Can not fill on tensor of type string or bytes.");
     int64_t cellSize = type_.SizeInBytes();
     if ((data_ != nullptr) && type_.IsCompatible<T>()) {
       for (dsize_t i = 0; i < Size(); i++) {
@@ -369,7 +450,7 @@ class Tensor {
   /// \param partial_insert: boolean to determine if insertion along the full axis is enforced
   /// \return Status code
   Status InsertTensor(const std::vector<dsize_t> &index, const std::shared_ptr<Tensor> &input,
-                      const bool partial_insert = false);
+                      bool partial_insert = false);
 
   /// Find the address of the given index. Used in InsertTensor.
   /// Example:
@@ -432,7 +513,7 @@ class Tensor {
   /// \param[out] out Tensor
   /// \param[in] slice_options vector of SliceOption objects
   /// \return Status error code
-  Status Slice(TensorPtr *out, const std::vector<mindspore::dataset::SliceOption> slice_options);
+  Status Slice(TensorPtr *out, const std::vector<mindspore::dataset::SliceOption> &slice_options);
 
   /// Get slice_option according to shape and index.
   /// \param[in] slice_option input SliceOption object
@@ -447,15 +528,28 @@ class Tensor {
   /// \return Status code
   Status GetDataAsNumpy(py::array *data);
 
-  /// Constructs numpy array of strings
+  /// Constructs numpy array of string or bytes
   /// \param[out] data this data is the location of python data
   /// \return Status code
   Status GetDataAsNumpyStrings(py::array *data);
 
-  /// Constructs numpy array of strings which are already decoded ('U')
-  /// \param[out] data this data is the location of python data
-  /// \return Status code
-  Status GetDataAsNumpyUnicodeStrings(py::array *data);
+  template <typename T>
+  Status GetDataAsNumpyStrings(py::array *data) {
+    RETURN_UNEXPECTED_IF_NULL(data);
+    if (Size() == 0) {
+      // NumPy will create empty array in type of float64 by default. So we must define the data type.
+      *data = py::array(type_.AsNumpyType(), shape_.AsVector(), nullptr);
+    } else {
+      std::vector<T> string_vector;
+      string_vector.reserve(Size());
+      // Iterate over tensor and create a vector of string_views of strings in the tensor.
+      (void)std::transform(begin<std::string_view>(), end<std::string_view>(), std::back_inserter(string_vector),
+                           [](const auto &element) { return static_cast<std::string>(element); });
+      *data = py::array(py::cast(string_vector));
+      data->resize(shape_.AsVector());
+    }
+    return Status::OK();
+  }
 
   static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
 #endif
@@ -596,7 +690,8 @@ class Tensor {
     std::string_view operator*() const {
       auto offset_ = reinterpret_cast<const offset_t *>(data_);
       offset_t start = offset_[index_];
-      return std::string_view{data_ + start};
+      offset_t end = offset_[index_ + 1];
+      return std::string_view{data_ + start, end - start - 1};  // -1 to skip the \0 at the end
     }
 
     TensorIterator<std::string_view> &operator+=(const dsize_t &inc) {
@@ -724,8 +819,8 @@ class Tensor {
   Status GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const;
 
   /// Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if
-  /// the tensor's type is a string, otherwise undefined address would be returned. \return address of the first string
-  /// of the tensor.
+  /// the tensor's type is a string, otherwise undefined address would be returned.
+  /// \return return the address of the first string of the tensor.
   uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
 
   /// all access to shape_ should be via shape
@@ -772,84 +867,12 @@ class Tensor {
   static Status CreateFromNpString(py::array arr, TensorPtr *out);
 #endif
 };
+
 template <>
 inline Tensor::TensorIterator<std::string_view> Tensor::end<std::string_view>() {
   return TensorIterator<std::string_view>(data_, shape_.NumOfElements());
 }
 
-/// Create a Tensor from a given list of strings.
-/// @note: The memory layout of a Tensor of strings consists of the Offset_array followed by the strings.
-/// The offset array will store one extra value to find the length of the last string.
-/// OFFSET_1, OFFSET_2, ..., OFFSET_n+1, STRING_1, STRING_2, ..., STRING_n
-/// The value of each offset is the start index of the corresponding string
-/// Offsets is of type offset_t
-/// strings will ne null-terminated
-/// example: Tensor(['abc', 'de'], shape={2}, type=DE_STRING)
-/// |----------------------------------------------------------------|
-/// |             OFFSET ARRAY           |            STRINGS        |
-/// | bytes 0-3 | bytes 3-6 | bytes 7-10 | bytes 11-14 | bytes 15-17 |
-/// |     11    |    15     |     18     |     abc\0   |      de\0   |
-/// |----------------------------------------------------------------|
-/// \param[in] items elements of the tensor
-/// \param[in] shape shape of the output tensor
-/// \param[out] out output argument to hold the created Tensor
-/// \return Status Code
-template <>
-inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::string> &items, const TensorShape &shape,
-                                                    TensorPtr *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    static_cast<dsize_t>(items.size()) == shape.NumOfElements(),
-    "Number of elements in the vector does not match the number of elements of the shape required");
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}),
-                                      DataType(DataType::DE_STRING));
-  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
-  if (items.empty()) {
-    if (shape.known()) {
-      return (*out)->Reshape(shape);
-    }
-  }
-  auto length_sum = [](size_t sum, const std::string &s) { return s.length() + sum; };
-  dsize_t total_length = std::accumulate(items.begin(), items.end(), 0, length_sum);
-
-  // total bytes needed = offset array + strings
-  // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
-  // strings will be null-terminated --> need 1 extra byte per element
-  size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
-
-  RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
-  auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
-  uchar *buf = (*out)->GetStringsBuffer();
-
-  offset_t offset = buf - (*out)->data_;  // the first string will start here
-  uint32_t i = 0;
-  for (const auto &str : items) {
-    //  insert the start index of the string.
-    offset_arr[i++] = offset;
-    // total bytes are reduced by kOffsetSize
-    num_bytes -= kOffsetSize;
-    // insert actual string
-    int ret_code = memcpy_s((*out)->data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
-    if (ret_code != 0) {
-      MS_LOG(ERROR) << "Cannot copy string into Tensor";
-    }
-    //  next string will be stored right after the current one.
-    offset = offset + str.length() + 1;
-    // total bytes are reduced by the length of the string
-    num_bytes -= str.length() + 1;
-  }
-  // store one more offset value so we can get the length of the last string
-  offset_arr[i] = offset;
-
-  (*out)->data_end_ = (*out)->data_ + offset_arr[i];
-
-  MS_ASSERT(num_bytes == 0);
-  if (shape.known()) {
-    RETURN_IF_NOT_OK((*out)->Reshape(shape));
-  }
-  return Status::OK();
-}
 /// Create a string scalar Tensor from the given value.
 /// \param[in] item value
 /// \param[out] out Created tensor
@@ -857,7 +880,7 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
 template <>
 inline Status Tensor::CreateScalar<std::string>(const std::string &item, TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  return CreateFromVector<std::string>({item}, TensorShape::CreateScalar(), out);
+  return CreateFromVector({item}, TensorShape::CreateScalar(), DataType(DataType::DE_STRING), out);
 }
 }  // namespace dataset
 }  // namespace mindspore

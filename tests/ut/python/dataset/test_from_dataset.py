@@ -66,7 +66,7 @@ def test_from_dataset():
         # key: word, value: number of occurrences, reason for using letters is so their order is apparent
         corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
         for k, v in corpus.items():
-            yield (np.array([k] * v, dtype='S'),)
+            yield (np.array([k] * v),)
 
     def test_config(freq_range, top_k):
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
@@ -114,11 +114,11 @@ def test_from_dataset_special_token():
         # key: word, value: number of occurrences, reason for using letters is so their order is apparent
         corpus = {"D": 1, "C": 1, "B": 1, "A": 1}
         for k, v in corpus.items():
-            yield (np.array([k] * v, dtype='S'),)
+            yield (np.array([k] * v),)
 
     def gen_input(texts):
         for word in texts.split(" "):
-            yield (np.array(word, dtype='S'),)
+            yield (np.array(word),)
 
     def test_config(texts, top_k, special_tokens, special_first):
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])

@@ -304,6 +304,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     @check_adjust_saturation
     def __init__(self, saturation_factor):
         super().__init__()
@@ -347,6 +348,7 @@ class AdjustSharpness(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     @check_adjust_sharpness
     def __init__(self, sharpness_factor):
         super().__init__()
@@ -822,10 +824,14 @@ class Decode(ImageTensorOperation, PyTensorOperation):
         Call method for input conversion for eager mode with C++ implementation.
         """
         if isinstance(img, bytes):
-            img = np.frombuffer(img, np.uint8)
-        elif not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
-            raise TypeError(
-                "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
+            img = np.frombuffer(img, dtype=np.uint8)
+        if not isinstance(img, np.ndarray):
+            raise TypeError("The type of the encoded image should be {0}, but got {1}.".format(np.ndarray, type(img)))
+        if img.dtype.type is np.str_:
+            raise TypeError("The data type of the encoded image can not be {}.".format(img.dtype.type))
+        if img.ndim != 1:
+            raise TypeError("The number of array dimensions of the encoded image should be 1, "
+                            "but got {0}.".format(img.ndim))
         return super().__call__(img)
 
     def execute_py(self, img):

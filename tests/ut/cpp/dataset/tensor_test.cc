@@ -531,6 +531,14 @@ TEST_F(MindDataTestTensorDE, TensorEmpty) {
   ASSERT_EQ(t->GetBuffer(), nullptr);
   ASSERT_TRUE(!t->HasData());
 
+  rc = Tensor::CreateEmpty(TensorShape({1, 0}), DataType(DataType::DE_BYTES), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({1, 0}));
+  ASSERT_EQ(t->type(), DataType::DE_BYTES);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
   std::vector<uint16_t> data;
   rc = Tensor::CreateFromVector(data, &t);
   ASSERT_TRUE(rc.IsOk());
@@ -565,6 +573,22 @@ TEST_F(MindDataTestTensorDE, TensorEmpty) {
   ASSERT_EQ(t->GetBuffer(), nullptr);
   ASSERT_TRUE(!t->HasData());
 
+  rc = Tensor::CreateFromVector(data2, TensorShape({0, 2, 3}), DataType(DataType::DE_STRING), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0, 2, 3}));
+  ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
+  rc = Tensor::CreateFromVector(data2, TensorShape({3, 2, 0}), DataType(DataType::DE_BYTES), &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({3, 2, 0}));
+  ASSERT_EQ(t->type(), DataType::DE_BYTES);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+  ASSERT_TRUE(!t->HasData());
+
   rc = Tensor::CreateFromMemory(TensorShape({0}), DataType(DataType::DE_INT8), nullptr, &t);
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(t->shape(), TensorShape({0}));
@@ -577,6 +601,13 @@ TEST_F(MindDataTestTensorDE, TensorEmpty) {
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(t->shape(), TensorShape({0}));
   ASSERT_EQ(t->type(), DataType::DE_STRING);
+  ASSERT_EQ(t->SizeInBytes(), 0);
+  ASSERT_EQ(t->GetBuffer(), nullptr);
+
+  rc = Tensor::CreateFromMemory(TensorShape({0}), DataType(DataType::DE_BYTES), nullptr, &t);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(t->shape(), TensorShape({0}));
+  ASSERT_EQ(t->type(), DataType::DE_BYTES);
   ASSERT_EQ(t->SizeInBytes(), 0);
   ASSERT_EQ(t->GetBuffer(), nullptr);
 

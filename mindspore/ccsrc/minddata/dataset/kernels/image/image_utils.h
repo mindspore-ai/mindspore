@@ -266,7 +266,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 ///               This will output original image multiplied by alpha. 0 gives a black image, 1 gives the
 ///               original image while 2 increases the brightness by a factor of 2.
 /// \param output: Adjusted image of same shape and type.
-Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
+Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha);
 
 /// \brief Returns image with adjusted contrast.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
@@ -275,14 +275,14 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 ///               0 gives a solid gray image, 1 gives the original image while 2 increases
 ///               the contrast by a factor of 2.
 /// \param output: Adjusted image of same shape and type.
-Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
+Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha);
 
 /// \brief Returns image with contrast maximized.
 /// \param input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and any OpenCv compatible type, see CVTensor.
 /// \param cutoff: Cutoff percentage of how many pixels are to be removed (high pixels change to 255 and low change
 ///     to 0) from the high and low ends of the histogram.
 /// \param ignore: Pixel values to be ignored in the algorithm.
-Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
+Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float cutoff,
                     const std::vector<uint32_t> &ignore);
 
 /// \brief Returns image with gamma correction.
@@ -292,8 +292,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 ///     darker, while gamma smaller than 1 make dark regions lighter.
 /// \param[in] gain: The constant multiplier.
 /// \param[out] output: Adjusted image of same shape and type.
-Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &gamma,
-                   const float &gain);
+Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float gamma, float gain);
 
 /// \brief Returns image with adjusted saturation.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
@@ -302,7 +301,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 ///               0 will give a black and white image, 1 will give the original image while
 ///               2 will enhance the saturation by a factor of 2.
 /// \param output: Adjusted image of same shape and type.
-Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha);
+Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha);
 
 /// \brief Returns image with adjusted hue.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
@@ -310,7 +309,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 ///             completely.
 ///             If user input one value in python, the range is [-value, value].
 /// \param output: Adjusted image of same shape and type.
-Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
+Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float hue);
 
 /// \brief Returns image with equalized histogram.
 /// \param[in] input: Tensor of shape <H,W,3>/<H,W,1>/<H,W> in RGB/Grayscale and

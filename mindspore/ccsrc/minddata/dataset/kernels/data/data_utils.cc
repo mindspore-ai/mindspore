@@ -122,12 +122,12 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 }
 
 Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out,
-                  std::shared_ptr<Tensor> fill_output, std::shared_ptr<Tensor> fill_value) {
+                  const std::shared_ptr<Tensor> &fill_output) {
   const DataType &input_type = input->type();
   const TensorShape &input_shape = input->shape();
   switch (input_type.value()) {
     case DataType::DE_BOOL: {
-      bool value = 0;
+      bool value = false;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
       RETURN_IF_NOT_OK((*out)->Fill<bool>(value));
       break;
@@ -198,36 +198,39 @@ Status FillHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
       RETURN_IF_NOT_OK((*out)->Fill<double>(value));
       break;
     }
-    case DataType::DE_STRING: {
+    case DataType::DE_STRING:
+    case DataType::DE_BYTES: {
       std::vector<std::string> strings;
       std::string_view fill_string_view;
-      RETURN_IF_NOT_OK(fill_value->GetItemAt(&fill_string_view, {}));
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&fill_string_view, {}));
       std::string fill_string = std::string(fill_string_view);
       for (int i = 0; i < input_shape.NumOfElements(); i++) {
         strings.emplace_back(fill_string);
       }
-      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, out));
-      break;
-    }
-    case DataType::DE_UNKNOWN: {
-      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype, check input datatype of this operator.");
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, DataType(input_type.value()), out));
       break;
     }
     default:
-      RETURN_STATUS_UNEXPECTED(
-        "Fill: unsupported input datatype, This input datatype is: " + std::to_string(input_type.value()) + ".");
+      RETURN_STATUS_UNEXPECTED("Fill: invalid data type, filling values into tensors of type " + input_type.ToString() +
+                               " is not supported.");
       break;
   }
   return Status::OK();
 }
 
-Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value) {
+Status Fill(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+            const std::shared_ptr<Tensor> &fill_value) {
   const DataType &fill_type = fill_value->type();
   const DataType &input_type = input->type();
   const TensorShape &input_shape = input->shape();
 
-  CHECK_FAIL_RETURN_UNEXPECTED(!((fill_type == DataType::DE_STRING) && (input_type != DataType::DE_STRING)),
-                               "Fill: fill datatype is string but the input datatype is not string.");
+  if (fill_type.IsString() || input_type.IsString()) {
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      fill_type == input_type,
+      "Fill: fill_value and the input tensor must be of the same data type when involving strings "
+      "or bytes, but got fill_value data type " +
+        fill_type.ToString() + " and input tensor data type " + input_type.ToString());
+  }
 
   CHECK_FAIL_RETURN_UNEXPECTED(
     fill_value->shape() == TensorShape({}),
@@ -235,9 +238,8 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
 
   std::shared_ptr<Tensor> out, fill_output;
 
-  if (input_type != DataType::DE_STRING && fill_type != DataType::DE_STRING && input_type != fill_type) {
-    auto op = std::make_unique<TypeCastOp>(input_type);
-    RETURN_IF_NOT_OK(op->Compute(fill_value, &fill_output));
+  if (input_type.IsNumeric() && fill_type.IsNumeric() && input_type != fill_type) {
+    RETURN_IF_NOT_OK(TypeCast(fill_value, &fill_output, input_type));
   } else {
     fill_output = fill_value;
   }
@@ -245,7 +247,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   if (input_type.IsNumeric()) {
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(input_shape, input_type, &out));
   }
-  RETURN_IF_NOT_OK(FillHelper(input, &out, fill_output, fill_value));
+  RETURN_IF_NOT_OK(FillHelper(input, &out, fill_output));
   *output = out;
   return Status::OK();
 }
@@ -366,11 +368,18 @@ Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       } else {
         RETURN_STATUS_UNEXPECTED("TypeCast: TypeCast does not support cast from string to " + data_type.ToString());
       }
+    case DataType::DE_BYTES:
+      if (data_type == DataType::DE_BYTES) {
+        *output = input;
+        break;
+      } else {
+        RETURN_STATUS_UNEXPECTED("TypeCast: TypeCast does not support cast from bytes to " + data_type.ToString());
+      }
     case DataType::DE_UNKNOWN:
     default:
       // sanity check, unreachable code.
       RETURN_STATUS_UNEXPECTED(
-        "TypeCast: Typecast does not support Input with type " + input->type().ToString() + ", supported datatype: " +
+        "TypeCast: Typecast does not support input with type " + input->type().ToString() + ", supported datatype: " +
         "[bool, int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, float64].");
   }
   return Status::OK();
@@ -412,19 +421,22 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
     }
   }
   CHECK_FAIL_RETURN_UNEXPECTED(src->type().IsNumeric() == pad_val->type().IsNumeric(),
-                               "PadEnd: pad_value and item of dataset are not of the same type, type of pad_value is:" +
-                                 pad_val->type().ToString() +
-                                 ", and type of dataset item is:" + src->type().ToString() + ".");
+                               "PadEnd: can not pad numeric and string tensors together, but got: " +
+                                 pad_val->type().ToString() + " and " + src->type().ToString() + ".");
   if (pad_val->type().IsNumeric()) {
     std::shared_ptr<Tensor> float_pad_value;
     RETURN_IF_NOT_OK(TypeCast(pad_val, &float_pad_value, DataType(DataType::DE_FLOAT32)));
     float val = 0;
     RETURN_IF_NOT_OK(float_pad_value->GetItemAt<float>(&val, {}));
     return PadEndNumeric(src, dst, pad_shape, val);
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(src->type() == pad_val->type(),
+                                 "PadEnd: can not pad string and byte tensors together, but got: " +
+                                   pad_val->type().ToString() + " and " + src->type().ToString() + ".");
+    std::string_view val;
+    RETURN_IF_NOT_OK(pad_val->GetItemAt(&val, {}));
+    return PadEndString(src, dst, pad_shape, std::string(val));
   }
-  std::string_view val;
-  RETURN_IF_NOT_OK(pad_val->GetItemAt(&val, {}));
-  return PadEndString(src, dst, pad_shape, std::string(val));
 }
 
 Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
@@ -500,7 +512,7 @@ Status PadEndString(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> 
     std::vector<dsize_t> cur_ind(src->Rank(), 0);
     std::vector<std::string> strings;
     RETURN_IF_NOT_OK(PadEndStringHelper(src, &strings, TensorShape(pad_shape), cur_ind, 0, pad_val));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, TensorShape(pad_shape), dst));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, TensorShape(pad_shape), src->type(), dst));
   }
   return Status::OK();
 }
@@ -627,11 +639,14 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     case DataType::DE_STRING:
       RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
       break;
+    case DataType::DE_BYTES:
+      RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
+      break;
     case DataType::DE_UNKNOWN:
     default:
       RETURN_STATUS_UNEXPECTED(
         "Mask: unsupported input datatype, support datatype is:[bool, int8, uint8, int16, uint16, int32, uint32, "
-        "int64, uint64, float16, float32, float64, string].");
+        "int64, uint64, float16, float32, float64, string, bytes].");
       break;
   }
   return Status::OK();
@@ -713,7 +728,7 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
         strings.emplace_back(*itr);
       }
     }
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, t, &out));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, t, input[0]->type(), &out));
   }
 
   output->push_back(out);

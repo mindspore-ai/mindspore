@@ -29,7 +29,7 @@ def test_ngram_callable():
     op = text.Ngram(2, separator="-")
 
     input1 = " WildRose Country"
-    input1 = np.array(input1.split(" "), dtype='S')
+    input1 = np.array(input1.split(" "))
     expect1 = ['-WildRose', 'WildRose-Country']
     result1 = op(input1)
     assert np.array_equal(result1, expect1)
@@ -60,14 +60,14 @@ def test_multiple_ngrams():
 
     def gen(texts):
         for line in texts:
-            yield (np.array(line.split(" "), dtype='S'),)
+            yield (np.array(line.split(" ")),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
     dataset = dataset.map(operations=text.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "), input_columns="text")
 
     i = 0
     for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert [d.decode("utf8") for d in data["text"]] == n_gram_mottos[i]
+        assert [d for d in data["text"]] == n_gram_mottos[i]
         i += 1
 
 
@@ -86,14 +86,14 @@ def test_simple_ngram():
 
     def gen(texts):
         for line in texts:
-            yield (np.array(line.split(" "), dtype='S'),)
+            yield (np.array(line.split(" ")),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
     dataset = dataset.map(operations=text.Ngram(3, separator=" "), input_columns="text")
 
     i = 0
     for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert [d.decode("utf8") for d in data["text"]] == n_gram_mottos[i], i
+        assert [d for d in data["text"]] == n_gram_mottos[i], i
         i += 1
 
 
@@ -106,13 +106,13 @@ def test_corner_cases():
 
     def test_config(input_line, n, l_pad=("", 0), r_pad=("", 0), sep=" "):
         def gen(texts):
-            yield (np.array(texts.split(" "), dtype='S'),)
+            yield (np.array(texts.split(" ")),)
 
         try:
             dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
             dataset = dataset.map(operations=text.Ngram(n, l_pad, r_pad, separator=sep), input_columns=["text"])
             for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-                return [d.decode("utf8") for d in data["text"]]
+                return [d for d in data["text"]]
         except (ValueError, TypeError) as e:
             return str(e)
 

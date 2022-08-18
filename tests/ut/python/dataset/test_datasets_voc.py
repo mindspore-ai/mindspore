@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore.dataset as ds
-import mindspore.dataset.text as text
 import mindspore.dataset.vision as vision
 
 DATA_DIR = "../data/dataset/testVOC2012"
@@ -32,7 +31,7 @@ def test_voc_segmentation():
     data1 = data1.rename("_meta-filename", "filename")
     num = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert text.to_str(item["filename"]) == IMAGE_ID[num]
+        assert item["filename"] == IMAGE_ID[num]
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
         assert item["target"].shape[0] == TARGET_SHAPE[num]
         num += 1
@@ -50,7 +49,7 @@ def test_voc_detection():
     num = 0
     count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert text.to_str(item["filename"]) == IMAGE_ID[num]
+        assert item["filename"] == IMAGE_ID[num]
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
         for label in item["label"]:
             count[label[0]] += 1
@@ -128,7 +127,7 @@ def test_voc_meta_column():
     data2 = data2.rename("_meta-filename", "filename")
     num = 0
     for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert text.to_str(item[2]) == IMAGE_ID[num]
+        assert item[2] == IMAGE_ID[num]
         num += 1
 
     # scenario three: map input_columns != output_columns
@@ -141,7 +140,7 @@ def test_voc_meta_column():
     data3 = data3.rename("_meta-filename", "filename")
     num = 0
     for item in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert text.to_str(item[0]) == IMAGE_ID[num]
+        assert item[0] == IMAGE_ID[num]
         num += 1
 
     # scenario four: map input_columns != output_columns
@@ -154,7 +153,7 @@ def test_voc_meta_column():
     data4 = data4.rename("_meta-filename", "filename")
     num = 0
     for item in data4.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert text.to_str(item[0]) == IMAGE_ID[num]
+        assert item[0] == IMAGE_ID[num]
         num += 1
 
 

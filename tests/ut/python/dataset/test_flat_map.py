@@ -27,7 +27,7 @@ def test_flat_map_basic():
     Expectation: The result is as expected
     """
     def flat_map_func(x):
-        data_dir = x.item().decode('utf8')
+        data_dir = x.item()
         d = ds.ImageFolderDataset(data_dir)
         return d
 
@@ -48,12 +48,12 @@ def test_flat_map_chain_call():
     Expectation: The result is as expected
     """
     def flat_map_func_1(x):
-        data_dir = x.item().decode('utf8')
+        data_dir = x.item()
         d = ds.ImageFolderDataset(data_dir)
         return d
 
     def flat_map_func_2(x):
-        text_file = x.item().decode('utf8')
+        text_file = x.item()
         d = ds.TextFileDataset(text_file)
         d = d.flat_map(flat_map_func_1)
         return d

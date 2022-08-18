@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore.dataset as ds
 from mindspore.dataset.text import JiebaTokenizer
-from mindspore.dataset.text import JiebaMode, to_str
+from mindspore.dataset.text import JiebaMode
 from mindspore import log as logger
 
 DATA_FILE = "../data/dataset/testJiebaDataset/3.txt"
@@ -63,7 +63,7 @@ def test_jieba_1():
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     ret = []
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -80,7 +80,7 @@ def test_jieba_1_1():
                     num_parallel_workers=1)
     expect = ['今天', '天气', '太', '好', '了', '我们', '一起', '去', '外面', '玩', '吧']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -97,7 +97,7 @@ def test_jieba_1_2():
                     num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -116,7 +116,7 @@ def test_jieba_2():
     data = data.map(operations=jieba_op, input_columns=["text"],
                     num_parallel_workers=2)
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -135,7 +135,7 @@ def test_jieba_2_1():
                     num_parallel_workers=2)
     expect = ['男默女泪', '市', '长江大桥']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -167,7 +167,7 @@ def test_jieba_2_3():
                     num_parallel_workers=2)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -189,7 +189,7 @@ def test_jieba_3():
                     num_parallel_workers=1)
     expect = ['男默女泪', '市', '长江大桥']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -212,7 +212,7 @@ def test_jieba_3_1():
                     num_parallel_workers=1)
     expect = ['男默女泪', '市长', '江大桥']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -233,7 +233,7 @@ def test_jieba_4():
                     num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -267,7 +267,7 @@ def test_jieba_5():
                     num_parallel_workers=1)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 
@@ -289,7 +289,7 @@ def test_jieba_with_offsets_1():
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
     ret = []
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -314,7 +314,7 @@ def test_jieba_with_offsets_1_1():
     expected_offsets_start = [0, 6, 12, 15, 18, 21, 27, 33, 36, 42, 45]
     expected_offsets_limit = [6, 12, 15, 18, 21, 27, 33, 36, 42, 45, 48]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -339,7 +339,7 @@ def test_jieba_with_offsets_1_2():
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -366,7 +366,7 @@ def test_jieba_with_offsets_2():
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -393,7 +393,7 @@ def test_jieba_with_offsets_2_1():
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -420,7 +420,7 @@ def test_jieba_with_offsets_2_2():
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]
     expected_offsets_limit = [6, 12, 21, 27, 30, 42, 45, 51, 57]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -450,7 +450,7 @@ def test_jieba_with_offsets_3():
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -481,7 +481,7 @@ def test_jieba_with_offsets_3_1():
     expected_offsets_start = [0, 12, 18]
     expected_offsets_limit = [12, 18, 27]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -510,7 +510,7 @@ def test_jieba_with_offsets_4():
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -538,7 +538,7 @@ def test_jieba_with_offsets_5():
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]
     expected_offsets_limit = [6, 12, 21, 27, 30, 42, 45, 51, 57]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["token"])
+        ret = i["token"]
         for index, item in enumerate(ret):
             assert item == expect[index]
         for index, item in enumerate(i["offsets_start"]):
@@ -548,17 +548,14 @@ def test_jieba_with_offsets_5():
 
 
 def gen():
-    text = np.array("今天天气太好了我们一起去外面玩吧".encode("UTF8"), dtype='S')
+    text = np.array("今天天气太好了我们一起去外面玩吧", dtype=np.str_)
     yield (text,)
 
 
 def pytoken_op(input_data):
-    te = str(to_str(input_data))
-    tokens = []
-    tokens.append(te[:5].encode("UTF8"))
-    tokens.append(te[5:10].encode("UTF8"))
-    tokens.append(te[10:].encode("UTF8"))
-    return np.array(tokens, dtype='S')
+    te = input_data.item()
+    tokens = [te[:5], te[5:10], te[10:]]
+    return np.array(tokens, dtype=np.str_)
 
 
 def test_jieba_6():
@@ -572,7 +569,7 @@ def test_jieba_6():
                     num_parallel_workers=1)
     expect = ['今天天气太', '好了我们一', '起去外面玩吧']
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for index, item in enumerate(ret):
             assert item == expect[index]
 

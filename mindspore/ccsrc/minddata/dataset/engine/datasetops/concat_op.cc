@@ -76,13 +76,13 @@ Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
     for (auto item : new_row) {
       if (item->type() != data_type_[index]) {
         RETURN_STATUS_UNEXPECTED(
-          "Invalid datatype, the data type of two datasets concated should be the same, but got " +
-          item->type().ToString() + " and " + data_type_[index].ToString() + ".");
+          "Concat: the data types of the two datasets to be concatenated should be the same, but got: " +
+          data_type_[index].ToString() + " and " + item->type().ToString() + ".");
       }
       if (item->Rank() != data_rank_[index]) {
         RETURN_STATUS_UNEXPECTED(
-          "Invalid datatype, the data rank of two datasets concated should be the same, but got " +
-          std::to_string(item->Rank()) + " and " + std::to_string(data_rank_[index]) + ".");
+          "Concat: the data tensor rank of the two datasets to be concatenated should be the same, but got: " +
+          std::to_string(data_rank_[index]) + " and " + std::to_string(item->Rank()) + ".");
       }
       index++;
     }

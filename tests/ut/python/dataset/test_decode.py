@@ -106,14 +106,13 @@ class ImageDataset:
 
     def __getitem__(self, index):
         # use file open and read method
-        f = open(self.data[index], 'rb')
-        img_bytes = f.read()
-        f.close()
+        with open(self.data[index], 'rb') as f:
+            img_bytes = [f.read()]
         if self.data_type == "numpy":
-            img_bytes = np.frombuffer(img_bytes, dtype=np.uint8)
+            img_bytes = np.array(img_bytes)
 
         # Return bytes directly
-        return (img_bytes, self.label[index])
+        return img_bytes, self.label[index]
 
     def __len__(self):
         return len(self.data)
@@ -134,7 +133,7 @@ def test_read_image_decode_op():
     dataset2 = dataset2.map(operations=[decode_op, to_tensor], input_columns=["data"])
 
     for item1, item2 in zip(dataset1, dataset2):
-        assert np.count_nonzero(item1[0].asnumpy() - item2[0].asnumpy()) == 0
+        np.allclose(item1[0].asnumpy(), item2[0].asnumpy())
 
 
 if __name__ == "__main__":

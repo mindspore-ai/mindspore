@@ -97,7 +97,7 @@ PYBIND_REGISTER(
       .def(py::init([](const std::shared_ptr<DatasetNode> &self, int32_t batch_size, bool drop_remainder, bool pad,
                        const py::list &in_col_names, const py::list &out_col_names, const py::list &col_order,
                        const py::object &size_obj, const py::object &map_obj, const py::dict &pad_info,
-                       std::shared_ptr<PythonMultiprocessingRuntime> python_mp) {
+                       const std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
         std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> c_pad_info;
         if (pad) {
           THROW_IF_ERROR(toPadInfo(pad_info, &c_pad_info));

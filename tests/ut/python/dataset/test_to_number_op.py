@@ -30,7 +30,7 @@ ms_non_integral_types = [mstype.float16, mstype.float32, mstype.float64]
 
 def string_dataset_generator(strings):
     for string in strings:
-        yield (np.array(string, dtype='S'),)
+        yield (np.array(string, dtype=np.str_),)
 
 
 def test_to_number_eager():

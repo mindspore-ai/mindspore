@@ -1117,21 +1117,13 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   return Status::OK();
 }
 
-Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
+Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustBrightness", {1, 2, 3, 4, 5, 6, 10, 11, 12}, {3}, {3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustBrightness: load image failed.");
-    }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustBrightness: image rank should be 3, but got:" + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
-    // Rank of the image represents how many dimensions, image is expected to be HWC
-    if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
-      RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3, got image rank: " +
-                               std::to_string(input_cv->Rank()) + ", and channel:" + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -1143,22 +1135,13 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   return Status::OK();
 }
 
-Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
+Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha) {
   try {
-    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustContrast", {3, 5, 11}));
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustContrast", {3, 5, 11}, {3}, {3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustContrast: load image failed.");
-    }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustContrast: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
-        ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
-    if (input_cv->Rank() != kDefaultImageChannel || num_channels != kDefaultImageChannel) {
-      RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3, got image rank: " +
-                               std::to_string(input_cv->Rank()) + ", and channel:" + std::to_string(num_channels));
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
@@ -1176,8 +1159,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   return Status::OK();
 }
 
-Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &gamma,
-                   const float &gain) {
+Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float gamma, float gain) {
   try {
     int num_channels = 1;
     if (input->Rank() < kMinImageRank) {
@@ -1237,7 +1219,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   return Status::OK();
 }
 
-Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
+Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float cutoff,
                     const std::vector<uint32_t> &ignore) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
@@ -1323,22 +1305,13 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   return Status::OK();
 }
 
-Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
+Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha) {
   try {
-    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustSaturation", {3, 5, 11}));
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustSaturation", {3, 5, 11}, {3}, {3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustSaturation: load image failed.");
-    }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustSaturation: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
-        ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
-    if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
-      RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3, but got rank: " +
-                               std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -1354,25 +1327,13 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   return Status::OK();
 }
 
-Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue) {
-  if (hue > 0.5 || hue < -0.5) {
-    RETURN_STATUS_UNEXPECTED("AdjustHue: invalid parameter, hue should within [-0.5, 0.5], but got: " +
-                             std::to_string(hue));
-  }
+Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float hue) {
   try {
-    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustHue", {3, 11}));
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustHue", {3, 11}, {3}, {3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustHue: load image failed.");
-    }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > kMinImageRank,
-                                 "AdjustHue: image rank should be greater than: " + std::to_string(kMinImageRank) +
-                                   ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = static_cast<int>(input_cv->shape()[2]);
-    if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
-      RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3, but got rank: " +
-                               std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -1669,8 +1630,8 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     }
     auto input_type = input->type();
     CHECK_FAIL_RETURN_UNEXPECTED(input_type != DataType::DE_UINT32 && input_type != DataType::DE_UINT64 &&
-                                   input_type != DataType::DE_INT64 && input_type != DataType::DE_STRING,
-                                 "RandomLighting: invalid tensor type of uint32, int64, uint64 or string.");
+                                   input_type != DataType::DE_INT64 && !input_type.IsString(),
+                                 "RandomLighting: invalid tensor type of uint32, int64, uint64, string or bytes.");
 
     std::vector<std::vector<float>> eig = {{55.46 * -0.5675, 4.794 * 0.7192, 1.148 * 0.4009},
                                            {55.46 * -0.5808, 4.794 * -0.0045, 1.148 * -0.8140},

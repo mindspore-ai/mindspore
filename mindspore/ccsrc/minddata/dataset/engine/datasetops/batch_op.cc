@@ -233,7 +233,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
         strings.emplace_back(*itr);
       }
     }
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, &new_tensor));
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, first_type, &new_tensor));
   }
   *dst = std::move(new_tensor);
   return Status::OK();

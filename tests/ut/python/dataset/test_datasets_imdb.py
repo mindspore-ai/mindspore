@@ -46,7 +46,7 @@ def test_imdb_basic():
     for index, item in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
         # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        strs = item["text"].item().decode("utf8")
+        strs = item["text"]
         logger.info("text is {}".format(strs))
         logger.info("label is {}".format(item["label"]))
         assert strs == content[index]
@@ -83,7 +83,7 @@ def test_imdb_test():
     for index, item in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
         # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        strs = item["text"].item().decode("utf8")
+        strs = item["text"]
         logger.info("text is {}".format(strs))
         logger.info("label is {}".format(item["label"]))
         assert strs == content[index]
@@ -120,7 +120,7 @@ def test_imdb_train():
     for index, item in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
         # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        strs = item["text"].item().decode("utf8")
+        strs = item["text"]
         logger.info("text is {}".format(strs))
         logger.info("label is {}".format(item["label"]))
         assert strs == content[index]
@@ -153,7 +153,7 @@ def test_imdb_num_samples():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -201,7 +201,7 @@ def test_imdb_num_shards():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -231,7 +231,7 @@ def test_imdb_shard_id():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -261,7 +261,7 @@ def test_imdb_no_shuffle():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -291,7 +291,7 @@ def test_imdb_true_shuffle():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -322,7 +322,7 @@ def test_random_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -353,7 +353,7 @@ def test_distributed_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -384,7 +384,7 @@ def test_pk_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -416,7 +416,7 @@ def test_subset_random_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -448,7 +448,7 @@ def test_weighted_random_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -518,7 +518,7 @@ def test_chained_sampler_with_random_sequential_repeat():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -553,7 +553,7 @@ def test_chained_sampler_with_distribute_random_batch_then_repeat():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -588,7 +588,7 @@ def test_chained_sampler_with_weighted_random_pk_sampler():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -615,7 +615,7 @@ def test_imdb_rename():
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 
@@ -657,7 +657,7 @@ def test_imdb_zip():
     num_iter = 0
     for item in data3.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"].item().decode("utf8")))
+        logger.info("text is {}".format(item["text"]))
         logger.info("label is {}".format(item["label"]))
         num_iter += 1
 

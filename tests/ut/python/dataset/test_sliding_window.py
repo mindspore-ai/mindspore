@@ -63,7 +63,7 @@ def test_sliding_window_string():
         for i in range(data['text'].shape[0]):
             result.append([])
             for j in range(data['text'].shape[1]):
-                result[i].append(data['text'][i][j].decode('utf8'))
+                result[i].append(data['text'][i][j])
         result = np.array(result)
     np.testing.assert_array_equal(result, expect)
 
@@ -156,7 +156,7 @@ def test_sliding_window_big_width2():
     """
     op = text.SlidingWindow(10, 0)
     inputs = ["大", "家", "早", "上", "好"]
-    expect = np.array([])
+    expect = np.array([], dtype=np.str_)
     result = op(inputs)
     assert np.array_equal(result, expect)
 

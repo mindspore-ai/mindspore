@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-import mindspore._c_dataengine as cde
 
+import mindspore
+import mindspore._c_dataengine as cde
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-from mindspore.dataset.text import to_str, to_bytes
 
 
 def test_basic():
@@ -26,17 +26,18 @@ def test_basic():
     Description: Test basic Tensor op on NumPy dataset with strings
     Expectation: Output is equal to the expected output
     """
-    x = np.array([["ab", "cde", "121"], ["x", "km", "789"]], dtype='S')
-    n = cde.Tensor(x)
-    arr = n.as_array()
-    np.testing.assert_array_equal(x, arr)
+    byte_data = np.array([["ab", "cde", "121"], ["x", "km", "789"]], dtype=np.bytes_)
+    byte_tensor = cde.Tensor(byte_data)
+    byte_array = byte_tensor.as_array()
+    np.testing.assert_array_equal(byte_data, byte_array)
 
-    arr2 = n.as_decoded_array()
-    np.testing.assert_array_equal(x, np.char.encode(arr2))
-    np.testing.assert_array_equal(np.char.decode(x), arr2)
+    string_data = np.array([["ab", "cde", "121"], ["x", "km", "789"]], dtype=np.str_)
+    string_tensor = cde.Tensor(string_data)
+    string_array = string_tensor.as_array()
+    np.testing.assert_array_equal(string_data, string_array)
 
 
-def compare(strings, dtype='S'):
+def compare(strings, dtype="S"):
     arr = np.array(strings, dtype=dtype)
 
     def gen():
@@ -45,7 +46,7 @@ def compare(strings, dtype='S'):
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
     for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal(d[0], arr.astype('S'))
+        np.testing.assert_array_equal(d[0], arr)
 
 
 def test_generator():
@@ -91,6 +92,7 @@ def test_batching_strings():
     Description: Test applying Batch op to string tensor using GeneratorDataset
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         for row in chinese:
             yield (np.array(row),)
@@ -99,7 +101,7 @@ def test_batching_strings():
     data = data.batch(2, drop_remainder=True)
 
     for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal(d[0], to_bytes(chinese[0:2]))
+        np.testing.assert_array_equal(d[0], chinese[0:2])
 
 
 def test_map():
@@ -108,18 +110,18 @@ def test_map():
     Description: Test applying Map op split to string tensor using GeneratorDataset
     Expectation: Output is equal to the expected output
     """
+
     def gen():
-        yield (np.array(["ab cde 121"], dtype='S'),)
+        yield (np.array(["ab cde 121"], dtype=np.str_),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
-    def split(b):
-        s = to_str(b)
+    def split(s):
         splits = s.item().split()
         return np.array(splits)
 
     data = data.map(operations=split, input_columns=["col"])
-    expected = np.array(["ab", "cde", "121"], dtype='S')
+    expected = np.array(["ab", "cde", "121"], dtype=np.str_)
     for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(d[0], expected)
 
@@ -130,6 +132,7 @@ def test_map2():
     Description: Test applying Map op upper to string tensor using GeneratorDataset
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         yield (np.array(["ab cde 121"], dtype='S'),)
 
@@ -162,9 +165,9 @@ def test_tfrecord1():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], to_str(d["line"]))
-        np.testing.assert_array_equal(words[i], to_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], d["line"])
+        np.testing.assert_array_equal(words[i], d["words"])
+        np.testing.assert_array_equal(chinese[i], d["chinese"])
 
 
 def test_tfrecord2():
@@ -179,9 +182,9 @@ def test_tfrecord2():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], to_str(d["line"]))
-        np.testing.assert_array_equal(words[i], to_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], d["line"])
+        np.testing.assert_array_equal(words[i], d["words"])
+        np.testing.assert_array_equal(chinese[i], d["chinese"])
 
 
 def test_tfrecord3():
@@ -201,9 +204,9 @@ def test_tfrecord3():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].reshape([2, 2]).shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], to_str(d["line"]))
-        np.testing.assert_array_equal(words[i].reshape([2, 2]), to_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], d["line"])
+        np.testing.assert_array_equal(words[i].reshape([2, 2]), d["words"])
+        np.testing.assert_array_equal(chinese[i], d["chinese"])
 
 
 def create_text_mindrecord():
@@ -238,8 +241,8 @@ def test_mindrecord():
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert d["english"].shape == line[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], to_str(d["english"]))
-        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], d["english"])
+        np.testing.assert_array_equal(chinese[i], d["chinese"])
 
 
 # The following tests cases were copied from test_pad_batch but changed to strings instead
@@ -250,14 +253,14 @@ def test_mindrecord():
 # col2d: [[100],[200]], [[101],[201]], [102],[202]], [103],[203]]
 def gen_2cols(num):
     for i in range(num):
-        yield (np.array([str(i)]), np.array([[str(i + 100)], [str(i + 200)]]))
+        yield np.array([str(i)], dtype=np.str_), np.array([[str(i + 100)], [str(i + 200)]], dtype=np.bytes_)
 
 
 # this generator function yield one column of variable shapes
 # col: [0], [0,1], [0,1,2], [0,1,2,3]
 def gen_var_col(num):
     for i in range(num):
-        yield (np.array([str(j) for j in range(i + 1)]),)
+        yield np.array([str(j) for j in range(i + 1)])
 
 
 # this generator function yield two columns of variable shapes
@@ -265,7 +268,7 @@ def gen_var_col(num):
 # col2: [100], [100,101], [100,101,102], [100,110,102,103]
 def gen_var_cols(num):
     for i in range(num):
-        yield (np.array([str(j) for j in range(i + 1)]), np.array([str(100 + j) for j in range(i + 1)]))
+        yield np.array([str(j) for j in range(i + 1)]), np.array([str(100 + j) for j in range(i + 1)])
 
 
 # this generator function yield two columns of variable shapes
@@ -273,7 +276,8 @@ def gen_var_cols(num):
 # col2: [[100]], [[100,101]], [[100,101,102]], [[100,110,102,103]]
 def gen_var_cols_2d(num):
     for i in range(num):
-        yield (np.array([[str(j) for j in range(i + 1)]]), np.array([[str(100 + j) for j in range(i + 1)]]))
+        yield (np.array([[str(j) for j in range(i + 1)]], dtype=np.str_),
+               np.array([[str(100 + j) for j in range(i + 1)]], dtype=np.bytes_))
 
 
 def test_batch_padding_01():
@@ -283,10 +287,10 @@ def test_batch_padding_01():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], b"-1")})
+    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], "-1")})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal([[b"0", b"-1"], [b"1", b"-1"]], data["col1d"])
+        np.testing.assert_array_equal([["0", "-1"], ["1", "-1"]], data["col1d"])
         np.testing.assert_array_equal([[[b"100", b"-2"], [b"200", b"-2"]], [[b"101", b"-2"], [b"201", b"-2"]]],
                                       data["col2d"])
 
@@ -299,10 +303,10 @@ def test_batch_padding_02():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], "")})
+    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], b"")})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal([[b"0"], [b"1"]], data["col1d"])
+        np.testing.assert_array_equal([["0"], ["1"]], data["col1d"])
         np.testing.assert_array_equal([[[b"100", b""]], [[b"101", b""]]], data["col2d"])
 
 
@@ -315,13 +319,13 @@ def test_batch_padding_03():
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, "PAD_VALUE")})  # pad automatically
     data1 = data1.repeat(2)
-    res = dict()
-    for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        res[ind] = data["col"].copy()
-    np.testing.assert_array_equal(res[0], [[b"0", b"PAD_VALUE"], [0, 1]])
-    np.testing.assert_array_equal(res[1], [[b"0", b"1", b"2", b"PAD_VALUE"], [b"0", b"1", b"2", b"3"]])
-    np.testing.assert_array_equal(res[2], [[b"0", b"PAD_VALUE"], [b"0", b"1"]])
-    np.testing.assert_array_equal(res[3], [[b"0", b"1", b"2", b"PAD_VALUE"], [b"0", b"1", b"2", b"3"]])
+    res = []
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(data["col"].copy())
+    np.testing.assert_array_equal(res[0], [["0", "PAD_VALUE"], [0, 1]])
+    np.testing.assert_array_equal(res[1], [["0", "1", "2", "PAD_VALUE"], ["0", "1", "2", "3"]])
+    np.testing.assert_array_equal(res[2], [["0", "PAD_VALUE"], ["0", "1"]])
+    np.testing.assert_array_equal(res[3], [["0", "1", "2", "PAD_VALUE"], ["0", "1", "2", "3"]])
 
 
 def test_batch_padding_04():
@@ -334,8 +338,8 @@ def test_batch_padding_04():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal(data["col1"], [[b"0", b""], [b"0", b"1"]])
-        np.testing.assert_array_equal(data["col2"], [[b"100", b""], [b"100", b"101"]])
+        np.testing.assert_array_equal(data["col1"], [["0", ""], ["0", "1"]])
+        np.testing.assert_array_equal(data["col2"], [["100", ""], ["100", "101"]])
 
 
 def test_batch_padding_05():
@@ -346,14 +350,37 @@ def test_batch_padding_05():
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
     data1 = data1.batch(batch_size=3, drop_remainder=False,
-                        pad_info={"col2": ([2, None], "-2"), "col1": (None, "-1")})  # pad automatically
+                        pad_info={"col2": ([2, None], b"-2"), "col1": (None, "-1")})  # pad automatically
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"],
-                                      [[[b"0", b"-1", b"-1"]], [[b"0", b"1", b"-1"]], [[b"0", b"1", b"2"]]])
+                                      [[["0", "-1", "-1"]], [["0", "1", "-1"]], [["0", "1", "2"]]])
         np.testing.assert_array_equal(data["col2"],
                                       [[[b"100", b"-2", b"-2"], [b"-2", b"-2", b"-2"]],
                                        [[b"100", b"101", b"-2"], [b"-2", b"-2", b"-2"]],
                                        [[b"100", b"101", b"102"], [b"-2", b"-2", b"-2"]]])
+
+
+def test_process_string_pipeline():
+    """
+    Feature: String and Bytes Tensor
+    Description: Test processing string and bytes data
+    Expectation: The output is as expected
+    """
+    def generate_and_process_string(dtype):
+        data = np.array([["apple"], ["orange"], ["banana"], ["1"], ["2"], ["3"], ["a"], ["b"], ["c"]], dtype=dtype)
+        dataset = ds.NumpySlicesDataset(data, column_names=["text"])
+        assert dataset.output_types()[0].type == dtype
+        dataset = dataset.map(lambda e: (e, e), input_columns=["text"], output_columns=["text1", "text2"],
+                              column_order=["text1", "text2"])
+        for i, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
+            item["text1"] = data[i]
+            item["text2"] = data[i]
+        for i, item in enumerate(dataset.create_tuple_iterator(num_epochs=1)):
+            item[0] = mindspore.Tensor(data[i])
+            item[1] = mindspore.Tensor(data[i])
+
+    generate_and_process_string(np.bytes_)
+    generate_and_process_string(np.str_)
 
 
 if __name__ == '__main__':
@@ -371,3 +398,4 @@ if __name__ == '__main__':
     test_batch_padding_03()
     test_batch_padding_04()
     test_batch_padding_05()
+    test_process_string_pipeline()

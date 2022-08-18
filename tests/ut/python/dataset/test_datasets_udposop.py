@@ -68,7 +68,7 @@ def test_udpos_dataset_shuffle_false_four_parallel():
             "Bus", "Nine", "Job", "Mom", "Abed", "From"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -96,7 +96,7 @@ def test_udpos_dataset_shuffle_false_one_parallel():
             "...", "The", "ken", "Ori", "...", "Respect"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -124,7 +124,7 @@ def test_udpos_dataset_shuffle_files_four_parallel():
             "Bus", "Nine", "Job", "Mom", "Abed", "From"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -152,7 +152,7 @@ def test_udpos_dataset_shuffle_files_one_parallel():
             "Bus", "Nine", "Job", "Mom", "Abed", "From"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -180,7 +180,7 @@ def test_udpos_dataset_shuffle_global_four_parallel():
             "...", "The", "ken", "Ori", "...", "Respect"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -208,7 +208,7 @@ def test_udpos_dataset_shuffle_global_one_parallel():
             "Abed", "...", "Zoom", "...", "Abed", "From"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6
@@ -258,7 +258,7 @@ def test_udpos_dataset_repeat():
             "What", "Like", "Good", "Mom", "Iike", "Good"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 3

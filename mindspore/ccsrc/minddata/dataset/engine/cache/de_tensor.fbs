@@ -30,7 +30,8 @@ enum TensorType : byte {
     DE_FLOAT16 = 10,
     DE_FLOAT32 = 11,
     DE_FLOAT64 = 12,
-    DE_STRING = 13
+    DE_STRING = 13,
+    DE_BYTES = 14
 }
 
 /// The meta information of a Tensor

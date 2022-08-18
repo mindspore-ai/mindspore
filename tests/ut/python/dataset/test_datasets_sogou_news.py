@@ -41,9 +41,9 @@ def test_sogou_news_dataset_all():
     data = ds.SogouNewsDataset(DATA_SOGOU_NEWS_DIR, usage='all', shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['index'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['index'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["1", "Jefferson commented on thick eyebrow: he has the top five talents in the league, but he "
                       "is not the top five", "They say he has the talent of the top five in the league. The talent "
                       "of the top five in the league is one of the most disrespectful statements. I say he has the "
@@ -75,9 +75,9 @@ def test_sogou_news_dataset_quoted():
     data = ds.SogouNewsDataset(DATA_SOGOU_NEWS_DIR, usage='test', shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['index'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['index'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["1", "Make history", "Su Bingtian's 100m breakthrough\\n 9.83",
                       "4", "Tesla price", "Tesla reduced its price by 70000 yuan",
                       "1", "Opening ceremony of the 14th National Games", "On the evening of September 15, Beijing time"

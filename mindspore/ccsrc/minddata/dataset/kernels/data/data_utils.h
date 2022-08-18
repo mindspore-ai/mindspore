@@ -52,7 +52,8 @@ Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<
 // @param output Tensor. The shape and type of the output tensor is same as input
 // @param fill_value Tensor. A scalar tensor used to fill the output tensor
 
-Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value);
+Status Fill(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+            const std::shared_ptr<Tensor> &fill_value);
 
 // Returns a type changed input tensor.
 //          Example: if input tensor is float64, the output will the specified dataType. See DataTypes.cpp

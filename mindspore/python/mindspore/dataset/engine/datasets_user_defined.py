@@ -140,9 +140,7 @@ def _convert_row(row):
     # convert single item to np.array
     prim_type = (int, float, str, bytes, np.ndarray, Tensor)
     if isinstance(row, prim_type):
-        if isinstance(row, bytes):         # bytes
-            item = np.frombuffer(row, np.uint8)
-        elif isinstance(row, Tensor):      # mindspore.Tensor
+        if isinstance(row, Tensor):      # mindspore.Tensor
             item = row.asnumpy()
         else:
             item = np.array(row, copy=False)
@@ -156,9 +154,7 @@ def _convert_row(row):
     idx = 0
     for x in row:
         idx += 1
-        if isinstance(x, bytes):         # bytes
-            value.append(np.frombuffer(x, np.uint8))
-        elif isinstance(x, Tensor):      # mindspore.Tensor
+        if isinstance(x, Tensor):      # mindspore.Tensor
             value.append(x.asnumpy())
         elif isinstance(x, dict):
             raise TypeError("The {}th item of input data is expected to be " \

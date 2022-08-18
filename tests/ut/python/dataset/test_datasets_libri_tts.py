@@ -170,8 +170,8 @@ def test_libri_tts_sequential_sampler():
     data1 = ds.LibriTTSDataset(DATA_DIR, usage="train-clean-100", sampler=sampler)
     data2 = ds.LibriTTSDataset(DATA_DIR, usage="train-clean-100", shuffle=False, num_samples=num_samples)
     list1, list2 = [], []
-    list_expected = [24000, b'good morning', b'Good morning', 2506, 11267, b'2506_11267_000001_000000',
-                     24000, b'good afternoon', b'Good afternoon', 2506, 11267, b'2506_11267_000002_000000']
+    list_expected = [24000, 'good morning', 'Good morning', 2506, 11267, '2506_11267_000001_000000',
+                     24000, 'good afternoon', 'Good afternoon', 2506, 11267, '2506_11267_000002_000000']
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(output_numpy=True, num_epochs=1),

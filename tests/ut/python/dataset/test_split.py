@@ -103,11 +103,11 @@ def test_unmappable_split():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(item["text"].item().decode("utf8"))
+        s1_output.append(item["text"])
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
 
     assert s1_output == text_file_data[0:4]
     assert s2_output == text_file_data[4:]
@@ -117,11 +117,11 @@ def test_unmappable_split():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(item["text"].item().decode("utf8"))
+        s1_output.append(item["text"])
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
 
     assert s1_output == text_file_data[0:4]
     assert s2_output == text_file_data[4:]
@@ -131,11 +131,11 @@ def test_unmappable_split():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(item["text"].item().decode("utf8"))
+        s1_output.append(item["text"])
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
 
     assert s1_output == text_file_data[0:2]
     assert s2_output == text_file_data[2:]
@@ -161,11 +161,11 @@ def test_unmappable_randomize_deterministic():
     for _ in range(10):
         s1_output = []
         for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-            s1_output.append(item["text"].item().decode("utf8"))
+            s1_output.append(item["text"])
 
         s2_output = []
         for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-            s2_output.append(item["text"].item().decode("utf8"))
+            s2_output.append(item["text"])
 
         # note no overlap
         assert s1_output == [text_file_data[0], text_file_data[2], text_file_data[1], text_file_data[4]]
@@ -195,11 +195,11 @@ def test_unmappable_randomize_repeatable():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(item["text"].item().decode("utf8"))
+        s1_output.append(item["text"])
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
 
     # note no overlap
     assert s1_output == [text_file_data[0], text_file_data[2], text_file_data[1], text_file_data[4]] * num_epochs
@@ -242,7 +242,7 @@ def test_unmappable_multi_split():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(item["text"].item().decode("utf8"))
+        s1_output.append(item["text"])
     assert s1_output == s1_correct_output
 
     # no randomize in second split
@@ -250,15 +250,15 @@ def test_unmappable_multi_split():
 
     s1s1_output = []
     for item in s1s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s1_output.append(item["text"].item().decode("utf8"))
+        s1s1_output.append(item["text"])
 
     s1s2_output = []
     for item in s1s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s2_output.append(item["text"].item().decode("utf8"))
+        s1s2_output.append(item["text"])
 
     s1s3_output = []
     for item in s1s3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s3_output.append(item["text"].item().decode("utf8"))
+        s1s3_output.append(item["text"])
 
     assert s1s1_output == [s1_correct_output[0]]
     assert s1s2_output == [s1_correct_output[1], s1_correct_output[2]]
@@ -266,7 +266,7 @@ def test_unmappable_multi_split():
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
     assert s2_output == [text_file_data[3]]
 
     # randomize in second split
@@ -277,15 +277,15 @@ def test_unmappable_multi_split():
 
     s1s1_output = []
     for item in s1s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s1_output.append(item["text"].item().decode("utf8"))
+        s1s1_output.append(item["text"])
 
     s1s2_output = []
     for item in s1s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s2_output.append(item["text"].item().decode("utf8"))
+        s1s2_output.append(item["text"])
 
     s1s3_output = []
     for item in s1s3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s3_output.append(item["text"].item().decode("utf8"))
+        s1s3_output.append(item["text"])
 
     assert s1s1_output == [s1_correct_output[shuffled_ids[0]]]
     assert s1s2_output == [s1_correct_output[shuffled_ids[1]], s1_correct_output[shuffled_ids[2]]]
@@ -293,7 +293,7 @@ def test_unmappable_multi_split():
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(item["text"].item().decode("utf8"))
+        s2_output.append(item["text"])
     assert s2_output == [text_file_data[3]]
 
     # Restore configuration num_parallel_workers

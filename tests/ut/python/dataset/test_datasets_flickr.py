@@ -80,8 +80,7 @@ def test_flickr30k_dataset_annotation_check():
         ])
     ]
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        annotation = [s.decode("utf8") for s in item["annotation"]]
-        np.testing.assert_array_equal(annotation, expect_annotation_arr[count])
+        np.testing.assert_array_equal(item["annotation"], expect_annotation_arr[count])
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
     assert count == 2

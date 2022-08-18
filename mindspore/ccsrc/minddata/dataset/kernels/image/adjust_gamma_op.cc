@@ -27,8 +27,9 @@ Status AdjustGammaOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   IO_CHECK(input, output);
 
   // typecast
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "AdjustGamma: input tensor type should be int, float or double, but got: string.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !input->type().IsString(),
+    "AdjustGamma: input tensor type should be int, float or double, but got: " + input->type().ToString());
 
   if (input->type().IsFloat()) {
     std::shared_ptr<Tensor> input_tensor;

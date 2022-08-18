@@ -65,7 +65,7 @@ class TensorOperation:
         if not hasattr(self, 'callable_op_') or self.callable_op_ is None:
             self.callable_op_ = cde.Execute(self.parse())
         output_tensor_list = self.callable_op_(tensor_row)
-        output_numpy_list = [x.as_decoded_array() for x in output_tensor_list]
+        output_numpy_list = [x.as_array() for x in output_tensor_list]
         return output_numpy_list[0] if len(output_numpy_list) == 1 else tuple(output_numpy_list)
 
     @staticmethod

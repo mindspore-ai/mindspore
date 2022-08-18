@@ -125,10 +125,10 @@ def test_csv_dataset_quoted():
         shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['col1'].item().decode("utf8"),
-                       d['col2'].item().decode("utf8"),
-                       d['col3'].item().decode("utf8"),
-                       d['col4'].item().decode("utf8")])
+        buffer.extend([d['col1'],
+                       d['col2'],
+                       d['col3'],
+                       d['col4']])
     assert buffer == ['a', 'b', 'c', 'd']
 
 
@@ -147,10 +147,10 @@ def test_csv_dataset_separated():
         shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['col1'].item().decode("utf8"),
-                       d['col2'].item().decode("utf8"),
-                       d['col3'].item().decode("utf8"),
-                       d['col4'].item().decode("utf8")])
+        buffer.extend([d['col1'],
+                       d['col2'],
+                       d['col3'],
+                       d['col4']])
     assert buffer == ['a', 'b', 'c', 'd']
 
 
@@ -168,10 +168,10 @@ def test_csv_dataset_embedded():
         shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['col1'].item().decode("utf8"),
-                       d['col2'].item().decode("utf8"),
-                       d['col3'].item().decode("utf8"),
-                       d['col4'].item().decode("utf8")])
+        buffer.extend([d['col1'],
+                       d['col2'],
+                       d['col3'],
+                       d['col4']])
     assert buffer == ['a,b', 'c"d', 'e\nf', ' g ']
 
 
@@ -189,11 +189,11 @@ def test_csv_dataset_chinese():
         shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['col1'].item().decode("utf8"),
-                       d['col2'].item().decode("utf8"),
-                       d['col3'].item().decode("utf8"),
-                       d['col4'].item().decode("utf8"),
-                       d['col5'].item().decode("utf8")])
+        buffer.extend([d['col1'],
+                       d['col2'],
+                       d['col3'],
+                       d['col4'],
+                       d['col5']])
     assert buffer == ['大家', '早上好', '中午好', '下午好', '晚上好']
 
 
@@ -210,10 +210,10 @@ def test_csv_dataset_header():
         shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['col1'].item().decode("utf8"),
-                       d['col2'].item().decode("utf8"),
-                       d['col3'].item().decode("utf8"),
-                       d['col4'].item().decode("utf8")])
+        buffer.extend([d['col1'],
+                       d['col2'],
+                       d['col3'],
+                       d['col4']])
     assert buffer == ['a', 'b', 'c', 'd']
 
 

@@ -62,7 +62,6 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
 
 // Helper function to produce a default/random schema if one didn't exist
 void RandomDataOp::GenerateSchema() {
-  const int32_t type_offset = 2;
   // To randomly create a schema, we need to choose:
   // a) how many columns
   // b) the type of each column
@@ -78,13 +77,13 @@ void RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - type_offset));
+    auto newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::DE_STRING - 1));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
       // 0 is not a valid dimension value.  however, we can support "*" or unknown, so map the random
       // 0 value to the unknown attribute if 0 is chosen
-      dsize_t dim_value = static_cast<dsize_t>(GenRandomInt(0, kMaxDimValue));
+      auto dim_value = static_cast<dsize_t>(GenRandomInt(0, kMaxDimValue));
       if (dim_value == 0) {
         dim_value = TensorShape::kDimUnknown;
       }

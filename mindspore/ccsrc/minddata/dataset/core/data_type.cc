@@ -54,7 +54,7 @@ uint8_t DataType::AsCVType() const {
       type_name = std::string(kTypeInfo[type_].name_);
     }
     std::string err_msg = "Cannot convert [" + type_name + "] to OpenCV type.";
-    err_msg += " Currently unsupported data type: [uint32, int64, uint64, string]";
+    err_msg += " Currently unsupported data type: [uint32, int64, uint64, string, bytes]";
     MS_LOG(ERROR) << err_msg;
   }
 
@@ -116,6 +116,8 @@ DataType::DataType(const std::string &type_str) {
     type_ = DE_FLOAT64;
   } else if (type_str == "string") {
     type_ = DE_STRING;
+  } else if (type_str == "bytes") {
+    type_ = DE_BYTES;
   } else {
     type_ = DE_UNKNOWN;
   }
@@ -154,8 +156,10 @@ DataType DataType::FromNpArray(const py::array &arr) {
     return DataType(DataType::DE_FLOAT32);
   } else if (py::isinstance<py::array_t<std::double_t>>(arr)) {
     return DataType(DataType::DE_FLOAT64);
-  } else if (arr.dtype().kind() == 'S' || arr.dtype().kind() == 'U') {
+  } else if (arr.dtype().kind() == 'U') {
     return DataType(DataType::DE_STRING);
+  } else if (arr.dtype().kind() == 'S') {
+    return DataType(DataType::DE_BYTES);
   } else {
     if (arr.size() == 0) {
       MS_LOG(ERROR) << "Please check input data, the data of numpy array is empty.";
@@ -163,7 +167,7 @@ DataType DataType::FromNpArray(const py::array &arr) {
     std::string err_msg = "Cannot convert from numpy type. Unknown data type is returned!";
     err_msg +=
       " Currently supported data type: [int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, "
-      "float64, string]";
+      "float64, string, bytes]";
     MS_LOG(ERROR) << err_msg;
     return DataType(DataType::DE_UNKNOWN);
   }
@@ -181,6 +185,5 @@ std::string DataType::GetPybindFormat() const {
   return res;
 }
 #endif
-
 }  // namespace dataset
 }  // namespace mindspore
