@@ -26,6 +26,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,6 +50,9 @@ constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
 constexpr auto StaticInput = 2;
 constexpr auto DynamicInput = 3;
+
+constexpr auto k2DHeightIndexNCHW = 2;
+constexpr auto k2DHeightIndexNHWC = 1;
 
 template <typename T, typename S = int64_t>
 class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
@@ -129,6 +133,38 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return false;
   }
 
+  void CalPadList(const ShapeVector input_shape, const ShapeVector filter_shape, int h_index, int w_index,
+                  std::vector<int> *pad_list) {
+    if ((*pad_list)[kTop2DPadIndex] == -1 || (*pad_list)[kBottom2DPadIndex] == -1) {
+      int pad_needed_h =
+        (static_cast<int>(std::ceil((input_shape[h_index] * 1.0) / stride_[kHeight2DStrideIndex])) - 1) *
+          stride_[kHeight2DStrideIndex] +
+        dilation_[h_index] * (filter_shape[h_index] - 1) + 1 - input_shape[h_index];
+      auto pad_needed_h_final = std::max(0, pad_needed_h);
+      (*pad_list)[kTop2DPadIndex] = static_cast<int>(std::floor(pad_needed_h_final * 1.0 / kSymmetricCoef));
+      (*pad_list)[kBottom2DPadIndex] = pad_needed_h_final - (*pad_list)[kTop2DPadIndex];
+    }
+    if ((*pad_list)[kLeft2DPadIndex] == -1 || (*pad_list)[kRight2DPadIndex] == -1) {
+      int pad_needed_w =
+        (static_cast<int>(std::ceil((input_shape[w_index] * 1.0) / stride_[kWidth2DStrideIndex])) - 1) *
+          stride_[kWidth2DStrideIndex] +
+        dilation_[w_index] * (filter_shape[w_index] - 1) + 1 - input_shape[w_index];
+      auto pad_needed_w_final = std::max(0, pad_needed_w);
+      (*pad_list)[kLeft2DPadIndex] = static_cast<int>(std::floor(pad_needed_w_final * 1.0 / kSymmetricCoef));
+      (*pad_list)[kRight2DPadIndex] = pad_needed_w_final - (*pad_list)[kLeft2DPadIndex];
+    }
+  }
+
+  void SetDilaA(int dilaA[]) {
+    if (data_format_ == kOpFormat_NHWC) {
+      dilaA[kIndex0] = dilation_[kHeight2DDilationIndex - 1];
+      dilaA[kIndex1] = dilation_[kWidth2DDilationIndex - 1];
+    } else {
+      dilaA[kIndex0] = dilation_[kHeight2DDilationIndex];
+      dilaA[kIndex1] = dilation_[kWidth2DDilationIndex];
+    }
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
@@ -142,8 +178,12 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     data_format_ = (format_attr == kOpFormat_NHWC) ? kOpFormat_NHWC : data_format_;
     ShapeVector input_shape;
     GetInputShape(kernel_node, &input_shape);
+    int h_index = k2DHeightIndexNCHW;
+    int w_index = k2DHeightIndexNCHW + 1;
     if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
+      h_index = k2DHeightIndexNHWC;
+      w_index = k2DHeightIndexNHWC + 1;
       if (format_attr == kOpFormat_NCHW) {
         ShapeNCHW2NHWC(&input_shape);
       }
@@ -154,7 +194,6 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                 "cudnnSetConvGroupCount failed");
-
     std::vector<int> pad_list;
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
@@ -162,15 +201,17 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (pad_list.size() != k2DPadSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got " << pad_list.size();
     }
+    SetStrideAndDilation(kernel_node);
+    CalPadList(input_shape, filter_shape, h_index, w_index, &pad_list);
     pad_height_ = pad_list[kTop2DPadIndex];
     pad_width_ = pad_list[kLeft2DPadIndex];
     use_pad_ = !((pad_height_ == pad_list[kBottom2DPadIndex]) && (pad_width_ == pad_list[kRight2DPadIndex]));
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
-    SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t dx_desc_real = nullptr;
     int padA[kConv2dDimSize];
     int strideA[kConv2dDimSize] = {stride_[kHeight2DStrideIndex], stride_[kWidth2DStrideIndex]};
-    int dilaA[kConv2dDimSize] = {dilation_[kHeight2DDilationIndex], dilation_[kWidth2DDilationIndex]};
+    int dilaA[kConv2dDimSize];
+    SetDilaA(dilaA);
     if (use_pad_) {
       pad_height_ = pad_list[kTop2DPadIndex] + pad_list[kBottom2DPadIndex];
       pad_width_ = pad_list[kLeft2DPadIndex] + pad_list[kRight2DPadIndex];
@@ -430,9 +471,16 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 4, but got "
                         << dilation_.size();
     }
-    if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
-                        << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
+    if (data_format_ == kOpFormat_NCHW) {
+      if (dilation_[kIndex0] != 1 || dilation_[kIndex1] != 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
+                          << "dilation[0]: " << dilation_[kIndex0] << ", dilation[1]: " << dilation_[kIndex1];
+      }
+    } else if (data_format_ == kOpFormat_NHWC) {
+      if (dilation_[kIndex0] != 1 || dilation_[kIndex3] != 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 3 axis must be 1, but got "
+                          << "dilation[0]: " << dilation_[kIndex0] << ", dilation[3]: " << dilation_[kIndex3];
+      }
     }
   }
   bool IsDynamic(const ShapeVector &dy_shape, const ShapeVector &filter_shape) {

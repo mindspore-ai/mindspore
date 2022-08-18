@@ -1321,89 +1321,7 @@ class Conv2D(Primitive):
     r"""
     2D convolution layer.
 
-    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
-    the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
-    For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
-
-    .. math::
-
-        out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
-
-    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
-    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
-    filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
-    of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the
-    convolution kernel. The full kernel has shape
-    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where group is the group number to split the input in the channel dimension.
-
-    If the 'pad_mode' is set to be "pad", the output height and width will be
-    :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
-    (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
-    (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` respectively.
-    Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
-
-
-    The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
-    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
-    http://cs231n.github.io/convolutional-networks/.
-
-    Args:
-        out_channel (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value is for both the height and the width of
-            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
-            width of the kernel.
-        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
-        pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
-
-            - same: Adopts the way of completion. The height and width of the output will be equal to
-              the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
-              left and right possiblily.
-              Otherwise, the last extra padding will be calculated from the bottom and the right side.
-              If this mode is set, `pad` must be 0.
-
-            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
-
-            - pad: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the input
-              Tensor borders. `pad` must be greater than or equal to 0.
-        pad (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
-                    the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
-                    with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
-                    pad[1], pad[2], and pad[3] accordingly. Default: 0.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
-                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater than or equal to 1 and bounded by the height and width of the
-                                      input `x`. Default: 1.
-        group (int): Splits input into groups. Default: 1.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
-          then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
-
-    Outputs:
-        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
-        TypeError: If `out_channel` or `group` is not an int.
-        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `pad` is a tuple whose length is not equal to 4.
-        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+    Refer to :func:`mindspore.ops.conv2d` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2533,7 +2451,8 @@ class Conv2DBackpropInput(Primitive):
         self.add_prim_attr('groups', self.group)
         if pad_list:
             for x in pad_list:
-                validator.check_non_negative_int(x, 'element of pad_list', self.name)
+                if x != -1:
+                    validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
 
 

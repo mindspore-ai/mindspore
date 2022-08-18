@@ -295,7 +295,8 @@ from .nn_func import (
     grid_sample,
     ctc_greedy_decoder,
     ctc_loss,
-    dropout
+    dropout,
+    conv2d,
 )
 from .linalg_func import (
     svd,

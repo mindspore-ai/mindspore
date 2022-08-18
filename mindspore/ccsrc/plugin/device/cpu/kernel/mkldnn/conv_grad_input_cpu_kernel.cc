@@ -26,7 +26,7 @@ namespace kernel {
 namespace {
 constexpr auto kConv2DBackpropInput = "Conv2DBackpropInput";
 constexpr auto kConv3DBackpropInput = "Conv3DBackpropInput";
-constexpr size_t kConvGradInputInputsNum = 2;
+constexpr size_t kConvGradInputInputsMinNum = 2;
 constexpr size_t kConvGradInputOutputsNum = 1;
 }  // namespace
 
@@ -107,7 +107,9 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvGradInputInputsNum, kernel_name_);
+  if (inputs.size() < kConvGradInputInputsMinNum) {
+    MS_LOG(EXCEPTION) << "Input numbers can not less " << kConvGradInputInputsMinNum << ", but got " << inputs.size();
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvGradInputOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->addr);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[weight_index_]->addr);
@@ -117,16 +119,19 @@ bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 std::vector<KernelAttr> ConvGradInputCpuKernelMod::GetOpSupport() {
-  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {{kConv2DBackpropInput,
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddOutputAttr(kNumberTypeFloat32)}},
-                                                                            {kConv3DBackpropInput,
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddOutputAttr(kNumberTypeFloat32)}}};
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
+    {kConv2DBackpropInput,
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32)}},
+    {kConv3DBackpropInput,
+     {KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddOutputAttr(kNumberTypeFloat32)}}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
     MS_LOG(EXCEPTION) << "ConvGradInput does not support " << kernel_type_;
