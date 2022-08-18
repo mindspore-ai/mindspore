@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, Parameter
+from mindspore.ops import functional as F
 
 # all cases tested against dchip
 
@@ -43,6 +44,16 @@ def scatter_mul_forward(nptype):
 
     net = TestScatterMulNet(inputx)
     output = net(indices, updates)
+    expected = inputx.asnumpy()
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+def scatter_mul_forward_functional(nptype):
+    inputx = Tensor(np.arange(0, 9).reshape((3, 3)).astype(nptype))
+    indices = Tensor(np.array([[[1, 0, 2], [2, 2, 0]], [[1, 0, 1], [2, 1, 2]]]).astype(np.int32))
+    updates = Tensor(np.ones((2, 2, 3, 3)).astype(nptype))
+
+    output = F.scatter_mul(Parameter(inputx, name="inputx"), indices, updates)
     expected = inputx.asnumpy()
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -151,3 +162,19 @@ def test_scatter_mul_dynamic_updates():
     scatter_mul_dynamic_updates()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     scatter_mul_dynamic_updates()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_scatter_mul_forward_int32_functional():
+    """
+    Feature: test scatter_mul forward.
+    Description: test int32 inputs.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    scatter_mul_forward_functional(np.int32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    scatter_mul_forward_functional(np.int32)
