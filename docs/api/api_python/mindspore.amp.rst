@@ -1,23 +1,36 @@
 mindspore.amp
 ================
 
-.. include:: amp/mindspore.amp.DynamicLossScaleManager.rst
+Cell管理
+-----------
 
-.. include:: amp/mindspore.amp.LossScaleManager.rst
+.. mscnautosummary::
+    :toctree: amp
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. include:: amp/mindspore.amp.FixedLossScaleManager.rst
+    mindspore.amp.DynamicLossScaleManager
 
-.. include:: amp/mindspore.amp.build_train_network.rst
+    mindspore.amp.LossScaleManager
 
-.. include:: amp/mindspore.amp.DynamicLossScaler.rst
+    mindspore.amp.FixedLossScaleManager
 
-.. include:: amp/mindspore.amp.StaticLossScaler.rst
+    mindspore.amp.build_train_network
 
-.. include:: amp/mindspore.amp.LossScaler.rst
+函数式
+-----------
 
-.. include:: amp/mindspore.amp.auto_mixed_precision.rst
+.. mscnautosummary::
+    :toctree: amp
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. include:: amp/mindspore.amp.all_finite.rst
+    mindspore.amp.DynamicLossScaler
 
-.. automodule:: mindspore.amp
-    :members:
+    mindspore.amp.StaticLossScaler
+
+    mindspore.amp.LossScaler
+
+    mindspore.amp.auto_mixed_precision
+
+    mindspore.amp.all_finite
