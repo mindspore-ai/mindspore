@@ -43,8 +43,13 @@
 #include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 #include "tools/common/string_util.h"
 #include "ops/core_ops.h"
+#include "ops/quant_dtype_cast.h"
 
 namespace mindspore::lite::quant {
+static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                                         prim::kPrimMatMulFusion, prim::kPrimFullConnection,
+                                                         prim::kPrimLayerNormFusion};
+
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
 QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode);
@@ -70,6 +75,13 @@ int GetQuantType(const CNodePtr &cnode);
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 
 int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
+
+ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
+                                   const std::vector<schema::QuantParamT> &input_quant_params,
+                                   const std::vector<schema::QuantParamT> &output_quant_params);
+bool IsGraphInDTypeCast(const CNodePtr &cnode);
+
+bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,

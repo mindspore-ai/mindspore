@@ -139,6 +139,51 @@ int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
   return RET_OK;
 }
 
+ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
+                                   const std::vector<schema::QuantParamT> &input_quant_params,
+                                   const std::vector<schema::QuantParamT> &output_quant_params) {
+  auto prim_c = std::make_shared<ops::QuantDTypeCast>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  prim_c->Init(src_type, dst_type);
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(input_quant_params.size(), output_quant_params.size());
+  MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
+  quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
+  quant_params_holder->set_input_quant_param(0, input_quant_params);
+  quant_params_holder->set_output_quant_param(0, output_quant_params);
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
+  prim->AddAttr("quant_params", quant_params_holder);
+  return NewValueNode(prim);
+}
+
+bool IsGraphInDTypeCast(const CNodePtr &cnode) {
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    return false;
+  }
+  auto input_node = cnode->input(1);
+  MS_CHECK_FALSE(input_node == nullptr, false);
+  return IsGraphInput(input_node);
+}
+
+bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    return false;
+  }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  auto node_users = manager->node_users()[cnode];
+  for (auto &node_user : node_users) {
+    auto output_cnode = node_user.first->cast<CNodePtr>();
+    if (!opt::CheckPrimitiveType(output_cnode, prim::kPrimReturn)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {
   if (tensor.quantParams.empty()) {
     return false;

@@ -102,6 +102,7 @@
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/propagete_quant_param_pass.h"
 #include "tools/converter/quantizer/quant_helper/dtype_transform_pass.h"
+#include "tools/converter/quantizer/quant_helper/graph_inout_transform_pass.h"
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 
@@ -445,7 +446,7 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
   quant::InsertQuantNodeManager inset_quant_node_pass;
   ret = inset_quant_node_pass.InsertQuantDtypeCastNode(func_graph);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "add QuantCast error";
+    MS_LOG(ERROR) << "Add QuantCast error";
     return RET_ERROR;
   }
   return RET_OK;

@@ -44,11 +44,15 @@ constexpr int kPrimIndex = 0;
 constexpr int kPrimOffset = 1;
 constexpr int kU8ZeroPointOffset = 128;
 constexpr int kQuantRange = 127;
+constexpr int kInt8LeftRange = -128;
+constexpr int kInt8RightRange = 127;
 constexpr int kMinIterations = 40;
 
 const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
                                                  prim::kPrimMatMulFusion, prim::kPrimFullConnection,
                                                  prim::kPrimLayerNormFusion};
+const std::set<PrimitivePtr> kUint8toFP32Operator = {prim::kPrimDetectionPostProcess};
+const std::set<TypeId> kFullQuantDType = {kNumberTypeInt8, kNumberTypeUInt8, kNumberTypeFloat32};
 
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,
@@ -66,6 +70,17 @@ enum TargetDevice {
 enum DebugMode {
   FAST,
   DETAIL,
+};
+
+enum CastNodeType {
+  kNone,
+  kQuant,
+  kDeQuant,
+};
+
+enum InsertDirection {
+  FORWARD,
+  BACKWARD,
 };
 
 struct CommonQuantParam {

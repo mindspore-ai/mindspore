@@ -63,6 +63,26 @@ bool QuantParamHolder::IsOutputQuantParamsInited() {
   return is_quant_params_inited;
 }
 
+bool QuantParamHolder::IsInputExistInited() {
+  if (this->input_quant_params_.empty()) {
+    return false;
+  }
+  bool is_exist_param_inited =
+    std::any_of(this->input_quant_params_.begin(), this->input_quant_params_.end(),
+                [](const std::vector<schema::QuantParamT> &quant_params) { return quant_params.front().inited; });
+  return is_exist_param_inited;
+}
+
+bool QuantParamHolder::IsOutputExistInited() {
+  if (this->output_quant_params_.empty()) {
+    return false;
+  }
+  bool is_exist_param_inited =
+    std::any_of(this->output_quant_params_.begin(), this->output_quant_params_.end(),
+                [](const std::vector<schema::QuantParamT> &quant_params) { return quant_params.front().inited; });
+  return is_exist_param_inited;
+}
+
 void QuantParamHolder::ClearQuantParams() {
   quant_type_ = schema::QuantType_QUANT_NONE;
   input_quant_params_.clear();
