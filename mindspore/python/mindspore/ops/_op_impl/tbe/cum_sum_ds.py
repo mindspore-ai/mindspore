@@ -24,7 +24,6 @@ cum_sum_ds_op_info = TBERegOp("CumSum") \
     .kernel_name("cumsum") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .attr("axis", "optional", "int", "all", "0") \
     .attr("exclusive", "optional", "bool", "true,false", "false") \
     .attr("reverse", "optional", "bool", "true,false", "false") \
     .input(0, "x", False, "required", "all") \

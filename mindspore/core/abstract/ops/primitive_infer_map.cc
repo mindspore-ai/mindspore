@@ -193,6 +193,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStandardNormal, ShapeSet{0}},
                                          {kStandardLaplace, ShapeSet{0}},
                                          {kCropAndResizeGradImage, ShapeSet{3}},
+                                         {prim::kPrimCumSum->name(), ShapeSet{1}},
                                          {kAdaptiveMaxPool3DGrad, ShapeSet{1}}};
   return host_depends;
 }

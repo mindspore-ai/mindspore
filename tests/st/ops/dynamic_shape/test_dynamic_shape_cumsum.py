@@ -40,11 +40,13 @@ class CumSumDyNet(nn.Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("axis", [0, 1, 2])
-@pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int8])
+@pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int32])
 def test_dynamic_shape_cumsum(axis, data_type):
     """
     Feature: CumSum DynamicShape.
