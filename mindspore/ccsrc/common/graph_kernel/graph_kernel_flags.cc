@@ -82,12 +82,12 @@ std::map<std::string, std::string> ParseFlags(const std::string &flags) {
     auto flag = ParseFlag(token);
     if (flag.first != "") {
       if (!flag_map.insert(flag).second) {
-        MS_LOG(WARNING) << "For 'context.set_context', the flag " << flag.first
-                        << " in the parameter 'graph_kernel_flags' is repeated.";
+        MS_LOG(WARNING) << "For 'context.set_context', the flag '" << flag.first
+                        << "' in the parameter 'graph_kernel_flags' is repeated.";
       }
     } else {
-      MS_LOG(WARNING) << "For 'context.set_context', the flag " << flag.first
-                      << " in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
+      MS_LOG(WARNING) << "For 'context.set_context', the flag '" << token
+                      << "' in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
     }
   }
   return flag_map;
@@ -99,7 +99,13 @@ class FlagRegister {
   ~FlagRegister() = default;
 
   template <typename T>
-  void AddFlag(const std::string &flag_name, T *flag_var, T default_value = T()) const {
+  void AddFlag(const std::string &flag_name, T *flag_var, T default_value) const {
+    *flag_var = std::move(default_value);
+    AddFlag(flag_name, flag_var);
+  }
+
+  template <typename T>
+  void AddFlag(const std::string &flag_name, T *flag_var) const {
     const auto iter = flag_map_.find(flag_name);
     if (iter != flag_map_.end()) {
       T var;
@@ -107,7 +113,6 @@ class FlagRegister {
       if (ret) {
         *flag_var = std::move(var);
       } else {
-        *flag_var = std::move(default_value);
         if (iter->second.empty()) {
           MS_LOG(WARNING) << "For 'context.set_context', the flag --" << iter->first
                           << " in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
@@ -117,8 +122,6 @@ class FlagRegister {
         }
       }
       (void)flag_map_.erase(iter);
-    } else {
-      *flag_var = std::move(default_value);
     }
   }
 
@@ -129,8 +132,8 @@ class FlagRegister {
   }
 
   bool ParseValue(const std::string &s, bool *result) const {
-    *result = (s.empty() || s == "true" || s == "on" || s == "1");
-    return *result || s == "false" || s == "off" || s == "0";
+    *result = (s.empty() || s == "true" || s == "True" || s == "on" || s == "1");
+    return *result || s == "false" || s == "False" || s == "off" || s == "0";
   }
 
   template <typename T>
@@ -176,23 +179,13 @@ const GraphKernelFlags &GraphKernelFlags::GetInstance() {
 }
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
-  // This environment variable is deprecated.
-  auto flags = common::GetEnv("MS_GRAPH_KERNEL_FLAGS");
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  auto flags = common::GetEnv("MS_GRAPH_KERNEL_FLAGS");
   bool enable_context{false};
 #else
-  static bool print_warning = true;
-  if ((!flags.empty()) && print_warning) {
-    print_warning = false;
-    MS_LOG(WARNING) << "The environment variable \"MS_GRAPH_KERNEL_FLAGS\" is deprecated from version 1.6 "
-                    << "and will be removed in a future version, "
-                    << "use context \"graph_kernel_flags\" instead.";
-  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (flags.empty()) {
-    flags = context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
-  }
+  auto flags = context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
   bool enable_context = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
 #endif
   return std::make_pair(flags, enable_context);
@@ -271,17 +264,17 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
-  reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion, false);
-  reg.AddFlag("enable_auto_tensor_inplace", &enable_auto_tensor_inplace, false);
+  reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion);
+  reg.AddFlag("enable_auto_tensor_inplace", &enable_auto_tensor_inplace);
   reg.AddFlag("enable_low_precision", &enable_low_precision);
   reg.AddFlag("enable_csr_fusion", &enable_csr_fusion);
   reg.AddFlag("enable_debug_mode", &enable_debug_mode);
   reg.AddFlag("enable_lite_conv_tuning", &enable_lite_conv_tuning);
 
   // Integer flags
-  reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth, -1);
+  reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);
   reg.AddFlag("online_tuning", &online_tuning);
-  reg.AddFlag("cpu_refer_thread_num", &cpu_refer_thread_num, default_cpu_refer_tread_num);
+  reg.AddFlag("cpu_refer_thread_num", &cpu_refer_thread_num);
   reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
   reg.AddFlag("parallel_ops_level", &parallel_ops_level);
   reg.AddFlag("recompute_increment_threshold", &recompute_increment_threshold);
