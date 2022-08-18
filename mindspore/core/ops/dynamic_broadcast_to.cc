@@ -50,6 +50,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
   if (input_y->isa<abstract::AbstractTensor>()) {
     if (y_value->isa<tensor::Tensor>()) {
       auto shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", y_value, prim_name);
+      CheckShapeValid(x_shape, shape_value);
       return std::make_shared<abstract::Shape>(shape_value);
     }
     y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
@@ -92,6 +93,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
   } else if (input_y->isa<abstract::AbstractTuple>()) {
     auto out_shape = GetValue<std::vector<int64_t>>(y_value);
+    CheckShapeValid(x_shape, out_shape);
     return std::make_shared<abstract::Shape>(out_shape);
   }
   MS_EXCEPTION(TypeError) << "For 'BroadcastTo', input args must be tensor or tuple.";
