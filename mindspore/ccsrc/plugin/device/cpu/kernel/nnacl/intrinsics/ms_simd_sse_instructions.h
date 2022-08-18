@@ -306,11 +306,10 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   static const MS_FLOAT32X4 neg = {-1.0f, -1.0f, -1.0f, -1.0f};
   static const MS_FLOAT32X4 pos = {1.0f, 1.0f, 1.0f, 1.0f};
   MS_FLOAT32X4 square = MS_MULQ_F32(src, src);
-  MS_FLOAT32X4 a = MS_MULQ_F32(
-    MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(square, data0), square), data1), square), data2), src);
-  MS_FLOAT32X4 b = MS_ADDQ_F32(
-    MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(data3, square), data4), square), data5), square),
-    data2);
+  MS_FLOAT32X4 a =
+    MS_MUL128_F32(MS_FMADD128_F32(MS_FMADD128_F32(MS_ADD128_F32(square, data0), square, data1), square, data2), src);
+  MS_FLOAT32X4 b =
+    MS_FMADD128_F32(MS_FMADD128_F32(MS_FMADD128_F32(data3, square, data4), square, data5), square, data2);
   return MS_MINQ_F32(MS_MAXQ_F32(MS_DIVQ_F32(a, b), neg), pos);
 }
 

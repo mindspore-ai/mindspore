@@ -327,14 +327,10 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   static const MS_FLOAT32X16 pos = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
                                     1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
   MS_FLOAT32X16 square = MS_MUL512_F32(src, src);
-  MS_FLOAT32X16 a = MS_MUL512_F32(
-    MS_ADD512_F32(MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(MS_ADD512_F32(square, data0), square), data1), square),
-                  data2),
-    src);
-  MS_FLOAT32X16 b = MS_ADD512_F32(
-    MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(MS_ADD512_F32(MS_MUL512_F32(data3, square), data4), square), data5),
-                  square),
-    data2);
+  MS_FLOAT32X16 a =
+    MS_MUL512_F32(MS_FMADD512_F32(MS_FMADD512_F32(MS_ADD512_F32(square, data0), square, data1), square, data2), src);
+  MS_FLOAT32X16 b =
+    MS_FMADD512_F32(MS_FMADD512_F32(MS_FMADD512_F32(data3, square, data4), square, data5), square, data2);
   return MS_MIN512_F32(MS_MAX512_F32(MS_DIV512_F32(a, b), neg), pos);
 }
 
