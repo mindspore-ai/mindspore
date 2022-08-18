@@ -416,3 +416,71 @@ def test_pynative_ms_function_with_tuple_inputs():
     net = Net()
     out = net((x, y))
     assert (out[0].asnumpy() == np.ones([2, 2]) + 1).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_with_optional_inputs():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with optional inputs.
+    Expectation: The calculation result is correct.
+    """
+
+    @ms_function
+    def foo(x, y=1):
+        return x + y
+
+    a = Tensor(3, dtype=ms.int32)
+    assert foo(a).asnumpy() == 4
+    assert foo(a, 2).asnumpy() == 5
+    assert foo(a, y=3).asnumpy() == 6
+    assert foo(x=a, y=4).asnumpy() == 7
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_with_args_inputs():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with *args.
+    Expectation: The calculation result is correct.
+    """
+
+    @ms_function
+    def foo(x, *args):
+        return x + args[0] + args[1]
+
+    x = Tensor(3, dtype=ms.int32)
+    assert foo(x, 1, 2).asnumpy() == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_with_kwargs_inputs():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with **kwargs.
+    Expectation: No exception.
+    """
+
+    @ms_function
+    def foo(x, **kwargs):
+        return x + kwargs.get('y')
+
+    with pytest.raises(ValueError):
+        x = Tensor(3, dtype=ms.int32)
+        data = {"y": 1}
+        foo(x, **data)
