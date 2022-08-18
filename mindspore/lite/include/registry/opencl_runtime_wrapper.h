@@ -30,7 +30,7 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore::registry::opencl {
-class OpenCLRuntimeWrapper {
+class MS_API OpenCLRuntimeWrapper {
  public:
   OpenCLRuntimeWrapper() = default;
   ~OpenCLRuntimeWrapper() = default;
