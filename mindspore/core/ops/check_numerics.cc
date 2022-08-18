@@ -42,6 +42,7 @@ TypePtr CheckNumericsInferType(const PrimitivePtr &primitive, const std::vector<
   return x_dtype;
 }
 }  // namespace
+
 AbstractBasePtr CheckNumericsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -51,7 +52,8 @@ AbstractBasePtr CheckNumericsInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_shape = CheckNumericsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-MIND_API_BASE_IMPL(CheckNumerics, PrimitiveC, BaseOperator);
+
+MIND_API_OPERATOR_IMPL(CheckNumerics, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(CheckNumerics, prim::kPrimCheckNumerics, CheckNumericsInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

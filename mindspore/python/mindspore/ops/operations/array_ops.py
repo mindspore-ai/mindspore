@@ -338,7 +338,7 @@ class CheckNumerics(Primitive):
         RuntimeError: If `x` has nan or inf values.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 3], [2, 4]], dtype=np.float32))
