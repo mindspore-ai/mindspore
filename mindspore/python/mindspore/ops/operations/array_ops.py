@@ -7754,15 +7754,15 @@ class LeftShift(Primitive):
     Raises:
         TypeError: If `x1` or `x2` has wrong type.
         TypeError: If `x1` or `x2` is not tensor.
-        TypeError: If `x1` and `x2` could not be broadcast.
+        ValueError: If `x1` and `x2` could not be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> left_shift = ops.LeftShift()
-        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.uint8))
-        >>> x2 = Tensor(np.array([0, 1, -1]).astype(np.uint8))
+        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.int8))
+        >>> x2 = Tensor(np.array([0, 1, -1]).astype(np.int8))
         >>> output = left_shift(x1, x2)
         >>> print(output)
         [1 4 3]
