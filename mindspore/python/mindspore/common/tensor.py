@@ -1590,7 +1590,9 @@ class Tensor(Tensor_):
 
     def mean(self, axis=(), keep_dims=False):
         """
-        Reduce a dimension of a tensor by averaging all elements in the dimension.
+        Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can
+        reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the
+        same by controlling `keep_dims`.
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
@@ -1600,6 +1602,13 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same data type as input tensor.
+
+            - If `axis` is (), and `keep_dims` is False,
+              the output is a 0-D tensor representing the product of all elements in the input tensor.
+            - If `axis` is int, set as 1, and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+            - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
@@ -1642,6 +1651,13 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input tensor.
 
+            - If `axis` is (), and `keep_dims` is False,
+              the output is a 0-D tensor representing the product of all elements in the input tensor.
+            - If `axis` is int, set as 1, and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+            - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
@@ -1676,6 +1692,13 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input tensor.
 
+            - If `axis` is (), and `keep_dims` is False,
+              the output is a 0-D tensor representing the product of all elements in the input tensor.
+            - If `axis` is int, set as 1, and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+            - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
             TypeError: If `keep_dims` is not a bool.
@@ -1697,7 +1720,9 @@ class Tensor(Tensor_):
 
     def prod(self, axis=(), keep_dims=False):
         """
-        Reduce a dimension of a tensor by product all elements in the dimension.
+        Reduces a dimension of a tensor by product all elements in the dimension, by default. And also can
+        reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the
+        same by controlling `keep_dims`.
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
@@ -1707,6 +1732,13 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same data type as input tensor.
+
+            - If `axis` is (), and `keep_dims` is False,
+              the output is a 0-D tensor representing the product of all elements in the input tensor.
+            - If `axis` is int, set as 1, and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+            - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+              the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
         Raises:
             TypeError: If `axis` is not one of the following: int, tuple or list.
