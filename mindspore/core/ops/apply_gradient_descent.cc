@@ -17,7 +17,9 @@
 #include "ops/apply_gradient_descent.h"
 
 #include <algorithm>
+#include <functional>
 #include <set>
+#include <utility>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
@@ -44,12 +46,21 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
                                << delta_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
+  }
   // alpha must be a scalar [Number, Tensor]
   const int64_t kShapeSize = 1;
   auto alpha_shape_rank = SizeToLong(alpha_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("alpha's rank'", alpha_shape_rank, kLessEqual, kShapeSize, prim_name);
-  if (alpha_shape_rank == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, prim_name);
+  if (batch_rank > 0) {
+    // when batch dimension exists, the rank of `alpha` must equal to batch_rank.
+    (void)CheckAndConvertUtils::CheckInteger("alpha's rank'", alpha_shape_rank, kEqual, batch_rank, prim_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("alpha's rank'", alpha_shape_rank, kLessEqual, kShapeSize, prim_name);
+    if (alpha_shape_rank == 1) {
+      (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, primitive->name());
+    }
   }
   MS_EXCEPTION_IF_NULL(var_shape_ptr);
   return var_shape_ptr;

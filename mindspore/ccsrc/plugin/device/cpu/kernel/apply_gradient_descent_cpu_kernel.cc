@@ -32,10 +32,28 @@ bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto input_shape = inputs[kZero]->GetShapeVector();
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
+  batch_rank_ = base_operator->get_batch_rank();
   dtype_ = inputs[kZero]->GetDtype();
   return true;
+}
+
+int ApplyGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  // get input size and the inner input size for one batch.
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
+  if (batch_rank_ != 0) {
+    inner_input_size_ =
+      std::accumulate(input_shape.begin() + batch_rank_, input_shape.end(), size_t(1), std::multiplies<size_t>());
+  }
+  return ret;
 }
 
 bool ApplyGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -43,6 +61,9 @@ bool ApplyGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressP
                                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyGradientDescentOutputsNum, kernel_name_);
+  if (input_size_ == 0) {
+    return true;
+  }
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -63,7 +84,8 @@ void ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto output_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
   auto task = [this, &var_addr, &alpha_addr, &delta_addr, &output_addr](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {
-      const T alpha_value = alpha_addr[0];
+      size_t batch_index = inner_input_size_ <= 0 ? 0 : pos / inner_input_size_;
+      const T alpha_value = alpha_addr[batch_index];
       var_addr[pos] -= alpha_value * delta_addr[pos];
       output_addr[pos] = var_addr[pos];
     }

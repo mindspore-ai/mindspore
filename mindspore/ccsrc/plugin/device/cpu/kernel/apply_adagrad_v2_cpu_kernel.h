@@ -59,6 +59,8 @@ class ApplyAdagradV2CpuKernelMod : public NativeCpuKernelMod {
 
   float epsilon_;
   bool update_slots_{true};
+  int64_t batch_rank_{0};
+  size_t inner_input_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
