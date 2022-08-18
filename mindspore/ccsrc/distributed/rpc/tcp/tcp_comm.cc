@@ -273,7 +273,7 @@ int TCPComm::ReceiveMessage(Connection *conn) {
 int TCPComm::SetConnectedHandler(Connection *conn) {
   /* add to epoll */
   return conn->recv_event_loop->SetEventHandler(conn->socket_fd,
-                                                (uint32_t)(EPOLLOUT | EPOLLHUP | EPOLLRDHUP | EPOLLERR),
+                                                static_cast<uint32_t>(EPOLLOUT | EPOLLHUP | EPOLLRDHUP | EPOLLERR),
                                                 ConnectedEventHandler, reinterpret_cast<void *>(conn));
 }
 
@@ -370,7 +370,7 @@ bool TCPComm::Flush(const std::string &dst_url) {
     return false;
   } else {
     std::lock_guard<std::mutex> lock(*(conn->conn_mutex));
-    return conn->Flush();
+    return (conn->Flush() > 0);
   }
 }
 
@@ -411,7 +411,7 @@ bool TCPComm::Connect(const std::string &dst_url) {
     conn->write_callback = std::bind(&TCPComm::WriteCallBack, this, std::placeholders::_1);
     conn->read_callback = std::bind(&TCPComm::ReadCallBack, this, std::placeholders::_1);
 
-    int ret = TCPComm::DoConnect(conn, (struct sockaddr *)&addr, sizeof(addr));
+    int ret = TCPComm::DoConnect(conn, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
     if (ret < 0) {
       MS_LOG(ERROR) << "Failed to do connect and link fail destination: " << dst_url;
       if (conn->socket_operation != nullptr) {
@@ -429,7 +429,7 @@ bool TCPComm::Connect(const std::string &dst_url) {
     size_t retry = 3;
     while (conn->state < ConnectionState::kConnected && retry-- > 0) {
       MS_LOG(WARNING) << "Waiting for the state of the connection to " << dst_url << " to be connected...";
-      sleep(interval);
+      (void)sleep(interval);
     }
     if (conn->state != ConnectionState::kConnected) {
       return false;
@@ -450,10 +450,10 @@ bool TCPComm::IsConnected(const std::string &dst_url) {
 }
 
 bool TCPComm::Disconnect(const std::string &dst_url) {
-  int interval = 100000;
+  unsigned int interval = 100000;
   size_t retry = 30;
   while (recv_event_loop_->RemainingTaskNum() != 0 && send_event_loop_->RemainingTaskNum() != 0 && retry > 0) {
-    usleep(interval);
+    (void)usleep(interval);
     retry--;
   }
   if (recv_event_loop_->RemainingTaskNum() > 0 || send_event_loop_->RemainingTaskNum() > 0) {

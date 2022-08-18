@@ -111,7 +111,7 @@ class RecvActor : public RpcActor {
 
   // After Recv actor receives data from a remote peer, the data could be with dynamic shape so we need to preprocess
   // it, e.g., infer shape for RpcRecv kernel and call Resize().
-  void PreprocessRemoteInput(MessageBase *const msg, bool *need_finalize);
+  void PreprocessRemoteInput(const MessageBase *const msg, bool *need_finalize);
 
   // The message callback of the tcp server.
   MessageBase *HandleMessage(MessageBase *const msg);
