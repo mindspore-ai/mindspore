@@ -655,6 +655,8 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   for (const auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     graph->set_root_graph_id(root_graph->graph_id());
+    graph->set_run_mode(device::RunMode::kGraphMode);
+    graph->set_is_loop_count_sink(true);
   }
 
   // todo: waiting for GraphExecutor
@@ -680,6 +682,10 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   // Embedding cache need global step of compute graph, can not enable loop sink, move loop control to loop count actor.
   if (ps::PSContext::instance()->cache_enable()) {
     root_graph->set_is_loop_count_sink(false);
+    for (const auto &graph : all_graphs) {
+      MS_EXCEPTION_IF_NULL(graph);
+      graph->set_is_loop_count_sink(false);
+    }
   }
 #endif
 
