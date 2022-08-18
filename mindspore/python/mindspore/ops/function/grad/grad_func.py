@@ -20,11 +20,10 @@ from mindspore.common import ms_function
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.grad.cell_grad import _JvpInner
-from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.function import ones, expand_dims
-from mindspore.ops.composite import _Grad, _TaylorOperation
+from mindspore.ops.composite import _Grad, _TaylorOperation, GradOperation
 from mindspore.ops import operations as P
 
 cast = P.Cast()
@@ -663,24 +662,41 @@ def linearize(fn, inputs):
     return output, partial(_wrap_container, output, *inputs)
 
 
-def vjp(fn, inputs, v):
+def _check_tensor(inputs):
+    if not isinstance(inputs, (Tensor, tuple)):
+        raise TypeError("The inputs type must be Tensor.")
+    if isinstance(inputs, tuple):
+        for item in inputs:
+            if not isinstance(item, (Tensor, tuple, list)):
+                raise TypeError("The inputs type must be Tensor.")
+    return True
+
+
+vjp_grad = GradOperation(get_all=True, sens_param=True)
+
+
+def vjp(fn, *inputs, has_aux=False):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
     `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
-
-    Note:
-        This function is subjected to change in the future.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
             Tensors.
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
-        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in vector-jacobian-product. The shape and type of `v`
-            should be the same as `fn(inputs)` .
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
 
     Returns:
-        - **net_output** (Union[Tensor, tuple[Tensor]]) - The result of `fn(inputs)` .
-        - **vjp** (Union[Tensor, tuple[Tensor]]) - The result of vector-jacobian-product.
+        Forward outputs and function to calculate vjp.
+
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`. Specially, when `has_aux` is set
+          True, `netout` is the first output of `fn(inputs)`.
+        - **vjp_fn** (Function) - To calculate vector-jacobian-product. Its inputs are the vectors whose shape and
+          type should be the same as `netout` .
+        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
+          It means the second to last outputs of `fn(inputs)`. Specially, `aux_value` does not contribute to gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
@@ -689,7 +705,7 @@ def vjp(fn, inputs, v):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore.ops import vjp
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
@@ -697,32 +713,62 @@ def vjp(fn, inputs, v):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = ops.vjp(Net(), (x, y), v)
-        >>> print(output[0])
+        >>> outputs, vjp_fn = vjp(Net(), x, y)
+        >>> print(outputs)
         [[ 2. 10.]
          [30. 68.]]
-        >>> print(output[1])
+        >>> gradient = vjp_fn(v)
+        >>> print(gradient)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 3.00000000e+00,  1.20000000e+01],
          [ 2.70000000e+01,  4.80000000e+01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 1.00000000e+00,  1.00000000e+00],
          [ 1.00000000e+00,  1.00000000e+00]]))
+        >>> def fn(x, y):
+        ...     return 2 * x + y, y ** 3
+        >>> outputs, vjp_fn, aux = vjp(Net(), x, y, has_aux=True)
+        >>> gradient = vjp_fn(v)
+        >>> print(outputs)
+        Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.00000000e+00,  6.00000000e+00],
+         [ 9.00000000e+00,  1.20000000e+01]])
+        >>> print(aux)
+        Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  8.00000000e+00],
+         [ 2.70000000e+01,  6.40000000e+01]])
+        >>> print(gradient)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.00000000e+00,  2.00000000e+00],
+         [ 2.00000000e+00,  2.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  1.00000000e+00],
+         [ 1.00000000e+00,  1.00000000e+00]]))
     """
-    vjp_inner = _VjpInner()
+    _check_tensor(inputs)
 
-    @ms_function(hash_args=fn)
-    def wrap_container(*arg):
-        args = arg[:-1]
-        vectors = arg[-1]
-        return vjp_inner(fn, *args, vectors)
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError("When has_aux is True, origin fn requires more than one outputs.")
+        res = outputs[0]
+        return res
 
-    if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
-        _raise_type_error()
-    if isinstance(v, list):
-        v = tuple(v)
-    if isinstance(inputs, (tuple, list)):
-        return wrap_container(*inputs, v)
-    return wrap_container(inputs, v)
+    if has_aux:
+        fn_ = aux_fn
+    else:
+        fn_ = fn
+
+    def wrap_container(*v):
+        _check_tensor(v)
+        if len(v) == 1:
+            return vjp_grad(fn_)(*inputs, v[0])
+        return vjp_grad(fn_)(*inputs, v)
+
+    res = fn(*inputs)
+    if has_aux:
+        if len(res) == 2:
+            return res[0], wrap_container, res[1]
+        return res[0], wrap_container, res[1:]
+    return res, wrap_container
 
 
 __all__ = [
