@@ -27,20 +27,19 @@
 #include <memory>
 #include <functional>
 #include <utility>
-#include <unordered_map>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "ir/anf.h"
-#include "ir/manager.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
+#include "utils/macros.h"
 #include "base/base_ref.h"
 #include "base/effect_info.h"
-#include "abstract/abstract_value.h"
+#include "ir/anf.h"
+#include "ir/manager.h"
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
-#include "utils/macros.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -286,7 +285,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Return graphs which forms a recursive loop.
   std::shared_ptr<std::list<FuncGraphPtr>> recursive_graphs();
 
-  std::size_t hash() const override { return std::hash<const FuncGraph *>{}(this); }
+  std::size_t hash() const override { return PointerHash<FuncGraph>{}(this); }
 
   bool operator==(const Value &other) const override {
     if (other.isa<FuncGraph>()) {
@@ -450,7 +449,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::shared_ptr<bool> switch_input_;
   std::shared_ptr<bool> switch_layer_input_;
   int64_t stage_;
-  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+  mindspore::HashMap<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;
 

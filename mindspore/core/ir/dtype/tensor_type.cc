@@ -16,6 +16,7 @@
 
 #include "ir/dtype/tensor_type.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 TypePtr UndeterminedType::DeepCopy() const {
@@ -51,13 +52,16 @@ bool UndeterminedType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const UndeterminedType &>(other).element_type_;
-  if (element_type_ == nullptr && other_elem_type == nullptr) {
-    return true;
-  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
-    return false;
+  const auto &other_type = static_cast<const UndeterminedType &>(other);
+  return common::IsEqual(element_type_, other_type.element_type_);
+}
+
+size_t UndeterminedType::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  if (element_type_ != nullptr) {
+    hash_value = hash_combine(hash_value, element_type_->hash());
   }
-  return *element_type_ == *other_elem_type;
+  return hash_value;
 }
 
 TypePtr TensorType::DeepCopy() const {
@@ -95,14 +99,16 @@ bool TensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const TensorType &>(other).element_type_;
-  // When element_type_ = nullptr, which means any type of Array.
-  if (element_type_ == nullptr && other_elem_type == nullptr) {
-    return true;
-  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
-    return false;
+  const auto &other_type = static_cast<const TensorType &>(other);
+  return common::IsEqual(element_type_, other_type.element_type_);
+}
+
+size_t TensorType::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  if (element_type_ != nullptr) {
+    hash_value = hash_combine(hash_value, element_type_->hash());
   }
-  return *element_type_ == *other_elem_type;
+  return hash_value;
 }
 
 std::string SparseTensorType::ElementsDtypeStr(const StringType str_type) const {
@@ -167,7 +173,7 @@ const bool SparseTensorType::ElementsEqual(const SparseTensorType &other) const 
     return false;
   }
   for (size_t i = 0; i < elements_.size(); ++i) {
-    if (*elements_[i] != *other.elements()[i]) {
+    if (!common::IsEqual(elements_[i], other.elements()[i])) {
       return false;
     }
   }
@@ -179,6 +185,15 @@ bool SparseTensorType::operator==(const Type &other) const {
     return false;
   }
   return ElementsEqual(static_cast<const SparseTensorType &>(other));
+}
+
+size_t SparseTensorType::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  hash_value = hash_combine(hash_value, elements_.size());
+  for (auto &e : elements_) {
+    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
+  }
+  return hash_value;
 }
 
 TypePtr RowTensorType::DeepCopy() const {
@@ -214,13 +229,16 @@ bool RowTensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const RowTensorType &>(other).element_type_;
-  if (element_type_ == nullptr && other_elem_type == nullptr) {
-    return true;
-  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
-    return false;
+  const auto &other_type = static_cast<const RowTensorType &>(other);
+  return common::IsEqual(element_type_, other_type.element_type_);
+}
+
+size_t RowTensorType::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  if (element_type_ != nullptr) {
+    hash_value = hash_combine(hash_value, element_type_->hash());
   }
-  return *element_type_ == *other_elem_type;
+  return hash_value;
 }
 
 TypePtr COOTensorType::DeepCopy() const {
@@ -230,14 +248,10 @@ TypePtr COOTensorType::DeepCopy() const {
   return std::make_shared<COOTensorType>(ElementsClone());
 }
 
-bool COOTensorType::operator==(const Type &other) const { return SparseTensorType::operator==(other); }
-
 TypePtr CSRTensorType::DeepCopy() const {
   if (IsGeneric()) {
     return std::make_shared<CSRTensorType>();
   }
   return std::make_shared<CSRTensorType>(ElementsClone());
 }
-
-bool CSRTensorType::operator==(const Type &other) const { return SparseTensorType::operator==(other); }
 }  // namespace mindspore

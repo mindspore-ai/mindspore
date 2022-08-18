@@ -24,8 +24,6 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
-#include <unordered_set>
-#include <unordered_map>
 #include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -399,7 +397,7 @@ bool CheckMiddleGraphOutputPyInterpret(
 
 // Transform tail call to parallel call.
 void Parser::TransformParallelCall() {
-  std::unordered_set<FuncGraphPtr> latter_call_graphs_set;
+  mindspore::HashSet<FuncGraphPtr> latter_call_graphs_set;
   for (auto &parallel_call_vec : parallel_call_graphs_) {
     bool all_middle_graphs_output_scalar = CheckMiddleGraphOutputContainScalar(parallel_call_vec);
     if (all_middle_graphs_output_scalar) {

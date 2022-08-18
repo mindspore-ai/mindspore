@@ -80,13 +80,8 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
         return_value_type_(func_desc_->retval()),
         specify_out_type_(specify_out_type) {
     for (size_t i = 0; i < nargs_; ++i) {
-      TypePtr type = func_desc_->args()[i];
-      if (type_map_[type]) {
-        type_map_[type]->push_back(i);
-      } else {
-        type_map_[type] = std::make_shared<std::vector<size_t>>();
-        type_map_[type]->push_back(i);
-      }
+      const TypePtr &type = func_desc_->args()[i];
+      type_map_[type].push_back(i);
     }
   }
   ~UniformPrimEvaluator() override { impl_ = nullptr; };
@@ -113,7 +108,7 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
   const std::size_t nargs_;
   const TypePtr return_value_type_;
   const TypePtr specify_out_type_;
-  mindspore::HashMap<TypePtr, std::shared_ptr<std::vector<size_t>>, TypeHasher, TypeEqual> type_map_;
+  mindspore::HashMap<TypePtr, std::vector<size_t>, TypeHashById, TypeEqualById> type_map_;
 };
 
 class DoSignatureEvaluator final : public Evaluator {

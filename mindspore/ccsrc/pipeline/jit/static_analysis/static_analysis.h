@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,13 @@
 #include <map>
 #include <set>
 #include <mutex>
-#include <unordered_map>
-#include <unordered_set>
-#include "abstract/abstract_value.h"
 #include "utils/ms_utils.h"
-
-#ifdef DEBUG
-#include <stack>
-#endif
-
 #include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/log_adapter.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "abstract/abstract_value.h"
 #include "abstract/analysis_context.h"
 #include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/parse.h"
@@ -144,16 +138,19 @@ class AnfNodeConfig : public Config {
   }
 
   bool operator==(const AnfNodeConfig &other) const {
-    // Compare node with pointer, context with pointer except DummyContext as it's created by make_shared().
-    // Context should not be nullptr.
+    if (this == &other) {
+      return true;
+    }
+    // Compare node with pointer.
     if (node_ != other.node_) {
       return false;
     }
-    if (context_->IsDummyContext() && other.context_->IsDummyContext()) {
-      return node_ == other.node_;
+    // Compare context with pointer.
+    if (context_ == other.context_) {
+      return true;
     }
-    // Don't check `func_graph_` equality.
-    return context_ == other.context_;
+    // If pointer not equal, both should be DummyContext.
+    return context_->IsDummyContext() && other.context_->IsDummyContext();
   }
 
   std::string ToString() const override {
@@ -214,7 +211,7 @@ class VirtualConfig : public Config {
 
 using PrimEvaluatorMap = mindspore::HashMap<PrimitivePtr, EvaluatorPtr, PrimitiveHasher, PrimitiveEqual>;
 using AnfNodeConfigMap =
-  std::unordered_map<AnfNodeConfigPtr, AnfNodeConfigPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+  mindspore::HashMap<AnfNodeConfigPtr, AnfNodeConfigPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
 
 struct AnalysisResult {
   EvalResultPtr eval_result;
@@ -223,7 +220,11 @@ struct AnalysisResult {
 
 struct PartialAppHasher {
   std::size_t operator()(const std::pair<AbstractFunctionPtr, AbstractBasePtrList> &p) const {
-    return hash_combine(PointerHash<AbstractFunctionPtr>{}(p.first), AbstractBasePtrListHash(p.second));
+    auto hash_value = PointerHash<AbstractFunctionPtr>{}(p.first);
+    for (const auto &abs : p.second) {
+      hash_value = hash_combine(hash_value, PointerHash<AbstractBasePtr>{}(abs));
+    }
+    return hash_value;
   }
 };
 
@@ -231,7 +232,7 @@ struct PartialAppHasher {
 struct EvaluatorArgs {
   EvaluatorArgs(const EvaluatorPtr &eval, const AbstractBasePtrList &args) : evaluator_(eval), args_(args) {}
   bool operator==(const EvaluatorArgs &other) const {
-    return (evaluator_ == other.evaluator_) && AbstractBasePtrListDeepEqual(args_, other.args_);
+    return (this == &other) || ((evaluator_ == other.evaluator_) && AbstractBasePtrListDeepEqual(args_, other.args_));
   }
   bool operator!=(const EvaluatorArgs &other) const { return !(*this == other); }
 
@@ -255,7 +256,14 @@ struct PrimitiveEvalCacheKey {
 
 struct PrimitiveEvalCacheHash {
   std::size_t operator()(const PrimitiveEvalCacheKey &key) const {
-    return hash_combine(key.attrs.size(), AbstractBasePtrListHash(key.args));
+    auto hash_value = key.attrs.size();
+    for (const auto &attr : key.attrs) {
+      hash_value = hash_combine(hash_value, std::hash<std::string>{}(attr.first));
+      if (attr.second != nullptr) {
+        hash_value = hash_combine(hash_value, attr.second->hash());
+      }
+    }
+    return hash_combine(hash_value, AbstractBasePtrListHash(key.args));
   }
 };
 
@@ -271,7 +279,7 @@ struct PrimitiveEvalCacheEqual {
 class PrimitiveEvalCache {
  public:
   using EvalCache =
-    std::unordered_map<PrimitiveEvalCacheKey, EvalResultPtr, PrimitiveEvalCacheHash, PrimitiveEvalCacheEqual>;
+    mindspore::HashMap<PrimitiveEvalCacheKey, EvalResultPtr, PrimitiveEvalCacheHash, PrimitiveEvalCacheEqual>;
   using PrimToEvalCache = mindspore::HashMap<std::string, EvalCache>;
   EvalResultPtr Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
   void Put(const PrimitivePtr &prim, AttrValueMap &&attrs, const AbstractBasePtrList &args,
@@ -359,15 +367,15 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
-  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
-  std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
+  mindspore::HashMap<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
+  mindspore::HashMap<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
     constructors_app_;
 
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<EvaluatorArgs> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
-  std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
+  mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
   // Root or top func_graph for static analysis;
   FuncGraphPtr root_func_graph_{nullptr};
   AnalysisContextPtr root_context_{nullptr};

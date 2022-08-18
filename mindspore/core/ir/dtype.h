@@ -37,6 +37,7 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/ref.h"
 #include "ir/dtype/monad_type.h"
+#include "utils/ms_utils.h"
 
 /* namespace to support intermediate representation definition */
 namespace mindspore {
@@ -419,24 +420,45 @@ MS_CORE_API bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_ty
 /// \return The result of the judgment.
 MS_CORE_API bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
 
-/// \brief TypeHasher provides a hash function for the shared_ptr of Type.
-struct MS_CORE_API TypeHasher {
-  std::size_t operator()(TypePtr const &type) const;
+/// \brief TypeHashById provides a hash function by Type id.
+struct MS_CORE_API TypeHashById {
+  std::size_t operator()(TypePtr const &type) const {
+    return type == nullptr ? 0 : static_cast<size_t>(type->type_id());
+  }
+};
+
+/// \brief TypeEqualById provides an equivalent function by Type id.
+struct MS_CORE_API TypeEqualById {
+  bool operator()(const TypePtr &t1, const TypePtr &t2) const {
+    return (t1 == t2) || (t1 != nullptr && t2 != nullptr && t1->type_id() == t2->type_id());
+  }
 };
 
 /// \brief TypeListHasher provides a hash function for the list of shared_ptr of Type.
 struct MS_CORE_API TypeListHasher {
-  std::size_t operator()(const TypePtrList &type_list) const;
-};
-
-/// \brief TypeEqual provides an equivalent function for the shared_ptr of Type.
-struct MS_CORE_API TypeEqual {
-  bool operator()(TypePtr const &t1, TypePtr const &t2) const;
+  std::size_t operator()(const TypePtrList &type_list) const {
+    std::size_t hash_sum = type_list.size();
+    for (auto &type : type_list) {
+      hash_sum = hash_combine(hash_sum, (type == nullptr ? 0 : type->hash()));
+    }
+    return hash_sum;
+  }
 };
 
 /// \brief TypeListEqual provides an equivalent function for the list of shared_ptr of Type.
 struct MS_CORE_API TypeListEqual {
-  bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const;
+  bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const {
+    const auto size = lhs.size();
+    if (size != rhs.size()) {
+      return false;
+    }
+    for (std::size_t i = 0; i < size; ++i) {
+      if (!common::IsEqual(lhs[i], rhs[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 GVAR_DEF(TypePtr, kTypeExternal, std::make_shared<External>());

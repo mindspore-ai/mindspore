@@ -24,13 +24,13 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
 
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/signature.h"
 #include "abstract/abstract_value.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -91,7 +91,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   FuncGraphPtr GenerateStubFunc(const TypePtrList &types) const;
   std::string name_;
   std::vector<Signature> signatures_;
-  std::unordered_map<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;
+  mindspore::HashMap<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;
 
  private:
   DebugInfoPtr debug_info_{nullptr};

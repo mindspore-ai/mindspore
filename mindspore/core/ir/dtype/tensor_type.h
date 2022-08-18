@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ class MS_CORE_API UndeterminedType final : public Object {
   std::string DumpText() const override;
 
   bool operator==(const Type &other) const override;
+  size_t hash() const override;
 
  protected:
   TypePtr element_type_;
@@ -108,6 +109,7 @@ class MS_CORE_API TensorType : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
+  size_t hash() const override;
 
  private:
   TypePtr element_type_;
@@ -145,16 +147,17 @@ class MS_CORE_API SparseTensorType : public Object {
   TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
 
   const TypePtr operator[](std::size_t dim) const;
-  bool operator==(const Type &other) const;
+  bool operator==(const Type &other) const override;
+  size_t hash() const override;
   TypePtrList elements() const { return elements_; }
 
   std::size_t size() const { return elements_.size(); }
-  std::string ToString() const;
-  std::string ToReprString() const;
-  std::string DumpText() const;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
   const TypePtrList ElementsClone() const;
   const bool ElementsEqual(const SparseTensorType &other) const;
-  TypePtr DeepCopy() const;
+  TypePtr DeepCopy() const override;
 
  private:
   TypePtrList elements_;
@@ -194,6 +197,7 @@ class MS_CORE_API RowTensorType final : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
+  size_t hash() const override;
 
  private:
   TypePtr element_type_;
@@ -220,7 +224,6 @@ class MS_CORE_API COOTensorType final : public SparseTensorType {
 
   TypeId generic_type_id() const override { return kObjectTypeCOOTensorType; }
   TypePtr DeepCopy() const override;
-  bool operator==(const Type &other) const override;
 };
 using COOTensorTypePtr = std::shared_ptr<COOTensorType>;
 
@@ -243,7 +246,6 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
   size_t GetElementIndex() override { return 2; }
   TypeId generic_type_id() const override { return kObjectTypeCSRTensorType; }
   TypePtr DeepCopy() const override;
-  bool operator==(const Type &other) const override;
 };
 using CSRTensorTypePtr = std::shared_ptr<CSRTensorType>;
 }  // namespace mindspore

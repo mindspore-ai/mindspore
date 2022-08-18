@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class ProgramSpecializer {
   // The list to erase the DeadNode in tuple/list elements.
   std::vector<std::pair<AnfNodePtr, size_t>> dead_node_list_;
   // Map for unspecialized abstract function to specialized abstract;
-  std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
+  mindspore::HashMap<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
     specialized_abs_map_;
 
   AbstractBasePtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);

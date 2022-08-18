@@ -70,13 +70,11 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   }
   if (node_abs->isa<abstract::PrimitiveAbstractClosure>()) {
     // Ignore the tracking_id and prim pointer hash.
-    auto prim_abs = node_abs->cast<abstract::PrimitiveAbstractClosurePtr>();
+    auto prim_abs = node_abs->cast_ptr<abstract::PrimitiveAbstractClosure>();
     return prim_abs->prim();
   } else if (ignore_fg_abs_tracking_id && node_abs->isa<abstract::FuncGraphAbstractClosure>()) {
     // Ignore the tracking_id.
-    auto new_fg_abs = node_abs->cast<abstract::AbstractFunctionPtr>()->Copy();
-    new_fg_abs->set_tracking_id(nullptr);
-    return new_fg_abs;
+    return node_abs->cast_ptr<abstract::AbstractFunction>()->CopyWithoutTrackingId();
   }
   return node_abs;
 }

@@ -21,20 +21,19 @@
 
 #include <memory>
 #include <string>
-#include <list>
-#include <unordered_map>
+#include <vector>
 
-#include "utils/hash_map.h"
-#include "abstract/abstract_value.h"
-#include "ir/meta_func_graph.h"
 #include "utils/macros.h"
+#include "utils/hash_map.h"
+#include "ir/meta_func_graph.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace abstract {
 class AnalysisContext;
 using AnalysisContextWeakPtr = std::weak_ptr<AnalysisContext>;
 using ArgsSpecToAnalysisContextMap =
-  std::unordered_map<AbstractBasePtrList, AnalysisContextWeakPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+  mindspore::HashMap<AbstractBasePtrList, AnalysisContextWeakPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 
 // AnalysisContext will be stored in Config in AnalysisCache.
 class MS_CORE_API AnalysisContext {
@@ -53,19 +52,20 @@ class MS_CORE_API AnalysisContext {
   // Return a context restricted to a graph and its parent.
   AnalysisContextPtr FindOwnOrParentContext(const FuncGraphPtr &func_graph);
   bool operator==(const AnalysisContext &other) const;
-  std::size_t hash();
+  std::size_t hash() const;
   static AnalysisContextPtr DummyContext();
-  bool IsDummyContext();
-  FuncGraphPtr func_graph() const { return func_graph_; }
-  AnalysisContextPtr parent() const { return parent_; }
+  bool IsDummyContext() const { return parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty(); }
+  const FuncGraphPtr &func_graph() const { return func_graph_; }
+  const AnalysisContextPtr &parent() const { return parent_; }
   std::string ToString() const;
   AnalysisContextPtr SpecializeKey() const;
-  AbstractBasePtrList args_spec_list() { return args_spec_list_; }
+  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
   static void ClearContext();
   static AnalysisContextPtr CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
                                           const AbstractBasePtrList &args_spec_list);
 
  private:
+  void Clear();
   AnalysisContextPtr parent_;
   FuncGraphPtr func_graph_;
   AbstractBasePtrList args_spec_list_;
@@ -75,11 +75,13 @@ class MS_CORE_API AnalysisContext {
   // Record all created child contexts from this context.
   // Like: key: [func_graph & arguments], value: [child_context]
   mindspore::HashMap<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
+  // Cached hash code.
+  mutable std::size_t hash_ = 0;
 
   // There may may be shared_ptr loop like:
   // FuncGraphAbstactClosur->AnalysisContext->children_cache_->ArgsSpec->FuncGraphAbstactClosur.
   // For break the loop, using all_context_ to clear context_.
-  static std::list<AnalysisContextPtr> all_context_;
+  static std::vector<AnalysisContextPtr> all_context_;
 };
 
 struct ContextHasher {

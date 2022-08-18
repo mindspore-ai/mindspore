@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,37 +25,37 @@
 #include <map>
 #include <set>
 #include <memory>
-#include <unordered_map>
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/misc.h"
+#include "utils/hash_map.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
 
 namespace mindspore {
-// namespace to support composite operators definition
 namespace prim {
 class MultitypeFuncGraph : public MetaFuncGraph {
  public:
+  template <typename T>
+  using TypeListMap = mindspore::HashMap<TypePtrList, T, TypeListHasher, TypeListEqual>;
+
   explicit MultitypeFuncGraph(const std::string &name);
   ~MultitypeFuncGraph() override = default;
   MS_DECLARE_PARENT(MultitypeFuncGraph, MetaFuncGraph)
 
   using specialize_fn = FuncGraph *(*)(TypePtrList);
-  // Register a method which specialize based on types vectors;
+  // Register a method which specialize based on types vectors.
   virtual void Register(const TypePtrList &types, specialize_fn s_fn);
   virtual void Register(const TypePtrList &types, const py::function &py_fn);
   virtual void PyRegister(const py::tuple &tuple, const py::function &py_fn);
 
   FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override;
   size_t GetPyFnCacheSize() const { return fn_cache_py_.size(); }
-  const std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> &GetPyFunctions() const {
-    return fn_cache_py_;
-  }
+  const TypeListMap<py::function> &GetPyFunctions() const { return fn_cache_py_; }
 
  private:
   const std::pair<py::function, bool> SignMatch(const TypePtrList &types);
-  std::unordered_map<TypePtrList, specialize_fn, TypeListHasher, TypeListEqual> fn_cache_;
-  std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> fn_cache_py_;
+  TypeListMap<specialize_fn> fn_cache_;
+  TypeListMap<py::function> fn_cache_py_;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
 }  // namespace prim

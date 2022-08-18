@@ -101,7 +101,7 @@ void DumpInferStack(std::ostringstream &oss) {
     if (graph == nullptr) {  // Top context.
       continue;
     }
-    auto args_spec_list = context->args_spec_list();
+    const auto &args_spec_list = context->args_spec_list();
     if (graph->parameters().size() < args_spec_list.size()) {
       continue;
     }
