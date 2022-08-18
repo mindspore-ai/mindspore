@@ -863,7 +863,7 @@ class SequenceMask(PrimitiveWithCheck):
         validator.check_subclass("maxlen", maxlen_dtype, mstype.number, self.name)
 
 
-class SyncBatchNorm(PrimitiveWithInfer):
+class SyncBatchNorm(Primitive):
     r"""
     Sync Batch Normalization for input data and updated parameters.
 
@@ -935,23 +935,6 @@ class SyncBatchNorm(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, input_x, scale, bias, mean, variance):
-        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
-        validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input_x channel", input_x[1], Rel.EQ, self.name)
-        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
-        validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
-        validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
-        return (input_x, scale, scale, scale, scale)
-
-    def infer_dtype(self, input_x, scale, bias, mean, variance):
-        validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
-        args = {"scale": scale, "bias": bias}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        args_moving = {"mean": mean, "variance": variance}
-        validator.check_tensors_dtypes_same_and_valid(args_moving, [mstype.float16, mstype.float32], self.name)
-        return (input_x, scale, bias, input_x, input_x)
 
 
 class Centralization(PrimitiveWithInfer):

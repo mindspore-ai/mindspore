@@ -342,6 +342,7 @@ constexpr auto kSeed0 = "seed0";
 constexpr auto kSeed1 = "seed1";
 constexpr auto kHandle = "handle";
 constexpr auto kBatchSize = "batch_size";
+constexpr auto kDeviceNum = "device_num";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

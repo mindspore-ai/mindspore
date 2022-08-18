@@ -55,7 +55,7 @@ class SyncBnSplit : public BnSplit {
 AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const CNodePtr &sync_bn_cnode);
 
 AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &allreduce_input,
-                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass);
+                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass, bool is_dynamic);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_SPLIT_H_
