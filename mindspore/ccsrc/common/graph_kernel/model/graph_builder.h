@@ -40,7 +40,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     return Emit("Select", {cond, lhs, rhs});
   }
-  NodePtr MatMul(const NodePtr &lhs, const NodePtr &rhs, const TypeId &type_id = kNumberTypeFloat32,
+  NodePtr MatMul(const NodePtr &lhs, const NodePtr &rhs, const TypeId &type_id = kNumberTypeFloat16,
                  const bool &transpose_a = false, const bool &transpose_b = false) const {
     return Emit("MatMul", {lhs, rhs},
                 {{"transpose_a", MakeValue(transpose_a)},
@@ -60,10 +60,28 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr StridedSlice(const NodePtr &input, const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
                        const std::vector<int64_t> &strides) const {
     return Emit("StridedSlice", {input},
-                {{"begin", MakeValue(begin)}, {"end", MakeValue(end)}, {"strides", MakeValue(strides)}});
+                {{"begin", MakeValue(begin)},
+                 {"end", MakeValue(end)},
+                 {"strides", MakeValue(strides)},
+                 {"shrink_axis_mask", MakeValue(static_cast<int64_t>(0))},
+                 {"begin_mask", MakeValue(static_cast<int64_t>(0))},
+                 {"ellipsis_mask", MakeValue(static_cast<int64_t>(0))},
+                 {"new_axis_mask", MakeValue(static_cast<int64_t>(0))},
+                 {"end_mask", MakeValue(static_cast<int64_t>(0))}});
   }
   NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
     return Emit("TensorScatterAdd", {input, indices, update});
+  }
+  NodePtr Custom(const NodePtrList &inputs, const NodeBase &baseinfo, const std::string &func_name,
+                 const std::string &func_type, const std::string &func_source_str, const size_t &inplace_assign_output,
+                 const std::string &func_compile_attrs) {
+    std::string write_from_output_to_input = "0 " + std::to_string(inplace_assign_output);
+    return Op("Custom", baseinfo, inputs,
+              {{"func_name", MakeValue(func_name)},
+               {"func_type", MakeValue(func_type)},
+               {"func_source_str", MakeValue(func_source_str)},
+               {"inplace_assign_output", MakeValue(write_from_output_to_input)},
+               {"func_compile_attrs", MakeValue(func_compile_attrs)}});
   }
   NodePtr Cast(const NodePtr &input, const TypeId &type_id) const {
     return Emit("Cast", {input}, {{"dst_type", TypeIdToType(type_id)}});

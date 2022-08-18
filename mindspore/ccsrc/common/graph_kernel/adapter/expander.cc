@@ -30,6 +30,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/adapter/callback_impl.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -61,6 +62,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
     {prim::kPrimArgMaxWithValue->name(), {ArgWithValueDeco::Creator}},
     {prim::kPrimArgMinWithValue->name(), {ArgWithValueDeco::Creator}},
+    {prim::kPrimSolveTriangular->name(), {ProcessCustomOpDeco::Creator}},
   };
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -96,6 +98,8 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     {kAllTarget, OpLevel_0, prim::kPrimAdamWeightDecay},
     {kAllTarget, OpLevel_0, prim::kPrimStandardNormal},
     {kAllTarget, OpLevel_0, prim::kPrimAdam},
+    // some ops including custom op are only used expand fallbak on Ascend.
+    {kAscendDevice, OpLevel_0, prim::kPrimSolveTriangular},
     // disabled
     {kAllTarget, OpLevel_1, prim::kPrimAddN},
     {kAllTarget, OpLevel_1, prim::kPrimErfc},
@@ -140,6 +144,19 @@ bool CanExpandFallback(const AnfNodePtr &node) {
   auto ops = GkUtils::GetValidOps(expander_fallback_ops_with_level, op_level, {}, {}, {});
   return std::any_of(ops.begin(), ops.end(),
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+}
+
+AnfNodePtr ProcessCustomOpDeco::Run(const AnfNodePtr &node) {
+  if (node == nullptr) return nullptr;
+  auto new_node = decorated_->Run(node);
+  auto graph = GetCNodeFuncGraph(new_node);
+  if (graph == nullptr) return nullptr;
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InplaceAssignForCustomOp>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  return new_node;
 }
 
 AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
