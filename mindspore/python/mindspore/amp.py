@@ -25,15 +25,18 @@ from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
 from .train.amp import build_train_network, auto_mixed_precision
 
-gpu_float_status = ops.FloatStatus()
+_ascend_target = context.get_context("device_target") == "Ascend"
+_gpu_target = context.get_context("device_target") == "GPU"
 
-npu_alloc_float_status = ops.NPUAllocFloatStatus()
-npu_clear_float_status = ops.NPUClearFloatStatus()
-npu_get_float_status = ops.NPUGetFloatStatus()
+_gpu_float_status = ops.FloatStatus()
 
-if context.get_context("device_target") == "Ascend":
-    _status = npu_alloc_float_status()
-    _ = npu_clear_float_status(_status)
+_npu_alloc_float_status = ops.NPUAllocFloatStatus()
+_npu_clear_float_status = ops.NPUClearFloatStatus()
+_npu_get_float_status = ops.NPUGetFloatStatus()
+
+if _ascend_target:
+    _status = _npu_alloc_float_status()
+    _ = _npu_clear_float_status(_status)
 else:
     _status = None
 
@@ -49,8 +52,8 @@ def _grad_scale(scale, grad):
 
 
 def _is_finite(inputs):
-    if context.get_context("device_target") == "GPU":
-        return ops.FloatStatus()(inputs)[0] == 0
+    if _gpu_target:
+        return _gpu_float_status(inputs)[0] == 0
     status = ops.isfinite(inputs)
     return status.all()
 
@@ -79,12 +82,12 @@ def all_finite(inputs):
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
         >>> output = all_finite(x)
     """
-    if context.get_context("device_target") == "Ascend":
+    if _ascend_target:
         status = ops.depend(_status, inputs)
-        get_status = ops.NPUGetFloatStatus()(status)
+        get_status = _npu_get_float_status(status)
         status = ops.depend(status, get_status)
         status_finite = status.sum() == 0
-        _ = ops.NPUClearFloatStatus()(status)
+        _ = _npu_clear_float_status(status)
         return status_finite
     outputs = _hypermap(_partial(_is_finite), inputs)
     return ops.stack(outputs).all()
