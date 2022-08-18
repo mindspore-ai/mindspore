@@ -83,12 +83,6 @@ class ParallelThreadPool : public ActorThreadPool {
     }
   }
 
-  void ActiveWorkers() override {
-    for (auto &worker : workers_) {
-      worker->Active();
-    }
-  }
-
   int ParallelLaunch(const Func &func, Content content, int task_num) override;
 
   void PushActorToQueue(ActorBase *actor) override {
