@@ -76,6 +76,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
 
  protected:
+  virtual bool NeedResize();
   virtual int SetInputShape();
   virtual int InitInputData();
   virtual int AssignInputData();
