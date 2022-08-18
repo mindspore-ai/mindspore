@@ -19,7 +19,6 @@
 #include <memory>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/ctcloss_v2_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchnorm_fold_impl.cuh"
 #include "mindspore/core/ops/ctc_loss_v2.h"
 #include "abstract/utils.h"
 

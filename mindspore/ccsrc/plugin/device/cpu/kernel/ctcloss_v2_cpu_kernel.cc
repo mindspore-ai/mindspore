@@ -91,10 +91,12 @@ void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p
     log_alpha_p[log_alpha_it(batch, 0, 1)] =
       log_probs_p[log_probs_it(0, batch, GetBlankPaddedTarget(tar_p, offset, 1))];
   }
-  for (int64_t t = 1; t < input_length; t++) {
-    for (int64_t s = 0; s < target_mul * target_length + 1; s++) {
-      auto current_target_prime = GetBlankPaddedTarget(tar_p, offset, s);
-      S log_a1 = log_alpha_p[log_alpha_it(batch, t - 1, s)];
+  for (int64_t s = 0; s < target_mul * target_length + 1; s++) {
+    auto current_target_prime = GetBlankPaddedTarget(tar_p, offset, s);
+    bool three_sum = (s > 1) && (GetBlankPaddedTarget(tar_p, offset, s - target_mul) != current_target_prime);
+    // a1 is the result of the previous loop
+    S log_a1 = log_alpha_p[log_alpha_it(batch, 0, s)];
+    for (int64_t t = 1; t < input_length; t++) {
       S log_max = log_a1;
       S log_a2, log_a3;
       if (s > 0) {
@@ -103,7 +105,7 @@ void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p
       } else {
         log_a2 = neg_inf;
       }
-      if ((s > 1) && (GetBlankPaddedTarget(tar_p, offset, s - target_mul) != current_target_prime)) {
+      if (three_sum) {
         log_a3 = log_alpha_p[log_alpha_it(batch, t - 1, s - target_mul)];
         log_max = std::max(log_a3, log_max);
       } else {
@@ -112,9 +114,10 @@ void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p
       if (log_max == neg_inf) {
         log_max = 0;
       }
-      log_alpha_p[log_alpha_it(batch, t, s)] =
-        std::log(std::exp(log_a1 - log_max) + std::exp(log_a2 - log_max) + std::exp(log_a3 - log_max)) + log_max +
-        log_probs_p[log_probs_it(t, batch, current_target_prime)];
+      S log_three_sum = std::log(std::exp(log_a1 - log_max) + std::exp(log_a2 - log_max) + std::exp(log_a3 - log_max)) +
+                        log_max + log_probs_p[log_probs_it(t, batch, current_target_prime)];
+      log_alpha_p[log_alpha_it(batch, t, s)] = log_three_sum;
+      log_a1 = log_three_sum;
     }
   }
 }
