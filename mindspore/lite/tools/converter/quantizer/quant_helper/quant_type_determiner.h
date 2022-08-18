@@ -20,7 +20,6 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::lite::quant {
 class QuantTypeDeterminer {

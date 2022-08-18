@@ -26,9 +26,6 @@
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
-namespace {
-static const std::set<PrimitivePtr> fp32_output_operator = {prim::kPrimDetectionPostProcess};
-}
 bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (opt::IsSpecialType(cnode)) {
@@ -56,15 +53,28 @@ bool QuantTypeDeterminer::DetermineQuantAll(const CNodePtr &cnode) {
   if (quant_holder->quant_type() != schema::QuantType_QUANT_NONE) {
     return quant_holder->quant_type() == schema::QuantType_QUANT_ALL;
   }
+  // if DTypeCastNode is graph input or output, set QuantType_QUANT_NONE
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    return (!IsGraphInDTypeCast(cnode) && !IsGraphOutDTypeCast(func_graph_, cnode));
+  }
   // Check input quant params, quantization parameters exist for all activations.
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->input(i);
+    TypeId input_node_dtype = kTypeUnknown;
+    if (opt::GetDataTypeFromAnfNode(input, &input_node_dtype) != RET_OK) {
+      MS_LOG(INFO) << "Get data type failed, input node name: " << input->fullname_with_scope();
+      continue;
+    }
+    // Only specified dtype need check input quant params
+    if (kFullQuantDType.find(input_node_dtype) == kFullQuantDType.end()) {
+      continue;
+    }
     if (input->isa<CNode>() && !quant_holder->CheckInit(i - kPrimOffset, true)) {
       return false;
     }
   }
   // Check output quant params.
-  if (CheckNodeInSet(cnode, fp32_output_operator) && !quant_holder->IsOutputQuantParamsInited()) {
+  if (!CheckNodeInSet(cnode, kUint8toFP32Operator) && !quant_holder->IsOutputQuantParamsInited()) {
     return false;
   }
   return true;
@@ -118,7 +128,7 @@ int QuantTypeDeterminer::Determine() {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " quant holder is nullptr.";
       continue;
     }
-    if (!quant_holder->IsInputQuantParamsInited() && !quant_holder->IsOutputQuantParamsInited()) {  // Check FP32.
+    if (!quant_holder->IsInputExistInited() && !quant_holder->IsOutputExistInited()) {  // Check FP32.
       if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
         continue;
       }

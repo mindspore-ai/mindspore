@@ -110,6 +110,10 @@ class QuantParamHolder : public Value {
 
   bool IsOutputQuantParamsInited();
 
+  bool IsInputExistInited();
+
+  bool IsOutputExistInited();
+
   void ClearQuantParams();
 
   bool CheckInit(size_t index, bool is_input);

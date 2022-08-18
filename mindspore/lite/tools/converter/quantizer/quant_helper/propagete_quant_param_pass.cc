@@ -118,6 +118,9 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
     if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
+      continue;
+    }
     // Infer quant param with forward (output->input).
     auto curr_quant_holder = GetCNodeQuantHolder(cnode);
     if (curr_quant_holder == nullptr) {
@@ -182,6 +185,9 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
     if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
+      continue;
+    }
     // Infer quant param with forward (output<-input).
     auto curr_quant_holder = GetCNodeQuantHolder(cnode);
     if (curr_quant_holder == nullptr) {
@@ -214,7 +220,7 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
             }
           }
         } else {
-          MS_LOG(ERROR) << "Support for multi output.";
+          MS_LOG(INFO) << "Support for multi output.";
         }
       }
     }
