@@ -929,7 +929,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
     auto symbol = GetValueNode<parse::SymbolPtr>(mod_node);
     // Only support the pattern (string % xxx) by fallback.
     if (symbol != nullptr && symbol->symbol() == "mod") {
-      if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple)) {
+      if (IsPrimitiveCNode(left_node, prim::kPrimJoinedStr)) {
         // left_node created by ParseJoinedStr
         auto inputs = left_node->cast<CNodePtr>()->inputs();
         if (inputs.size() <= 1) {
@@ -2458,11 +2458,16 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
 AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast JoinedStr.";
   MS_EXCEPTION_IF_NULL(block);
+  const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
   py::list py_values = python_adapter::GetPyObjAttr(node, "values");
-  std::vector<AnfNodePtr> value_nodes{NewValueNode(prim::kPrimMakeTuple)};
+  std::vector<AnfNodePtr> value_nodes{NewValueNode(prim::kPrimJoinedStr)};
   for (size_t i = 0; i < py_values.size(); ++i) {
     AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
     str_value = HandleInterpret(block, str_value, py_values[i]);
+    // If exist interpret node in JoinedStr, all object in py_values will convert to interpret node.
+    if (IsPrimitiveCNode(str_value, prim::kPrimPyInterpret)) {
+      return MakeInterpretNode(block, str_value, script_text);
+    }
     (void)value_nodes.emplace_back(str_value);
   }
   auto func_graph = block->func_graph();
@@ -2677,22 +2682,10 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   return MakeInterpretNode(block, value_node, script_text);
 }
 
-bool Parser::IsTensorType(const AnfNodePtr &node, const std::string &script_text) const {
-  if (node->interpret_internal_type() && script_text.find("(") == std::string::npos) {
-    MS_LOG(DEBUG) << "The Tensor is present as type.";
-    return true;
-  }
-  return false;
-}
-
 bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
                                        const string &script_text) const {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(node);
-  // If the Tensor is present as type, should not convert Interpret node.
-  if (IsTensorType(node, script_text)) {
-    return false;
-  }
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
   auto keys = std::get<0>(block->local_py_params());

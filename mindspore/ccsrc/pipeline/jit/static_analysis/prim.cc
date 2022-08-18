@@ -2651,6 +2651,49 @@ class WithExitEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+class JoinedStrEvaluator : public TransitionPrimEvaluator {
+ public:
+  JoinedStrEvaluator() : TransitionPrimEvaluator("JoinedStrEvaluator") {}
+  ~JoinedStrEvaluator() override = default;
+  MS_DECLARE_PARENT(JoinedStrEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto node = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cur_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+    bool exist_tensor = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &arg) {
+      auto arg_value = arg->BuildValue();
+      MS_EXCEPTION_IF_NULL(arg_value);
+      return arg_value->isa<AnyValue>();
+    });
+    AnfNodePtr new_node = nullptr;
+    if (exist_tensor) {
+      // This is a variable scenario, and the specific value cannot be obtained in the static analysis stage.
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto cnode_inputs = cnode->inputs();
+      std::vector<AnfNodePtr> new_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      (void)new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end());
+      new_node = cur_graph->NewCNode(new_inputs);
+    } else {
+      std::string ret;
+      for (const auto &arg : args_spec_list) {
+        auto arg_value = arg->BuildValue();
+        MS_EXCEPTION_IF_NULL(arg_value);
+        ret += arg_value->ToString();
+      }
+      new_node = NewValueNode(ret);
+    }
+
+    cur_graph->ReplaceInOrder(node, new_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+};
+
 struct PrimitiveImplInferValue {
   PrimitiveImpl impl_;        // implement function of primitive
   bool eval_value_;           // whether evaluate value
@@ -2715,6 +2758,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimRaise] = std::make_shared<RaiseEvaluator>();
   constructor[prim::kPrimWithEnter] = std::make_shared<WithEnterEvaluator>();
   constructor[prim::kPrimWithExit] = std::make_shared<WithExitEvaluator>();
+  constructor[prim::kPrimJoinedStr] = std::make_shared<JoinedStrEvaluator>();
 }
 }  // namespace
 

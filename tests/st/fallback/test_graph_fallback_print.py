@@ -450,3 +450,27 @@ def test_print_exception():
         y = ms.Tensor(np.array([1, 2, 3, 4, 5]))
         net = Net()
         net(x, y)
+
+
+def test_print_joinedstr():
+    """
+    Feature: graph print joinedstr.
+    Description: Test print joinedstr.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_print():
+        x = (1, 2, 3, 4, 5)
+        c = f"x:{x}"
+        dict_input = {"a": 1, "b": 2, c: 3}
+        print(f"Tensor(x): {Tensor(x)}, dict_input: {dict_input}")
+        return Tensor(x)
+
+    cap = Capture()
+    with capture(cap):
+        res = np_print()
+        assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5]))
+        time.sleep(0.1)
+
+    patterns = {"Tensor(x): [1 2 3 4 5], dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
+    check_output(cap.output, patterns)
