@@ -62,6 +62,7 @@ Element-wise Methods
     mindspore.Tensor.inv
     mindspore.Tensor.invert
     mindspore.Tensor.lerp
+    mindspore.Tensor.log
     mindspore.Tensor.log1p
     mindspore.Tensor.logit
     mindspore.Tensor.pow
@@ -69,6 +70,7 @@ Element-wise Methods
     mindspore.Tensor.std
     mindspore.Tensor.svd
     mindspore.Tensor.tan
+    mindspore.Tensor.tanh
     mindspore.Tensor.var
     mindspore.Tensor.xdivy
     mindspore.Tensor.xlogy
