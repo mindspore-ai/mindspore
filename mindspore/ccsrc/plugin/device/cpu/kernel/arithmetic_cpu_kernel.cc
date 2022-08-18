@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -24,7 +23,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/mul_fp32.h"
@@ -36,7 +34,6 @@ namespace kernel {
 namespace {
 constexpr float kMaxSubSerialSize = 10000.0;
 constexpr float kMaxPowSerialSize = 700.0;
-
 constexpr auto kAdd = "Add";
 constexpr auto kAddV2 = "AddV2";
 constexpr auto kSub = "Sub";
@@ -99,30 +96,28 @@ void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size
 }
 
 template <typename T>
-class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
+class ArithmeticCpuTypeFunc : public CpuKernelFunc {
  public:
   ~ArithmeticCpuTypeFunc() override = default;
-  explicit ArithmeticCpuTypeFunc(const CNodePtr &kernel_node) {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    input_shape1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    input_shape2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (output_shape_.size() == 0) {
+  ArithmeticCpuTypeFunc() = default;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
+    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
+    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+    if (output_shape_.empty()) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
     }
-
     output_size_ = SizeOf(output_shape_);
     op_para_.in_elements_num0_ = SizeToInt(SizeOf(input_shape1_));
     op_para_.in_elements_num1_ = SizeToInt(SizeOf(input_shape2_));
-
     size_t l = input_shape1_.size();
     if (l < output_shape_.size()) {
       for (size_t i = 0; i < output_shape_.size() - l; ++i) {
         (void)input_shape1_.insert(input_shape1_.begin(), 1);
       }
     }
-
     l = input_shape2_.size();
     if (l < output_shape_.size()) {
       for (size_t i = 0; i < output_shape_.size() - l; ++i) {
@@ -132,7 +127,12 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
     CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
     CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
     CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+    return KRET_OK;
+  }
 
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
     InitComputeFunc();
   }
 
@@ -152,11 +152,9 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
   void AssignSub(T *input1, const T *input2, T *out);
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
-  void Xdivy(const T *input1, const T *input2, T *out);
   void Xlogy(const T *input1, const T *input2, T *out);
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
   void DivComplex(const T *input1, const T *input2, T *out);
-  void XdivyComplex(const T *input1, const T *input2, T *out);
   void PowComplex(const T *input1, const T *input2, T *out);
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -214,7 +212,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
                                {kXlogy, &ArithmeticCpuTypeFunc<T>::Xlogy}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
-      MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Map2Str(arithmeticMathFuncMap)
+      MS_LOG(EXCEPTION) << "For 'Arithmetic', it only supports operators in " << Map2Str(arithmeticMathFuncMap)
                         << ", but got " << kernel_name_ << "for " << dtype_desc << ", but got " << kernel_name_ << ".";
     }
     compute_func_ = arithmeticMathFuncMap.at(kernel_name_);
@@ -250,12 +248,12 @@ void ArithmeticCpuTypeFunc<T>::AssignAdd(T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::AssignSub(T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
-    auto task = [&input1, &input2, &out](size_t start, size_t end) {
+    auto task = [&input1, &input2](size_t start, size_t end) {
       (void)AssignSubOpt(input1 + start, input2 + start, end - start);
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
-    auto task = [&input1, &input2, &out](size_t start, size_t end) {
+    auto task = [&input1, &input2](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         input1[i] = input1[i] - input2[i];
       }
@@ -296,7 +294,7 @@ template <typename T>
 void ArithmeticCpuTypeFunc<T>::Sub(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
-      auto task = [this, input1, input2, out](size_t start, size_t end) {
+      auto task = [input1, input2, out](size_t start, size_t end) {
         (void)ElementSub(input1 + start, input2 + start, out + start, end - start);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -331,7 +329,7 @@ template <typename T>
 void ArithmeticCpuTypeFunc<T>::Mul(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
-      auto task = [this, input1, input2, out](size_t start, size_t end) {
+      auto task = [input1, input2, out](size_t start, size_t end) {
         (void)ElementMul(input1 + start, input2 + start, out + start, end - start);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -419,21 +417,21 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, T *out) {
   if (input_shape1_ == input_shape2_) {
-    auto task = [this, input1, input2, out](size_t start, size_t end) {
+    auto task = [input1, input2, out](size_t start, size_t end) {
       ElementRealDivComplex<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
     return;
   }
   if (op_para_.in_elements_num0_ == 1) {
-    auto task = [this, input1, input2, out](size_t start, size_t end) {
+    auto task = [input1, input2, out](size_t start, size_t end) {
       ElementRealDivComplex<T>(input1, input2 + start, out + start, end - start, 0, 1);
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
     return;
   }
   if (op_para_.in_elements_num1_ == 1) {
-    auto task = [this, input1, input2, out](size_t start, size_t end) {
+    auto task = [input1, input2, out](size_t start, size_t end) {
       ElementRealDivComplex<T>(input1 + start, input2, out + start, end - start, 1, 0);
     };
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -755,10 +753,10 @@ void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithFunc(const CNodePtr &kernel_node) {
-  return std::make_shared<ArithmeticCpuTypeFunc<T>>(kernel_node);
+std::shared_ptr<CpuKernelFunc> SpecializeArithFunc() {
+  return std::make_shared<ArithmeticCpuTypeFunc<T>>();
 }
-using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>(const CNodePtr &)>;
+using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFuncCreator>>> kernel_attr_list = {
   {kSub,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
@@ -1097,19 +1095,33 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<complex128>}}}};
 }  // namespace
 
-void ArithmeticCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+bool ArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto iter = kernel_attr_list.find(kernel_name_);
+  if (iter == kernel_attr_list.end()) {
+    MS_LOG(ERROR) << "For 'Arithmetic', the kernel name must be in " << kernel::Map2Str(kernel_attr_list)
+                  << ", but got " << kernel_name_;
+    return false;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Arithmetic does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'Arithmetic', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  func_obj_ = kernel_attr_list[kernel_name_][index].second();
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
 
-  func_obj_ = kernel_attr_list[kernel_name_][index].second(kernel_node);
+int ArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return func_obj_->Resize(base_operator, inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticCpuKernelMod::GetOpSupport() {

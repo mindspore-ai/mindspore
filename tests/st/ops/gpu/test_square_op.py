@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,14 +19,28 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import operations as P
 
 
-@pytest.mark.level1
+class SquareNet(nn.Cell):
+    def __init__(self):
+        super(SquareNet, self).__init__()
+        self.ops = P.Square()
+
+    def construct(self, x):
+        return self.ops(x)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_square_normal():
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_square_normal(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Square
+    Expectation: the result match to numpy
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_np = np.random.rand(2, 3, 4, 4).astype(np.float32)
     output_ms = P.Square()(Tensor(x_np))
@@ -36,39 +50,33 @@ def test_square_normal():
     output_ms = P.Square()(Tensor(x_np))
     output_np = np.square(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
-    x_np = np.random.rand(2,).astype(np.float32)
+    x_np = np.random.rand(2).astype(np.float32)
     output_ms = P.Square()(Tensor(x_np))
     output_np = np.square(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-# Dynamic Shape Testing
-class SqaureNetDynamic(nn.Cell):
-    def __init__(self):
-        super(SqaureNetDynamic, self).__init__()
-        self.square = P.Square()
-        self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
-
-    def construct(self, x):
-        x_dyn = self.gpu_convert_to_dynamic_shape(x)
-        return self.square(x_dyn)
-
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_square_dynamic():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    net = SqaureNetDynamic()
-    x_np = np.random.rand(1, 3, 4, 4, 1).astype(np.float32)
-    output_ms = net(Tensor(x_np))
-    output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-    x_np = np.random.rand(2, 3, 4, 4, 8, 9).astype(np.float16)
-    output_ms = net(Tensor(x_np))
-    output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-    x_np = np.random.rand(1).astype(np.float32)
-    output_ms = net(Tensor(x_np))
-    output_np = np.square(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_square_dynamic(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Square dynamic shape.
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    input_x_np = np.random.randn(2, 3, 3, 4).astype(dtype)
+    benchmark_output = np.square(input_x_np)
+    loss = 1e-6
+    square_net = SquareNet()
+    real_input = Tensor(input_x_np)
+    dy_shape = [None for _ in input_x_np.shape]
+    input_dyn = Tensor(shape=dy_shape, dtype=real_input.dtype)
+    square_net.set_inputs(input_dyn)
+    ms_result = square_net(real_input)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    ms_result = square_net(real_input)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)

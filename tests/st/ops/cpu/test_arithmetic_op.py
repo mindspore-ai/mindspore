@@ -73,6 +73,11 @@ class FloorModNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sub():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Sub.
+    Expectation: the result match to numpy
+    """
     x = np.random.rand(2, 3, 4, 4).astype(np.float32)
     y = np.random.rand(4, 1).astype(np.float32)
     net = SubNet()
@@ -93,6 +98,11 @@ def test_sub():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_div():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Div.
+    Expectation: the result match to numpy
+    """
     prop = 1 if np.random.random() < 0.5 else -1
     x0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     y0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
@@ -197,6 +207,11 @@ def test_div():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_floor_div():
+    """
+    Feature: ALL To ALL
+    Description: test cases for FloorDiv.
+    Expectation: the result match to numpy
+    """
     prop = 1 if np.random.random() < 0.5 else -1
     x0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     y0_np = np.random.randint(1, 100, (2, 1, 4, 4)).astype(np.float32) * prop
@@ -273,6 +288,11 @@ def test_floor_div():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mod():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Mod.
+    Expectation: the result match to numpy
+    """
     prop = 1 if np.random.random() < 0.5 else -1
     x0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     y0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
@@ -367,6 +387,11 @@ def test_mod():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_floor_mod():
+    """
+    Feature: ALL To ALL
+    Description: test cases for FloorMod.
+    Expectation: the result match to numpy
+    """
     prop = 1 if np.random.random() < 0.5 else -1
     x0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
     y0_np = np.random.randint(1, 100, (2, 3, 4, 4)).astype(np.float32) * prop
@@ -455,3 +480,33 @@ def test_floor_mod():
     expect7 = np.mod(x7_np, y7_np).astype(np.int64)
     assert np.all(output7.asnumpy() == expect7)
     assert output6.shape == expect6.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_dynamic_sub(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Sub dynamic shape.
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = np.random.rand(2, 3, 4, 4).astype(dtype)
+    y = np.random.rand(4, 1).astype(dtype)
+    benchmark_output = x - y
+    loss = 1e-5
+    sub_net = SubNet()
+    real_x = Tensor(x)
+    real_y = Tensor(y)
+    dy_x_shape = [None for _ in x.shape]
+    dy_y_shape = [None for _ in y.shape]
+    input_dyn_x = Tensor(shape=dy_x_shape, dtype=real_x.dtype)
+    input_dyn_y = Tensor(shape=dy_y_shape, dtype=real_y.dtype)
+    sub_net.set_inputs(input_dyn_x, input_dyn_y)
+    ms_result = sub_net(real_x, real_y)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    ms_result = sub_net(real_x, real_y)
+    np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
