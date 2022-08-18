@@ -20,6 +20,7 @@ import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -260,3 +261,95 @@ def test_grid_sampler_3d_grad_float64():
     diff_grid = output[1].asnumpy() - expect_grid
     assert np.all(np.abs(diff_x) < error_x)
     assert np.all(np.abs(diff_grid) < error_grid)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap_grid_sampler_2d_grad():
+    """
+    Feature: GridSampler2DGrad GPU op vmap feature.
+    Description: test the vmap feature of GridSampler2DGrad.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    # 2 batches
+    grad = Tensor(np.arange(0, 8, 0.5).reshape(2, 2, 2, 2, 1).astype(np.float32))
+    input_x = Tensor(np.arange(0, 16, 0.5).reshape(2, 2, 2, 2, 2).astype(np.float32))
+    grid = Tensor(np.arange(0, 1.6, 0.1).reshape(2, 2, 2, 1, 2)).astype(np.float32)
+    net = NetGridSampler2DGrad()
+    expect_x = np.array([[[[[0.07, 0.10500001], [0.12999998, 0.19500001]],
+                           [[0.435, 0.54], [0.66499996, 0.86]]],
+                          [[[0.225, 0.65], [0.875, 2.75]],
+                           [[0.32999998, 0.94499993], [1.27, 3.955]]]],
+                         [[[[0.02000001, 0.18000004], [0.38000008, 7.6949997]],
+                           [[0.02500001, 0.22500005], [0.4750001, 9.5]]],
+                          [[[0, 0], [0, 8.49]],
+                           [[0., 0.], [0., 9.855]]]]]).astype(np.float32)
+    expect_grid = np.array([[[[[0.25, 0.5]], [[0.49999994, 1.0000002]]],
+                             [[[1.25, 2.5000005]], [[1.5, 2.999999]]]],
+                            [[[[2.2499986, 4.4999986]], [[-50.350002, -53.]]],
+                             [[[-80.537506, -85.274994]], [[-76.5, -81.6]]]]]).astype(np.float32)
+    [x_vmap, grid_vmap] = F.vmap(net, in_axes=(0, 0, 0))(grad, input_x, grid)
+    error_x = np.ones(shape=expect_x.shape) * 1.0e-6
+    error_grid = np.ones(shape=expect_grid.shape) * 1.0e-6
+    assert np.all(abs(x_vmap.asnumpy() - expect_x) < error_x)
+    assert np.all(abs(grid_vmap.asnumpy() - expect_grid) < error_grid)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap_grid_sampler_3d_grad():
+    """
+    Feature: GridSampler3DGrad GPU op vmap feature.
+    Description: test the vmap feature of GridSampler3DGrad.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    # 3 batches
+    grad = Tensor(np.arange(0, 2.4, 0.1).reshape(3, 2, 2, 2, 1, 1).astype(np.float32))
+    input_x = Tensor(np.arange(0, 4.8, 0.05).reshape(3, 2, 2, 2, 2, 2).astype(np.float32))
+    grid = Tensor(np.arange(-0.6, 3, 0.1).reshape(3, 2, 2, 1, 1, 3)).astype(np.float32)
+    net = NetGridSampler3DGrad()
+    expect_x = np.array([[[[[[0.02145, 0.01155], [0.0143, 0.0077]],
+                            [[0.01755, 0.00945], [0.0117, 0.0063]]],
+                           [[[0.14835002, 0.05565], [0.0709, 0.0301]],
+                            [[0.08865, 0.03735], [0.0471, 0.0219]]]],
+                          [[[[0.049125, 0.060375], [0.074625, 0.100875]],
+                            [[0.093375, 0.12712501], [0.15787502, 0.23662502]]],
+                           [[[0.072375, 0.08812499], [0.10887501, 0.145625]],
+                            [[0.13612501, 0.18337502], [0.22762501, 0.337875]]]]],
+                         [[[[[0.0024, 0.0096], [0.0136, 0.05440002]],
+                            [[0.02159999, 0.08639999], [0.16515002, 1.3018501]]],
+                           [[[0.003, 0.012], [0.017, 0.06800002]],
+                            [[0.02699999, 0.10799998], [0.20525001, 1.60475]]]],
+                          [[[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 1.1780249]]],
+                           [[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 1.368675]]]]],
+                         [[[[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 0.3711]]],
+                           [[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 0.4167]]]],
+                          [[[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 0.031575]]],
+                           [[[0., 0.], [0., 0.]],
+                            [[0., 0.], [0., 0.034725]]]]]]).astype(np.float32)
+    expect_grid = np.array([[[[[[0.005, 0.01, 0.02]]],
+                              [[[0.01, 0.02, 0.04]]]],
+                             [[[[0.025, 0.04999997, 0.10000003]]],
+                              [[[0.02999998, 0.05999997, 0.11999999]]]]],
+                            [[[[[0.04499996, 0.08999997, 0.18000007]]],
+                              [[[0.04749997, -2.059125, -2.1675]]]],
+                             [[[[-2.6214, -2.7756, -2.949075]]],
+                              [[[-1.88825, -2.023125, -2.1787503]]]]],
+                            [[[[[-1.7586248, -1.9185001, -2.11035]]],
+                              [[[-0.94780004, -1.0662752, -1.2186]]]],
+                             [[[[-0.4787501, -0.5745, -0.71812487]]],
+                              [[[-0.05014996, -0.07522491, -0.15044999]]]]]]).astype(np.float32)
+    [x_vmap, grid_vmap] = F.vmap(net, in_axes=(0, 0, 0))(grad, input_x, grid)
+    error_x = np.ones(shape=expect_x.shape) * 1.0e-6
+    error_grid = np.ones(shape=expect_grid.shape) * 1.0e-6
+    assert np.all(abs(x_vmap.asnumpy() - expect_x) < error_x)
+    assert np.all(abs(grid_vmap.asnumpy() - expect_grid) < error_grid)

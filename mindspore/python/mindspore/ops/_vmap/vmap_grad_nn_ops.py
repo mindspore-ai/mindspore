@@ -24,7 +24,7 @@ from mindspore.ops import constexpr
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.composite import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
-    _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
+    _bdim_at_front, _vmap_clone_prim, _vmap_update_prim_attr, _bdim_at_any, _handle_broadcasting
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -610,4 +610,77 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         dx, _, _ = batch_prim(x, dy, var, mean, ones_like_gamma)
 
         return (dx, 0), (d_gamma, 0), (d_beta, 0)
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.GridSampler2DGrad)
+@vmap_rules_getters.register(G.GridSampler3DGrad)
+def get_grid_sampler_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `GridSampler2DGrad` and `GridSampler3DGrad`."""
+    prim_name = prim.name
+    if prim_name == "GridSampler2DGrad":
+        non_batch_dim_index = -3
+    else:
+        non_batch_dim_index = -4
+
+    def vmap_rule(grad_bdim, input_x_bdim, grid_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, grad_bdim, input_x_bdim, grid_bdim)
+        if is_all_none:
+            return result
+
+        grad, grad_dim = grad_bdim
+        input_x, input_x_dim = input_x_bdim
+        grid, grid_dim = grid_bdim
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        grad = F.reshape(grad, (-1,) + grad_shape[non_batch_dim_index:])
+
+        input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
+        input_x_shape = F.shape(input_x)
+        input_x = F.reshape(input_x, (-1,) + input_x_shape[non_batch_dim_index:])
+
+        grid = _bdim_at_front(grid, grid_dim, axis_size)
+        grid_shape = F.shape(grid)
+        grid = F.reshape(grid, (-1,) + grid_shape[non_batch_dim_index:])
+
+        dx, dgrid = prim(grad, input_x, grid)
+        dx_shape = F.shape(dx)
+        dx_return_shape = input_x_shape[:non_batch_dim_index] + dx_shape[non_batch_dim_index:]
+        dx = F.reshape(dx, dx_return_shape)
+        dgrid_shape = F.shape(dgrid)
+        dgrid_return_shape = input_x_shape[:non_batch_dim_index] + dgrid_shape[non_batch_dim_index:]
+        dgrid = F.reshape(dgrid, dgrid_return_shape)
+        return (dx, 0), (dgrid, 0)
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.UpsampleNearest3DGrad)
+@vmap_rules_getters.register(G.UpsampleTrilinear3DGrad)
+def get_upsample_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `UpsampleNearest3DGrad` and `UpsampleTrilinear3DGrad`."""
+    cdhw_reverse_index = -4
+    input_size = prim.input_size
+
+    def vmap_rule(grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, grad_bdim)
+        if is_all_none:
+            return result
+
+        grad, grad_dim = grad_bdim
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        input_shape = (-1,) + grad_shape[cdhw_reverse_index:]
+        grad = F.reshape(grad, input_shape)
+        real_in_shape = F.shape(grad)
+
+        # update batch dimension of input_size
+        new_input_size = (real_in_shape[0],) + input_size[1:]
+        _vmap_update_prim_attr(prim, 'input_size', new_input_size)
+
+        out = prim(grad)
+        out_shape = F.shape(out)
+        real_out_shape = grad_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return out, 0
     return vmap_rule

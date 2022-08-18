@@ -18,6 +18,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import functional as F
 from mindspore.ops.operations.nn_ops import UpsampleTrilinear3D
 
 
@@ -35,10 +36,10 @@ class UpsampleTrilinear3DNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-def test_upsample_nearest_3d_output_size(data_type):
+def test_upsample_trilinear_3d_output_size(data_type):
     """
-    Feature: UpsampleNearest3D
-    Description: Test cases for UpsampleNearest3D operator with output_size.
+    Feature: UpsampleTrilinear3D
+    Description: Test cases for UpsampleTrilinear3D operator with output_size.
     Expectation: The result matches expected output.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -84,10 +85,10 @@ def test_upsample_nearest_3d_output_size(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-def test_upsample_nearest_3d_output_size_align_corners(data_type):
+def test_upsample_trilinear_3d_output_size_align_corners(data_type):
     """
-    Feature: UpsampleNearest3D
-    Description: Test cases for UpsampleNearest3D operator with output_size,
+    Feature: UpsampleTrilinear3D
+    Description: Test cases for UpsampleTrilinear3D operator with output_size,
     with align corners parameter enabled
     Expectation: The result matches expected output.
     """
@@ -134,10 +135,10 @@ def test_upsample_nearest_3d_output_size_align_corners(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-def test_upsample_nearest_3d_scales(data_type):
+def test_upsample_trilinear_3d_scales(data_type):
     """
-    Feature: UpsampleNearest3D
-    Description: Test cases for UpsampleNearest3D operator with scales.
+    Feature: UpsampleTrilinear3D
+    Description: Test cases for UpsampleTrilinear3D operator with scales.
     Expectation: The result match expected output.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -185,10 +186,10 @@ def test_upsample_nearest_3d_scales(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-def test_upsample_nearest_3d_scales_align_corners(data_type):
+def test_upsample_trilinear_3d_scales_align_corners(data_type):
     """
-    Feature: UpsampleNearest3D
-    Description: Test cases for UpsampleNearest3D operator with scales,
+    Feature: UpsampleTrilinear3D
+    Description: Test cases for UpsampleTrilinear3D operator with scales,
     with align corners parameter enabled
     Expectation: The result match expected output.
     """
@@ -238,10 +239,10 @@ def test_upsample_nearest_3d_scales_align_corners(data_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_upsample_nearest_3d_error():
+def test_upsample_trilinear_3d_error():
     """
-    Feature: UpsampleNearest3D
-    Description: Test cases for UpsampleNearest3D operator with errors.
+    Feature: UpsampleTrilinear3D
+    Description: Test cases for UpsampleTrilinear3D operator with errors.
     Expectation: Raise expected error type.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -280,3 +281,29 @@ def test_upsample_nearest_3d_error():
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = UpsampleTrilinear3DNet()
         net(input_tensor)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap_upsample_trilinear_3d():
+    """
+    Feature:  UpsampleTrilinear3D GPU op vmap feature.
+    Description: test the vmap feature of UpsampleTrilinear3D.
+    Expectation: success.
+    """
+    # 3 batches
+    input_tensor = Tensor(np.arange(0, 4.8, 0.1).reshape([3, 1, 1, 2, 2, 4]).astype(np.float32))
+    net = UpsampleTrilinear3DNet(output_size=[3, 2, 2], align_corners=True)
+    expect = np.array([[[[[[0.0, 0.3], [0.4, 0.7]],
+                          [[0.4, 0.70000005], [0.8, 1.1]],
+                          [[0.8, 1.1], [1.2, 1.5]]]]],
+                       [[[[[1.6, 1.9], [2.0, 2.3]],
+                          [[2.0, 2.3], [2.4, 2.6999998]],
+                          [[2.4, 2.7], [2.8, 3.1]]]]],
+                       [[[[[3.2, 3.5], [3.6, 3.9]],
+                          [[3.6, 3.9], [4.0, 4.3]],
+                          [[4.0, 4.3], [4.4, 4.7]]]]]])
+    out_vmap = F.vmap(net, in_axes=(0))(input_tensor)
+    error = np.ones(shape=expect.shape) * 1.0e-6
+    assert np.all(abs(out_vmap.asnumpy() - expect) < error)

@@ -41,7 +41,9 @@ void CheckDims(string check_dim_name, string op_name, std::vector<T> check_vecto
 abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
 
   (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim5),
                                            prim_name);
@@ -76,6 +78,9 @@ abstract::ShapePtr UpsampleTrilinear3DInferShape(const PrimitivePtr &primitive,
   } else if (!output_size.empty() && !scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
                              << " But get both.";
+  }
+  if (x_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(output_shape);
   }
   constexpr auto name_ = "output_shape";
   CheckDims(name_, prim_name, output_shape);

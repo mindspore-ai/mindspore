@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -154,3 +155,28 @@ def test_upsample_nearest_3d_error():
         grad_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = NetUpsampleNearest3DGrad((2, 2, 2, 2, 2))
         net(grad_tensor)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap_upsample_nearest3d_grad():
+    """
+    Feature:  UpsampleNearest3DGrad GPU op vmap feature.
+    Description: test the vmap feature of UpsampleNearest3DGrad.
+    Expectation: success.
+    """
+    # 3 batches
+    input_shape = (1, 1, 2, 2, 2)
+    input_tensor = Tensor(np.arange(0, 7.2, 0.1).reshape(
+        (3, 1, 1, 2, 3, 4)).astype(np.float32))
+    net = NetUpsampleNearest3DGrad(input_shape, output_size=[2, 3, 4])
+    expect = np.array([[[[[[1.0, 1.8], [1.7, 2.1]],
+                          [[5.8, 6.6], [4.1, 4.5]]]]],
+                       [[[[[10.6, 11.4], [6.5, 6.9]],
+                          [[15.4, 16.2], [8.9, 9.299999]]]]],
+                       [[[[[20.2, 21.], [11.299999, 11.700001]],
+                          [[25.0, 25.8], [13.700001, 14.1]]]]]]).astype(np.float32)
+    out_vmap = F.vmap(net, in_axes=(0))(input_tensor)
+    error = np.ones(shape=expect.shape) * 1.0e-6
+    assert np.all(abs(out_vmap.asnumpy() - expect) < error)

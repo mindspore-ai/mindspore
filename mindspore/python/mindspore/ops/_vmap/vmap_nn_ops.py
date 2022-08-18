@@ -1636,6 +1636,64 @@ def get_layernorm_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.GridSampler2D)
+@vmap_rules_getters.register(NN.GridSampler3D)
+def get_grid_sampler_vmap_rule(prim, axis_size):
+    """VmapRule for `GridSampler2D` and `GridSampler3D`."""
+    prim_name = prim.name
+    if prim_name == "GridSampler2D":
+        non_batch_dim_index = -3
+    else:
+        non_batch_dim_index = -4
+
+    def vmap_rule(input_x_bdim, grid_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_x_bdim, grid_bdim)
+        if is_all_none:
+            return result
+
+        input_x, input_x_dim = input_x_bdim
+        grid, grid_dim = grid_bdim
+
+        input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
+        input_x_shape = F.shape(input_x)
+        input_x = F.reshape(input_x, (-1,) + input_x_shape[non_batch_dim_index:])
+
+        grid = _bdim_at_front(grid, grid_dim, axis_size)
+        grid_shape = F.shape(grid)
+        grid = F.reshape(grid, (-1,) + grid_shape[non_batch_dim_index:])
+
+        out = prim(input_x, grid)
+        out_shape = F.shape(out)
+        return_shape = input_x_shape[:non_batch_dim_index] + out_shape[non_batch_dim_index:]
+        out = F.reshape(out, return_shape)
+        return out, 0
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.UpsampleNearest3D)
+@vmap_rules_getters.register(NN.UpsampleTrilinear3D)
+def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
+    """VmapRule for `UpsampleNearest3D` and `UpsampleTrilinear3D`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        input_shape = (-1,) + x_shape[cdhw_reverse_index:]
+        x = F.reshape(x, input_shape)
+        out = prim(x)
+        out_shape = F.shape(out)
+        return_shape = x_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, return_shape)
+        return out, 0
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
