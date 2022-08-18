@@ -59,10 +59,10 @@ class _Conv(Cell):
         self.pad_mode = pad_mode
         self.weight_init = weight_init
         self.bias_init = bias_init
-        self.format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+        self.data_format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
+        if context.get_context("device_target") != "GPU" and self.data_format == "NHWC":
             raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
-                             f"but got the 'format' is {self.format} and "
+                             f"but got the 'format' is {self.data_format} and "
                              f"the platform is {context.get_context('device_target')}.")
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -93,7 +93,7 @@ class _Conv(Cell):
         if transposed:
             shape = [in_channels, out_channels // group, *kernel_size]
         else:
-            shape = [out_channels, *kernel_size, in_channels // group] if self.format == "NHWC" else \
+            shape = [out_channels, *kernel_size, in_channels // group] if self.data_format == "NHWC" else \
                 [out_channels, in_channels // group, *kernel_size]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
@@ -107,6 +107,25 @@ class _Conv(Cell):
     def construct(self, *inputs):
         """Must be overridden by all subclasses."""
         raise NotImplementedError
+
+    def extend_repr(self):
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
+            'weight_init={}, bias_init={}, format={}'.format(
+                self.in_channels,
+                self.out_channels,
+                self.kernel_size,
+                self.stride,
+                self.pad_mode,
+                self.padding,
+                self.dilation,
+                self.group,
+                self.has_bias,
+                self.weight_init,
+                self.bias_init,
+                self.data_format)
+        return s
 
 
 class Conv2d(_Conv):
@@ -283,33 +302,14 @@ class Conv2d(_Conv):
                                stride=self.stride,
                                dilation=self.dilation,
                                group=self.group,
-                               data_format=self.format)
-        self.bias_add = P.BiasAdd(data_format=self.format)
+                               data_format=self.data_format)
+        self.bias_add = P.BiasAdd(data_format=self.data_format)
 
     def construct(self, x):
         output = self.conv2d(x, self.weight)
         if self.has_bias:
             output = self.bias_add(output, self.bias)
         return output
-
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}, format={}'.format(
-                self.in_channels,
-                self.out_channels,
-                self.kernel_size,
-                self.stride,
-                self.pad_mode,
-                self.padding,
-                self.dilation,
-                self.group,
-                self.has_bias,
-                self.weight_init,
-                self.bias_init,
-                self.format)
-        return s
 
 
 @constexpr
@@ -489,24 +489,6 @@ class Conv1d(_Conv):
 
         output = self.squeeze(output)
         return output
-
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}'.format(
-                self.in_channels,
-                self.out_channels,
-                self.kernel_size,
-                self.stride,
-                self.pad_mode,
-                self.padding,
-                self.dilation,
-                self.group,
-                self.has_bias,
-                self.weight_init,
-                self.bias_init)
-        return s
 
 
 @constexpr
@@ -696,8 +678,8 @@ class Conv3d(_Conv):
                                stride=self.stride,
                                dilation=self.dilation,
                                group=self.group,
-                               data_format=self.format)
-        self.bias_add = P.BiasAdd(data_format=self.format)
+                               data_format=self.data_format)
+        self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
 
     def construct(self, x):
@@ -707,25 +689,6 @@ class Conv3d(_Conv):
         if self.has_bias:
             output = self.bias_add(output, self.bias)
         return output
-
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}, format={}'.format(
-                self.in_channels,
-                self.out_channels,
-                self.kernel_size,
-                self.stride,
-                self.pad_mode,
-                self.padding,
-                self.dilation,
-                self.group,
-                self.has_bias,
-                self.weight_init,
-                self.bias_init,
-                self.format)
-        return s
 
 
 class Conv3dTranspose(_Conv):
@@ -910,8 +873,8 @@ class Conv3dTranspose(_Conv):
                                                   dilation=self.dilation,
                                                   group=self.group,
                                                   output_padding=self.output_padding,
-                                                  data_format=self.format)
-        self.bias_add = P.BiasAdd(data_format=self.format)
+                                                  data_format=self.data_format)
+        self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
 
     def construct(self, x):
@@ -921,23 +884,6 @@ class Conv3dTranspose(_Conv):
         if self.has_bias:
             output = self.bias_add(output, self.bias)
         return output
-
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}'.format(self.in_channels,
-                                                  self.out_channels,
-                                                  self.kernel_size,
-                                                  self.stride,
-                                                  self.pad_mode,
-                                                  self.padding,
-                                                  self.dilation,
-                                                  self.group,
-                                                  self.has_bias,
-                                                  self.weight_init,
-                                                  self.bias_init)
-        return s
 
 
 def _deconv_output_length(is_valid, is_same, is_pad, input_length, filter_size, stride_size, dilation_size, padding):
@@ -1149,23 +1095,6 @@ class Conv2dTranspose(_Conv):
                                  self.bias)
         return self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
 
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}'.format(self.in_channels,
-                                                  self.out_channels,
-                                                  self.kernel_size,
-                                                  self.stride,
-                                                  self.pad_mode,
-                                                  self.padding,
-                                                  self.dilation,
-                                                  self.group,
-                                                  self.has_bias,
-                                                  self.weight_init,
-                                                  self.bias_init)
-        return s
-
 
 class Conv1dTranspose(_Conv):
     r"""
@@ -1351,20 +1280,3 @@ class Conv1dTranspose(_Conv):
 
         output = self.squeeze(output)
         return output
-
-    def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
-            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}, ' \
-            'weight_init={}, bias_init={}'.format(self.in_channels,
-                                                  self.out_channels,
-                                                  self.kernel_size,
-                                                  self.stride,
-                                                  self.pad_mode,
-                                                  self.padding,
-                                                  self.dilation,
-                                                  self.group,
-                                                  self.has_bias,
-                                                  self.weight_init,
-                                                  self.bias_init)
-        return s

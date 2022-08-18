@@ -3232,6 +3232,10 @@ class SGD(PrimitiveWithCheck):
     initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
     Note:
+        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
+        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
+        parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
+        applied.
         For more details, please refer to :class:`mindspore.nn.SGD`.
 
     Args:

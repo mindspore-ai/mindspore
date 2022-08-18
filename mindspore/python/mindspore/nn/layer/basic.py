@@ -20,7 +20,7 @@ import math
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import context
+from mindspore import context, log as logger
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
@@ -119,6 +119,7 @@ class Dropout(Cell):
 
     Note:
         Each channel will be zeroed out independently on every construct call.
+        Parameter `dtype` will be removed in a future version. It is not recommended to define this parameter.
 
     Args:
         keep_prob (float): The keep rate, greater than 0 and less equal than 1. E.g. rate=0.9,
@@ -159,6 +160,8 @@ class Dropout(Cell):
             raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range (0, 1], "
                              f"but got {keep_prob}.")
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        if dtype != mstype.float32:
+            logger.info("This parameter `dtype` will be deleted or invisible in the future. Please don't use it.")
         self.keep_prob = keep_prob
         seed0, seed1 = _get_graph_seed(0, "dropout")
         self.seed0 = seed0
