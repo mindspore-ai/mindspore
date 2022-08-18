@@ -532,7 +532,12 @@ class OrderEnforcer {
     std::vector<AnfNodePtr> new_inputs{NewValueNode(prim)};
     (void)new_inputs.emplace_back(node);
     auto real_load = func_graph_->NewCNode(new_inputs);
-    real_load->set_abstract(node->abstract());
+    auto load_abs = node->abstract();
+    if (!load_abs->isa<abstract::AbstractRefTensor>()) {
+      MS_LOG(EXCEPTION) << "Unexpected load node:" << node->DebugString();
+    }
+    const auto &abs_ref = load_abs->cast<abstract::AbstractRefPtr>();
+    real_load->set_abstract(abs_ref->CloneAsTensor());
     MS_LOG(DEBUG) << "Insert TensorMove " << real_load->DebugString() << " for load " << node->DebugString();
     (void)manager_->Replace(node, real_load);
   }
