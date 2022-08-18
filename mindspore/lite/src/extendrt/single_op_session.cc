@@ -58,7 +58,7 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> context) {
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
   if (AscendInit(context) != kSuccess) {
     MS_LOG(ERROR) << "Init ascend failed.";
-    return kMEInvalidInput;
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -183,10 +183,68 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
 
   return kSuccess;
 }
+
+Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorPtr> &inputs,
+                                               const std::vector<std::vector<int64_t>> &dims) {
+  if (inputs_.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Graph inputs tensor size[" << inputs_.size() << " is not equal with user input tensor size["
+                  << inputs.size() << "]";
+    return kLiteError;
+  }
+  auto graph_inputs = RuntimeUtils::GetGraphDataInputs(kernel_graph_);
+  if (graph_inputs.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Graph inputs size[" << graph_inputs.size() << " is not equal with user input size["
+                  << inputs.size() << "]";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < graph_inputs.size(); ++i) {
+    auto graph_input = graph_inputs[i];
+    auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
+    auto type_id = graph_input_addr->type_id();
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    size_t tensor_size = dims[i].empty()
+                           ? type_size
+                           : std::accumulate(dims[i].begin(), dims[i].end(), type_size, std::multiplies<size_t>());
+    // update input size
+    if (graph_input_addr->ptr_ != nullptr) {
+      free(graph_input_addr->ptr_);
+      auto new_addr = malloc(tensor_size);
+      if (new_addr == nullptr) {
+        MS_LOG(ERROR) << " malloc memory of input " << i << " failed, memory size " << inputs[i]->Size();
+        return kLiteError;
+      }
+      graph_input_addr->set_ptr(new_addr);
+      graph_input_addr->SetSize(tensor_size);
+    }
+    // update input shape
+    inputs_[i]->set_shape(dims[i]);
+    auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), dims[i]);
+    graph_input->set_abstract(abstract);
+  }
+  return kSuccess;
+}  // namespace mindspore
+
 Status SingleOpInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
                                     const std::vector<std::vector<int64_t>> &dims) {
+  if (ResizeGraphInputs(inputs, dims) != kSuccess) {
+    MS_LOG(EXCEPTION) << "Resize graph input error. ";
+  }
+  auto &kernel_nodes = kernel_graph_->execution_order();
+  for (const auto &kernel_node : kernel_nodes) {
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    MS_LOG(INFO) << "SingleOpInferSession::Resize " << kernel_name;
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel_node);
+    if (kernel_mod == nullptr) {
+      MS_LOG(EXCEPTION) << "Kernel mod is nullptr, kernel name: " << kernel_name;
+    }
+    auto args = kernel::AbstractArgsFromCNode(kernel_node);
+    if (kernel_mod->Resize(args.op, args.inputs, args.outputs) != kSuccess) {
+      MS_LOG(EXCEPTION) << "Kernel mod resize failed, kernel name: " << kernel_name;
+    }
+  }
   return kSuccess;
 }
+
 std::vector<tensor::TensorPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
 std::vector<tensor::TensorPtr> SingleOpInferSession::GetInputs() { return inputs_; }
 std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }
