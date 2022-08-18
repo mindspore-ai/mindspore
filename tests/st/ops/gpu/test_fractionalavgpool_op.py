@@ -197,27 +197,3 @@ def test_fractionalavgpool_pynative():
                                           [[0.2777778], [0.2777778], [0.6944444], [0.41666666]],
                                           [[0.16666667], [0.16666667], [0.41666666], [0.25]]]]).astype(type_i)
         assert np.allclose(output_grad.asnumpy(), expect_output_grad_y)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_fractionalavgpool_bigdata_fp32():
-    """
-    Feature: FractionalAvgPool
-    Description: Test of big input
-    Expectation: The results are as expected
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-
-    x = Tensor(np.arange(50331648).reshape([16, 1024, 1024, 3]).astype(np.float32))
-    net = NetFractionalAvgPool()
-    output = net(x)
-
-    net = NetFractionalAvgPoolRealRandom()
-    output = net(x)
-    type0 = output[0].asnumpy().dtype
-    assert type0 == np.float32
-
-    net = NetFractionalAvgPoolOverlapPing()
-    output = net(x)
