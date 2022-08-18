@@ -1107,7 +1107,7 @@ class HSwish(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
