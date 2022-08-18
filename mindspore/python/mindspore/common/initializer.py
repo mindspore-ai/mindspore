@@ -92,10 +92,12 @@ def _assignment(arr, num):
 
 def _numpy_seed():
     # This will produce same value after call numpy.random.seed with same seed.
-    return np.random.randint(low=1, high=(1 << 63))
+    return np.random.randint(low=1, high=(1 << 63), dtype=np.int64)
 
 
 def _init_random_normal(mean, sigma, shape):
+    if sigma < 0:
+        raise ValueError("sigma < 0")
     data = np.ndarray(shape=shape, dtype=np.float32)
     _random_normal(_numpy_seed(), data, mean, sigma)
     return data
@@ -108,6 +110,8 @@ def _init_random_uniform(a, b, shape):
 
 
 def _init_truncated_normal(a, b, mean, sigma, shape):
+    if sigma < 0:
+        raise ValueError("sigma < 0")
     data = np.ndarray(shape=shape, dtype=np.float32)
     _truncated_normal(_numpy_seed(), data, a, b, mean, sigma)
     return data
