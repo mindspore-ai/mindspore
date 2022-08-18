@@ -1067,6 +1067,32 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('tan')()(self)
 
     def tanh(self):
+        r"""
+        Tanh activation function.
+
+        Computes hyperbolic tangent of self Tensor element-wise. The Tanh function is defined as:
+
+        .. math::
+
+            tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+
+        where :math:`x_i` is an element of the self Tensor.
+
+        Returns:
+            Tensor, with the same dtype and shape as self.
+
+        Raises:
+            TypeError: If dtype of self tensor is not float16, float32, float64, complex64 or complex128.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``  ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> output = input_x.tanh()
+            >>> print(output)
+            [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
+        """
         self._init_check()
         return tensor_operator_registry.get('tanh')(self)
 
@@ -1585,6 +1611,36 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('pow')()(self, power)
 
     def log(self):
+        """
+        Returns the natural logarithm of self Tensor element-wise.
+
+        .. math::
+            y_i = log_e(x_i)
+
+        .. note::
+            The dimension of the self Tensor on Ascend should be less than or equal to 8, and the dimension of the
+            self Tensor on the CPU should be less than 8.
+
+        .. warning::
+            If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+            be inaccurate.
+
+        Returns:
+            Tensor, has the same shape and dtype as self.
+
+        Raises:
+            TypeError: If dtype of self Tensor is not float16, float32, float64, complex64 or complex128 on GPU and CPU.
+            TypeError: If dtype of self Tensor is not float16 or float32 on Ascend.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = x.log()
+            >>> print(output)
+            [0.        0.6931472 1.3862944]
+        """
         self._init_check()
         return tensor_operator_registry.get('log')(self)
 
