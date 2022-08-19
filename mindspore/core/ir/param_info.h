@@ -102,9 +102,9 @@ class ParamInfo {
 
   std::vector<int64_t> cache_shape() const { return cache_shape_; }
   void set_cache_shape(const std::vector<int64_t> &cache_shape) { cache_shape_ = cache_shape; }
-  ParameterPtr parameter() { return parameter_; }
+  ParameterPtr parameter() { return parameter_.lock(); }
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
-  void ClearParameter() { parameter_ = nullptr; }
+  void ClearParameter() { parameter_.reset(); }
 
   bool requires_aggr() const { return requires_aggr_; }
   void set_requires_aggr(bool requires_aggr) { requires_aggr_ = requires_aggr; }
@@ -123,7 +123,7 @@ class ParamInfo {
   bool parallel_optimizer_comm_recompute_{false};
   bool cache_enable_{false};
   std::vector<int64_t> cache_shape_;
-  ParameterPtr parameter_{nullptr};
+  ParameterWeakPtr parameter_;
   bool requires_aggr_{true};
   std::vector<int64_t> parameter_shape_;
   // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
