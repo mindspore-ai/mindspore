@@ -113,23 +113,17 @@ Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vecto
 }
 }  // namespace
 
-int ModelPool::GetDefaultThreadNum() {
+int ModelPool::GetDefaultThreadNum(int worker_num) {
   int default_thread_num = -1;
-  std::vector<int> physical_core_list;
-  std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "DistinguishPhysicalAndLogical failed.";
-    return 0;
-  }
-  auto core_size = physical_core_list.size();
-  if (can_use_all_physical_core_) {
-    core_size = can_use_core_num_;
-  }
-  if (core_size <= kNumPhysicalCoreThreshold) {
-    default_thread_num = core_size >= kDefaultThreadsNum ? core_size / kDefaultWorkerNumPerPhysicalCpu : core_size;
+  if (can_use_core_num_ <= kNumPhysicalCoreThreshold) {
+    default_thread_num = can_use_core_num_ >= kDefaultWorkerNumPerPhysicalCpu
+                           ? can_use_core_num_ / kDefaultWorkerNumPerPhysicalCpu
+                           : can_use_core_num_;
   } else {
     default_thread_num = kDefaultThreadsNum;
+  }
+  if (worker_num * default_thread_num > can_use_core_num_) {
+    default_thread_num = can_use_core_num_ >= worker_num ? can_use_core_num_ / worker_num : can_use_core_num_;
   }
   return default_thread_num;
 }
@@ -370,9 +364,10 @@ Status ModelPool::CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_con
   }
   if (thread_num == 0) {
     // Defaults are automatically adjusted based on computer performance
-    auto default_thread_num = GetDefaultThreadNum();
+    auto default_thread_num = GetDefaultThreadNum(runner_config->GetWorkersNum());
     if (default_thread_num == 0) {
-      MS_LOG(ERROR) << "computer thread num failed.";
+      MS_LOG(ERROR) << "computer thread num failed, worker num: " << runner_config->GetWorkersNum()
+                    << " | can use core num: " << can_use_core_num_;
       return kLiteError;
     }
     context->SetThreadNum(default_thread_num);

@@ -109,7 +109,7 @@ class ModelPool {
 
   bool CanUseAllPhysicalResources();
 
-  int GetDefaultThreadNum();
+  int GetDefaultThreadNum(int worker_num = 0);
 
   Status CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_config);
 
