@@ -3,7 +3,7 @@ mindspore.ops.celu
 
 .. py:function:: mindspore.ops.celu(x, alpha=1.0)
 
-    celu激活函数，按输入元素计算输出，公式定义如下：
+    celu激活函数，按输入元素计算输出。公式定义如下：
 
     .. math::
         \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))

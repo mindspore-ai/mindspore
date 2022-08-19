@@ -3,7 +3,7 @@ mindspore.ops.soft_shrink
 
 .. py:function:: mindspore.ops.soft_shrink(x, lambd=0.5)
 
-    Soft Shrink激活函数，按输入元素计算输出，公式定义如下：
+    Soft Shrink激活函数，按输入元素计算输出。公式定义如下：
 
     .. math::
         \text{SoftShrink}(x) =
