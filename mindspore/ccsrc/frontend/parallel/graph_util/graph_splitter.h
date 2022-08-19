@@ -311,6 +311,9 @@ class ParameterServerMode : public DistributedExecutionMode {
   // Fuse the given rpc recv nodes list. Only nodes which recv data from the same peer can be fused.
   CNodePtr FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes);
 
+  // Fuse communication edges with same peers.
+  std::vector<FusedInterProcessOpPair> FuseCommEdges(const std::vector<InterProcessOpPair> &inter_process_pairs);
+
   // The fusion config for rpc nodes connected with optimizers on Parameter Server. This is similar to
   // 'all_reduce_fusion_split_indices'.
   std::vector<size_t> ps_optimizer_fusion_segments_;
