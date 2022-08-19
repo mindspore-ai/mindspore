@@ -35,6 +35,8 @@ from ...common._decorator import deprecated
 from ...common.parameter import Parameter
 from ...common.tensor import Tensor, CSRTensor, COOTensor
 from ..._c_expression import Tensor as Tensor_
+from ..._c_expression import CSRTensor as CSRTensor_
+from ..._c_expression import COOTensor as COOTensor_
 from ..._c_expression import get_dyn_shape
 
 
@@ -272,9 +274,9 @@ class DType(Primitive):
         """Initialize DType"""
 
     def __call__(self, x):
-        if not isinstance(x, (Tensor, CSRTensor, COOTensor)):
+        if not isinstance(x, (Tensor, CSRTensor, COOTensor, Tensor_, CSRTensor_, COOTensor_)):
             raise TypeError("For Primitive[Dtype], the input argument[input_x] "
-                            "must be a Tensor, CSRTensor or COOTensor, but got " + type(x) + ".")
+                            "must be a Tensor, CSRTensor or COOTensor, but got " + str(type(x)) + ".")
         return x.dtype
 
 
