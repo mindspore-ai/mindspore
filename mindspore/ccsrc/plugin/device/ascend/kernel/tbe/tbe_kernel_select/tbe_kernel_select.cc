@@ -43,20 +43,61 @@ constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
 
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
-  auto tbe_selecter = TbeKernelSelect(kernel_node, kernel_info_list);
-  tbe_selecter.TbeMetadataInfoEx();
+  auto tbe_selector = TbeKernelSelect(kernel_node, kernel_info_list);
+  tbe_selector.TbeMetadataInfoEx();
 }
 
-bool TbeCheckIsSupported(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  auto tbe_selecter = TbeKernelSelect(kernel_node, &kernel_info_list);
-  return tbe_selecter.FindKernelInfo(select_kernel_build_info);
+bool NeedCheckDynamicImpl(const CNodePtr &cnode) {
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name, cnode);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  auto is_op_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
+  auto is_kernel_dynamic_shape = op_info_ptr->dynamic_shape();
+  auto is_kernel_dynamic_compile_static = op_info_ptr->dynamic_compile_static();
+  if (is_op_dynamic_shape && is_kernel_dynamic_shape) {
+    return true;
+  }
+
+  if (!is_op_dynamic_shape && is_kernel_dynamic_compile_static) {
+    return true;
+  }
+  return false;
 }
 
-bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node) {
+bool TbeCheckIsSupportedSpec(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  auto tbe_selecter = TbeKernelSelect(kernel_node, &kernel_info_list);
-  return tbe_selecter.CheckIsKernelInfoEmpty();
+  auto tbe_selector = TbeKernelSelect(kernel_node, &kernel_info_list);
+  if (NeedCheckDynamicImpl(kernel_node)) {
+    common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(true), kernel_node);
+    auto ret = tbe_selector.FindKernelInfo(select_kernel_build_info);
+    if (ret) {
+      if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
+        common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicShape, MakeValue(true), kernel_node);
+      }
+      return true;
+    } else {
+      common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(false), kernel_node);
+    }
+  }
+  return tbe_selector.FindKernelInfo(select_kernel_build_info);
+}
+
+bool TbeCheckIsSupportedAny(const CNodePtr &kernel_node) {
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+  auto tbe_selector = TbeKernelSelect(kernel_node, &kernel_info_list);
+  if (NeedCheckDynamicImpl(kernel_node)) {
+    common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(true), kernel_node);
+    auto ret = tbe_selector.CheckIsAnyKernelInfo();
+    if (ret) {
+      if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
+        common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicShape, MakeValue(true), kernel_node);
+      }
+      return true;
+    } else {
+      common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(false), kernel_node);
+    }
+  }
+  return tbe_selector.CheckIsAnyKernelInfo();
 }
 
 TbeKernelSelect::TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list)
@@ -74,22 +115,16 @@ bool TbeKernelSelect::CheckCNode() {
     MS_LOG(INFO) << "Warning: node(" << full_name_ << ") is not supported by tbe ai_core.";
     return false;
   }
-  GetKernelHashName();
   return true;
 }
 
-bool TbeKernelSelect::CheckIsKernelInfoEmpty() {
+bool TbeKernelSelect::CheckIsAnyKernelInfo() {
   if (!check_cnode) {
-    return true;
+    return false;
   }
 
-  auto iter = select_cache_.find(kernel_hash_name);
-  if (iter == select_cache_.end()) {
-    TbeMetadataInfoEx();
-    return kernel_info_list_->empty();
-  }
-
-  return iter->second.empty();
+  TbeMetadataInfoEx();
+  return !kernel_info_list_->empty();
 }
 
 bool TbeKernelSelect::FindKernelInfo(const KernelBuildInfoPtr &select_kernel_build_info) {
@@ -97,18 +132,9 @@ bool TbeKernelSelect::FindKernelInfo(const KernelBuildInfoPtr &select_kernel_bui
     return false;
   }
 
-  auto iter = select_cache_.find(kernel_hash_name);
-  if (iter == select_cache_.end()) {
-    TbeMetadataInfoEx();
-    return std::any_of(kernel_info_list_->begin(), kernel_info_list_->end(),
-                       [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
-                         MS_EXCEPTION_IF_NULL(item);
-                         return *item == *select_kernel_build_info;
-                       });
-  }
-
-  for (auto &cache_info : iter->second) {
-    auto builder = KernelBuildInfo::KernelBuildInfoBuilder(cache_info);
+  TbeMetadataInfoEx();
+  for (auto &kernel_info : *kernel_info_list_) {
+    auto builder = KernelBuildInfo::KernelBuildInfoBuilder(kernel_info);
     auto item = builder.Build();
     if (*item == *select_kernel_build_info) {
       return true;
@@ -134,9 +160,11 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
     return;
   }
 
+  GetKernelHashName();
   node_name_ = common::AnfAlgo::GetCNodeName(cnode_ptr_);
   full_name_ = cnode_ptr_->fullname_with_scope();
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   // if op pattern is FormatAgnostic, can't use select cache
   bool skip_cache = (op_info_ptr->op_pattern() == kFormatAgnosticPattern);
 

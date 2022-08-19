@@ -93,7 +93,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   transpose->set_scope(transposed->scope());
   transpose->set_abstract(transposed->abstract());
 
-  if (tbe_kernel_query_->TbeCheckIsKernelInfoEmpty(transpose)) {
+  if (!CheckAICoreSupportedAny(transpose)) {
     return nullptr;
   }
 

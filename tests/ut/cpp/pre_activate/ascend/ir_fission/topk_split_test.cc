@@ -54,15 +54,6 @@ class TestHWTopKSplit : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-class MockSupportedChecker : public SupportedChecker {
- public:
-  MockSupportedChecker() = default;
-  ~MockSupportedChecker() override = default;
-  bool CheckAICoreSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) override {
-    return true;
-  }
-};  // namespace opt
-
 TEST_F(TestHWTopKSplit, test_topk_split) {
   /*
    * def before(input):
@@ -80,7 +71,6 @@ TEST_F(TestHWTopKSplit, test_topk_split) {
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ConvertConstInputToAttr>());
   auto topk_split = std::make_shared<opt::TopKSplit>();
-  topk_split->supported_checker_ = std::make_shared<MockSupportedChecker>();
   pm->AddPass(topk_split);
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kernel_graph);
@@ -122,7 +112,6 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ConvertConstInputToAttr>());
   auto topk_split = std::make_shared<opt::TopKSplit>();
-  topk_split->supported_checker_ = std::make_shared<MockSupportedChecker>();
   pm->AddPass(topk_split);
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kernel_graph);

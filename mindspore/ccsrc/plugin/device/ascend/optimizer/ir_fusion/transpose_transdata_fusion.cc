@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_transdata_fusion.h"
 #include <memory>
+#include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -55,7 +56,7 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
   new_transdata_builder->SetProcessor(transdata_kernel_build_info->processor());
 
   auto new_fusion_transdata = std::make_shared<Primitive>(kTransDataOpName);
-  if (supported_checker_->CheckAICoreSupported(transdata_cnode, new_transdata_builder->Build())) {
+  if (CheckAICoreSupportedSpec(transdata_cnode, new_transdata_builder->Build())) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(new_fusion_transdata),
                                       utils::cast<AnfNodePtr>((*equiv)[input_varptr_])};
     auto new_node = NewCNode(inputs, func_graph);

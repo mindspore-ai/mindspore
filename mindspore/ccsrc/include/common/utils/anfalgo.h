@@ -145,6 +145,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsUpdateParameterKernel(const CNodePtr &node);
   static AnfNodePtr GetInputNode(const CNodePtr &node, size_t index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
+  static bool IsDtypeFormatSensitiveOp(const AnfNodePtr &node);
   static bool IsFusedCommunicationOp(const AnfNodePtr &node);
   static bool IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &type);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
@@ -161,6 +162,7 @@ class COMMON_EXPORT AnfAlgo {
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
   static bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr);
+  static bool IsKernelDynamicImpl(const AnfNodePtr &node);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);

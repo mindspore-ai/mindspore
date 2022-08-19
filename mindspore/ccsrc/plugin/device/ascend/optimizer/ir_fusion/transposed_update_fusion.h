@@ -30,9 +30,7 @@ namespace opt {
 class TransposedUpdateFusion : public PatternProcessPass {
  public:
   explicit TransposedUpdateFusion(bool multigraph = true, const string &name = "transposed_update_fusion")
-      : PatternProcessPass(name, multigraph),
-        kernel_select_(std::make_shared<KernelSelect>()),
-        tbe_kernel_query_(std::make_shared<TbeKernelQuery>()) {}
+      : PatternProcessPass(name, multigraph), kernel_select_(std::make_shared<KernelSelect>()) {}
   ~TransposedUpdateFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
@@ -41,7 +39,6 @@ class TransposedUpdateFusion : public PatternProcessPass {
   CNodePtr DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   bool IsFormatInvaild(const AnfNodePtr &node) const;
   KernelSelectPtr kernel_select_;
-  TbeKernelQueryPtr tbe_kernel_query_;
 };
 }  // namespace opt
 }  // namespace mindspore
