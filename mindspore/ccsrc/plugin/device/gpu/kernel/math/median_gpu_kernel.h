@@ -71,14 +71,30 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
       }
       input_shape_.clear();
       input_shape_.push_back(input_size);
+      if (axis_ != 0) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', when 'global_median' is True, the 'axis' must be 0, but got " << axis_;
+      }
+      if (keep_dims_) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', when 'global_median' is True, the 'keep_dims' must be False, but got " << keep_dims_;
+      }
     }
     int64_t dims = static_cast<int64_t>(input_shape_.size());
-    if (axis_ < -dims || axis_ >= dims) {
+    if (dims == 0) {
+      if (axis_ < -1 || axis_ > 0) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-1,1), but got " << axis_;
+      }
+    } else if (axis_ < -dims || axis_ >= dims) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
     if (axis_ < 0) {
-      axis_ += dims;
+      if (dims == 0) {
+        axis_ = 0;
+      } else {
+        axis_ += dims;
+      }
     }
     return true;
   }
