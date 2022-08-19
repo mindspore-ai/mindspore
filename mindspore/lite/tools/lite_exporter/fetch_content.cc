@@ -452,17 +452,15 @@ int RemoveIfDepend(const CNodePtr &cnode) {
 
   inputs.emplace_back(cnode->input(0));
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    AnfNodePtr inputNode = cnode->input(i);
-    MS_CHECK_TRUE_MSG(inputNode != nullptr, RET_NULL_PTR, "inputNode is nullptr");
-    if (!inputNode->isa<CNode>()) {
+    AnfNodePtr input_node = cnode->input(i);
+    MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "inputNode is nullptr");
+    if (!input_node->isa<CNode>()) {
       inputs.emplace_back(cnode->input(i));
       continue;
     }
-    auto depend_node = utils::cast<CNodePtr>(inputNode);
-    MS_CHECK_TRUE_MSG(depend_node != nullptr, RET_NULL_PTR, "depend_node is nullptr");
-    auto value_node = depend_node->input(0)->cast<ValueNodePtr>();
-    MS_CHECK_TRUE_MSG(value_node != nullptr, RET_NULL_PTR, "value node is invalid.");
-    if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
+    if (opt::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
+      auto depend_node = utils::cast<CNodePtr>(input_node);
+      MS_CHECK_TRUE_MSG(depend_node != nullptr, RET_NULL_PTR, "depend_node is nullptr");
       has_depend = true;
       bool mask_out = (depend_node->inputs().size() == opt::kInputSizeThree);
       for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
@@ -496,11 +494,8 @@ int TraceRealInputOfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *in
     }
     auto input_cnode = utils::cast<CNodePtr>(input_node);
     MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr");
-    MS_CHECK_TRUE_MSG(input_cnode->input(0) != nullptr, RET_NULL_PTR, "Input of input_cnode is nullptr");
-    auto value_node = input_cnode->input(0)->cast<ValueNodePtr>();
-    MS_CHECK_TRUE_MSG(value_node != nullptr, RET_NULL_PTR, "Value node is invalid.");
-    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple) ||
-                                           opt::CheckPrimitiveType(input_cnode, opt::kPrimMakeTupleV2))) {
+    if (opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple) ||
+        opt::CheckPrimitiveType(input_cnode, opt::kPrimMakeTupleV2)) {
       *has_make_tuple = true;
       for (size_t j = 1; j < input_cnode->inputs().size(); ++j) {
         auto make_tuple_input = utils::cast<CNodePtr>(input_cnode->input(j));

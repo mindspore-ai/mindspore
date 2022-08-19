@@ -31,10 +31,8 @@ namespace mindspore {
 namespace lite {
 namespace {
 int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bool weight_narrow_range,
-                           int32_t act_numbits, int32_t weight_numbits) {
-  MS_ASSERT(prim->GetAttr("quant_params") != nullptr);
-  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
-  MS_ASSERT(quant_param_holder != nullptr);
+                           int32_t act_numbits, int32_t weight_numbits,
+                           std::map<int, std::vector<schema::QuantParamT>> *input_quant_params) {
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
   auto input_min = prim->GetAttr("input_minq");
@@ -53,7 +51,7 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
     auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, act_numbits, input_narrow_range);
     MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
     quants.emplace_back(quant_param);
-    quant_param_holder->set_input_quant_param(0, quants);
+    input_quant_params->insert({0, quants});
   }
 
   quants.clear();
@@ -81,18 +79,13 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
       min_buf++;
       max_buf++;
     }
-    quant_param_holder->set_input_quant_param(1, quants);
+    input_quant_params->insert({1, quants});
   }
   return lite::RET_OK;
 }
 
-int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
-  MS_ASSERT(prim->GetAttr("quant_params") != nullptr);
-  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
-  if (quant_param_holder == nullptr) {
-    MS_LOG(ERROR) << "Primitive has not quant-parameter.";
-    return lite::RET_ERROR;
-  }
+int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits,
+                            std::map<int, std::vector<schema::QuantParamT>> *output_quant_params) {
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
   auto outputMin = prim->GetAttr("output_minq");
@@ -111,7 +104,7 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
     auto ret = CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, numbits, narrow_range);
     MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Failed to calculate quant parameters.");
     quants.emplace_back(quant_param);
-    quant_param_holder->set_output_quant_param(0, quants);
+    output_quant_params->insert({0, quants});
   }
   return lite::RET_OK;
 }
@@ -173,11 +166,26 @@ int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &i
   int32_t weight_num_bits_param = 8;
   status = GetNumBits(prim, "weight_num_bits", &weight_num_bits_param);
   MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Get weight num_bits failed.");
+
+  std::map<int, std::vector<schema::QuantParamT>> input_quant_params;
+  std::map<int, std::vector<schema::QuantParamT>> output_quant_params;
   status = ConvertInputQuantParam(prim, input_narrow_range_param, weight_narrow_range_param, act_num_bits_param,
-                                  weight_num_bits_param);
+                                  weight_num_bits_param, &input_quant_params);
   MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Compute input quant param failed.");
-  status = ConvertOutputQuantParam(prim, output_narrow_range_param, act_num_bits_param);
+  status = ConvertOutputQuantParam(prim, output_narrow_range_param, act_num_bits_param, &output_quant_params);
   MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "Compute output quant param failed.");
+
+  if (!input_quant_params.empty() || !output_quant_params.empty()) {
+    auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
+    MSLITE_CHECK_PTR(quant_params_holder);
+    for (auto &iter : input_quant_params) {
+      quant_params_holder->set_input_quant_param(iter.first, iter.second);
+    }
+    for (auto &iter : output_quant_params) {
+      quant_params_holder->set_output_quant_param(iter.first, iter.second);
+    }
+    prim->AddAttr("quant_params", quant_params_holder);
+  }
   return lite::RET_OK;
 }
 }  // namespace
@@ -284,11 +292,6 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   }
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
-
-  auto quant_param_holder =
-    std::make_shared<lite::QuantParamHolder>(inputs.size(), lite::GetCNodeOutputsSize(anf_node, train_flag_));
-  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
-  primitive->AddAttr("quant_params", quant_param_holder);
 
   if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {
     MS_LOG(ERROR) << "compute quant param failed.";
