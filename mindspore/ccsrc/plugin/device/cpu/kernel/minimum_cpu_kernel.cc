@@ -50,10 +50,6 @@ void MinimumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     InitInputTensorAndScalar(max_input_shape_size);
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
     InitInputTensors(input_x_dtype, input_y_dtype);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', inputs must be two tensors or one tensor and one scalar, but got " << input_x_dtype
-                      << " and " << input_y_dtype;
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
