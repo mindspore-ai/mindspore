@@ -41,6 +41,7 @@
 #endif
 #ifdef PARALLEL_INFERENCE
 #include <thread>
+#include "src/common/config_file.h"
 #endif
 namespace mindspore {
 constexpr size_t kDataToStringMaxNum = 40;
@@ -969,6 +970,14 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
 }
 
 int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config) {
+  std::map<std::string, std::map<std::string, std::string>> all_config_info;
+  int ret = lite::GetAllSectionInfoFromConfigFile(flags_->config_file_, &all_config_info);
+  if (ret == RET_OK) {
+    std::map<std::string, std::map<std::string, std::string>>::iterator it;
+    for (it = all_config_info.begin(); it != all_config_info.end(); ++it) {
+      runner_config->SetConfigInfo(it->first, it->second);
+    }
+  }
   auto env = std::getenv("BENCHMARK_WEIGHT_PATH");
   if (env == nullptr) {
     return RET_OK;

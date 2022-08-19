@@ -57,6 +57,7 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/opengl_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/config_file.cc
         )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../lite)
