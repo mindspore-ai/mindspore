@@ -17,6 +17,11 @@
 #include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T, typename S>
 __global__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
                                size_t output_dim2, size_t input_dim1) {
@@ -47,6 +52,22 @@ void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output
   return;
 }
 
+template CUDA_LIB_EXPORT void GatherV2<Complex<float>, int>(Complex<float> *input, int *indices,
+                                                   Complex<float> *output, size_t output_dim0,
+                                                   size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<Complex<float>, int64_t>(Complex<float> *input, int64_t *indices,
+                                                   Complex<float> *output, size_t output_dim0,
+                                                   size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<Complex<double>, int>(Complex<double> *input, int *indices,
+                                                   Complex<double> *output, size_t output_dim0,
+                                                   size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                   cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<Complex<double>, int64_t>(Complex<double> *input, int64_t *indices,
+                                                   Complex<double> *output, size_t output_dim0,
+                                                   size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                   cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherV2<float, int>(float *input, int *indices, float *output, size_t output_dim0,
                                                    size_t output_dim1, size_t output_dim2, size_t input_dim1,
                                                    cudaStream_t stream);
