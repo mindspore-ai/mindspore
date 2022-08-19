@@ -120,6 +120,7 @@ def test_grad_first_input_net(mode):
     Description: Normal input type.
     Expectation: No exception.
     """
+
     class FirstInputTensorNet(nn.Cell):
         def construct(self, tensor_a, tuple_a, list_b, tensor_b, tensor_c, dict_c):
             return tensor_a + tuple_a[2] - list_b[1][1]["y"] + tensor_b - tensor_c + dict_c["y"]
@@ -150,6 +151,17 @@ class GradCellWithParameter(nn.Cell):
 
     def construct(self, x):
         return self.grad(self.net, self.param)(x)
+
+
+class AssignParameterWithCell(nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+        self.param = self.net.param
+
+    def construct(self, x):
+        self.param = self.param * 2
+        return x
 
 
 class GradCell(nn.Cell):
@@ -215,9 +227,10 @@ def test_grad_parameter_as_input_and_fv(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-# Support Ascend BE later.
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
@@ -236,6 +249,26 @@ def test_grad_same_parameter_both_input_and_fv(mode):
     print(f'b: {b}')
     assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
     assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_same_arg_parameter_assign(mode):
+    """
+    Feature: Change value of common parameter.
+    Description: Change value of common parameter.Watch another parameter with same param_obj.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
+    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
+    a = AssignParameterWithCell(TestCell(x))(x)
+    print(f'a: {a}')
+    assert np.array_equal(a.asnumpy(), x.asnumpy())
 
 
 class TestCell2(nn.Cell):
