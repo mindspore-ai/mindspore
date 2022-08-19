@@ -34,6 +34,7 @@
 #include "profiler/device/profiling.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/optimizer/ge_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -338,6 +339,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   FuncGraphPtr origin_graph = kg->GetFuncGraph();
   MS_EXCEPTION_IF_NULL(origin_graph);
   ReorderInputsAsFrontGraph(kg, origin_graph);
+  opt::GeOptimization(origin_graph);
   BuildDFGraph(origin_graph, GetParams(origin_graph), false);
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);

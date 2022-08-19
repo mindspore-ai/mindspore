@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ struct DfGraphWrapper {
   int id_;
   DfGraphPtr graph_ptr_;
   OptionMap options_ = {};
+  bool is_added_to_ge_session_ = false;
 };
 
 using DfGraphWrapperPtr = std::shared_ptr<DfGraphWrapper>;
