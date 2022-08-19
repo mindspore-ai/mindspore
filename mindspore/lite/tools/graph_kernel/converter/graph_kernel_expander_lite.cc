@@ -35,44 +35,19 @@
 #include "tools/graph_kernel/converter/preprocess_weight.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
+AnfNodePtr TensorToValueDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   for (const auto &idx : input_idx_) {
-    if (cnode->input(idx + 1)->isa<Parameter>()) {
-      auto param_value = cnode->input(idx + 1)->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
-      auto int_value = static_cast<int *>(param_value->data_ptr()->data());
-      ShapeVector out_list;
-      std::transform(int_value, int_value + param_value->data_ptr()->size(), std::back_inserter(out_list), IntToLong);
-      auto value = std::make_shared<ValueNode>(MakeValue(out_list));
-      cnode->set_input(idx + 1, value);
-    }
-  }
-  return decorated_->Run(cnode);
-}
-
-AnfNodePtr ParaToTensorDeco::Run(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
-  HashSet<size_t> ids;
-  if (convert_all_) {
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      (void)ids.insert(i - 1);
-    }
-  } else {
-    ids = input_idx_;
-  }
-  for (const auto &idx : ids) {
-    if (cnode->input(idx + 1)->isa<Parameter>()) {
-      auto default_param = cnode->input(idx + 1)->cast<ParameterPtr>()->default_param();
-      if (default_param == nullptr) {
-        continue;
+    if (cnode->input(idx + 1)->isa<ValueNode>()) {
+      auto value = cnode->input(idx + 1)->cast<ValueNodePtr>()->value();
+      if (value->isa<tensor::Tensor>()) {
+        auto param_value = value->cast<tensor::TensorPtr>();
+        auto int_value = static_cast<int *>(param_value->data_ptr()->data());
+        ShapeVector out_list;
+        std::transform(int_value, int_value + param_value->data_ptr()->size(), std::back_inserter(out_list), IntToLong);
+        auto new_value = std::make_shared<ValueNode>(MakeValue(out_list));
+        cnode->set_input(idx + 1, new_value);
       }
-      auto param_value = default_param->cast<tensor::TensorPtr>();
-      if (param_value == nullptr) {
-        continue;
-      }
-      auto value = NewValueNode(param_value);
-      value->set_abstract(param_value->ToAbstract());
-      cnode->set_input(idx + 1, value);
     }
   }
   return decorated_->Run(cnode);
@@ -180,7 +155,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},       {kCPUDevice, OpLevel_1, prim::kPrimGather},
     {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
     {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimConv2DFusion},
-    {kCPUDevice, OpLevel_1, prim::kPrimAvgPoolFusion},   {kCPUDevice, OpLevel_1, prim::kPrimMaxPoolFusion}};
+    {kCPUDevice, OpLevel_1, prim::kPrimAvgPoolFusion},   {kCPUDevice, OpLevel_1, prim::kPrimMaxPoolFusion},
+    {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice}};
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                               flags.enable_expand_ops, flags.disable_expand_ops);
@@ -213,13 +189,13 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimShape->name(), {FixFormatDeco::Creator}},
     {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::GetCreator({0}), FixFormatDeco::Creator}},
-    {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
+    {prim::kPrimTranspose->name(), {TensorToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
     {prim::kPrimGather->name(),
-     {ParaToTensorDeco::GetCreator({1}), ParaToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2}),
-      FixFormatDeco::Creator}},
-    {prim::kPrimConcat->name(), {ParaToTensorDeco::GetCreator({}, true), FixFormatDeco::Creator}},
-    {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
-    {prim::kPrimMatMulFusion->name(), {ParaToTensorDeco::GetCreator({1}), MatmulPackB::Creator}},
+     {TensorToValueDeco::GetCreator({2}), InputToAttrDeco::GetCreator({2}), FixFormatDeco::Creator}},
+    {prim::kPrimConcat->name(), {FixFormatDeco::Creator}},
+    {prim::kPrimStridedSlice->name(), {FixFormatDeco::Creator}},
+    {prim::kPrimConv2DFusion->name(), {SubstituteConv2D::Creator}},
+    {prim::kPrimMatMulFusion->name(), {MatmulPackB::Creator}},
     {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},
     {prim::kPrimMaxPoolFusion->name(), {PoolLayoutDeco::Creator}},
   };

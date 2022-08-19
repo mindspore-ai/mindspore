@@ -113,6 +113,7 @@ OP_REGISTER("BatchMatMul", OpaqueOp);
 OP_REGISTER("CumSum", OpaqueOp);
 OP_REGISTER("OneHot", OpaqueOp);
 OP_REGISTER("StridedSlice", StridedSliceOp);
+OP_REGISTER("StridedSliceOnnx", StridedSliceOnnxOp);
 OP_REGISTER("Concat", ConcatOp);
 OP_REGISTER("Gather", GatherOp);
 OP_REGISTER("Shape", ShapeOp);

@@ -18,6 +18,8 @@
 #include <cmath>
 #include <algorithm>
 #include <set>
+#include <unordered_set>
+#include <unordered_map>
 #include <sstream>
 #include <functional>
 #include <numeric>
@@ -1000,6 +1002,133 @@ void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBase
   auto input_names = primitive->GetAttr(kAttrInputNames);
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   SetAbastractsFromAttrs(primitive, convert_input_list, inputs_abstract, input_names_vec);
+}
+
+template <typename TM>
+tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &attrs) {
+  constexpr size_t input_index = 0;
+  constexpr size_t begin_index = 1;
+  constexpr size_t end_index = 2;
+  constexpr size_t axes_index = 3;
+  constexpr size_t stride_index = 4;
+
+  ShapeVector input_shape = inputs[input_index]->shape;
+  std::vector<int> begin = ChangeDataToVec<int, int>(inputs[begin_index]);
+  std::vector<int> end = ChangeDataToVec<int, int>(inputs[end_index]);
+  std::vector<int> axes = ChangeDataToVec<int, int>(inputs[axes_index]);
+  std::vector<int> stride = ChangeDataToVec<int, int>(inputs[stride_index]);
+
+  std::unordered_map<int, std::unordered_set<size_t>> info;
+  for (size_t i = 0; i < axes.size(); i++) {
+    int axis = axes[i] < 0 ? axes[i] + SizeToInt(input_shape.size()) : axes[i];
+    if (begin[i] < 0 || end[i] < 0 || stride[i] < 0) {
+      MS_LOG(INFO) << "Only do infervalue for StridedSliceOnnx when begin, end and stride are non-negative.";
+      return nullptr;
+    }
+    std::unordered_set<size_t> pos;
+    int index = begin[i];
+    while (index < end[i]) {
+      (void)pos.insert(IntToSize(index));
+      index += stride[i];
+    }
+    (void)info.emplace(axis, pos);
+  }
+
+  TM *input_x =
+    static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(inputs[input_index])->data()->data_c());
+
+  std::vector<TM> res;
+
+  std::function<void(size_t, size_t)> func;
+  func = [&func, &input_x, &res, &info, &input_shape](size_t dim, size_t offset) {
+    if ((dim + 1) == input_shape.size()) {
+      for (size_t i = 0; i < LongToSize(input_shape[dim]); i++) {
+        if (info.count(SizeToInt(dim)) > 0) {
+          if (info[SizeToInt(dim)].count(i) > 0) {
+            (void)res.emplace_back(input_x[offset + i]);
+          }
+        } else {
+          (void)res.emplace_back(input_x[offset + i]);
+        }
+      }
+    } else if ((dim + 1) < input_shape.size()) {
+      size_t accu = 1;
+      for (size_t j = dim + 1; j < input_shape.size(); j++) {
+        accu *= LongToSize(input_shape[j]);
+      }
+      for (size_t i = 0; i < LongToSize(input_shape[dim]); i++) {
+        if (info.count(SizeToInt(dim)) > 0) {
+          if (info[SizeToInt(dim)].count(i) > 0) {
+            func(dim + 1, offset + i * accu);
+          }
+        } else {
+          func(dim + 1, offset + i * accu);
+        }
+      }
+    }
+    return;
+  };
+  func(0, 0);
+  return std::make_shared<tensor::Tensor>(this->type, this->shape, &res[0], this->type);
+}
+
+NodePtr StridedSliceOnnxOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
+  }
+  TypeId output_type = this->type;
+  tensor::TensorPtr res = nullptr;
+  switch (static_cast<int>(output_type)) {
+    case TypeId::kNumberTypeUInt8: {
+      res = CalcStridedSliceOnnx<uint8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      res = CalcStridedSliceOnnx<int8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      res = CalcStridedSliceOnnx<int16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      res = CalcStridedSliceOnnx<int32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt64: {
+      res = CalcStridedSliceOnnx<int64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt16: {
+      res = CalcStridedSliceOnnx<uint16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt32: {
+      res = CalcStridedSliceOnnx<uint32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt64: {
+      res = CalcStridedSliceOnnx<uint64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat16: {
+      res = CalcStridedSliceOnnx<float16>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat32: {
+      res = CalcStridedSliceOnnx<float>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat64: {
+      res = CalcStridedSliceOnnx<double>(inputs, attrs);
+      break;
+    }
+    default:
+      return nullptr;
+  }
+  return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
 
 void MatMulOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {

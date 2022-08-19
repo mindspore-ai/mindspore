@@ -36,6 +36,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 #include "tools/graph_kernel/converter/insert_abstract.h"
 #include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
+#include "tools/graph_kernel/converter/parameter_to_tensor.h"
 
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
@@ -51,6 +52,7 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // Some ops may lose abstract in converter
   pm->Add(std::make_shared<InsertAbstract>(), OptLevel_1);
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
+  pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1);
   return pm;
 }
 

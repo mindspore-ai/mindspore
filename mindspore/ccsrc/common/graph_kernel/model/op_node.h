@@ -326,6 +326,22 @@ class StridedSliceOp : public OpaqueOp {
   void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) override;
 };
 
+class StridedSliceOnnxOp : public OpaqueOp {
+ public:
+  explicit StridedSliceOnnxOp(const std::string &op) : OpaqueOp(op) {}
+  ~StridedSliceOnnxOp() = default;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+
+ protected:
+  template <typename TM>
+  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &attrs);
+  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override {
+    return GetValue<std::vector<DShape>>(attrs.find("output_shape")->second);
+  }
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
+  DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
+};
+
 class MatMulOp : public OpaqueOp {
  public:
   explicit MatMulOp(const std::string &op) : OpaqueOp(op) {}
