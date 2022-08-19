@@ -493,8 +493,7 @@ class _Grad(GradOperation_):
         def aux_fn(*args):
             outputs = fn(*args)
             if not isinstance(outputs, tuple) or len(outputs) < 2:
-                raise ValueError("When has_aux is True, origin fn requires more than one outputs, but got "
-                                 + len(outputs) + " outputs.")
+                raise ValueError("When has_aux is True, origin fn requires more than one outputs.")
             res = (outputs[0],)
             stop_gradient = Primitive("stop_gradient")
             for item in outputs[1:]:

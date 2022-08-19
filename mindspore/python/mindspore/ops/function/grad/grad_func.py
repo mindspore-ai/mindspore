@@ -124,8 +124,8 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         ...     return res, z
         >>> x = Tensor([3, 3], mindspore.float32)
         >>> y = Tensor([0, 0], mindspore.float32)
-        >>> z = Tensor([2, 2], mindspore.float32)
-        >>> gradient, aux = grad(net, (1, 2), None, True)(x, y)
+        >>> z = Tensor([5, 5], mindspore.float32)
+        >>> gradient, aux = grad(fn, (1, 2), None, True)(x, y, z)
         >>> print(gradient)
         (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
          Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
@@ -230,9 +230,9 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> grad_fn = value_and_grad(net, grad_position=1)
         >>> output, inputs_gradient = grad_fn(x, y, z)
         >>> print(output)
-        [ -0.  18.]
+        [ -0. 18.]
         >>> print(inputs_gradient)
-        [0, 6.]
+        [0. 6.]
         >>>
         >>> # Function object to be differentiated
         >>> def fn(x, y, z):
@@ -240,8 +240,8 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
         ...     return res, z
         >>> x = Tensor(np.array([3, 3]).astype(np.float32))
         >>> y = Tensor(np.array([0, 0]).astype(np.float32))
-        >>> z = Tensor(np.array([2, 2]).astype(np.float32))
-        >>> output, inputs_gradient = grad(net, grad_position=(1, 2), weights=None, has_aux=True)(x, y)
+        >>> z = Tensor(np.array([5, 5]).astype(np.float32))
+        >>> output, inputs_gradient = value_and_grad(fn, grad_position=(1, 2), weights=None, has_aux=True)(x, y, z)
         >>> print(output)
         (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
          Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]))
