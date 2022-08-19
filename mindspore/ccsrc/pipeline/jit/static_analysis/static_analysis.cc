@@ -306,6 +306,36 @@ void CheckInterpretedObject(const AbstractBasePtr &abs) {
   }
 }
 
+EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
+  auto val = abs->BuildValue();
+  auto class_val = dyn_cast_ptr<parse::ClassType>(val);
+  const auto &class_name = class_val->name();
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  auto py_fn = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name));
+  if (py::isinstance<py::none>(py_fn)) {
+    MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << abs->ToString() << ".";
+    MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
+    MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
+  }
+  auto list_func_fg = parse::ParsePythonCode(py_fn);
+  auto fg = cnode->func_graph();
+  list_func_fg->set_manager(fg->manager());
+
+  auto &inputs = cnode->inputs();
+  std::vector<AnfNodePtr> new_cnode_inputs;
+  (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
+  for (std::size_t i = 1; i < inputs.size(); ++i) {
+    (void)new_cnode_inputs.emplace_back(inputs[i]);
+  }
+  auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
+  fg->ReplaceInOrder(cnode, new_cnode);
+
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf);
+}
+
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -313,6 +343,15 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
     return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
+  }
+
+  if (possible_func->isa<AbstractScalar>()) {
+    // Convert class to function, such as list(xxx).
+    auto val = possible_func->BuildValue();
+    MS_EXCEPTION_IF_NULL(val);
+    if (val->isa<parse::ClassType>()) {
+      return ConvertClassToFunc(cnode, possible_func, conf);
+    }
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
@@ -325,8 +364,8 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   bool contains_isolated_side_effect = false;
   ConfigPtrList args_conf_list;
-  // Ignore the first node which is function name
   auto &inputs = cnode->inputs();
+  // Ignore the first node which is function name
   for (std::size_t i = 1; i < inputs.size(); i++) {
     const AnfNodePtr &node = inputs[i];
     args_conf_list.push_back(MakeConfig(node, conf->context(), conf->func_graph()));

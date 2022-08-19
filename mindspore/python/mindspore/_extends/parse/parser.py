@@ -40,7 +40,8 @@ from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_dat
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
-from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
+from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
+from .resources import SYMBOL_UNDEFINE, NO_IMPLEMENT
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
 
 # Define return value
@@ -99,7 +100,7 @@ _builtin_function_or_method_type = type(abs)
 
 # Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
-    list, tuple, set, dict, slice, bool, int, float, str, complex, reversed, type,
+    set, dict, slice, bool, int, float, str, complex, reversed, type,
 )
 
 _unsupported_internal_type = (
@@ -107,7 +108,7 @@ _unsupported_internal_type = (
 )
 
 _hybrid_type = (
-    print, enumerate, zip, map, filter, abs, all, any, round, max, min, hasattr
+    print, enumerate, zip, map, filter, abs, all, any, round, max, min, hasattr, list, tuple
 )
 
 # Unsupported python builtin type in JIT Fallback.
@@ -423,6 +424,11 @@ def create_instance(cls_type, params=None):
             raise ValueError(f"When call 'create_instance', the parameter should be *args or **kwargs, "
                              f"but got {params.__class__.__name__}, params: {params}")
     return obj
+
+
+def convert_class_to_function(cls_str):
+    """Convert class to function."""
+    return convert_class_to_function_map.get(cls_str)
 
 
 def python_isinstance(x, cmp_type):

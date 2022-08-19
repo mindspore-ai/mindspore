@@ -238,3 +238,151 @@ def test_builtin_function_max_min_with_tensor_list():
     min_out, max_out = foo(Tensor([1, 2, 3, 4, 5], dtype=mstype.float32))
     assert operator.eq(min_out, 1)
     assert operator.eq(max_out, 5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_list_with_input_constant_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test list() in graph mode with constant tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = list(Tensor([1, 2, 3]))
+        x.append(Tensor([4]))
+        return x
+    out = foo()
+    assert isinstance(out, tuple)
+    assert len(out) == 4
+    assert isinstance(out[0], Tensor)
+    assert out[0].asnumpy() == 1
+    assert isinstance(out[1], Tensor)
+    assert out[1].asnumpy() == 2
+    assert isinstance(out[2], Tensor)
+    assert out[2].asnumpy() == 3
+    assert isinstance(out[3], Tensor)
+    assert out[3].asnumpy() == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_list_with_input_constant_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test list() in graph mode with constant tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = list(Tensor([[1, 2], [3, 4]]))
+        x.append(Tensor([5, 6]))
+        return x
+    out = foo()
+    assert isinstance(out, tuple)
+    assert len(out) == 3
+    assert isinstance(out[0], Tensor)
+    assert np.allclose(out[0].asnumpy(), np.array([1, 2]))
+    assert isinstance(out[1], Tensor)
+    assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
+    assert isinstance(out[2], Tensor)
+    assert np.allclose(out[2].asnumpy(), np.array([5, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_builtin_function_list_with_non_constant_tensor():
+    """
+    Feature: Graph list function.
+    Description: When the input to list() is non constant tensor, list function will return correct result.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo(x):
+        return list(x)
+
+    ret = foo(Tensor([[1, 2, 3], [4, 5, 6]]))
+    assert len(ret) == 2
+    assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
+    assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tuple_with_input_constant_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test tuple() in graph mode with constant tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = tuple(Tensor([1, 2, 3]))
+        return x
+    out = foo()
+    assert isinstance(out, tuple)
+    assert len(out) == 3
+    assert isinstance(out[0], Tensor)
+    assert out[0].asnumpy() == 1
+    assert isinstance(out[1], Tensor)
+    assert out[1].asnumpy() == 2
+    assert isinstance(out[2], Tensor)
+    assert out[2].asnumpy() == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tuple_with_input_constant_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test tuple() in graph mode with constant tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = list(Tensor([[1, 2], [3, 4]]))
+        return x
+    out = foo()
+    assert isinstance(out, tuple)
+    assert len(out) == 2
+    assert isinstance(out[0], Tensor)
+    assert np.allclose(out[0].asnumpy(), np.array([1, 2]))
+    assert isinstance(out[1], Tensor)
+    assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_builtin_function_tuple_with_non_constant_tensor():
+    """
+    Feature: Graph tuple function.
+    Description: When the input to tuple() is non constant tensor, list function will return correct result.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo(x):
+        return tuple(x)
+
+    ret = foo(Tensor([[1, 2, 3], [4, 5, 6]]))
+    assert len(ret) == 2
+    assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
+    assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
