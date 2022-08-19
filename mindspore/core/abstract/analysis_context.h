@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,80 +22,88 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "utils/macros.h"
+#include "utils/hashing.h"
 #include "utils/hash_map.h"
-#include "ir/meta_func_graph.h"
+#include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace abstract {
-class AnalysisContext;
-using AnalysisContextWeakPtr = std::weak_ptr<AnalysisContext>;
-using ArgsSpecToAnalysisContextMap =
-  mindspore::HashMap<AbstractBasePtrList, AnalysisContextWeakPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
-
-// AnalysisContext will be stored in Config in AnalysisCache.
-class MS_CORE_API AnalysisContext {
+//
+// AnalysisContext represents the context that a func graph is called.
+// - parent context: determines the free variables used by the func graph;
+// - func graph: the func graph be called in current context;
+// - argument list: the argument abstracts used to call the func graph.
+//
+class MS_CORE_API AnalysisContext : public std::enable_shared_from_this<AnalysisContext> {
  public:
-  AnalysisContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
-      : parent_(parent), func_graph_(fg), args_spec_list_(args_spec_list) {
-    if (parent_ != nullptr) {
-      extant_context_cache_ = parent_->extant_context_cache_;
-    }
-  }
   ~AnalysisContext() = default;
 
+  AnalysisContextPtr parent() const { return parent_ == nullptr ? nullptr : parent_->shared_from_this(); }
+  const FuncGraphPtr &func_graph() const { return func_graph_; }
+  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
+
   // Extend this context with values for another graph.
-  AnalysisContextPtr NewContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
+  AnalysisContextPtr NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list);
 
   // Return a context restricted to a graph and its parent.
-  AnalysisContextPtr FindOwnOrParentContext(const FuncGraphPtr &func_graph);
-  bool operator==(const AnalysisContext &other) const;
-  std::size_t hash() const;
-  static AnalysisContextPtr DummyContext();
-  bool IsDummyContext() const { return parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty(); }
-  const FuncGraphPtr &func_graph() const { return func_graph_; }
-  const AnalysisContextPtr &parent() const { return parent_; }
+  AnalysisContextPtr FindOwnOrParentContext(FuncGraph *fg);
+
   std::string ToString() const;
-  AnalysisContextPtr SpecializeKey() const;
-  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
+
+  // Return current root dummy context.
+  static AnalysisContextPtr DummyContext();
+
+  // Create a new root dummy context.
+  static AnalysisContextPtr NewDummyContext();
+
+  // Clear all contexts to release resources.
   static void ClearContext();
-  static AnalysisContextPtr CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
-                                          const AbstractBasePtrList &args_spec_list);
+
+ protected:
+  // Make constructor protected to prevent creating an isolated context object.
+  AnalysisContext(AnalysisContext *parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
+      : parent_(parent), func_graph_(fg), args_spec_list_(args_spec_list) {}
 
  private:
+  // Clear to release resources.
   void Clear();
-  AnalysisContextPtr parent_;
+
+  // Find context from the given func graph.
+  AnalysisContext *FindContext(const FuncGraphPtr &fg);
+
+  // Create a new context instance.
+  static AnalysisContextPtr CreateContext(AnalysisContext *parent, const FuncGraphPtr &fg,
+                                          const AbstractBasePtrList &args_spec_list);
+
+  using ChildKey = std::pair<FuncGraphPtr, AbstractBasePtrList>;
+
+  struct ChildHash {
+    std::size_t operator()(const ChildKey &key) const noexcept;
+  };
+
+  struct ChildEqual {
+    bool operator()(const ChildKey &a, const ChildKey &b) const noexcept;
+  };
+
+  // Parent context, use raw pointer to avoid cycle reference.
+  AnalysisContext *parent_;
+
+  // Func graph for current context.
   FuncGraphPtr func_graph_;
+
+  // Func graph arguments in current context.
   AbstractBasePtrList args_spec_list_;
-  // Record all created context for each func graph.
-  // `extant_context_cache_` is copied from its parent context.
-  mindspore::HashMap<FuncGraphPtr, AnalysisContextWeakPtr> extant_context_cache_;
-  // Record all created child contexts from this context.
-  // Like: key: [func_graph & arguments], value: [child_context]
-  mindspore::HashMap<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
-  // Cached hash code.
-  mutable std::size_t hash_ = 0;
 
-  // There may may be shared_ptr loop like:
-  // FuncGraphAbstactClosur->AnalysisContext->children_cache_->ArgsSpec->FuncGraphAbstactClosur.
-  // For break the loop, using all_context_ to clear context_.
-  static std::vector<AnalysisContextPtr> all_context_;
+  // Children contexts discriminated by func_graph & arguments.
+  mindspore::HashMap<ChildKey, AnalysisContextPtr, ChildHash, ChildEqual> children_;
+
+  // Root dummy contexts.
+  static std::vector<AnalysisContextPtr> dummy_contexts_;
 };
-
-struct ContextHasher {
-  std::size_t operator()(const AnalysisContextPtr &t) const {
-    std::size_t hash = t->hash();
-    return hash;
-  }
-};
-
-struct ContextEqual {
-  bool operator()(const AnalysisContextPtr &lhs, const AnalysisContextPtr &rhs) const { return *lhs == *rhs; }
-};
-
-extern const AnalysisContextPtr kDummyAnalysisContext;
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ANALYSIS_CONTEXT_H_

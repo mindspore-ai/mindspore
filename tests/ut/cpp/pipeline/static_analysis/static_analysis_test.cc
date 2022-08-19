@@ -294,21 +294,21 @@ TEST_F(TestInferGraph, test_context) {
   AnalysisContextPtr dummy_context = AnalysisContext::DummyContext();
 
   AnalysisContextPtr f_context = dummy_context->NewContext(graph_f_, AbstractBasePtrList());
-  ASSERT_TRUE(f_context->FindOwnOrParentContext(graph_f_) = f_context);
+  ASSERT_TRUE(f_context->FindOwnOrParentContext(graph_f_.get()) = f_context);
   ASSERT_TRUE(f_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
   AnalysisContextPtr g_context = f_context->NewContext(graph_g_, AbstractBasePtrList());
-  ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_g_) = g_context);
-  ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_f_) = dummy_context);
+  ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_g_.get()) = g_context);
+  ASSERT_TRUE(g_context->FindOwnOrParentContext(graph_f_.get()) = dummy_context);
   ASSERT_TRUE(g_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
   AnalysisContextPtr alpha_context = dummy_context->NewContext(graph_alpha_, AbstractBasePtrList());
-  ASSERT_TRUE(alpha_context->FindOwnOrParentContext(graph_alpha_) = alpha_context);
+  ASSERT_TRUE(alpha_context->FindOwnOrParentContext(graph_alpha_.get()) = alpha_context);
   ASSERT_TRUE(alpha_context->FindOwnOrParentContext(nullptr) = dummy_context);
 
   AnalysisContextPtr beta_context = alpha_context->NewContext(graph_beta_, AbstractBasePtrList());
-  ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_beta_) = beta_context);
-  ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_alpha_) = alpha_context);
+  ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_beta_.get()) = beta_context);
+  ASSERT_TRUE(beta_context->FindOwnOrParentContext(graph_alpha_.get()) = alpha_context);
   ASSERT_TRUE(beta_context->FindOwnOrParentContext(nullptr) = dummy_context);
 }
 

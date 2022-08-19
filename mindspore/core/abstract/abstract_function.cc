@@ -203,6 +203,11 @@ bool FuncGraphAbstractClosure::IsEqualExceptTrackingId(const FuncGraphAbstractCl
   return (this == &other) || (func_graph_ == other.func_graph_ && context_ == other.context_);
 }
 
+std::size_t FuncGraphAbstractClosure::HashWithoutTrackingId() const {
+  auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph_));
+  return hash_combine(hash_value, PointerHash<AnalysisContextPtr>{}(context_));
+}
+
 std::size_t FuncGraphAbstractClosure::hash() const {
   auto hash_value = hash_combine(tid(), PointerHash<FuncGraphPtr>{}(func_graph_));
   hash_value = hash_combine(hash_value, PointerHash<AnalysisContextPtr>{}(context_));

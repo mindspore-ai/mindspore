@@ -98,11 +98,11 @@ class AnfNodeConfig : public Config {
     if (context == nullptr) {
       return;
     }
-    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
+    auto fg = GetValuePtr<FuncGraph>(node);
     if (fg == nullptr && node != nullptr) {
-      fg = node->func_graph();
+      fg = node->func_graph().get();
     }
-    if (context->func_graph() == fg) {
+    if (context->func_graph().get() == fg) {
       // Usually `node` is CNode and not a FV, or top graph's ValueNodes.
       context_ = context;
     } else {
@@ -127,9 +127,6 @@ class AnfNodeConfig : public Config {
 
   size_t hash() const override {
     std::size_t node_hash = PointerHash<AnfNodePtr>{}(node_);
-    if (context_->IsDummyContext()) {
-      return node_hash;
-    }
     return hash_combine(node_hash, PointerHash<AnalysisContextPtr>{}(context_));
   }
 
@@ -142,11 +139,7 @@ class AnfNodeConfig : public Config {
       return false;
     }
     // Compare context with pointer.
-    if (context_ == other.context_) {
-      return true;
-    }
-    // If pointer not equal, both should be DummyContext.
-    return context_->IsDummyContext() && other.context_->IsDummyContext();
+    return context_ == other.context_;
   }
 
   std::string ToString() const override {
