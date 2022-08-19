@@ -44,7 +44,7 @@ int EventLoopRun(EventLoop *evloop, int timeout) {
     MS_LOG(ERROR) << "Failed to call malloc events";
     return RPC_ERROR;
   }
-  if (memset_s(events, size, 0, size)) {
+  if (memset_s(events, size, 0, size) > 0) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     free(events);
     return RPC_ERROR;
@@ -189,7 +189,7 @@ bool EventLoop::Initialize(const std::string &threadName) {
 }
 
 void EventLoop::Finalize() {
-  if (loop_thread_) {
+  if (loop_thread_ > 0) {
     void *threadResult = nullptr;
     Stop();
 
@@ -260,7 +260,7 @@ int EventLoop::SetEventHandler(int fd, uint32_t events, EventHandler handler, vo
   Event *evdata = nullptr;
   int ret = 0;
 
-  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev))) {
+  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) > 0) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     return RPC_ERROR;
   }
@@ -282,7 +282,7 @@ int EventLoop::SetEventHandler(int fd, uint32_t events, EventHandler handler, vo
 
   ev.data.ptr = evdata;
   ret = epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &ev);
-  if (ret) {
+  if (ret > 0) {
     event_lock_.lock();
     DeleteEvent(fd);
     event_lock_.unlock();
@@ -344,7 +344,7 @@ int EventLoop::UpdateEpollEvent(int fd, uint32_t events) {
     MS_LOG(ERROR) << "Failed to call event lookup, fd:" << fd << ",events:" << events_;
     return RPC_ERROR;
   }
-  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev))) {
+  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) > 0) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     return RPC_ERROR;
   }
@@ -437,7 +437,7 @@ void EventLoop::HandleEvent(struct epoll_event *events, size_t nevent) {
 
     if (tev != nullptr) {
       found = FindDeletedEvent(tev);
-      if (found) {
+      if (found > 0) {
         MS_LOG(WARNING) << "The fd has been deleted from epoll fd:" << tev->fd << ",epoll_fd_:" << epoll_fd_;
         continue;
       }

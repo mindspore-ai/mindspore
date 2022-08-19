@@ -59,12 +59,12 @@ void ConnectionPool::DeleteConnection(const std::string &dst_url) {
   Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
     std::lock_guard<std::mutex> lock(mutex_);
-    connections_.erase(dst_url);
+    (void)connections_.erase(dst_url);
     CloseConnection(conn);
   }
 }
 
-void ConnectionPool::DeleteAllConnections(std::map<std::string, Connection *> *links) {
+void ConnectionPool::DeleteAllConnections(std::map<std::string, Connection *> *links) const {
   auto iter = links->begin();
   while (iter != links->end()) {
     Connection *conn = iter->second;
