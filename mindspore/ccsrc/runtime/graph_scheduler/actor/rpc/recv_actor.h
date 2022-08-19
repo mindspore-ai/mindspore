@@ -40,9 +40,9 @@ class RecvActor : public RpcActor {
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor),
         server_(nullptr),
         is_context_valid_(false),
+        recv_data_(nullptr),
         ip_(""),
-        port_(0),
-        recv_data_(nullptr) {}
+        port_(0) {}
   ~RecvActor() override;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
@@ -87,12 +87,23 @@ class RecvActor : public RpcActor {
    */
   virtual void *AllocateMessage(size_t size);
 
+  /**
+   * @description: Allocate memory by DeviceResManager.
+   * @param {size_t} size: memory buffer's size.
+   * @return {void *}
+   */
+  void *AllocateMemByDeviceRes(size_t size);
+
   std::unique_ptr<TCPServer> server_;
 
   // The variables used to ensure thread-safe of op context visited by recv actor.
   bool is_context_valid_;
   std::mutex context_mtx_;
   std::condition_variable context_cv_;
+
+  // The received data which should be allocated by framework.
+  // It will be used for copying the buffer from the kernel function.
+  std::shared_ptr<CPUDeviceAddress> recv_data_;
 
  private:
   // Create abstract and add to the abstract list.
@@ -119,10 +130,6 @@ class RecvActor : public RpcActor {
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
-
-  // The received data which should be allocated by framework.
-  // It will be used for copying the buffer from the kernel function.
-  std::shared_ptr<CPUDeviceAddress> recv_data_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;

@@ -101,8 +101,10 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
     rpc_actor->set_actor_route_table_proxy(proxy);
   }
 
-  // Update the reference counts of rpc kernel inputs and workspaces.
-  UpdateRpcActorRefCounts(rpc_actor_set);
+  if (!common::GetEnv("use_void").empty()) {
+    // Update the reference counts of rpc kernel inputs and workspaces.
+    UpdateRpcActorRefCounts(rpc_actor_set);
+  }
 
   return rpc_actor_set;
 }

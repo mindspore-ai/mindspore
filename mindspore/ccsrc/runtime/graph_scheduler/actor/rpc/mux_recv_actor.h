@@ -62,6 +62,9 @@ class MuxRecvActor : public RecvActor {
   // Parse finalize command message from received message.
   void ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) override;
 
+  // The callback set to rpc module to allocate message(Raw pointer).
+  void *AllocateMessage(size_t size);
+
   // Record the from actor aid when receive a message;
   AID from_actor_aid_;
 

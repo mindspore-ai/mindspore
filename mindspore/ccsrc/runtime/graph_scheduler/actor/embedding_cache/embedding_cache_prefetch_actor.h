@@ -246,6 +246,8 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The device interface.
   device::DeviceContext *device_context_;
+  // The CPU device context used for allocating rpc message data.
+  device::DeviceContext *cpu_device_context_;
   // The device stream used to async memcpy operators and launch device kernels, such as embedding cache look up and
   // update kernel.
   size_t stream_id_{0};
@@ -364,7 +366,11 @@ class RpcOperator {
 // Sender is used to send data to other process.
 class Sender : public RpcOperator {
  public:
-  Sender() : server_url_(""), client_(nullptr) {}
+  explicit Sender(device::DeviceContext *cpu_device_context)
+      : server_url_(""),
+        client_(nullptr),
+        cpu_device_context_(cpu_device_context),
+        use_void_(!common::GetEnv("use_void").empty()) {}
   ~Sender() override;
 
   // Send buffer to peer.
@@ -388,6 +394,13 @@ class Sender : public RpcOperator {
                                                const std::string &from_url, const std::string &to_url,
                                                bool finalize_remote) const;
 
+  // Free message after it's sent to remote.
+  bool FreeMessage(void *data);
+
+  // Calculate the dynamic shape message size.
+  size_t CalDataSize(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
+                     const AddressPtrList &data_list, bool finalize_remote) const;
+
   // The url of the peer receiver's tcp server.
   std::string server_url_;
 
@@ -396,12 +409,25 @@ class Sender : public RpcOperator {
   // The sender and the receiver are used in pairs. The information sent by the sender contains the url of the
   // corresponding receiver, so a reference to the receiver is maintained in the sender.
   ReceiverPtr receiver_;
+
+  // The CPU device context used for allocating rpc message data.
+  device::DeviceContext *cpu_device_context_;
+
+  // Whether use void * protocol.
+  bool use_void_;
 };
 
 // Receiver is used to receive data from other process.
 class Receiver : public RpcOperator {
  public:
-  Receiver() : ip_(""), port_(0), server_(nullptr), received_buffer_(nullptr), received_msg_(false) {}
+  explicit Receiver(device::DeviceContext *cpu_device_context)
+      : ip_(""),
+        port_(0),
+        server_(nullptr),
+        received_buffer_(nullptr),
+        received_msg_(false),
+        cpu_device_context_(cpu_device_context),
+        use_void_(!common::GetEnv("use_void").empty()) {}
   ~Receiver() override;
 
   // Receive message from the peer sender, this interface is a synchronous interface and will wait for the message
@@ -424,6 +450,9 @@ class Receiver : public RpcOperator {
   // The output parameter 'data' contains real data addr and size.
   bool ParseDynamicShapeData(const char *msg_body, size_t msg_len, std::pair<const void *, size_t> *data) const;
 
+  // The callback set to rpc module to allocate message(Raw pointer).
+  void *AllocateMessage(size_t size);
+
   // The network address of this receiver. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
@@ -439,6 +468,12 @@ class Receiver : public RpcOperator {
   // The interface 'Receive' is a synchronous, use condition variable to block thread and wait for the message.
   std::condition_variable received_msg_cv_;
   std::mutex received_msg_mtx_;
+
+  // The CPU device context used for allocating rpc message data.
+  device::DeviceContext *cpu_device_context_;
+
+  // Whether use void * protocol.
+  bool use_void_;
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;
