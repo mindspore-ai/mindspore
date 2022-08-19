@@ -101,62 +101,35 @@ class VirtualDatasetEliminater : public AnfVisitor {
 
     return node->func_graph()->NewCNode(args);
   }
-
-  void Visit(const AnfNodePtr &) override {}
 };
 
 // {prim::kPrimVirtualOutput, X} -> X
 class VirtualOutputEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimVirtualOutput) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->inputs().size() <= 1) {
+    if (cnode == nullptr) {
       return nullptr;
     }
     return cnode->input(1);
   }
-
-  void Visit(const AnfNodePtr &) override {}
 };
 
-// {prim::kPrimReceive, X} -> prim::kPrimReceive
-class ReceiveEliminater : public AnfVisitor {
+// {ParallelVirtualNode, X, Y...} -> X
+class ParallelVirtualNodeEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimReceive) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->inputs().size() == 1) {
+    if (cnode == nullptr) {
       return nullptr;
     }
-    std::vector<AnfNodePtr> args = {cnode->input(0)};
-    return node->func_graph()->NewCNode(args);
+    auto input = cnode->input(1);
+    if (input->isa<CNode>()) {
+      auto input_cnode = input->cast<CNodePtr>();
+      input_cnode->set_primal_attrs(cnode->primal_attrs());
+    }
+    return cnode->input(1);
   }
-
-  void Visit(const AnfNodePtr &) override {}
-};
-
-class VirtualAssignAddEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAssignAdd) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < 2) {
-      return nullptr;
-    }
-
-    return inputs[1];
-  }
-
- private:
-  AnfNodePtr x_{nullptr};
 };
 
 class LinSpaceValue : public AnfVisitor {
@@ -197,44 +170,6 @@ class LinSpaceValue : public AnfVisitor {
   }
 };
 
-class VirtualAccuGradEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAccuGrad) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < 2) {
-      return nullptr;
-    }
-
-    return inputs[1];
-  }
-
- private:
-  AnfNodePtr x_{nullptr};
-};
-
-// {prim::kPrimMirrorMicroStep, X, Z} -> X
-class MirrorMicroStepEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimMirrorMicroStep) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < 2) {
-      return nullptr;
-    }
-
-    return inputs[1];
-  }
-
-  void Visit(const AnfNodePtr &) override {}
-};
-
 // {prim::kPrimSameTypeShape, X, Y} -> X
 class SameEliminater : public AnfVisitor {
  public:
@@ -273,44 +208,6 @@ class CheckBpropEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr};
 };
 
-// {prim::kPrimMirrorMiniStep, X, Z} -> X
-class MirrorMiniStepEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimMirrorMiniStep) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < 2) {
-      return nullptr;
-    }
-
-    return inputs[1];
-  }
-
-  void Visit(const AnfNodePtr &) override {}
-};
-
-// {prim::kPrimVirtualAdd, X, Z} -> X
-class VirtualAddEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAdd) || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < 2) {
-      return nullptr;
-    }
-
-    return inputs[1];
-  }
-
-  void Visit(const AnfNodePtr &) override {}
-};
-
 // {prim::kPrimMiniStepAllGather, X, Z} -> {prim::kPrimAllGather, X}
 class MiniStepAllGatherPass : public AnfVisitor {
  public:
@@ -346,8 +243,6 @@ class MiniStepAllGatherPass : public AnfVisitor {
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
   }
-
-  void Visit(const AnfNodePtr &) override {}
 };
 
 // {prim::kPrimMicroStepAllGather, X, Z} -> {prim::kPrimAllGather, X}
@@ -385,8 +280,6 @@ class MicroStepAllGatherPass : public AnfVisitor {
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
   }
-
-  void Visit(const AnfNodePtr &) override {}
 };
 
 // Reset defer_inline flag

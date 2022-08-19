@@ -18,6 +18,7 @@ from mindspore import context
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
 from ..operations import _grad_ops as G
+from ..operations.comm_ops import _VirtualPipelineEnd
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -56,6 +57,17 @@ def get_bprop_roll(self):
         dx = roll_grad(dout)
         return (dx,)
 
+    return bprop
+
+
+@bprop_getters.register(_VirtualPipelineEnd)
+def get_bprop_virtual_pipeline_end(self):
+    """Backpropagator for _VirtualPipelineEnd."""
+    grad = _VirtualPipelineEnd()
+
+    def bprop(x, out, dout):
+        dx = grad(dout)
+        return (dx,)
     return bprop
 
 

@@ -60,8 +60,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr reset_defer_inline_;
   SubstitutionPtr depend_value_elim_;
   SubstitutionPtr all_reduce_const_elim_;
-  SubstitutionPtr mirror_mini_step_elim_;
-  SubstitutionPtr virtual_add_elim_;
   SubstitutionPtr mini_step_allgather_replace_;
   SubstitutionPtr micro_step_allgather_replace_;
   SubstitutionPtr real_op_eliminate_;
@@ -128,10 +126,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr virtual_output_eliminate_;
 
   // PipelineSplit
-  SubstitutionPtr receive_eliminate_;
-  SubstitutionPtr virtual_accu_grad_;
-  SubstitutionPtr virtual_assign_add_;
-  SubstitutionPtr mirror_micro_step_;
+  SubstitutionPtr parallel_virtual_node_;
 
   // Convert
   SubstitutionPtr print_tuple_wrapper_;

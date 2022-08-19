@@ -376,8 +376,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.check_bprop_eliminate_,
       irpass.switch_layer_defer_inline_,
       irpass.replace_applicator_,
-      irpass.mirror_mini_step_elim_,
-      irpass.virtual_add_elim_,
       irpass.row_tensor_add_zeros_like_,
       irpass.mini_step_allgather_replace_,
       irpass.micro_step_allgather_replace_,
@@ -493,9 +491,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
                                                irpass.value_based_eliminate_,
-                                               irpass.virtual_accu_grad_,
-                                               irpass.virtual_assign_add_,
-                                               irpass.mirror_micro_step_},
+                                               irpass.parallel_virtual_node_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.row_tensor_eliminate_,

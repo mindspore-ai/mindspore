@@ -33,27 +33,6 @@
 
 namespace mindspore {
 namespace parallel {
-const std::set<PrimitivePtr> END_NODE_BLACK_LIST = {
-  prim::kPrimDepend,    prim::kPrimTupleGetItem, prim::kPrimAdd,    prim::kPrimSoftmaxCrossEntropyWithLogits,
-  prim::kPrimMakeTuple, prim::kPrimUpdateState,  prim::kPrimReshape};
-
-static bool IsInEndNodeBlackList(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!IsValueNode<Primitive>(cnode->input(0))) {
-    return true;
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (IsInParallelBlackList(prim)) {
-    return true;
-  }
-  for (auto prim_node = END_NODE_BLACK_LIST.cbegin(); prim_node != END_NODE_BLACK_LIST.cend(); ++prim_node) {
-    if (IsPrimitiveCNode(cnode, *prim_node)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode) {
   auto pre_node = cnode->input(1);
   size_t depth = 0;
@@ -557,24 +536,19 @@ void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root)
   }
 }
 
-AnfNodePtr GetPreNode(const AnfNodePtr &node) {
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<AnfNodePtr> node_queue = {node};
-  while (!node_queue.empty()) {
-    auto cur_node = (*node_queue.cbegin())->cast<CNodePtr>();
-    if (!cur_node) {
-      (void)node_queue.erase(node_queue.cbegin());
-      continue;
-    }
-    (void)node_queue.erase(node_queue.cbegin());
-    if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD)) {
-      MS_LOG(INFO) << "Pipeline End node: " << cur_node->DebugString();
-      return cur_node;
-    }
-    (void)node_queue.insert(node_queue.cend(), cur_node->inputs().cbegin() + 1, cur_node->inputs().cend());
-  }
-  MS_LOG(EXCEPTION) << "Get Pipeline End node failed.";
+void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index) {
+  auto pre_cnode = cnode->input(index)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(pre_cnode);
+  auto graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  OperatorAttrs attrs_;
+  auto op = CreateOpInstance(attrs_, "_VirtualPipelineEnd", "end_node");
+  auto value_node = NewValueNode(op);
+  auto virtual_end = graph->NewCNode({value_node, pre_cnode});
+  virtual_end->set_abstract(pre_cnode->abstract());
+  virtual_end->AddPrimalAttr(PIPELINE_END, pre_cnode->GetPrimalAttr(MICRO));
+  virtual_end->AddPrimalAttr(MICRO, pre_cnode->GetPrimalAttr(MICRO));
+  manager->SetEdge(cnode, SizeToInt(index), virtual_end);
 }
 
 void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager,
@@ -593,7 +567,8 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
     }
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PIPELINE_END)) {
-      for (auto &temp_node : cnode->inputs()) {
+      for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+        auto temp_node = cnode->input(i);
         if (!temp_node->isa<CNode>()) {
           continue;
         }
@@ -601,18 +576,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
         if (!temp_prim || temp_prim->HasAttr(PIPELINE_END)) {
           continue;
         }
-        auto end_node = GetPreNode(temp_node);
-        MS_EXCEPTION_IF_NULL(end_node);
-        auto end_cnode = end_node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(end_cnode);
-        auto end_prim = GetCNodePrimitive(end_node);
-        OperatorAttrs attrs_;
-        auto op = CreateOpInstance(attrs_, end_prim->name(), "");
-        auto value_node = NewValueNode(op);
-        auto new_prim = GetValueNode(value_node)->cast<PrimitivePtr>();
-        (void)new_prim->SetAttrs(end_prim->attrs());
-        manager->SetEdge(end_node, 0, value_node);
-        end_cnode->AddPrimalAttr(PIPELINE_END, end_cnode->GetPrimalAttr(MICRO));
+        InsertVirtualPipelineEndNode(cnode, manager, i);
       }
     }
   }

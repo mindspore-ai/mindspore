@@ -987,6 +987,28 @@ class _VirtualDiv(PrimitiveWithInfer):
 virtual_div = _VirtualDiv()
 
 
+class _VirtualPipelineEnd(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward and backward, mark end node in pipeline parallel.
+
+    Args:
+        divisor: float32
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize _VirtualPipelineEnd."""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
+
+
+virtual_pipeline_end = _VirtualPipelineEnd()
+
+
 class _VirtualAdd(PrimitiveWithInfer):
     """Auto parallel virtual operator. Do nothing in forward, do Add in backward."""
 
