@@ -3074,12 +3074,11 @@ class MulNoNan(_MathBinaryOp):
         Tensor, the shape is the same as the shape after broadcasting,
         and the data type is the one with higher precision among the two inputs.
 
+    Raises:
+        TypeError: If neither `x` nor `y` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
 
     Examples:
         >>> # case 1 : same data type and shape of two inputs, there are some 0 in y.
@@ -5375,7 +5374,7 @@ class MatrixInverse(Primitive):
     result may be returned.
 
     Note:
-        The parameter 'adjoint' is only supporting False right now. Because complex number is not supported at present.
+        The parameter 'adjoint' is only supporting False right now, because complex number is not supported at present.
 
     Args:
         adjoint (bool) : An optional bool. Default: False.
@@ -6254,23 +6253,23 @@ class RaggedRange(Primitive):
 
     Inputs:
         - **starts** (Tensor) - The starts of each range, whose type is int32, int64, float32 or float64,
-                                and shape is 0D or 1D.
+          and shape is 0D or 1D.
         - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
         - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
-                                and each element in the tensor should not be equal to 0.
+          and each element in the tensor should not be equal to 0.
     Outputs:
         - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
-                                          and type of the tensor is `Tsplits`,
-                                          shape of the tensor is equal to shape of input `starts` plus 1.
+          and type of the tensor is `Tsplits`,
+          shape of the tensor is equal to shape of input `starts` plus 1.
         - **rt_dense_values**  (Tensor) - The dense values of the return `RaggedTensor`,
-                                          and type of the tensor should be same as input `starts`.
-                                          Let size of input `starts`, input `limits` and input `deltas` are i,
-                                          if type of the input `starts`, input `limits` and input `deltas`
-                                          are int32 or int64, shape of the output `rt_dense_values` is equal to
-                                          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
-                                          if type of the input `starts`, input `limits` and input `deltas`
-                                          are float32 or float64, shape of the output `rt_dense_values` is equal to
-                                          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+          and type of the tensor should be same as input `starts`.
+          Let size of input `starts`, input `limits` and input `deltas` are i,
+          if type of the input `starts`, input `limits` and input `deltas`
+          are int32 or int64, shape of the output `rt_dense_values` is equal to
+          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
+          if type of the input `starts`, input `limits` and input `deltas`
+          are float32 or float64, shape of the output `rt_dense_values` is equal to
+          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
     Raises:
         TypeError: If any input is not Tensor.
         TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.

@@ -45,9 +45,6 @@ class Gamma(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.
 
-    Supported Platforms:
-        ``Ascend``
-
     Note:
         `concentration` and `rate` must be greater than zero.
         `dist_spec_args` are `concentration` and `rate`.
@@ -56,6 +53,9 @@ class Gamma(Distribution):
     Raises:
         ValueError: When concentration <= 0 or rate <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore

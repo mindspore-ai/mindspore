@@ -41,9 +41,6 @@ class Logistic(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Logistic'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
@@ -52,6 +49,9 @@ class Logistic(Distribution):
     Raises:
         ValueError: When scale <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

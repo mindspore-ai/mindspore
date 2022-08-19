@@ -188,7 +188,7 @@ class AllGather(PrimitiveWithInfer):
 
     Note:
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example, please check the details on the
+        communication environment variables before running the following example. Please check the details on the
         official website of `MindSpore \
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
 

@@ -566,14 +566,14 @@ class UniformInt(Primitive):
         - **maxval** (Tensor) - The distribution parameter, b.
           It defines the maximum possibly generated value, with int32 data type. Only one number is supported.
 
+    Outputs:
+        Tensor. The shape is the same as the input 'shape', and the data type is int32.
+
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
         TypeError: If `shape` is not a tuple.
         TypeError: If neither `minval` nor `maxval` is a Tensor.
         ValueError: If `shape` is not a constant value.
-
-    Outputs:
-        Tensor. The shape is the same as the input 'shape', and the data type is int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

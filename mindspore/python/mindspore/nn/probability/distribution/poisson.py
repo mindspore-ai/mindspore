@@ -37,15 +37,15 @@ class Poisson(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.
 
-    Supported Platforms:
-        ``Ascend``
-
     Note:
         `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.
 
     Raises:
         ValueError: When rate <= 0.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore

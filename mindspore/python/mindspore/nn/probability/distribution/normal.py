@@ -43,9 +43,6 @@ class Normal(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Normal'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `sd` must be greater than zero.
         `dist_spec_args` are `mean` and `sd`.
@@ -54,6 +51,9 @@ class Normal(Distribution):
     Raises:
         ValueError: When sd <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

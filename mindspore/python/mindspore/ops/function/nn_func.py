@@ -381,14 +381,14 @@ def celu(x, alpha=1.0):
     Returns:
         Tensor, has the same data type and shape as the input.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
     Raises:
         TypeError: If `alpha` is not a float.
         ValueError: If `alpha` has the value of 0.
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
@@ -563,13 +563,13 @@ def kl_div(logits, labels, reduction='mean'):
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise it is a scalar.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
     Raises:
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
         TypeError: If dtype of `logits` or `labels` is not float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -616,13 +616,13 @@ def hardshrink(x, lambd=0.5):
     Returns:
         Tensor, has the same data type and shape as the input `x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If `lambd` is not a float.
         TypeError: If `x` is not a tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
@@ -772,9 +772,6 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
     Returns:
         Resized tensor, with the same data type as input `x`.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
-
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If the data type of `x` is not supported.
@@ -786,6 +783,9 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         ValueError: If `coordinate_transformation_mode` is not in the support list.
         TypeError: If `mode` is not a string.
         ValueError: If `mode` is not in the support list.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> # case 1: linear mode
@@ -972,11 +972,11 @@ def selu(input_x):
     Returns:
         Tensor, with the same type and shape as the `input_x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -1046,9 +1046,6 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
                 \text{dilations[3]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
         TypeError: If `modulated` is not a bool.
@@ -1065,6 +1062,9 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
           - `offsets` value is float which does not contain a decimal part is not supported, e.g. `offsets` is assigned
             with "numpy.ones()".
           - `kernel_size` should meet the requirement::math:`3 * kernel\_size[0] * kernel\_size[1] > 8`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
@@ -1725,11 +1725,11 @@ def mish(x):
     Returns:
         Tensor, with the same type and shape as the `x`.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)

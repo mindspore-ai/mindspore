@@ -1,5 +1,5 @@
 ﻿mindspore.dataset.text.BasicTokenizer
-=====================================
+======================================
 
 .. py:class:: mindspore.dataset.text.BasicTokenizer(lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE, preserve_unused_token=True, with_offsets=False)
 

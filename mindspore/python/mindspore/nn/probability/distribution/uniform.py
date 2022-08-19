@@ -41,9 +41,6 @@ class Uniform(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Uniform'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `low` must be strictly less than `high`.
         `dist_spec_args` are `high` and `low`.
@@ -53,6 +50,8 @@ class Uniform(Distribution):
         ValueError: When high <= low.
         TypeError: When the input `dtype` is not a subclass of float.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

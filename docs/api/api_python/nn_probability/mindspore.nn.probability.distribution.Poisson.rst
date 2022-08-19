@@ -18,7 +18,7 @@ mindspore.nn.probability.distribution.Poisson
         - **name** (str) - 分布的名称。默认值：'Poisson'。
 
     .. note:: 
-        `rate` 必须大于0。
+        `rate` 必须大于0。 `dist_spec_args` 是 `rate`。
 
     异常：
         - **ValueError** - `rate` 中元素小于0。
