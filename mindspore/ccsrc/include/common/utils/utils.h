@@ -650,6 +650,9 @@ constexpr auto kAttrUpdateSlots = "update_slots";
 constexpr auto kAttrLr = "lr";
 constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
 constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
+constexpr auto kAttrJitLevel = "jit_level";
+constexpr auto kAttrJitLevelO2 = "O2";
+constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";

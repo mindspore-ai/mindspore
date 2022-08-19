@@ -952,6 +952,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
 
+  auto jit_level = pipeline::GetJitLevel();
+  func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
+
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
   // GPU/CPU no need set any context.
   if (!ExistTarget(all_nodes, kAscendDevice)) {

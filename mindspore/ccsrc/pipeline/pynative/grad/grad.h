@@ -130,6 +130,7 @@ class GradExecutor {
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
+  void SetBpropGraphJitLevel(const py::object &cell) const;
 
   // grad graph id to identify grad graph cache
   std::string grad_position_;
