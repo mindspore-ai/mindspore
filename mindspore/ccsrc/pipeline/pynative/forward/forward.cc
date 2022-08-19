@@ -174,15 +174,15 @@ bool IsConstPrimOrConstInput(const FrontendOpRunInfoPtr &op_run_info, size_t ind
   bool is_const_prim = prim->is_const_prim();
   const auto &const_input_index = prim->get_const_input_indexes();
   bool have_const_input = !const_input_index.empty();
+  if (!is_const_prim && !have_const_input) {
+    (void)kNotConstPrimOrConstInput.emplace(prim->name());
+    return false;
+  }
   bool is_const_input =
     have_const_input && std::find(const_input_index.begin(), const_input_index.end(), index) != const_input_index.end();
   MS_LOG(DEBUG) << prim->ToString() << " is const prim " << prim->is_const_prim() << ", is_const_input "
                 << is_const_input;
-  bool ret = is_const_prim || is_const_input;
-  if (!ret) {
-    (void)kNotConstPrimOrConstInput.emplace(prim->name());
-  }
-  return ret;
+  return is_const_prim || is_const_input;
 }
 
 void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
