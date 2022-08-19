@@ -86,7 +86,7 @@ def _check(input_shape, padding, name):
         if item[1] < -input_shape[index]:
             msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
                   "value of parameter 'padding' applied to the {} dimension of input must " \
-                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item[0])
+                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item[1])
             raise ValueError(msg)
         if input_shape[index] + item[0] + item[1] <= 0:
             msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
