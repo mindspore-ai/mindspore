@@ -158,6 +158,7 @@ truncate_mod_ = P.TruncateMod()
 trunc_ = P.Trunc()
 sparse_segment_mean_ = SparseSegmentMean()
 xlogy_ = P.Xlogy()
+square_ = P.Square()
 
 
 #####################################
@@ -3379,6 +3380,35 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
     return output
 
 
+def square(x):
+    """
+    Returns square of a tensor element-wise.
+
+    .. math::
+
+        out_{i} = (x_{i})^2
+
+    Args:
+        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> output = ops.square(x)
+        >>> print(output)
+        [1. 4. 9.]
+    """
+    return square_(x)
+
+
 def outer(x1, x2):
     """
     Return outer product of `x1` and `x2`. If `x1` is a vector of size n and `x2` is a vector of size m,
@@ -5716,6 +5746,7 @@ __all__ = [
     'logit',
     'logsumexp',
     'ldexp',
+    'square',
     'sin',
     'cos',
     'tan',

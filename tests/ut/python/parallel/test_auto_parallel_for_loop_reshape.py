@@ -62,7 +62,7 @@ class LayerNorm(nn.Cell):
         self.add = P.Add()
         self.mul = P.Mul()
         self.div = P.RealDiv()
-
+        self.square = P.Square()
         self.reshape = P.Reshape()
         self.shape = P.Shape()
 
@@ -73,7 +73,7 @@ class LayerNorm(nn.Cell):
         x = self.reshape(x, x_shape)
         x = self.reshape(x, x_target_shape)
         mean = self.mean(x, -1)
-        variance = self.mean(F.square(self.sub(x, mean)))
+        variance = self.mean(self.square(self.sub(x, mean)))
         output = self.div(self.sub(x, mean), F.sqrt(self.add(variance, self.eps)))
         rescaled_output = self.add(self.mul(output, self.gamma), self.beta)
         output_shape = self.shape(rescaled_output) + (1,)

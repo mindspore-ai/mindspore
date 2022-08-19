@@ -272,13 +272,13 @@ tensor::TensorPtr ConstData() {
 
 CNodePtr SquareOp(const FuncGraphPtr &graph, const AnfNodePtr &cond, int64_t switch_idx,
                   const tensor::TensorPtr &const_data) {
-  auto PrimSquare = prim::GetPythonOps("square", "mindspore.ops.functional")->cast<PrimitivePtr>();
+  auto prim_square = prim::kPrimSquare;
   // for the depended node , add two const data to merge the flow ,one for depended node with same switch,
   // the other use the opposite
   auto ctrl_data = NewValueNode(const_data);
   auto ctrl_node = GenerateSwitchNode(graph, cond, ctrl_data, switch_idx);
 
-  std::vector<AnfNodePtr> square_nodes{NewValueNode(PrimSquare), ctrl_node};
+  std::vector<AnfNodePtr> square_nodes{NewValueNode(prim_square), ctrl_node};
   auto square_op = graph->NewCNode(square_nodes);
 
   return square_op;

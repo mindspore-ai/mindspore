@@ -1039,6 +1039,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
+    def square(self):
+        """
+        Returns square of a tensor element-wise.
+
+        .. math::
+
+            out_{i} = (x_{i})^2
+
+        Returns:
+            Tensor, has the same shape and dtype as the `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+            >>> output = x.square()
+            >>> print(output)
+            [1. 4. 9.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('square')(self)
+
     def tan(self):
         """
         Computes tangent of `x` element-wise.

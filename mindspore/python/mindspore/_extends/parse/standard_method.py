@@ -2125,6 +2125,11 @@ def bitwise_xor(x, y):
     return F.bitwise_xor(x, y)
 
 
+def square(x):
+    """Returns square of a tensor element-wise."""
+    return F.square(x)
+
+
 def tan(x):
     """Returns tangent of `x`."""
     return F.tan(x)
