@@ -242,7 +242,9 @@ AbstractBasePtr ForwardExecutor::GetValueAbstract(const FrontendOpRunInfoPtr &op
     MS_EXCEPTION_IF_NULL(abs);
     if (!is_const_prim_or_input) {
       SetNonCostantValueAbs(abs, id);
-      node_abs_map_[id] = abs;
+      if (v->isa<tensor::Tensor>()) {
+        node_abs_map_[id] = abs;
+      }
     }
   }
   return abs;
