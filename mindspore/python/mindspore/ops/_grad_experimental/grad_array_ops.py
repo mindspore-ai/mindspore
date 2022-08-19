@@ -14,7 +14,6 @@
 # ============================================================================
 
 """array_ops"""
-
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
 from ...common import dtype as mstype
@@ -37,6 +36,7 @@ from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
 from ..operations.array_ops import TensorScatterElements
+from ..operations.array_ops import ScatterAddWithAxis
 from ..operations.array_ops import Expand
 from ..operations.array_ops import SegmentMean
 from ..operations.array_ops import AffineGrid
@@ -632,6 +632,33 @@ def get_bprop_tensor_scatter_elements(self):
         x_grad = tensor_scatter_elements(dout, indices, zeros_like(update))
         update_grad = gather_d(dout, axis, indices)
         return x_grad, zeros_like(indices), update_grad
+
+    return bprop
+
+
+@bprop_getters.register(ScatterAddWithAxis)
+def get_bprop_scatter_add_with_axis(self):
+    """Generate bprop for ScatterAddWithAxis"""
+    gather_d = P.GatherD()
+    slice_op = P.Slice()
+    axis = self.axis
+
+    def bprop(x, indices, update, out, dout):
+        dout_shape = dout.shape
+        index_shape = indices.shape
+        if dout_shape != index_shape:
+            pad_list = []
+            slice_list = []
+            for i, pos in enumerate(dout_shape):
+                pad_list.append((0, pos - index_shape[i]))
+                slice_list.append(0)
+            pad_tuple = tuple(pad_list)
+            out_index = P.Pad(pad_tuple)(indices)
+            out_gather = gather_d(dout, axis, out_index)
+            update_grad = slice_op(out_gather, slice_list, index_shape)
+        else:
+            update_grad = gather_d(dout, axis, indices)
+        return dout, zeros_like(indices), update_grad
 
     return bprop
 

@@ -1,0 +1,193 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/cpu/kernel/scatter_add_with_axis_cpu_kernel.h"
+
+#include <atomic>
+#include <complex>
+
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+
+namespace {
+#define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, inputs, outputs) \
+  case (DTYPE): {                                            \
+    if ((ITYPE) == kNumberTypeInt32) {                       \
+      LaunchKernel<TYPE, int32_t>(inputs, outputs);          \
+      break;                                                 \
+    } else {                                                 \
+      LaunchKernel<TYPE, int64_t>(inputs, outputs);          \
+      break;                                                 \
+    }                                                        \
+  }
+}  // namespace
+
+namespace mindspore {
+namespace kernel {
+namespace {
+#define ADD_KERNEL(t1, t2, t3, t4) \
+  KernelAttr()                     \
+    .AddInputAttr(kNumberType##t1) \
+    .AddInputAttr(kNumberType##t2) \
+    .AddInputAttr(kNumberType##t3) \
+    .AddOutputAttr(kNumberType##t4)
+const int32_t kInputNum = 3;
+const int32_t kOutputNum = 1;
+const uint32_t kInputIndex2 = 2;
+const int32_t KSplitSize = 64 * 1024;
+}  // namespace
+
+void ScatterAddWithAxisCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  x_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  if (indices_type_ != kNumberTypeInt32 && indices_type_ != kNumberTypeInt64) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dtype of 'indices' must be int32 or int64, but got "
+                             << indices_type_;
+  }
+
+  // check parameters basic attribution are valid
+  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  updates_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
+  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
+
+  // Get and check 3 input dim info
+  int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());
+  int64_t value_dim_num_x2 = static_cast<int64_t>(indices_shape_.size());
+  int64_t value_dim_num_x3 = static_cast<int64_t>(updates_shape_.size());
+  if (value_dim_num_x1 != value_dim_num_x2 || value_dim_num_x2 != value_dim_num_x3) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dim values of three inputs must be same, but got "
+                             << "data: " << value_dim_num_x1 << ", indices: " << value_dim_num_x2
+                             << ", update: " << value_dim_num_x3;
+  }
+  if (axis_ < value_dim_num_x1 * -1 || axis_ >= value_dim_num_x1) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of axis is out of range!";
+  }
+
+  int64_t sub_data_fix = 1;
+  int64_t sub_index_fix = 1;
+  for (int64_t i = value_dim_num_x2 - 1; i >= 0; --i) {
+    if (x_shape_[i] < indices_shape_[i] || indices_shape_[i] != updates_shape_[i] || updates_shape_[i] <= 0) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << " dimension verification failed: "
+                               << "input0[" << x_shape_[i] << "], input1[" << indices_shape_[i] << "], input2["
+                               << updates_shape_[i] << "]";
+    }
+    if (i > 0) {
+      sub_data_fix *= x_shape_[i];
+      data_dim_vec_.push_back(sub_data_fix);
+      sub_index_fix *= indices_shape_[i];
+      index_dim_vec_.push_back(sub_index_fix);
+    }
+  }
+}
+
+bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs) {
+  // check param
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  bool ret = true;
+  switch (x_type_) {
+    DO_COMPUTE_CASE(kNumberTypeFloat16, float16, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeFloat32, float, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeFloat64, double, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeBool, bool, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeInt8, int8_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeInt16, int16_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeInt32, int32_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeInt64, int64_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeUInt32, uint32_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeUInt64, uint64_t, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeComplex64, std::complex<float>, indices_type_, inputs, outputs);
+    DO_COMPUTE_CASE(kNumberTypeComplex128, std::complex<double>, indices_type_, inputs, outputs);
+    default:
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input x ["
+                              << TypeIdToType(x_type_)->ToString()
+                              << "] is unsupported. It should be "
+                                 "float16|float|double|bool|int8|int16|int32|int64|uint8|unint32|"
+                                 "unit64|complex16|complex32.";
+      ret = false;
+  }
+  return ret;
+}
+
+template <typename T, typename TI>
+void ScatterAddWithAxisCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &outputs) {
+  T *input_x1 = reinterpret_cast<T *>(inputs[0]->addr);
+  TI *input_x2 = reinterpret_cast<TI *>(inputs[1]->addr);
+  T *input_x3 = reinterpret_cast<T *>(inputs[2]->addr);
+  T *output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());
+  axis_ = axis_ < 0 ? axis_ + value_dim_num_x1 : axis_;
+  int64_t axis_dim_value = x_shape_[axis_];
+  int64_t initial_size = inputs[0]->size;
+  int64_t total_value_num = initial_size / sizeof(T);
+  int64_t update_value_num = inputs[2]->size / sizeof(T);
+
+  // using input to initial output
+  auto ret = memcpy_s(output_y, outputs[0]->size, input_x1, inputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+  }
+  // update data by adding "updates" according to indices
+  for (int64_t i = 0; i < update_value_num; ++i) {
+    int64_t remain_index = i;
+    int64_t index_value = 0;
+    int64_t counter = 0;
+    if (input_x2[i] < axis_dim_value * -1 || input_x2[i] >= axis_dim_value) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices value " << input_x2[i] << " is out of bound "
+                               << axis_dim_value << "!";
+    }
+    int64_t input_x2_value = input_x2[i] < 0 ? input_x2[i] + axis_dim_value : input_x2[i];
+    for (int64_t j = static_cast<int64_t>(index_dim_vec_.size()) - 1; j >= 0; --j) {
+      int64_t index_tmp = counter == axis_ ? input_x2_value : remain_index / index_dim_vec_[j];
+      index_value += (index_tmp * data_dim_vec_[j]);
+      remain_index %= index_dim_vec_[j];
+      ++counter;
+    }
+    index_value += (counter == axis_ ? input_x2_value : remain_index);
+    if (index_value >= total_value_num) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', update index " << index_value << "greater than "
+                               << total_value_num << "which is overflow!";
+    }
+    output_y[index_value] += input_x3[i];
+  }
+}
+
+std::vector<KernelAttr> ScatterAddWithAxisCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    ADD_KERNEL(UInt8, Int32, UInt8, UInt8),       ADD_KERNEL(UInt8, Int64, UInt8, UInt8),
+    ADD_KERNEL(UInt16, Int32, UInt16, UInt16),    ADD_KERNEL(UInt16, Int64, UInt16, UInt16),
+    ADD_KERNEL(UInt32, Int32, UInt32, UInt32),    ADD_KERNEL(UInt32, Int64, UInt32, UInt32),
+    ADD_KERNEL(UInt64, Int32, UInt64, UInt64),    ADD_KERNEL(UInt64, Int64, UInt64, UInt64),
+    ADD_KERNEL(Int8, Int32, Int8, Int8),          ADD_KERNEL(Int8, Int64, Int8, Int8),
+    ADD_KERNEL(Int16, Int32, Int16, Int16),       ADD_KERNEL(Int16, Int64, Int16, Int16),
+    ADD_KERNEL(Int32, Int32, Int32, Int32),       ADD_KERNEL(Int32, Int64, Int32, Int32),
+    ADD_KERNEL(Int64, Int32, Int64, Int64),       ADD_KERNEL(Int64, Int64, Int64, Int64),
+    ADD_KERNEL(Float16, Int32, Float16, Float16), ADD_KERNEL(Float16, Int64, Float16, Float16),
+    ADD_KERNEL(Float32, Int32, Float32, Float32), ADD_KERNEL(Float32, Int64, Float32, Float32),
+    ADD_KERNEL(Float64, Int32, Float64, Float64), ADD_KERNEL(Float64, Int64, Float64, Float64)};
+  return support_list;
+}
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterAddWithAxis, ScatterAddWithAxisCpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore
