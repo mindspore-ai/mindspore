@@ -18,6 +18,7 @@
 #include <limits>
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include <cfloat>
 #include <memory>
 #include "utils/log_adapter.h"
@@ -162,67 +163,68 @@ bool InnerScalarGe(T x, U y) {
   return x >= y;
 }
 
-#define SCALAR_OP(op_t)                                                                                              \
-  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                                                  \
-    constexpr size_t kListInputSize = 2;                                                                             \
-    if (list.size() != kListInputSize) {                                                                             \
-      MS_EXCEPTION(NotSupportError) << "Input number of Scalar" << #op_t << " should be 2, but got " << list.size(); \
-    }                                                                                                                \
-    const ValuePtr &x = list[0];                                                                                     \
-    const ValuePtr &y = list[1];                                                                                     \
-    MS_EXCEPTION_IF_NULL(x);                                                                                         \
-    MS_EXCEPTION_IF_NULL(y);                                                                                         \
-    if (x->isa<FP64Imm>() && y->isa<FP64Imm>()) {                                                                    \
-      double sum = InnerScalar##op_t(GetValue<double>(x), GetValue<double>(y));                                      \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<FP32Imm>()) {                                                                    \
-      float sum = InnerScalar##op_t(GetValue<float>(x), GetValue<float>(y));                                         \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                                  \
-      int sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int>(y));                                               \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                                                   \
-      float sum = InnerScalar##op_t(IntToFloat(GetValue<int>(x)), GetValue<float>(y));                               \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                                                   \
-      float sum = InnerScalar##op_t(GetValue<float>(x), IntToFloat(GetValue<int>(y)));                               \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                                  \
-      int64_t sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                                   \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<FP64Imm>()) {                                                                   \
-      double sum = InnerScalar##op_t(LongToDouble(GetValue<int64_t>(x)), GetValue<double>(y));                       \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<FP32Imm>()) {                                                                   \
-      double sum = InnerScalar##op_t(LongToDouble(GetValue<int64_t>(x)), FloatToDouble(GetValue<float>(y)));         \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                                  \
-      int64_t sum = InnerScalar##op_t(GetValue<int64_t>(x), IntToLong(GetValue<int>(y)));                            \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<Int64Imm>()) {                                                                   \
-      double sum = InnerScalar##op_t(FloatToDouble(GetValue<float>(x)), LongToDouble(GetValue<int64_t>(y)));         \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP64Imm>() && y->isa<Int64Imm>()) {                                                                   \
-      double sum = InnerScalar##op_t(GetValue<double>(x), LongToDouble(GetValue<int64_t>(y)));                       \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                                  \
-      int64_t sum = InnerScalar##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                            \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    MS_EXCEPTION(TypeError) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name()      \
-                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()                  \
-                            << ", value of y:" << y->ToString();                                                     \
+#define SCALAR_OP(op_t)                                                                                         \
+  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                                             \
+    constexpr size_t scalar_input_size = 2;                                                                     \
+    if (list.size() != scalar_input_size) {                                                                     \
+      MS_EXCEPTION(NotSupportError) << "Input number of Scalar" << #op_t << " should be " << scalar_input_size  \
+                                    << ", but got " << list.size();                                             \
+    }                                                                                                           \
+    const ValuePtr &x = list[0];                                                                                \
+    const ValuePtr &y = list[1];                                                                                \
+    MS_EXCEPTION_IF_NULL(x);                                                                                    \
+    MS_EXCEPTION_IF_NULL(y);                                                                                    \
+    if (x->isa<FP64Imm>() && y->isa<FP64Imm>()) {                                                               \
+      double sum = InnerScalar##op_t(GetValue<double>(x), GetValue<double>(y));                                 \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<FP32Imm>()) {                                                               \
+      float sum = InnerScalar##op_t(GetValue<float>(x), GetValue<float>(y));                                    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                             \
+      int sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int>(y));                                          \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                                              \
+      float sum = InnerScalar##op_t(IntToFloat(GetValue<int>(x)), GetValue<float>(y));                          \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                                              \
+      float sum = InnerScalar##op_t(GetValue<float>(x), IntToFloat(GetValue<int>(y)));                          \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                             \
+      int64_t sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                              \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<FP64Imm>()) {                                                              \
+      double sum = InnerScalar##op_t(LongToDouble(GetValue<int64_t>(x)), GetValue<double>(y));                  \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<FP32Imm>()) {                                                              \
+      double sum = InnerScalar##op_t(LongToDouble(GetValue<int64_t>(x)), FloatToDouble(GetValue<float>(y)));    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                             \
+      int64_t sum = InnerScalar##op_t(GetValue<int64_t>(x), IntToLong(GetValue<int>(y)));                       \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<Int64Imm>()) {                                                              \
+      double sum = InnerScalar##op_t(FloatToDouble(GetValue<float>(x)), LongToDouble(GetValue<int64_t>(y)));    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP64Imm>() && y->isa<Int64Imm>()) {                                                              \
+      double sum = InnerScalar##op_t(GetValue<double>(x), LongToDouble(GetValue<int64_t>(y)));                  \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                             \
+      int64_t sum = InnerScalar##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                       \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    MS_EXCEPTION(TypeError) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name() \
+                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()             \
+                            << ", value of y:" << y->ToString();                                                \
   }
 
 SCALAR_OP(Add)
@@ -233,75 +235,76 @@ SCALAR_OP(Mod)
 SCALAR_OP(Pow)
 SCALAR_OP(Floordiv)
 
-#define LOGIC_OP(op_t)                                                                                               \
-  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                                                  \
-    constexpr size_t kListInputSize = 2;                                                                             \
-    if (list.size() != kListInputSize) {                                                                             \
-      MS_EXCEPTION(NotSupportError) << "Input number of Scalar" << #op_t << " should be 2, but got " << list.size(); \
-    }                                                                                                                \
-    const ValuePtr &x = list[0];                                                                                     \
-    const ValuePtr &y = list[1];                                                                                     \
-    MS_EXCEPTION_IF_NULL(x);                                                                                         \
-    MS_EXCEPTION_IF_NULL(y);                                                                                         \
-    if (x->isa<FP64Imm>() && y->isa<FP64Imm>()) {                                                                    \
-      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<double>(y));                                        \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<FP32Imm>()) {                                                                    \
-      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<float>(y));                                          \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP64Imm>() && y->isa<FP32Imm>()) {                                                                    \
-      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<float>(y));                                         \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<FP64Imm>()) {                                                                    \
-      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<double>(y));                                         \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                                  \
-      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int>(y));                                              \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<int>(y));                                            \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP32Imm>() && y->isa<Int64Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<int64_t>(y));                                        \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<float>(y));                                            \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<FP32Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<float>(y));                                        \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                                  \
-      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                                      \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<FP64Imm>() && y->isa<Int64Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<int64_t>(y));                                       \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<FP64Imm>()) {                                                                   \
-      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<double>(y));                                       \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                                  \
-      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int>(y));                                          \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                                  \
-      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int64_t>(y));                                          \
-      return MakeValue(sum);                                                                                         \
-    }                                                                                                                \
-    MS_EXCEPTION(TypeError) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name()      \
-                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()                  \
-                            << ", value of y:" << y->ToString();                                                     \
+#define LOGIC_OP(op_t)                                                                                          \
+  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                                             \
+    constexpr size_t scalar_input_size = 2;                                                                     \
+    if (list.size() != scalar_input_size) {                                                                     \
+      MS_EXCEPTION(NotSupportError) << "Input number of Scalar" << #op_t << " should be " << scalar_input_size  \
+                                    << ", but got " << list.size();                                             \
+    }                                                                                                           \
+    const ValuePtr &x = list[0];                                                                                \
+    const ValuePtr &y = list[1];                                                                                \
+    MS_EXCEPTION_IF_NULL(x);                                                                                    \
+    MS_EXCEPTION_IF_NULL(y);                                                                                    \
+    if (x->isa<FP64Imm>() && y->isa<FP64Imm>()) {                                                               \
+      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<double>(y));                                   \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<FP32Imm>()) {                                                               \
+      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<float>(y));                                     \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP64Imm>() && y->isa<FP32Imm>()) {                                                               \
+      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<float>(y));                                    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<FP64Imm>()) {                                                               \
+      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<double>(y));                                    \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                             \
+      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int>(y));                                         \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<int>(y));                                       \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP32Imm>() && y->isa<Int64Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<int64_t>(y));                                   \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<float>(y));                                       \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<FP32Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<float>(y));                                   \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                             \
+      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                                 \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<FP64Imm>() && y->isa<Int64Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<double>(x), GetValue<int64_t>(y));                                  \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<FP64Imm>()) {                                                              \
+      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<double>(y));                                  \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                             \
+      bool sum = InnerScalar##op_t(GetValue<int64_t>(x), GetValue<int>(y));                                     \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                             \
+      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int64_t>(y));                                     \
+      return MakeValue(sum);                                                                                    \
+    }                                                                                                           \
+    MS_EXCEPTION(TypeError) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name() \
+                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()             \
+                            << ", value of y:" << y->ToString();                                                \
   }
 
 LOGIC_OP(Eq)
@@ -321,54 +324,59 @@ T InnerBitOr(T x, U y) {
   return x | y;
 }
 
-#define BIT_OP(op_t)                                                                                              \
-  ValuePtr Bit##op_t(const ValuePtrList &list) {                                                                  \
-    constexpr size_t kListInputSize = 2;                                                                          \
-    if (list.size() != kListInputSize) {                                                                          \
-      MS_EXCEPTION(NotSupportError) << "Input number of Bit" << #op_t << " should be 2, but got " << list.size(); \
-    }                                                                                                             \
-    const ValuePtr &x = list[0];                                                                                  \
-    const ValuePtr &y = list[1];                                                                                  \
-    MS_EXCEPTION_IF_NULL(x);                                                                                      \
-    MS_EXCEPTION_IF_NULL(y);                                                                                      \
-    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                               \
-      int32_t res = InnerBit##op_t(GetValue<int>(x), GetValue<int>(y));                                           \
-      return MakeValue(res);                                                                                      \
-    }                                                                                                             \
-    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                               \
-      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int>(y));                                       \
-      return MakeValue(res);                                                                                      \
-    }                                                                                                             \
-    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                               \
-      int64_t res = InnerBit##op_t(GetValue<int64_t>(y), GetValue<int>(x));                                       \
-      return MakeValue(res);                                                                                      \
-    }                                                                                                             \
-    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                               \
-      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                                   \
-      return MakeValue(res);                                                                                      \
-    }                                                                                                             \
-    MS_EXCEPTION(TypeError) << "Unsupported input type. For Bit" << #op_t                                         \
-                            << ", only integer types are supported, but got type of x:" << x->type_name()         \
-                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()               \
-                            << ", value of y:" << y->ToString();                                                  \
+#define BIT_OP(op_t)                                                                                      \
+  ValuePtr Bit##op_t(const ValuePtrList &list) {                                                          \
+    constexpr size_t bit_input_size = 2;                                                                  \
+    if (list.size() != bit_input_size) {                                                                  \
+      MS_EXCEPTION(NotSupportError) << "Input number of Bit" << #op_t << " should be" << bit_input_size   \
+                                    << ", but got " << list.size();                                       \
+    }                                                                                                     \
+    const ValuePtr &x = list[0];                                                                          \
+    const ValuePtr &y = list[1];                                                                          \
+    MS_EXCEPTION_IF_NULL(x);                                                                              \
+    MS_EXCEPTION_IF_NULL(y);                                                                              \
+    if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                       \
+      int32_t res = InnerBit##op_t(GetValue<int>(x), GetValue<int>(y));                                   \
+      return MakeValue(res);                                                                              \
+    }                                                                                                     \
+    if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                       \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int>(y));                               \
+      return MakeValue(res);                                                                              \
+    }                                                                                                     \
+    if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                       \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(y), GetValue<int>(x));                               \
+      return MakeValue(res);                                                                              \
+    }                                                                                                     \
+    if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                       \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int64_t>(y));                           \
+      return MakeValue(res);                                                                              \
+    }                                                                                                     \
+    MS_EXCEPTION(TypeError) << "Unsupported input type. For Bit" << #op_t                                 \
+                            << ", only integer types are supported, but got type of x:" << x->type_name() \
+                            << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()       \
+                            << ", value of y:" << y->ToString();                                          \
   }
 BIT_OP(And)
 BIT_OP(Or)
 
 ValuePtr ScalarUAdd(const ValuePtrList &list) {
-  if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUAdd should be 1, but got " << list.size() << ".";
+  constexpr size_t scalar_input_size = 1;
+  if (list.size() != scalar_input_size) {
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUAdd should be " << scalar_input_size << ", but got "
+                                  << list.size() << ".";
   }
-  ValuePtr x = list[0];
+  const auto &x = list[0];
   MS_EXCEPTION_IF_NULL(x);
   return x;
 }
 
 ValuePtr ScalarUSub(const ValuePtrList &list) {
-  if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUSub should be 1, but got " << list.size() << ".";
+  constexpr size_t scalar_input_size = 1;
+  if (list.size() != scalar_input_size) {
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarUSub should be " << scalar_input_size << ", but got "
+                                  << list.size() << ".";
   }
-  ValuePtr x = list[0];
+  const auto &x = list[0];
   MS_EXCEPTION_IF_NULL(x);
 
   if (x->isa<Int32Imm>()) {
@@ -383,15 +391,16 @@ ValuePtr ScalarUSub(const ValuePtrList &list) {
     float sum = -1.0f * GetValue<float>(x);
     return MakeValue(sum);
   }
-
   MS_EXCEPTION(NotSupportError) << "Not support ScalarUSub [x:" << x->ToString() << "].";
 }
 
 ValuePtr ScalarLog(const ValuePtrList &list) {
-  if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of ScalarLog must be 1, but got " << list.size() << ".";
+  constexpr size_t scalar_input_size = 1;
+  if (list.size() != scalar_input_size) {
+    MS_EXCEPTION(NotSupportError) << "Input number of ScalarLog must be " << scalar_input_size << ", but got "
+                                  << list.size() << ".";
   }
-  ValuePtr x = list[0];
+  const auto &x = list[0];
   MS_EXCEPTION_IF_NULL(x);
 
   if (x->isa<FP64Imm>()) {
@@ -402,84 +411,146 @@ ValuePtr ScalarLog(const ValuePtrList &list) {
     auto v = static_cast<float>(log(GetValue<float>(x)));
     return MakeValue(v);
   }
-
   MS_EXCEPTION(NotSupportError) << "Not support ScalarLog [x:" << x->ToString() << "].";
 }
 
-ValuePtr BoolNot(const ValuePtrList &list) {
-  if (list.size() != 1) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolNot must be 1, but got " << list.size() << ".";
+void GetBooleansFromValueList(const std::string &prim_name, const ValuePtrList &list, bool *val_x, bool *val_y) {
+  constexpr size_t boolean_input_size = 2;
+  if (list.size() != boolean_input_size) {
+    MS_EXCEPTION(NotSupportError) << "The input number of " << prim_name << " operator must be " << boolean_input_size
+                                  << ", but got " << list.size() << ".";
   }
-  ValuePtr x = list[0];
+  const auto &x = list[0];
+  const auto &y = list[1];
   MS_EXCEPTION_IF_NULL(x);
-  bool convert = false;
-
-  if (ValueToBool(x, &convert)) {
-    auto res = !convert;
-    return MakeValue(res);
+  MS_EXCEPTION_IF_NULL(y);
+  if (!x->isa<BoolImm>() || !y->isa<BoolImm>()) {
+    MS_LOG(EXCEPTION) << "The inputs of " << prim_name
+                      << " operator should be two booleans, but got param0: " << x->ToString()
+                      << ", param1: " << y->ToString() << ".";
   }
+  *val_x = x->cast<BoolImmPtr>()->value();
+  *val_y = y->cast<BoolImmPtr>()->value();
+}
 
-  MS_EXCEPTION(NotSupportError) << "Not support BoolNot [x:" << x->ToString() << "].";
+void GetStringsFromValueList(const std::string &prim_name, const ValuePtrList &list, std::string *str_x,
+                             std::string *str_y) {
+  constexpr size_t string_input_size = 2;
+  if (list.size() != string_input_size) {
+    MS_EXCEPTION(NotSupportError) << "The input number of " << prim_name << " operator must be " << string_input_size
+                                  << ", but got " << list.size() << ".";
+  }
+  const auto &x = list[0];
+  const auto &y = list[1];
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(y);
+  if (!x->isa<StringImm>() || !y->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "The inputs of " << prim_name
+                      << " operator should be two strings, but got param0: " << x->ToString()
+                      << ", param1: " << y->ToString() << ".";
+  }
+  *str_x = GetValue<std::string>(x);
+  *str_y = GetValue<std::string>(y);
+}
+
+ValuePtr BoolNot(const ValuePtrList &list) {
+  constexpr size_t boolean_input_size = 1;
+  if (list.size() != boolean_input_size) {
+    MS_EXCEPTION(NotSupportError) << "Input number of BoolNot must be " << boolean_input_size << ", but got "
+                                  << list.size() << ".";
+  }
+  const auto &x = list[0];
+  MS_EXCEPTION_IF_NULL(x);
+  if (!x->isa<BoolImm>()) {
+    MS_LOG(EXCEPTION) << "The input of BoolNot operator should be a boolean, but got " << x->ToString() << ".";
+  }
+  bool val = x->cast<BoolImmPtr>()->value();
+  return MakeValue<bool>(!val);
+}
+
+ValuePtr StringNot(const ValuePtrList &list) {
+  constexpr size_t string_input_size = 1;
+  if (list.size() != string_input_size) {
+    MS_EXCEPTION(NotSupportError) << "Input number of StringNot must be " << string_input_size << ", but got "
+                                  << list.size() << ".";
+  }
+  const auto &x = list[0];
+  MS_EXCEPTION_IF_NULL(x);
+  if (!x->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "The input of BoolNot operator should be a string, but got " << x->ToString() << ".";
+  }
+  std::string str = x->cast<StringImmPtr>()->value();
+  return MakeValue<bool>(str.empty());
 }
 
 ValuePtr BoolAnd(const ValuePtrList &list) {
-  constexpr size_t kListInputSize = 2;
-  if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolAnd must be 2, but got " << list.size() << ".";
-  }
-  ValuePtr x = list[0];
-  ValuePtr y = list[1];
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(y);
-  bool x_b = false;
-  bool y_b = false;
-
-  if (ValueToBool(x, &x_b) && ValueToBool(y, &y_b)) {
-    auto res = x_b && y_b;
-    return MakeValue(res);
-  }
-
-  MS_EXCEPTION(NotSupportError) << "Not support [x:" << x->ToString() << "] BoolAnd [y:" << y->ToString() << "].";
+  bool x = false;
+  bool y = false;
+  GetBooleansFromValueList("BoolAnd", list, &x, &y);
+  return MakeValue<bool>(x && y);
 }
 
 ValuePtr BoolOr(const ValuePtrList &list) {
-  constexpr size_t kListInputSize = 2;
-  if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolOr must be 2, but got " << list.size() << ".";
-  }
-  ValuePtr x = list[0];
-  ValuePtr y = list[1];
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(y);
-  bool x_b = false;
-  bool y_b = false;
-
-  if (ValueToBool(x, &x_b) && ValueToBool(y, &y_b)) {
-    auto res = x_b || y_b;
-    return MakeValue(res);
-  }
-
-  MS_EXCEPTION(NotSupportError) << "Not support [x:" << x->ToString() << "] BoolOr [y:" << y->ToString() << "].";
+  bool x = false;
+  bool y = false;
+  GetBooleansFromValueList("BoolOr", list, &x, &y);
+  return MakeValue<bool>(x || y);
 }
 
 ValuePtr BoolEq(const ValuePtrList &list) {
-  constexpr size_t kListInputSize = 2;
-  if (list.size() != kListInputSize) {
-    MS_EXCEPTION(NotSupportError) << "Input number of BoolEq must be 2, but got " << list.size() << ".";
-  }
-  ValuePtr x = list[0];
-  ValuePtr y = list[1];
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(y);
-  bool x_b = false;
-  bool y_b = false;
+  bool x = false;
+  bool y = false;
+  GetBooleansFromValueList("BoolEq", list, &x, &y);
+  return MakeValue<bool>(x == y);
+}
 
-  if (ValueToBool(x, &x_b) && ValueToBool(y, &y_b)) {
-    auto res = x_b == y_b;
-    return MakeValue(res);
-  }
+ValuePtr StringEq(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringEq", list, &str_x, &str_y);
+  return MakeValue<bool>(str_x == str_y);
+}
 
-  MS_EXCEPTION(NotSupportError) << "Not support [x:" << x->ToString() << "] BoolEq [y:" << y->ToString() << "].";
+ValuePtr StringLt(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringLt", list, &str_x, &str_y);
+  return MakeValue<bool>(str_x < str_y);
+}
+
+ValuePtr StringGt(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringGt", list, &str_x, &str_y);
+  return MakeValue<bool>(str_x > str_y);
+}
+
+ValuePtr StringLe(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringLe", list, &str_x, &str_y);
+  return MakeValue<bool>(str_x <= str_y);
+}
+
+ValuePtr StringGe(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringGe", list, &str_x, &str_y);
+  return MakeValue<bool>(str_x >= str_y);
+}
+
+ValuePtr StringIn(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringIn", list, &str_x, &str_y);
+  return MakeValue<bool>(str_y.find(str_x) != std::string::npos);
+}
+
+ValuePtr StringConcat(const ValuePtrList &list) {
+  std::string str_x;
+  std::string str_y;
+  GetStringsFromValueList("StringConcat", list, &str_x, &str_y);
+  return MakeValue<std::string>(str_x + str_y);
 }
 }  // namespace prim
 }  // namespace mindspore

@@ -50,6 +50,18 @@ constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kCropAndResize = "CropAndResize";
 constexpr auto kCropAndResizeGradImage = "CropAndResizeGradImage";
 
+// String
+constexpr auto kStringEq = "string_eq";
+constexpr auto kStringLt = "string_lt";
+constexpr auto kStringGt = "string_gt";
+constexpr auto kStringLe = "string_le";
+constexpr auto kStringGe = "string_ge";
+constexpr auto kStringConcat = "string_concat";
+constexpr auto kStringNot = "string_not";
+constexpr auto kStringIn = "string_in";
+constexpr auto kStringMul = "string_mul";
+constexpr auto kStringGetItem = "string_getitem";
+
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
 constexpr auto kScalarSub = "ScalarSub";
@@ -377,6 +389,18 @@ GVAR_DEF(PrimitivePtr, kPrimScalarSin, std::make_shared<Primitive>("scalar_sin")
 GVAR_DEF(PrimitivePtr, kPrimScalarCos, std::make_shared<Primitive>("scalar_cos"));
 GVAR_DEF(PrimitivePtr, kPrimScalarTan, std::make_shared<Primitive>("scalar_tan"));
 GVAR_DEF(PrimitivePtr, kPrimLinearSumAssignment, std::make_shared<Primitive>(kLinearSumAssignment));
+
+// String
+GVAR_DEF(PrimitivePtr, kPrimStringEq, std::make_shared<Primitive>(kStringEq));
+GVAR_DEF(PrimitivePtr, kPrimStringLt, std::make_shared<Primitive>(kStringLt));
+GVAR_DEF(PrimitivePtr, kPrimStringGt, std::make_shared<Primitive>(kStringGt));
+GVAR_DEF(PrimitivePtr, kPrimStringLe, std::make_shared<Primitive>(kStringLe));
+GVAR_DEF(PrimitivePtr, kPrimStringGe, std::make_shared<Primitive>(kStringGe));
+GVAR_DEF(PrimitivePtr, kPrimStringConcat, std::make_shared<Primitive>(kStringConcat));
+GVAR_DEF(PrimitivePtr, kPrimStringNot, std::make_shared<Primitive>(kStringNot));
+GVAR_DEF(PrimitivePtr, kPrimStringIn, std::make_shared<Primitive>(kStringIn));
+GVAR_DEF(PrimitivePtr, kPrimStringMul, std::make_shared<Primitive>(kStringMul));
+GVAR_DEF(PrimitivePtr, kPrimStringGetItem, std::make_shared<Primitive>(kStringGetItem));
 
 // Comparisons
 GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>("scalar_eq"));
@@ -1358,8 +1382,6 @@ GVAR_DEF(PrimitivePtr, kPrimTupleEqual, std::make_shared<Primitive>("tuple_equal
 GVAR_DEF(PrimitivePtr, kPrimListEqual, std::make_shared<Primitive>("list_equal"));
 GVAR_DEF(PrimitivePtr, kPrimMakeRange, std::make_shared<Primitive>("make_range"));
 GVAR_DEF(PrimitivePtr, kPrimStopGradient, std::make_shared<Primitive>("stop_gradient"));
-GVAR_DEF(PrimitivePtr, kPrimStringEqual, std::make_shared<Primitive>("string_equal"));
-GVAR_DEF(PrimitivePtr, kPrimStringConcat, std::make_shared<Primitive>("string_concat"));
 GVAR_DEF(PrimitivePtr, kPrimDictLen, std::make_shared<Primitive>("dict_len"));
 GVAR_DEF(PrimitivePtr, kPrimFakeBprop, std::make_shared<Primitive>("fake_bprop"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastGradientArgs, std::make_shared<Primitive>("BroadcastGradientArgs"));

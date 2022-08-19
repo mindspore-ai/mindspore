@@ -33,7 +33,7 @@ namespace mindspore {
 /* namespace to support prim related definition */
 namespace prim {
 // Supported meta type
-enum PrimType { kPrimTypeUnknown, kPrimTypeOneArg, kPrimTypeTwoArgs };
+enum PrimType { kPrimTypeUnknown, kPrimTypeNumOneArg, kPrimTypeNumTwoArgs, kPrimTypeStrOneArg, kPrimTypeStrTwoArgs };
 
 class PrimToFunction;
 

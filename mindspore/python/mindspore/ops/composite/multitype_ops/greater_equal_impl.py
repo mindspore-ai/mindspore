@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 """Implementation for internal polymorphism `greater_equal` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 # greater_equal is a metagraph object which will determine if two objects are greater_equal according to input type
 # using ".register" decorator
@@ -25,7 +26,7 @@ greater_equal = base.MultitypeFuncGraph("greater_equal", True)
 @greater_equal.register("Number", "Number")
 def _greater_equal_scala(x, y):
     """
-    Determine whether x is greater equal than y.
+    Determine whether x is greater than or equal to y.
 
     Args:
        x(Number): Number.
@@ -37,12 +38,27 @@ def _greater_equal_scala(x, y):
     return F.scalar_ge(x, y)
 
 
+@greater_equal.register("String", "String")
+def _greater_equal_string(x, y):
+    """
+    Determine whether x is greater than or equal to y.
+
+    Args:
+       x(String): String.
+       y(String): String.
+
+    Returns:
+       bool, if x >= y return true, x < y return false.
+   """
+    return inner.string_ge(x, y)
+
+
 @greater_equal.register("Tensor", "Number")
 @greater_equal.register("Number", "Tensor")
 @greater_equal.register("Tensor", "Tensor")
 def _greater_equal_tensor(x, y):
     """
-    Determine  whether tensor x is greater equal than tensor y elementwise
+    Determine whether x is greater than or equal to y elementwise.
 
     Args:
        x(Tensor): Tensor.

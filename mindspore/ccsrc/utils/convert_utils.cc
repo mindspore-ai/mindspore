@@ -43,6 +43,9 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
     *value = fabs(v->cast<FP32ImmPtr>()->value()) > FLT_EPSILON;
   } else if (v->isa<FP64Imm>()) {
     *value = fabs(v->cast<FP64ImmPtr>()->value()) > DBL_EPSILON;
+  } else if (v->isa<StringImm>()) {
+    std::string str = v->cast<StringImmPtr>()->value();
+    *value = str.length() != 0;
   } else if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);

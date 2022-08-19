@@ -22,41 +22,55 @@ namespace mindspore {
 namespace prim {
 
 PrimToFunction::PrimToFunction()
-    : prim_func_type_map_(
-        {{"bool_not", kPrimTypeOneArg},   {"scalar_cos", kPrimTypeOneArg}, {"scalar_exp", kPrimTypeOneArg},
-         {kScalarFloor, kPrimTypeOneArg}, {"scalar_log", kPrimTypeOneArg}, {"scalar_sin", kPrimTypeOneArg},
-         {"scalar_tan", kPrimTypeOneArg}, {kScalarTrunc, kPrimTypeOneArg}, {"typeof", kPrimTypeOneArg},
-         {kScalarUadd, kPrimTypeOneArg},  {kScalarUsub, kPrimTypeOneArg},  {kScalarAdd, kPrimTypeTwoArgs},
-         {"bool_and", kPrimTypeTwoArgs},  {"bool_eq", kPrimTypeTwoArgs},   {"bool_or", kPrimTypeTwoArgs},
-         {kScalarDiv, kPrimTypeTwoArgs},  {"scalar_eq", kPrimTypeTwoArgs}, {"scalar_ge", kPrimTypeTwoArgs},
-         {"scalar_gt", kPrimTypeTwoArgs}, {"scalar_le", kPrimTypeTwoArgs}, {"scalar_lt", kPrimTypeTwoArgs},
-         {"scalar_ne", kPrimTypeTwoArgs}, {kScalarMod, kPrimTypeTwoArgs},  {kScalarMul, kPrimTypeTwoArgs},
-         {kScalarPow, kPrimTypeTwoArgs},  {kScalarSub, kPrimTypeTwoArgs},  {kScalarFloordiv, kPrimTypeTwoArgs},
-         {"bit_and", kPrimTypeTwoArgs},   {"bit_or", kPrimTypeTwoArgs}}) {}
+    : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},       {"scalar_cos", kPrimTypeNumOneArg},
+                           {"scalar_exp", kPrimTypeNumOneArg},     {kScalarFloor, kPrimTypeNumOneArg},
+                           {"scalar_log", kPrimTypeNumOneArg},     {"scalar_sin", kPrimTypeNumOneArg},
+                           {"scalar_tan", kPrimTypeNumOneArg},     {kScalarTrunc, kPrimTypeNumOneArg},
+                           {"typeof", kPrimTypeNumOneArg},         {kScalarUadd, kPrimTypeNumOneArg},
+                           {kScalarUsub, kPrimTypeNumOneArg},      {kScalarAdd, kPrimTypeNumTwoArgs},
+                           {"bool_and", kPrimTypeNumTwoArgs},      {"bool_eq", kPrimTypeNumTwoArgs},
+                           {"bool_or", kPrimTypeNumTwoArgs},       {kScalarDiv, kPrimTypeNumTwoArgs},
+                           {"scalar_eq", kPrimTypeNumTwoArgs},     {"scalar_ge", kPrimTypeNumTwoArgs},
+                           {"scalar_gt", kPrimTypeNumTwoArgs},     {"scalar_le", kPrimTypeNumTwoArgs},
+                           {"scalar_lt", kPrimTypeNumTwoArgs},     {"scalar_ne", kPrimTypeNumTwoArgs},
+                           {kScalarMod, kPrimTypeNumTwoArgs},      {kScalarMul, kPrimTypeNumTwoArgs},
+                           {kScalarPow, kPrimTypeNumTwoArgs},      {kScalarSub, kPrimTypeNumTwoArgs},
+                           {kScalarFloordiv, kPrimTypeNumTwoArgs}, {"bit_and", kPrimTypeNumTwoArgs},
+                           {"bit_or", kPrimTypeNumTwoArgs},        {kStringNot, kPrimTypeStrOneArg},
+                           {kStringIn, kPrimTypeStrTwoArgs},       {kStringConcat, kPrimTypeStrTwoArgs},
+                           {kStringEq, kPrimTypeStrTwoArgs},       {kStringLt, kPrimTypeStrTwoArgs},
+                           {kStringGt, kPrimTypeStrTwoArgs},       {kStringLe, kPrimTypeStrTwoArgs},
+                           {kStringGe, kPrimTypeStrTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const {
-  bool result = false;
-
   if (func != nullptr) {
     int64_t args_num = GetPrimType(prim);
-    std::vector<TypePtr> one_arg{std::make_shared<Number>()};
-    std::vector<TypePtr> two_args{std::make_shared<Number>(), std::make_shared<Number>()};
-    TypePtr retval = std::make_shared<Number>();
-    result = true;
     switch (args_num) {
-      case kPrimTypeOneArg:
-        *func = Function(one_arg, retval).DeepCopy()->cast<FunctionPtr>();
-        break;
-      case kPrimTypeTwoArgs:
-        *func = Function(two_args, retval).DeepCopy()->cast<FunctionPtr>();
-        break;
+      case kPrimTypeNumOneArg: {
+        std::vector<TypePtr> num_one_arg{std::make_shared<Number>()};
+        *func = Function(num_one_arg, std::make_shared<Number>()).DeepCopy()->cast<FunctionPtr>();
+        return true;
+      }
+      case kPrimTypeNumTwoArgs: {
+        std::vector<TypePtr> num_two_args{std::make_shared<Number>(), std::make_shared<Number>()};
+        *func = Function(num_two_args, std::make_shared<Number>()).DeepCopy()->cast<FunctionPtr>();
+        return true;
+      }
+      case kPrimTypeStrOneArg: {
+        std::vector<TypePtr> str_one_arg{std::make_shared<String>()};
+        *func = Function(str_one_arg, std::make_shared<String>()).DeepCopy()->cast<FunctionPtr>();
+        return true;
+      }
+      case kPrimTypeStrTwoArgs: {
+        std::vector<TypePtr> str_two_args{std::make_shared<String>(), std::make_shared<String>()};
+        *func = Function(str_two_args, std::make_shared<String>()).DeepCopy()->cast<FunctionPtr>();
+        return true;
+      }
       default:
-        result = false;
-        break;
+        return false;
     }
   }
-
-  return result;
+  return false;
 }
 
 int64_t PrimToFunction::GetPrimType(const PrimitivePtr &prim) const {

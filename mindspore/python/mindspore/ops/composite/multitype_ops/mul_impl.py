@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `mul` operations."""
 
+from mindspore.ops.operations import _inner_ops as inner
 from . import _compile_utils as utils
 from ._constexpr_utils import check_equal
 from ...composite import base
@@ -70,6 +71,28 @@ def _tensor_mul_scalar(x, y):
         Tensor, has the same dtype as x.
     """
     return F.tensor_mul(x, y)
+
+
+@mul.register("Number", "String")
+def _number_mul_string(x, y):
+    """
+    Returns x * y where x is a number and y is a string. x must be integer.
+
+    Outputs:
+       String.
+    """
+    return inner.string_mul(x, y)
+
+
+@mul.register("String", "Number")
+def _string_mul_number(x, y):
+    """
+    Returns x * y where x is a string and y is a number. y must be integer.
+
+    Outputs:
+        String.
+    """
+    return inner.string_mul(x, y)
 
 
 @mul.register("List", "Number")
