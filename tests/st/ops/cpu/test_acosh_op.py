@@ -50,3 +50,21 @@ def test_acosh(dtype):
     print(output)
     expect = np.arccosh(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_acosh_tensor(dtype):
+    """
+    Feature: acosh tensor interface
+    Description: test the rightness of acosh tensor interface
+    Expectation: Success.
+    """
+    np_array = np.array([1, 2, 3, 4, 5]).astype(dtype)
+    input_x = Tensor(np_array)
+    output = input_x.acosh()
+    print(output)
+    expect = np.arccosh(np_array)
+    assert np.allclose(output.asnumpy(), expect)

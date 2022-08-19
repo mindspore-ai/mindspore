@@ -50,3 +50,21 @@ def test_acos(dtype):
     print(output)
     expect = np.arccos(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_acos_tensor(dtype):
+    """
+    Feature: acos tensor interface
+    Description: test the rightness of acos tensor interface
+    Expectation: Success.
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype(dtype)
+    input_x = Tensor(np_array)
+    output = input_x.acos()
+    print(output)
+    expect = np.arccos(np_array)
+    assert np.allclose(output.asnumpy(), expect)

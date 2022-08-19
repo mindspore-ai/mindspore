@@ -2862,3 +2862,24 @@ def isfinite(x):
     Refer to :func:`mindspore.ops.isfinite` for more details.
     """
     return F.isfinite(x)
+
+
+def cos(x):
+    r"""
+    Computes cosine of input element-wise.
+    """
+    return F.cos(x)
+
+
+def acos(x):
+    r"""
+    Computes arccosine of input tensors element-wise.
+    """
+    return F.acos(x)
+
+
+def acosh(x):
+    r"""
+    Computes inverse hyperbolic cosine of the inputs element-wise.
+    """
+    return F.acosh(x)
