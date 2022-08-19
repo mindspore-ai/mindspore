@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,9 +101,9 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
   /// \brief Constructor of PrimitiveAbstractClosure
   ///
   /// \param[in] prim The primitive that this PrimitiveAbstractClosure corresponding to.
-  /// \param[in] tracking_id A Node identifies different uses of the prim.
-  explicit PrimitiveAbstractClosure(const PrimitivePtr &prim, const AnfNodePtr &tracking_id = nullptr)
-      : PrimitiveAbstractClosure(prim, ToTrackingId(tracking_id)) {}
+  /// \param[in] tracking_node A Node identifies different uses of the prim.
+  explicit PrimitiveAbstractClosure(const PrimitivePtr &prim, const AnfNodePtr &tracking_node = nullptr)
+      : PrimitiveAbstractClosure(prim, ToTrackingId(tracking_node)) {}
 
   // For internal usage only, make it public so that make_shared can work on it.
   PrimitiveAbstractClosure(const PrimitivePtr &prim, std::uintptr_t tracking_id)
@@ -116,7 +116,7 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the Primitive that this PrimitiveAbstractClosure corresponding to.
   ///
   /// \return The Primitive that this PrimitiveAbstractClosure corresponding to.
-  PrimitivePtr prim() { return prim_; }
+  const PrimitivePtr &prim() const { return prim_; }
 
   std::uintptr_t tracking_id() const override { return tracking_id_; }
 
@@ -151,10 +151,10 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   ///
   /// \param[in] func_graph The function graph that this PrimitiveAbstractClosure corresponding to.
   /// \param[in] context The context that func_graph corresponding to.
-  /// \param[in] tracking_id A Node identifies different uses of the func_graph.
+  /// \param[in] tracking_node A Node identifies different uses of the func_graph.
   FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
-                           const AnfNodePtr &tracking_id = nullptr, bool specialized = false)
-      : FuncGraphAbstractClosure(func_graph, context, ToTrackingId(tracking_id), specialized) {}
+                           const AnfNodePtr &tracking_node = nullptr, bool specialized = false)
+      : FuncGraphAbstractClosure(func_graph, context, ToTrackingId(tracking_node), specialized) {}
 
   // For internal usage only, make it public so that make_shared can work on it.
   FuncGraphAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
@@ -171,7 +171,7 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the FuncGraph that this FuncGraphAbstractClosure corresponding to.
   ///
   /// \return The FuncGraph that this FuncGraphAbstractClosure corresponding to.
-  FuncGraphPtr func_graph() { return func_graph_; }
+  const FuncGraphPtr &func_graph() const { return func_graph_; }
 
   AnalysisContextPtr context() const override { return context_; }
 
@@ -219,11 +219,12 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \brief Constructor of FuncGraphAbstractClosure.
   ///
   /// \param[in] meta_func_graph The function graph that this MetaFuncGraphAbstractClosure corresponding to.
-  /// \param[in] tracking_id A Node identifies different uses of the meta_func_graph.
+  /// \param[in] tracking_node A Node identifies different uses of the meta_func_graph.
   /// \param[in] scope The scope to which the tracking_id belong to.
   explicit MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph,
-                                        const AnfNodePtr &tracking_id = nullptr, const ScopePtr &scope = kDefaultScope)
-      : MetaFuncGraphAbstractClosure(meta_func_graph, ToTrackingId(tracking_id), scope) {}
+                                        const AnfNodePtr &tracking_node = nullptr,
+                                        const ScopePtr &scope = kDefaultScope)
+      : MetaFuncGraphAbstractClosure(meta_func_graph, ToTrackingId(tracking_node), scope) {}
 
   // For internal usage only, make it public so that make_shared can work on it.
   MetaFuncGraphAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, std::uintptr_t tracking_id,
@@ -237,14 +238,14 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the MetaFuncGraph that this MetaFuncGraphAbstractClosure corresponding to.
   ///
   /// \return The MetaFuncGraph that this MetaFuncGraphAbstractClosure corresponding to.
-  MetaFuncGraphPtr meta_func_graph() { return meta_func_graph_; }
+  const MetaFuncGraphPtr &meta_func_graph() const { return meta_func_graph_; }
 
   AnalysisContextPtr context() const override { return kDummyAnalysisContext; }
 
   /// \brief Get the Scope that this MetaFuncGraphAbstractClosure corresponding to.
   ///
   /// \return The Scope that this MetaFuncGraphAbstractClosure corresponding to.
-  ScopePtr GetScope() { return scope_; }
+  const ScopePtr &GetScope() const { return scope_; }
 
   std::uintptr_t tracking_id() const override { return tracking_id_; }
 
@@ -346,7 +347,7 @@ class MS_CORE_API JTransformedAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the AbstractFuncAtom JTransformedAbstractClosure corresponding to.
   ///
   /// \return The AbstractFuncAtom JTransformedAbstractClosure corresponding to.
-  AbstractFuncAtomPtr fn() { return fn_; }
+  const AbstractFuncAtomPtr &fn() const { return fn_; }
 
   AbstractFunctionPtr Copy() const override { return std::make_shared<JTransformedAbstractClosure>(fn_); }
 
@@ -376,7 +377,7 @@ class MS_CORE_API TaylorTransformedAbstractClosure final : public AbstractFuncAt
   /// \brief Get the AbstractFuncAtom TaylorTransformedAbstractClosure corresponding to.
   ///
   /// \return The AbstractFuncAtom TaylorTransformedAbstractClosure corresponding to.
-  AbstractFuncAtomPtr fn() { return fn_; }
+  const AbstractFuncAtomPtr &fn() const { return fn_; }
 
   AbstractFunctionPtr Copy() const override { return std::make_shared<TaylorTransformedAbstractClosure>(fn_); }
 
@@ -406,7 +407,7 @@ class MS_CORE_API ShardTransformedAbstractClosure final : public AbstractFuncAto
   /// \brief Get the AbstractFuncAtom ShardTransformedAbstractClosure corresponding to.
   ///
   /// \return The AbstractFuncAtom ShardTransformedAbstractClosure corresponding to.
-  AbstractFuncAtomPtr fn() { return fn_; }
+  const AbstractFuncAtomPtr &fn() const { return fn_; }
 
   AbstractFunctionPtr Copy() const override { return std::make_shared<ShardTransformedAbstractClosure>(fn_); }
 
@@ -438,11 +439,11 @@ class MS_CORE_API VmapTransformedAbstractClosure final : public AbstractFuncAtom
   /// \brief Get the AbstractFuncAtom VmapTransformedAbstractClosure corresponding to.
   ///
   /// \return The AbstractFuncAtom VmapTransformedAbstractClosure corresponding to.
-  AbstractFuncAtomPtr fn() { return fn_; }
+  const AbstractFuncAtomPtr &fn() const { return fn_; }
 
-  ValuePtr in_axes() { return in_axes_; }
+  const ValuePtr &in_axes() const { return in_axes_; }
 
-  ValuePtr out_axes() { return out_axes_; }
+  const ValuePtr &out_axes() const { return out_axes_; }
 
   AbstractFunctionPtr Copy() const override {
     return std::make_shared<VmapTransformedAbstractClosure>(fn_, in_axes_, out_axes_);
@@ -485,12 +486,12 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the abstract values of arguments.
   ///
   /// \return The abstract values of arguments.
-  const AbstractBasePtrList &args_spec_list() { return args_spec_list_; }
+  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
 
   /// \brief Get the abstract value of output.
   ///
   /// \return The abstract value of output.
-  AbstractBasePtr output() { return output_; }
+  const AbstractBasePtr &output() const { return output_; }
 
   AbstractFunctionPtr Copy() const override {
     return std::make_shared<VirtualAbstractClosure>(args_spec_list_, output_);
@@ -528,17 +529,17 @@ class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom 
   /// \brief Get the Primitive that this TypedPrimitiveAbstractClosure corresponding to.
   ///
   /// \return The Primitive that this TypedPrimitiveAbstractClosure corresponding to.
-  PrimitivePtr prim() { return prim_; }
+  const PrimitivePtr &prim() const { return prim_; }
 
   /// \brief Get the abstract values of arguments this TypedPrimitiveAbstractClosure corresponding to.
   ///
   /// \return The abstract values of arguments this TypedPrimitiveAbstractClosure corresponding to.
-  AbstractBasePtrList args_spec_list() { return args_spec_list_; }
+  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
 
   /// \brief Get the abstract value of output this TypedPrimitiveAbstractClosure corresponding to.
   ///
   /// \return The abstract value of output this TypedPrimitiveAbstractClosure corresponding to.
-  AbstractBasePtr output() { return output_; }
+  const AbstractBasePtr &output() const { return output_; }
 
   AbstractFunctionPtr Copy() const override {
     return std::make_shared<TypedPrimitiveAbstractClosure>(prim_, args_spec_list_, output_);
