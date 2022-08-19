@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_
 
+#include <vector>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
@@ -50,5 +51,6 @@ class GraphKernelOptimizer {
 };
 
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);
+bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_

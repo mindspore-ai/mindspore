@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/helper.h"
+#ifdef ENABLE_AKG
+#include "common/graph_kernel/graph_kernel_flags.h"
+#include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#endif
 
 namespace mindspore {
 namespace opt {
@@ -218,6 +222,21 @@ void GetFusionScopeComputeNodeList(const session::KernelGraph *kernel_graph,
       (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(cnode);
     }
   }
+
+#ifdef ENABLE_AKG
+  // If Graph Kernel Fusion is enabled, we will let Graph Kernel fuse these nodes if it supports.
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    auto iter = buffer_fusion_infos->begin();
+    while (iter != buffer_fusion_infos->end()) {
+      if (graphkernel::GraphKernelSupported(iter->second.anf_nodes)) {
+        MS_LOG(DEBUG) << "Fusion id: " << iter->first << ", uses Graph Kernel Fusion";
+        buffer_fusion_infos->erase(iter++);
+      } else {
+        iter++;
+      }
+    }
+  }
+#endif
 }
 
 void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,

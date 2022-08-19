@@ -33,7 +33,7 @@
 #include "common/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
-std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
+std::vector<PrimitivePtr> GraphKernelCluster::GetClusterOps() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
     // all target
     {kAllTarget, OpLevel_0, prim::kPrimAbs},
@@ -112,6 +112,8 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
                                   flags.enable_cluster_ops, flags.disable_cluster_ops);
   return GkUtils::FilterExcludedOps(ops);
 }
+
+std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() { return GraphKernelCluster::GetClusterOps(); }
 
 bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
