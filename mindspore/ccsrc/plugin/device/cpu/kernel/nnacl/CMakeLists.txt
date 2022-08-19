@@ -97,7 +97,8 @@ list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX512_FILE})
 
 set(KERNEL_AVX_FILE ${NNACL_DIR}/fp32/conv_sw_avx_fp32.c
                     ${NNACL_DIR}/fp32/conv_1x1_avx_fp32.c
-                    ${NNACL_DIR}/fp32/matmul_avx_fp32.c)
+                    ${NNACL_DIR}/fp32/matmul_avx_fp32.c
+                    ${NNACL_DIR}/fp32/conv_depthwise_avx_fp32.c)
 list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX_FILE})
 
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)

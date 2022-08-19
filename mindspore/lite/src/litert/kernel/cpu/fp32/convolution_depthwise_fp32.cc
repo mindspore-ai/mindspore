@@ -18,6 +18,7 @@
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
 #include "include/errorcode.h"
 #include "src/litert/pack_weight_manager.h"
+#include "nnacl/fp32/conv_depthwise_avx_fp32.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
@@ -125,9 +126,12 @@ int ConvolutionDepthwiseCPUKernel::DoExecute(int task_id) {
     ret = ConvDwAVX512(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
                        reinterpret_cast<float *>(bias_data_), conv_param_, task_id, conv_dw_calc_param_);
   } else {
-    ret = ConvDw(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
-                 reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
+    ret = ConvDwAVX(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
+                    reinterpret_cast<float *>(bias_data_), conv_param_, task_id, conv_dw_calc_param_);
   }
+#elif defined(ENABLE_AVX)
+  ret = ConvDwAVX(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
+                  reinterpret_cast<float *>(bias_data_), conv_param_, task_id, conv_dw_calc_param_);
 #else
   ret = ConvDw(output_ptr_, input_ptr_, reinterpret_cast<float *>(packed_weight_),
                reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
