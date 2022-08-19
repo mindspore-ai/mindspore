@@ -40,7 +40,7 @@ class SSLSocketOperation : public SocketOperation {
 
  private:
   // Handshake for the ssl protocol.
-  void Handshake(int fd, Connection *conn);
+  void Handshake(int fd, Connection *conn) const;
 
   // The ssl related data structures.
   SSL_CTX *ssl_ctx_;

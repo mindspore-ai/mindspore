@@ -16,7 +16,6 @@
 
 #include "distributed/rpc/tcp/socket_operation.h"
 
-#include <sys/ioctl.h>
 #include <net/if.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
@@ -74,19 +73,19 @@ int SocketOperation::SetSocketOptions(int sock_fd) {
   int ret = 0;
 
   ret = setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &option_val, sizeof(option_val));
-  if (ret) {
+  if (ret > 0) {
     MS_LOG(ERROR) << "Failed to call setsockopt SO_REUSEADDR, fd: " << sock_fd << ", errno:" << errno;
     return -1;
   }
 
   ret = setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, &option_val, sizeof(option_val));
-  if (ret) {
+  if (ret > 0) {
     MS_LOG(ERROR) << "Failed to call setsockopt TCP_NODELAY, fd: " << sock_fd << ", errno:" << errno;
     return -1;
   }
 
   ret = SetSocketKeepAlive(sock_fd, SOCKET_KEEPALIVE, SOCKET_KEEPIDLE, SOCKET_KEEPINTERVAL, SOCKET_KEEPCOUNT);
-  if (ret) {
+  if (ret > 0) {
     MS_LOG(WARNING) << "Failed to call setsockopt keep alive, fd: " << sock_fd;
   }
   return 0;
@@ -125,7 +124,9 @@ std::string SocketOperation::GetLocalIP() {
   struct ifaddrs *if_addr = if_addrs;
   MS_EXCEPTION_IF_NULL(if_addr);
   while (if_addr != nullptr) {
-    if (if_addr->ifa_addr == nullptr) continue;
+    if (if_addr->ifa_addr == nullptr) {
+      continue;
+    }
 
     if (if_addr->ifa_addr->sa_family == AF_INET && !(if_addr->ifa_flags & IFF_LOOPBACK)) {
       auto sock_addr = reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_addr);
@@ -223,7 +224,7 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
     return false;
   }
   try {
-    port = (uint16_t)std::stoul(url.substr(idx));
+    port = static_cast<uint16_t>(std::stoul(url.substr(idx)));
   } catch (const std::system_error &e) {
     MS_LOG(ERROR) << "Couldn't find port in url: " << url.c_str();
     return false;
@@ -254,7 +255,7 @@ uint16_t SocketOperation::GetPort(int fd) {
   socklen_t isaLen = sizeof(struct sockaddr_storage);
 
   retval = getsockname(fd, &isa.sa, &isaLen);
-  if (retval) {
+  if (retval > 0) {
     MS_LOG(INFO) << "Failed to call getsockname, fd: " << fd << ", ret: " << retval << ", errno: " << errno;
     return port;
   }
@@ -335,7 +336,7 @@ int SocketOperation::Listen(const std::string &url) {
   }
 
   // bind
-  if (::bind(listenFd, (struct sockaddr *)&addr, sizeof(SocketAddress))) {
+  if (::bind(listenFd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(SocketAddress)) > 0) {
     MS_LOG(ERROR) << "Failed to call bind, url: " << url.c_str();
     if (close(listenFd) != 0) {
       MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
@@ -344,7 +345,7 @@ int SocketOperation::Listen(const std::string &url) {
   }
 
   // listen
-  if (::listen(listenFd, SOCKET_LISTEN_BACKLOG)) {
+  if (::listen(listenFd, SOCKET_LISTEN_BACKLOG) > 0) {
     MS_LOG(ERROR) << "Failed to call listen, fd: " << listenFd << ", errno: " << errno << ", url: " << url.c_str();
     if (close(listenFd) != 0) {
       MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
@@ -359,7 +360,8 @@ int SocketOperation::Accept(int sock_fd) {
   socklen_t length = sizeof(storage);
 
   // accept connection
-  auto acceptFd = ::accept4(sock_fd, (struct sockaddr *)&storage, &length, SOCK_NONBLOCK | SOCK_CLOEXEC);
+  auto acceptFd =
+    ::accept4(sock_fd, reinterpret_cast<struct sockaddr *>(&storage), &length, SOCK_NONBLOCK | SOCK_CLOEXEC);
   if (acceptFd < 0) {
     MS_LOG(ERROR) << "Failed to call accept, errno: " << errno << ", server: " << sock_fd;
     return acceptFd;
