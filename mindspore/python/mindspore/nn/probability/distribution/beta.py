@@ -43,9 +43,6 @@ class Beta(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Beta'.
 
-    Supported Platforms:
-        ``Ascend``
-
     Note:
         `concentration1` and `concentration0` must be greater than zero.
         `dist_spec_args` are `concentration1` and `concentration0`.
@@ -54,6 +51,9 @@ class Beta(Distribution):
     Raises:
         ValueError: When concentration1 <= 0 or concentration0 >=1.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore

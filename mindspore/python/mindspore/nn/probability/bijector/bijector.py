@@ -243,7 +243,7 @@ class Bijector(Cell):
             *args (list): the list of positional arguments forwarded to subclasses.
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
-        Output:
+        Returns:
             Tensor, the value of the  transformed random variable.
         """
         return self._forward(value, *args, **kwargs)
@@ -257,7 +257,7 @@ class Bijector(Cell):
             *args (list): the list of positional arguments forwarded to subclasses.
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
-        Output:
+        Returns:
             Tensor, the value of the input random variable.
         """
         return self._inverse(value, *args, **kwargs)
@@ -271,7 +271,7 @@ class Bijector(Cell):
             *args (list): the list of positional arguments forwarded to subclasses.
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
-        Output:
+        Returns:
             Tensor, the value of logarithm of the derivative of the forward transformation.
         """
         return self._forward_log_jacobian(value, *args, **kwargs)
@@ -285,7 +285,7 @@ class Bijector(Cell):
             *args (list): the list of positional arguments forwarded to subclasses.
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
-        Output:
+        Returns:
             Tensor, the value of logarithm of the derivative of the inverse transformation.
         """
         return self._inverse_log_jacobian(value, *args, **kwargs)

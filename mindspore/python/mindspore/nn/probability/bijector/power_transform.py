@@ -37,15 +37,15 @@ class PowerTransform(Bijector):
         power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         The dtype of `power` must be float.
 
     Raises:
         ValueError: When `power` is less than 0 or is not known statically.
         TypeError: When the dtype of `power` is not float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

@@ -32,9 +32,6 @@ class GumbelCDF(Bijector):
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
         name (str): The name of the Bijector. Default: 'GumbelCDF'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `scale` must be greater than zero.
         For `inverse` and `inverse_log_jacobian`, input should be in range of (0, 1).
@@ -45,6 +42,9 @@ class GumbelCDF(Bijector):
     Raises:
         TypeError: When the dtype of `loc` or `scale` is not float,
                    or when the dtype of `loc` and `scale` is not same.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

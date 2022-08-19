@@ -914,8 +914,9 @@ class Cell(Cell_):
         Returns the dynamic_inputs of a cell object in one network.
 
         Returns:
-            inputs (tuple): Inputs of the Cell object.
-        NOTE:
+            inputs (tuple), Inputs of the Cell object.
+
+        Note:
             This is an experimental interface that is subject to change or deletion.
         """
 
@@ -2006,7 +2007,7 @@ class Cell(Cell_):
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
         Set `comm_fusion` for all the parameters in this cell. Please refer to the description of
-         :class:`mindspore.Parameter.comm_fusion`.
+        :class:`mindspore.Parameter.comm_fusion`.
 
         Note:
             The value of attribute will be overwritten when the function is called multiply.

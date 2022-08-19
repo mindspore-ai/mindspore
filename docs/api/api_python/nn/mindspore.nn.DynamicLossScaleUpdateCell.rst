@@ -24,3 +24,6 @@ mindspore.nn.DynamicLossScaleUpdateCell
     .. py:method:: get_loss_scale()
 
         获取当前损失缩放系数。
+
+        返回：
+            float，损失缩放系数。

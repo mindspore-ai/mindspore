@@ -344,14 +344,14 @@ class BatchNorm1d(_BatchNorm):
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If `num_features` is not an int.
         TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -977,9 +977,6 @@ class InstanceNorm1d(_InstanceNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, L)`. Same type and
         shape as the `x`.
 
-    Supported Platforms:
-        ``GPU``
-
     Raises:
         TypeError: If the type of `num_features` is not int.
         TypeError: If the type of `eps` is not float.
@@ -992,6 +989,9 @@ class InstanceNorm1d(_InstanceNorm):
         ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> import mindspore
@@ -1067,9 +1067,6 @@ class InstanceNorm2d(_InstanceNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, H, W)`. Same type and
         shape as the `x`.
 
-    Supported Platforms:
-        ``GPU``
-
     Raises:
         TypeError: If the type of `num_features` is not int.
         TypeError: If the type of `eps` is not float.
@@ -1082,6 +1079,9 @@ class InstanceNorm2d(_InstanceNorm):
         ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> import mindspore
@@ -1157,9 +1157,6 @@ class InstanceNorm3d(_InstanceNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, D, H, W)`. Same type and
         shape as the `x`.
 
-    Supported Platforms:
-        ``GPU``
-
     Raises:
         TypeError: If the type of `num_features` is not int.
         TypeError: If the type of `eps` is not float.
@@ -1172,6 +1169,9 @@ class InstanceNorm3d(_InstanceNorm):
         ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
         KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
             exists.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> import mindspore
