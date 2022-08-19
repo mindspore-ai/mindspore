@@ -30,7 +30,7 @@ namespace ascend {
 using KernelGraph = mindspore::session::KernelGraph;
 
 void AscendDeviceContext::Initialize() {
-  MS_LOG(INFO) << "Status record: Enter Initialize...";
+  MS_LOG(INFO) << "Start Initialize...";
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();
@@ -49,7 +49,7 @@ void AscendDeviceContext::Initialize() {
   MS_EXCEPTION_IF_NULL(ascend_graph_executor);
   ascend_graph_executor->Initialize();
   initialized_ = true;
-  MS_LOG(INFO) << "Status record: Initialize success.";
+  MS_LOG(INFO) << "Initialize success.";
 }
 
 void AscendDeviceContext::Destroy() {
@@ -63,7 +63,7 @@ void AscendDeviceContext::Destroy() {
     }
   }
 #endif
-  MS_LOG(INFO) << "Status record: Enter Destroy...";
+  MS_LOG(INFO) << "Enter Destroy...";
   if (!initialized_) {
     if (deprecated_interface_ != nullptr) {
       deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
@@ -71,7 +71,7 @@ void AscendDeviceContext::Destroy() {
     return;
   }
 
-  MS_LOG(INFO) << "Status record: Destroy start...";
+  MS_LOG(INFO) << "Start Destroy ";
   auto ascend_graph_executor = dynamic_cast<AscendGraphExecutor *>(graph_executor_.get());
   ascend_graph_executor->Destroy();
   auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
@@ -84,7 +84,7 @@ void AscendDeviceContext::Destroy() {
     deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
   initialized_ = false;
-  MS_LOG(INFO) << "Status record: Destroy success.";
+  MS_LOG(INFO) << "Destroy success.";
 }
 
 // @todo move SetRunMode to here when old runtime is delete
