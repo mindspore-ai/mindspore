@@ -375,7 +375,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
 
   void set_python_obj(const ValuePtr &python_obj) { python_obj_ = python_obj; }
-  ValuePtr python_obj() { return python_obj_; }
+  ValuePtr python_obj() const { return python_obj_; }
 
  private:
   // Only used for func_graph manager to control resource free.

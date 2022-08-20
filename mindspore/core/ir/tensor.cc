@@ -367,7 +367,7 @@ class TensorStringifier {
           ignored *= shape[i];
         }
         // Multiple with ignored layers number.
-        ignored *= num - kThreshold;
+        ignored *= (num - kThreshold);
         *cursor += ignored;
       }
       // Handle the second half.
@@ -1099,10 +1099,14 @@ std::string COOTensor::ToString() const {
 }
 
 abstract::AbstractBasePtr COOTensor::ToAbstract() {
+  MS_EXCEPTION_IF_NULL(values_);
   auto dtype = values_->Dtype();
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(indices_->ToAbstract());
+  MS_EXCEPTION_IF_NULL(values_->ToAbstract());
   auto indices = indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
   auto values = values_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
   std::vector<abstract::AbstractBasePtr> abstract_shape;
@@ -1131,7 +1135,9 @@ abstract::AbstractBasePtr RowTensor::ToAbstract() {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
   auto abs_sparse_tensor = std::make_shared<abstract::AbstractRowTensor>(dtype, shape_);
-
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(indices_->ToAbstract());
+  MS_EXCEPTION_IF_NULL(values_->ToAbstract());
   abs_sparse_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
   abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
 

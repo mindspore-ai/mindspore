@@ -48,7 +48,7 @@ AbstractFunctionPtr FuncGraph::abstract() {
     MS_LOG(ERROR) << "Error func graph no output";
     return nullptr;
   }
-
+  MS_EXCEPTION_IF_NULL(output());
   return std::make_shared<VirtualAbstractClosure>(args_spec_list, output()->abstract());
 }
 
@@ -116,6 +116,7 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int var
     specialized_parameter_list->push_back(para);
   }
   auto var_tuple_param = specialized_graph->NewCNode(std::move(var_param_tuple_nodes));
+  MS_EXCEPTION_IF_NULL(repl_nodes);
   (void)repl_nodes->emplace(specialized_graph->GetVariableArgParameter(), var_tuple_param);
 }
 
@@ -150,6 +151,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
           MS_EXCEPTION(TypeError) << "Multiply values for keyword argument: " << kw_param_name;
         }
         para->set_name(param_name);
+        MS_EXCEPTION_IF_NULL(para->debug_info());
         para->debug_info()->set_name(param_name);
         kwarg_keys_tuple_nodes.push_back(NewValueNode(kw_param_name));
         auto extract_node =
@@ -167,6 +169,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
         auto extract_node = specialized_graph->NewCNode(
           {NewValueNode(prim::kPrimExtractKeywordArg), NewValueNode(kw_param_name), param_node});
         kwarg_nodes.insert(param_node);
+        MS_EXCEPTION_IF_NULL(repl_nodes);
         (void)repl_nodes->emplace(param_node, extract_node);
       }
     }
@@ -280,6 +283,8 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(specialized_graph, false);
   auto tr = manager->Transact();
   for (auto &node_pair : repl_nodes) {
+    MS_EXCEPTION_IF_NULL(node_pair.first);
+    MS_EXCEPTION_IF_NULL(node_pair.second);
     MS_LOG(DEBUG) << "GenerateGraph replace:" << node_pair.first->DebugString() << "-"
                   << node_pair.second->DebugString();
     (void)tr.Replace(node_pair.first, node_pair.second);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class MS_CORE_API PrimalDebugInfoManager {
                         [this](const NodeDebugInfoPtr &debug_info) { (void)primal_debug_infos_.emplace(debug_info); });
   }
   void ClearPrimalDebugInfo() noexcept { primal_debug_infos_.clear(); }
-  std::set<NodeDebugInfoPtr, DebugInfoCompare> GetCurrentPrimalDebugInfo() { return primal_debug_infos_; }
+  std::set<NodeDebugInfoPtr, DebugInfoCompare> GetCurrentPrimalDebugInfo() const { return primal_debug_infos_; }
 
  private:
   PrimalDebugInfoManager() = default;

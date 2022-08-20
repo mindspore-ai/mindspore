@@ -53,7 +53,7 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
 
 void FuncGraph::DoBreakLoop() {
   if (attached_mng_cnt() > 0) {
-    MS_LOG(ERROR) << "Cur Graph is holding by FuncGraphManager, can't DoBreakLoop now";
+    MS_LOG(ERROR) << "Current Graph is holding by FuncGraphManager, can't DoBreakLoop now";
     return;
   }
   ClearOrderList();
@@ -130,6 +130,7 @@ ParameterPtr FuncGraph::AddFvParameter(const std::string &name, const ValuePtr &
   FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
   ParameterPtr param = std::make_shared<Parameter>(this_graph);
   param->set_name(name);
+  MS_EXCEPTION_IF_NULL(param->debug_info());
   param->debug_info()->set_name(name);
   MS_EXCEPTION_IF_NULL(default_value);
   param->set_default_param(default_value);
@@ -195,7 +196,7 @@ CNodePtr FuncGraph::NewCNodeBefore(const AnfNodePtr &position, const std::vector
   CNodePtr cnode = NewCNode(inputs);
   CNodePtr pos_cnode = dyn_cast<CNode>(position);
   auto iter = order_.find(pos_cnode);
-  order_.insert(iter, cnode);
+  (void)order_.insert(iter, cnode);
   return cnode;
 }
 
@@ -206,7 +207,7 @@ CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const std::vector<
   if (iter == order_.end()) {
     order_.push_front(cnode);
   } else {
-    order_.insert(std::next(iter), cnode);
+    (void)order_.insert(std::next(iter), cnode);
   }
   return cnode;
 }
@@ -214,6 +215,7 @@ CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const std::vector<
 void FuncGraph::DumpCNodeList() {
   MS_LOG(INFO) << "FuncGraph " << ToString() << " has following CNode in code order:";
   for (const auto &cnode : order_) {
+    MS_EXCEPTION_IF_NULL(cnode);
     MS_LOG(INFO) << cnode->DebugString();
   }
 }
@@ -247,7 +249,7 @@ void FuncGraph::DropNode(const AnfNodePtr &node) {
     MS_LOG(ERROR) << "Node is nullptr";
     return;
   }
-  nodes_.erase(node);
+  (void)nodes_.erase(node);
   auto graph = node->func_graph();
   if (node->isa<Parameter>()) {
     (void)parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
@@ -261,6 +263,7 @@ void FuncGraph::DropNode(const AnfNodePtr &node) {
 const AnfNodeCounterMap &FuncGraph::value_nodes() const { return value_nodes_; }
 
 void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
+  MS_EXCEPTION_IF_NULL(source);
   auto &others = source->value_nodes();
   for (auto it = others.begin(); it != others.end(); ++it) {
     AddValueNode(it->first, it->second);
@@ -294,6 +297,7 @@ void FuncGraph::DropValueNode(const AnfNodePtr &node) {
 const AnfNodeCounterMap &FuncGraph::free_variables() const { return free_variables_; }
 
 void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
+  MS_EXCEPTION_IF_NULL(source);
   auto &others = source->free_variables();
   for (auto it = others.begin(); it != others.end(); ++it) {
     const auto &free_var = it->first;
@@ -371,7 +375,7 @@ void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
   for (auto it = others.begin(); it != others.end(); ++it) {
     (void)AddFuncGraphUsed(it->first, it->second);
   }
-  func_graphs_used_.erase(source);
+  (void)func_graphs_used_.erase(source);
 }
 
 void FuncGraph::ClearFuncGraphsUsed() { func_graphs_used_.clear(); }
@@ -412,9 +416,12 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
 const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() const { return func_graph_cnodes_index_; }
 
 void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
+  MS_EXCEPTION_IF_NULL(source);
   auto &others = source->func_graph_cnodes_index();
   for (auto it = others.begin(); it != others.end(); ++it) {
     // Ignore the user graph who may own itself.
+    MS_EXCEPTION_IF_NULL(it->first);
+    MS_EXCEPTION_IF_NULL(it->first->first);
     auto fg = it->first->first->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     if (fg.get() != this) {
@@ -699,6 +706,7 @@ void FuncGraph::EraseUnusedNodeInOrder() {
     // Erase unused cnode.
     for (auto it = order_.begin(); it != order_.end();) {
       if (!all_nodes.contains(*it)) {
+        MS_EXCEPTION_IF_NULL(*it);
         MS_LOG(DEBUG) << "Remove node: " << (*it)->ToString() << " in graph " << ToString() << " order.";
         it = order_.erase(it);
         continue;
@@ -712,7 +720,7 @@ void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
   if (node) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode) {
-      order_.erase(cnode);
+      (void)order_.erase(cnode);
       MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
     }
   }
@@ -740,11 +748,11 @@ void FuncGraph::ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new
   auto new_cnode = new_node->cast<CNodePtr>();
   if (new_cnode != nullptr) {
     // Insert new node just before the old node.
-    order_.insert(iter, new_cnode);
+    (void)order_.insert(iter, new_cnode);
   }
   // Remove old node from order list.
   // Unused children nodes can be cleared by EraseUnusedNodeInOrder().
-  order_.erase(iter);
+  (void)order_.erase(iter);
 }
 
 static std::vector<AnfNodePtr> MakeInputNodes(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
