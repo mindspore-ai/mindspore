@@ -41,7 +41,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
 else()
     # add python lib dir to rpath
+    if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/..:$ORIGIN/../lib")
+    endif()
 endif()
 
 set(CMAKE_CXX_FLAGS "-fPIE ${CMAKE_CXX_FLAGS}")

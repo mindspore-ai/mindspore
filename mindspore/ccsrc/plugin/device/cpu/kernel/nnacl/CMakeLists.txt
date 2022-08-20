@@ -211,7 +211,9 @@ if(APPLE)
 endif()
 
 ########################### build nnacl library ########################
+if(NOT MSVC)
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+endif()
 
 add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_SIMD_SRC})
 
