@@ -37,7 +37,8 @@ from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
-from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, OpParallelConfig, MoEParallelConfig
+from mindspore import log as logger
 
 __all__ = [
     "FixedSparseAttention"
@@ -154,6 +155,30 @@ class _LayerInputCheck:
                              f"but got {input_shape[dim]}")
         return True
 
+    @staticmethod
+    def check_shape_equal_without_batch(input_shape, param_name, func_name, target_shape):
+        """
+        Check the input shape's is equal to the expected shape, the value on 0-th is viewed as batch, and the
+        batch size will not be checked.
+        """
+        target_shape = target_shape
+        length, hidden = target_shape
+        if isinstance(input_shape, tuple):
+            input_shape = list(input_shape)
+        _LayerInputCheck.check_shape_length(input_shape, param_name, func_name,
+                                            [len(target_shape), len(target_shape) + 1])
+        if input_shape[-1] != hidden:
+            raise ValueError(f"For {func_name}, the last dimension of {param_name} shape must be {hidden},"
+                             f"but got the last dimension {input_shape[-1]} in {input_shape}.")
+        if input_shape[0] == 0:
+            raise ValueError(f"For {func_name}, the first dimension of {param_name} shape greater than 0,"
+                             f"but got the first dimension {input_shape[0]} in {input_shape}.")
+        if len(input_shape) == 2 and input_shape[0] % length != 0:
+            raise ValueError(f"For {func_name}, the first dimension of {param_name} shape should be divisible "
+                             f"by {length}, "
+                             f"but got the first dimension {input_shape[0]} in {input_shape}.")
+        return True
+
 
 @constexpr
 def _check_past_none_input_none(use_past, param_name, func_name, default_value, is_tensor, is_default):
@@ -190,6 +215,11 @@ def _check_shape_equal(input_shape, param_name, func_name, target_shape):
 @constexpr
 def _check_input_shape_value(input_shape, dim, param_name, cls_name, target_value):
     _LayerInputCheck.check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value)
+
+
+@constexpr
+def _check_shape_equal_without_batch(input_shape, param_name, func_name, target_shape):
+    _LayerInputCheck.check_shape_equal_without_batch(input_shape, param_name, func_name, target_shape)
 
 
 class _Dropout(nn.Cell):
@@ -392,7 +422,6 @@ class _Linear(Cell):
     @_args_type_validator_check(in_channels=Validator.check_positive_int,
                                 out_channels=Validator.check_positive_int,
                                 has_bias=Validator.check_bool,
-                                activation=_valid_type_checks([type(None), str], "Linear"),
                                 transpose_b=Validator.check_bool,
                                 expert_num=Validator.check_positive_int,
                                 outer_batch=Validator.check_positive_int,
@@ -449,7 +478,10 @@ class _Linear(Cell):
             self.bias.parallel_optimizer = False
             self.bias_add = P.Add()
         self.act_name = activation
-        self.activation = get_activation(activation) if isinstance(activation, str) else activation
+        if callable(activation):
+            self.activation = activation()
+        else:
+            self.activation = get_activation(activation) if isinstance(activation, str) else activation
         self.activation_flag = self.activation is not None
         self.dtype = compute_dtype
         self.cast = P.Cast()
@@ -491,7 +523,7 @@ class _Linear(Cell):
         self.matmul.shard(strategy_matmul)
         if self.has_bias:
             self.bias_add.shard(strategy_bias)
-        if self.activation_flag:
+        if self.activation_flag and isinstance(self.act_name, str):
             # some operations has many primitives, need to manually set the shard
             if self.act_name.lower() == "leakyrelu":
                 self.activation.select_op.shard((strategy_activation[0], strategy_activation[0]))
@@ -506,7 +538,26 @@ class _Linear(Cell):
                                  "or auto parallel mode.")
             else:
                 getattr(self.activation, self.act_name).shard(strategy_activation)
-
+        elif self.activation_flag and isinstance(self.activation, Cell):
+            if hasattr(self.activation, 'shard') and strategy_activation:
+                shard_tuple = strategy_activation[0]
+                if len(shard_tuple) == 2:
+                    parallel_config = OpParallelConfig(data_parallel=shard_tuple[0],
+                                                       model_parallel=shard_tuple[1])
+                elif len(shard_tuple) == 4:
+                    parallel_config = MoEParallelConfig(data_parallel=shard_tuple[0],
+                                                        expert_parallel=shard_tuple[1],
+                                                        model_parallel=shard_tuple[2])
+                else:
+                    raise ValueError("The user-defined activation function currently only supports the case where the "
+                                     "input policy is 2 or 4, so that relevant policies can be extracted from it."
+                                     "To avoid this error, you need to add the function of extracting "
+                                     "'ParallelConfig' or 'OpParallelConfig' from the incoming strategy_activation ")
+                self.activation.shard(parallel_config)
+            else:
+                logger.warning(f"The user passed the custom defined activation function {self.activation_flag}. "
+                               f"If the user want to enable shard for the activation cell, "
+                               f"the user should set the shard for each primitives in the cell.")
         return self
 
 

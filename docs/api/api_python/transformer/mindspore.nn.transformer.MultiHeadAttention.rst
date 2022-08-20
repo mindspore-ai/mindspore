@@ -10,7 +10,7 @@
     如果query tensor、key tensor和value tensor相同，则上述即为自注意力机制的计算过程。
 
     参数：
-        - **batch_size** (int) - 表示训练批次的大小。
+        - **batch_size** (int) - 表示增量预测时输入张量的批量大小，应该是正整数。当进行训练或预测时，该参数将不起作用，用户可将None传递给此参数。
         - **src_seq_length** (int) - 表示query向量的序列长度。
         - **tgt_seq_length** (int) - 表示key向量和value向量的序列长度。
         - **hidden_size** (int) - 表示输入的向量大小。
@@ -28,7 +28,7 @@
         - **query_tensor** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, src_seq_length, hidden_size)或(batch_size * src_seq_length, hidden_size)的query向量。否则，shape必须为(batch_size, 1, hidden_size)。
         - **key_tensor** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, tgt_seq_length, hidden_size)或(batch_size * tgt_seq_length, hidden_size)的key向量。否则，shape必须为(batch_size, 1, hidden_size)。
         - **value_tensor** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, tgt_seq_length, hidden_size)或(batch_size * tgt_seq_length, hidden_size)的value向量。否则，shape必须为(batch_size, 1, hidden_size)。
-        - **attention_mask** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, src_seq_length, tgt_seq_length)的注意力掩码矩阵。否则，shape必须为(batch_size, 1, tgt_seq_length)。
+        - **attention_mask** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, src_seq_length, tgt_seq_length)的注意力掩码矩阵, 或者为None，None表示在Softmax计算中将不会进行掩码。否则，shape必须为(batch_size, 1, tgt_seq_length)。
         - **key_past** (Tensor) - shape为(batch_size, num_heads, size_per_head, tgt_seq_length)的Float16 tensor，表示过去所计算的key向量。
           当use_past为True时，需要传入非None值用于增量预测。默认值为None。
         - **value_past** (Tensor) - shape为(batch_size, num_heads, tgt_seq_length, size_per_head)的Float16 tensor，表示过去所计算的value向量。

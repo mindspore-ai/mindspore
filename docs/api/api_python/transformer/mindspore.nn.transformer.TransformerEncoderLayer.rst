@@ -3,7 +3,7 @@
     Transformer的编码器层。Transformer的编码器层上的单层的实现，包括多头注意力层和前馈层。
 
     参数：
-        - **batch_size** (int) - 表示输入Tensor的批次大小。
+        - **batch_size** (int) - 表示增量预测时输入张量的批量大小，应该是正整数。当进行训练或预测时，该参数将不起作用，用户可将None传递给此参数。
         - **hidden_size** (int) - 表示输入的隐藏大小。
         - **seq_length** (int) - 表示输入序列长度。
         - **ffn_hidden_size** (int) - 表示前馈层中bottleneck的隐藏大小。
@@ -21,7 +21,7 @@
 
     输入：
         - **x** (Tensor) - Float Tensor。如果use_past为False或者is_first_iteration为True，shape应为[batch_size, seq_length, hidden_size]或者[batch_size * seq_length, hidden_size]。否则，shape应为[batch_size, 1, hidden_size]。
-        - **input_mask** (Tensor) - Float tensor。use_past为False或者is_first_iteration为True时，表示shape为[batch_size, seq_length, seq_length]的注意力掩码。否则，shape应为[batch_size, 1, hidden_size]。
+        - **input_mask** (Tensor) - Float tensor。use_past为False或者is_first_iteration为True时，表示shape为[batch_size, seq_length, seq_length]的注意力掩码，或者为None，None表示在Softmax计算中将不会进行掩码。否则，shape应为[batch_size, 1, hidden_size]。
         - **init_reset** (Tensor) - shape为[1]的bool tensor，用于清除增量预测中使用的past key参数和past value参数。仅当use_past为True时有效。默认值为True。
         - **batch_valid_length** (Tensor) - shape为[batch_size]的Int32 tensor，表示过去所计算的索引。当use_past为True时，它用于增量预测。默认值为None。
 

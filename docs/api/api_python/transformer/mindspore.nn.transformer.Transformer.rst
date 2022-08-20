@@ -7,7 +7,7 @@
         这是一个实验接口，可能会被更改或者删除。
 
     参数：
-        - **batch_size** (int) - 表示输入的批次大小。
+        - **batch_size** (int) - 表示增量预测时输入张量的批量大小，应该是正整数。当进行训练或预测时，该参数将不起作用，用户可将None传递给此参数。
         - **encoder_layers** (int) - 表示 `TransformerEncoderLayer` 的层数。
         - **decoder_layers** (int) - 表示 `TransformerDecoderLayer` 的层数。
         - **hidden_size** (int) - 表示输入向量的大小。
@@ -29,10 +29,10 @@
 
     输入：
         - **encoder_inputs** (Tensor) - shape为[batch_size, seq_length, hidden_size]或[batch_size * seq_length, hidden_size]的输入Tensor。
-        - **encoder_masks** (Tensor) - shape为[batch_size, seq_length, seq_length]的解码器的注意力掩码。
+        - **encoder_masks** (Tensor) - shape为[batch_size, seq_length, seq_length]的解码器的注意力掩码。或者为None，None表示在编码器中self attention中的Softmax计算中将不会进行掩码。
         - **decoder_inputs** (Tensor) - shape为[batch_size, seq_length, hidden_size]或[batch_size * seq_length, hidden_size]的编码器的输出。如果解码器层数为0，则此值应为None。
-        - **decoder_masks** (Tensor) - shape为[batch_size, seq_length, seq_length]的解码器的注意力掩码。
-        - **memory_mask** (Tensor) - shape为[batch, tgt_seq_length,  src_seq_length]的交叉注意力的memory掩码，其中tgt_seq_length表示解码器的长度。如果解码器层为0，则shape为[batch_size, seq_length, hidden_size]的编码器的输出应为None。
+        - **decoder_masks** (Tensor) - shape为[batch_size, seq_length, seq_length]的解码器的注意力掩码。或者为None，None表示将不会在解码器中的self attention中的Softmax计算中引入掩码计算。
+        - **memory_mask** (Tensor) - shape为[batch, tgt_seq_length,  src_seq_length]的交叉注意力的memory掩码，其中tgt_seq_length表示解码器的长度。或者为None，None表示将不会在cross attention中的Softmax计算中引入掩码计算。
         - **init_reset** (Tensor) - shape为[1]的bool tensor，用于清除增量预测中使用的past key参数和past value参数。仅当use_past为True时有效。默认值为True。
         - **batch_valid_length** (Tensor) - shape为[batch_size]的Int32 tensor，表示过去所计算的索引。当use_past为True时，它用于增量预测。默认值为None。
 
