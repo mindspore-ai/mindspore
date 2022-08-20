@@ -39,6 +39,7 @@ from ..operations.math_ops import NextAfter
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import LuUnpack
+from ..operations.math_ops import MatrixExp
 from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import Median
 from ..operations.math_ops import Betainc
@@ -372,6 +373,43 @@ def get_bprop_lp_norm(self):
             input_scaled = pow_op(abs_op(input_x), (p - 2)) * input_x
             scale_v = dout / pow_op(out, (p - 1))
         return (input_scaled * scale_v,)
+
+    return bprop
+
+
+@bprop_getters.register(MatrixExp)
+def get_bprop_matrix_exp(self):
+    """Gegerate brop for MatrixExp"""
+    matrix_exp = MatrixExp()
+    zeros = P.Zeros()
+    concat_row = P.Concat(-1)
+    concat_col = P.Concat(-2)
+    cast = P.Cast()
+    slice_op = P.Slice()
+
+    def bprop(x, out, dout):
+        shape_x = P.Shape()(x)
+        n = shape_x[-1]
+        zero_matrix = zeros(shape_x, mstype.float32)
+        zero_matrix = cast(zero_matrix, dout.dtype)
+        x_len = len(shape_x)
+        input_perm = [ele for ele in range(x_len)]
+        input_perm[-1] = input_perm[-2]
+        input_perm[-2] = x_len-1
+        input_perm = tuple(input_perm)
+        x_transpose = P.Transpose()(x, input_perm)
+
+        meta_grad_up = concat_row((x_transpose, dout))
+        meta_grad_down = concat_row((zero_matrix, x_transpose))
+        meta_grad = concat_col((meta_grad_up, meta_grad_down))
+        meta_grad = matrix_exp(meta_grad)
+
+        begins = [0] * x_len
+        begins[-1] = n
+        sizes = [i for i in shape_x]
+        sizes[-2] = n
+        sizes[-1] = n
+        return (slice_op(meta_grad, begins, sizes),)
 
     return bprop
 

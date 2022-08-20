@@ -41,6 +41,7 @@ from ..operations.math_ops import (
     BesselY1,
     BesselK1,
     BesselK1e,
+    MatrixExp,
     MatrixSolve,
     Median,
     Orgqr,
@@ -152,6 +153,7 @@ tensor_round_ = P.Round()
 linspace_ = P.LinSpace()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
+matrix_exp_ = MatrixExp()
 exp2_ = P.Pow()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
@@ -2183,6 +2185,41 @@ def matrix_determinant(x):
         [-16.5 21. ]
     """
     return matrix_determinant_(x)
+
+
+def matrix_exp(x):
+    r"""
+    Computes the matrix exponential of a square matrix. Supports batched inputs.
+
+    .. math::
+
+        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
+          Must be one of the following types: float64, float32, float16, complex64, complex128.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of `x` is not one of the following dtype:
+                   float16, float32, float64, complex64, complex128.
+        ValueError: If the rank of `x` is less than 2.
+        ValueError: If the last two dimensions of `x` are not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
+        >>> output = ops.matrix_exp(x)
+        >>> print(output)
+        [[2.7182817 5.436563 ]
+        [0.        2.7182817]]
+    """
+    return matrix_exp_(x)
 
 
 def log_matrix_determinant(x):

@@ -195,6 +195,7 @@ from .stack_push_pop import _stack_destroy_aicpu
 from .matrix_diag_v3 import _matrix_diag_v3_aicpu
 from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
+from .matrix_exp import _matrix_exp_aicpu
 from .ragged_range import _raggedrange_aicpu
 from .tan import _tan_aicpu
 from .argmax_with_value import _argmax_with_value_aicpu
