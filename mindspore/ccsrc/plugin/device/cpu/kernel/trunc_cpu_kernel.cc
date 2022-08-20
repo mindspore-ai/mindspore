@@ -24,18 +24,16 @@ namespace {
 const size_t kZero = 0;
 constexpr size_t kTruncInputsNum = 1;
 constexpr size_t kTruncOutputsNum = 1;
+constexpr size_t kSizeGapMin = 1024;
+constexpr size_t kSizeGapMax = 102400;
 
 template <typename T>
 void Trunc(const T *in0, T *out0, size_t start, size_t end) {
   for (size_t index = start; index < end; index++) {
-    int ind = static_cast<int>(in0[index]);
-    if (std::is_same_v<T, std::uint8_t>) {
+    if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, int8_t>) || (std::is_same_v<T, int32_t>)) {
       out0[index] = in0[index];
-    } else {
-      auto absvalue1 = (in0[index]) * (in0[index]);
-      auto absvalue = sqrt(absvalue1);
-      auto retp = floor(absvalue);
-      out0[index] = (ind < 0) ? -retp : retp;
+    } else if constexpr ((std::is_same_v<T, float>) || (std::is_same_v<T, double>)) {
+      out0[index] = std::trunc(in0[index]);
     }
   }
 }
@@ -68,9 +66,7 @@ bool TruncCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   bool ret = true;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    ret = LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
+  if (dtype_ == kNumberTypeFloat32) {
     ret = LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     ret = LaunchKernel<double>(inputs, outputs);
@@ -92,13 +88,18 @@ bool TruncCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   T *output_0_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
   auto task = std::bind(Trunc<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
-  ParallelLaunchAutoSearch(task, input_size_ * kTruncInputsNum, this, &parallel_search_info_);
+  if (input_size_ <= kSizeGapMin) {
+    Trunc(input_0_addr, output_0_addr, 0, input_size_ * kTruncInputsNum);
+  } else if (input_size_ <= kSizeGapMax) {
+    ParallelLaunchAutoSearch(task, input_size_ * kTruncInputsNum, this, &parallel_search_info_);
+  } else {
+    ParallelLaunch(task, input_size_ * kTruncInputsNum, 0, this);
+  }
   return true;
 }
 
 std::vector<KernelAttr> TruncCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
     KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
