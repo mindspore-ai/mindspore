@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_AVX512
+#ifdef ENABLE_AVX
 #include "nnacl/assembly_global.h"
 
 .text
 .align 4
 
-// void ConvDwAVX512Fp32Row(float *output_ptr, const float *input_tmp, const float *weight_ptr, size_t num_pixels,
+// void ConvDwAVXFp32Row(float *output_ptr, const float *input_tmp, const float *weight_ptr, size_t num_pixels,
 //                          size_t output_channel, size_t input_step);
 // in linux x64 platform:
 // rdi: output_ptr
@@ -37,7 +37,7 @@
 // 40: output_channel
 // 48: input_step
 
-asm_function ConvDwAVX512Fp32Row
+asm_function ConvDwAVXFp32Row
     pushq %r15
     pushq %r14
     pushq %r13
@@ -59,6 +59,7 @@ asm_function ConvDwAVX512Fp32Row
     movq 8(%rsp), %r11 // first_calc_flag
     movq 16(%rsp), %r10 // bias
 #endif
+
 
     movq $4, %r13
     imul %r13, %r9
@@ -85,48 +86,11 @@ OutputInitByBias:
         movq %r15, %r8 // channel_tmp
         movq 16(%rsp), %r10 // bias_tmp
 
-        cmpq $16, %r8
-        jae BiasLoopC16Num4
         cmpq $8, %r8
         jae BiasLoopC8Num4
         cmpq $0, %r8
         ja BiasLoopCNum4
         jmp BiasLoopCEndNum4
-
-        BiasLoopC16Num4:
-            vmovups (%rsi), %zmm0 // input_tmp
-            vmovups (%rsi, %r9), %zmm1
-            vmovups (%rsi, %r9, 2), %zmm2
-            // vmovups (%rsi, %r9, 3), %zmm3
-
-            vmovups (%r10), %zmm8 // output_tmp
-            vmovups (%r10), %zmm9 // output_tmp
-            vmovups (%r10), %zmm10 // output_tmp
-            // vmovups (%r10), %zmm11 // output_tmp
-            addq $64, %rsi
-            addq $64, %r10
-
-            vmovups (%rdx), %zmm15 // weight_tmp
-            vfmadd231ps %zmm15, %zmm0, %zmm8
-            vfmadd231ps %zmm15, %zmm1, %zmm9
-            vfmadd231ps %zmm15, %zmm2, %zmm10
-            // vfmadd231ps %zmm15, %zmm3, %zmm11
-
-            addq $64, %rdx
-            vmovups %zmm8, (%rdi)
-            vmovups %zmm9, (%rdi, %r12)
-            vmovups %zmm10, (%rdi, %r12, 2)
-            // vmovups %zmm11, (%rdi, %r12, 3)
-            addq $64, %rdi
-
-            subq $16, %r8
-            cmpq $16, %r8
-            jae BiasLoopC16Num4
-            cmpq $8, %r8
-            jae BiasLoopC8Num4
-            cmpq $0, %r8
-            ja BiasLoopCNum4
-            jmp BiasLoopCEndNum4
 
         BiasLoopC8Num4:
             vmovups (%rsi), %ymm0 // input_tmp
@@ -212,34 +176,11 @@ OutputInitByBias:
         movq %r15, %r8 // channel_tmp
         movq 16(%rsp), %r10 // bias_tmp
 
-        cmpq $16, %r8
-        jae BiasLoopC16
         cmpq $8, %r8
         jae BiasLoopC8
         cmpq $0, %r8
         ja BiasLoopC
         jmp BiasLoopCEnd
-
-        BiasLoopC16:
-            vmovups (%rsi), %zmm0 // input_tmp
-            vmovups (%r10), %zmm8 // output_tmp
-            addq $64, %rsi
-            addq $64, %r10
-
-            vfmadd231ps (%rdx), %zmm0, %zmm8
-
-            addq $64, %rdx
-            vmovups %zmm8, (%rdi)
-            addq $64, %rdi
-
-            subq $16, %r8
-            cmpq $16, %r8
-            jae BiasLoopC16
-            cmpq $8, %r8
-            jae BiasLoopC8
-            cmpq $0, %r8
-            ja BiasLoopC
-            jmp BiasLoopCEnd
 
         BiasLoopC8:
             vmovups (%rsi), %ymm0 // input_tmp
@@ -296,47 +237,11 @@ OutputInitBySelf:
         movq %r14, %rdx // weight_tmp
         movq %r15, %r8 // channel_tmp
 
-        cmpq $16, %r8
-        jae LoopC16Num4
         cmpq $8, %r8
         jae LoopC8Num4
         cmpq $0, %r8
         ja LoopCNum4
         jmp LoopCEndNum4
-
-        LoopC16Num4:
-            vmovups (%rsi), %zmm0 // input_tmp
-            vmovups (%rsi, %r9), %zmm1
-            vmovups (%rsi, %r9, 2), %zmm2
-            // vmovups (%rsi, %r9, 3), %zmm3
-
-            vmovups (%rdi), %zmm8 // output_tmp
-            vmovups (%rdi, %r12), %zmm9 // output_tmp
-            vmovups (%rdi, %r12, 2), %zmm10 // output_tmp
-            // vmovups (%rdi, %r12, 3), %zmm11 // output_tmp
-            addq $64, %rsi
-
-            vmovups (%rdx), %zmm15 // weight_tmp
-            vfmadd231ps %zmm15, %zmm0, %zmm8
-            vfmadd231ps %zmm15, %zmm1, %zmm9
-            vfmadd231ps %zmm15, %zmm2, %zmm10
-            // vfmadd231ps %zmm15, %zmm3, %zmm11
-
-            addq $64, %rdx
-            vmovups %zmm8, (%rdi)
-            vmovups %zmm9, (%rdi, %r12)
-            vmovups %zmm10, (%rdi, %r12, 2)
-            // vmovups %zmm11, (%rdi, %r12, 3)
-            addq $64, %rdi
-
-            subq $16, %r8
-            cmpq $16, %r8
-            jae LoopC16Num4
-            cmpq $8, %r8
-            jae LoopC8Num4
-            cmpq $0, %r8
-            ja LoopCNum4
-            jmp LoopCEndNum4
 
         LoopC8Num4:
             vmovups (%rsi), %ymm0 // input_tmp
@@ -419,33 +324,11 @@ OutputInitBySelf:
         movq %r14, %rdx // weight_tmp
         movq %r15, %r8 // channel_tmp
 
-        cmpq $16, %r8
-        jae LoopC16
         cmpq $8, %r8
         jae LoopC8
         cmpq $0, %r8
         ja LoopC
         jmp LoopCEnd
-
-        LoopC16:
-            vmovups (%rsi), %zmm0 // input_tmp
-            vmovups (%rdi), %zmm8 // output_tmp
-            addq $64, %rsi
-
-            vfmadd231ps (%rdx), %zmm0, %zmm8
-
-            addq $64, %rdx
-            vmovups %zmm8, (%rdi)
-            addq $64, %rdi
-
-            subq $16, %r8
-            cmpq $16, %r8
-            jae LoopC16
-            cmpq $8, %r8
-            jae LoopC8
-            cmpq $0, %r8
-            ja LoopC
-            jmp LoopCEnd
 
         LoopC8:
             vmovups (%rsi), %ymm0 // input_tmp
