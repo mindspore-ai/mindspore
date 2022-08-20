@@ -3236,10 +3236,10 @@ class Tensor(Tensor_):
 
         try:
             data = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
-        except ValueError:
+        except ValueError as e:
             msg = "Error shape={}".format(shape)
             logger.critical(msg)
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
         class seed_context:
             """Set and restore seed."""
