@@ -313,13 +313,13 @@ class SparseToDenseV2(Primitive):
 
     Inputs:
         - **indices** (Tensor) - A 0D, 1D, or 2D Tensor of type int32 or int64, represents the position
-                                 of the element in the sparse tensor.
+          of the element in the sparse tensor.
         - **output_shape** (Tensor) - A 1D Tensor of the same type as `indices`, represents the shape
-                                      of the dense output tensor.
+          of the dense output tensor.
         - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`
-                                or a scalar value to be used for all indices.
+          or a scalar value to be used for all indices.
         - **default_value** (Tensor) - A 0D Tensor of the same type as `sparse_values`, scalar value to
-                                       set for indices not specified in indices.
+          set for indices not specified in indices.
 
     Returns:
         Tensor, converted from sparse tensor. The dtype is same as `values`, and the shape is `output_shape`.
@@ -873,21 +873,20 @@ class SparseConcat(Primitive):
         SparseTensor. Support int32, int64. Default: 0.
 
     Inputs:
-
         - **sp_input_indices** (Tensor) - the list of Tensor which means COOTensor indices, and Need to
-            concatenates. Support int64.
+          concatenates. Support int64.
         - **sp_input_values** (Tensor) - the list of Tensor which means COOTensor values, and
-            need to concatenates.
+          need to concatenates.
         - **sp_input_shape** (Tensor) - the list of Tensor which means COOTensor shape, and
-            need to concatenates. Support int64.
+          need to concatenates. Support int64.
 
     Outputs:
         - **output_indices** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the indices of output COOTensor.
+          specified dimension. This is the indices of output COOTensor.
         - **output_values** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the values of output COOTensor.
+          specified dimension. This is the values of output COOTensor.
         - **output_shape** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the shape of output COOTensor.
+          specified dimension. This is the shape of output COOTensor.
 
     Raises:
         ValueError: If only one sparse tensor input.
@@ -1961,3 +1960,67 @@ class SparseReshape(Primitive):
         """Initialize SparseReshape."""
         self.init_prim_io_names(inputs=['indices', 'shape', 'new_shape'], outputs=[
             'y_indices', 'y_shape'])
+
+
+class SparseCountSparseOutput(Primitive):
+    """
+    Performs sparse-output bin counting for a sparse tensor input.
+    Counts the number of times each value occurs in the input.
+
+    Args:
+        binary_output (bool) - If false, output the number of occurrences of each value,
+                               if True output 1 for orresponding values. Default False
+        minlength(Scalar) - Int type minimum value to count, default -1
+        maxlength(Scalar) - Int type maximum value to count, default -1
+
+    Inputs:
+        - **indices** (Tensor) - Tensor representing the position of the element in the sparse
+          tensor. Support int64, each element value should be a non-negative int number.
+        - **values** (Tensor) - 1-D Tensor, represents the value corresponding to the position
+          in the `indices`. Support int32, int64
+        - **dense_shape** (Tensor) - A positive int tuple which specifies the shape of sparse
+          tensor, should have 2 elements, support int64
+        - **weights** (Tensor) - A Tensor of the same shape as indices containing per-index
+          weight values. Support int32, int64, float32, float64
+
+    Outputs:
+        - **output_indices** (Tensor) - contains the indices of the output sparse tensor
+        - **output_values** (Tensor) - contains the values of the output sparse tensor
+        - **output_dense_shape** (Tensor) - contains the dense shape of the output sparse tensor
+
+    Raises:
+        TypeError: If binary_output is not a bool
+        TypeError: If minlenght or maxlength are not integers
+        TypeError: If dtype of indices and dense_shape is not int64
+        TypeError: If dtype of values is neither int32 nor int64
+        TypeError: If dtype of weights is not in int32, int64, float32, float64
+        ValueError: If number of values does not match first dimension of indices
+        ValueError: If number of dense_shape dimensions does not match second dimension of indices
+        ValueError: If num dim of dense_shape is < 1
+        RunTimeError: If number of weights is not equal to number of values
+        RunTimeError: If indexes are not in bounds of the dense shape
+
+    Examples:
+        >>> indices = Tensor([[1, 2] ,[2, 3], [2, 1], [0, 2]], dtype=mstype.int64)
+        >>> values = Tensor([0, 2, 8, 8], dtype=mstype.int64)
+        >>> dense_shape = Tensor([4, 4], dtype=mstype.int64)
+        >>> weights = Tensor([1, 2, 1, 0], dtype=mstype.int64)
+        >>> sparse_count_sparse_output = ops.SparseCountSparseOutput()
+        >>> out = sparse_count_sparse_output(indices, values, dense_shape, weights)
+        >>> print(out)
+       (Tensor(shape=[4, 2], dtype=Int64, value= [[0, 8], [1, 0], [2, 2], [2, 8]]),
+        Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]),
+        Tensor(shape=[2], dtype=Int64, value= [4, 9])
+
+    Supported Platforms:
+        ``CPU``
+
+    """
+    @prim_attr_register
+    def __init__(self, binary_output=False, minlength=-1, maxlength=-1):
+        self.init_prim_io_names(
+            inputs=["indices", "values", "dense_shape", "weights"],
+            outputs=["output_indices", "output_values", "output_shape"])
+        validator.check_value_type("binary_output", binary_output, [bool], self.name)
+        validator.check_value_type("minlength", minlength, [int], self.name)
+        validator.check_value_type("maxlength", maxlength, [int], self.name)
