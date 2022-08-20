@@ -16,164 +16,58 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IN_TOP_K_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IN_TOP_K_GPU_KERNEL_H_
 
-#include <cstdint>
-#include <limits>
 #include <vector>
-#include <algorithm>
-
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/in_top_k_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class InTopKGpuKernelMod : public NativeGpuKernelMod {
  public:
-  InTopKGpuKernelMod() { ResetResource(); }
+  InTopKGpuKernelMod() {}
   ~InTopKGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    T *predictions_device = GetDeviceAddress<T>(inputs, 0);
-    int32_t *targets_device = GetDeviceAddress<int32_t>(inputs, 1);
-
-    bool *output_device = GetDeviceAddress<bool>(outputs, 0);
-
-    if (k_ <= 0) {
-      CHECK_CUDA_RET_WITH_EXCEPT(
-        kernel_node_, cudaMemsetAsync(output_device, false, outer_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemsetAsync failed.");
-
-      return true;
-    }
-
-    k_ = std::min(k_, static_cast<int64_t>(inner_size_));
-    T *top_k_output_device = GetDeviceAddress<T>(workspace, 0);
-    int32_t *top_k_indices_device = GetDeviceAddress<int32_t>(workspace, 1);
-
-    if (std::is_same<T, half>::value) {
-      // remove later! urgent fix for bug: topk has incorrect output for float16
-      float top_k_init = std::numeric_limits<float>::lowest();
-
-      // cast to float32
-      float *casted_float32_input = GetDeviceAddress<float>(workspace, 2);
-      float *top_k_output_device_float32 = GetDeviceAddress<float>(workspace, 3);
-
-      Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      FastTopK(outer_size_, inner_size_, casted_float32_input, static_cast<int32_t>(k_), top_k_output_device_float32,
-               top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      CalInTopK(casted_float32_input, targets_device, output_device, top_k_output_device_float32, input_shape_[0],
-                input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      // topk sorts the input along the last dimension
-      FastTopK(outer_size_, inner_size_, predictions_device, static_cast<int32_t>(k_), top_k_output_device,
-               top_k_indices_device, top_k_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      CalInTopK(predictions_device, targets_device, output_device, top_k_output_device, input_shape_[0],
-                input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, cuda_stream);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_count != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_count;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of output must be 1, but got " << output_count;
-    }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-    input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    if (input_shape_.size() < 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
-                        << input_shape_.size();
-    }
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_rank_ = input_shape_.size();
-    input_size_ = 1;
-    for (size_t i = 0; i < input_rank_; i++) {
-      input_size_ *= static_cast<size_t>(input_shape_[i]);
-    }
-
-    k_ = GetAttr<int64_t>(kernel_node, "k");
-
-    inner_size_ = static_cast<size_t>(input_shape_[1]);
-    outer_size_ = static_cast<size_t>(input_shape_[0]);
-
-    if (std::is_same<T, half>::value) {
-      // min value representable by float16, std::numeric_limits doesn't support half
-      top_k_init_ = static_cast<half>(-65504.);
-    } else {
-      top_k_init_ = std::numeric_limits<T>::lowest();
-    }
-
-    InitSizeLists();
-
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 0;
-    k_ = 0;
-    input_shape_.clear();
-    input_rank_ = 0;
-    outer_size_ = 0;
-    inner_size_ = 0;
-    is_null_input_ = false;
-    top_k_init_ = static_cast<T>(0.);
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * sizeof(int32_t));
-    output_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * sizeof(bool));
-    if (k_ > 0) {
-      workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(T));
-      workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(int32_t));
-    }
-
-    // remove later! urgent fix for bug: topk has incorrect output for float16
-    if (std::is_same<T, half>::value) {
-      workspace_size_list_.push_back(input_size_ * sizeof(float));
-      if (k_ > 0) {
-        workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(float));
-      }
-    }
-  }
+  void InitSizeLists();
 
  private:
-  size_t input_size_;
-  T top_k_init_;
-  int64_t k_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *cuda_stream);
+  using InTopKFunc = std::function<bool(InTopKGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &, void *cuda_stream)>;
+  InTopKFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, InTopKFunc>> func_list_;
+
+  size_t input_size_{1};
+  int64_t k_{0};
+  TypeId dtype_{kTypeUnknown};
   std::vector<int64_t> input_shape_;
-  size_t input_rank_;
 
   // for topk
-  size_t outer_size_;
-  size_t inner_size_;
-  bool is_null_input_;
+  size_t outer_size_{1};
+  size_t inner_size_{1};
+  bool is_null_input_{false};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
