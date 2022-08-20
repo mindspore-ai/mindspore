@@ -19,6 +19,7 @@ from mindspore import ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
 def test_fallback_round_with_x_int_n_default():
     """
     Feature: JIT Fallback

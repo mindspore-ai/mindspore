@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_class
 from mindspore import dtype as mstype
+from mindspore._c_expression import Tensor as Tensor_
 
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
@@ -1865,6 +1866,50 @@ def ms_round(*data):
     if isinstance(data[0], Tensor) or isinstance(data[1], Tensor):
         const_utils.raise_type_error("When applying round() to tensor, only one tensor is supported as input.")
     return constant_round(*data)
+
+
+@constexpr
+def cast_to_int(data):
+    if isinstance(data, Tensor_):
+        data = Tensor(data, internal=True)
+    return int(data)
+
+
+def int_func(*data):
+    """Implementation of `int`."""
+    data_len = len(data)
+    if data_len >= 2:
+        const_utils.raise_type_error("int() requires 0 or 1 arguments.")
+    if data_len == 0:
+        return 0
+    data = data[0]
+    if not F.isconstant(data):
+        const_utils.raise_type_error("int() does not support non-constant input.")
+    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+        const_utils.raise_type_error("int() does not support sparse tensor input.")
+    return cast_to_int(data)
+
+
+@constexpr
+def cast_to_float(data):
+    if isinstance(data, Tensor_):
+        data = Tensor(data, internal=True)
+    return float(data)
+
+
+def float_func(*data):
+    """Implementation of `float`."""
+    data_len = len(data)
+    if data_len >= 2:
+        const_utils.raise_type_error("float() requires 0 or 1 arguments.")
+    if data_len == 0:
+        return 0.0
+    data = data[0]
+    if not F.isconstant(data):
+        const_utils.raise_type_error("float() does not support non-constant input.")
+    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+        const_utils.raise_type_error("float() does not support sparse tensor input.")
+    return cast_to_float(data)
 
 
 def list_func(*data):

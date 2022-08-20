@@ -179,5 +179,7 @@ if not security.enable_security():
 # Convert class object to callable function
 convert_class_to_function_map = {
     "class 'list'":  M.list_func,
-    "class 'tuple'": M.tuple_func
+    "class 'tuple'": M.tuple_func,
+    "class 'int'":   M.int_func,
+    "class 'float'": M.float_func,
 }

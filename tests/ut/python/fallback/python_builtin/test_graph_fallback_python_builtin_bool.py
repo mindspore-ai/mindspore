@@ -13,9 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
-import math
-import numpy as np
-
 from mindspore import ms_function, Tensor
 
 
@@ -83,7 +80,7 @@ def test_fallback_bool_str():
     assert not x and y
 
 
-def test_fallback_bool_None_and_complex():
+def test_fallback_bool_none_and_complex():
     """
     Feature : JIT Fallback
     Description: Test bool(None) and bool(complex) in graph mode.
@@ -134,103 +131,3 @@ def test_fallback_bool_tensor_construct():
         return x, y
     x, y = foo()
     assert x and not y
-
-
-def test_fallback_float():
-    """
-    Feature : JIT Fallback
-    Description: Test float(int) in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = float(5)
-        return x
-
-    assert math.isclose(foo(), 5.0, abs_tol=1e-5)
-
-
-def test_fallback_float_empty():
-    """
-    Feature : JIT Fallback
-    Description: Test float() in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = float()
-        return x
-
-    assert math.isclose(foo(), 0.0, abs_tol=1e-5)
-
-
-def test_fallback_float_str():
-    """
-    Feature : JIT Fallback
-    Description: Test float(str) in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x1 = float("12.3")
-        x2 = float("-12.3")
-        x3 = float("1e-003")
-        x4 = float("-1234\n")
-        x5 = float("-Infinity")
-        return x1, x2, x3, x4, x5
-
-    x1, x2, x3, x4, x5 = foo()
-    assert math.isclose(x1, 12.3, abs_tol=1e-5) \
-           and math.isclose(x2, -12.3, abs_tol=1e-5) \
-           and math.isclose(x3, 1e-003, abs_tol=1e-5) \
-           and math.isclose(x4, -1234, abs_tol=1e-5) \
-           and x5 == float("-Infinity")
-
-
-def test_fallback_float_tensor():
-    """
-    Feature : JIT Fallback
-    Description: Test float(Tensor) in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = float(Tensor([1.5]))
-        return x
-
-    assert math.isclose(foo(), 1.5, abs_tol=1e-5)
-
-
-def test_fallback_float_tensor_construct():
-    """
-    Feature : JIT Fallback
-    Description: Test float(Tensor) in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = Tensor([1.5])
-        x = float(x)
-        return x
-
-    assert math.isclose(foo(), 1.5, abs_tol=1e-5)
-
-
-def test_fallback_float_numpy():
-    """
-    Feature : JIT Fallback
-    Description: Test float(np.array) in graph mode.
-    Expectation: No exception
-    """
-
-    @ms_function
-    def foo():
-        x = float(np.array([1.5]))
-        return x
-
-    assert math.isclose(foo(), 1.5, abs_tol=1e-5)
