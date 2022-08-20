@@ -67,6 +67,10 @@ class MIND_API StridedSlice : public BaseOperator {
   ///
   /// \return shrink_axis_mask.
   int64_t get_shrink_axis_mask() const;
+
+  std::vector<int64_t> get_begin() const;
+  std::vector<int64_t> get_end() const;
+  std::vector<int64_t> get_strides() const;
 };
 
 abstract::AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -46,6 +46,7 @@ class MIND_API StridedSliceGrad : public BaseOperator {
   int64_t get_ellipsis_mask() const;
   int64_t get_new_axis_mask() const;
   int64_t get_shrink_axis_mask() const;
+  std::vector<int64_t> get_shapex() const;
 };
 
 abstract::AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

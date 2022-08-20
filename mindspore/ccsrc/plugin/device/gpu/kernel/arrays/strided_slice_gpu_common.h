@@ -24,6 +24,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,16 +34,17 @@ class StridedSliceGpuCommon {
   StridedSliceGpuCommon() : null_output_(false) {}
   ~StridedSliceGpuCommon() = default;
 
-  void CollectInfo(const CNodePtr &kernel_node, bool is_dynamic_attr_ = false) {
+  void CollectInfo(const BaseOperatorPtr &base_operator, bool is_dynamic_attr_ = false) {
     if (!is_dynamic_attr_) {
-      begin_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-      end_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-      strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+      auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+      begin_ = kernel_ptr->get_begin();
+      end_ = kernel_ptr->get_end();
+      strides_ = kernel_ptr->get_strides();
     }
     auto shape_tmp = Convert2Long(input_shape_);
-    FillEmptyDims(kernel_node, &begin_, &end_, &strides_, &shape_tmp);
+    FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp);
     input_shape_ = Convert2SizeT(shape_tmp);
-    ParseStrideSliceMasks(kernel_node, &begin_, &end_, &strides_, shape_tmp);
+    ParseStrideSliceMasks(base_operator, &begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
     null_output_ = IsNullOutput();
   }

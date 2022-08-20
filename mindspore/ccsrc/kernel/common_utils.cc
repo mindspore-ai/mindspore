@@ -691,14 +691,15 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   return axis_list;
 }
 
-void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                    std::vector<int64_t> *stride, ShapeVector *input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   auto &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << common::AnfAlgo::GetCNodeName(kernel_node)
+    auto kernel_name = base_operator->name();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
                          "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
                       << _begin.size() << ", the length of 'stride': " << _stride.size()
@@ -744,10 +745,11 @@ std::vector<bool> Dec2Bin(const int64_t &mask) {
   return result;
 }
 
-void ComputeBeginMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, const std::vector<int64_t> &stride,
-                      const ShapeVector &input_shape) {
+void ComputeBeginMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
+                      const std::vector<int64_t> &stride, const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
-  auto begin_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBeginMask);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+  auto begin_mask_int = kernel_ptr->get_begin_mask();
   auto begin_mask = Dec2Bin(begin_mask_int);
   for (size_t i = 0; i < begin_mask.size(); i++) {
     if (i < kStridedSliceMaxDims && begin_mask[i]) {
@@ -756,10 +758,11 @@ void ComputeBeginMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, 
   }
 }
 
-void ComputeEndMask(const CNodePtr &kernel_node, std::vector<int64_t> *end, const std::vector<int64_t> &stride,
+void ComputeEndMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *end, const std::vector<int64_t> &stride,
                     const ShapeVector &input_shape) {
   std::vector<int64_t> &_end = *end;
-  auto end_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEndMask);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+  auto end_mask_int = kernel_ptr->get_end_mask();
   auto end_mask = Dec2Bin(end_mask_int);
   for (size_t j = 0; j < end_mask.size(); j++) {
     if (j < kStridedSliceMaxDims && end_mask[j]) {
@@ -768,12 +771,13 @@ void ComputeEndMask(const CNodePtr &kernel_node, std::vector<int64_t> *end, cons
   }
 }
 
-void ComputeEllipsisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void ComputeEllipsisMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                          std::vector<int64_t> *stride, const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto ellipsis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEllipsisMask);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+  auto ellipsis_mask_int = kernel_ptr->get_ellipsis_mask();
   auto ellipsis_mask = Dec2Bin(ellipsis_mask_int);
   for (size_t k = 0; k < ellipsis_mask.size(); k++) {
     if (k < kStridedSliceMaxDims && ellipsis_mask[k]) {
@@ -784,12 +788,13 @@ void ComputeEllipsisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begi
   }
 }
 
-void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void ComputNewAxisMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                        std::vector<int64_t> *stride, const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto new_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrNewAxisMask);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+  auto new_axis_mask_int = kernel_ptr->get_new_axis_mask();
   auto new_axis_mask = Dec2Bin(new_axis_mask_int);
   for (size_t l = 0; l < new_axis_mask.size(); l++) {
     if (l < kStridedSliceMaxDims && new_axis_mask[l]) {
@@ -800,11 +805,12 @@ void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
   }
 }
 
-void ComputeShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_t> &begin, std::vector<int64_t> *end,
-                           std::vector<int64_t> *stride) {
+void ComputeShrinkAxisMask(const BaseOperatorPtr &base_operator, const std::vector<int64_t> &begin,
+                           std::vector<int64_t> *end, std::vector<int64_t> *stride) {
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto shrink_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrShrinkAxisMask);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
+  auto shrink_axis_mask_int = kernel_ptr->get_shrink_axis_mask();
   auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_int);
   for (size_t m = 0; m < shrink_axis_mask.size(); m++) {
     if (m < kStridedSliceMaxDims && shrink_axis_mask[m]) {
@@ -814,13 +820,13 @@ void ComputeShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_
   }
 }
 
-void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void ParseStrideSliceMasks(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                            std::vector<int64_t> *stride, const ShapeVector &input_shape) {
-  ComputeBeginMask(kernel_node, begin, *stride, input_shape);
-  ComputeEndMask(kernel_node, end, *stride, input_shape);
-  ComputeEllipsisMask(kernel_node, begin, end, stride, input_shape);
-  ComputNewAxisMask(kernel_node, begin, end, stride, input_shape);
-  ComputeShrinkAxisMask(kernel_node, *begin, end, stride);
+  ComputeBeginMask(base_operator, begin, *stride, input_shape);
+  ComputeEndMask(base_operator, end, *stride, input_shape);
+  ComputeEllipsisMask(base_operator, begin, end, stride, input_shape);
+  ComputNewAxisMask(base_operator, begin, end, stride, input_shape);
+  ComputeShrinkAxisMask(base_operator, *begin, end, stride);
 }
 
 std::string GetProcessorStr(const AnfNodePtr &anf_node) {

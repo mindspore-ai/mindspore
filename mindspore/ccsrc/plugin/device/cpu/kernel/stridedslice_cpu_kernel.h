@@ -19,21 +19,27 @@
 
 #include <vector>
 #include <memory>
+#include <map>
+
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 
 namespace mindspore {
 namespace kernel {
-class StridedSliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
  public:
   StridedSliceCpuKernelMod() = default;
   ~StridedSliceCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -70,14 +76,13 @@ class StridedSliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
-  void InitSliceParam(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+  void InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                       std::vector<int64_t> *stride);
   bool MatchParallelPattern();
   void InitParallelParam();
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
   common::Status RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   common::Status RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
-  void ParseMasks(const CNodePtr &kernel_node);
 
   TypeId dtype_;
   int data_size_{4};
@@ -86,9 +91,13 @@ class StridedSliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   int outer_{1};
   int cal_num_per_thread_{1};
   bool parallel_{false};
+  BaseOperatorPtr base_operator_{nullptr};
   ParallelStrategy parallel_strategy_{kOnSplitAxis};
   ShapeVector input_shape_;
   ShapeVector output_shape_;
+  ShapeVector begin_shape_;
+  ShapeVector end_shape_;
+  ShapeVector stride_shape_;
   StridedSliceParameter slice_param_;
 };
 }  // namespace kernel
