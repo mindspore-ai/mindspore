@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SCALE_FP32_H_
 
 #include <vector>
-#include "src/runtime/lite_kernel.h"
-#include "nnacl/fp32/scale_fp32.h"
+#include "src/runtime/kernel/cpu/base/scale_base.h"
 
 namespace mindspore::kernel {
 
-class ScaleCPUKernel : public LiteKernel {
+class ScaleCPUKernel : public ScaleBaseCPUKernel {
  public:
   ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
-  }
-  ~ScaleCPUKernel() override;
+      : ScaleBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~ScaleCPUKernel() override = default;
 
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
-  int CalculateParameter();
-  virtual int InitScaleOffset();
-  int Scale(int task_id);
-
- protected:
-  ScaleParameter *scale_param_;
-
- private:
-  float *input_ptr_ = nullptr;
-  float *scale_ = nullptr;
-  float *offset_ = nullptr;
-  float *output_ptr_ = nullptr;
+  int Compute(int task_id) override;
 };
 }  // namespace mindspore::kernel
 

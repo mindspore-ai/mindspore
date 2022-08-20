@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ typedef struct ScaleParameter {
   int outer_size_;
   int axis_size_;
   int inner_size_;
+  bool offset_align_to_axis_;  // the boolean is to identify whether offset is aligned with axis or inner.
 
   // other parameter
   bool const_scale_;

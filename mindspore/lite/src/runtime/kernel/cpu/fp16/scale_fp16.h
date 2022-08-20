@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,37 +18,26 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_SCALE_FP16_H_
 
 #include <vector>
-#include "src/runtime/lite_kernel.h"
-#include "src/runtime/kernel/cpu/fp32/scale_fp32.h"
-#include "nnacl/scale.h"
+#include "src/runtime/kernel/cpu/base/scale_base.h"
 
 namespace mindspore::kernel {
 
-class ScaleFp16CPUKernel : public ScaleCPUKernel {
+class ScaleFp16CPUKernel : public ScaleBaseCPUKernel {
  public:
   ScaleFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ScaleCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~ScaleFp16CPUKernel() = default;
+      : ScaleBaseCPUKernel(parameter, inputs, outputs, ctx) {
+    data_type_size_ = 2;
+  }
+  ~ScaleFp16CPUKernel() override = default;
 
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
-  int InitScaleOffset() override;
-  int Scale(int task_id);
+  int Compute(int task_id) override;
 
  private:
-  int MallocAssignTmpBuffer();
-  void FreeTmpBuffer();
-
- private:
-  bool malloc_scale_ = false;
-  bool malloc_offset_ = false;
-
-  float16_t *input_ = nullptr;
-  float16_t *scale_ = nullptr;
-  float16_t *offset_ = nullptr;
-  float16_t *output_ = nullptr;
+  int EnsureFp16Inputs();
+  void FreeRunningBuffer();
+  std::vector<void *> run_buffers_;
 };
 }  // namespace mindspore::kernel
 

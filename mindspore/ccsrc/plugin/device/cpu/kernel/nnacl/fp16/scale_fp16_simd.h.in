@@ -1,0 +1,147 @@
+/**
+* Copyright 2022 Huawei Technologies Co., Ltd
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#ifndef MINDSPORE_NNACL_FP16_SCALE_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP16_SCALE_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int DoScaleF16PatternOne@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                         const float16_t bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ MS_FLOAT16X8 bias_vec = MS_MOVQ_F16(bias);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 vout = MS_FMAQ_F16(bias_vec, src_vec, scale_vec);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternTwo@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t *scale,
+                                                         const float16_t *bias, float16_t *out, int size) {
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 scale_vec = MS_LDQ_F16(scale + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_FMAQ_F16(bias_vec, src_vec, scale_vec);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternThird@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                           const float16_t *bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_FMAQ_F16(bias_vec, src_vec, scale_vec);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternOneRelu@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                             const float16_t bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ MS_FLOAT16X8 bias_vec = MS_MOVQ_F16(bias);
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 vout = MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternTwoRelu@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t *scale,
+                                                             const float16_t *bias, float16_t *out, int size) {
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 scale_vec = MS_LDQ_F16(scale + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternThirdRelu@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                               const float16_t *bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternOneRelu6@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                              const float16_t bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ MS_FLOAT16X8 bias_vec = MS_MOVQ_F16(bias);
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ MS_FLOAT16X8 six = MS_MOVQ_F16(6.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 vout = MS_MINQ_F16(MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero), six);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternTwoRelu6@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t *scale,
+                                                              const float16_t *bias, float16_t *out, int size) {
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ MS_FLOAT16X8 six = MS_MOVQ_F16(6.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 scale_vec = MS_LDQ_F16(scale + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_MINQ_F16(MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero), six);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+static inline int DoScaleF16PatternThirdRelu6@SIMD_INSTRUCTION@(int index, const float16_t *src, const float16_t scale,
+                                                                const float16_t *bias, float16_t *out, int size) {
+ MS_FLOAT16X8 scale_vec = MS_MOVQ_F16(scale);
+ MS_FLOAT16X8 zero = MS_MOVQ_F16(0.0f);
+ MS_FLOAT16X8 six = MS_MOVQ_F16(6.0f);
+ for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+   MS_FLOAT16X8 src_vec = MS_LDQ_F16(src + index);
+   MS_FLOAT16X8 bias_vec = MS_LDQ_F16(bias + index);
+   MS_FLOAT16X8 vout = MS_MINQ_F16(MS_MAXQ_F16(MS_FMAQ_F16(bias_vec, src_vec, scale_vec), zero), six);
+   MS_STQ_F16(out + index, vout);
+ }
+ return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif

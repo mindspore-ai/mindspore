@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ int FusedBatchnormCPUKernel::InitScaleParam() {
   scale_param_ = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
   CHECK_NULL_RETURN(scale_param_);
   scale_param_->op_parameter_.thread_num_ = ms_context_->thread_num_;
+  scale_param_->activation_type_ = schema::ActivationType_NO_ACTIVATION;
 
   scale_param_->axis_ = kNHWC_C;
   auto in_shape = in_tensors_[0]->shape();
@@ -72,6 +73,7 @@ int FusedBatchnormCPUKernel::InitScaleParam() {
   }
   scale_param_->axis_size_ = in_shape[DIMENSION_3D];
   scale_param_->inner_size_ = 1;
+  scale_param_->offset_align_to_axis_ = true;
   return RET_OK;
 }
 
@@ -101,7 +103,28 @@ int FusedBatchnormCPUKernel::Batchnorm2Scale(const void *scale_data, const void 
       (reinterpret_cast<const float *>(bias_data))[i] - (reinterpret_cast<const float *>(mean_data))[i] * fp32_scale[i];
   }
   is_scale_ = true;
+  ComputeThreadCuttingInfo();
   return RET_OK;
+}
+
+void FusedBatchnormCPUKernel::ComputeThreadCuttingInfo() {
+  split_points_ = {0};
+  auto ele_num = out_tensors_.front()->ElementsNum();
+  thread_num_ = scale_param_->op_parameter_.thread_num_;
+  int64_t block = ele_num / thread_num_;
+  int64_t remain = ele_num - block * thread_num_;
+  int64_t split = 0;
+  while (split < ele_num) {
+    split += block;
+    if (remain > 0) {
+      ++split;
+      --remain;
+    }
+    if (split > ele_num) {
+      split = ele_num;
+    }
+    split_points_.push_back(split);
+  }
 }
 
 int FusedBatchnormCPUKernel::InitConstTensor() {
@@ -234,8 +257,12 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(in_data);
   CHECK_NULL_RETURN(out_data);
   if (is_scale_) {
-    DoScale(in_data, out_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_), task_id,
-            scale_param_);
+    if (task_id + 1 >= static_cast<int>(split_points_.size())) {
+      return RET_OK;
+    }
+    int block[C2NUM] = {static_cast<int>(split_points_[task_id]), static_cast<int>(split_points_[task_id + 1])};
+    DoScaleFp32(in_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_), out_data, scale_param_,
+                block);
   } else {
     FusedBatchNormFp32(in_data, reinterpret_cast<float *>(scale_), reinterpret_cast<float *>(offset_),
                        reinterpret_cast<float *>(mean_), reinterpret_cast<float *>(variance_), param, task_id,

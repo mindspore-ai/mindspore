@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@ class ScaleFP32Coder final : public OperatorCoder {
 
  private:
   int ReSize();
-  int CalculateParameter();
   int InitScaleOffset();
+  int ComputeThreadCuttingInfo();
 
  private:
   ScaleParameter *scale_param_{nullptr};
   float *scale_{nullptr};
   float *offset_{nullptr};
+  std::vector<int> split_points_;
+  int *split_points_bak_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MICRO_CODER_OPCODERS_FP32__CODER_H_

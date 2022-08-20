@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
 }
 
 int ScaleInt8CPUKernel::InitParameter() {
+  scale_param_->offset_align_to_axis_ = true;
   auto input0_shape = in_tensors_[FIRST_INPUT]->shape();
   auto input1_shape = in_tensors_[SECOND_INPUT]->shape();
   if (scale_param_->axis_ < 0) {

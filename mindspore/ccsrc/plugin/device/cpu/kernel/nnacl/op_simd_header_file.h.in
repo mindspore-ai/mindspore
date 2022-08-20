@@ -18,19 +18,19 @@
 
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #ifdef ENABLE_AVX512
-#include "nnacl/avx512/@OP_NAME_LOWER@_avx512.h"
+#include "nnacl/@DATA_TYPE@/avx512/@OP_NAME_LOWER@_avx512.h"
 #endif
 
 #ifdef ENABLE_AVX
-#include "nnacl/avx/@OP_NAME_LOWER@_avx.h"
+#include "nnacl/@DATA_TYPE@/avx/@OP_NAME_LOWER@_avx.h"
 #endif
 
 #ifdef ENABLE_SSE
-#include "nnacl/sse/@OP_NAME_LOWER@_sse.h"
+#include "nnacl/@DATA_TYPE@/sse/@OP_NAME_LOWER@_sse.h"
 #endif
 
 #ifdef ENABLE_ARM
-#include "nnacl/neon/@OP_NAME_LOWER@_neon.h"
+#include "nnacl/@DATA_TYPE@/neon/@OP_NAME_LOWER@_neon.h"
 #endif
 
 #endif
