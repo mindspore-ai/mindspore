@@ -510,17 +510,30 @@ Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \return The status code.
 Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality = 75);
 
-/// \brief Write the one dimension uint8 data into a file using binary mode.
-/// \param[in] filename The path to the file to be written.
-/// \param[in] data The tensor data.
-/// \return The status code.
-Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
-
 /// \brief Reads a file in binary mode.
 /// \param[in] filename The path to the file to be read.
 /// \param[out] output The binary data.
 /// \return The status code.
 Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output);
+
+/// \brief Reads a image file and decode it into one or three channels data.
+/// \param[in] filename The path to the image file to be read.
+/// \param[out] output Output Tensor.
+/// \param[in] mode The read mode used for optionally converting the image, can be one of
+///    [ImageReadMode::kUNCHANGED, ImageReadMode::kGRAYSCALE, ImageReadMode::kCOLOR]. Default:
+///    ImageReadMode::kUNCHANGED.
+///    - ImageReadMode::kUNCHANGED, remain the output in the original format.
+///    - ImageReadMode::kGRAYSCALE, convert the output into one channel grayscale data.
+///    - ImageReadMode::kCOLOR, convert the output into three channels RGB color data.
+/// \return The status code.
+Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output,
+                 ImageReadMode mode = ImageReadMode::kUNCHANGED);
+
+/// \brief Write the one dimension uint8 data into a file using binary mode.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] data The tensor data.
+/// \return The status code.
+Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

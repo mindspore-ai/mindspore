@@ -189,5 +189,13 @@ PYBIND_REGISTER(ConvertMode, 0, ([](const py::module *m) {
                     .value("DE_COLOR_RGBA2GRAY", ConvertMode::COLOR_RGBA2GRAY)
                     .export_values();
                 }));
+
+PYBIND_REGISTER(ImageReadMode, 0, ([](const py::module *m) {
+                  (void)py::enum_<ImageReadMode>(*m, "ImageReadMode", py::arithmetic())
+                    .value("DE_IMAGE_READ_MODE_UNCHANGED", ImageReadMode::kUNCHANGED)
+                    .value("DE_IMAGE_READ_MODE_GRAYSCALE", ImageReadMode::kGRAYSCALE)
+                    .value("DE_IMAGE_READ_MODE_COLOR", ImageReadMode::kCOLOR)
+                    .export_values();
+                }));
 }  // namespace dataset
 }  // namespace mindspore

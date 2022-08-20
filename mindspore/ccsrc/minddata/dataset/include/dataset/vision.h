@@ -1666,6 +1666,19 @@ class DATASET_API RandomVerticalFlipWithBBox final : public TensorTransform {
 /// \return The status code.
 Status DATASET_API ReadFile(const std::string &filename, mindspore::MSTensor *output);
 
+/// \brief Read a image file and decode it into one or three channels data.
+/// \param[in] filename The path to the file to be read.
+/// \param[out] output The Tensor data.
+/// \param[in] mode The read mode used for optionally converting the image, can be one of
+///    [ImageReadMode::kUNCHANGED, ImageReadMode::kGRAYSCALE, ImageReadMode::kCOLOR]. Default:
+///    ImageReadMode::kUNCHANGED.
+///    - ImageReadMode::kUNCHANGED, remain the output in the original format.
+///    - ImageReadMode::kGRAYSCALE, convert the output into one channel grayscale data.
+///    - ImageReadMode::kCOLOR, convert the output into three channels RGB color data.
+/// \return The status code.
+Status DATASET_API ReadImage(const std::string &filename, mindspore::MSTensor *output,
+                             ImageReadMode mode = ImageReadMode::kUNCHANGED);
+
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {
  public:

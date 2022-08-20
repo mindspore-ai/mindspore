@@ -1163,6 +1163,18 @@ Status ReadFile(const std::string &filename, mindspore::MSTensor *output) {
 
   return Status::OK();
 }
+
+// ReadImage Function.
+Status ReadImage(const std::string &filename, mindspore::MSTensor *output, ImageReadMode mode) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  std::shared_ptr<Tensor> de_tensor;
+  RETURN_IF_NOT_OK(mindspore::dataset::ReadImage(filename, &de_tensor, mode));
+  CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(),
+                               "ReadImage: get an empty tensor with shape " + de_tensor->shape().ToString());
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  return Status::OK();
+}
 #endif  // not ENABLE_ANDROID
 
 // Rescale Transform Operation.

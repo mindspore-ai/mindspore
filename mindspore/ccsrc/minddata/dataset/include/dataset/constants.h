@@ -71,6 +71,13 @@ enum class DATASET_API ConvertMode {
   COLOR_RGBA2GRAY = 11                ///< Convert RGBA image to GRAY image.
 };
 
+/// \brief The mode for reading a image file.
+enum class DATASET_API ImageReadMode {
+  kUNCHANGED = 0,  ///< Remain the output in the original format.
+  kGRAYSCALE = 1,  ///< Convert the output into one channel grayscale data.
+  kCOLOR = 2,      ///< Convert the output into three channels RGB color data.
+};
+
 // \brief Possible density function in Dither.
 enum DATASET_API DensityFunction {
   kTPDF = 0,  ///< Use triangular probability density function.

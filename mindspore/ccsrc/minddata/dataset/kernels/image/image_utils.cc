@@ -2261,6 +2261,57 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   return Status::OK();
 }
 
+Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " does not exist.");
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(realpath.value(), output));
+  return Status::OK();
+}
+
+Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output, ImageReadMode mode) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    std::string err_msg = "ReadImage: Invalid file path, " + filename + " does not exist.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("ReadImage: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  cv::Mat image;
+  int cv_mode = static_cast<int>(mode) - 1;
+  image = cv::imread(realpath.value(), cv_mode);
+  if (image.data == nullptr) {
+    RETURN_STATUS_UNEXPECTED("ReadImage: Can not read file " + filename);
+  }
+
+  std::shared_ptr<CVTensor> output_cv;
+  if (mode == ImageReadMode::kCOLOR || image.channels() > 1) {
+    cv::Mat image_rgb;
+    cv::cvtColor(image, image_rgb, cv::COLOR_BGRA2RGB);
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(image_rgb, kDefaultImageRank, &output_cv));
+  } else {
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(image, kDefaultImageRank, &output_cv));
+  }
+  *output = std::static_pointer_cast<Tensor>(output_cv);
+
+  return Status::OK();
+}
+
 Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data) {
   std::string err_msg;
 
@@ -2319,23 +2370,6 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
     }
   }
   fs.close();
-  return Status::OK();
-}
-
-Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output) {
-  RETURN_UNEXPECTED_IF_NULL(output);
-
-  auto realpath = FileUtils::GetRealPath(filename.c_str());
-  if (!realpath.has_value()) {
-    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " does not exist.");
-  }
-  struct stat sb;
-  stat(realpath.value().c_str(), &sb);
-  if (S_ISREG(sb.st_mode) == 0) {
-    RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " is not a regular file.");
-  }
-
-  RETURN_IF_NOT_OK(Tensor::CreateFromFile(realpath.value(), output));
   return Status::OK();
 }
 }  // namespace dataset

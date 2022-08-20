@@ -139,10 +139,12 @@ API样例中常用的导入模块如下：
     mindspore.dataset.vision.Border
     mindspore.dataset.vision.ConvertMode
     mindspore.dataset.vision.ImageBatchFormat
+    mindspore.dataset.vision.ImageReadMode
     mindspore.dataset.vision.Inter
     mindspore.dataset.vision.SliceMode
     mindspore.dataset.vision.encode_jpeg
     mindspore.dataset.vision.get_image_num_channels
     mindspore.dataset.vision.get_image_size
     mindspore.dataset.vision.read_file
+    mindspore.dataset.vision.read_image
     mindspore.dataset.vision.write_file
