@@ -26,7 +26,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.composite import _VmapGeneralPreprocess
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations.random_ops import UniformCandidateSampler
+from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
 from mindspore.ops._grad.grad_base import BpropRegistry as VmapRuleRegistry
 
 
@@ -512,4 +512,5 @@ _ops_vmap_clone_prim_dict = {
     "SparseApplyAdagrad": P.SparseApplyAdagrad,
     "SparseApplyAdagradV2": P.SparseApplyAdagradV2,
     "SparseApplyFtrl": P.SparseApplyFtrl,
+    "RandomShuffle": RandomShuffle,
 }
