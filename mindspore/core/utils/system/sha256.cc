@@ -99,7 +99,7 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
 
   std::vector<uint32_t> hash(digest_size);
   size_t mem_size = IntToSize(digest_size) * sizeof(uint32_t);
-  auto ret = memcpy_s(hash.data(), mem_size, digest, mem_size);
+  errno_t ret = memcpy_s(hash.data(), mem_size, digest, mem_size);
   if (ret != EOK) {
     return false;
   }

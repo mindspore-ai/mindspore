@@ -71,8 +71,8 @@ void OptimizerInfo::UpdateOptimInputValue(const std::string &optim_type, const s
   T *src_data = reinterpret_cast<T *>(data) + offset;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  int64_t ret = memcpy_s(optim_input->addr, optim_input->size, src_data, size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(optim_input->addr, optim_input->size, src_data, size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
@@ -111,8 +111,8 @@ void DenseOptimInfo::ComputeMean(const std::vector<ShapeVector> &, size_t n, siz
 
 void DenseOptimInfo::Reset() {
   MS_EXCEPTION_IF_NULL(gradient()->addr);
-  int64_t ret = memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size);
-  if (ret != 0) {
+  errno_t ret = memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     return;
   }
@@ -138,8 +138,8 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   void *src_data = incr_grad_data;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
@@ -170,8 +170,8 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   src_data = incr_indice_data;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  auto ret2 = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret2 != 0) {
+  errno_t ret2 = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (ret2 != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
     return;
   }
@@ -232,8 +232,8 @@ void SparseOptimInfo::ComputeMean(const std::vector<ShapeVector> &shapes, size_t
 
   size_t reduced_grad_size = unique_sparse_grad.indices_size_ * segment_size * sizeof(float);
   MS_EXCEPTION_IF_NULL(unique_sparse_grad.value_);
-  int ret = memcpy_s(gradient()->addr, gradient()->size, unique_sparse_grad.value_, reduced_grad_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(gradient()->addr, gradient()->size, unique_sparse_grad.value_, reduced_grad_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
@@ -241,7 +241,7 @@ void SparseOptimInfo::ComputeMean(const std::vector<ShapeVector> &shapes, size_t
   size_t reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
   MS_EXCEPTION_IF_NULL(unique_sparse_grad.indices_);
   ret = memcpy_s(indices()->addr, indices()->size, unique_sparse_grad.indices_, reduced_indice_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }

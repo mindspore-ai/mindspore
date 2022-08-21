@@ -99,8 +99,8 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
     size_t size = sizes[i] * sizeof(float);
     size_t dest_size = size;
     size_t src_size = size;
-    auto ret = memcpy_s(dst_data, dest_size, src_data, src_size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(dst_data, dest_size, src_data, src_size);
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return;
     }
@@ -138,8 +138,8 @@ void Worker::Pull(const size_t key, void *dev_addr, const size_t size) {
   MS_LOG(DEBUG) << "The variables:" << variables << " the size is:" << size;
   size_t dst_size = size;
   size_t src_size = size;
-  auto ret = memcpy_s(dev_addr, dst_size, variables.data(), src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(dev_addr, dst_size, variables.data(), src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
@@ -359,8 +359,8 @@ bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     src_data = pair->first;
     MS_ERROR_IF_NULL(dst_data);
     MS_ERROR_IF_NULL(src_data);
-    auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-    if (mem_ret != 0) {
+    errno_t mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+    if (mem_ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << mem_ret << ")";
       return false;
     }
@@ -553,8 +553,8 @@ void Worker::PrepareSparseGradient(const size_t, const size_t, const mindspore::
     src_data = pair.second;
     MS_EXCEPTION_IF_NULL(dst_data);
     MS_EXCEPTION_IF_NULL(src_data);
-    auto ret = memcpy_s(gradient + offset, dst_size, pair.second, src_size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(gradient + offset, dst_size, pair.second, src_size);
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return;
     }
@@ -583,8 +583,8 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
       src_data = const_cast<float *>(original_data) + offset;
       MS_EXCEPTION_IF_NULL(dst_data);
       MS_EXCEPTION_IF_NULL(src_data);
-      auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-      if (mem_ret != 0) {
+      errno_t mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+      if (mem_ret != EOK) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
         return;
       }
@@ -603,8 +603,8 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   dst_data = reduced_data->data() + grad_offset;
   src_data = const_cast<float *>(grads);
   MS_EXCEPTION_IF_NULL(dst_data);
-  auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
@@ -620,7 +620,7 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
   ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }

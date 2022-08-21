@@ -102,7 +102,7 @@ class DumpDataBuilder {
         }
       }
     }
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "Failed to memcpy: error code (" << ret << ").";
       return false;
     }

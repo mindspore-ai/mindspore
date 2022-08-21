@@ -23,8 +23,8 @@ namespace mindspore {
 namespace common {
 static inline errno_t huge_memcpy(uint8_t *destAddr, size_t destMaxLen, const uint8_t *srcAddr, size_t srcLen) {
   while (destMaxLen > SECUREC_MEM_MAX_LEN && srcLen > SECUREC_MEM_MAX_LEN) {
-    auto ret = memcpy_s(destAddr, SECUREC_MEM_MAX_LEN, srcAddr, SECUREC_MEM_MAX_LEN);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(destAddr, SECUREC_MEM_MAX_LEN, srcAddr, SECUREC_MEM_MAX_LEN);
+    if (ret != EOK) {
       return ret;
     }
     destAddr += SECUREC_MEM_MAX_LEN;

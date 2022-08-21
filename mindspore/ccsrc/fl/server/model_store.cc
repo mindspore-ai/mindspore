@@ -82,8 +82,8 @@ void ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
     size_t dst_size = stored_model[weight_name]->size;
     void *src_addr = weight.second->addr;
     size_t src_size = weight.second->size;
-    int ret = memcpy_s(dst_addr, dst_size, src_addr, src_size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(dst_addr, dst_size, src_addr, src_size);
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return;
     }
@@ -163,8 +163,8 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() const {
 
     auto src_data_size = weight_size;
     auto dst_data_size = weight_size;
-    int ret = memcpy_s(weight_data.get(), dst_data_size, weight.second->addr, src_data_size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(weight_data.get(), dst_data_size, weight.second->addr, src_data_size);
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return nullptr;
     }
@@ -208,9 +208,9 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewCompressModelMemory(
       auto compress_weight_data = std::make_unique<char[]>(compress_weight_size);
       auto src_data_size = compress_weight_size;
       auto dst_data_size = compress_weight_size;
-      int ret =
+      errno_t ret =
         memcpy_s(compress_weight_data.get(), dst_data_size, compressWeight.second.compress_data.data(), src_data_size);
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return nullptr;
       }
@@ -323,8 +323,8 @@ std::shared_ptr<std::vector<uint8_t>> ModelStore::StoreModelResponseCache(const 
     MS_LOG(ERROR) << "Malloc data of size " << datalen << " failed";
     return nullptr;
   }
-  auto ret = memcpy_s(cache->data(), cache->size(), data, datalen);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(cache->data(), cache->size(), data, datalen);
+  if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s  error, errorno(" << ret << ")";
     return nullptr;
   }

@@ -233,7 +233,7 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
         }
         resBuff->DataSize = str.size();
         errno_t ret = memcpy_s(resBuff->Buff, resBuff->MaxBuffSize, str.data(), resBuff->DataSize);
-        if (ret != 0) {
+        if (ret != EOK) {
           resBuff->DataSize = 0;  // memcpy fail amount of data copied is 0
           MS_LOG(ERROR) << "memcpy_s return: " << ret;
         }

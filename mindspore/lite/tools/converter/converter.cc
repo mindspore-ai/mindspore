@@ -840,7 +840,11 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
         MS_LOG(ERROR) << "malloc failed.";
         return RET_ERROR;
       }
-      (void)memcpy_s(buffer, *data_size, packed_buffer, *data_size);
+      if (memcpy_s(buffer, *data_size, packed_buffer, *data_size) != EOK) {
+        free(buffer);
+        MS_LOG(ERROR) << "memory copy failed.";
+        return RET_ERROR;
+      }
       *model_data = buffer;
     } else {
       status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);

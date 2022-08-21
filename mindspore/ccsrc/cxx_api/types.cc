@@ -60,7 +60,7 @@ class Buffer::Impl {
     }
 
     auto ret = memcpy_s(MutableData(), DataSize(), data, data_len);
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "Set data memcpy_s failed, ret = " << ret;
       return false;
     }
@@ -298,7 +298,7 @@ MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std
       continue;
     }
     auto ret = memcpy_s(static_cast<void *>(cur_data), str[i].size(), str[i].data(), str[i].size());
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       DestroyTensorPtr(tensor);
       return nullptr;
@@ -355,7 +355,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
     str.resize(str_len);
     const uint8_t *cur_data = reinterpret_cast<const uint8_t *>(data) + offset;
     auto ret = memcpy_s(static_cast<void *>(str.data()), str.size(), cur_data, str_len);
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       return {};
     }

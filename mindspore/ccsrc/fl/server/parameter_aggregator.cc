@@ -86,8 +86,8 @@ bool ParameterAggregator::UpdateData(const std::map<std::string, Address> &new_d
     MS_ERROR_IF_NULL_W_RET_VAL(data.second.addr, false);
     MS_LOG(DEBUG) << "Update data for " << name << ". Destination size: " << name_to_addr[name]->size
                   << ". Source size: " << data.second.size;
-    int ret = memcpy_s(name_to_addr[name]->addr, name_to_addr[name]->size, data.second.addr, data.second.size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(name_to_addr[name]->addr, name_to_addr[name]->size, data.second.addr, data.second.size);
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return false;
     }

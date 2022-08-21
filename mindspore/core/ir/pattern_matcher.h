@@ -580,7 +580,7 @@ class PConstant : public PBase<PConstant<T> > {
     if (x == nullptr) {
       auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
       char *data = static_cast<char *>(new_tensor_ptr->data_c());
-      if (memset_s(data, new_tensor_ptr->Size(), 0, new_tensor_ptr->Size()) != 0) {
+      if (memset_s(data, new_tensor_ptr->Size(), 0, new_tensor_ptr->Size()) != EOK) {
         return nullptr;
       }
       auto new_vnode = NewValueNode(new_tensor_ptr);
@@ -620,7 +620,7 @@ class PConstant : public PBase<PConstant<T> > {
       char *data = static_cast<char *>(new_tensor_ptr->data_c());
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
         ret = memcpy_s(data + IntToSize(i) * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
-        if (ret != 0) {
+        if (ret != EOK) {
           MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << tensor_type_byte << ", dest size "
                        << tensor_type_byte;
         }
@@ -628,7 +628,7 @@ class PConstant : public PBase<PConstant<T> > {
     } else {
       char *data = static_cast<char *>(new_tensor_ptr->data_c());
       ret = memcpy_s(data, new_tensor_ptr->Size(), source_data, new_tensor_ptr->Size());
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << new_tensor_ptr->Size()
                      << ", dest size " << new_tensor_ptr->DataSize();
         return nullptr;
@@ -652,7 +652,7 @@ class PConstant : public PBase<PConstant<T> > {
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
-    if (memset_s(data, mem_size, value, mem_size) != 0) {
+    if (memset_s(data, mem_size, value, mem_size) != EOK) {
       return nullptr;
     }
     auto new_vnode = NewValueNode(new_tensor_ptr);
@@ -778,7 +778,7 @@ class PConstant : public PBase<PConstant<T> > {
         }
       }
     }
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret << ", source size " << mem_size << "dest size"
                         << new_tensor_ptr->DataSize();
     }
