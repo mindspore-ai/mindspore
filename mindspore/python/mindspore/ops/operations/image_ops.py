@@ -636,7 +636,7 @@ class ResizeLinear1D(Primitive):
 
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
-            following types: uint8, int8, int16, int32, int64, float16, float32, double.
+          following types: uint8, int8, int16, int32, int64, float16, float32, double.
         - **size** (Tensor) - A 1-D int64 Tensor, describes the size of the output tensor.
 
     Outputs:
@@ -686,9 +686,9 @@ class ResizeBilinearV2(Primitive):
 
     Inputs:
         - **x** (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
-            :math:`(batch, channels, height, width)`, with data type of float32 or float16.
+          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
         - **size** (Union[tuple[int], list[int], Tensor]): The new size of the images.
-            A tuple or list or Tensor of 2 int elements :math:`(new\_height, new\_width)`.
+          A tuple or list or Tensor of 2 int elements :math:`(new\_height, new\_width)`.
 
     Outputs:
         Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
@@ -846,11 +846,11 @@ class ResizeArea(Primitive):
 
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape which is [batch, height, width, channels].
-            The format must be NHWC.
-            Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+          The format must be NHWC.
+          Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - Input size must be a 1-D tensor of 2 elements: new_height, new_width.
-            The new size of output image.
-            Types allowed: int32.
+          The new size of output image.
+          Types allowed: int32.
 
     Outputs:
         A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.

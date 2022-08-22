@@ -319,23 +319,23 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
     Inputs:
         - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input tensor should be
-                                    positive.
+          positive.
         - **bounding_boxes** (Tensor) - 3-D with shape [batch, N, 4] describing the N bounding boxes associated with
-                                        the image. The value of this input tensor should be in range [0.0, 1.0]. The
-                                        data type is float32.
+          the image. The value of this input tensor should be in range [0.0, 1.0]. The
+          data type is float32.
         - **min_object_covered** (Tensor) - The cropped area of the image must contain at least this fraction of any
-                                            bounding box supplied. The value of this parameter should be in range
-                                            [0.0, 1.0]. In the case of 0, the cropped area does not need to overlap any
-                                            of the bounding boxes supplied. The data type is float32.
+          bounding box supplied. The value of this parameter should be in range
+          [0.0, 1.0]. In the case of 0, the cropped area does not need to overlap any
+          of the bounding boxes supplied. The data type is float32.
 
     Outputs:
         - **begin** (Tensor) - A 1-D Tensor, containing [offset_height, offset_width, 0]. The data type is same as
-                               `image_size`.
+          `image_size`.
         - **size** (Tensor) - A 1-D Tensor, containing [target_height, target_width, -1]. The data type is same as
-                              `image_size`. When the data type of `image_size` is uint8, the last value of `size`,
-                              which is originally -1, will be forced to 255.
+          `image_size`. When the data type of `image_size` is uint8, the last value of `size`,
+          which is originally -1, will be forced to 255.
         - **bboxes** (Tensor) - A 3-D Tensor with shape [1, 1, 4], containing the distorted bounding box. The data type
-                                is float32.
+          is float32.
 
     Raises:
         TypeError: If `image_size` is not a Tensor.

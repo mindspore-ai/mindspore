@@ -44,9 +44,9 @@ class BufferSample(PrimitiveWithInfer):
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
-         each tensor is described by the `buffer_shape` and `buffer_type`.
+          each tensor is described by the `buffer_shape` and `buffer_type`.
         - **count** (Parameter) - The count means the real available size of the buffer,
-         data type: int32.
+          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
 
     Outputs:
@@ -151,11 +151,11 @@ class BufferAppend(PrimitiveWithInfer):
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
-         each tensor is described by the `buffer_shape` and `buffer_type`.
+          each tensor is described by the `buffer_shape` and `buffer_type`.
         - **exp** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents one list of experience data,
-         each tensor is described by the `buffer_shape` and `buffer_type`.
+          each tensor is described by the `buffer_shape` and `buffer_type`.
         - **count** (Parameter) - The count means the real available size of the buffer,
-         data type: int32.
+          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
 
     Outputs:
@@ -253,9 +253,9 @@ class BufferGetItem(PrimitiveWithInfer):
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
-         each tensor is described by the `buffer_shape` and `buffer_type`.
+          each tensor is described by the `buffer_shape` and `buffer_type`.
         - **count** (Parameter) - The count means the real available size of the buffer,
-         data type: int32.
+          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
         - **index** (int64) - The position of the data in buffer.
 
