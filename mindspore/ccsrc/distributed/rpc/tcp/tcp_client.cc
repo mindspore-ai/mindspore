@@ -66,7 +66,10 @@ bool TCPClient::Connect(const std::string &dst_url, size_t retry_count, const Me
     } else {
       MS_LOG(WARNING) << "Failed to connect to the tcp server : " << dst_url << ", retry to reconnect(" << (i + 1)
                       << "/" << retry_count << ")...";
-      (void)tcp_comm_->Disconnect(dst_url);
+      if (!tcp_comm_->Disconnect(dst_url)) {
+        MS_LOG(ERROR) << "Can not disconnect from the server: " << dst_url;
+        return false;
+      }
       (void)sleep(interval);
     }
   }
@@ -77,7 +80,10 @@ bool TCPClient::IsConnected(const std::string &dst_url) { return tcp_comm_->IsCo
 
 bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   bool rt = false;
-  (void)tcp_comm_->Disconnect(dst_url);
+  if (!tcp_comm_->Disconnect(dst_url)) {
+    MS_LOG(ERROR) << "Can not disconnect from the server: " << dst_url;
+    return false;
+  }
 
   size_t timeout_in_ms = timeout_in_sec * 1000;
   size_t sleep_in_ms = 100;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 int EventLoopRun(EventLoop *evloop, int timeout) {
+  if (evloop == nullptr) {
+    return RPC_ERROR;
+  }
   struct epoll_event *events = nullptr;
   (void)sem_post(&evloop->sem_id_);
 
@@ -298,7 +301,7 @@ int EventLoop::SetEventHandler(int fd, uint32_t events, EventHandler handler, vo
 }
 
 void EventLoop::AddEvent(Event *event) {
-  if (!event) {
+  if (event == nullptr) {
     return;
   }
   DeleteEvent(event->fd);
@@ -361,6 +364,9 @@ int EventLoop::UpdateEpollEvent(int fd, uint32_t events) {
 }
 
 void EventLoop::AddDeletedEvent(Event *event) {
+  if (event == nullptr) {
+    return;
+  }
   // caller need check eventData is not nullptr
   std::list<Event *> delete_event_list;
 
@@ -411,6 +417,9 @@ void EventLoop::RemoveDeletedEvents() {
 }
 
 int EventLoop::FindDeletedEvent(const Event *tev) {
+  if (tev == nullptr) {
+    return 0;
+  }
   std::map<int, std::list<Event *>>::iterator fdIter = deleted_events_.find(tev->fd);
   if (fdIter == deleted_events_.end()) {
     return 0;
@@ -429,6 +438,9 @@ int EventLoop::FindDeletedEvent(const Event *tev) {
 }
 
 void EventLoop::HandleEvent(struct epoll_event *events, size_t nevent) {
+  if (events == nullptr) {
+    return;
+  }
   int found;
   Event *tev = nullptr;
 

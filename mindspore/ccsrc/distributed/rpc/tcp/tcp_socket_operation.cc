@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, u
 }
 
 int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) {
+  if (connection == nullptr || recvBuf == nullptr || recvLen == nullptr) {
+    return IO_RW_ERROR;
+  }
   char *curRecvBuf = recvBuf;
   int fd = connection->socket_fd;
 
@@ -106,6 +109,9 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 
 int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen,
                                     size_t *sendLen) {
+  if (connection == nullptr || sendMsg == nullptr || sendLen == nullptr) {
+    return IO_RW_ERROR;
+  }
   int eagainCount = 0;
   // Print retry log interval.
   const int print_interval = 10000;
@@ -160,6 +166,9 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
 }
 
 void TCPSocketOperation::Close(Connection *connection) {
+  if (connection == nullptr) {
+    return;
+  }
   (void)close(connection->socket_fd);
   connection->socket_fd = -1;
 }
@@ -167,12 +176,18 @@ void TCPSocketOperation::Close(Connection *connection) {
 // accept new conn event handle
 void TCPSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
   conn->state = ConnectionState::kConnected;
   return;
 }
 
 void TCPSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
   conn->state = ConnectionState::kConnected;
   return;
 }

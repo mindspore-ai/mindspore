@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,15 @@ void ConnectionPool::DeleteConnection(const std::string &dst_url) {
 }
 
 void ConnectionPool::DeleteAllConnections(std::map<std::string, Connection *> *links) const {
+  if (links == nullptr) {
+    return;
+  }
   auto iter = links->begin();
   while (iter != links->end()) {
     Connection *conn = iter->second;
+    if (conn == nullptr) {
+      continue;
+    }
     // erase link
     if (conn->recv_message != nullptr) {
       delete conn->recv_message;
@@ -102,6 +108,9 @@ void ConnectionPool::DeleteConnInfo(int fd) {
 
   while (iter2 != conn_infos.end()) {
     auto linkInfo = *iter2;
+    if (linkInfo == nullptr) {
+      continue;
+    }
     if (linkInfo->delete_callback) {
       linkInfo->delete_callback(linkInfo->to, linkInfo->from);
     }
@@ -112,6 +121,9 @@ void ConnectionPool::DeleteConnInfo(int fd) {
 }
 
 void ConnectionPool::DeleteConnInfo(Connection *conn) {
+  if (conn == nullptr) {
+    return;
+  }
   int fd = conn->socket_fd;
   // If run in double link pattern, link fd and send fd must be the same, send Exit message bind on this fd
   if (double_link_) {
@@ -157,6 +169,9 @@ ConnectionInfo *ConnectionPool::FindConnInfo(int fd, const std::string &dst_url)
 
   while (iter2 != conn_infos.end()) {
     auto linkInfo = *iter2;
+    if (linkInfo == nullptr) {
+      continue;
+    }
     if (linkInfo->to == dst_url) {
       return linkInfo;
     }

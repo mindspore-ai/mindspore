@@ -67,7 +67,7 @@ class TCPClient {
 
  private:
   // The basic TCP communication component used by the client.
-  std::unique_ptr<TCPComm> tcp_comm_;
+  std::unique_ptr<TCPComm> tcp_comm_{nullptr};
 
   // The mutex and condition variable used to synchronize the write and read of the received message returned by calling
   // the `ReceiveSync` method.

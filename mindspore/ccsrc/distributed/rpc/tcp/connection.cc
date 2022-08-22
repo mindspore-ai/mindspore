@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ const int kPrintTimeInterval = 50000;
 // Handle socket events like read/write.
 void SocketEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
 
   if (fd != conn->socket_fd) {
     MS_LOG(ERROR) << "Failed to reuse connection, delete and close fd: " << fd << ", connfd: " << conn->socket_fd
@@ -90,6 +93,9 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
 void NewConnectEventHandler(int fd, uint32_t events, void *context) {
   int retval = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
   conn->socket_operation->NewConnEventHandler(fd, events, context);
 
   if (conn->state == ConnectionState::kDisconnecting) {
@@ -191,6 +197,10 @@ void Connection::InitSocketOperation() {
 }
 
 bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, uint32_t error) {
+  if (soError == nullptr) {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(recv_event_loop);
   socklen_t len = sizeof(*soError);
 
   int retval = recv_event_loop->DeleteEpollEvent(fd);
@@ -309,6 +319,9 @@ void Connection::CheckMessageType() {
 }
 
 std::string Connection::GenerateHttpMessage(MessageBase *msg) {
+  if (msg == nullptr) {
+    return "";
+  }
   static const std::string postLineBegin = std::string() + "POST /";
   static const std::string postLineEnd = std::string() + " HTTP/1.1\r\n";
   static const std::string userAgentLineBegin = std::string() + "User-Agent: libprocess/";
@@ -340,6 +353,9 @@ std::string Connection::GenerateHttpMessage(MessageBase *msg) {
 }
 
 void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg) {
+  if (msg == nullptr || send_metrics == nullptr) {
+    return;
+  }
   if (msg->type == MessageBase::Type::KMSG) {
     size_t index = 0;
     if (!isHttpKmsg) {
