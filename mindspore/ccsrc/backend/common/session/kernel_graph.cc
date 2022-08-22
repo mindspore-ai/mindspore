@@ -770,7 +770,15 @@ void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodeP
   if (front_backend_anf_map_.find(front_anf) != front_backend_anf_map_.end()) {
     MS_LOG(EXCEPTION) << "Anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
   }
+  front_backend_anf_map_[front_anf] = backend_anf;
   if (backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end()) {
+    // If def func(x, y) and call as func(arg, arg) ,then the parameter x and y share same param_info "arg".
+    // In this case, parameter is get from param_info and has been exist in the map. So can't add it to map again.
+    if (backend_anf->isa<Parameter>()) {
+      MS_LOG(INFO) << "Backend parameter already exist, backend parameter:" << backend_anf->DebugString()
+                   << ", exist front parameter:" << backend_front_anf_map_[backend_anf]->DebugString();
+      return;
+    }
     auto front_node = front_anf->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(front_node);
     auto attr_input = front_node->input(kAnfPrimitiveIndex);
@@ -779,7 +787,6 @@ void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodeP
       MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
     }
   }
-  front_backend_anf_map_[front_anf] = backend_anf;
   backend_front_anf_map_[backend_anf] = front_anf;
 }
 
