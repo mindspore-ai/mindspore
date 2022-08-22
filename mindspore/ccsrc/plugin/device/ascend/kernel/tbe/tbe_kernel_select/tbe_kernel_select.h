@@ -22,17 +22,15 @@
 #include <memory>
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::kernel {
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
 bool TbeCheckIsSupportedSpec(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
 bool TbeCheckIsSupportedAny(const CNodePtr &kernel_node);
 
 class TbeKernelSelect {
   using OpInfoPtr = std::shared_ptr<OpInfo>;
-  using KernelBuildInfoIter = std::vector<std::shared_ptr<KernelBuildInfo>>::iterator;
 
  public:
   TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
@@ -47,10 +45,11 @@ class TbeKernelSelect {
   void GetAgnosticPatternKernelInfo(const OpInfo &op_info);
   void GetBroadcastPatternKernelInfo(const OpInfo &op_info);
   void GetReducePatternKernelInfo(const OpInfo &op_info);
-  void FilterInVaildKernelInfo(const OpInfo &op_info);
-  bool FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter, bool is_dynamic_input);
-  static bool IsShapeMatchFormat(const ShapeVector &shape, const std::string &format);
-  bool TbeCheckSupported(const KernelBuildInfoIter &kernel_build_info_iter);
+  void FilterInvalidKernelInfo();
+  bool FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info, bool is_dynamic_input);
+  bool IsShapeMatchFormat(const ShapeVector &shape, const std::string &format);
+  bool IsShapeMatchFormatRNN(const ShapeVector &shape, const std::string &format);
+  bool TbeCheckSupported(const KernelBuildInfoPtr &kernel_build_info);
   static void SetTbeBuildCommonInfo(const OpInfo &op_info, KernelBuildInfo::KernelBuildInfoBuilder *builder);
   std::vector<int64_t> GetNodeDynamicInputs();
   bool GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
@@ -71,8 +70,6 @@ class TbeKernelSelect {
   void GetKernelHashName();
   bool CheckCNode();
 
-  static void PrintSupportedFormat(const SupportFormat &support_format);
-
   CNodePtr cnode_ptr_;
   std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
   std::string node_name_;
@@ -81,8 +78,23 @@ class TbeKernelSelect {
   std::string kernel_hash_name;
   bool check_cnode;
   inline static mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> select_cache_ = {};
+
+ private:
+  bool Initialize();
+  bool GetKernelBuildInfoFromCache();
+  void GenerateKernelBuildInfo(const SupportFormatDType &support_format_dtype);
+  void ConstructIOKernelBuildInfo(const OpIOInfoPtr &op_io_info, const std::string &support_dtype,
+                                  const std::string &support_format, int64_t dynamic_num,
+                                  KernelBuildInfoItem *kernel_build_info_item, size_t *io_index,
+                                  size_t *real_put_index) const;
+  OpInfoPtr op_info_ = nullptr;
+
+  void ConstructKernelBuildInfo(const KernelBuildInfoItem &input_kernel_build_info,
+                                const KernelBuildInfoItem &output_kernel_build_info);
+  void AddKernelBuildInfoToCache();
+
+  void PrintSupportedFormatDtype(const SupportFormatDType &support_format_dtype);
 };
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_TBE_KERNEL_SELECT_H

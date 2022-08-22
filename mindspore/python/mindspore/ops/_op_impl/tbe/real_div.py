@@ -26,7 +26,6 @@ realdiv_op_info = TBERegOp("RealDiv") \
     .input(0, "x", False, "required", "all") \
     .input(1, "y", False, "required", "all") \
     .output(0, "z", False, "required", "all") \
-    .op_pattern("broadcast") \
     .is_dynamic_format(True) \
     .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \

@@ -99,12 +99,7 @@ enum FusionType {
   UNKNOWN_FUSION_TYPE = -1,
 };
 
-enum OpPattern {
-  kCommonPattern = 0,
-  kFormatAgnosticPattern = 1,
-  kBroadcastPattern = 2,
-  kReducePattern = 3,
-};
+enum OpPattern { kCommonPattern = 0, kFormatAgnosticPattern, kBroadcastPattern, kReducePattern, kDynamicFormatPattern };
 
 // Backend processor
 enum Processor {

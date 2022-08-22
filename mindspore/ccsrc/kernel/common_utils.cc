@@ -680,7 +680,7 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   auto axis_attr = primitive->GetAttr(kAxis);
   if (axis_attr == nullptr) {
     MS_LOG(ERROR) << "This node doesn't have axis attr. Node info [" << cnode->DebugString() << "]";
-    return std::vector<int64_t>();
+    return {};
   }
   std::vector<int64_t> axis_list;
   if (axis_attr->isa<Int64Imm>()) {

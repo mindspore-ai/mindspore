@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
+
+#include <algorithm>
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,7 +57,7 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
     for (size_t i = 0; i < input_num_; ++i) {
       auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
       PadScalarShape(&input_shape);
-      input_shapes_.emplace_back(input_shape);
+      (void)input_shapes_.emplace_back(input_shape);
     }
   }
 
@@ -64,7 +65,7 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
   for (size_t i = 0; i < output_num_; ++i) {
     auto output = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, i);
     PadScalarShape(&output);
-    output_shapes_.emplace_back(output);
+    (void)output_shapes_.emplace_back(output);
   }
   AssignSupportFormat(kOpFormat_DEFAULT, support_format);
   return true;
@@ -85,7 +86,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
   if (HasScalarInput()) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (!Is4DShape(shape)) {
           return false;
@@ -93,7 +94,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
         if (shape[kChannelC] % kAlignmented16 != 0) {
           return false;
         }
-        input_support_format.emplace_back(kOpFormat_NC1HWC0);
+        (void)input_support_format.emplace_back(kOpFormat_NC1HWC0);
       }
     }
   } else {
@@ -167,7 +168,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
   if (HasScalarInput()) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (!Is4DShape(shape)) {
           return false;
@@ -175,7 +176,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
         if (shape[kChannelN] % kAlignmented16 != 0) {
           return false;
         }
-        input_support_format.emplace_back(kOpFormat_C1HWNCoC0);
+        (void)input_support_format.emplace_back(kOpFormat_C1HWNCoC0);
       }
     }
   } else {
@@ -196,8 +197,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
     input_support_format.assign(input_num_, kOpFormat_C1HWNCoC0);
   }
   GenOutputSupportFormat(kOpFormat_C1HWNCoC0, &output_support_format);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
   return true;
 }
 
@@ -216,7 +217,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
   if (HasScalarInput()) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (shape.size() < kShape2dDims) {
           return false;
@@ -225,7 +226,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
         if (shape[shape.size() - 1] % kAlignmented16 != 0 || shape[shape.size() - SECOND_LAST] % kAlignmented16 != 0) {
           return false;
         }
-        input_support_format.emplace_back(kOpFormat_FRAC_NZ);
+        (void)input_support_format.emplace_back(kOpFormat_FRAC_NZ);
       }
     }
   } else {
@@ -269,13 +270,13 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
   if (HasScalarInput()) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_NCDHW);
+        (void)input_support_format.emplace_back(kOpFormat_NCDHW);
       } else if (!Is5DShape(shape)) {
         return false;
       } else if (shape[kChannelC] % kAlignmented16 != 0) {
         return false;
       } else {
-        input_support_format.emplace_back(kOpFormat_NDC1HWC0);
+        (void)input_support_format.emplace_back(kOpFormat_NDC1HWC0);
       }
     }
   } else {
@@ -322,7 +323,7 @@ bool TbeKernelBroadCastSelecter::IsSameShape() const {
 void TbeKernelBroadCastSelecter::PadScalarShape(ShapeVector *shape) const {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
-    shape->emplace_back(1);
+    (void)shape->emplace_back(1);
   }
 }
 
@@ -346,9 +347,9 @@ void TbeKernelBroadCastSelecter::GenOutputSupportFormat(const std::string &suppo
   MS_EXCEPTION_IF_NULL(output_support_item);
   for (const auto &shape : output_shapes_) {
     if (IsScalarShape(shape)) {
-      output_support_item->emplace_back(kOpFormat_DEFAULT);
+      (void)output_support_item->emplace_back(kOpFormat_DEFAULT);
     } else {
-      output_support_item->emplace_back(support_format);
+      (void)output_support_item->emplace_back(support_format);
     }
   }
 }
