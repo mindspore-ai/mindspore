@@ -20,7 +20,6 @@ from functools import partial
 from mindspore.common import ms_function
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.function import ones, expand_dims
@@ -30,6 +29,14 @@ from mindspore.ops import operations as P
 cast = P.Cast()
 dtype = P.DType()
 zeros = P.Zeros()
+oneslike = P.OnesLike()
+
+
+@constexpr
+def _check_has_aux_type(inputs):
+    if not isinstance(inputs, bool):
+        raise TypeError("The 'has_aux' must be bool type.")
+    return True
 
 
 @constexpr
@@ -540,7 +547,11 @@ def derivative(fn, primals, order):
     return out_primals, out_series
 
 
-def jvp(fn, inputs, v):
+_grad_jvp_single = GradOperation(sens_param=True)
+_grad_jvp_all = GradOperation(sens_param=True, get_all=True)
+
+
+def jvp(fn, inputs, v, has_aux=False):
     """
     Compute the jacobian-vector-product of the given network. `jvp` matches
     `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
@@ -551,10 +562,16 @@ def jvp(fn, inputs, v):
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
         v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of `v`
             should be the same as `inputs` .
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
 
     Returns:
-        - **net_output** (Union[Tensor, tuple[Tensor]]) - The result of `fn(inputs)` .
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)` . Specially, when `has_aux` is set
+          True, `netout` is the first output of `fn(inputs)` .
         - **jvp** (Union[Tensor, tuple[Tensor]]) - The result of jacobian-vector-product.
+        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
+          It means the second to last outputs of `fn(inputs)` . Specially, `aux_value` does not contribute to gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
@@ -563,8 +580,10 @@ def jvp(fn, inputs, v):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import ops
         >>> from mindspore import Tensor
+        >>> import mindspore.nn as nn
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
         ...         return x**3 + y
@@ -578,14 +597,63 @@ def jvp(fn, inputs, v):
         >>> print(output[1])
         [[ 4. 13.]
          [28. 49.]]
+        >>>
+        >>> def fn(x, y):
+        ...     return x ** 3 + y, y
+        >>> output, jvp_out, aux = ops.jvp(fn, (x, y), (v, v), has_aux=True)
+        >>> print(output)
+        [[ 2. 10.]
+         [30. 68.]]
+        >>> print(jvp_out)
+        [[ 4. 13.]
+         [28. 49.]]
+        >>> print(aux)
+        [[ 1. 2.]
+         [3. 4.]]
     """
-    jvp_inner = _JvpInner()
+    _check_has_aux_type(has_aux)
 
-    @ms_function(hash_args=fn)
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError("When 'has_aux' is True, origin 'fn' requires more than one outputs.")
+        res = outputs[0]
+        return res
+
+    if has_aux:
+        fn_ = aux_fn
+    else:
+        fn_ = fn
+
+    def grad_single(u, first_grad_single_value):
+        return _grad_jvp_single(fn_)(*first_grad_single_value, u)
+
+    def grad_all(u, first_grad):
+        return _grad_jvp_all(fn_)(*first_grad, u)
+
+    @ms_function(hash_args=fn_)
     def _wrap_container(*arg):
-        args = arg[1:]
+        jvp_inputs = arg[1:]
         vectors = arg[0]
-        return jvp_inner(fn, vectors, *args)
+        outputs = fn_(*jvp_inputs)
+        if isinstance(outputs, tuple):
+            u = ()
+            for item in outputs:
+                u = u + (oneslike(item),)
+        else:
+            u = oneslike(outputs)
+        if len(jvp_inputs) == 1:
+            second_grad_net = _grad_jvp_single(grad_single)
+            gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
+        else:
+            second_grad_net = _grad_jvp_single(grad_all)
+            gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
+        if has_aux:
+            res = fn(*jvp_inputs)
+            if len(res) == 2:
+                return res[0], gradient_outputs, res[1]
+            return res[0], gradient_outputs, res[1:]
+        return outputs, gradient_outputs
 
     if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
         _raise_type_error()
@@ -706,6 +774,8 @@ def vjp(fn, *inputs, has_aux=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
         >>> from mindspore.ops import vjp
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
@@ -727,16 +797,14 @@ def vjp(fn, *inputs, has_aux=False):
          [ 1.00000000e+00,  1.00000000e+00]]))
         >>> def fn(x, y):
         ...     return 2 * x + y, y ** 3
-        >>> outputs, vjp_fn, aux = vjp(Net(), x, y, has_aux=True)
+        >>> outputs, vjp_fn, aux = vjp(fn, x, y, has_aux=True)
         >>> gradient = vjp_fn(v)
         >>> print(outputs)
-        Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 3.00000000e+00,  6.00000000e+00],
-         [ 9.00000000e+00,  1.20000000e+01]])
+        [[ 3.  6.],
+         [ 9. 12.]]
         >>> print(aux)
-        Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.00000000e+00,  8.00000000e+00],
-         [ 2.70000000e+01,  6.40000000e+01]])
+        [[ 1.  8.],
+         [27. 64.]]
         >>> print(gradient)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 2.00000000e+00,  2.00000000e+00],
@@ -745,11 +813,12 @@ def vjp(fn, *inputs, has_aux=False):
          [ 1.00000000e+00,  1.00000000e+00]]))
     """
     _check_tensor(inputs)
+    _check_has_aux_type(has_aux)
 
     def aux_fn(*args):
         outputs = fn(*args)
         if not isinstance(outputs, tuple) or len(outputs) < 2:
-            raise ValueError("When has_aux is True, origin fn requires more than one outputs.")
+            raise ValueError("When 'has_aux' is True, origin 'fn' requires more than one outputs.")
         res = outputs[0]
         return res
 
