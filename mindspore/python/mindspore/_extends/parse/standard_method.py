@@ -1857,11 +1857,11 @@ def ms_round(*data):
     len_data = len(data)
     if len_data <= 0 or len_data > 2:
         const_utils.raise_type_error("round() requires 1 or 2 arguments.")
-    if len_data == 1:
+    if len_data == 1 or data[1] is None:
         x = data[0]
         if isinstance(x, Tensor):
             return round_(x)
-        return constant_round(*data)
+        return constant_round(x)
     if isinstance(data[0], Tensor) or isinstance(data[1], Tensor):
         const_utils.raise_type_error("When applying round() to tensor, only one tensor is supported as input.")
     return constant_round(*data)
