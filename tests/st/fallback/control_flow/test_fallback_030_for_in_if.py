@@ -109,7 +109,7 @@ def test_for_in_if_param():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_for_in_if_numpy_print():
+def test_for_in_if_numpy():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -120,10 +120,8 @@ def test_for_in_if_numpy_print():
         x = np.array([1, 1, 1])
         y = list((4, 6, -2))
         if len(y) != min(x):
-            print("before add:", y)
             for i in range(3):
                 y += x[i]
-                print("after add {}, res is {}.".format(x[i], y))
         return Tensor(y)
     out = control_flow_for_in_if()
     np.all(out.asnumpy() == np.array([7, 9, 1]))
