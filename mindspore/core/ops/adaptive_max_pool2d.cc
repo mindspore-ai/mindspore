@@ -58,9 +58,14 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   const auto &output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
-  if ((in_shape_vector.size() != kFormatCHWShapeSize && in_shape_vector.size() != kFormatNCHWShapeSize) ||
-      (in_shape_vector.size() == 1 && in_shape_vector[0] != kDynamicRankValue) ||
-      output_size.size() != kOutputSizeAttrSize) {
+  if (in_shape_vector.size() == 1) {
+    if (in_shape_vector[0] != kDynamicRankValue) {
+      MS_EXCEPTION(ValueError)
+        << "For primitive[AdaptiveMaxPool2D], the shape size of input argument[input_x] must be 3 "
+           "or 4, but got shape size is 1.";
+    }
+  } else if ((in_shape_vector.size() != kFormatCHWShapeSize && in_shape_vector.size() != kFormatNCHWShapeSize) ||
+             output_size.size() != kOutputSizeAttrSize) {
     MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the shape size of input argument[input_x] must be 3 "
                                 "or 4 and the size of attr[output_size] must be 2, but got shape size:"
                              << in_shape_vector.size() << " and output_size size:" << output_size.size();
