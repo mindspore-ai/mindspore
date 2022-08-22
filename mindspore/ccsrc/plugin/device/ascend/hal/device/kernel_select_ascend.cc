@@ -603,7 +603,7 @@ void FillNoneInKernelInfo(const CNodePtr &kernel_node, std::vector<kernel::Kerne
       if (format.empty()) {
         format = output_infer_format;
       }
-      outputs_format.push_back(output_infer_format);
+      outputs_format.push_back(format);
     }
     builder->SetOutputsDeviceType(outputs_device_type);
     builder->SetOutputsFormat(outputs_format);
