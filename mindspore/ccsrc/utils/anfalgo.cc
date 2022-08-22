@@ -303,6 +303,15 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
 
 std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std::vector<PrimitivePtr> &return_types) {
   std::vector<AnfNodePtr> ret;
+  const auto output_pair = GetAllOutputIndexByReturnTypes(node, return_types);
+  std::transform(output_pair.begin(), output_pair.end(), std::back_inserter(ret),
+                 [](const KernelWithIndex &ele) { return ele.first; });
+  return ret;
+}
+
+std::vector<KernelWithIndex> AnfAlgo::GetAllOutputIndexByReturnTypes(const AnfNodePtr &node,
+                                                                     const std::vector<PrimitivePtr> &return_types) {
+  std::vector<KernelWithIndex> ret;
   auto return_prim_type = return_types;
   // if visited make_tuple should return back
   return_prim_type.push_back(prim::kPrimMakeTuple);
@@ -312,12 +321,12 @@ std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std:
     auto make_tuple = item_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
-      auto input_i_vector = GetAllOutput(make_tuple->input(i), return_types);
+      auto input_i_vector = GetAllOutputIndexByReturnTypes(make_tuple->input(i), return_types);
       (void)std::copy(input_i_vector.begin(), input_i_vector.end(), std::back_inserter(ret));
     }
     return ret;
   }
-  ret.push_back(item_with_index.first);
+  ret.push_back(item_with_index);
   return ret;
 }
 

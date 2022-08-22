@@ -56,6 +56,8 @@ class COMMON_EXPORT AnfAlgo {
     abstract::AbstractBasePtr *abstract = nullptr);
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
                                               const std::vector<PrimitivePtr> &return_types = {});
+  static std::vector<KernelWithIndex> GetAllOutputIndexByReturnTypes(
+    const AnfNodePtr &node, const std::vector<PrimitivePtr> &return_types = {});
   static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);

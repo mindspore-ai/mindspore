@@ -40,6 +40,7 @@ namespace opt {
 namespace {
 constexpr size_t kType32Len = 4;
 constexpr size_t kType64Len = 8;
+constexpr auto kNopNodeRealInputIndex = 1;
 
 void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
   std::vector<AnfNodePtr> orig_real_cnodes;
@@ -294,6 +295,61 @@ AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node)
   new_node->set_scope(node->scope());
   common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), new_node);
   return new_node;
+}
+
+std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  std::vector<AnfNodePtr> ret;
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
+  auto iter = node_users.find(node);
+  if (iter == node_users.end()) {
+    return ret;
+  }
+  for (auto &item : iter->second) {
+    MS_EXCEPTION_IF_NULL(item.first);
+    auto next_node = item.first->cast<CNodePtr>();
+    bool find = false;
+    auto graph_outputs_pair =
+      common::AnfAlgo::GetAllOutputIndexByReturnTypes(graph->output(), {prim::kPrimTupleGetItem});
+    for (auto output_pair : graph_outputs_pair) {
+      while (AnfUtils::IsRealCNodeKernel(output_pair.first)) {
+        auto output_kernel = output_pair.first;
+        MS_EXCEPTION_IF_NULL(output_kernel);
+        auto cnode = output_kernel->cast<CNodePtr>();
+        // nop node
+        if (common::AnfAlgo::IsNopNode(cnode)) {
+          output_pair = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, true);
+          continue;
+        }
+        // ref node
+        if (kernel_graph->IsInRefOutputMap(output_pair)) {
+          output_pair = kernel_graph->GetRefCorrespondOutput(output_pair);
+          continue;
+        }
+        break;
+      }
+      if (next_node == output_pair.first->cast<CNodePtr>()) {
+        find = true;
+        break;
+      }
+    }
+    if (!find) {
+      continue;
+    }
+    auto tensor_move = CreateTensorMoveOp(graph, next_node);
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    tensor_move->set_kernel_info(kernel_info);
+    (void)manager->Replace(next_node, tensor_move);
+    ret.push_back(tensor_move);
+    MS_LOG(DEBUG) << "Insert Output TensorMove for op " << node->fullname_with_scope();
+  }
+  return ret;
 }
 
 bool IsAllNopNode(const session::KernelGraph *const graph) {
