@@ -4312,7 +4312,7 @@ class Tensor(Tensor_):
             RuntimeError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
 
         Supported Platforms:
-            ``GPU``
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> import numpy as np

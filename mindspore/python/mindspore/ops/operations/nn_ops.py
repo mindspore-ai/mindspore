@@ -7004,6 +7004,9 @@ class CTCGreedyDecoder(Primitive):
     Performs greedy decoding on the logits given in inputs.
 
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
     """
 
     @prim_attr_register
@@ -8137,7 +8140,7 @@ class CTCLossV2(Primitive):
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
-            of classes (including blank).
+          of classes (including blank).
         - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
         - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
         - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
@@ -8184,7 +8187,7 @@ class CTCLossV2Grad(Primitive):
     Inputs:
         - **grad_out** (Tenosr) - Gradient renewal codfficient, A tensor for shape (N), where N is batch size.
         - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
-            of classes (including blank).
+          of classes (including blank).
         - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
         - **input_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
         - **target_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
@@ -8289,7 +8292,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         where :math:`group` is the Args parameter.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
