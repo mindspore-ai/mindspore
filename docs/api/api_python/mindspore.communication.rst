@@ -21,8 +21,9 @@ mindspore.communication
     初始化通信服务需要的分布式后端，例如 `HCCL` 或 `NCCL` 服务。
 
     .. note::
-        - HCCL的全称是华为集合通信库（Huawei Collective Communication Library），NCCL的全称是英伟达集合通信库（NVIDIA Collective Communication Library）。
-        - `init` 方法应该在 `set_context` 方法之后使用。
+        - HCCL的全称是华为集合通信库（Huawei Collective Communication Library）。
+        - NCCL的全称是英伟达集合通信库（NVIDIA Collective Communication Library）。
+        - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     参数：
