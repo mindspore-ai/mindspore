@@ -91,5 +91,6 @@ Utilities
     mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.Inter
     mindspore.dataset.vision.SliceMode
+    mindspore.dataset.vision.encode_jpeg
     mindspore.dataset.vision.get_image_num_channels
     mindspore.dataset.vision.get_image_size

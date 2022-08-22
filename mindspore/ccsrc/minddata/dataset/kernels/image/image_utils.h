@@ -55,6 +55,8 @@ constexpr dsize_t kGIndex = 1;               // index of green channel in RGB fo
 constexpr dsize_t kBIndex = 2;               // index of blue channel in RGB format
 constexpr dsize_t kHeightIndex = 0;          // index of height of HWC images
 constexpr dsize_t kWidthIndex = 1;           // index of width of HWC images
+constexpr dsize_t kMinJpegQuality = 1;       // the minimum quality for JPEG
+constexpr dsize_t kMaxJpegQuality = 100;     // the maximum quality for JPEG
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
@@ -500,6 +502,13 @@ float Round(float value);
 /// \param[in] fill_value Values used to fill.
 Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
                     float magnitude, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
+
+/// \brief Encode the image as JPEG data.
+/// \param[in] image The image to be encoded.
+/// \param[out] output The Tensor data.
+/// \param[in] quality The quality for the output tensor from 1 to 100. Default: 75.
+/// \return The status code.
+Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality = 75);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

@@ -2198,5 +2198,65 @@ Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
   return Status::OK();
 }
+
+Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  std::string err_msg;
+  if (image->type() != DataType::DE_UINT8) {
+    err_msg = "EncodeJpeg: The type of the image data should be UINT8, but got " + image->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  TensorShape shape = image->shape();
+  int rank = shape.Rank();
+  if (rank < kMinImageRank || rank > kDefaultImageRank) {
+    err_msg = "EncodeJpeg: The image has invalid dimensions. It should have two or three dimensions, but got ";
+    err_msg += std::to_string(rank) + " dimensions.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  int channels;
+  if (rank == kDefaultImageRank) {
+    channels = shape[kMinImageRank];
+    if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
+      err_msg = "EncodeJpeg: The image has invalid channels. It should have 1 or 3 channels, but got ";
+      err_msg += std::to_string(channels) + " channels.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    channels = 1;
+  }
+
+  if (quality < kMinJpegQuality || quality > kMaxJpegQuality) {
+    err_msg = "EncodeJpeg: Invalid quality " + std::to_string(quality) + ", should be from " +
+              std::to_string(kMinJpegQuality) + " to " + std::to_string(kMaxJpegQuality) + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY,  quality, cv::IMWRITE_JPEG_PROGRESSIVE,  0,
+                             cv::IMWRITE_JPEG_OPTIMIZE, 0,       cv::IMWRITE_JPEG_RST_INTERVAL, 0};
+
+  std::vector<unsigned char> buffer;
+  cv::Mat image_matrix;
+
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(image);
+  image_matrix = input_cv->mat();
+  if (!image_matrix.data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] EncodeJpeg: load the image tensor failed.");
+  }
+
+  if (channels == kMinImageChannel) {
+    cv::imencode(".JPEG", image_matrix, buffer, params);
+  } else {
+    cv::Mat image_bgr;
+    cv::cvtColor(image_matrix, image_bgr, cv::COLOR_RGB2BGR);
+    cv::imencode(".JPEG", image_bgr, buffer, params);
+  }
+
+  TensorShape tensor_shape = TensorShape({(long int)buffer.size()});
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(tensor_shape, DataType(DataType::DE_UINT8), buffer.data(), output));
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -440,6 +440,13 @@ class DATASET_API CutOut final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Encode the image as JPEG data.
+/// \param[in] image The image to be encoded.
+/// \param[out] output The Tensor data.
+/// \param[in] quality The quality for the output tensor from 1 to 100. Default: 75.
+/// \return The status code.
+Status DATASET_API EncodeJpeg(const mindspore::MSTensor &image, mindspore::MSTensor *output, int quality = 75);
+
 /// \brief Apply histogram equalization on the input image.
 class DATASET_API Equalize final : public TensorTransform {
  public:
