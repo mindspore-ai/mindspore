@@ -2279,11 +2279,11 @@ class LJEnergy(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
-            The data type is uint32 and the shape is :math:`(n, 3)`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-           The data type is int32 and the shape is :math:`(n,)`
+          The data type is int32 and the shape is :math:`(n,)`
         - **charge** (Tensor) - The charge carried by each atom.
-           The data type is float32 and the shape is :math:`(n,)`
+          The data type is float32 and the shape is :math:`(n,)`
         - **scaler** (Tensor) - The scale factor between real
           space coordinate and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **nl_numbers** - (Tensor) - The each atom.
@@ -2297,7 +2297,7 @@ class LJEnergy(PrimitiveWithInfer):
 
     Outputs:
         - **d_LJ_energy_atom** (Tensor) - The Lennard-Jones potential energy of each atom.
-           The data type is float32 and the shape is :math:`(n,)`.
+          The data type is float32 and the shape is :math:`(n,)`.
         - **d_LJ_energy_sum** (Scalar), the sum of Lennard-Jones potential energy of each atom.
           The data type is float32.
 
@@ -2380,9 +2380,9 @@ class LJForce(PrimitiveWithInfer):
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-           The data type is int32 and the shape is :math:`(n,)`
+          The data type is int32 and the shape is :math:`(n,)`
         - **charge** (Tensor) - The charge carried by each atom.
-           The data type is float32 and the shape is :math:`(n,)`
+          The data type is float32 and the shape is :math:`(n,)`
         - **scaler** (Tensor) - The scale factor between real space
           coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **nl_numbers** - (Tensor) - The each atom.
