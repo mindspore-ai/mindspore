@@ -39,14 +39,14 @@ class Categorical(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: Categorical.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `probs` must have rank at least 1, values are proper probabilities and sum to 1.
 
     Raises:
         ValueError: When the sum of all elements in `probs` is not 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

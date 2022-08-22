@@ -40,13 +40,6 @@ class TransformedDistribution(Distribution):
           will use this seed; elsewise, the underlying distribution's seed will be used.
         name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Raises:
-        TypeError: When the input `bijector` is not a Bijector instance.
-        TypeError: When the input `distribution` is not a Distribution instance.
-
     Note:
         The arguments used to initialize the original distribution cannot be None.
         For example, mynormal = msd.Normal(dtype=mindspore.float32) cannot be used to initialized a
@@ -57,6 +50,13 @@ class TransformedDistribution(Distribution):
         `default_parameters`, `parameter_names` and `parameter_type` are set to be consistent with the original
         distribution. Derived class can overwrite `default_parameters` and `parameter_names` by calling
         `reset_parameters` followed by `add_parameter`.
+
+    Raises:
+        TypeError: When the input `bijector` is not a Bijector instance.
+        TypeError: When the input `distribution` is not a Distribution instance.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

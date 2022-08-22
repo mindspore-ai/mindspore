@@ -44,9 +44,9 @@ class Beta(Distribution):
         name (str): The name of the distribution. Default: 'Beta'.
 
     Note:
-        `concentration1` and `concentration0` must be greater than zero.
-        `dist_spec_args` are `concentration1` and `concentration0`.
-        `dtype` must be a float type because Beta distributions are continuous.
+        - `concentration1` and `concentration0` must be greater than zero.
+        - `dist_spec_args` are `concentration1` and `concentration0`.
+        - `dtype` must be a float type because Beta distributions are continuous.
 
     Raises:
         ValueError: When concentration1 <= 0 or concentration0 >=1.

@@ -433,7 +433,7 @@ class Print(PrimitiveWithInfer):
         str remains unchanged.
         This function is used for debugging. When too much data is printed at the same time,
         in order not to affect the main process, the framework may discard some data. At this time,
-        if you need to record the data completely, you can recommended to use the `Summary` function. Please check
+        if you need to record the data completely, you can recommended to use the `Summary` function, and can check
         `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
 
     Inputs:

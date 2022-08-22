@@ -2276,7 +2276,7 @@ def matrix_solve(matrix, rhs, adjoint=False):
         adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: False.
 
     Returns:
-        x (Tensor): The dtype and shape is the same as 'rhs'.
+        x (Tensor), The dtype and shape is the same as 'rhs'.
 
     Raises:
         TypeError: If adjoint is not the type of bool.

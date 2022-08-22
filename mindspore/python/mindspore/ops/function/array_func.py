@@ -1075,7 +1075,7 @@ def slice(input_x, begin, size):
         size (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
     Returns:
-        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
+        Tensor, the shape is input `size`, the data type is the same as `input_x`.
 
     Raises:
         TypeError: If `begin` or `size` is neither tuple nor list.

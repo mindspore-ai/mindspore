@@ -560,7 +560,7 @@ def batch_dot(x1, x2, axes=None):
           Default: None.
 
     Returns:
-        Tensor, batch dot product of `x1` and `x2`. For example: The Shape of output
+        Tensor, batch dot product of `x1` and `x2`. For example, the Shape of output
         for input `x1` shapes (batch, d1, axes, d2) and `x2` shapes (batch, d3, axes, d4) is (batch, d1, d2, d3, d4),
         where d1 and d2 means any number.
 

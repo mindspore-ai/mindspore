@@ -695,11 +695,11 @@ class Mish(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -743,11 +743,11 @@ class SeLU(Primitive):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If dtype of `input_x` is not int8, int32, float16, float32, float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.nn_ops import SeLU
@@ -7104,7 +7104,7 @@ class Dropout2D(PrimitiveWithInfer):
     Dropout2D can improve the independence between channel feature maps.
 
     Note:
-        The keep probability :math:`keep\_prob` is equal to 'ops.dropout2d' input '1-p'.
+        The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout2d`.
 
     Refer to :func:`mindspore.ops.dropout2d` for more detail.
 
@@ -7138,7 +7138,7 @@ class Dropout3D(PrimitiveWithInfer):
 
 
     Note:
-        The keep probability :math:`keep\_prob` is equal to 'ops.dropout3d' input '1-p'.
+        The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout2d`.
 
     Refer to :func:`mindspore.ops.dropout3d` for more detail.
 
@@ -8571,9 +8571,6 @@ class Conv3DTranspose(Primitive):
         Tensor of shape :math:`(N, C_{out}//group, D_{out}, H_{out}, W_{out})`,
         where :math:`group` is the Args parameter.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Raises:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `pad` , `dilation` or `output_padding` is neither an int not a tuple.
@@ -8585,6 +8582,9 @@ class Conv3DTranspose(Primitive):
         ValueError: If `data_format` is not 'NCDHW'.
         TypeError: If data type of dout and weight is not float16.
         ValueError: If bias is not none. The rank of dout and weight is not 5.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)

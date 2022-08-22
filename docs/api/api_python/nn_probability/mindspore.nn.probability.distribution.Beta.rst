@@ -20,6 +20,7 @@ mindspore.nn.probability.distribution.Beta
 
     .. note::
         - `concentration1` 和 `concentration0` 中元素必须大于零。
+        - `dist_spec_args` 是 `concentration1` 和 `concentration0`。
         - `dtype` 必须是float，因为 Beta 分布是连续的。
 
     异常：

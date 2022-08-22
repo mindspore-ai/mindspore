@@ -44,9 +44,6 @@ class LogNormal(msd.TransformedDistribution):
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'LogNormal'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.
@@ -55,6 +52,9 @@ class LogNormal(msd.TransformedDistribution):
     Raises:
         ValueError: When scale <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np

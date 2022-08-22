@@ -320,7 +320,7 @@ def dense_to_sparse_coo(tensor):
         tensor: A dense tensor, must be 2-D.
 
     Returns:
-        COOTensor, a sparse representation of the original dense tensor, containing:
+        COOTensor, a sparse representation of the original dense tensor, containing the following parts.
 
         - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
         - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
@@ -366,7 +366,7 @@ def dense_to_sparse_csr(tensor):
         tensor: A dense tensor, must be 2-D.
 
     Returns:
-        CSRTensor, a sparse representation of the original dense tensor, containing:
+        CSRTensor, a sparse representation of the original dense tensor, containing the following parts.
 
         - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
         - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
@@ -454,8 +454,8 @@ def sparse_concat(sp_input, concat_dim=0):
 
     Outputs:
         - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. OutShape: OutShape[non concat_dim] is equal to InShape[non concat_dim] and
-            OutShape[concat_dim] is all input concat_dim axis shape accumulate.
+          specified dimension. OutShape: OutShape[non concat_dim] is equal to InShape[non concat_dim] and
+          OutShape[concat_dim] is all input concat_dim axis shape accumulate.
 
     Raises:
         ValueError: If only one sparse tensor input.

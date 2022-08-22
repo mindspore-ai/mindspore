@@ -40,9 +40,6 @@ class Exponential(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Exponential'.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.
@@ -51,6 +48,9 @@ class Exponential(Distribution):
     Raises:
         ValueError: When rate <= 0.
         TypeError: When the input `dtype` is not a subclass of float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

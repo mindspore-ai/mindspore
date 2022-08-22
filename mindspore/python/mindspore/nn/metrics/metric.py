@@ -30,6 +30,15 @@ def rearrange_inputs(func):
 
     This decorator is currently applied on the `update` of :class:`mindspore.nn.Metric`.
 
+    Args:
+        func (Callable): A candidate function to be wrapped whose input will be rearranged.
+
+    Returns:
+        Callable, used to exchange metadata between functions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> from mindspore.nn import rearrange_inputs
         >>> class RearrangeInputsExample:
@@ -52,15 +61,6 @@ def rearrange_inputs(func):
         >>> outs = rearrange_inputs_example.update(5, 9)
         >>> print(outs)
         (9, 5)
-
-    Args:
-        func (Callable): A candidate function to be wrapped whose input will be rearranged.
-
-    Returns:
-        Callable, used to exchange metadata between functions.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
     """
     @functools.wraps(func)
     def wrapper(self, *inputs):

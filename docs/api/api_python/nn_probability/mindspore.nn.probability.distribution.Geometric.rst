@@ -15,7 +15,7 @@ mindspore.nn.probability.distribution.Geometric
         - **name** (str) - 分布的名称。默认值：'Geometric'。
 
     .. note:: 
-        `probs` 必须是合适的概率（0<p<1）。
+        `probs` 必须是合适的概率（0<p<1）。`dist_spec_args` 是 `probs`。
 
 
     异常：
