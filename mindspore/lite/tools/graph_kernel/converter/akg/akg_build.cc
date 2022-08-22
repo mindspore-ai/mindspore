@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <utility>
+#include <algorithm>
 
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/anf.h"
@@ -36,13 +37,11 @@ namespace mindspore::graphkernel {
 bool CompileSingleJson(const std::string &json_name) {
   std::string attrs = "None";
   std::ostringstream py_cmd;
-  py_cmd << "from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path\n";
-  py_cmd << "import sys\n";
-  py_cmd << "sys.path.insert(0, get_akg_path())\n";
+  py_cmd << kAddAkgPath;
   py_cmd << "from akg.ms import compilewithjsonname\n";
   py_cmd << "if not compilewithjsonname(\'" << json_name << "\', " << attrs << "):\n";
   py_cmd << "    raise RuntimeError(\'Compile fail for json: " << json_name << "\')";
-  std::string cmd = "unset LD_LIBRARY_PATH;python -c \"" + py_cmd.str() + "\"";
+  std::string cmd = "python -c \"" + py_cmd.str() + "\"";
   auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;
@@ -74,10 +73,14 @@ bool RetStatus(const int status) {
 }
 
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list) {
+  auto process_num = std::min(PROCESS_LIMIT, json_list.size());
+  if (process_num == 0) {
+    return true;
+  }
   size_t i;
   pid_t pid;
   std::vector<pid_t> child_process;
-  for (i = 0; i < PROCESS_LIMIT; ++i) {
+  for (i = 0; i < process_num; ++i) {
     pid = fork();
     if (pid < 0) {
       MS_LOG(ERROR) << "fork error";
@@ -105,7 +108,7 @@ bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::stri
     }
   } else {
     bool all_process_pass{true};
-    for (size_t j = 0; j < PROCESS_LIMIT; ++j) {
+    for (size_t j = 0; j < process_num; ++j) {
       int status = 0;
       waitpid(child_process[j], &status, 0);
       // kill child process of child process if overtime
@@ -132,13 +135,13 @@ bool SaveJsonInfo(const std::string &json_name, const std::string &info) {
 }
 
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
-                          std::map<AnfNodePtr, std::string> *node_kernel, std::vector<std::string> *kernel_names) {
+                          std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names) {
   auto dir_path = FileUtils::CreateNotExistDirs(dir);
   if (!dir_path.has_value()) {
     MS_LOG(ERROR) << "Failed to CreateNotExistDirs: " << dir;
     return "";
   }
-  std::vector<std::string> unique_kernel_name;
+  std::set<std::string> unique_kernel_name;
   for (const auto &node : nodes) {
     graphkernel::AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto fg = GetCNodeFuncGraph(node);
@@ -155,10 +158,9 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;
     }
-    if (find(unique_kernel_name.cbegin(), unique_kernel_name.cend(), json_kernel_name) != unique_kernel_name.cend()) {
+    if (!unique_kernel_name.insert(json_kernel_name).second) {
       continue;
     }
-    unique_kernel_name.push_back(json_kernel_name);
     if (!SaveJsonInfo(dir_path.value() + "/" + json_kernel_name, akg_kernel_json_generator.kernel_json_str())) {
       return "";
     }
@@ -169,42 +171,60 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
   return dir_path.value();
 }
 
-void ExcludeCachedObj(const std::string &dir_path, std::vector<std::string> *kernel_names,
-                      std::vector<std::string> *obj_files) {
+void ExcludeTunedObj(const std::string &dir_path, std::set<std::string> *kernel_names,
+                     std::map<AnfNodePtr, std::string> *node_kernel) {
   auto fs = system::Env::GetFileSystem();
-  std::vector<std::string> new_kernel_names;
-  for (const auto &name : *kernel_names) {
-    auto tuned_op_cache = dir_path + "/Tuned_" + name + ".o";
-    if (fs->FileExist(tuned_op_cache)) {
-      MS_LOG(INFO) << "Reuse the object file " << tuned_op_cache;
-      (void)obj_files->emplace_back(std::move(tuned_op_cache));
+  std::map<std::string, std::string> tuned_obj_map;  // < tuned_signature, best split object name >
+  for (auto &iter : *node_kernel) {
+    auto fg = GetCNodeFuncGraph(iter.first);
+    MS_EXCEPTION_IF_NULL(fg);
+    auto tuned_sign = fg->has_attr(kTunedSign) ? GetValue<std::string>(fg->get_attr(kTunedSign)) : "";
+    if (tuned_sign == iter.second) {
+      // the kernel name is the same as signature, find cache.
+      auto cache = tuned_obj_map.find(tuned_sign);
+      if (cache != tuned_obj_map.end()) {
+        iter.second = cache->second;
+      }
+      if (!fg->has_attr(kAttrNodeName)) {
+        continue;
+      }
+      auto best_split_kernel = std::string("best_split_") + GetValue<std::string>(fg->get_attr(kAttrNodeName));
+      auto best_split_file = dir_path + "/" + best_split_kernel + ".o";
+      if (!fs->FileExist(best_split_file)) {
+        continue;
+      }
+      // the cache file exists, use it.
+      tuned_obj_map[tuned_sign] = best_split_kernel;
+      iter.second = best_split_kernel;
+      (void)kernel_names->erase(tuned_sign);
+      MS_LOG(INFO) << "Reuse the object file " << best_split_file;
     } else {
-      new_kernel_names.push_back(name);
-      (void)obj_files->emplace_back(dir_path + "/" + name + ".o");
+      if (!tuned_sign.empty()) {
+        MS_LOG(INFO) << "The kernel_name of " << iter.first->fullname_with_scope() << " mismatch its signature. "
+                     << "kernel_name is " << iter.second << ", and tuned_signature is " << tuned_sign;
+      }
     }
-  }
-  if (new_kernel_names.size() < kernel_names->size()) {
-    *kernel_names = std::move(new_kernel_names);
   }
 }
 
 bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
-  std::map<AnfNodePtr, std::string> node_name;
-  std::vector<std::string> kernel_names;
-  auto dir_path = SaveNodesInfo(node_list, "./kernel_meta", AkgKernelBuilder::json_option(), &node_name, &kernel_names);
+  std::map<AnfNodePtr, std::string> node_info_map;
+  std::set<std::string> uniq_info_names;
+  auto dir_path =
+    SaveNodesInfo(node_list, "./kernel_meta", AkgKernelBuilder::json_option(), &node_info_map, &uniq_info_names);
   if (dir_path.empty()) {
     return false;
   }
-  std::vector<std::string> obj_files;
-  ExcludeCachedObj(dir_path, &kernel_names, &obj_files);
-  auto res = CompileJsonsInList(dir_path, kernel_names);
+  ExcludeTunedObj(dir_path, &uniq_info_names, &node_info_map);
+  auto res = CompileJsonsInList(dir_path, std::vector<std::string>(uniq_info_names.begin(), uniq_info_names.end()));
   if (res) {
-    for (const auto &iter : node_name) {
-      AnfUtils::SetNodeAttr("kernel_name", MakeValue(iter.second + "_kernel"), iter.first);
-    }
+    std::set<std::string> obj_files;
     std::ostringstream objs;
-    for (const auto &obj : obj_files) {
-      objs << obj << " ";
+    for (const auto &iter : node_info_map) {
+      AnfUtils::SetNodeAttr("kernel_name", MakeValue(iter.second + "_kernel"), iter.first);
+      if (obj_files.insert(iter.second).second) {
+        objs << dir_path << "/" << iter.second << ".o ";
+      }
     }
     auto cmd = "g++ -fPIC -shared -o akgkernels.so " + objs.str();
     if (std::system(cmd.c_str()) == 0) {

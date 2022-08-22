@@ -24,6 +24,7 @@
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
+#include "tools/graph_kernel/converter/akg/akg_build.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"
 #include "utils/hash_set.h"
@@ -133,18 +134,12 @@ nlohmann::json GenTuneInfo(const AnfNodePtr &conv_node, const std::map<AnfNodePt
 void TuneProcess(const std::string &json_file_name, const std::string &res_file_name, const std::string &akg_path) {
   std::ostringstream py_cmd;
   const auto &flags = GraphKernelFlags::GetInstance();
-  py_cmd << "import sys\n";
-  py_cmd << "import subprocess\n";
-  py_cmd << "str = \'from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path; "
-            "print(get_akg_path())\'\n";
-  py_cmd << "cmd = \'unset LD_LIBRARY_PATH;python -c \\\"{}\\\"\'.format(str)\n";
-  py_cmd << "p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)\n";
-  py_cmd << "sys.path.insert(0, p.communicate()[-2].decode().strip())\n";
-  py_cmd << "import akg\n";
+  py_cmd << kAddAkgPath;
   py_cmd << "import auto_tune\n";
   py_cmd << "auto_tune.tune_layout(\'" << json_file_name << "\', \'" << res_file_name << "\', "
          << flags.cpu_refer_thread_num << ")\n";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
+  MS_LOG(INFO) << "GraphKernel conv tuning content: \n" << cmd;
   auto ret = system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Tune process start fail! process content is as follows:\n" << cmd;
