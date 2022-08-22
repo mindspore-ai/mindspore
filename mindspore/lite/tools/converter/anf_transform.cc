@@ -415,8 +415,8 @@ bool AnfTransform::CheckExternalExtension(const std::shared_ptr<ConverterPara> &
 STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
       param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
-    auto remove_pass = quant::RemoveUnusedQuantParam(func_graph);
-    auto ret = remove_pass.Remove();
+    auto remove_quant_param_pass = quant::RemoveQuantParam(func_graph);
+    auto ret = remove_quant_param_pass.Remove();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "remove unused quant param failed.";
       return RET_ERROR;
@@ -434,8 +434,8 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
     MS_LOG(ERROR) << "Run quant type determine failed.";
     return ret;
   }
-  auto dtype_trans_pass = quant::DTypeTransformPass(func_graph);
-  ret = dtype_trans_pass.Transform();
+  auto transform_uint8_pass = quant::TransformUint8Pass(func_graph);
+  ret = transform_uint8_pass.Transform();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run dtype transform pass failed.";
     return ret;
@@ -586,6 +586,12 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
 
   if (CheckExternalExtension(param)) {
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
+    return nullptr;
+  }
+
+  status = QATTransform(old_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do QATTransform failed.";
     return nullptr;
   }
 

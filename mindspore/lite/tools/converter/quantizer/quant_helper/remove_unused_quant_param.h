@@ -22,10 +22,10 @@
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
-class RemoveUnusedQuantParam {
+class RemoveQuantParam {
  public:
-  explicit RemoveUnusedQuantParam(const FuncGraphPtr &funcGraph) : func_graph_(funcGraph) {}
-  ~RemoveUnusedQuantParam() = default;
+  explicit RemoveQuantParam(const FuncGraphPtr &funcGraph) : func_graph_(funcGraph) {}
+  ~RemoveQuantParam() = default;
 
  public:
   int Remove();

@@ -83,6 +83,8 @@ bool IsGraphInDTypeCast(const CNodePtr &cnode);
 
 bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
+int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastNodeType *cast_node_type);
+
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
                 std::vector<T> *dequant_data, int preferred_dim = 0) {

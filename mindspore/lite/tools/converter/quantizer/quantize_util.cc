@@ -175,13 +175,68 @@ bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   }
   CHECK_NULL_RETURN(manager);
   auto node_users = manager->node_users()[cnode];
+  MS_CHECK_TRUE_RET(!node_users.empty(), RET_NULL_PTR);
   for (auto &node_user : node_users) {
     auto output_cnode = node_user.first->cast<CNodePtr>();
+    CHECK_NULL_RETURN(output_cnode);
     if (!opt::CheckPrimitiveType(output_cnode, prim::kPrimReturn)) {
       return false;
     }
   }
   return true;
+}
+
+int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastNodeType *cast_node_type) {
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    MS_LOG(DEBUG) << "Not QuantDtypeCastNode, cnode name: " << cnode->fullname_with_scope();
+    return RET_NOT_SUPPORT;
+  }
+  auto input_node = cnode->input(1);
+  MS_CHECK_FALSE(input_node == nullptr, RET_ERROR);
+
+  // input node
+  TypeId pre_node_dtype = kTypeUnknown;
+  if (opt::GetDataTypeFromAnfNode(input_node, &pre_node_dtype) != RET_OK) {
+    MS_LOG(ERROR) << "Get data type failed, cnode name: " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+
+  // output node
+  TypeId post_node_dtype = kTypeUnknown;
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  auto node_users = manager->node_users()[cnode];
+  MS_CHECK_TRUE_RET(!node_users.empty(), RET_NULL_PTR);
+  auto output_cnode = node_users.begin()->first->cast<CNodePtr>();
+  CHECK_NULL_RETURN(output_cnode);
+
+  if (!opt::CheckPrimitiveType(output_cnode, prim::kPrimReturn)) {
+    if (opt::GetDataTypeFromAnfNode(output_cnode, &post_node_dtype) != RET_OK) {
+      MS_LOG(ERROR) << "Get data type failed, cnode name: " << output_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    if (pre_node_dtype == kNumberTypeFloat32 &&
+        (post_node_dtype == kNumberTypeInt8 || post_node_dtype == kNumberTypeUInt8)) {
+      *cast_node_type = kQuant;
+    } else if ((pre_node_dtype == kNumberTypeInt8 || pre_node_dtype == kNumberTypeUInt8) &&
+               post_node_dtype == kNumberTypeFloat32) {
+      *cast_node_type = kDeQuant;
+    } else {
+      MS_LOG(ERROR) << "Not support QuantDTypeCastNode, cnode name: " << cnode->fullname_with_scope();
+    }
+  } else {
+    if (pre_node_dtype == kNumberTypeFloat32) {
+      *cast_node_type = kQuant;
+    } else if (pre_node_dtype == kNumberTypeInt8 || pre_node_dtype == kNumberTypeUInt8) {
+      *cast_node_type = kDeQuant;
+    } else {
+      MS_LOG(ERROR) << "Not support QuantDTypeCastNode, cnode name: " << cnode->fullname_with_scope();
+    }
+  }
+  return RET_OK;
 }
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {

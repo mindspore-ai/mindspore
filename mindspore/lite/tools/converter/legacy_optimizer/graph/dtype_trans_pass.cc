@@ -42,12 +42,6 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
     MS_LOG(ERROR) << "DoModelOutputDTypeTrans error: " << status;
     return status;
   }
-
-  status = DoNodeInoutDTypeTrans(graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "DoNodeInoutDTypeTrans error: " << status;
-    return status;
-  }
   return RET_OK;
 }
 
