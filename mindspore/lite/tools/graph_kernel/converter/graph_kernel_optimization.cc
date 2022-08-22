@@ -30,7 +30,7 @@
 #include "common/graph_kernel/core/transform_op_optimizer.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
-#include "tools/graph_kernel/converter/conv_tune.h"
+#include "tools/graph_kernel/converter/conv_pool_expander.h"
 #include "tools/graph_kernel/converter/format_recognition.h"
 #include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
@@ -58,12 +58,9 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
 GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageCluster, "cluster");
-  auto &flags = GraphKernelFlags::GetInstance();
-  if (flags.enable_lite_conv_tuning) {
-    pm->Add(std::make_shared<ConvTune>(), OptLevel_1);
-  }
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
+  pm->Add(std::make_shared<ConvPoolExpander>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<GraphKernelClusterLite>(), OptLevel_1);

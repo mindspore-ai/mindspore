@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/graph_kernel/converter/conv_tune.h"
+#include "tools/graph_kernel/converter/conv_pool_expander.h"
 #include <map>
 #include <sstream>
 #include <string>
@@ -21,16 +21,55 @@
 
 #include "nlohmann/json.hpp"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"
 #include "utils/hash_set.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
+bool IsSameNumberList(const std::vector<int64_t> &vec, int64_t n) {
+  return std::all_of(vec.begin(), vec.end(), [n](int64_t i) { return i == n; });
+}
+
+bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
+                     const std::vector<int64_t> &dilation) {
+  constexpr int64_t one_kernel_size = 1;
+  constexpr int64_t two_kernel_size = 2;
+  constexpr int64_t winograd_kernel_size = 3;
+  if ((IsSameNumberList(kernel_size, one_kernel_size) || IsSameNumberList(kernel_size, two_kernel_size) ||
+       IsSameNumberList(kernel_size, winograd_kernel_size)) &&
+      IsSameNumberList(stride, 1LL) && IsSameNumberList(dilation, 1LL)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsInvalidConv(const AnfNodePtr &node) {
+  auto cb = Callback::Instance();
+  auto input_shape = cb->GetInputShape(node, 0);
+  if (input_shape.size() == 0) {
+    return true;
+  }
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto kernel_size = GetValue<std::vector<int64_t>>(prim->GetAttr("kernel_size"));
+  const auto stride = GetValue<std::vector<int64_t>>(prim->GetAttr("stride"));
+  const auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
+  if (InvalidConvAttr(kernel_size, stride, dilation)) {
+    return true;
+  }
+  return false;
+}
+
 bool IsBlackListOp(const AnfNodePtr &node) {
   std::vector<PrimitivePtr> black_list = {prim::kPrimMatMulFusion};
   for (auto &prim : black_list) {
     if (IsPrimitiveCNode(node, prim)) {
+      return true;
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimConv2DFusion) && IsInvalidConv(node)) {
       return true;
     }
   }
@@ -154,7 +193,7 @@ void TuneConvOps(const AnfNodePtrList &conv_list) {
         for (size_t i = 1; i < inputs.size(); i++) {
           if (inputs[i]->cast<CNodePtr>() == nullptr || visited.count(inputs[i]) != 0) {
             continue;
-          } else if (IsPrimitiveCNode(inputs[i], prim::kPrimConv2DFusion)) {
+          } else if (IsPrimitiveCNode(inputs[i], prim::kPrimConv2DFusion) && !IsInvalidConv(inputs[i])) {
             former_conv_nodes[inputs[i]] = has_black_node;
             has_black_node = false;
             continue;
@@ -183,19 +222,32 @@ void TuneConvOps(const AnfNodePtrList &conv_list) {
   SetTuneAttrs(conv_list, output_file);
 }
 
-bool ConvTune::Run(const FuncGraphPtr &func_graph) {
+std::vector<PrimitivePtr> ConvPoolExpander::InitOpList() {
+  std::vector<OpWithLevel> expand_ops_with_level = {{kCPUDevice, OpLevel_1, prim::kPrimConv2DFusion},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimAvgPoolFusion},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimMaxPoolFusion}};
+  const auto &flags = GraphKernelFlags::GetInstance();
+  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                              flags.enable_expand_ops, flags.disable_expand_ops);
+}
+
+bool ConvPoolExpander::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(func_graph->get_return());
-  auto todos = TopoSort(func_graph->get_return());
-  AnfNodePtrList conv_list;
-  for (auto &node : todos) {
-    if (IsPrimitiveCNode(node, prim::kPrimConv2DFusion)) {
-      (void)conv_list.emplace_back(node->cast<CNodePtr>());
-      changed = true;
+  auto &flags = GraphKernelFlags::GetInstance();
+  if (flags.enable_lite_conv_tuning) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    MS_EXCEPTION_IF_NULL(func_graph->get_return());
+    auto todos = TopoSort(func_graph->get_return());
+    AnfNodePtrList conv_list;
+    for (auto &node : todos) {
+      if (IsPrimitiveCNode(node, prim::kPrimConv2DFusion) && !IsInvalidConv(node)) {
+        (void)conv_list.emplace_back(node->cast<CNodePtr>());
+        changed = true;
+      }
     }
+    TuneConvOps(conv_list);
   }
-  TuneConvOps(conv_list);
+  changed = GraphKernelExpanderLite::Run(func_graph) || changed;
   return changed;
 }
 }  // namespace mindspore::graphkernel
