@@ -63,14 +63,13 @@ int SparseMatrixSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return 0;
 }
 
-bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto *input_logits_dense_shape = reinterpret_cast<int *>(inputs[logits_dense_shape]->addr);
-  auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->addr);
-  auto *input_logits_values = reinterpret_cast<float *>(inputs[logits_values]->addr);
-
-  if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
-    LaunchKernel(input_logits_values, input_logits_col_indices, input_logits_dense_shape);
+bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
+  if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'logits_values' must be Float32 or Float64, but got "
@@ -81,8 +80,11 @@ bool SparseMatrixSoftmaxCpuKernelMod::Launch(const std::vector<AddressPtr> &inpu
 
 template <typename T>
 
-void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(T *input_logits_values, int *input_logits_col_indices,
-                                                   int *input_logits_dense_shape) {
+void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                   const std::vector<kernel::AddressPtr> &) {
+  auto *input_logits_values = reinterpret_cast<T *>(inputs[logits_values]->addr);
+  auto *input_logits_dense_shape = reinterpret_cast<int *>(inputs[logits_dense_shape]->addr);
+  auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->addr);
   float total = 0;
   float MAX = input_logits_values[0];
   int row_index = input_logits_dense_shape[0];

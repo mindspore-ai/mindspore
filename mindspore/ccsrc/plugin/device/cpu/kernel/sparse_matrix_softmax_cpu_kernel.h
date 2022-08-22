@@ -39,7 +39,7 @@ class SparseMatrixSoftmaxCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
@@ -47,9 +47,8 @@ class SparseMatrixSoftmaxCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   TypeId dtype_{kTypeUnknown};
-
   template <typename T>
-  void LaunchKernel(T *input_logits_values, int *input_logits_col_indices, int *input_logits_dense_shape);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore
