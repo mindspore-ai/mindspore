@@ -588,8 +588,8 @@ class Im2Col(Primitive):
             Default: 0.
 
     Inputs:
-        - **x** (Tensor) : input tensor, only 4-D input tensors (batched image-like tensors) are supported.
-            support all real number data type.
+        - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
+          support all real number data type.
 
     Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
@@ -3348,7 +3348,7 @@ class StridedSlice(PrimitiveWithInfer):
     `x[2:,...]` is equivalent to `x[2:5,:,:,:]`.
 
     If the ith bit of `new_axis_mask` is set, `begin`, `end` and `strides` are ignored and a new length 1
-    dimension is added at the specified position in tthe output tensor.
+    dimension is added at the specified position in the output tensor.
 
     As for a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape :math:`(2, 1, 7)` .
 
@@ -6460,7 +6460,7 @@ class SearchSorted(PrimitiveWithInfer):
 
     Inputs:
         - **sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
-                                  It must contain monitonically increasing sequence on the innermost dimension.
+          It must contain monitonically increasing sequence on the innermost dimension.
         - **values** (Tensor) - The shape of tensor is : math:`(x_1, x_2, ..., x_R-1, x_S)`.
 
     Outputs:
@@ -8120,6 +8120,9 @@ class PopulationCount(Primitive):
     Computes element-wise population count(a.k.a bitsum, bitcount).
 
     Refer to :func:`mindspore.ops.population_count` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register

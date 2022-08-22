@@ -10,7 +10,7 @@ mindspore.Tensor.tan
         out_i = tan(x_i)
 
     返回：
-        Tensor。
+        Tensor，和当前输入的shape一样。
 
     异常：
         - **TypeError** - 当前输入不是Tensor。

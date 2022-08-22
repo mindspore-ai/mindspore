@@ -11,7 +11,7 @@ mindspore.Tensor.atan2
     输入 `x` 和 `y` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
 
     参数：
-        - **y** (Tensor) - 输入Tensor，shape应能在广播后与 `x` 相同，或 `x` 的shape在广播后与 `y` 相同。
+        - **y** (Tensor) - 输入Tensor。shape应能在广播后与 `x` 相同，或 `x` 的shape在广播后与 `y` 相同。
 
     返回：
         Tensor，与广播后的输入shape相同，和 `x` 数据类型相同。

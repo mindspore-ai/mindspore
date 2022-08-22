@@ -3,7 +3,7 @@ mindspore.Tensor.inv
 
 .. py:method:: mindspore.Tensor.inv()
 
-    计算当前Tensor的倒数。
+    逐元素计算当前Tensor的倒数。
 
     .. math::
         out_i = \frac{1}{x_{i} }

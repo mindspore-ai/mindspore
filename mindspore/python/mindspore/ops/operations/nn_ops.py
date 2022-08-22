@@ -7252,6 +7252,9 @@ class CTCGreedyDecoder(Primitive):
     Performs greedy decoding on the logits given in inputs.
 
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
     """
 
     @prim_attr_register
@@ -8584,7 +8587,7 @@ class Conv3DTranspose(Primitive):
         ValueError: If bias is not none. The rank of dout and weight is not 5.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
