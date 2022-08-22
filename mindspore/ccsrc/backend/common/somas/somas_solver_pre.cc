@@ -31,12 +31,14 @@ constexpr auto kSolNumThresholdMultiThread = 8;
 Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const {
   auto tensors = *pTensors;
   if (tensors[index1] == nullptr) {
-    MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index1 << ")";
-    return FAILED;
+    MS_LOG(EXCEPTION) << "NULL tensor received in continuous constraint (tensor index " << index1
+                      << "), there may be kGraphInput or kGraphOutput in the input tensors or output tensors of the "
+                         "fused communication op.";
   }
   if (tensors[index2] == nullptr) {
-    MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index2 << ")";
-    return FAILED;
+    MS_LOG(EXCEPTION) << "NULL tensor received in continuous constraint (tensor index " << index2
+                      << "), there may be kGraphInput or kGraphOutput in the input tensors or output tensors of the "
+                         "fused communication op.";
   }
 
   if (tensors[index1]->right_) {

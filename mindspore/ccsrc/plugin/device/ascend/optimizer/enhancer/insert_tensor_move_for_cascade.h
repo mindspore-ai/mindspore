@@ -32,6 +32,7 @@ class InsertTensorMoveForCascade : public PatternProcessPass {
 
  private:
   AnfNodePtr InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
+  void InsertOutputTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt

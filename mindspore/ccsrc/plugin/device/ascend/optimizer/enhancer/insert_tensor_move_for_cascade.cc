@@ -25,6 +25,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kSingleOutput = 1;
+
 bool IsPartOutputsOfHcclOp(const AnfNodePtr &node, const CNodePtr &cur_hccl, const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(cur_hccl);
@@ -106,6 +108,37 @@ AnfNodePtr InsertTensorMoveForCascade::InsertTensorMove(const FuncGraphPtr &grap
   return nullptr;
 }
 
+void InsertTensorMoveForCascade::InsertOutputTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
+  // Need to insert TensorMove if the output of FusedCommunicationOp is GraphOutput
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(hccl_node);
+  MS_EXCEPTION_IF_NULL(kernel_select_);
+  if (!common::AnfAlgo::IsFusedCommunicationOp(hccl_node)) {
+    return;
+  }
+
+  AnfNodePtr node = nullptr;
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &output_with_index : outputs) {
+    if (!common::AnfAlgo::IsFusedCommunicationOp(output_with_index.first)) {
+      continue;
+    }
+    auto cnode = output_with_index.first->cast<CNodePtr>();
+    if (cnode != hccl_node || common::AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
+      continue;
+    }
+    node = output_with_index.first;
+    break;
+  }
+
+  if (node != nullptr) {
+    auto tensor_move_list = InsertTensorMoveForGraphOutput(graph, node);
+    for (auto &tensor_move : tensor_move_list) {
+      kernel_select_->SelectKernel(tensor_move->cast<CNodePtr>());
+    }
+  }
+}
+
 const AnfNodePtr InsertTensorMoveForCascade::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                      const EquivPtr &) const {
   if (func_graph == nullptr || node == nullptr || !node->isa<CNode>()) {
@@ -115,6 +148,7 @@ const AnfNodePtr InsertTensorMoveForCascade::Process(const FuncGraphPtr &func_gr
   if (!common::AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
+  InsertOutputTensorMove(func_graph, cnode);
   return InsertTensorMove(func_graph, cnode);
 }
 }  // namespace opt

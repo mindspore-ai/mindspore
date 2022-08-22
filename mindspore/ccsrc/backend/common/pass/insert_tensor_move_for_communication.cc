@@ -19,6 +19,8 @@
 
 namespace mindspore {
 namespace opt {
+constexpr auto kSingleOutput = 1;
+
 bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
@@ -46,9 +48,25 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
         FuncGraphManagerPtr manager = graph->manager();
         MS_EXCEPTION_IF_NULL(manager);
         manager->SetEdge(communication_op, SizeToInt(i) + 1, tensor_move);
-        MS_LOG(DEBUG) << "Insert TensorMove for op " << communication_op->fullname_with_scope();
+        MS_LOG(DEBUG) << "Insert Input TensorMove for op " << communication_op->fullname_with_scope();
       }
     }
+  }
+
+  // Need to insert TensorMove if the output of FusedCommunicationOp is GraphOutput
+  std::set<AnfNodePtr> candidate_set;
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &output_with_index : outputs) {
+    if (!common::AnfAlgo::IsFusedCommunicationOp(output_with_index.first) ||
+        common::AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
+      continue;
+    }
+    candidate_set.insert(output_with_index.first);
+    break;
+  }
+
+  for (const auto &node : candidate_set) {
+    (void)InsertTensorMoveForGraphOutput(graph, node);
   }
   return true;
 }
