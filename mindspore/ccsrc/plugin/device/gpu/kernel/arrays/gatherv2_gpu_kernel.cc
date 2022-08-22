@@ -15,9 +15,29 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gatherv2_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+MS_REG_GPU_KERNEL_THREE(
+  Gather,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  GatherV2FwdGpuKernelMod, Complex<float>, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(
+  Gather,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  GatherV2FwdGpuKernelMod, Complex<float>, int64_t, int64_t)
+MS_REG_GPU_KERNEL_THREE(
+  Gather,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  GatherV2FwdGpuKernelMod, Complex<double>, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(
+  Gather,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  GatherV2FwdGpuKernelMod, Complex<double>, int64_t, int64_t)
 MS_REG_GPU_KERNEL_THREE(
   Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
