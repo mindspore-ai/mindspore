@@ -22,7 +22,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeviceResManager::Initialize() {
-  MS_LOG(INFO) << "Status record: Device resource manager Initialize start...";
+  MS_LOG(INFO) << "Device resource manager Initialize start...";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -46,11 +46,11 @@ void AscendDeviceResManager::Initialize() {
   communication_stream_ = runtime_instance_->communication_stream();
   MS_EXCEPTION_IF_NULL(communication_stream_);
 
-  MS_LOG(INFO) << "Status record: Device resource manager Initialize success.";
+  MS_LOG(INFO) << "Device resource manager Initialize success.";
 }
 
 void AscendDeviceResManager::Destroy() {
-  MS_LOG(INFO) << "Status record: Device resource manager Destroy start...";
+  MS_LOG(INFO) << "Device resource manager Destroy start...";
   if (DataQueueMgr::GetInstance().IsInit()) {
     MS_EXCEPTION_IF_CHECK_FAIL(DataQueueMgr::GetInstance().Destroy(), "Could not destroy ascend data queue.");
   }
@@ -59,7 +59,7 @@ void AscendDeviceResManager::Destroy() {
   if (runtime_instance_) {
     runtime_instance_ = nullptr;
   }
-  MS_LOG(INFO) << "Status record: Device resource manager Destroy success.";
+  MS_LOG(INFO) << "Device resource manager Destroy success.";
 }
 
 bool AscendDeviceResManager::BindDeviceToCurrentThread() const {
