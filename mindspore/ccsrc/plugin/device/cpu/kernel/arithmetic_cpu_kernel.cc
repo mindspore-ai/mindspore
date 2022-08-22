@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/arithmetic_cpu_kernel.h"
 
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <map>
 #include <memory>
