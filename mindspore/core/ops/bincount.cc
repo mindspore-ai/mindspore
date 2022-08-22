@@ -28,23 +28,12 @@ namespace {
 abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto arr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  int64_t arr_size = 1;
-  int64_t weight_size = 1;
-  if (w_shape.size() != 0) {
-    auto weights_num = std::accumulate(w_shape.begin(), w_shape.end(), int64_t(1), std::multiplies{});
-    (void)CheckAndConvertUtils::CheckInteger("size of weights", weights_num, kNotEqual, 0, primitive->name());
-  }
-  for (size_t i = 0; i < arr_shape.size(); ++i) {
-    arr_size *= arr_shape[i];
-  }
-  for (size_t i = 0; i < w_shape.size(); ++i) {
-    weight_size *= w_shape[i];
-  }
-  (void)CheckAndConvertUtils::CheckInteger("size of array and weights", arr_size, kEqual, weight_size,
-                                           primitive->name());
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(arr_shape) || IsDynamicRank(size_shape) || IsDynamicRank(w_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+  CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
   auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   if (!size_value_ptr->isa<AnyValue>() && !size_value_ptr->isa<None>()) {

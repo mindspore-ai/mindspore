@@ -7826,7 +7826,7 @@ class Bincount(Primitive):
         TypeError: If dtype of weights is not in int32,int64,float32,float64
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Example:
         >>> array = Tensor(np.array([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]), mindspore.int32)
@@ -7841,3 +7841,4 @@ class Bincount(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Bincount"""
+        self.init_prim_io_names(inputs=['array', 'size', 'weights'], outputs=['bins'])
