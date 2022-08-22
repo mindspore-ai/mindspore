@@ -21,12 +21,33 @@
 #include <memory>
 #include <unordered_map>
 
+#include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
-
+#ifdef WITH_BACKEND
+#include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
+#endif
+#include "mindspore/ccsrc/ps/ps_cache/ps_data/ps_data_prefetch.h"
+#ifdef WITH_BACKEND
+#include "utils/ms_context.h"
+#endif
 namespace mindspore {
 namespace dataset {
+namespace {
+std::vector<DataQueueItem> ConvertTensorRowToDataQueueItem(const TensorRow &row) {
+  std::vector<device::DataQueueItem> items;
+  for (auto &i : row) {
+    device::DataQueueItem data_item;
+    data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
+    data_item.shapes_ = i->shape().AsVector();
+    data_item.data_ptr_ = const_cast<void *>(static_cast<const void *>(i->GetBuffer()));
+    data_item.data_type_ = i->type().ToString();
+    items.emplace_back(std::move(data_item));
+  }
+  return items;
+}
+}  // namespace
 DeviceQueueOp::DeviceQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id,
                              bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
     : PipelineOp(1),
@@ -40,37 +61,23 @@ DeviceQueueOp::DeviceQueueOp(const std::string channel_name, DeviceType device_t
       create_data_info_queue_(create_data_info_queue),
       data_info_queue_ptr_(nullptr),
       first_fetch_flag_(false),
-      first_push_flag_(false)
-#ifdef ENABLE_TDTQUE
-      ,
-      ascend_keep_waiting_(true),
-      tdtInstancePtr(std::make_shared<TdtPlugin>(channel_name_, device_id_))
-#endif
-{
+      first_push_flag_(false),
+      ascend_keep_waiting_(true) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   dynamic_shape_ = cfg->dynamic_shape();
 
-#ifdef ENABLE_GPUQUE
-  // Get the total device num of current machine
-  int32_t device_count = 0;
-  cudaGetDeviceCount(&device_count);
-  rank_id_ = cfg->rank_id();  // Get the current rank_id
-  if (device_count > 0) {
-    rank_id_ = rank_id_ % device_count;
-  }
   // Be careful when try to modified these num_workers_ and queue_capacity_,
   // and we suggest num_workers_ * queue_capacity_ not greater than 16, because
   // one worker one circular_pool with 1G pin memory, so num_workers_ * queue_capacity_
   // must limit to avoid memory overload
   num_workers_ = kDeviceQueGpuNumThreads;
   queue_capacity_ = kDeviceQueGpuQueueCapacity;
-#endif
-#ifdef ENABLE_TDTQUE
   ascend_keep_waiting_ = true;
-  if (kIsHeterogeneous) {
-    tdtInstancePtr = std::make_shared<HostQueueImpl>(channel_name_, device_id_);
-  } else {
-    tdtInstancePtr = std::make_shared<TdtPlugin>(channel_name_, device_id_);
+#ifdef WITH_BACKEND
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !dynamic_shape_) {
+    ascend_data_queue_ =
+      device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_, 0, nullptr, {});
   }
 #endif
 #ifdef ENABLE_DUMP_IR
@@ -87,13 +94,11 @@ DeviceQueueOp::~DeviceQueueOp() {
 #endif
 }
 
-#ifdef ENABLE_GPUQUE
 void DeviceQueueOp::ReleaseData(void *addr, int32_t worker_id) {
   if (addr != nullptr && worker_id >= 0 && worker_id < pool_.size()) {
     pool_[worker_id]->Deallocate(addr);
   }
 }
-#endif
 
 Status DeviceQueueOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
@@ -150,7 +155,7 @@ Status DeviceQueueOp::operator()() {
   }
 #endif
   if (device_type_ == DeviceType::Ascend) {
-#ifdef ENABLE_TDTQUE
+#ifdef WITH_BACKEND
     if (create_data_info_queue_) {
       // This place has a race condition with GetDataInfo, so the first one
       // arrive here will do the initialize work.
@@ -162,10 +167,6 @@ Status DeviceQueueOp::operator()() {
         }
       }
     }
-    if (!kIsHeterogeneous && tdtInstancePtr->acl_handle_ == nullptr) {
-      RETURN_STATUS_UNEXPECTED(
-        "[Internal ERROR] Create channel for sending data failed, please check DEVICE ID setting.");
-    }
 
     if (dynamic_shape_) {
       RETURN_IF_NOT_OK(SendDataToAscendDynamic());
@@ -174,7 +175,7 @@ Status DeviceQueueOp::operator()() {
     }
 #endif
   } else if (device_type_ == DeviceType::GPU) {
-#ifdef ENABLE_GPUQUE
+#ifdef WITH_BACKEND
     RETURN_IF_NOT_OK(SendDataToGPU());
 #endif
   } else if (device_type_ == DeviceType::CPU) {
@@ -184,7 +185,6 @@ Status DeviceQueueOp::operator()() {
   return Status::OK();
 }
 
-#ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
 #ifndef ENABLE_SECURITY
@@ -242,7 +242,7 @@ Status DeviceQueueOp::SendDataToAscend() {
 #endif
       PrintBeginInfoWhenFirstBatch(first_push_flag_);
       // when training stopped, handle might have been destroyed immediately
-      if (!kIsHeterogeneous && tdtInstancePtr->acl_handle_ == nullptr) {
+      if (ascend_data_queue_ != nullptr && !ascend_data_queue_->IsOpen()) {
         MS_LOG(WARNING) << "Thread has already been terminated.";
         is_break_loop = true;
         continue;
@@ -306,9 +306,22 @@ Status DeviceQueueOp::SendEpochEndToAscend(const TensorRow &curr_row, const bool
                                            int32_t *tdt_cost, bool *is_break_loop) {
   RETURN_UNEXPECTED_IF_NULL(tdt_cost);
   RETURN_UNEXPECTED_IF_NULL(is_break_loop);
-  if (curr_row.eoe() && send_epoch_end_ && tdtInstancePtr->acl_handle_ != nullptr) {
+  if (curr_row.eoe() && send_epoch_end_ && ascend_data_queue_->IsOpen()) {
     TensorRow dummy_row;
-    auto status = tdtInstancePtr->hostPush(dummy_row, is_profiling_enable, tdt_cost, ACL_TENSOR_DATA_END_OF_SEQUENCE);
+#ifndef ENABLE_SECURITY
+    double start_time = 0;
+    if (is_profiling_enable) {
+      start_time = ProfilingTime::GetCurMilliSecond();
+    }
+#endif
+    auto status = ascend_data_queue_->Push({});
+#ifndef ENABLE_SECURITY
+    if (is_profiling_enable) {
+      double end_time = ProfilingTime::GetCurMilliSecond();
+      // compile error occurring when MS_EXCEPTION_IF_NULL
+      *tdt_cost = static_cast<int32_t>(end_time - start_time);
+    }
+#endif
 
     RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, is_break_loop));
     MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
@@ -337,8 +350,22 @@ void DeviceQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num
 }
 
 Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost) {
-  auto status = tdtInstancePtr->hostPush(curr_row, is_profiling_enable, tdt_cost);
-  if (status != Status::OK()) {
+  std::vector<device::DataQueueItem> items = ConvertTensorRowToDataQueueItem(curr_row);
+#ifndef ENABLE_SECURITY
+  double start_time = 0;
+  if (is_profiling_enable) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
+#endif
+  auto status = ascend_data_queue_->Push(items);
+#ifndef ENABLE_SECURITY
+  if (is_profiling_enable) {
+    double end_time = ProfilingTime::GetCurMilliSecond();
+    // compile error occurring when MS_EXCEPTION_IF_NULL
+    *tdt_cost = static_cast<int32_t>(end_time - start_time);
+  }
+#endif
+  if (status != device::DataQueueStatus::SUCCESS) {
     if (stop_send_) {
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
@@ -358,15 +385,16 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable,
   return Status::OK();
 }
 
-Status DeviceQueueOp::CheckPushStatus(Status status, bool stop_send, bool *send_finished, bool *is_break_loop) {
-  if (status != Status::OK()) {
+Status DeviceQueueOp::CheckPushStatus(DataQueueStatus status, bool stop_send, bool *send_finished,
+                                      bool *is_break_loop) {
+  if (status != DataQueueStatus::SUCCESS) {
     if (stop_send) {
       *send_finished = true;
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
     }
     // when training stopped, handle might have been destroyed immediately
-    if (tdtInstancePtr->acl_handle_ == nullptr) {
+    if (!ascend_data_queue_->IsOpen()) {
       *is_break_loop = true;
       MS_LOG(WARNING) << "Thread has already been terminated.";
       return Status::OK();
@@ -379,10 +407,14 @@ Status DeviceQueueOp::CheckPushStatus(Status status, bool stop_send, bool *send_
   }
   return Status::OK();
 }
-#endif
 
-#ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
+#ifdef WITH_BACKEND
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    RETURN_STATUS_UNEXPECTED("'GetDataInfo' only supported on Ascend.");
+  }
+
   if (!create_data_info_queue_) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] DataInfo queue is not created.");
   }
@@ -396,38 +428,29 @@ Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
     }
   }
   RETURN_IF_NOT_OK(data_info_queue_ptr_->PopFront(data_info));
+#endif
   return Status::OK();
 }
-#else
-Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
-  RETURN_STATUS_UNEXPECTED("'GetDataInfo' only supported on Ascend.");
-}
-#endif
 
-#ifdef ENABLE_GPUQUE
 Status DeviceQueueOp::SetThreadDevice() {
-  // Without cudaSetDevice cuda memory will allocate on GPU:0 as default
-  // and will overload in distribute scenario.
-  auto ret = cudaSetDevice(rank_id_);
-  if (ret != cudaSuccess) {
-    std::string err;
-    err += "cudaSetDevice failed, ret[";
-    err += std::to_string(static_cast<int>(ret));
-    err += "], ";
-    err += cudaGetErrorString(ret);
-    RETURN_STATUS_UNEXPECTED(err);
-  }
+#ifdef WITH_BACKEND
+  (void)device::DataQueueMgr::GetInstance().SetThreadDevice("GPU");
+#endif
   return Status::OK();
 }
 
 Status DeviceQueueOp::LaunchParallelCopyThread() {
+#ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(tree_);
   // Every thread use cuda api should SetThreadDevice
   RETURN_IF_NOT_OK(SetThreadDevice());
   // CircularPool may not safe under multi-threads scenario, so one worker with one pool
   for (int i = 0; i < num_workers_; i++) {
     std::shared_ptr<MemoryPool> pool;
-    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool, -1, kDeviceQueGpuThreadMemory, false, true));
+    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(
+      &pool, -1, kDeviceQueGpuThreadMemory, false,
+      MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice));
     pool_.push_back(pool);
   }
   gpu_connector_ = std::make_unique<GpuConnector>(num_workers_, 1, queue_capacity_);
@@ -437,15 +460,20 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
     tree_->LaunchWorkers(num_workers_, std::bind(&DeviceQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
                                                       std::bind(&DeviceQueueOp::PushDataToGPU, this), nullptr, id()));
-
+#endif
   return Status::OK();
 }
 
 bool DeviceQueueOp::NoExceptionRaised() {
-  return !TaskManager::FindMe()->Interrupted() && !mindspore::DataQueueHandler::IsClosed();
+#ifdef WITH_BACKEND
+  return !TaskManager::FindMe()->Interrupted() && !device::DataQueueMgr::GetInstance().IsClosed();
+#else
+  return !TaskManager::FindMe()->Interrupted();
+#endif
 }
 
 Status DeviceQueueOp::PushDataToGPU() {
+#ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(tree_);
   // Every thread use cuda api should SetThreadDevice
   RETURN_IF_NOT_OK(SetThreadDevice());
@@ -473,17 +501,17 @@ Status DeviceQueueOp::PushDataToGPU() {
   bool eoe_flag = item.eoe_flag;
   int64_t send_batch = 0;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  BlockQueueStatus_T ret;
+  DataQueueStatus ret;
   if (dynamic_shape_) {
-    ret = mindspore::DataQueueHandler::OpenDynamicBufQueue(channel_name_, release_function);
+    ret = device::DataQueueMgr::GetInstance().OpenDynamicBufQueue(channel_name_, release_function);
   } else {
-    ret = mindspore::DataQueueHandler::Open(channel_name_, release_function);
+    ret = device::DataQueueMgr::GetInstance().Open(channel_name_, release_function);
   }
-  if (ret != BlockQueueStatus_T::SUCCESS) {
+  if (ret != DataQueueStatus::SUCCESS) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for sending data.");
   }
 
-  while (!(items.empty() && !eoe_flag) && !mindspore::DataQueueHandler::IsClosed()) {
+  while (!(items.empty() && !eoe_flag) && !device::DataQueueMgr::GetInstance().IsClosed()) {
     if (!eoe_flag) {
 #ifdef ENABLE_DUMP_IR
       md_channel_info_->RecordBatchQueue(gpu_connector_->size());
@@ -524,8 +552,8 @@ Status DeviceQueueOp::PushDataToGPU() {
       eoe_flag = item.eoe_flag;
       // If the batches send by dataset are more than gpu calculate, gpu will core for no signal notify.
       if (rc.IsError()) {
-        mindspore::DataQueueHandler::Close(channel_name_);
-        mindspore::DataQueueHandler::CloseConfirm();
+        device::DataQueueMgr::GetInstance().Close(channel_name_);
+        device::DataQueueMgr::GetInstance().CloseConfirm();
         return rc;
       }
     } else {
@@ -540,8 +568,8 @@ Status DeviceQueueOp::PushDataToGPU() {
   tree_->SetFinished();
   MS_LOG(INFO) << "ExecutionTree finished.  Device queue pushed number of batches: " << send_batch;
 
-  mindspore::DataQueueHandler::Close(channel_name_);
-  mindspore::DataQueueHandler::CloseConfirm();
+  device::DataQueueMgr::GetInstance().Close(channel_name_);
+  device::DataQueueMgr::GetInstance().CloseConfirm();
   return Status::OK();
 }
 
@@ -553,7 +581,7 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
   TensorRow current_row;
   uint32_t batch_num = 0;
   RETURN_IF_NOT_OK(receive_queues_[worker_id]->PopFront(&current_row));
-  while (!current_row.quit() && !mindspore::DataQueueHandler::IsClosed()) {
+  while (!current_row.quit() && !device::DataQueueMgr::GetInstance().IsClosed()) {
     GpuConnectorItem connector_item = {{}, current_row.eoe()};
     if (!connector_item.eoe_flag) {
       std::vector<device::DataQueueItem> items;
@@ -565,6 +593,7 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
         data_item.worker_id_ = worker_id;
         items.push_back(data_item);
       }
+
       RETURN_IF_NOT_OK(MallocForGPUData(&items, current_row, worker_id));
       connector_item.data_item = std::move(items);
       batch_num++;
@@ -579,10 +608,12 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
   // Add empty data_item vector with eoe_flag=false as quit flag.
   GpuConnectorItem connector_item = {{}, false};
   RETURN_IF_NOT_OK(gpu_connector_->Add(worker_id, std::move(connector_item)));
+#endif
   return Status::OK();
 }
 
 Status DeviceQueueOp::SendDataToGPU() {
+#ifdef WITH_BACKEND
   RETURN_IF_NOT_OK(LaunchParallelCopyThread());
   MS_LOG(INFO) << "Device queue, sending data to GPU.";
 #ifndef ENABLE_SECURITY
@@ -594,10 +625,8 @@ Status DeviceQueueOp::SendDataToGPU() {
   first_fetch_flag_ = true;
   int64_t num_buf = 0;
   bool is_break_loop = false;
-  uint32_t batch_num = 0;
-  while (!current_row.eof() && !is_break_loop && !mindspore::DataQueueHandler::IsClosed()) {
-    while (!current_row.eoe() && !is_break_loop && !mindspore::DataQueueHandler::IsClosed()) {
-      batch_num++;
+  while (!current_row.eof() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
+    while (!current_row.eoe() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
 #ifndef ENABLE_SECURITY
@@ -636,6 +665,7 @@ Status DeviceQueueOp::SendDataToGPU() {
   }
 
   MS_LOG(INFO) << "Device queue received number of batches and EOEs: " << (num_buf - num_workers_);
+#endif
   return Status::OK();
 }
 
@@ -664,22 +694,22 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataQueueItem> *items
 }
 
 Status DeviceQueueOp::ClearDevice() {
+#ifdef WITH_BACKEND
   MS_LOG(INFO) << "Clearing the data in GPU device: " << device_id_ << " channel: " << channel_name_;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  auto ret = mindspore::DataQueueHandler::Open(channel_name_, release_function);
-  if (ret != BlockQueueStatus_T::SUCCESS) {
+  auto ret = device::DataQueueMgr::GetInstance().Open(channel_name_, release_function);
+  if (ret != DataQueueStatus::SUCCESS) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for clearing the device.");
   }
 
-  ret = mindspore::DataQueueHandler::Clear(channel_name_);
-  CHECK_FAIL_RETURN_UNEXPECTED(!ret, "Failed to clear the device.");
+  ret = device::DataQueueMgr::GetInstance().Clear(channel_name_);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret == DataQueueStatus::SUCCESS, "Failed to clear the device.");
 
-  mindspore::DataQueueHandler::Close(channel_name_);
-  mindspore::DataQueueHandler::CloseConfirm();
+  device::DataQueueMgr::GetInstance().Close(channel_name_);
+  device::DataQueueMgr::GetInstance().CloseConfirm();
+#endif
   return Status::OK();
 }
-
-#endif
 
 Status DeviceQueueOp::SendDataToCPU() {
   MS_LOG(INFO) << "Device queue, sending data to CPU.";
@@ -794,6 +824,7 @@ void DeviceQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
 }
 Status DeviceQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, const bool profiling,
                                     uint64_t *push_time) {
+#ifdef WITH_BACKEND
   bool flag_log = false;
 #ifndef ENABLE_SECURITY
   uint64_t start_time = 0;
@@ -801,10 +832,10 @@ Status DeviceQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, con
     start_time = ProfilingTime::GetCurMilliSecond();
   }
 #endif
-  while (!mindspore::DataQueueHandler::IsClosed() && !TaskManager::FindMe()->Interrupted()) {
-    BlockQueueStatus_T ret = mindspore::DataQueueHandler::Push(channel_name_, items, WAIT_TIME);
-    if (ret != BlockQueueStatus_T::SUCCESS) {
-      if (ret == BlockQueueStatus_T::ERROR_INPUT) {
+  while (!device::DataQueueMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
+    DataQueueStatus ret = device::DataQueueMgr::GetInstance().Push(channel_name_, items, WAIT_TIME);
+    if (ret != DataQueueStatus::SUCCESS) {
+      if (ret == DataQueueStatus::ERROR_INPUT) {
         return Status(
           StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
           "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
@@ -828,10 +859,12 @@ Status DeviceQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, con
     *push_time = ProfilingTime::GetCurMilliSecond() - start_time;
   }
 #endif
+#endif
   return Status::OK();
 }
 
 Status DeviceQueueOp::SendDataToAscendDynamic() {
+#ifdef WITH_BACKEND
   MS_LOG(DEBUG) << "Dynamic Device queue, sending data to Ascend.";
 
   int64_t send_batch = 0;
@@ -840,8 +873,8 @@ Status DeviceQueueOp::SendDataToAscendDynamic() {
   bool is_break_loop = false;
 
   std::function<void(void *, int32_t)> release_function([](void *, int32_t) { return; });
-  auto ret = mindspore::DataQueueHandler::OpenDynamicBufQueue(channel_name_, release_function);
-  if (ret != BlockQueueStatus_T::SUCCESS) {
+  auto ret = device::DataQueueMgr::GetInstance().OpenDynamicBufQueue(channel_name_, release_function);
+  if (ret != DataQueueStatus::SUCCESS) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "[Internal ERROR] Failed to open channel for sending data.");
   }
@@ -854,16 +887,7 @@ Status DeviceQueueOp::SendDataToAscendDynamic() {
     while (!curr_row.eoe() && !is_break_loop) {
       RETURN_IF_NOT_OK(FilterMetadata(&curr_row));
       RETURN_IF_NOT_OK(CheckExceptions(curr_row));
-      std::vector<device::DataQueueItem> items;
-      for (auto &i : curr_row) {
-        device::DataQueueItem data_item;
-        data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
-        data_item.shapes_ = i->shape().AsVector();
-        data_item.data_ptr_ = const_cast<void *>(static_cast<const void *>(i->GetBuffer()));
-        data_item.data_type_ = i->type().ToString();
-        items.push_back(data_item);
-      }
-
+      std::vector<device::DataQueueItem> items = ConvertTensorRowToDataQueueItem(curr_row);
       RETURN_IF_NOT_OK(RetryPushData(items, false, &data_queue_cost));
       if (create_data_info_queue_) {
         DATA_INFO data_info;
@@ -895,9 +919,9 @@ Status DeviceQueueOp::SendDataToAscendDynamic() {
   tree_->SetFinished();
   MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
 
-  mindspore::DataQueueHandler::Close(channel_name_);
-  mindspore::DataQueueHandler::CloseConfirm();
-
+  device::DataQueueMgr::GetInstance().Close(channel_name_);
+  device::DataQueueMgr::GetInstance().CloseConfirm();
+#endif
   return Status::OK();
 }
 }  // namespace dataset

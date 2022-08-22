@@ -1112,7 +1112,7 @@ bool TaskEmitAction(const ResourcePtr &resource) {
     resource->SetResult(kOutput, graph_id);
     return true;
   }
-  std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
+  std::vector<PrimitivePtr> cut_list = compile::GetNonlinearOps();
   if (bc_ptr->name() == kMsConvert) {
     cut_list = compile::GetMsNonlinearOps();
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_BLOCKING_QUEUE_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_BLOCKING_QUEUE_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_BLOCKING_QUEUE_H
+#define MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_BLOCKING_QUEUE_H
 
 #include <unistd.h>
 #include <iostream>
@@ -25,7 +25,7 @@
 #include <vector>
 #include <condition_variable>
 #include <functional>
-#include "runtime/data_queue/data_queue.h"
+#include "include/backend/data_queue/data_queue.h"
 namespace mindspore {
 namespace device {
 class BlockingQueue {
@@ -33,15 +33,16 @@ class BlockingQueue {
   BlockingQueue() : queue_(nullptr) {}
   ~BlockingQueue() = default;
 
-  BlockQueueStatus_T Create(const std::shared_ptr<DataQueue> &data_queue);
+  DataQueueStatus Create(const std::shared_ptr<DataQueue> &data_queue);
   void RegisterRelease(const std::function<void(void *, int32_t)> &func);
-  BlockQueueStatus_T Push(const std::vector<DataQueueItem> &data, unsigned int timeout_in_sec);
-  BlockQueueStatus_T Front(std::vector<DataQueueItem> *data);
-  BlockQueueStatus_T Pop();
-  BlockQueueStatus_T Clear();
+  DataQueueStatus Push(const std::vector<DataQueueItem> &data, unsigned int timeout_in_sec);
+  DataQueueStatus Front(std::vector<DataQueueItem> *data);
+  DataQueueStatus Pop();
+  DataQueueStatus Clear();
   bool Destroy();
   size_t Size() { return queue_->Size(); }
   size_t Capacity() { return queue_->Capacity(); }
+  const std::shared_ptr<DataQueue> &Queue() const { return queue_; }
 
  private:
   std::mutex mutex_;
@@ -51,5 +52,4 @@ class BlockingQueue {
 };
 }  // namespace device
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_BLOCKING_QUEUE_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_BLOCKING_QUEUE_H

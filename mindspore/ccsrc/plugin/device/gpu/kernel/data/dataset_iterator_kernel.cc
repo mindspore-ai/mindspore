@@ -27,7 +27,7 @@
 #ifndef ENABLE_SECURITY
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #endif
-#include "runtime/data_queue/data_queue_mgr.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
@@ -113,7 +113,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
     }
 #endif
     auto ret = DataQueueMgr::GetInstance().Front(queue_name_, data);
-    if (ret == device::SUCCESS) {
+    if (ret == device::DataQueueStatus::SUCCESS) {
 #ifndef ENABLE_SECURITY
       if (profiling_enable_) {
         uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
@@ -123,7 +123,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
       break;
     }
 
-    if (ret == device::TIMEOUT) {
+    if (ret == device::DataQueueStatus::TIMEOUT) {
       repeat++;
       if (repeat < 10) {
         MS_LOG(INFO) << "Waiting for data...(" << repeat << " / 10)";
@@ -155,7 +155,7 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
   }
   if (!is_opened_) {
     auto ret = DataQueueMgr::GetInstance().OpenDynamicBufQueue(queue_name_);
-    if (ret != device::BlockQueueStatus_T::SUCCESS) {
+    if (ret != device::DataQueueStatus::SUCCESS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed: " << ret;
     }
     is_opened_ = true;

@@ -10,10 +10,6 @@ endif()
 
 add_subdirectory(cache)
 
-if(ENABLE_TDTQUE)
-    add_subdirectory(device_queue_impl)
-endif()
-
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 set(SRC_FILES_LIST
@@ -66,8 +62,4 @@ if(NOT ENABLE_SECURITY)
     else()
         add_dependencies(engine-perf engine-cache-client)
     endif()
-endif()
-
-if(ENABLE_TDTQUE)
-    add_dependencies(engine engine-device-queue)
 endif()

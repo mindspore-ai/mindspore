@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/gpu_event.h"
-#include "runtime/data_queue/data_queue_mgr.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"

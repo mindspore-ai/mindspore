@@ -27,30 +27,20 @@
 
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
-#include "mindspore/core/utils/data_queue_handler.h"
 #ifdef ENABLE_DUMP_IR
 #include "minddata/dataset/util/rdr.h"
 #endif
-
-#ifdef ENABLE_TDTQUE
 #include "minddata/dataset/util/queue.h"
-#include "minddata/dataset/engine/device_queue_impl/device_queue_base.h"
-#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_plugin.h"
-#include "minddata/dataset/engine/device_queue_impl/host_queue/host_queue_plugin.h"
-#endif
-
-#ifdef ENABLE_GPUQUE
-#include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/util/circular_pool.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#endif
+#include "mindspore/ccsrc/include/backend/data_queue/data_queue.h"
 
 namespace mindspore {
 namespace dataset {
+class GpuConnector;
 using DATA_INFO = std::vector<std::pair<DataType, TensorShape>>;
 using DATA_INFO_QUEUE = Queue<DATA_INFO>;
-using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::DataQueueItem;
+using mindspore::device::DataQueueStatus;
 constexpr int32_t kTimeOutMilliSeconds = 25000;
 const int kDataInfoQueueCapacity = 128;
 
@@ -83,13 +73,9 @@ class DeviceQueueOp : public PipelineOp {
     stop_send_ = false;
   }
 
-#ifdef ENABLE_TDTQUE
   void StopWaiting() { ascend_keep_waiting_ = false; }
-#endif
 
-#ifdef ENABLE_GPUQUE
   Status ClearDevice();
-#endif
 
   Status GetDataInfo(DATA_INFO *data_info);
 
@@ -136,7 +122,6 @@ class DeviceQueueOp : public PipelineOp {
   bool NoExceptionRaised();
   Status SendDataToAscendDynamic();
 
-#ifdef ENABLE_TDTQUE
   void WaitContinueSignal() const;
   Status SendDataToAscend();
   Status SendEpochEndToAscend(const TensorRow &curr_row, const bool &is_profiling_enable, int32_t *tdt_cost,
@@ -144,11 +129,9 @@ class DeviceQueueOp : public PipelineOp {
   void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg);
   Status SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost);
   // check status that push data into device
-  Status CheckPushStatus(Status status, bool stop_send, bool *send_finished, bool *is_break_loop);
+  Status CheckPushStatus(DataQueueStatus status, bool stop_send, bool *send_finished, bool *is_break_loop);
   bool ascend_keep_waiting_;
-#endif
 
-#ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
   Status MallocForGPUData(std::vector<device::DataQueueItem> *items, const TensorRow &curr_row,
                           const int32_t &worker_id);
@@ -166,11 +149,6 @@ class DeviceQueueOp : public PipelineOp {
   const uint32_t kDeviceQueGpuThreadMemory = 1024;
   uint32_t num_workers_;
   uint32_t queue_capacity_;
-  // This rank_id is for device_queue, one process work with only one rank_id,
-  // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
-  // but for distribute scenario, this rank_id come from _get_global_rank() in python
-  uint32_t rank_id_;
-#endif
 
   Status SendDataToCPU();
 #ifndef ENABLE_SECURITY
@@ -195,10 +173,8 @@ class DeviceQueueOp : public PipelineOp {
   std::mutex data_info_mutex_;
   bool first_push_flag_;  // default: false, when first push, it will be true
   bool dynamic_shape_{false};
+  std::shared_ptr<device::DataQueue> ascend_data_queue_;
 
-#ifdef ENABLE_TDTQUE
-  std::shared_ptr<DeviceQueueBase> tdtInstancePtr;
-#endif
 #ifdef ENABLE_DUMP_IR
   std::shared_ptr<MDChannelInfo> md_channel_info_;
 #endif

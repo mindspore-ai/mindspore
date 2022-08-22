@@ -11,10 +11,5 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
-if(ENABLE_TDTQUE)
-    file(GLOB_RECURSE TDT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "../../minddata/dataset/engine/tdt/tdt_handle.cc")
-endif()
-
 set_property(SOURCE ${DEVICE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-add_library(_mindspore_runtime_device_obj OBJECT ${DEVICE_SRC_LIST}  ${TDT_SRC_LIST})
+add_library(_mindspore_runtime_device_obj OBJECT ${DEVICE_SRC_LIST})

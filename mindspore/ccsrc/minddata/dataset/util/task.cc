@@ -22,12 +22,10 @@
 #if defined(__ANDROID__) || defined(ANDROID)
 #include "minddata/dataset/util/services.h"
 #endif
-#ifdef ENABLE_TDTQUE
-#include "acl/acl_tdt.h"
-#include "tdt/status.h"
-#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
+#ifdef WITH_BACKEND
+#include "utils/ms_context.h"
+#include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
 #endif
-
 namespace mindspore {
 namespace dataset {
 thread_local Task *gMyTask = nullptr;
@@ -141,6 +139,10 @@ Status Task::Run() {
 }
 
 Status Task::Join(WaitFlag blocking) {
+#ifdef WITH_BACKEND
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+#endif
   if (running_) {
     RETURN_UNEXPECTED_IF_NULL(MyTaskGroup());
     auto interrupt_svc = MyTaskGroup()->GetIntrpService();
@@ -162,23 +164,27 @@ Status Task::Join(WaitFlag blocking) {
           MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str() << " is not responding. Interrupt again";
           interrupt_svc->InterruptAll();
           wait_times++;
-#ifdef ENABLE_TDTQUE
-          // Because hostPush hung in DeviceQueueOp, wait 5 seconds and destroy the tdt
-          if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
-            MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
-                            << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
-            if (!TdtHandle::DestroyHandle()) {
-              MS_LOG(WARNING) << "Destroy tdt channel failed.";
-            } else {
-              MS_LOG(INFO) << "Destroy tdt channel success.";
-            }
+#ifdef WITH_BACKEND
+          if (device_target == kAscendDevice) {
+            // Because hostPush hung in DeviceQueueOp, wait 5 seconds and destroy the tdt
+            if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
+              MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
+                              << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
+              auto queue =
+                device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, {}, false, 0, nullptr, {});
+              if (queue != nullptr && !queue->Destroy()) {
+                MS_LOG(WARNING) << "Destroy tdt channel failed.";
+              } else {
+                MS_LOG(INFO) << "Destroy tdt channel success.";
+              }
 
-            // just wait 30 seconds
-            // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
-            if (wait_times > kWaitInterruptTaskTime) {
-              MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
-                              << " is not responding. Maybe it's destroyed, task stop.";
-              break;
+              // just wait 30 seconds
+              // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
+              if (wait_times > kWaitInterruptTaskTime) {
+                MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
+                                << " is not responding. Maybe it's destroyed, task stop.";
+                break;
+              }
             }
           }
 #endif

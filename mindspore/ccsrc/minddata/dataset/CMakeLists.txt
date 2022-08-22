@@ -24,10 +24,6 @@ if(ENABLE_ACL)
     add_definitions(-D ENABLE_ACL)
     message(STATUS "ACL module is enabled")
 endif()
-if(ENABLE_GPUQUE)
-    add_definitions(-D ENABLE_GPUQUE)
-    message(STATUS "GPU queue is enabled")
-endif()
 if(ENABLE_TDTQUE)
     add_definitions(-D ENABLE_TDTQUE)
     message(STATUS "TDT queue is enabled")
@@ -119,9 +115,6 @@ endif()
 if(NOT ENABLE_SECURITY)
     add_dependencies(engine-perf core)
 endif()
-if(ENABLE_TDTQUE)
-    add_dependencies(engine-device-queue core)
-endif()
 
 # for proto/cache_grpc.pb.h dependency
 if(ENABLE_CACHE)
@@ -204,11 +197,6 @@ if(ENABLE_TDTQUE)
     if(NOT ENABLE_SECURITY)
         set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
     endif()
-    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-device-queue>)
-    # tdt impl
-    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-tdt>)
-    # host queue impl
-    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-host-queue>)
 else()
     if(NOT ENABLE_SECURITY)
         set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
@@ -251,16 +239,7 @@ target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turb
                                           mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                                           mindspore::sentencepiece_train ${ICU_LIB})
 
-if(ENABLE_GPUQUE)
-    target_link_libraries(_c_dataengine PRIVATE
-                          ${CUDNN_LIBRARY_PATH}
-                          ${CUDA_PATH}/lib64/libcudart.so
-                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
-endif()
-
-if(ENABLE_TDTQUE)
-    target_link_libraries(_c_dataengine PRIVATE ${ACL} ${ACL_TDT_CHANNEL})
-endif()
+target_link_libraries(_c_dataengine PRIVATE mindspore_backend)
 
 add_dependencies(_c_dataengine _c_mindrecord)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

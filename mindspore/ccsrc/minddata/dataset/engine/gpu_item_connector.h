@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GPU_ITEM_CONNECTOR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GPU_ITEM_CONNECTOR_H_
 
-#ifdef ENABLE_GPUQUE
 #include <memory>
 #include <string>
 #include <utility>
@@ -24,7 +23,7 @@
 #include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "runtime/data_queue/blocking_queue.h"
+#include "include/backend/data_queue/blocking_queue.h"
 
 using mindspore::device::DataQueueItem;
 
@@ -88,5 +87,4 @@ class GpuConnector : public Connector<GpuConnectorItem> {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // ENABLE_GPUQUE
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GPU_ITEM_CONNECTOR_H_

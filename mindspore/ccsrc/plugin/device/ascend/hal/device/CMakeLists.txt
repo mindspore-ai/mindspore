@@ -7,11 +7,6 @@ file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 list(REMOVE_ITEM DEVICE_SRC_LIST "distribute/mpi_collective_group.cc"
         "distribute/collective_group_wrapper.cc" "distribute/mpi_pycc.cc")
 
-if(ENABLE_TDTQUE)
-    file(GLOB_RECURSE TDT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/engine/tdt/tdt_handle.cc)
-endif()
-
 if(ENABLE_MPI AND ENABLE_D)
     set_property(SOURCE "distribute/mpi_pycc.cc"
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)

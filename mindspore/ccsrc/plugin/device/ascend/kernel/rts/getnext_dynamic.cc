@@ -29,7 +29,7 @@
 #include "acl/acl_rt.h"
 #include "runtime/device/kernel_runtime.h"
 #include "utils/ms_context.h"
-#include "runtime/data_queue/data_queue_mgr.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
 
 namespace mindspore {
 namespace kernel {

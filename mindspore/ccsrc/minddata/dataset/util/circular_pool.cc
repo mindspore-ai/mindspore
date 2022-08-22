@@ -27,11 +27,7 @@ namespace dataset {
 Status CircularPool::AddOneArena() {
   Status rc;
   std::shared_ptr<Arena> b;
-#ifdef ENABLE_GPUQUE
   RETURN_IF_NOT_OK(Arena::CreateArena(&b, arena_size_, is_cuda_malloc_));
-#else
-  RETURN_IF_NOT_OK(Arena::CreateArena(&b, arena_size_));
-#endif
   tail_ = b.get();
   cur_size_in_mb_ += arena_size_;
   mem_segments_.push_back(std::move(b));
@@ -198,22 +194,13 @@ int CircularPool::PercentFree() const {
   }
 }
 
-#ifdef ENABLE_GPUQUE
 CircularPool::CircularPool(int max_size_in_gb, int arena_size, bool is_cuda_malloc)
     : unlimited_(max_size_in_gb <= 0),
       max_size_in_mb_(unlimited_ ? std::numeric_limits<int32_t>::max() : max_size_in_gb * 1024),
       arena_size_(arena_size),
       is_cuda_malloc_(is_cuda_malloc),
       cur_size_in_mb_(0) {}
-#else
-CircularPool::CircularPool(int max_size_in_gb, int arena_size)
-    : unlimited_(max_size_in_gb <= 0),
-      max_size_in_mb_(unlimited_ ? std::numeric_limits<int32_t>::max() : max_size_in_gb * 1024),
-      arena_size_(arena_size),
-      cur_size_in_mb_(0) {}
-#endif
 
-#ifdef ENABLE_GPUQUE
 Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, int max_size_in_gb, int arena_size,
                                         bool createOneArena, bool is_cuda_malloc) {
   Status rc;
@@ -234,28 +221,6 @@ Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, i
   }
   return rc;
 }
-#else
-Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, int max_size_in_gb, int arena_size,
-                                        bool createOneArena) {
-  Status rc;
-  if (out_pool == nullptr) {
-    RETURN_STATUS_UNEXPECTED("pPool is null");
-  }
-  auto pool = new (std::nothrow) CircularPool(max_size_in_gb, arena_size);
-  if (pool == nullptr) {
-    RETURN_STATUS_OOM("Out of memory.");
-  }
-  if (createOneArena) {
-    rc = pool->AddOneArena();
-  }
-  if (rc.IsOk()) {
-    (*out_pool).reset(pool);
-  } else {
-    delete pool;
-  }
-  return rc;
-}
-#endif
 
 CircularPool::~CircularPool() = default;
 }  // namespace dataset
