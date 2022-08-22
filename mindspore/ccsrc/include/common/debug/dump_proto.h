@@ -37,7 +37,7 @@ bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_pat
 
 COMMON_EXPORT void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 
-COMMON_EXPORT void GetFuncGraphProto(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto);
+COMMON_EXPORT std::string GetFuncGraphProtoJsonString(const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_DUMP_PROTO_H_

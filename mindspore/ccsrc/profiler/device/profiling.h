@@ -99,6 +99,7 @@ class Profiler {
   void SetSingleOpLaunchTime(const std::pair<double, double> &launch_start_end) {
     single_op_launch_start_time_end_time_ = launch_start_end;
   }
+  bool GetParallelStrategyEnableFlag() const { return is_parallel_strategy; }
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
@@ -121,6 +122,7 @@ class Profiler {
   std::mutex record_mutex_;
   bool init_flag_ = false;
   std::string profiling_options_;
+  bool is_parallel_strategy = false;
 
  private:
   BACKEND_EXPORT inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
