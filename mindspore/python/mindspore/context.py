@@ -447,8 +447,6 @@ def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, only data parallel supported on CPU.
 
-    Auto parallel context should be configured before the initialization of your network.
-
     Note:
         Attribute name is required for setting attributes.
         If a program has tasks on different parallel modes, before setting a new parallel mode for the
