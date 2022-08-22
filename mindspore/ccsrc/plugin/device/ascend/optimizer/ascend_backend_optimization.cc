@@ -166,6 +166,7 @@
 #include "plugin/device/ascend/optimizer/mindir/bn_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/reg_ascend_const_input_to_attr.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include "backend/common/pass/optimize_gradients_allreduce_overlap.h"

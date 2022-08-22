@@ -18,6 +18,7 @@
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
+#include "plugin/device/cpu/optimizer/reg_cpu_const_input_to_attr.h"
 #ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #endif

@@ -68,6 +68,9 @@ FrontendOpRunInfoPtr ConstructOpExecInfo() {
 }
 
 TEST_F(TestPynativeExecute, TestCreateContext) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, "CPU");
   auto ctx3 = MsContext::GetInstance();
   ASSERT_EQ(ctx3->backend_policy(), "vm");
   ASSERT_EQ(ctx3->get_param<std::string>(MS_CTX_DEVICE_TARGET), "CPU");

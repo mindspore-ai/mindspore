@@ -40,7 +40,11 @@ namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 class TestHWBufferFusion : public BackendCommon {
  public:
-  TestHWBufferFusion() : get_py_fun_("gtest_input.pre_activate.buffer_fusion_test", true) {}
+  TestHWBufferFusion() : get_py_fun_("gtest_input.pre_activate.buffer_fusion_test", true) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
+  }
   ~TestHWBufferFusion() override = default;
 
   UT::PyFuncGraphFetcher get_py_fun_;

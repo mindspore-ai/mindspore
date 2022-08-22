@@ -17,9 +17,7 @@
 
 #include <algorithm>
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "backend/common/optimizer/reg_cpu_const_input_to_attr.h"
-#include "backend/common/optimizer/reg_gpu_const_input_to_attr.h"
-#include "backend/common/optimizer/reg_ascend_const_input_to_attr.h"
+#include "backend/common/optimizer/const_input_to_attr_factory.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -45,10 +43,19 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     backend = primitive_target;
   }
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
-  auto attr_index = ConstInputToAttrRegister::GetInstance().GetConstToAttr(name, backend, is_dynamic_shape);
-  if (attr_index.empty()) {
+  mindspore::HashSet<size_t> input_to_attr = {};
+  auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(name, backend, is_dynamic_shape);
+  if (reg_info == nullptr) {
     return nullptr;
+  } else {
+    for (auto &iter : reg_info->GetInputAttrInfoMap()) {
+      input_to_attr.insert(iter.second.GetInputIndex());
+    }
+    if (input_to_attr.empty()) {
+      return nullptr;
+    }
   }
-  return ConstInputToAttr(cnode, attr_index);
+
+  return ConstInputToAttr(cnode, input_to_attr);
 }
 }  // namespace mindspore::opt

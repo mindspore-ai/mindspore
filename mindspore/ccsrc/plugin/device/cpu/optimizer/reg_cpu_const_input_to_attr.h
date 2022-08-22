@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
 
 #include "backend/common/optimizer/const_input_to_attr_factory.h"
 
 namespace mindspore::opt {
+#define RER_CPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kCPUDevice, false, __VA_ARGS__)
+#define RER_CPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kCPUDevice, true, __VA_ARGS__)
+
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kCastOpName, 1);
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kConcatOpName, 0);
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kEmbeddingLookupOpName, 2, 3, 4, 5);
@@ -103,4 +106,4 @@ RER_CPU_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
 RER_CPU_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
 }  // namespace mindspore::opt
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_

@@ -29,7 +29,11 @@ namespace mindspore {
 namespace opt {
 class TestHWConstInputToAttr : public BackendCommon {
  public:
-  TestHWConstInputToAttr() : getPyFun_("gtest_input.pre_activate.convert_const_input_test", true) {}
+  TestHWConstInputToAttr() : getPyFun_("gtest_input.pre_activate.convert_const_input_test", true) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
+  }
   ~TestHWConstInputToAttr() override = default;
 
  public:
