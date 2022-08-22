@@ -226,7 +226,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
                                                                       device_contexts_[0]->GetDeviceType());
-    // todo:
+    // Ge backend maybe nullptr.
     if (input_device_tensor == nullptr) {
       continue;
     }

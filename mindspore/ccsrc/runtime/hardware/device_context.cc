@@ -67,7 +67,8 @@ void *DeviceResManager::GetStream(size_t stream_id) const {
 bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() != nullptr) {
-    MS_LOG(EXCEPTION) << "Memory leak detected!";
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
   }
 
   auto device_ptr = AllocateMemory(address->GetSize());
@@ -90,8 +91,7 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
     return;
   }
 
-  void *ptr = const_cast<void *>(address->GetPtr());
-  FreeMemory(ptr);
+  FreeMemory(address->GetMutablePtr());
   address->set_ptr(nullptr);
 }
 }  // namespace device

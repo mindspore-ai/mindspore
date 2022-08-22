@@ -182,6 +182,14 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
   }
 }
 
+void MemoryManagerActor::FreeMemorydirectly(void **free_ptr, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(free_ptr);
+  MS_EXCEPTION_IF_NULL(*free_ptr);
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->device_res_manager_->FreeMemory(*free_ptr);
+  *free_ptr = nullptr;
+}
+
 void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   // Call back to the from actor to process.
   ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);

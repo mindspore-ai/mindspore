@@ -1089,6 +1089,7 @@ KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &func_graph = node->func_graph();
   if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "No association graph for node: " << node->fullname_with_scope();
     return nullptr;
   } else {
     return func_graph->cast<KernelGraphPtr>();
