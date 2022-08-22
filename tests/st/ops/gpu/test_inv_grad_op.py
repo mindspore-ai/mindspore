@@ -50,7 +50,7 @@ class InvGradDynamicShapeNet(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.complex64, np.complex128])
-def test_inv_grad_float32(mode, dtype):
+def test_inv_grad_float_and_complex(mode, dtype):
     """
     Feature: ALL To ALL
     Description: test cases for InvGrad for float32 and complex
