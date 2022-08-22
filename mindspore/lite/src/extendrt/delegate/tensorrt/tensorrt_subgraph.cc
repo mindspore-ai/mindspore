@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <limits>
 #include "src/runtime/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
@@ -36,6 +37,20 @@ size_t DataType2Size(DataType datatype) {
     {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
   };
   return TypeByte[datatype];
+}
+std::string GetNameByBindingIndex(const MSTensor &tensor, size_t index) {
+  std::string tensor_name = tensor.Name();
+  if (index != 0) {
+    tensor_name += " [profile " + std::to_string(index) + "]";
+  }
+  return tensor_name;
+}
+std::string GetNameByBindingIndex(const std::string &name, size_t index) {
+  std::string tensor_name = name;
+  if (index != 0) {
+    tensor_name += " [profile " + std::to_string(index) + "]";
+  }
+  return tensor_name;
 }
 }  // namespace
 TensorRTSubGraph::~TensorRTSubGraph() {
@@ -69,20 +84,15 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "Get TensorRT subgraph input and output ops failed.";
     return RET_ERROR;
   }
-  profile_ = runtime_->GetBuilder()->createOptimizationProfile();
-  if (profile_ == nullptr) {
-    MS_LOG(ERROR) << "createOptimizationProfile failed.";
-    return RET_ERROR;
-  }
   ctx_ = new TensorRTContext();
   if (ctx_ == nullptr) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
-    return RET_OK;
+    return RET_ERROR;
   }
   ctx_->SetRuntime(runtime_);
   if (!ctx_->Init()) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
-    return RET_OK;
+    return RET_ERROR;
   }
   if (SetDeviceConfig(stream) != RET_OK) {
     MS_LOG(WARNING) << "set tensorrt config failed.";
@@ -91,6 +101,21 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
   if (serializer_ == nullptr) {
     MS_LOG(ERROR) << "create Serializer failed.";
     return RET_ERROR;
+  }
+  using_input_ranges_ =
+    min_dims_.size() != 0 && min_dims_.size() == opt_dims_.size() && min_dims_.size() == max_dims_.size();
+  if (using_input_ranges_) {
+    for (size_t i = 0; i != min_dims_.front().size(); ++i) {
+      profiles_.push_back(runtime_->GetBuilder()->createOptimizationProfile());
+    }
+  } else {
+    profiles_.push_back(runtime_->GetBuilder()->createOptimizationProfile());
+  }
+  for (size_t i = 0; i != profiles_.size(); ++i) {
+    if (profiles_[i] == nullptr) {
+      MS_LOG(ERROR) << "create optimization profile failed.";
+      return RET_ERROR;
+    }
   }
   engine_ = serializer_->GetSerializedEngine();
   if (engine_ != nullptr) {
@@ -102,16 +127,16 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
       input_hw_index_ = -1;
     }
   }
-  using_input_ranges_ =
-    min_dims_.size() != 0 && min_dims_.size() == opt_dims_.size() && min_dims_.size() == max_dims_.size();
   return RET_OK;
 }
 
 int TensorRTSubGraph::BuildEngine() {
   // print all network ops
-  if (this->config_->addOptimizationProfile(profile_) == -1) {
-    MS_LOG(ERROR) << "addOptimizationProfile failed.";
-    return RET_ERROR;
+  for (auto &profile : profiles_) {
+    if (this->config_->addOptimizationProfile(profile) == -1) {
+      MS_LOG(ERROR) << "addOptimizationProfile failed.";
+      return RET_ERROR;
+    }
   }
   MS_LOG(INFO) << "build engine for tensorrt network: " << ctx_->network()->getName();
   for (int i = 0; i < ctx_->network()->getNbLayers(); i++) {
@@ -198,60 +223,47 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
 }
 
 nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const mindspore::MSTensor &in_tensor, size_t index) {
+  auto &min_profile_dims = min_dims_[index];
+  auto &max_profile_dims = max_dims_[index];
   nvinfer1::Dims input_dims;
-  input_dims.nbDims = min_dims_[index].nbDims;
-  DebugDims("input min dims", min_dims_[index]);
+  input_dims.nbDims = min_dims_[index].front().nbDims;
   for (int i = 0; i != input_dims.nbDims; ++i) {
-    input_dims.d[i] = (max_dims_[index].d[i] != min_dims_[index].d[i]) ? -1 : min_dims_[index].d[i];
+    int min_dim = std::numeric_limits<int>::max();
+    int max_dim = std::numeric_limits<int>::min();
+    for (int j = 0; j != min_profile_dims.size(); ++j) {
+      min_dim = std::min(min_profile_dims[j].d[i], min_dim);
+      max_dim = std::max(max_profile_dims[j].d[i], max_dim);
+    }
+    input_dims.d[i] = (min_dim == max_dim ? min_dim : -1);
   }
   DebugDims("input dims", input_dims);
-  if (profile_ == nullptr) {
-    MS_LOG(ERROR) << "profile is null.";
-    return input_dims;
+  for (int i = 0; i != opt_dims_[index].size(); ++i) {
+    if (!profiles_[i]->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN,
+                                     min_dims_[index][i])) {
+      MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
+      return input_dims;
+    }
+    if (!profiles_[i]->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT,
+                                     opt_dims_[index][i])) {
+      MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
+      return input_dims;
+    }
+    if (!profiles_[i]->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX,
+                                     max_dims_[index][i])) {
+      MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
+      return input_dims;
+    }
+    DebugDims("min dims", min_dims_[index][i]);
+    DebugDims("opt dims", opt_dims_[index][i]);
+    DebugDims("max dims", max_dims_[index][i]);
   }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, min_dims_[index])) {
-    MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
-    return input_dims;
-  }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, opt_dims_[index])) {
-    MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
-    return input_dims;
-  }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, max_dims_[index])) {
-    MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
-    return input_dims;
-  }
-  DebugDims("min dims", min_dims_[index]);
-  DebugDims("opt dims", opt_dims_[index]);
-  DebugDims("max dims", max_dims_[index]);
   return input_dims;
 }
 
 nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor &in_tensor) {
   nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
-  if (profile_ == nullptr) {
-    MS_LOG(ERROR) << "profile is null.";
-    return input_dims;
-  }
-  if (runtime_->GetBatchSize() == 0) {
-    runtime_->SetBatchSize(input_dims.d[0]);
-    MS_LOG(INFO) << "batch size init as " << runtime_->GetBatchSize();
-    if (input_batchsize_index_ != -1) {
-      input_dims.d[0] = -1;  // dynamic batch size with wildcard N, default batchsize is first dims
-      input_batchsize_index_ = 0;
-    }
-  } else {
-    if (input_batchsize_index_ != -1) {
-      for (int n = 0; n < input_dims.nbDims; n++) {
-        if (input_dims.d[n] == runtime_->GetBatchSize()) {
-          runtime_->SetBatchSize(std::max(input_dims.d[0], runtime_->GetBatchSize()));
-          // first dims equals to batchsize
-          input_dims.d[n] = -1;
-          input_batchsize_index_ = n;
-          break;
-        }
-      }
-    }
+  if (input_batchsize_index_ != -1) {
+    input_dims.d[0] = -1;
   }
   // only support NHWC HW dim resize
   if (input_hw_index_ != -1) {
@@ -263,30 +275,30 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
   // We do not need to check the return of setDimension and addOptimizationProfile here as all dims are explicitly set
   nvinfer1::Dims input_dims_min = ConvertCudaDims(in_tensor.Shape());
   if (input_batchsize_index_ != -1) {
-    input_dims_min.d[input_batchsize_index_] = 1;
+    input_dims_min.d[0] = 1;
     if (input_hw_index_ != -1) {
       input_dims_min.d[input_hw_index_] = 1;
       input_dims_min.d[input_hw_index_ + 1] = 1;
     }
   }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
+  if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
     MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
     return input_dims;
   }
   nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
+  if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
     MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
     return input_dims;
   }
   nvinfer1::Dims input_dims_max = ConvertCudaDims(in_tensor.Shape());
   // input_dims_max should be the same with input network dims
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
+  if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return input_dims;
   }
-  min_dims_.push_back(input_dims_min);
-  opt_dims_.push_back(input_dims_opt);
-  max_dims_.push_back(input_dims_max);
+  min_dims_.push_back({input_dims_min});
+  opt_dims_.push_back({input_dims_opt});
+  max_dims_.push_back({input_dims_max});
   DebugDims("input min dims", input_dims_min);
   DebugDims("input opt dims", input_dims_opt);
   DebugDims("input max dims", input_dims_max);
@@ -454,27 +466,33 @@ int TensorRTSubGraph::Prepare() {
     return RET_ERROR;
   }
 
+  size_t profile_index = MaxVolumnProfileIndex();
   for (size_t i = 0; i != inputs_.size(); ++i) {
     auto &tensor = inputs_[i];
-    int volumn = std::accumulate(max_dims_[i].d, max_dims_[i].d + max_dims_[i].nbDims, 1, std::multiplies<int>());
+    int volumn =
+      std::accumulate(max_dims_[i][profile_index].d, max_dims_[i][profile_index].d + max_dims_[i][profile_index].nbDims,
+                      1, std::multiplies<int>());
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, volumn * DataType2Size(tensor.DataType()));
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for inputs tensor device memory failed.";
       return RET_ERROR;
     }
-    runtime_->SetBatchSize(max_dims_[i].d[0]);
-    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
-    MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor.Name() << " attr: " << device_ptr;
-    tensor_bindings_[index] = device_ptr;
     trt_in_tensor_name_.push_back(tensor.Name());
-    nvinfer1::Dims input_dims = max_dims_[i];
-    for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
-    }
-
-    if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
-      MS_LOG(ERROR) << "invalid input dims of " << tensor.Name();
-      return RET_ERROR;
+    for (size_t j = 0; j != profiles_.size(); ++j) {
+      int binding_index = 0;
+      std::string tensor_name = GetNameByBindingIndex(tensor, j);
+      int index = this->engine_->getBindingIndex(tensor_name.c_str());
+      MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor_name << " attr: " << device_ptr;
+      tensor_bindings_[index] = device_ptr;
+      nvinfer1::Dims input_dims = max_dims_[i][j];
+      for (int od = 0; od < input_dims.nbDims; od++) {
+        MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
+      }
+      this->trt_context_->setOptimizationProfile(j);
+      if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
+        MS_LOG(ERROR) << "invalid input dims of " << tensor.Name();
+        return RET_ERROR;
+      }
     }
   }
 
@@ -504,8 +522,9 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
-    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
-    auto out_dims = trt_context_->getBindingDimensions(index);
+    std::string max_tensor_name = GetNameByBindingIndex(tensor, profile_index);
+    int max_index = this->engine_->getBindingIndex(max_tensor_name.c_str());
+    auto out_dims = trt_context_->getBindingDimensions(max_index);
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
     DebugDims("out dims", out_dims);
     if (tensor.Data() == nullptr) {
@@ -518,16 +537,60 @@ int TensorRTSubGraph::Prepare() {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
       return RET_ERROR;
     }
-    tensor_bindings_[index] = device_ptr;
+    for (size_t j = 0; j != profiles_.size(); ++j) {
+      std::string tensor_name = GetNameByBindingIndex(tensor, j);
+      int index = this->engine_->getBindingIndex(tensor_name.c_str());
+      tensor_bindings_[index] = device_ptr;
+    }
     trt_out_tensor_name_.push_back(tensor.Name());
   }
   return RET_OK;
+}
+
+int TensorRTSubGraph::SelectProfile() const {
+  std::vector<int> profile_index;
+  for (int i = 0; i != profiles_.size(); ++i) {
+    bool condition = true;
+    for (size_t j = 0; j != inputs_.size(); ++j) {
+      auto &tensor = inputs_[j];
+      nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[j].Shape());
+      for (int od = 0; od < input_dims.nbDims; od++) {
+        if (input_dims.d[od] < min_dims_[j][i].d[od] || input_dims.d[od] > max_dims_[j][i].d[od]) {
+          condition = false;
+          break;
+        }
+      }
+    }
+    if (condition) {
+      profile_index.push_back(i);
+    }
+  }
+  return profile_index.empty() ? 0 : profile_index.front();
+}
+
+size_t TensorRTSubGraph::MaxVolumnProfileIndex() const {
+  int max_volumn = std::numeric_limits<int>::min();
+  size_t max_volumn_index = 0;
+  for (size_t i = 0; i != max_dims_.front().size(); ++i) {
+    // depend on the first input tensor
+    int volumn = std::accumulate(max_dims_.front()[i].d, max_dims_.front()[i].d + max_dims_.front()[i].nbDims, 1,
+                                 std::multiplies<int>());
+    if (volumn > max_volumn) {
+      max_volumn_index = i;
+      volumn = max_volumn;
+    }
+  }
+  return max_volumn_index;
 }
 
 int TensorRTSubGraph::ReSize() {
   if (input_batchsize_index_ == -1) {
     MS_LOG(ERROR) << "current network don't support resize.";
     return RET_ERROR;
+  }
+  profile_index_ = SelectProfile();
+  if (this->trt_context_->setOptimizationProfile(profile_index_)) {
+    MS_LOG(INFO) << "setOptimizationProfile: " << profile_index_;
   }
   for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
     if (ctx_->network() != nullptr) {
@@ -546,7 +609,6 @@ int TensorRTSubGraph::ReSize() {
 
     MS_LOG(INFO) << "resize at input_batch_index " << input_batchsize_index_ << ", update batch size to "
                  << inputs_[i].Shape()[input_batchsize_index_];
-    runtime_->SetBatchSize(inputs_[i].Shape()[input_batchsize_index_]);
 
     // inputs_ is dupulated by mindrt, name is untustable.
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_in_tensor_name_[i], inputs_[i].DataSize(),
@@ -555,7 +617,7 @@ int TensorRTSubGraph::ReSize() {
       MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
       return RET_ERROR;
     }
-    int index = this->engine_->getBindingIndex(trt_in_tensor_name_[i].c_str());
+    int index = this->engine_->getBindingIndex(GetNameByBindingIndex(trt_in_tensor_name_[i], profile_index_).c_str());
     MS_LOG(INFO) << "device index " << index << " for tensor : " << trt_in_tensor_name_[i] << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     // Set actual input size
@@ -575,7 +637,9 @@ int TensorRTSubGraph::ReSize() {
   }
 
   for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
-    int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
+    int index = this->engine_->getBindingIndex(GetNameByBindingIndex(trt_out_tensor_name_[i], profile_index_).c_str());
+    auto out_dims = trt_context_->getBindingDimensions(index);
+    DebugDims("out dims", out_dims);
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_out_tensor_name_[i], outputs_[i].DataSize(),
                                                                 ConvertDataType(outputs_[i].DataType()));
     if (device_ptr == nullptr) {
@@ -650,16 +714,10 @@ int TensorRTSubGraph::Execute() {
   }
 
   for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
-    int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
+    int index = this->engine_->getBindingIndex(GetNameByBindingIndex(trt_out_tensor_name_[i], profile_index_).c_str());
     // actual output tensor dims
     auto out_dims = this->trt_context_->getBindingDimensions(index);
     std::vector<int64_t> new_shape = lite::ConvertMSShape(out_dims);
-    // batchsize resize need set new batch size
-    if (input_batchsize_index_ != -1) {
-      if (runtime_->GetBatchSize() != new_shape[output_batchsize_index_]) {
-        new_shape[output_batchsize_index_] = runtime_->GetBatchSize();
-      }
-    }
     for (int od = 0; od < out_dims.nbDims; od++) {
       MS_LOG(DEBUG) << "out tensor " << trt_out_tensor_name_[i] << " dims at " << od << " is " << new_shape[od];
     }
@@ -741,17 +799,19 @@ int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MST
     MS_LOG(ERROR) << "add cache Weight Tensor data is nullptr.";
     return RET_ERROR;
   }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims)) {
-    MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
-    return RET_ERROR;
-  }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims)) {
-    MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
-    return RET_ERROR;
-  }
-  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims)) {
-    MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
-    return RET_ERROR;
+  for (int i = 0; i != opt_dims_.size(); ++i) {
+    if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
+    if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
+    if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims)) {
+      MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
+      return RET_ERROR;
+    }
   }
   ITensorHelper trt_tensor{cache_input, Format::NHWC, true};
   ctx_->RegisterTensor(trt_tensor, in_tensor.Name());

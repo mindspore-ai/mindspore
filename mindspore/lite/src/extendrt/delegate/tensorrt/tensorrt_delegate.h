@@ -61,9 +61,9 @@ class TensorRTDelegate : public Delegate {
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
   std::string serialize_path_;
   cudaStream_t stream_{nullptr};
-  std::vector<nvinfer1::Dims> min_dims_;
-  std::vector<nvinfer1::Dims> opt_dims_;
-  std::vector<nvinfer1::Dims> max_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> min_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> opt_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> max_dims_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

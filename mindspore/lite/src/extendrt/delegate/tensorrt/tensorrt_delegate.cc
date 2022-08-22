@@ -37,17 +37,23 @@ std::vector<std::string> Split(const std::string &str, const std::string &delim)
   substrs.push_back(str.substr(start, end));
   return substrs;
 }
-std::vector<nvinfer1::Dims> StringToDims(const std::string &str) {
-  std::vector<nvinfer1::Dims> all_dims;
+// mul profile check
+std::vector<std::vector<nvinfer1::Dims>> StringToDims(const std::string &str) {
+  std::vector<std::vector<nvinfer1::Dims>> all_dims;
   std::vector<std::string> all_str_dims = Split(str, ";");
-  for (const std::string &str_dims : all_str_dims) {
-    std::vector<std::string> str_dims_vec = Split(str_dims, ",");
-    nvinfer1::Dims dims;
-    dims.nbDims = str_dims_vec.size();
-    for (size_t i = 0; i != str_dims_vec.size(); ++i) {
-      dims.d[i] = std::stoi(str_dims_vec[i]);
+  for (const std::string &str_dims_each : all_str_dims) {
+    std::vector<nvinfer1::Dims> dims_for_one_input;
+    std::vector<std::string> all_str_dims_each = Split(str_dims_each, ":");
+    for (const std::string &str_dims : all_str_dims_each) {
+      std::vector<std::string> str_dims_vec = Split(str_dims, ",");
+      nvinfer1::Dims dims;
+      dims.nbDims = str_dims_vec.size();
+      for (size_t i = 0; i != str_dims_vec.size(); ++i) {
+        dims.d[i] = std::stoi(str_dims_vec[i]);
+      }
+      dims_for_one_input.push_back(dims);
     }
-    all_dims.push_back(dims);
+    all_dims.push_back(dims_for_one_input);
   }
   return all_dims;
 }
