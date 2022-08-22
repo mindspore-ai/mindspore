@@ -248,6 +248,11 @@ struct BitwiseXor<half2> {
 template <typename T>
 struct ComplexFunc {
   __device__ __host__ __forceinline__ Complex<T> operator()(const T &lhs, const T &rhs) { return Complex<T>(lhs, rhs); }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const T &rhs) { return lhs; }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const T &lhs, const Complex<T> &rhs) { return rhs; }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const Complex<T> &rhs) {
+     return lhs;
+  }
 };
 
 template <typename T>
@@ -338,12 +343,77 @@ struct XDivyFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     return lhs < kFloatEplison && lhs > -kFloatEplison ? 0.0 : (lhs / rhs);
   }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const Complex<T> &rhs) {
+    Complex<T> res(0.0, 0.0);
+    Complex<T> x(lhs.real(), lhs.imag());
+    Complex<T> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
 };
 
 template <>
-struct XDivyFunc<int> {
-  __device__ __host__ __forceinline__ int operator()(const int &lhs, const int &rhs) {
-    return lhs == 0 ? 0 : (lhs / rhs);
+struct XDivyFunc<Complex<float>> {
+__device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs, rhs);
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs, lhs);
+    Complex<float> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs, lhs);
+    Complex<float> y(rhs, rhs);
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
+};
+
+template <>
+struct XDivyFunc<Complex<double>> {
+__device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs, rhs);
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs, lhs);
+    Complex<double> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs, lhs);
+    Complex<double> y(rhs, rhs);
+    res = x/y;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs.real(), rhs.imag());
+    res = x/y;
+    return res;
   }
 };
 
@@ -354,6 +424,13 @@ struct XDivyFunc<half> {
       return static_cast<half>(0.0);
     }
     return __float2half_rn(__half2float(lhs) / __half2float(rhs));
+  }
+};
+
+template <>
+struct XDivyFunc<int> {
+__device__ __host__ __forceinline__ int operator()(const int &lhs, const int &rhs) {
+    return lhs == 0 ? 0 : (lhs / rhs);
   }
 };
 
@@ -381,36 +458,93 @@ struct XDivyFunc<half2> {
 };
 
 
-// complex64
-template <>
-struct XDivyFunc<Complex<float>> {
-  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
-    Complex<float> res(0.0, 0.0);
-    Complex<float> x(lhs.real(), lhs.imag());
-    Complex<float> y(rhs.real(), rhs.imag());
-    res = x/y;
-    return res;
-  }
-};
-// complex128
-template <>
-struct XDivyFunc<Complex<double>> {
-  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
-                                                                 const Complex<double> &rhs) {
-    Complex<double> res(0.0, 0.0);
-    Complex<double> x(lhs.real(), lhs.imag());
-    Complex<double> y(rhs.real(), rhs.imag());
-    res = x/y;
-    return res;
-  }
-};
-
 // XLogy check if lhs is less than epsilon, XLogy support half, float, double
 template <typename T>
 struct XLogyFunc {
   // default T is float
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     return lhs < kFloatEplison && lhs > -kFloatEplison ? 0.0 : (lhs * log(rhs));
+  }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const Complex<T> &rhs) {
+    Complex<T> res(0.0, 0.0);
+    Complex<T> x(lhs.real(), lhs.imag());
+    Complex<T> y(rhs.real(), rhs.imag());
+    Complex<T> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+};
+
+template <>
+struct XLogyFunc<Complex<float>> {
+__device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs, rhs);
+    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> y(rhs.real(), rhs.imag());
+    Complex<float> x(lhs, lhs);
+    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs, lhs);
+    Complex<float> y(rhs, rhs);
+    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs.real(), rhs.imag());
+    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+};
+
+template <>
+struct XLogyFunc<Complex<double>> {
+__device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs, rhs);
+    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> y(rhs.real(), rhs.imag());
+    Complex<double> x(lhs, lhs);
+    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs, lhs);
+    Complex<double> y(rhs, rhs);
+    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs.real(), rhs.imag());
+    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
+    res = x * mid;
+    return res;
   }
 };
 
@@ -432,34 +566,6 @@ struct XLogyFunc<half2> {
   }
 };
 
-// complex64
-template <>
-struct XLogyFunc<Complex<float>> {
-  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
-    Complex<float> res(0.0, 0.0);
-    Complex<float> x(lhs.real(), lhs.imag());
-    Complex<float> y(rhs.real(), rhs.imag());
-    Complex<float> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
-    res = x * mid;
-    return res;
-  }
-};
-// complex128
-template <>
-struct XLogyFunc<Complex<double>> {
-  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
-                                                                 const Complex<double> &rhs) {
-    Complex<double> res(0.0, 0.0);
-    Complex<double> x(lhs.real(), lhs.imag());
-    Complex<double> y(rhs.real(), rhs.imag());
-    Complex<double> mid(0.5 * log(y.real() * y.real() + y.imag() * y.imag()), atan2(y.imag(), y.real()));
-    res = x * mid;
-    return res;
-  }
-};
-
-
-
 // convert to float to fix accuracy issue
 // MulNoNan
 template <typename T>
@@ -467,6 +573,120 @@ struct MulNoNanFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     return rhs < kFloatEplison && rhs > -kFloatEplison ? 0.0 : (lhs * rhs);
     }
+  __device__ __host__ __forceinline__ Complex<T> operator()(const Complex<T> &lhs, const Complex<T> &rhs) {
+    Complex<T> res(0.0, 0.0);
+    if ((rhs.real() < kFloatEplison && rhs.real() > -kFloatEplison) ||
+          (rhs.imag() < kFloatEplison && rhs.imag() > -kFloatEplison)) {
+      return res;
+    } else {
+      Complex<T> x(lhs.real(), lhs.imag());
+      Complex<T> y(rhs.real(), rhs.imag());
+      res = x*y;
+      return res;
+    }
+  }
+};
+
+template <>
+struct MulNoNanFunc<Complex<float>> {
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    if ((lhs < 1e-15 && lhs > -1e-15) || (rhs.imag() < 1e-15 && rhs.imag() > -1e-15)) {
+      return res;
+    } else {
+      Complex<float> x(rhs.real(), rhs.imag());
+      Complex<float> y(lhs, lhs);
+      res = x*y;
+      return res;
+    }
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    if ((rhs < 1e-15 && rhs > -1e-15) || (lhs.imag() < 1e-15 && lhs.imag() > -1e-15)) {
+      return res;
+    } else {
+      Complex<float> x(lhs.real(), lhs.imag());
+      Complex<float> y(rhs, rhs);
+      res = x*y;
+      return res;
+    }
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    if ((rhs < 1e-15 && rhs > -1e-15) || (lhs < 1e-15 && lhs > -1e-15)) {
+      return res;
+    } else {
+      Complex<float> x(lhs, lhs);
+      Complex<float> y(rhs, rhs);
+      res = x*y;
+      return res;
+    }
+  }
+  // __device__ __host__ __forceinline__ float operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+  //     return kFloatEplison;
+  // }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    if ((rhs.real() < kFloatEplison && rhs.real() > -kFloatEplison) ||
+          (rhs.imag() < kFloatEplison && rhs.imag() > -kFloatEplison)) {
+      return res;
+    } else {
+      Complex<float> x(lhs.real(), lhs.imag());
+      Complex<float> y(rhs.real(), rhs.imag());
+      res = x*y;
+      return res;
+    }
+  }
+};
+
+template <>
+struct MulNoNanFunc<Complex<double>> {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    if ((lhs < 1e-15 && lhs > -1e-15) || (rhs.imag() < 1e-15 && rhs.imag() > -1e-15)) {
+      return res;
+    } else {
+      Complex<double> x(rhs.real(), rhs.imag());
+      Complex<double> y(lhs, lhs);
+      res = x*y;
+      return res;
+    }
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    if ((rhs < 1e-15 && rhs > -1e-15) || (lhs.imag() < 1e-15 && lhs.imag() > -1e-15)) {
+      return res;
+    } else {
+      Complex<double> x(lhs.real(), lhs.imag());
+      Complex<double> y(rhs, rhs);
+      res = x*y;
+      return res;
+    }
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    if ((rhs < 1e-15 && rhs > -1e-15) || (lhs < 1e-15 && lhs > -1e-15)) {
+      return res;
+    } else {
+      Complex<double> x(lhs, lhs);
+      Complex<double> y(rhs, rhs);
+      res = x*y;
+      return res;
+    }
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    if ((rhs.real() < kFloatEplison && rhs.real() > -kFloatEplison) ||
+          (rhs.imag() < kFloatEplison && rhs.imag() > -kFloatEplison)) {
+      return res;
+    } else {
+      Complex<double> x(lhs.real(), lhs.imag());
+      Complex<double> y(rhs.real(), rhs.imag());
+      res = x*y;
+      return res;
+    }
+  }
 };
 
 template <>
@@ -495,39 +715,7 @@ struct MulNoNanFunc<half> {
     return __float2half_rn(__half2float(lhs) * __half2float(rhs));
   }
 };
-// complex64
-template <>
-struct MulNoNanFunc<Complex<float>> {
-  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
-    Complex<float> res(0.0, 0.0);
-    if ((rhs.real() < kFloatEplison && rhs.real() > -kFloatEplison) ||
-          (rhs.imag() < kFloatEplison && rhs.imag() > -kFloatEplison)) {
-      return res;
-    } else {
-      Complex<float> x(lhs.real(), lhs.imag());
-      Complex<float> y(rhs.real(), rhs.imag());
-      res = x*y;
-      return res;
-    }
-  }
-};
-// complex128
-template <>
-struct MulNoNanFunc<Complex<double>> {
-  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
-                                                                 const Complex<double> &rhs) {
-    Complex<double> res(0.0, 0.0);
-    if ((lhs.real() < 1e-15 && lhs.real() > -1e-15) || (rhs.imag() < 1e-15 && rhs.imag() > -1e-15)) {
-      return res;
-    } else {
-      Complex<double> x(lhs.real(), lhs.imag());
-      Complex<double> y(rhs.real(), rhs.imag());
-      res = x*y;
-      return res;
-    }
-  }
-};
-// convert to float to fix accuracy issue
+
 template <typename T>
 struct FloorDivFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
@@ -882,13 +1070,6 @@ __global__ void ElewiseArithComplexKernel(const int nums, const T1 *x0, const T2
   }
 }
 
-template <typename T, typename Func>
-__global__ void ElewiseArithComplexKernel(const int nums, const Complex<T> *x0, const Complex<T> *x1, Complex<T> *y) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nums; pos += blockDim.x * gridDim.x) {
-    y[pos] = Func()(x0[pos], x1[pos]);
-  }
-}
-
 template <typename T>
 void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream) {
   switch (op) {
@@ -943,23 +1124,23 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
   }
 }
 
-template <typename T>
-void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const Complex<T> *x0, const Complex<T> *x1,
-                               Complex<T> *y,   cudaStream_t stream) {
-  switch (op) {
-    case BROADCAST_TYPE_MULNONAN:
-      return ElewiseArithComplexKernel<T, MulNoNanFunc<Complex<T>>>
-            <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XDIVY:
-      return ElewiseArithComplexKernel<T, XDivyFunc<Complex<T>>>
-            <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    case BROADCAST_TYPE_XLOGY:
-      return ElewiseArithComplexKernel<T, XLogyFunc<Complex<T>>>
-            <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
-    default:
-      break;
-  }
-}
+// template <typename T>
+// void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const Complex<T> *x0, const Complex<T> *x1,
+//                                Complex<T> *y,   cudaStream_t stream) {
+//   switch (op) {
+//     case BROADCAST_TYPE_MULNONAN:
+//       return ElewiseArithComplexKernel<T, MulNoNanFunc<Complex<T>>>
+//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+//     case BROADCAST_TYPE_XDIVY:
+//       return ElewiseArithComplexKernel<T, XDivyFunc<Complex<T>>>
+//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+//     case BROADCAST_TYPE_XLOGY:
+//       return ElewiseArithComplexKernel<T, XLogyFunc<Complex<T>>>
+//             <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+//     default:
+//       break;
+//   }
+// }
 
 template <typename T1, typename T2, typename T3>
 void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T1 *x0, const T2 *x1, Complex<T3> *y,
@@ -980,16 +1161,20 @@ void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T
     case BROADCAST_TYPE_REALDIV:
       return ElewiseArithComplexKernel<T1, T2, T3, RealDivFunc<T3>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_COMPLEX:
+      return ElewiseArithComplexKernel<T1, T2, T3, ComplexFunc<T3>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_MULNONAN:
+      return ElewiseArithComplexKernel<T1, T2, T3, MulNoNanFunc<Complex<T3>>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XDIVY:
+      return ElewiseArithComplexKernel<T1, T2, T3, XDivyFunc<Complex<T3>>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XLOGY:
+      return ElewiseArithComplexKernel<T1, T2, T3, XLogyFunc<Complex<T3>>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
-  }
-}
-
-template <typename T>
-void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, Complex<T> *y,
-                               cudaStream_t stream) {
-  if (op == BROADCAST_TYPE_COMPLEX) {
-    return ElewiseArithComplexKernel<T, T, T, ComplexFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
   }
 }
 
@@ -1008,13 +1193,6 @@ void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, cons
   } else {
     return ElewiseArithKernel(nums, op, x0, x1, y, stream);
   }
-}
-
-
-template <typename T>
-void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<T> *x0,
-                         const Complex<T> *x1, Complex<T> *y, cudaStream_t stream) {
-    return ElewiseArithComplexKernel(nums, op, x0, x1, y, stream);
 }
 
 template <typename T1, typename T2, typename T3>
@@ -1202,42 +1380,6 @@ __global__ void BroadcastArithKernel(const size_t l0, const size_t l1, const siz
                                      const size_t d6, const T *x0, const T *x1, T *y) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
        pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    size_t k = pos / (d3 * d4 * d5 * d6) % d2;
-    size_t l = pos / (d4 * d5 * d6) % d3;
-    size_t m = pos / (d5 * d6) % d4;
-    size_t n = pos / d6 % d5;
-    size_t o = pos % d6;
-
-    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-    l_index += Index(l, l3) * l4 * l5 * l6;
-    l_index += Index(m, l4) * l5 * l6;
-    l_index += Index(n, l5) * l6;
-    l_index += Index(o, l6);
-    size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-    r_index += Index(l, r3) * r4 * r5 * r6;
-    r_index += Index(m, r4) * r5 * r6;
-    r_index += Index(n, r5) * r6;
-    r_index += Index(o, r6);
-    y[pos] = Func()(x0[l_index], x1[r_index]);
-  }
-}
-
-template <typename T, typename Func>
-__global__ void BroadcastComplexArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                            const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                            const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                            const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                            const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                            const size_t d6,
-                                            const Complex<T> *x0, const Complex<T> *x1, Complex<T> *y) {
-  const size_t size = d0 * d1 * d2 * d3 * d4 * d5 * d6;
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
     size_t k = pos / (d3 * d4 * d5 * d6) % d2;
@@ -1462,70 +1604,28 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_MULNONAN:
+      return BroadcastComplexArithKernel<T1, T2, T3, MulNoNanFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_XDIVY:
+      return BroadcastComplexArithKernel<T1, T2, T3, XDivyFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_XLOGY:
+      return BroadcastComplexArithKernel<T1, T2, T3, XLogyFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_COMPLEX:
+      return BroadcastComplexArithKernel<T1, T2, T3, ComplexFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     default:
       break;
-  }
-}
-
-template <typename T>
-void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
-                           Complex<T> *y, cudaStream_t stream) {
-  size_t size = 1;
-  for (auto d : y_dims) {
-    size *= d;
-  }
-  if (op == BROADCAST_TYPE_COMPLEX) {
-    return BroadcastComplexArithKernel<T, T, T, ComplexFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-  if (op == BROADCAST_TYPE_MULNONAN) {
-    return BroadcastComplexArithKernel<T, T, T, MulNoNanFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-  if (op == BROADCAST_TYPE_XDIVY) {
-    return BroadcastComplexArithKernel<T, T, T, XDivyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-  if (op == BROADCAST_TYPE_XLOGY) {
-    return BroadcastComplexArithKernel<T, T, T, XLogyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-}
-
-template <typename T>
-void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const Complex<T> *x0,
-                           const Complex<T> *x1, Complex<T> *y, cudaStream_t stream) {
-  size_t size = 1;
-  for (auto d : y_dims) {
-    size *= d;
-  }
-  if (op == BROADCAST_TYPE_MULNONAN) {
-    return BroadcastComplexArithKernel<T, MulNoNanFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-  if (op == BROADCAST_TYPE_XDIVY) {
-    return BroadcastComplexArithKernel<T, XDivyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
-  }
-  if (op == BROADCAST_TYPE_XLOGY) {
-    return BroadcastComplexArithKernel<T, XLogyFunc<Complex<T>>><<<(size + 255) / 256, 256, 0, stream>>>(
-      x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
-      x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3], y_dims[4],
-      y_dims[5], y_dims[6], x0, x1, y);
   }
 }
 
@@ -1568,11 +1668,6 @@ template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims,
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
                                                     const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                                    const Complex<float> *x0, const Complex<float> *x1,
-                                                    Complex<float> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
-                                                    const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                                     const Complex<float> *x0, const float *x1, Complex<float> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
@@ -1583,11 +1678,6 @@ template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
                                                     const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                                    const Complex<double> *x0, const Complex<double> *x1,
-                                                    Complex<double> *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
-                                                    const std::vector<size_t> &x1_dims,
-                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                                     const Complex<double> *x0, const double *x1, Complex<double> *y,
                                                     cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
@@ -1595,6 +1685,16 @@ template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x
                                                     const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                                     const double *x0, const Complex<double> *x1, Complex<double> *y,
                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
+                                                    const std::vector<size_t> &x1_dims,
+                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const Complex<double> *x0, const Complex<double> *x1,
+                                                    Complex<double> *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
+                                                    const std::vector<size_t> &x1_dims,
+                                                    const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                                    const Complex<float> *x0, const Complex<float> *x1,
+                                                    Complex<float> *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x0_dims,
                                                     const std::vector<size_t> &x1_dims,
                                                     const std::vector<size_t> &y_dims, enum BroadcastOpType op,
