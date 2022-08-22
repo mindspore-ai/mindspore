@@ -36,7 +36,7 @@ size_t GPUSomas::GetAlignSize(size_t original_size) const {
 bool GPUSomas::GetDependExecOrderFlag(const session::KernelGraph &graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     return true;
   } else {
     return false;

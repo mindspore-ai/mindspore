@@ -96,7 +96,7 @@ bool AscendSomas::GetDependExecOrderFlag(const session::KernelGraph &graph) cons
   MS_EXCEPTION_IF_NULL(ms_context);
   auto task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto opt_level = ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL);
-  if (task_sink || (opt_level == kOptimizeO1)) {
+  if (task_sink || (opt_level != kOptimizeO0)) {
     return true;
   } else {
     return false;
