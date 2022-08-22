@@ -42,8 +42,9 @@ class TensorRTSubGraph : public kernel::Kernel {
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
                    std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_resize,
-                   bool support_hw_resize, const std::vector<nvinfer1::Dims> &min_dims,
-                   const std::vector<nvinfer1::Dims> &opt_dims, const std::vector<nvinfer1::Dims> &max_dims)
+                   bool support_hw_resize, const std::vector<std::vector<nvinfer1::Dims>> &min_dims,
+                   const std::vector<std::vector<nvinfer1::Dims>> &opt_dims,
+                   const std::vector<std::vector<nvinfer1::Dims>> &max_dims)
       : kernel::Kernel(inputs, outputs, nullptr, ctx),
         all_ops_(std::move(ops)),
         device_info_(device_info),
@@ -113,6 +114,9 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::Dims SetInputDimsProfile(const mindspore::MSTensor &in_tensor, size_t index);
   int ParseInputsProfile();
 
+  size_t MaxVolumnProfileIndex() const;
+  int SelectProfile() const;
+
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
 
   std::vector<TensorRTOp *> all_ops_{};
@@ -140,7 +144,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::IBuilderConfig *config_{nullptr};
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
-  nvinfer1::IOptimizationProfile *profile_{nullptr};
+  std::vector<nvinfer1::IOptimizationProfile *> profiles_{};
 
   TensorRTContext *ctx_;
 
@@ -159,9 +163,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::string serialize_file_path_;
   cudaStream_t stream_{nullptr};
 
-  std::vector<nvinfer1::Dims> min_dims_;
-  std::vector<nvinfer1::Dims> opt_dims_;
-  std::vector<nvinfer1::Dims> max_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> min_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> opt_dims_;
+  std::vector<std::vector<nvinfer1::Dims>> max_dims_;
+  size_t profile_index_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
