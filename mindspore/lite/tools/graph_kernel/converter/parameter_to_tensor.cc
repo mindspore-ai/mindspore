@@ -29,7 +29,7 @@ bool ParameterToTensor::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    for (size_t idx = 1; i < cnode->inputs().size(); idx++) {
+    for (size_t idx = 1; idx < cnode->inputs().size(); idx++) {
       if (cnode->input(idx)->isa<Parameter>()) {
         auto default_param = cnode->input(idx)->cast<ParameterPtr>()->default_param();
         if (default_param == nullptr) {

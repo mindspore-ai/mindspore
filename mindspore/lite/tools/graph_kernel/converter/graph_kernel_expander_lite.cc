@@ -73,7 +73,8 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
 
 AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
   std::unordered_set<std::string> akg_exclude_nodes = {prim::kPrimGather->name(), prim::kPrimShape->name(),
-                                                       prim::kPrimConcat->name(), prim::kPrimConstantOfShape->name()};
+                                                       prim::kPrimConcat->name(), prim::kPrimConstantOfShape->name(),
+                                                       prim::kPrimStridedSliceOnnx->name()};
   auto cnode = QuickCloneCNode(node);
   auto ret = decorated_->Run(cnode);
   if (ret == nullptr) {
