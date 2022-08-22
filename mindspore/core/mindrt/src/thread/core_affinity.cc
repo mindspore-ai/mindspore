@@ -311,7 +311,7 @@ std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) 
     THREAD_ERROR("init sorted core id failed");
     return bind_id;
   }
-  if (bind_mode == Power_Higher || bind_mode == Power_NoBind) {
+  if (bind_mode == Power_Higher) {
     for (size_t i = 0; i < thread_num; ++i) {
       bind_id.push_back(sorted_id_[i % core_num_]);
     }
