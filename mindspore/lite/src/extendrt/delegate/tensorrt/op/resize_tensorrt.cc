@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/extendrt/delegate/tensorrt/op/resize_tensorrt.h"
+#include <vector>
 #include <algorithm>
 #include <memory>
+#include "src/extendrt/delegate/tensorrt/op/resize_tensorrt.h"
 #include "nnacl/nnacl_common.h"
 #include "resize_bilinear_impl.cuh"
 
 namespace mindspore::lite {
+namespace {
+nvinfer1::ITensor *ConvertConstantTensor1D(TensorRTContext *ctx, int *weights_vec, nvinfer1::DataType data_type) {
+  nvinfer1::Weights weights{data_type, weights_vec, INPUT_SIZE4};
+  nvinfer1::Dims dims;
+  dims.nbDims = 1;
+  dims.d[0] = INPUT_SIZE4;
+  nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
+  if (constant_tensor == nullptr) {
+    MS_LOG(ERROR) << "create constant_tensor failed.";
+    return nullptr;
+  }
+  return constant_tensor->getOutput(0);
+}
+}  // namespace
 int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if (!IsShapeKnown()) {
@@ -46,6 +61,7 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   }
   dynamic_shape_params_.support_hw_dynamic_ =
     (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
+
   return RET_OK;
 }
 
@@ -70,6 +86,7 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     this->transpose_layer_ = transpose_layer;
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, false);
+
   auto method = resize_op_->method();
   nvinfer1::ITensor *output_tensor = nullptr;
   if (method == schema::ResizeMethod_LINEAR) {
@@ -109,6 +126,7 @@ nvinfer1::ITensor *ResizeTensorRT::RunPlugin(TensorRTContext *ctx, nvinfer1::ITe
     bool using_half_pixel = (resize_op_->coordinate_transform_mode() == schema::CoordinateTransformMode_HALF_PIXEL);
     auto plugin = std::make_shared<ResizeLinear2DPlugin>(resize_in_tensor->getName(), resize_shape[0], resize_shape[1],
                                                          using_half_pixel, device_id_);
+
     nvinfer1::ITensor *inputTensors[] = {resize_in_tensor};
     nvinfer1::IPluginV2Layer *resize_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     if (resize_layer == nullptr) {
@@ -138,7 +156,6 @@ nvinfer1::ITensor *ResizeTensorRT::RunTensorRT(TensorRTContext *ctx, nvinfer1::I
     MS_LOG(ERROR) << "SetParams failed for " << op_name_;
     return nullptr;
   }
-
   this->layer_ = resize_layer;
   return resize_layer->getOutput(0);
 }
@@ -146,16 +163,9 @@ nvinfer1::ITensor *ResizeTensorRT::RunTensorRT(TensorRTContext *ctx, nvinfer1::I
 int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor,
                                   nvinfer1::IResizeLayer *resize_layer) {
   nvinfer1::Dims in_dims = resize_in_tensor->getDimensions();
-  if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_dynamic_ && in_dims.nbDims == DIMENSION_4D) {
+  if (in_tensors_.size() == 1 && in_dims.nbDims == DIMENSION_4D) {
     nvinfer1::Dims4 new_dims(in_dims.d[0], in_dims.d[1], resize_op_->new_height(), resize_op_->new_width());  // nchw
     resize_layer->setOutputDimensions(new_dims);  // static shape
-  } else if (ReadyInputsNumber(ctx) == 1 && !dynamic_shape_params_.support_hw_dynamic_ &&
-             dynamic_shape_params_.support_dynamic_ && in_dims.nbDims == DIMENSION_4D) {
-    // hw is static, but has dynamic batch size
-    float scales[DIMENSION_4D]{1, 1, 1, 1};
-    scales[kNCHW_H] = static_cast<float>(resize_op_->new_height()) / static_cast<float>(in_dims.d[kNCHW_H]);
-    scales[kNCHW_W] = static_cast<float>(resize_op_->new_width()) / static_cast<float>(in_dims.d[kNCHW_W]);
-    resize_layer->setScales(scales, DIMENSION_4D);
   } else {
     auto shape_value_tensor = in_tensors_[1];
     if (shape_value_tensor.Data() == nullptr && in_tensors_.size() >= INPUT_SIZE2) {
@@ -164,7 +174,6 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
       if (shape_tensor->getDimensions().d[0] == INPUT_SIZE4) {
         resize_layer->setInput(1, *shape_tensor);
       } else {
-        MS_LOG(WARNING) << "DEBUG";
         auto in_tensor_shape = ctx->network()->addShape(*resize_in_tensor)->getOutput(0);
         CHECK_NULL_RETURN(in_tensor_shape);
         nvinfer1::Dims start_dims{1, {0}};
@@ -180,7 +189,6 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
         auto concat_layer = ctx->network()->addConcatenation(trt_input_tensors, INPUT_SIZE2);
         concat_layer->setAxis(0);
         auto nchw = concat_layer->getOutput(0);
-        MS_LOG(DEBUG) << "resize dims:" << GetTensorFormat(nchw, Format::NCHW, false);
         CHECK_NULL_RETURN(nchw);
         nchw = TRTTensorCast(ctx, nchw, nvinfer1::DataType::kINT32, op_name_ + "_input_nchw_to_int32");
         resize_layer->setInput(1, *nchw);
@@ -188,39 +196,48 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
     } else {
       std::vector<float> out_shape;
       ParseValueFromShapeTensor(ctx, shape_value_tensor, &out_shape);
-      if (SameDims(out_shape, out_tensors_[0].Shape())) {
-        // static dims
-        if (out_shape.size() == DIMENSION_4D) {
-          // convert nhwc to nchw
-          auto channel = out_shape[out_shape.size() - 1];
-          out_shape.insert(out_shape.begin() + 1, channel);
-          out_shape.erase(out_shape.begin() + out_shape.size() - 1);
+      if (out_shape.size() == DIMENSION_2D && in_dims.nbDims == DIMENSION_4D) {
+        // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
+        out_shape.insert(out_shape.begin(), in_dims.d[0]);  // batch size is dynamic
+        out_shape.push_back(in_dims.d[kNCHW_C]);            // channel is const
+      }
+      if (shape_value_tensor.DataType() == DataType::kNumberTypeInt32) {
+        if (resize_in_tensor->getDimensions().d[0] == -1) {
+          nvinfer1::IShapeLayer *shape_layer = ctx->network()->addShape(*resize_in_tensor);
+          auto in_shape = shape_layer->getOutput(0);
+          mask2_[INPUT_SIZE2] = out_shape[kNHWC_H];
+          mask2_[INPUT_SIZE3] = out_shape[kNHWC_W];
+          auto mask1 = ConvertConstantTensor1D(ctx, mask1_, nvinfer1::DataType::kINT32);
+          auto mask2 = ConvertConstantTensor1D(ctx, mask2_, nvinfer1::DataType::kINT32);
+          in_shape =
+            ctx->network()->addElementWise(*in_shape, *mask1, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+          in_shape =
+            ctx->network()->addElementWise(*in_shape, *mask2, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+          resize_layer->setInput(1, *in_shape);
+        } else {
+          auto h = out_shape[kNHWC_H];
+          auto w = out_shape[kNHWC_W];
+          auto c = out_shape[kNHWC_C];
+          out_shape[kNCHW_H] = h;
+          out_shape[kNCHW_W] = w;
+          out_shape[kNCHW_C] = c;
+          nvinfer1::Dims dims;
+          dims.nbDims = DIMENSION_4D;
+          dims.d[0] = out_shape[0];
+          dims.d[1] = out_shape[1];
+          dims.d[INPUT_SIZE2] = out_shape[INPUT_SIZE2];
+          dims.d[INPUT_SIZE3] = out_shape[INPUT_SIZE3];
+          resize_layer->setOutputDimensions(dims);
         }
-        resize_layer->setOutputDimensions(ConvertCudaDims(out_shape));
-      } else if (IsScaleOutputDim(in_tensors_[0].Shape(), out_tensors_[0].Shape(), out_shape)) {
-        // scale dims
-        float scales[DIMENSION_4D]{1, 1, 1, 1};
-        scales[kNCHW_H] =
-          static_cast<float>(out_tensors_[0].Shape()[kNHWC_H]) / static_cast<float>(in_tensors_[0].Shape()[kNHWC_H]);
-        scales[kNCHW_W] =
-          static_cast<float>(out_tensors_[0].Shape()[kNHWC_W]) / static_cast<float>(in_tensors_[0].Shape()[kNHWC_W]);
-        resize_layer->setScales(scales, DIMENSION_4D);
-      } else if (out_tensors_[0].Shape().size() == DIMENSION_4D) {
-        MS_LOG(DEBUG) << op_name_ << " output shape tensor value is const, but set to scales for dynamic input shape.";
-        float scales[out_tensors_[0].Shape().size()];
-        for (size_t i = 0; i < out_tensors_[0].Shape().size(); i++) {
-          scales[i] = static_cast<float>(out_tensors_[0].Shape()[i]) / static_cast<float>(in_tensors_[0].Shape()[i]);
-        }
-        // change to nchw
-        scales[kNCHW_W] = scales[kNHWC_W];
-        scales[kNCHW_H] = scales[kNHWC_H];
-        scales[kNCHW_C] = 1;
-        MS_LOG(DEBUG) << op_name_ << "scale at H " << kNCHW_H << ": " << scales[kNCHW_H] << ", W " << kNCHW_W << ": "
-                      << scales[kNCHW_W];
-        resize_layer->setScales(scales, out_tensors_[0].Shape().size());
       } else {
-        MS_LOG(ERROR) << "resize dims needs check for " << op_name_;
-        return RET_ERROR;
+        auto h = out_shape[kNHWC_H];
+        auto w = out_shape[kNHWC_W];
+        out_shape[kNCHW_H] = h;
+        out_shape[kNCHW_W] = w;
+        float scales[DIMENSION_4D]{1, 1, 1, 1};
+        scales[kNCHW_H] = out_shape[kNCHW_H];
+        scales[kNCHW_W] = out_shape[kNCHW_W];
+        resize_layer->setScales(scales, DIMENSION_4D);
       }
     }
   }
@@ -245,9 +262,9 @@ void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const minds
       break;
     }
     case DataType::kNumberTypeInt32: {
-      const int *shape_data_fp16 = static_cast<const int *>(shape_value_tensor.Data().get());
+      const int *shape_data_int32 = static_cast<const int *>(shape_value_tensor.Data().get());
       for (int i = 0; i < shape_value_tensor.ElementNum(); i++) {
-        out_shape->push_back(*(shape_data_fp16 + i));
+        out_shape->push_back(*(shape_data_int32 + i));
       }
       break;
     }
@@ -255,11 +272,6 @@ void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const minds
       MS_LOG(WARNING) << op_name_
                       << " more datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
       break;
-  }
-  if (out_shape->size() == DIMENSION_2D && input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
-    // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
-    out_shape->insert(out_shape->begin(), input(ctx, 0).trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
-    out_shape->push_back(in_tensors_[0].Shape()[kNHWC_C]);                                   // channel is const
   }
 }
 
@@ -335,7 +347,7 @@ nvinfer1::IPluginV2DynamicExt *ResizeLinear2DPlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t ResizeLinear2DPlugin::getSerializationSize() const noexcept { return sizeof(int) * 2; }
+size_t ResizeLinear2DPlugin::getSerializationSize() const noexcept { return sizeof(int) * INPUT_SIZE2; }
 
 nvinfer1::DimsExprs ResizeLinear2DPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
                                                               int nbInputDims,
@@ -355,6 +367,5 @@ void ResizeLinear2DPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &resize_h_, sizeof(int));
   SerializeValue(&buffer, &resize_w_, sizeof(int));
 }
-
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Resize, ResizeTensorRT)
 }  // namespace mindspore::lite
