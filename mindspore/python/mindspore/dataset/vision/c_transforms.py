@@ -48,14 +48,15 @@ from PIL import Image
 
 import mindspore._c_dataengine as cde
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy, parse_padding
-from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
-    check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
-    check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, check_alpha, \
-    check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
-    check_random_adjust_sharpness, check_auto_augment, \
-    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_positive_degrees, FLOAT_MAX_INTEGER, deprecated_c_vision, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
+from .validators import check_adjust_gamma, check_alpha, check_auto_augment, check_auto_contrast, \
+    check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, \
+    check_cutout, check_gaussian_blur, check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_pad, \
+    check_positive_degrees, check_prob, check_random_adjust_sharpness, check_random_affine, \
+    check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_posterize, \
+    check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
+    check_range, check_rescale, check_resize, check_resize_interpolation, check_rotate, check_slice_patches, \
+    check_uniform_augment_cpp, deprecated_c_vision, FLOAT_MAX_INTEGER
+
 
 
 class ImageTensorOperation:
@@ -1695,7 +1696,7 @@ class RandomPosterize(ImageTensorOperation):
     """
 
     @deprecated_c_vision()
-    @check_posterize
+    @check_random_posterize
     def __init__(self, bits=(8, 8)):
         self.bits = bits
 
