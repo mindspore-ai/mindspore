@@ -102,6 +102,8 @@ from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .unstack import _unstack_aicpu
 from .addcmul import _addcmul_aicpu
+from .kldivloss import _kldiv_loss_aicpu
+from .kldivlossgrad import _kldiv_loss_grad_aicpu
 from .sample_distorted_bounding_box_v2 import _sample_distorted_bounding_box_v2_aicpu
 from .sparse_apply_centered_rms_prop import _sparse_apply_centered_rms_prop_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu

@@ -88,6 +88,8 @@ constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
+constexpr auto kKLDivLoss = "KLDivLoss";
+constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
@@ -122,6 +124,8 @@ const std::set<std::string> kDynamicInputOps{
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
   kIdentityN};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
+  {kKLDivLoss, "KLDiv"},
+  {kKLDivLossGrad, "KlDivLossGrad"},
   {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
   {kMaxPoolGradV1, "MaxPoolGrad"},

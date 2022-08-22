@@ -31,6 +31,7 @@ using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
 using CheckSupportFun = bool (*)(const CNodePtr &cnode);
 
 constexpr char kAttrSorted[] = "sorted";
+constexpr char kAttrReduction[] = "reduction";
 constexpr char kAttrStrides[] = "strides";
 constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 
@@ -127,10 +128,20 @@ static bool CheckTopK(const CNodePtr &cnode) {
   MS_LOG(EXCEPTION) << "For 'TopK', it should be have attribute 'sorted'." << trace::DumpSourceLines(cnode);
 }
 
+static bool CheckKLDivLoss(const CNodePtr &cnode) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrReduction, cnode)) {
+    auto reduction = common::AnfAlgo::GetNodeAttr<string>(cnode, kAttrReduction);
+    return reduction != "mean";
+  }
+  MS_LOG(EXCEPTION) << "For 'KLDivLoss', it should be have attribute 'reduction'." << trace::DumpSourceLines(cnode);
+}
+
 bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  static std::map<std::string, CheckSupportFun> tbe_property_checker = {
-    {kStridedSliceOpName, CheckStridedSlice}, {kStridedSliceGradOpName, CheckStridedSlice}, {kTopKOpName, CheckTopK}};
+  static std::map<std::string, CheckSupportFun> tbe_property_checker = {{kStridedSliceOpName, CheckStridedSlice},
+                                                                        {kStridedSliceGradOpName, CheckStridedSlice},
+                                                                        {kTopKOpName, CheckTopK},
+                                                                        {kKLDivLossOpName, CheckKLDivLoss}};
   auto cnode_type = common::AnfAlgo::GetCNodeName(cnode);
   auto find_iter = tbe_property_checker.find(cnode_type);
   if (find_iter != tbe_property_checker.end()) {
