@@ -18,7 +18,7 @@
 #include <string>
 #include <limits>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
-#include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#include "minddata/dataset/engine/datasetops/data_queue_op.h"
 #ifdef WITH_BACKEND
 #include "mindspore/core/utils/numa_interface.h"
 #endif
@@ -57,7 +57,7 @@ ExecutionTree::~ExecutionTree() {
     handle_ = nullptr;
   }
 #if defined(ENABLE_TDTQUE)
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root_.get());
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root_.get());
   if (op != nullptr) {
     op->StopWaiting();
   }

@@ -111,6 +111,11 @@ class DeviceResManager {
   virtual bool AllocateMemory(DeviceAddress *const &address) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
 
+  // Allocate host memory with raii and ref count
+  virtual std::shared_ptr<void> AllocateHostMemory(size_t size) const {
+    return std::shared_ptr<void>(::malloc(size), ::free);
+  }
+
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.

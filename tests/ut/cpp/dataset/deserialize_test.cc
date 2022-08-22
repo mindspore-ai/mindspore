@@ -506,7 +506,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
   std::shared_ptr<TensorOperation> operation2 = std::make_shared<text::ToNumberOperation>("int32_t");
   std::vector<std::shared_ptr<TensorOperation>> ops = {operation1, operation2};
   ds = std::make_shared<MapNode>(ds, ops);
-  ds = std::make_shared<TransferNode>(ds, "queue", "type", 1, true, 10, true);
+  ds = std::make_shared<DataQueueNode>(ds, "queue", "type", 1, true, 10, true);
   compare_dataset(ds);
 }
 

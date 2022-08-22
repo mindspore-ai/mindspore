@@ -222,7 +222,7 @@ Status Serdes::CreateDatasetOperationNode(const std::shared_ptr<DatasetNode> &ds
   } else if (op_type == kSkipNode) {
     RETURN_IF_NOT_OK(SkipNode::from_json(json_obj, ds, result));
   } else if (op_type == kTransferNode) {
-    RETURN_IF_NOT_OK(TransferNode::from_json(json_obj, ds, result));
+    RETURN_IF_NOT_OK(DataQueueNode::from_json(json_obj, ds, result));
   } else if (op_type == kTakeNode) {
     RETURN_IF_NOT_OK(TakeNode::from_json(json_obj, ds, result));
   } else {

@@ -803,6 +803,20 @@ DeprecatedInterface *GPUDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
+  void *ptr;
+  if (CudaDriver::AllocHostPinnedMem(size, &ptr) != size) {
+    MS_LOG(ERROR) << "Failed to allow host pinned memory.";
+    return nullptr;
+  }
+
+  return std::shared_ptr<void>(ptr, [](void *ptr) -> void {
+    if (ptr != nullptr) {
+      CudaDriver::FreeHostPinnedMem(ptr);
+    }
+  });
+}
+
 MS_REGISTER_DEVICE(kGPUDevice, GPUDeviceContext);
 }  // namespace gpu
 }  // namespace device

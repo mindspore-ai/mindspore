@@ -23,7 +23,7 @@
 #include "minddata/dataset/engine/ir/datasetops/cache_node.h"
 #include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 
 namespace mindspore {
 namespace dataset {
@@ -206,10 +206,10 @@ Status RepeatPass::VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const
 }
 #endif
 
-Status RepeatPass::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
+Status RepeatPass::VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(modified);
-  // Set total repeats and total epochs for the TransferNode
+  // Set total repeats and total epochs for the DataQueueNode
   node->SetTotalRepeats(num_epochs_);
   node->SetNumEpochs(num_epochs_);
   return Status::OK();

@@ -377,40 +377,40 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status GetConnectorSizeByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector size of DatasetIterator or DataQueueOp
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with connector size at each step
   /// \return Status object with the error code
   Status GetConnectorSizeByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector size of DatasetIterator or DataQueueOp
   /// \param [in] start_step The step interval start range
   /// \param [in] end_step The step interval end range
   /// \param [out] result A vector with connector size at each step
   /// \return Status object with the error code
   Status GetConnectorSizeByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector size of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector size of DatasetIterator or DataQueueOp
   /// \param [in] start_ts The time interval start range in ms
   /// \param [in] end_ts The time interval end range in ms
   /// \param [out] result A vector with connector size at each step
   /// \return Status object with the error code
   Status GetConnectorSizeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector capacity of DatasetIterator or DataQueueOp
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result A vector with connector capacity at each step
   /// \return Status object with the error code
   Status GetConnectorCapacityByEpoch(int32_t epoch_num, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector capacity of DatasetIterator or DataQueueOp
   /// \param [in] start_step The step interval start range
   /// \param [in] end_step The step interval end range
   /// \param [out] result A vector with connector capacity at each step
   /// \return Status object with the error code
   Status GetConnectorCapacityByStep(int32_t start_step, int32_t end_step, std::vector<int32_t> *result);
 
-  /// \brief API to get the connector capacity of DatasetIterator or DeviceQueueOp
+  /// \brief API to get the connector capacity of DatasetIterator or DataQueueOp
   /// \param [in] start_ts The time interval start range in ms
   /// \param [in] end_ts The time interval end range in ms
   /// \param [out] result A vector with connector capacity for steps in the given time range
@@ -477,20 +477,20 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status GetBatchTimeByTime(uint64_t start_ts, uint64_t end_ts, std::vector<int32_t> *result);
 
-  /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
+  /// \brief API to get fraction of steps that DatasetIterator or DataQueueOp connector was empty
   /// \param [in] epoch_num The epoch number for which results are requested
   /// \param [out] result The empty queue frequency
   /// \return Status object with the error code
   Status GetEmptyQueueFrequencyByEpoch(int32_t epoch_num, float_t *result);
 
-  /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
+  /// \brief API to get fraction of steps that DatasetIterator or DataQueueOp connector was empty
   /// \param [in] start_step The step interval start range
   /// \param [in] end_step The step interval end range
   /// \param [out] result The empty queue frequency
   /// \return Status object with the error code
   Status GetEmptyQueueFrequencyByStep(int32_t start_step, int32_t end_step, float_t *result);
 
-  /// \brief API to get fraction of steps that DatasetIterator or DeviceQueueOp connector was empty
+  /// \brief API to get fraction of steps that DatasetIterator or DataQueueOp connector was empty
   /// \param [in] start_ts The time interval start range in ms
   /// \param [in] end_ts The time interval end range in ms
   /// \param [out] result The empty queue frequency

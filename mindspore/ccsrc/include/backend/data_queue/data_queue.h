@@ -30,12 +30,13 @@ class DeviceContext;
 enum class DataQueueStatus : int { SUCCESS = 0, QUEUE_EXIST, QUEUE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
 
 struct DataQueueItem {
-  int32_t worker_id_{0};
-  std::string data_type_;
-  size_t data_len_{0};
-  void *data_ptr_{nullptr};
-  std::vector<int64_t> shapes_;
-  void *device_addr_{nullptr};
+  int32_t worker_id{0};
+  std::string data_type;
+  size_t data_len{0};
+  void *data_ptr{nullptr};
+  std::vector<int64_t> shapes;
+  void *device_addr{nullptr};
+  // add tensor type when tdt need more types than data and end-of-sequence
 };
 
 class DataQueue {
@@ -57,8 +58,6 @@ class DataQueue {
 
   virtual size_t Size() { return size_; }
   virtual size_t Capacity() { return capacity_; }
-
-  virtual std::shared_ptr<void> AllocHostMem(size_t size) { return std::shared_ptr<void>(::malloc(size), ::free); }
 
  protected:
   size_t head_;

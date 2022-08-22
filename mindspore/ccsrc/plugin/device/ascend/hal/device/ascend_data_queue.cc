@@ -135,18 +135,18 @@ AscendDataQueueDynamic::AscendDataQueueDynamic(const size_t capacity)
 DataQueueStatus AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
-    if (item.data_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_;
+    if (item.data_ptr == nullptr) {
+      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr << ", len: " << item.data_len;
       return DataQueueStatus::ERROR_INPUT;
     }
-    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len_);
+    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len);
     if (addr == nullptr) {
       MS_LOG(ERROR) << "Allocate device memory of data queue failed";
     }
     CheckRtRetWithError(
-      rtMemcpyAsync(addr, item.data_len_, item.data_ptr_, item.data_len_, RT_MEMCPY_HOST_TO_DEVICE, stream_),
+      rtMemcpyAsync(addr, item.data_len, item.data_ptr, item.data_len, RT_MEMCPY_HOST_TO_DEVICE, stream_),
       "Rt Memcpy Error");
-    item.device_addr_ = addr;
+    item.device_addr = addr;
   }
   CheckRtRetWithError(rtStreamSynchronize(stream_), "Call runtime rtStreamSynchronize failed");
   node_info_[tail_].data_ = std::move(data);
@@ -157,7 +157,7 @@ DataQueueStatus AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
 
 DataQueueStatus AscendDataQueueDynamic::Front(std::vector<DataQueueItem> *data) const {
   for (auto &item : node_info_[head_].data_) {
-    host_release_(item.data_ptr_, item.worker_id_);
+    host_release_(item.data_ptr, item.worker_id);
   }
   *data = node_info_[head_].data_;
   return DataQueueStatus::SUCCESS;
@@ -293,12 +293,12 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
   for (const auto &ts : data) {
     aclDataType acl_type;
     acltdtDataItem *acl_data = nullptr;
-    if (!GetAclDataType(ts.data_type_, &acl_type)) {
-      MS_LOG(ERROR) << "Convert type " << ts.data_type_ << " to acl type failed.";
+    if (!GetAclDataType(ts.data_type, &acl_type)) {
+      MS_LOG(ERROR) << "Convert type " << ts.data_type << " to acl type failed.";
       return false;
     }
 
-    const auto &shape = ts.shapes_;
+    const auto &shape = ts.shapes;
     std::string shape_str = "[";
     for (auto dim : shape) {
       (void)shape_str.append(std::to_string(dim)).append(",");
@@ -306,8 +306,8 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
     shape_str.pop_back();
     (void)shape_str.append("]");
 
-    void *data_ptr = ts.data_ptr_;
-    size_t data_size = ts.data_len_;
+    void *data_ptr = ts.data_ptr;
+    size_t data_size = ts.data_len;
 
     acl_data = acltdtCreateDataItem(acltdtTensorType::ACL_TENSOR_DATA_TENSOR, (shape.empty() ? nullptr : &shape[0]),
                                     shape.size(), acl_type, data_ptr, data_size);
@@ -492,20 +492,20 @@ bool AscendHostQueue::CreateDataItemInfos(const std::vector<DataQueueItem> &data
 
   for (auto &ts : data) {
     aclDataType acl_type;
-    if (!GetAclDataType(ts.data_type_, &acl_type)) {
-      MS_LOG(ERROR) << "Convert type " << ts.data_type_ << " to acl type failed.";
+    if (!GetAclDataType(ts.data_type, &acl_type)) {
+      MS_LOG(ERROR) << "Convert type " << ts.data_type << " to acl type failed.";
       return false;
     }
 
-    const auto &shape = ts.shapes_;
-    void *data_ptr = ts.data_ptr_;
-    size_t data_size = ts.data_len_;
+    const auto &shape = ts.shapes;
+    void *data_ptr = ts.data_ptr;
+    size_t data_size = ts.data_len;
 
-    if (ts.data_type_ != "string") {
+    if (ts.data_type != "string") {
       items->emplace_back(BuildDataItemInfo(ACL_TENSOR_DATA_TENSOR, static_cast<int32_t>(acl_type),
                                             (shape.empty() ? nullptr : &shape[0]), shape.size(), data_ptr, data_size));
     } else {
-      MS_LOG(ERROR) << "Create data item failed when send data with type:" << ts.data_type_;
+      MS_LOG(ERROR) << "Create data item failed when send data with type:" << ts.data_type;
     }
   }
   return true;

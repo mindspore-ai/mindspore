@@ -42,6 +42,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   bool BindDeviceToCurrentThread() const override;
 
+  std::shared_ptr<void> AllocateHostMemory(size_t size) const override;
+
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,

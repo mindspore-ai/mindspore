@@ -120,7 +120,7 @@ DataQueueStatus DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_n
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   std::string device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   std::shared_ptr<DataQueue> device_queue = CreateDataQueue(device_name, channel_name, true, capacity, nullptr, {});
-  if (device_queue != nullptr && (device_name == kGPUDevice || device_name == kAscendDevice)) {
+  if (device_queue != nullptr) {
     std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
     DataQueueStatus rt = queue->Create(device_queue);
     if (rt != DataQueueStatus::SUCCESS) {
@@ -261,22 +261,14 @@ std::shared_ptr<DataQueue> DataQueueMgr::GetDataQueue(const std::string &channel
   return iter->second->Queue();
 }
 
-DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &device_name) {
-  auto tmp_queue = CreateDataQueue(device_name, {}, false, 0, nullptr, {});
-  if (tmp_queue == nullptr) {
+DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &channel_name) {
+  auto queue = GetDataQueue(channel_name);
+  if (queue == nullptr) {
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
-  tmp_queue->SetThreadDevice();
+
+  queue->SetThreadDevice();
   return DataQueueStatus::SUCCESS;
-}
-
-std::shared_ptr<void> DataQueueMgr::AllocHostMem(const std::string &device_name, size_t size) {
-  auto tmp_queue = CreateDataQueue(device_name, {}, false, 0, nullptr, {});
-  if (tmp_queue == nullptr) {
-    return std::shared_ptr<void>(::malloc(size), ::free);
-  }
-
-  return tmp_queue->AllocHostMem(size);
 }
 #ifndef BUILD_LITE
 bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
@@ -299,12 +291,12 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   std::vector<TypeId> types;
   std::vector<size_t> output_size_list;
   for (size_t i = 0; i < data.size(); ++i) {
-    device_tensors[i]->set_ptr(data[i].device_addr_);
-    device_tensors[i]->SetSize(data[i].data_len_);
+    device_tensors[i]->set_ptr(data[i].device_addr);
+    device_tensors[i]->SetSize(data[i].data_len);
     device_tensors[i]->set_from_mem_pool(true);
-    output_size_list.push_back(data[i].data_len_);
+    output_size_list.push_back(data[i].data_len);
     (void)kernel_info->SetOutputAddr(device_tensors[i], i);
-    shapes.push_back(data[i].shapes_);
+    shapes.push_back(data[i].shapes);
     types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
   }
   auto kernel_mod = kernel_info->MutableKernelMod();

@@ -140,7 +140,7 @@ Status Task::Run() {
 
 Status Task::Join(WaitFlag blocking) {
 #ifdef WITH_BACKEND
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
   std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 #endif
   if (running_) {
@@ -166,8 +166,8 @@ Status Task::Join(WaitFlag blocking) {
           wait_times++;
 #ifdef WITH_BACKEND
           if (device_target == kAscendDevice) {
-            // Because hostPush hung in DeviceQueueOp, wait 5 seconds and destroy the tdt
-            if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
+            // Because hostPush hung in DataQueueOp, wait 5 seconds and destroy the tdt
+            if (wait_times > 5 && my_name_.find("DataQueueOp") != std::string::npos) {
               MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
                               << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
               auto queue =
@@ -179,7 +179,7 @@ Status Task::Join(WaitFlag blocking) {
               }
 
               // just wait 30 seconds
-              // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
+              // case1: cpu usage 100%, DataQueueOp thread may destroy without thread_future
               if (wait_times > kWaitInterruptTaskTime) {
                 MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
                                 << " is not responding. Maybe it's destroyed, task stop.";

@@ -1102,7 +1102,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
     DumpTaskExceptionInfo(graph);
 #endif
 #ifdef WITH_BACKEND
-    // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
+    // Run task error, we should call TdtHostDestroy to release tdt to avoid DataQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
     if (!tdt_handle::DestroyHandle()) {
       MS_LOG(WARNING) << "Destroy tdt channel failed.";

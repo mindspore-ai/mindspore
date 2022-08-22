@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_DATA_QUEUE_NODE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_DATA_QUEUE_NODE_H_
 
 #include <memory>
 #include <string>
@@ -25,14 +25,14 @@
 
 namespace mindspore {
 namespace dataset {
-class TransferNode : public DatasetNode {
+class DataQueueNode : public DatasetNode {
  public:
   /// \brief Constructor
-  TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type, int32_t device_id,
-               bool send_epoch_end, int32_t total_batch, bool create_data_info_queue);
+  DataQueueNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type, int32_t device_id,
+                bool send_epoch_end, int32_t total_batch, bool create_data_info_queue);
 
   /// \brief Destructor
-  ~TransferNode() override = default;
+  ~DataQueueNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -100,4 +100,4 @@ class TransferNode : public DatasetNode {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_DATA_QUEUE_NODE_H_

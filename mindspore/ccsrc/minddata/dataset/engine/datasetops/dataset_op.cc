@@ -23,7 +23,7 @@
 #include <string>
 #include <algorithm>
 
-#include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#include "minddata/dataset/engine/datasetops/data_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 
 #include "minddata/dataset/engine/operator_connector.h"
@@ -54,7 +54,7 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampl
 
 // Adds a operator to become our child.
 Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
-  if (std::dynamic_pointer_cast<DeviceQueueOp>(child) != nullptr) {
+  if (std::dynamic_pointer_cast<DataQueueOp>(child) != nullptr) {
     std::string err_msg(
       "Unsupported scenario, \'send\' operator can only be after \'device_queue\' operation, but got " + Name());
     RETURN_STATUS_UNEXPECTED(err_msg);

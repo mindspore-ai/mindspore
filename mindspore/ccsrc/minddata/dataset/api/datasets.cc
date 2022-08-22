@@ -66,7 +66,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 #endif
 
@@ -228,10 +228,10 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
     return false;
   }
 
-  // Add TransferNode IR on top of dataset
+  // Add DataQueueNode IR on top of dataset
   auto ds =
-    std::make_shared<TransferNode>(shared_from_this()->IRNode(), CharToString(queue_name), CharToString(device_type),
-                                   device_id, send_epoch_end, total_batches, create_data_info_queue);
+    std::make_shared<DataQueueNode>(shared_from_this()->IRNode(), CharToString(queue_name), CharToString(device_type),
+                                    device_id, send_epoch_end, total_batches, create_data_info_queue);
 
   // Get ToDevice consumer
   auto consumer = std::make_unique<ToDevice>(num_epochs);

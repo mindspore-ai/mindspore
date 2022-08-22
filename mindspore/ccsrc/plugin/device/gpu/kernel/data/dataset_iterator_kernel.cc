@@ -167,8 +167,8 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
 
   for (size_t i = 0; i < output_data_.size(); i++) {
     void *output_addr = GetDeviceAddress<void>(outputs, i);
-    auto device_addr = output_data_[i].device_addr_;
-    auto data_len = output_data_[i].data_len_;
+    auto device_addr = output_data_[i].device_addr;
+    auto data_len = output_data_[i].data_len;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(output_addr, device_addr, data_len, cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream)),
@@ -187,7 +187,7 @@ void DatasetIteratorKernelMod::SyncData() {
   std::vector<ShapeVector> shapes;
   for (const auto &item : output_data_) {
     ShapeVector shape;
-    std::transform(item.shapes_.begin(), item.shapes_.end(), std::back_inserter(shape), LongToSize);
+    std::transform(item.shapes.begin(), item.shapes.end(), std::back_inserter(shape), LongToSize);
     shapes.push_back(shape);
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(types_, shapes, kernel_node_.lock().get());

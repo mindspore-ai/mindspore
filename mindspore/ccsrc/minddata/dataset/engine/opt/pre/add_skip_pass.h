@@ -60,11 +60,11 @@ class AddSkipPass : public IRTreePass {
     Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) override;
 #endif
 
-    /// \brief Register the TransferNode for further action.
+    /// \brief Register the DataQueueNode for further action.
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) override;
+    Status VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) override;
 
     /// \brief Getter
     std::shared_ptr<DatasetNode> injection_point() { return injection_point_; }

@@ -159,7 +159,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/dataset_op.cc
         ${MINDDATA_DIR}/engine/datasetops/repeat_op.cc
         ${MINDDATA_DIR}/engine/datasetops/epoch_ctrl_op.cc
-        ${MINDDATA_DIR}/engine/datasetops/device_queue_op.cc
+        ${MINDDATA_DIR}/engine/datasetops/data_queue_op.cc
         ${MINDDATA_DIR}/engine/datasetops/project_op.cc
         ${MINDDATA_DIR}/engine/datasetops/shuffle_op.cc
         ${MINDDATA_DIR}/engine/datasetops/skip_op.cc

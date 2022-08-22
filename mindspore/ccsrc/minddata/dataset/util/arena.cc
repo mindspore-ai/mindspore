@@ -19,7 +19,7 @@
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
 #ifdef WITH_BACKEND
-#include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
+#include "mindspore/ccsrc/runtime/hardware/device_context_manager.h"
 #endif
 namespace mindspore {
 namespace dataset {
@@ -247,9 +247,15 @@ Status Arena::Init() {
     int64_t sz = size_in_MB_ * 1048576L;
 #ifdef WITH_BACKEND
     if (is_cuda_malloc_) {
-      ptr_ = device::DataQueueMgr::GetInstance().AllocHostMem("GPU", sz);
+      auto ms_context = MsContext::GetInstance();
+      RETURN_UNEXPECTED_IF_NULL(ms_context);
+      auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      RETURN_UNEXPECTED_IF_NULL(device_context);
+      RETURN_UNEXPECTED_IF_NULL(device_context->device_res_manager_);
+      ptr_ = device_context->device_res_manager_->AllocateHostMemory(sz);
     } else {
-      ptr_ = device::DataQueueMgr::GetInstance().AllocHostMem("Others", sz);
+      ptr_ = std::shared_ptr<void>(::malloc(sz), ::free);
     }
 #else
     ptr_ = std::shared_ptr<void>(::malloc(sz), ::free);

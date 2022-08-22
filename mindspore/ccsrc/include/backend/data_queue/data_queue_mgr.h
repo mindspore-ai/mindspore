@@ -99,8 +99,7 @@ class BACKEND_EXPORT DataQueueMgr {
   DataQueueStatus CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity);
   DataQueueStatus OpenDynamicBufQueue(const std::string &channel_name);
   std::shared_ptr<DataQueue> GetDataQueue(const std::string &channel_name) const;
-  DataQueueStatus SetThreadDevice(const std::string &device_name);
-  std::shared_ptr<void> AllocHostMem(const std::string &device_name, size_t size);
+  DataQueueStatus SetThreadDevice(const std::string &channel_name);
 
   void Close(const std::string &channel_name) const noexcept;
 

@@ -95,11 +95,11 @@ class RepeatPass : public IRNodePass {
   Status VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const modified) override;
 #endif
 
-  /// \brief Sets the epoch count for TransferNode
+  /// \brief Sets the epoch count for DataQueueNode
   /// \param[in] node The node being visited
   /// \param[in,out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) override;
+  Status VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) override;
 
   /// \brief All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
   ///     for use with a controlling repeat above it.

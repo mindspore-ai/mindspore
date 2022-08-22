@@ -32,20 +32,6 @@ void SetThreadToDeviceId(uint32_t device_id) {
     MS_LOG(EXCEPTION) << "cudaSetDevice failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
   }
 }
-
-std::shared_ptr<void> AllocHostMemory(size_t size) {
-  void *ptr;
-  auto ret = cudaHostAlloc(&ptr, size, cudaHostAllocDefault);
-  if (ret != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "cudaHostAlloc failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
-  }
-
-  return std::shared_ptr<void>(ptr, [](void *ptr) -> void {
-    if (ptr != nullptr) {
-      (void)cudaFreeHost(ptr);
-    }
-  });
-}
 }  // namespace
 GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capacity), node_info_(nullptr) {
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
@@ -61,14 +47,14 @@ GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capa
 DataQueueStatus GpuDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
-    if (item.data_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_;
+    if (item.data_ptr == nullptr) {
+      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr << ", len: " << item.data_len;
       return DataQueueStatus::ERROR_INPUT;
     }
-    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len_);
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr_, item.data_len_, cudaMemcpyHostToDevice, stream_),
+    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len);
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr, item.data_len, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
-    item.device_addr_ = addr;
+    item.device_addr = addr;
   }
 
   node_info_[tail_].event_.reset(new cudaEvent_t());
@@ -84,7 +70,7 @@ DataQueueStatus GpuDataQueueDynamic::Front(std::vector<DataQueueItem> *data) con
   CHECK_CUDA_RET_WITH_ERROR(cudaEventSynchronize(*(node_info_[head_].event_)), "Cuda Event Syn Failed");
   CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(*(node_info_[head_].event_)), "Cuda Destroy Event Failed");
   for (auto &item : node_info_[head_].data_) {
-    host_release_(item.data_ptr_, item.worker_id_);
+    host_release_(item.data_ptr, item.worker_id);
   }
   *data = node_info_[head_].data_;
   return DataQueueStatus::SUCCESS;
@@ -99,8 +85,6 @@ DataQueueStatus GpuDataQueueDynamic::Pop() {
 bool GpuDataQueueDynamic::Destroy() { return true; }
 
 void GpuDataQueueDynamic::SetThreadDevice() { SetThreadToDeviceId(device_id_); }
-
-std::shared_ptr<void> GpuDataQueueDynamic::AllocHostMem(size_t size) { return AllocHostMemory(size); }
 
 GpuQueue::GpuQueue(size_t capacity, void *addr, const std::vector<size_t> &shape)
     : DataQueue(capacity), buffer_(addr), shape_(shape), len_(0), stream_(0), node_info_(nullptr) {
@@ -120,24 +104,24 @@ DataQueueStatus GpuQueue::Push(std::vector<DataQueueItem> data) {
   void *addr = reinterpret_cast<uint8_t *>(buffer_) + tail_ * len_;
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
-    MS_EXCEPTION_IF_NULL(item.data_ptr_);
-    if (item.data_len_ != shape_[i] && !ds_detected_) {
+    MS_EXCEPTION_IF_NULL(item.data_ptr);
+    if (item.data_len != shape_[i] && !ds_detected_) {
       MS_LOG(WARNING) << "Detected that dataset is dynamic shape, it is suggested to call network.set_inputs() to "
                          "configure dynamic dims of input data before running the network";
       ds_detected_ = true;
     }
-    if (item.data_len_ > shape_[i]) {
-      MS_LOG(ERROR) << "Data size(" << item.data_len_ << ") of item " << item.data_ptr_ << " exceeds the max capacity("
+    if (item.data_len > shape_[i]) {
+      MS_LOG(ERROR) << "Data size(" << item.data_len << ") of item " << item.data_ptr << " exceeds the max capacity("
                     << shape_[i] << "), "
                     << "you need to call network.set_inputs() to "
                        "configure dynamic dims of input data before running the network";
       return DataQueueStatus::ERROR_INPUT;
     }
 
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr_, item.data_len_, cudaMemcpyHostToDevice, stream_),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr, item.data_len, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
-    item.device_addr_ = addr;
-    addr = reinterpret_cast<uint8_t *>(addr) + item.data_len_;
+    item.device_addr = addr;
+    addr = reinterpret_cast<uint8_t *>(addr) + item.data_len;
   }
 
   node_info_[tail_].event_.reset(new cudaEvent_t());
@@ -153,7 +137,7 @@ DataQueueStatus GpuQueue::Front(std::vector<DataQueueItem> *data) const {
   CHECK_CUDA_RET_WITH_ERROR(cudaEventSynchronize(*(node_info_[head_].event_)), "Cuda Event Syn Failed");
   CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(*(node_info_[head_].event_)), "Cuda Destroy Event Failed");
   for (auto &item : node_info_[head_].data_) {
-    host_release_(item.data_ptr_, item.worker_id_);
+    host_release_(item.data_ptr, item.worker_id);
   }
   *data = node_info_[head_].data_;
   return DataQueueStatus::SUCCESS;
@@ -179,8 +163,6 @@ bool GpuQueue::Destroy() {
 }
 
 void GpuQueue::SetThreadDevice() { SetThreadToDeviceId(device_id_); }
-
-std::shared_ptr<void> GpuQueue::AllocHostMem(size_t size) { return AllocHostMemory(size); }
 
 namespace {
 std::shared_ptr<DataQueue> CreateGpuDataQueue(const std::string &, bool dynamic_shape, size_t capacity, void *addr,
