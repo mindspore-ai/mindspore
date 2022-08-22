@@ -14,6 +14,7 @@
 # ============================================================================
 """Generate the summary event which conform to proto format."""
 from __future__ import absolute_import
+from __future__ import division
 
 import io
 import platform

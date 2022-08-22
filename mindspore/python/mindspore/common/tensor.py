@@ -22,6 +22,7 @@ import numpy as np
 
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.common._utils import is_shape_unknown
+from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
@@ -3428,7 +3429,6 @@ class Tensor(Tensor_):
 
             def __init__(self, init):
                 self.init = init
-                from .seed import get_seed
                 global_seed = get_seed()
                 self._np_seed = np.random.get_state()[1][0]
                 self.need_set_seed = (slice_index is not None)
