@@ -27,7 +27,10 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type, c
   auto tensor_data = tensor->data_c();
   char *data = reinterpret_cast<char *>(tensor_data);
   MS_EXCEPTION_IF_NULL(data);
-  (void)memset_s(data, mem_size, 0, mem_size);
+  if (memset_s(data, mem_size, 0, mem_size) != EOK) {
+    MS_LOG(ERROR) << "Cannot create zeros tensor.";
+    return nullptr;
+  }
 
   return tensor;
 }

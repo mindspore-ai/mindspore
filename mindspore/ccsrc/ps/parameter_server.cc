@@ -225,8 +225,8 @@ void CopyTensorData(void *dest_ptr, size_t tensor_size, const void *src_ptr) {
   for (size_t offset = 0; offset < tensor_size; offset += SECUREC_MEM_MAX_LEN) {
     size_t copy_len = std::min(tensor_size - offset, SECUREC_MEM_MAX_LEN);
     size_t dest_len = copy_len;
-    int ret = memcpy_s(dest + offset, dest_len, src + offset, copy_len);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(dest + offset, dest_len, src + offset, copy_len);
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Failed to memcpy tensor, errorno(" << ret << ")";
     }
   }
@@ -950,8 +950,8 @@ void ParameterServer::ServerHandler::HandlePullReq(const void *data, size_t size
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
   size_t src_size = res_data.ByteSizeLong();
-  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 }
@@ -1072,8 +1072,8 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPush(const void *data, s
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
   size_t src_size = res_data.ByteSizeLong();
-  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 }
@@ -1091,8 +1091,8 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPull(const void *data, s
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
   size_t src_size = res_data.ByteSizeLong();
-  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 }
@@ -1113,8 +1113,8 @@ void ParameterServer::ServerHandler::HandleEmbeddingLookup(const void *data, siz
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
   size_t src_size = res_data.ByteSizeLong();
-  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 }

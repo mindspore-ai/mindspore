@@ -288,8 +288,8 @@ void Server::InitCipher() {
   mindspore::armour::CipherPublicPara param;
   param.g = cipher_g;
   param.t = cipher_t;
-  int ret = memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, sizeof(cipher_p));
-  if (ret != 0) {
+  errno_t ret = memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, sizeof(cipher_p));
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Memcpy_s error, errorno" << ret;
   }
   param.dp_delta = dp_delta;

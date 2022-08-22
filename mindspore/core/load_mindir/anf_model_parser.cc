@@ -265,8 +265,8 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   const std::string &tensor_buf = attr_tensor.raw_data();
   if (attr_tensor.has_raw_data() && tensor->data().nbytes() != 0) {
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
-    auto ret = memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf.data(), tensor_buf.size());
-    if (ret != 0) {
+    errno_t ret = memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+    if (ret != EOK) {
       MS_LOG(ERROR) << "Failed to get tensor form tensor proto.";
       return nullptr;
     }
@@ -940,8 +940,8 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
     tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
     const std::string &tensor_buf = attr_tensor.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-    auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
-    if (ret != 0) {
+    errno_t ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+    if (ret != EOK) {
       MS_LOG(ERROR) << "Obtain ValueNode in TupleTensorForm occur memcpy_s error.";
       return false;
     }

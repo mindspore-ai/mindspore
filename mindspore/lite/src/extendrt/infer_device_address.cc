@@ -48,7 +48,7 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
       MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
       return true;
     }
-    auto ret_code = memcpy_s(host_ptr, size, ptr_, size);
+    errno_t ret_code = memcpy_s(host_ptr, size, ptr_, size);
     // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";

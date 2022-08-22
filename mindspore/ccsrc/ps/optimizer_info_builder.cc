@@ -101,8 +101,8 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
   void *src_data = reinterpret_cast<T *>(ps_data) + addr_data_offset;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
+  errno_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     delete[] buffer;
     buffer = nullptr;
@@ -127,7 +127,7 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   MS_EXCEPTION_IF_NULL(accumulate->addr);
   accumulate->size = sizeof(float) * weight->size();
   int64_t ret = memset_s(accumulate->addr, accumulate->size, 0x00, accumulate->size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(accumulate->addr);
     accumulate->addr = nullptr;
@@ -157,7 +157,7 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   m->addr = new float[weight->size()];
   MS_EXCEPTION_IF_NULL(m->addr);
   m->size = weight->size() * sizeof(float);
-  int64_t ret = memset_s(m->addr, m->size, 0x00, m->size);
+  errno_t ret = memset_s(m->addr, m->size, 0x00, m->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(m->addr);
@@ -172,7 +172,7 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   MS_EXCEPTION_IF_NULL(v->addr);
   v->size = weight->size() * sizeof(float);
   ret = memset_s(v->addr, v->size, 0x00, v->size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(v->addr);
     v->addr = nullptr;
@@ -229,8 +229,8 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   linear->addr = new float[weight->size()];
   MS_EXCEPTION_IF_NULL(linear->addr);
   linear->size = weight->size() * sizeof(float);
-  int64_t ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
-  if (ret != 0) {
+  errno_t ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(linear->addr);
     linear->addr = nullptr;

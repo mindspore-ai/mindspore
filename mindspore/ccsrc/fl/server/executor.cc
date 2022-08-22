@@ -107,8 +107,8 @@ bool Executor::HandlePushWeight(const std::map<std::string, Address> &feature_ma
     MS_ERROR_IF_NULL_W_RET_VAL(old_weight, false);
     MS_ERROR_IF_NULL_W_RET_VAL(old_weight->addr, false);
     MS_ERROR_IF_NULL_W_RET_VAL(new_weight.addr, false);
-    int ret = memcpy_s(old_weight->addr, old_weight->size, new_weight.addr, new_weight.size);
-    if (ret != 0) {
+    errno_t ret = memcpy_s(old_weight->addr, old_weight->size, new_weight.addr, new_weight.size);
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return false;
     }

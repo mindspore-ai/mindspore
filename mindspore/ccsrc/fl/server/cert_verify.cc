@@ -216,8 +216,8 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
       char keyid[8] = {0};
       size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
-      int ret = strcat_s(subject_keyid, base, keyid);
-      if (ret == -1) {
+      errno_t ret = strcat_s(subject_keyid, base, keyid);
+      if (ret != EOK) {
         result = false;
         break;
       }
@@ -239,8 +239,8 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
       char keyid[8] = {0};
       size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
-      int ret = strcat_s(issuer_keyid, base, keyid);
-      if (ret == -1) {
+      errno_t ret = strcat_s(issuer_keyid, base, keyid);
+      if (ret != EOK) {
         result = false;
         break;
       }

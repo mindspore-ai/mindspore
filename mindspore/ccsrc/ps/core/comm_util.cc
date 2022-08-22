@@ -435,8 +435,8 @@ bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
     char keyid[8] = {0};
     size_t base = keyidLen;
     (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
-    int ret = strcat_s(subject_keyid, base, keyid);
-    if (ret != 0) {
+    errno_t ret = strcat_s(subject_keyid, base, keyid);
+    if (ret != EOK) {
       return false;
     }
   }

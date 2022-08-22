@@ -170,8 +170,8 @@ std::string FileUtils::UTF_8ToGB2312(const char *text) {
   int len = strlen(text);
   char *new_text = const_cast<char *>(text);
   auto rst = std::make_unique<char[]>(len + (len >> 2) + 2);
-  auto ret = memset_s(rst.get(), len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
-  if (ret != 0) {
+  errno_t ret = memset_s(rst.get(), len + (len >> 2) + 2, 0, len + (len >> 2) + 2);
+  if (ret != EOK) {
     MS_LOG(ERROR) << "memset_s error, error code: " << ret;
     return "";
   }
@@ -214,8 +214,8 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
 
   int len = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, nullptr, 0);
   auto wstr = std::make_unique<wchar_t[]>(len + 1);
-  auto ret = memset_s(wstr.get(), len + 1, 0, len + 1);
-  if (ret != 0) {
+  errno_t ret = memset_s(wstr.get(), len + 1, 0, len + 1);
+  if (ret != EOK) {
     MS_LOG(ERROR) << "memset_s error, error code: " << ret;
     return "";
   }
@@ -223,8 +223,8 @@ std::string FileUtils::GB2312ToUTF_8(const char *gb2312) {
   len = WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, nullptr, 0, nullptr, nullptr);
 
   auto str = std::make_unique<char[]>(len + 1);
-  auto ret2 = memset_s(str.get(), len + 1, 0, len + 1);
-  if (ret2 != 0) {
+  errno_t ret2 = memset_s(str.get(), len + 1, 0, len + 1);
+  if (ret2 != EOK) {
     MS_LOG(ERROR) << "memset_s error, error code: " << ret2;
     return "";
   }

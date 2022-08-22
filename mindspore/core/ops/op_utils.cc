@@ -313,8 +313,8 @@ ValuePtr TransShapeToTensorValue(const ShapeVector &shape) {
   auto new_value = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape_vec_shape);
   auto data_c = new_value->data_c();
   auto elem_num = shape.size() * kType64Len;
-  auto ret_code = memcpy_s(data_c, static_cast<size_t>(new_value->data().nbytes()), &shape[0], elem_num);
-  if (ret_code == 0) {
+  errno_t ret_code = memcpy_s(data_c, static_cast<size_t>(new_value->data().nbytes()), &shape[0], elem_num);
+  if (ret_code == EOK) {
     return new_value;
   }
   return nullptr;
