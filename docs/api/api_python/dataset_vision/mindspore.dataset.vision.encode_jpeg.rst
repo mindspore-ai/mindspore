@@ -7,10 +7,10 @@ mindspore.dataset.vision.encode_jpeg
 
     参数：
         - **image** (Union[numpy.ndarray, mindspore.Tensor]) - 编码的图像。
-        - **quality** (int, 可选) - 生成的JPEG数据的质量，从1到100。默认值75。
+        - **quality** (int, 可选) - 生成的JPEG数据的质量，取值范围为[1, 100]。默认值: 75。
 
     返回：
-        - numpy:ndarray, 一维uint8类型数据。
+        - numpy.ndarray, 一维uint8类型数据。
 
     异常：
         - **TypeError** - 如果 `image` 不是numpy.ndarray或mindspore.Tensor类型。

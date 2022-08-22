@@ -379,7 +379,7 @@ def encode_jpeg(image, quality=75):
 
     Args:
         image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
-        quality (int, optional): Quality of the resulting JPEG data, from 1 to 100. Default: 75.
+        quality (int, optional): Quality of the resulting JPEG data, in range of [1, 100]. Default: 75.
 
     Returns:
         numpy.ndarray, one dimension uint8 data.
@@ -406,6 +406,44 @@ def encode_jpeg(image, quality=75):
         return cde.encode_jpeg(cde.Tensor(image), quality).as_array()
     if isinstance(image, mindspore.Tensor):
         return cde.encode_jpeg(cde.Tensor(image.asnumpy()), quality).as_array()
+    raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
+                                                                                  mindspore.Tensor, type(image)))
+
+
+def encode_png(image, compression_level=6):
+    """
+    Encode the input image as PNG data.
+
+    Args:
+        image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
+        compression_level (int, optional): The compression_level for encoding, in range of [0, 9]. Default: 6.
+
+    Returns:
+        numpy.ndarray, one dimension uint8 data.
+
+    Raises:
+        TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
+        TypeError: If `compression_level` is not of type int.
+        RuntimeError: If the data type of `image` is not uint8.
+        RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
+        RuntimeError: If `compression_level` is less than 0 or greater than 9.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> # Generate a random image with height=120, width=340, channels=3
+        >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
+        >>> png_data = vision.encode_png(image)
+    """
+    if not isinstance(compression_level, int):
+        raise TypeError("Input compression_level is not of type {0}, but got: {1}.".format(int,
+                                                                                           type(compression_level)))
+    if isinstance(image, np.ndarray):
+        return cde.encode_png(cde.Tensor(image), compression_level).as_array()
+    if isinstance(image, mindspore.Tensor):
+        return cde.encode_png(cde.Tensor(image.asnumpy()), compression_level).as_array()
     raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
                                                                                   mindspore.Tensor, type(image)))
 

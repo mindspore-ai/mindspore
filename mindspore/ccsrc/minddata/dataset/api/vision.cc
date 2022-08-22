@@ -468,6 +468,7 @@ std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env
 }
 #endif
 #ifndef ENABLE_ANDROID
+
 // EncodeJpeg Function.
 Status EncodeJpeg(const mindspore::MSTensor &image, mindspore::MSTensor *output, int quality) {
   RETURN_UNEXPECTED_IF_NULL(output);
@@ -477,6 +478,19 @@ Status EncodeJpeg(const mindspore::MSTensor &image, mindspore::MSTensor *output,
   RETURN_IF_NOT_OK(mindspore::dataset::EncodeJpeg(input, &de_tensor, quality));
   CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(),
                                "EncodeJpeg: get an empty tensor with shape " + de_tensor->shape().ToString());
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  return Status::OK();
+}
+
+// EncodePng Function.
+Status EncodePng(const mindspore::MSTensor &image, mindspore::MSTensor *output, int compression_level) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::shared_ptr<dataset::Tensor> input;
+  RETURN_IF_NOT_OK(Tensor::CreateFromMSTensor(image, &input));
+  TensorPtr de_tensor;
+  RETURN_IF_NOT_OK(mindspore::dataset::EncodePng(input, &de_tensor, compression_level));
+  CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(),
+                               "EncodePng: get an empty tensor with shape " + de_tensor->shape().ToString());
   *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   return Status::OK();
 }

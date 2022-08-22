@@ -279,6 +279,14 @@ PYBIND_REGISTER(EncodeJpegOperation, 1, ([](py::module *m) {
                                }));
                 }));
 
+PYBIND_REGISTER(EncodePNGOperation, 1, ([](py::module *m) {
+                  (void)m->def("encode_png", ([](const std::shared_ptr<Tensor> &image, int compression_level) {
+                                 std::shared_ptr<Tensor> output;
+                                 THROW_IF_ERROR(EncodePng(image, &output, compression_level));
+                                 return output;
+                               }));
+                }));
+
 PYBIND_REGISTER(EqualizeOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::EqualizeOperation, TensorOperation, std::shared_ptr<vision::EqualizeOperation>>(

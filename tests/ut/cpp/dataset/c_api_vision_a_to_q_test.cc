@@ -2831,3 +2831,85 @@ TEST_F(MindDataTestPipeline, TestEncodeJpegException) {
   input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
   ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
 }
+
+/// Feature: EncodePng
+/// Description: Test EncodePng by encoding the image as PNG data according to the compression_level
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestEncodePngNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesEncodePngNormal.";
+  mindspore::MSTensor output;
+  std::string folder_path = "./data/dataset/";
+  std::string filename;
+  const UINT8 *data;
+
+  filename = folder_path + "apple.jpg";
+  cv::Mat image_bgr = cv::imread(filename, cv::ImreadModes::IMREAD_UNCHANGED);
+  cv::Mat image;
+  cv::cvtColor(image_bgr, image, cv::COLOR_BGRA2RGB);
+
+  TensorShape tensor_shape = TensorShape({image.size[0], image.size[1], image.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromMemory(tensor_shape, pixel_type, image.data, &input);
+  auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+
+  ASSERT_OK(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
+  data = (const UINT8 *) (output.Data().get());
+  EXPECT_EQ(data[0], 137);
+  EXPECT_EQ(data[1], 80);
+  EXPECT_EQ(data[2], 78);
+  EXPECT_EQ(data[3], 71);
+
+  int compression_level;
+  for (compression_level = 0; compression_level <= 9 ; compression_level++) {
+    ASSERT_OK(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output, compression_level));
+    data = (const UINT8 *) (output.Data().get());
+    EXPECT_EQ(data[1], 80);
+  }
+}
+
+/// Feature: EncodePng
+/// Description: Test EncodePng with invalid parameter
+/// Expectation: Error is caught when the parameter is invalid
+TEST_F(MindDataTestPipeline, TestEncodePngException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesEncodePngException.";
+  mindspore::MSTensor output;
+  std::string folder_path = "./data/dataset/";
+  std::string filename;
+
+  filename = folder_path + "apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_UNCHANGED);
+
+  TensorShape tensor_shape = TensorShape({image.size[0], image.size[1], image.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromMemory(tensor_shape, pixel_type, image.data, &input);
+  auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+
+  // Test with an invalid compression_level integer
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output, -1));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output, 10));
+
+  // Test with an invalid image with the type of float
+  std::shared_ptr<Tensor> float32_de_tensor;
+  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_de_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
+
+  // Test with an invalid image with only one dimension
+  input->Reshape(TensorShape({image.size[0] * image.size[1] * image.channels()}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
+
+  // Test with an invalid image with four dimensions
+  input->Reshape(TensorShape({image.size[0] / 2, image.size[1], image.channels(), 2}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
+
+  // Test with an invalid image with two channels
+  input->Reshape(TensorShape({image.size[0] * image.channels() / 2, image.size[1], 2}));
+  input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
+}
