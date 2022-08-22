@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ms_function
 from mindspore.ops import composite as C
-from mindspore.ops.functional import grad, value_and_grad
+from mindspore.ops import grad, value_and_grad, vmap
 from mindspore.common import dtype as mstype
 from mindspore import Parameter, ParameterTuple
 
@@ -184,6 +184,35 @@ def test_grad_wrap_with_msfunction_pynative():
     expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
     real_grad = grad_wrap_with_msfunction(x, y, z)
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_vmap_pynative():
+    """
+    Features: Function grad.
+    Description: Test F.grad vmap  in pynative mode.
+    Expectation: No exception.
+    """
+
+    def fn(x):
+        return x * x
+
+    class VmapNet(nn.Cell):
+        def __init__(self, net):
+            super(VmapNet, self).__init__()
+            self.grad_net = grad(net)
+
+        def construct(self, x):
+            res = vmap(self.grad_net, 0, 0)(x)
+            return res
+
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    ms_net = VmapNet(fn)
+    outputs = ms_net(x)
+    expect_value = np.array([[2, 4], [6, 8]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect_value)
 
 
 @pytest.mark.level0
