@@ -159,7 +159,7 @@ class COMMON_EXPORT Callback {
   friend class CallbackImplRegister;
   static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
 
-  static CallbackPtr instance_;
+  COMMON_EXPORT inline static CallbackPtr instance_{nullptr};
 };
 
 class CallbackImplRegister {
