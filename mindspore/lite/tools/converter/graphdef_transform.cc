@@ -58,22 +58,6 @@ int QuantTransform(const std::shared_ptr<ConverterPara> &param, schema::MetaGrap
     {
       // quantization
       // init old node indices
-      auto old_nodes = GetGraphNodes(*graph_defT);
-      Optimizer tensor_quant_optimizer;
-      tensor_quant_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-      tensor_quant_optimizer.AddPass(new (std::nothrow) InferQuantParamPass());
-      tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass(param->fmk_type));
-      tensor_quant_optimizer.AddPass(new (std::nothrow) TensorQuantPass());
-      tensor_quant_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-      auto status = tensor_quant_optimizer.Run(graph_defT);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "DoQuantize failed!";
-        return status;
-      }
-    }
-    {
-      // quantization
-      // init old node indices
       Optimizer quant_node_optimizer;
       quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
       auto old_nodes = GetGraphNodes(*graph_defT);

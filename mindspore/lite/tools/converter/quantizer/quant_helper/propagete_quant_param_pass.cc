@@ -156,7 +156,10 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
       auto before_cnode = before_cnode_map.first;
       size_t before_out_index = before_cnode_map.second;
       auto before_quant_holder = GetCNodeQuantHolder(before_cnode);
-      CHECK_NULL_RETURN(before_quant_holder);
+      if (before_quant_holder == nullptr) {
+        MS_LOG(WARNING) << cnode->fullname_with_scope() << " get before_quant_holder failed.";
+        continue;
+      }
       auto before_output_quant_param = before_quant_holder->get_output_quant_params();
       if (before_output_quant_param.size() > before_out_index && before_quant_holder->IsOutputQuantParamsInited()) {
         MS_LOG(INFO) << before_cnode->fullname_with_scope() << " forward propagate to " << cnode->fullname_with_scope();

@@ -28,11 +28,11 @@
 
 namespace mindspore::lite::quant {
 // only enable for uint8
-int DTypeTransformPass::Transform() {
+int TransformUint8Pass::Transform() {
   auto cnodes = func_graph_->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (!CheckNeedDTypeTrans(cnode)) {
-      MS_LOG(INFO) << "CheckNeedDTypeTrans invalid cnode, cnode name: " << cnode->fullname_with_scope();
+      MS_LOG(DEBUG) << "CheckNeedDTypeTrans invalid cnode, cnode name: " << cnode->fullname_with_scope();
       continue;
     }
     auto status = DoNodeDTypeTrans(cnode);
@@ -67,26 +67,45 @@ int DTypeTransformPass::Transform() {
   return RET_OK;
 }
 
-int DTypeTransformPass::DoParameterNodeTrans(const CNodePtr &cnode, const ParameterPtr &input_node,
+int TransformUint8Pass::DoParameterNodeTrans(const CNodePtr &cnode, const ParameterPtr &input_node,
                                              size_t input_index) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(input_node);
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
-    return RET_OK;
+    return RET_NOT_SUPPORT;
   }
   auto tensor_info = input_node->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
+  bool is_shared_weight = IsSharedWeightParameter(input_node);
+  auto weight_name = input_node->fullname_with_scope();
+
+  if (is_shared_weight) {
+    auto iter = shared_weight_quant_params_.find(weight_name);
+    if (iter != shared_weight_quant_params_.end()) {
+      auto quant_param_holder = GetCNodeQuantHolder(cnode);
+      CHECK_NULL_RETURN(quant_param_holder);
+      quant_param_holder->set_input_quant_param(input_index - 1, iter->second);
+      return RET_NO_CHANGE;
+    }
+  }
+
+  // filter condition: dtype == kNumberTypeUInt8
   if (tensor_info->data_type() != kNumberTypeUInt8) {
     MS_LOG(INFO) << input_node->fullname_with_scope() << " dtype not uint8.";
-    return RET_ERROR;
+    return RET_NOT_SUPPORT;
   }
+
+  // transform weight data
   size_t elem_count = tensor_info->DataSize();
   auto ret = Uint8toInt8(static_cast<uint8_t *>(tensor_info->data().data()), elem_count);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << input_node->fullname_with_scope() << " transform data uint8 to int8 failed.";
     return ret;
   }
+
+  // update zp
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(quant_param_holder);
   if (quant_param_holder->get_input_quant_params().size() < input_index) {
     MS_LOG(ERROR) << "Invalid quant params. input node  name: " << input_node->fullname_with_scope();
     return RET_ERROR;
@@ -96,6 +115,9 @@ int DTypeTransformPass::DoParameterNodeTrans(const CNodePtr &cnode, const Parame
     quant_param.zeroPoint -= kU8ZeroPointOffset;
   }
   quant_param_holder->set_input_quant_param(input_index - 1, quant_params);
+  if (is_shared_weight && shared_weight_quant_params_.find(weight_name) == shared_weight_quant_params_.end()) {
+    shared_weight_quant_params_.insert({weight_name, quant_params});
+  }
 
   // set dtype
   tensor_info->set_data_type(kNumberTypeInt8);
@@ -107,7 +129,7 @@ int DTypeTransformPass::DoParameterNodeTrans(const CNodePtr &cnode, const Parame
   return RET_OK;
 }
 
-int DTypeTransformPass::Uint8toInt8(uint8_t *data, int size) {
+int TransformUint8Pass::Uint8toInt8(uint8_t *data, int size) {
   CHECK_NULL_RETURN(data);
 
   for (int i = 0; i < size; i++) {
@@ -123,7 +145,7 @@ int DTypeTransformPass::Uint8toInt8(uint8_t *data, int size) {
   return RET_OK;
 }
 
-int DTypeTransformPass::GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
+int TransformUint8Pass::GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
   CHECK_NULL_RETURN(cnode);
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(quant_param_holder);
@@ -134,7 +156,7 @@ int DTypeTransformPass::GetQuantType(const CNodePtr &cnode, schema::QuantType *q
 /**
  * Transform CNode(dtype,uint8toint8,weigh data)
  * */
-int DTypeTransformPass::DoNodeDTypeTrans(const CNodePtr &cnode) {
+int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
   auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(curr_quant_param_holder);
   TypeId cnode_dtype = kTypeUnknown;
@@ -190,15 +212,17 @@ int DTypeTransformPass::DoNodeDTypeTrans(const CNodePtr &cnode) {
       curr_quant_param_holder->set_input_quant_param(index - 1, input_quant_params);
     } else if (input_node->isa<mindspore::Parameter>()) {  // weight data
       auto ret = DoParameterNodeTrans(cnode, input_node->cast<ParameterPtr>(), index);
-      if (ret != RET_OK) {
+      bool is_failed = (ret != RET_OK && ret != RET_NOT_SUPPORT && ret != RET_NO_CHANGE);
+      if (is_failed) {
         MS_LOG(WARNING) << "DoParameterNodeTrans failed, input node name: " << input_node->fullname_with_scope();
+        return ret;
       }
     }
   }
   return RET_OK;
 }
 
-int DTypeTransformPass::InsertForwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
+int TransformUint8Pass::InsertForwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
   // inputs
   quant::InsertQuantNodeManager insert_node_manager;
   for (size_t index = 1; index < cnode->size(); index++) {
@@ -233,7 +257,7 @@ int DTypeTransformPass::InsertForwardCastNode(const CNodePtr &cnode, schema::Qua
   return RET_OK;
 }
 
-int DTypeTransformPass::InsertBackwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
+int TransformUint8Pass::InsertBackwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
   // outputs
   auto manager = this->func_graph_->manager();
   if (manager == nullptr) {
@@ -262,13 +286,23 @@ int DTypeTransformPass::InsertBackwardCastNode(const CNodePtr &cnode, schema::Qu
   return RET_OK;
 }
 
-bool DTypeTransformPass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
+bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
   if (opt::IsSpecialType(cnode)) {
     return false;
   }
-  if (IsGraphInDTypeCast(cnode) || IsGraphOutDTypeCast(func_graph_, cnode)) {
+  // If CastNode(kDeQuant) as graph input node, or CastNode(kQuant) as graph output node, do nothing.
+  CastNodeType cast_node_type = kNone;
+  auto status = quant::GetCastNodeType(func_graph_, cnode, &cast_node_type);
+  if (status == RET_OK) {
+    if ((cast_node_type == kDeQuant && IsGraphInDTypeCast(cnode)) ||
+        (IsGraphOutDTypeCast(func_graph_, cnode) && cast_node_type == kQuant)) {
+      return false;
+    }
+  } else if (status != RET_NOT_SUPPORT) {
+    MS_LOG(ERROR) << "Get cast node type failed, cnode name: " << cnode->fullname_with_scope();
     return false;
   }
+
   TypeId cnode_dtype = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(cnode, &cnode_dtype) != RET_OK) {
     MS_LOG(ERROR) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
@@ -281,5 +315,15 @@ bool DTypeTransformPass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
     return false;
   }
   return true;
+}
+
+bool TransformUint8Pass::IsSharedWeightParameter(const AnfNodePtr &anf_node) {
+  auto manager = this->func_graph_->manager();
+  if (manager == nullptr) {
+    manager = Manage(this->func_graph_, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  auto node_users = manager->node_users()[anf_node];
+  return (node_users.size() > 1);
 }
 }  // namespace mindspore::lite::quant

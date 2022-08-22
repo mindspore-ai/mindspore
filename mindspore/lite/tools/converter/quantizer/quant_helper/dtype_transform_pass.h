@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <vector>
+#include <string>
+#include <map>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ops/primitive_c.h"
@@ -27,14 +29,14 @@
 
 namespace mindspore::lite::quant {
 /**
- * Transform CNode(dtype,uint8toint8,weigh data)
+ * Transform CNode(dtype uint8toint8, transform weigh data)
  * Insert QuantCastNode
  * */
-class DTypeTransformPass {
+class TransformUint8Pass {
  public:
-  explicit DTypeTransformPass(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+  explicit TransformUint8Pass(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
 
-  ~DTypeTransformPass() = default;
+  ~TransformUint8Pass() = default;
 
   int Transform();
 
@@ -53,7 +55,12 @@ class DTypeTransformPass {
 
   int InsertBackwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type);
 
+  bool IsSharedWeightParameter(const AnfNodePtr &anf_node);
+
   FuncGraphPtr func_graph_ = nullptr;
+
+  // key is tensor_name
+  std::map<std::string, std::vector<schema::QuantParamT>> shared_weight_quant_params_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_

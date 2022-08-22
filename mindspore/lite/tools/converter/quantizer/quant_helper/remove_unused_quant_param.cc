@@ -17,7 +17,7 @@
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 
 namespace mindspore::lite::quant {
-int RemoveUnusedQuantParam::Remove() {
+int RemoveQuantParam::Remove() {
   CHECK_NULL_RETURN(func_graph_);
   auto nodes = func_graph_->GetOrderedCnodes();
   for (auto const &cnode : nodes) {
