@@ -54,6 +54,7 @@
 #include "ops/max_pool.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/dropout.h"
+#include "ops/xdivy.h"
 
 namespace mindspore {
 namespace abstract {
@@ -386,6 +387,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimUnsortedSegmentSum, R{InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, R{InferImplDiv, nullptr, true}},
     {prim::kPrimRealDiv, R{ops::RealDivInfer, nullptr, false}},
+    {prim::kPrimXdivy, R{ops::XdivyInfer, nullptr, true}},
     {prim::kPrimTranspose, R{InferImplTranspose, nullptr, true}},
     {prim::kPrimTransposeNOD, R{InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, R{ops::StridedSliceInfer, nullptr, true}},
