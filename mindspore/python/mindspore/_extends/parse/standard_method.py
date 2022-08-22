@@ -1983,15 +1983,9 @@ def python_len(data):
     return len(data)
 
 
-@constexpr
-def is_constant(data):
-    """Return whether data is constant"""
-    return data is not None
-
-
 def ms_len(data):
     """Implementation of `len`."""
-    if not isinstance(data, Tensor) and is_constant(data):
+    if not isinstance(data, Tensor) and F.isconstant(data):
         return python_len(data)
     return data.__len__()
 
