@@ -13,10 +13,27 @@
 # limitations under the License.
 # ============================================================================
 import os
+import pytest
 
 
-def test_full_ps_ascend_lenet():
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
+def test_full_ps_lenet():
+    """
+    Feature: Parameter Server.
+    Description: Test LeNet accuracy in ps mode.
+    Expectation: success.
+    """
     return_code = os.system(
-        "bash shell_run_test.sh GPU /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8082"
+        "bash shell_run_test.sh Ascend /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8082"
     )
+    if return_code != 0:
+        os.system(f"echo '\n**************** Worker Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' ./worker*/worker*.log")
+        os.system(f"echo '\n**************** Server Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' ./server*/server*.log")
+        os.system(f"echo '\n**************** Scheduler Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' ./sched/sched.log")
     assert return_code == 0

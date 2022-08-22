@@ -85,7 +85,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     create dataset for train or test
     """
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path)
+    mnist_ds = ds.MnistDataset(data_path, num_shards=512, shard_id=0)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

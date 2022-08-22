@@ -24,45 +24,59 @@ export MS_SERVER_NUM=$4
 export MS_SCHED_HOST=$5
 export MS_SCHED_PORT=$6
 export MS_ROLE=MS_SCHED
-export fusion=True
-for((i=0;i<1;i++));
-do
-  rm -rf ${execute_path}/sched_$i/
-  mkdir ${execute_path}/sched_$i/
-  cd ${execute_path}/sched_$i/ || exit
-  python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH &
-done
+
+rm -rf ${execute_path}/sched/
+mkdir ${execute_path}/sched/
+cd ${execute_path}/sched/ || exit
+python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH > sched.log 2>&1 &
+sched_pid=`echo $!`
 
 export MS_ROLE=MS_PSERVER
+server_pids=()
 for((i=0;i<$MS_SERVER_NUM;i++));
 do
   rm -rf ${execute_path}/server_$i/
   mkdir ${execute_path}/server_$i/
   cd ${execute_path}/server_$i/ || exit
-  python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH &
+  python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH > server_$i.log 2>&1 &
+  server_pids[${i}]=`echo $!`
 done
 
 export MS_ROLE=MS_WORKER
-process_pid=()
+worker_pids=()
 for((i=0;i<$MS_WORKER_NUM;i++));
 do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
   cd ${execute_path}/worker_$i/ || exit
-  python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH &
-  process_pid[${i}]=`echo $!`
+  python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH > worker_$i.log 2>&1 &
+  worker_pids[${i}]=`echo $!`
 done
 
 
 for((i=0; i<${MS_WORKER_NUM}; i++)); do
-    wait ${process_pid[i]}
+    wait ${worker_pids[i]}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-        echo "[ERROR] test_ps_embedding_heterogeneous_conv2d_adam failed. status: ${status}"
+        echo "[ERROR] test_ps_embedding_heterogeneous_conv2d_adam failed. Failed to wait worker_{$i}, status: ${status}"
         exit 1
-    else
-        echo "[INFO] test_ps_embedding_heterogeneous_conv2d_adam success."
     fi
 done
+
+for((i=0; i<${MS_SERVER_NUM}; i++)); do
+    wait ${server_pids[i]}
+    status=`echo $?`
+    if [ "${status}" != "0" ]; then
+        echo "[ERROR] test_ps_embedding_heterogeneous_conv2d_adam failed. Failed to wait server_{$i}, status: ${status}"
+        exit 1
+    fi
+done
+
+wait ${sched_pid}
+status=`echo $?`
+if [ "${status}" != "0" ]; then
+  echo "[ERROR] test_ps_embedding_heterogeneous_conv2d_adam failed. Failed to wait scheduler, status: ${status}"
+  exit 1
+fi
 
 exit 0
