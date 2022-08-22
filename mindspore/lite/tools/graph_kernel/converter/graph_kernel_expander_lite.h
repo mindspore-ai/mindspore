@@ -23,39 +23,21 @@
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
-class ParaToValueDeco : public ExpanderDecorator {
+class TensorToValueDeco : public ExpanderDecorator {
  public:
-  ParaToValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
+  TensorToValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
       : ExpanderDecorator(decorated), input_idx_(input_idx) {}
-  ~ParaToValueDeco() = default;
+  ~TensorToValueDeco() = default;
 
   static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
     return [input_idx](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<ParaToValueDeco>(decorated, input_idx));
+      return std::static_pointer_cast<Expander>(std::make_shared<TensorToValueDeco>(decorated, input_idx));
     };
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
   HashSet<size_t> input_idx_;
-};
-
-class ParaToTensorDeco : public ExpanderDecorator {
- public:
-  ParaToTensorDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx, bool convert_all = false)
-      : ExpanderDecorator(decorated), input_idx_(input_idx), convert_all_(convert_all) {}
-  ~ParaToTensorDeco() = default;
-
-  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx, bool convert_all = false) {
-    return [input_idx, convert_all](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<ParaToTensorDeco>(decorated, input_idx, convert_all));
-    };
-  }
-  AnfNodePtr Run(const AnfNodePtr &node) override;
-
- protected:
-  HashSet<size_t> input_idx_;
-  bool convert_all_;
 };
 
 class FixFormatDeco : public ExpanderDecorator {
