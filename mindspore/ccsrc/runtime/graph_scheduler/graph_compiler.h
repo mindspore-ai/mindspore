@@ -105,18 +105,8 @@ class GraphCompiler {
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
   GraphId CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph, const DeviceContext *device_context);
 
-  // Construct single op kernel graph and compile the kernel graph in PyNative mode.
-  GraphId CompileGraph(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
-                       const DeviceContext *device_context);
-
-  // Create kernel and Create workspace for graphs in PyNative mode.
-  void BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context) const;
-
   // Get graph by graph id, if not exist return nullptr, used in Graph mode.
   KernelGraphPtr Fetch(GraphId graph_id) const;
-
-  // Get graph by graph info, if not exist return nullptr, used in PyNative mode.
-  KernelGraphPtr Fetch(const GraphInfo &graph_info) const;
 
   // The following four methods used in PyNative back propagation to split complete kernel graph to single
   // op graph, and these methods will be removed to class MindRTBackend after deleting session module.
@@ -177,15 +167,10 @@ class GraphCompiler {
   // operator.
   void ClearAllBucket(const GraphId &graph_id);
 
-  const std::vector<KernelWithIndex> &GetGraphOutputNodes(GraphId graph_id) const;
-
   // Register a summary callback function, which is called in the final stages of summary.
   void RegisterSummaryCallBackFunc(const CallBackFunc &callback) const;
   // Execute graph summary.
   void Summary(const std::vector<KernelGraphPtr> &graphs) const;
-
-  // Remove single op kernel graph cache and output nodes cache.
-  void EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id);
 
   // The implementation of compiling graph in Graph Mode, including optimizing graph,
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
@@ -195,27 +180,11 @@ class GraphCompiler {
  private:
   DISABLE_COPY_AND_ASSIGN(GraphCompiler);
 
-  // Add operators' output and input reference map to the graph.
-  void AddOutInRefToGraph(const KernelGraphPtr &graph) const;
-
-  // Update ref info of graph, before create kernel.
-  void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info,
-                                       const KernelGraphPtr &graph) const;
-
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
-  // Create device address for input and output of ops.
-  void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                           bool is_gradient_out) const;
-
   // Set Graph's dependencies for pre_graph and post_graph.
   void SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const;
-
-  // Single op kernel graph cache for PyNative mode.
-  mindspore::HashMap<GraphInfo, KernelGraphPtr> run_op_graphs_;
-  // Single op kernel graph output nodes cache for PyNative mode.
-  mindspore::HashMap<GraphId, std::vector<KernelWithIndex>> run_op_graph_output_nodes_;
 
   // The member variable 'session_' will be removed after removing session module.
   // Now all the GraphCompiler share the same 'session_'.

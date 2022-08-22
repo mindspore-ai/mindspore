@@ -181,6 +181,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void UpdateInternalParameterShape(const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters,
                                            const CNodePtr &cnode);
   static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
+
+  static void AddOutInRefToGraph(const KernelGraphPtr &graph);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

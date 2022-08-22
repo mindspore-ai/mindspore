@@ -34,6 +34,7 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/pynative/op_task.h"
+#include "runtime/pynative/op_compiler.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -136,8 +137,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   void CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode);
 
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
-  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                            GraphCompilerInfo *graph_compiler_info) const;
+  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
   void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
@@ -153,27 +153,21 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
   std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 
-  // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
-  std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
-                                                                const std::vector<int64_t> &tensors_mask,
-                                                                const std::vector<TensorPtr> &input_tensors,
-                                                                bool need_erase);
-
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
-  void EraseSingleOpCache(const ActorInfo &actor_info, const std::string &graph_info, const KernelGraphPtr &graph);
+  void EraseSingleOpCache(const GraphInfo &graph_info);
 
   // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
   void BatchBuildCallback();
 
   // Run op or dispatch  build task and run task.
-  void RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info,
+  void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                  const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
 
   // Dispatch task and execute the task in another thread.
-  void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, GraphCompilerInfo *graph_compiler_info,
+  void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
                       const session::BackendOpRunInfoPtr &op_run_info);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
