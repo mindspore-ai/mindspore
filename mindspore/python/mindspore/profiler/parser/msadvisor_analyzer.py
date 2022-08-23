@@ -38,11 +38,11 @@ class Msadvisor:
         Call MSAdvisor by command line.
         """
         output_path = os.path.join(self._output_path, "msadvisor")
-        output_path = os.path.join(output_path, self._rank_id)
+        output_path = os.path.join(output_path, "device_" + self._rank_id)
         output_path = validate_and_normalize_path(output_path)
         logger.info("MSAdvisor is running. Log and result files are saved in %s", output_path)
         try:
-            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"])
+            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"], capture_output=True)
         except FileNotFoundError as err:
             logger.warning("MSAdvisor: command not found,"
                            "please check if installed ascend-toolkit and set environment path correctly.")
