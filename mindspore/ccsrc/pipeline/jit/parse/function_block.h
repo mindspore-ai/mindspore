@@ -90,6 +90,11 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void SetAsDeadBlock();
   CNodePtr GetJumpNode(FunctionBlock *target_block);
 
+  bool is_return_statement_inside() const { return is_return_statement_inside_; }
+  void SetReturnStatementInside();
+  bool is_break_continue_statement_inside() const { return is_break_continue_statement_inside_; }
+  void SetBreakContinueStatementInside();
+
   const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
   void AddGlobalPyParam(const std::string &name, const py::object &obj) {
@@ -205,6 +210,13 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   AnfNodePtr ReadLocalVariable(const std::string &var_name);
   std::pair<AnfNodePtr, bool> FindPredInterpretNode(const std::string &var_name);
+  // Flags help for determine if parallel-if transformation can be performed or not.
+  // If inside this block include all inner block there is a return statement.
+  // This flag will propagate beyond outer if/else or while/for loop, but not if-by-if;
+  bool is_return_statement_inside_{false};
+  // If inside this block there is a break/continue statement.
+  // This flag will propagate beyond outer if/else but not while/for loop, if-by-if;
+  bool is_break_continue_statement_inside_{false};
 };
 }  // namespace parse
 }  // namespace mindspore

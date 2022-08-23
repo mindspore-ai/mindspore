@@ -39,6 +39,7 @@ def test_simple_if(tag):
     Expectation: funcgraph parsed and manual constructed should be isomorphic.
     """
     fns = FnDict()
+
     @fns
     def basic(x, y):
         if x > y:
@@ -74,6 +75,7 @@ def test_if_by_if(tag):
     Expectation: funcgraph parsed and manual constructed should be isomorphic.
     """
     fns = FnDict()
+
     @fns
     def basic(x, y):
         if x > y:
@@ -128,6 +130,7 @@ def test_if_in_if(tag):
     Expectation: funcgraph parsed and manual constructed should be isomorphic.
     """
     fns = FnDict()
+
     @fns
     def basic(x, y):
         if x >= y:
@@ -179,6 +182,7 @@ def test_if_elif_else(tag):
     Expectation: funcgraph parsed and manual constructed should be isomorphic.
     """
     fns = FnDict()
+
     @fns
     def basic(x, y):
         if x > y:
@@ -220,3 +224,1737 @@ def test_if_elif_else(tag):
         return after1(result1)
 
     return fns[tag]
+
+
+#  The following test cases are Combination of
+#      Three kinds of statements: return, break, continue
+#      Two kinds of loop: while loop, for loop
+#      Location of additional if/else: if/else parallel with loop,
+#                                      if/else parallel with if/else, if/else inside if.
+def test_while_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in while loop requires that the after-if func graph should not
+                 be called.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_return_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    return bias
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_break_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    return bias
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_return_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    return bias
+                return x
+        return x + y
+
+    return foo
+
+
+def test_while_return_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through outer while to
+                 the else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    return bias
+        return x + y
+
+    return foo
+
+
+def test_if_return_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through outer while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        return bias
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_return_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        return bias
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_while_return_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part. The inner if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            while x > 0:
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_while_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part. The inner if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                return bias
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_if_return_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner second if requires that the after-if func graph should not
+                 be called, and this information should be propagated through if to
+                 the outer else part. The inner first if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            if x > 0:
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_if_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner second if requires that the after-if func graph should not
+                 be called, and this information should be propagated through if to
+                 the outer else part. The inner second if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > 0:
+                return bias
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        return x + y
+
+    return foo
+
+
+def test_while_return_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part. The first if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_while_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part. The second if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                return bias
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_return_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in else of the second if/else requires that the after-if func graph should not
+                 be called, and this information should be propagated through if to
+                 the outer else part. The first if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        if bias > y:
+            y = x + y
+        else:
+            if x > 0:
+                return bias
+
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_if_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner second if requires that the after-if func graph should not
+                 be called, and this information should be propagated through if to
+                 the outer else part. The second first if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > 0:
+                return bias
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_while_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part. The inner if/else in the first if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            while x > 0:
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_if_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in else of the first if/else requires that the after-if func graph should not
+                 be called, and this information should be propagated through if to
+                 the outer else part. The if/else inside the first if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            if x > 0:
+                return bias
+
+        return x + y
+
+    return foo
+
+
+def test_for_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in for loop requires that the after-if func graph should not
+                 be called.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_return_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    return bias
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_break_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    return bias
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_return_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    return bias
+                return x
+        return x + y
+
+    return foo
+
+
+def test_for_return_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through outer for to
+                 the else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    return bias
+        return x + y
+
+    return foo
+
+
+def test_if_return_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through outer for to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        return bias
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_return_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        return bias
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_for_return_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part. The inner if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            for _ in range(5):
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_for_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part. The inner if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                return bias
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_for_return_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part. The first if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                return bias
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_for_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part. The second if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                return bias
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_for_return_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer else part. The inner if/else in the first if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            for _ in range(5):
+                return bias
+        return x + y
+
+    return foo
+
+
+## Similar test cases but replace return to break. These test cases may not runnable as it just replace
+## return bias to break.
+def test_while_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so the if-else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_break_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: if inside the while loop cannot be transformed, but the outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    break
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_break_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: if inside the while loop cannot be transformed, but the outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    break
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_return_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    break
+                return x
+        return x + y
+
+    return foo
+
+
+def test_while_break_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in inner while loop cannot flow beyond the loop, so the if-else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    break
+        return x + y
+
+    return foo
+
+
+def test_if_break_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in inner while loop cannot flow beyond the while loop, so the outer
+                 if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        break
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_return_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        break
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_while_break_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            while x > 0:
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_while_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                break
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_while_break_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_while_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                break
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_while_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            while x > 0:
+                break
+        return x + y
+
+    return foo
+
+
+def test_for_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop cannot flow beyond the loop, so if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_break_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop cannot flow beyond the loop, so outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    break
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_return_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in for loop will flow beyond the loop, so no if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    break
+                return x
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_break_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop cannot flow beyond the loop, so outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    break
+                break
+        return x + y
+
+    return foo
+
+
+def test_for_break_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in inner for loop cannot flow beyond the loop, so if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    break
+        return x + y
+
+    return foo
+
+
+def test_if_break_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in inner for loop will not flow beyond the loop, so outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        break
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_break_else_return_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop will flow beyond the loop, so no if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        break
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_for_break_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            for _ in range(5):
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_for_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                break
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_for_break_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                break
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_for_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                break
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_for_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: break in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            for _ in range(5):
+                break
+        return x + y
+
+    return foo
+
+
+## Similar test cases but replace break to continue. These test cases may not runnable as it just replace
+## break to continue.
+def test_while_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so the if-else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: if inside the while loop cannot be transformed, but the outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    continue
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_continue_else_continue_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: if inside the while loop cannot be transformed, but the outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    continue
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_else_return_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                if y > 0:
+                    continue
+                return x
+        return x + y
+
+    return foo
+
+
+def test_while_continue_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in inner while loop cannot flow beyond the loop, so the if-else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in inner while loop cannot flow beyond the while loop, so the outer
+                 if/else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        continue
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_continue_else_return_in_while_in_while_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through while to
+                 the outer else part.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                while x > 0:
+                    if y > 0:
+                        continue
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_while_continue_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            while x > 0:
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_while_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                continue
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_while_continue_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_while_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            while x > 0:
+                continue
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_while_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in while loop cannot flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            while x > 0:
+                continue
+        return x + y
+
+    return foo
+
+
+def test_for_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop cannot flow beyond the loop, so if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop cannot flow beyond the loop, so outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    continue
+                x = x - 1
+                y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_return_else_continue_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in for loop will flow beyond the loop, so no if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    return x
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_else_continue_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in for loop will flow beyond the loop, so no if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                if y > 0:
+                    continue
+                continue
+        return x + y
+
+    return foo
+
+
+def test_for_continue_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in inner for loop cannot flow beyond the loop, so if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    continue
+        return x + y
+
+    return foo
+
+
+def test_if_continue_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in inner for loop will not flow beyond the loop, so outer if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        continue
+                    x = x - 1
+                    y = y + 1
+        return x + y
+
+    return foo
+
+
+def test_if_continue_else_return_in_for_in_for_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return in inner for loop will flow beyond the loop, so no if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                for _ in range(5):
+                    if y > 0:
+                        continue
+                    return x
+        return x + y
+
+    return foo
+
+
+def test_for_continue_after_if_else_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+            for _ in range(5):
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_for_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                continue
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+
+        return x + y
+
+    return foo
+
+
+def test_for_continue_in_else_after_if_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                continue
+        return x + y
+
+    return foo
+
+
+def test_if_else_after_by_for_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+        else:
+            for _ in range(5):
+                continue
+        if x > y:
+            x = x + y
+        else:
+            x = x - y
+        return x + y
+
+    return foo
+
+
+def test_if_else_in_if_for_continue_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: continue in for loop will not flow beyond the loop, so both if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        if bias > y:
+            y = x + y
+            if x > y:
+                x = x + y
+            else:
+                x = x - y
+        else:
+            for _ in range(5):
+                continue
+        return x + y
+
+    return foo
+
+
+def test_func_call_in_if_while_break_in_else():
+    """
+    Feature: Parallel if transformation.
+    Description: return inside def func should not propagate to caller of that func, so the if-else can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, bias):
+        def bar(x, y):
+            return x + y
+
+        if bias > y:
+            y = bar(x, y)
+        else:
+            while x > 0:
+                break
+        return x + y
+
+    return foo

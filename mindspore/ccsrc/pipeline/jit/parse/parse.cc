@@ -681,14 +681,25 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
   auto node_list = py::cast<py::list>(nodes);
   size_t count = py::len(node_list);
   MS_LOG(DEBUG) << "The nodes count is " << count;
+  auto sub_block = block;
   for (size_t i = 0; i < count; ++i) {
-    MS_LOG(DEBUG) << "Start parse statement[" << i << "]: " << py::str(node_list[i]);
+    MS_LOG(DEBUG) << "Start parse statement[" << i << "]: " << py::str(node_list[i])
+                  << ", block: " << sub_block->ToString();
     auto node = node_list[i];
-    block = ParseStatement(block, node);
-    MS_EXCEPTION_IF_NULL(block);
-    MS_EXCEPTION_IF_NULL(block->func_graph());
+    // Flag of return statement is set on sub_block inside ParseStatement, so use next_block
+    // to store the returned block temporarily.
+    auto next_block = ParseStatement(sub_block, node);
+    MS_EXCEPTION_IF_NULL(next_block);
+    MS_EXCEPTION_IF_NULL(next_block->func_graph());
+    // Propagate flag of return statement back;
+    if (sub_block != block && sub_block->is_return_statement_inside()) {
+      MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
+                    << " has return statement inside, propagate flag back to block: " << block->ToString();
+      block->SetReturnStatementInside();
+    }
+    sub_block = next_block;
     // Insert appropriate depended items for the function block if it has a return node
-    if (block->func_graph()->get_return() != nullptr || block->is_dead_block()) {
+    if (sub_block->func_graph()->get_return() != nullptr || sub_block->is_dead_block()) {
       // If break is not the last expr.
       if (i != count - 1) {
         TraceGuard trace_guard(GetLocation(node_list[i + 1]));
@@ -698,7 +709,7 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
       break;
     }
   }
-  return block;
+  return sub_block;
 }
 
 FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py::object &node) {
@@ -774,7 +785,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
     py::object value_object = expand_info[1];
     // Make a Expr CNode.
     AnfNodePtr call_node = ParseExprNode(block, value_object);
-    if (py::len(expand_info) == 2) {
+    if (py::len(expand_info) == expect_size) {
       // Expression that not assigned to any variable.
       // This is usually a call with side effects.
       // e.g.: print(x)
@@ -885,6 +896,8 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
   auto func_graph = block->func_graph();
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
   func_graph->set_return(return_cnode);
+  MS_LOG(DEBUG) << "Inside the block has return statement, block: " << block->ToString();
+  block->SetReturnStatementInside();
   return block;
 }
 
@@ -1754,6 +1767,35 @@ FunctionBlockPtr Parser::ParseGlobal(const FunctionBlockPtr &block, const py::ob
   return block;
 }
 
+void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, FunctionBlockPtr> *branch_graphs_pair,
+                                            const FunctionBlockPtr &branch_block, const FunctionBlockPtr &branch_end,
+                                            const FunctionBlockPtr &after_block, const FunctionBlockPtr &block) {
+  if (branch_block->is_return_statement_inside()) {
+    MS_LOG(DEBUG)
+      << "Inside the branch block has return statement, ignore for transformation to parallel-if call, branch block:"
+      << branch_block->ToString() << ", block: " << block->ToString();
+    block->SetReturnStatementInside();
+    return;
+  }
+  if (branch_end->func_graph()->get_return() != nullptr) {
+    MS_LOG(DEBUG) << "Ignore the block as branch_end will not call after_block, branch_block: "
+                  << branch_block->ToString() << ", branch_end: " << branch_end->ToString()
+                  << ", after_block: " << after_block->ToString();
+    branch_block->SetBreakContinueStatementInside();
+  }
+  if (branch_block->is_break_continue_statement_inside()) {
+    MS_LOG(DEBUG) << "Inside the branch block has break or continue statement, ignore for transformation to "
+                     "parallel-if call, branch block: "
+                  << branch_block->ToString() << ", branch end: " << branch_end->ToString()
+                  << ", block: " << block->ToString();
+    MS_LOG(DEBUG) << "Propagate flag of break or continue statement from branch block to block, branch block:"
+                  << branch_block->ToString() << ", block: " << block->ToString();
+    block->SetBreakContinueStatementInside();
+  } else {
+    branch_graphs_pair->second = branch_end;
+  }
+}
+
 // Process a if statement
 FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast If";
@@ -1796,56 +1838,35 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
   MS_EXCEPTION_IF_NULL(true_end->func_graph());
-  bool return_of_true_end_is_set = true, return_of_false_end_is_set = true;
+  CheckControlFlowAlterationInIf(&true_branch_graphs, true_block, true_end, after_block, block);
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
-    return_of_true_end_is_set = false;
     true_end->Jump(after_block, {});
     MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString() << ", after: " << after_block->ToString();
-    if (ignored_if_latter_call_graphs_.find(true_end) == ignored_if_latter_call_graphs_.end()) {
-      true_branch_graphs.second = true_end;
-    } else {
-      MS_LOG(DEBUG) << "Ignore the true_end block for transform to parallem call, true_block: "
-                    << true_block->ToString() << ", true_end: " << true_end->ToString();
-      (void)ignored_if_latter_call_graphs_.insert(after_block);
-    }
     if (use_fallback) {
       after_block->UpdateGlobalPyParam(true_end->global_py_params());
     }
   }
-
   // Process the orelse branch
   std::pair<FunctionBlockPtr, FunctionBlockPtr> false_branch_graphs;
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
   FunctionBlockPtr false_end = ParseStatements(false_block, orelseNode);
   MS_EXCEPTION_IF_NULL(false_end->func_graph());
+  CheckControlFlowAlterationInIf(&false_branch_graphs, false_block, false_end, after_block, block);
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
-    return_of_false_end_is_set = false;
     false_end->Jump(after_block, {});
     MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString() << ", after: " << after_block->ToString();
-    if (ignored_if_latter_call_graphs_.find(false_end) == ignored_if_latter_call_graphs_.end()) {
-      false_branch_graphs.second = false_end;
-    } else {
-      MS_LOG(DEBUG) << "Ignore the false_end block for transform to parallem call, false_block: "
-                    << false_block->ToString() << ", false_end: " << false_end->ToString();
-      (void)ignored_if_latter_call_graphs_.insert(after_block);
-    }
     if (use_fallback) {
       after_block->UpdateGlobalPyParam(false_end->global_py_params());
     }
   }
+
   auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
 
   // Record the former, middle, latter graphs info.
-  if (return_of_true_end_is_set || return_of_false_end_is_set) {
-    MS_LOG(DEBUG) << "True_end or false_end will not call after_block, true_block: " << true_block->ToString()
-                  << ", true_end: " << true_end->ToString() << ", false_block: " << false_block->ToString()
-                  << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
-    (void)ignored_if_latter_call_graphs_.insert(after_block);
-  }
   static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") != "0");
   if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
       false_branch_graphs.second != nullptr) {
@@ -1870,6 +1891,16 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   }
   after_block->Mature();
   return after_block;
+}
+
+void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &header_block,
+                               const FunctionBlockPtr &body_block, const FunctionBlockPtr &after_block) {
+  // Propagate flag of return statement in body_block back.
+  if (body_block->is_return_statement_inside()) {
+    MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
+                  << ", block: " << block->ToString();
+    block->SetReturnStatementInside();
+  }
 }
 
 FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::object &node) {
@@ -1934,9 +1965,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   if (end_block) {
     after_block->Jump(end_block, {});
     end_block->Mature();
+    CheckReturnInLoop(block, header_block, body_block, after_block);
     return end_block;
   }
   // No 'break', no end_block.
+  CheckReturnInLoop(block, header_block, body_block, after_block);
   return after_block;
 }
 
@@ -2104,9 +2137,11 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
     // end_block exists if we encounter 'break' in loop body.
     after_block->Jump(end_block, {});
     end_block->Mature();
+    CheckReturnInLoop(block, header_block, body_block, after_block);
     return end_block;
   }
   // No 'break', no end_block.
+  CheckReturnInLoop(block, header_block, body_block, after_block);
   return after_block;
 }
 

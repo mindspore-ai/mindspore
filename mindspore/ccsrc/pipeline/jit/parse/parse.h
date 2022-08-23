@@ -330,6 +330,13 @@ class Parser {
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
   // Check if the node is pop operation.
   bool IsPopOperation(const AnfNodePtr &node);
+  // Check if branch block contains break/continue/return statement, and propagate that flag back to block.
+  void CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, FunctionBlockPtr> *branch_graphs_pair,
+                                      const FunctionBlockPtr &branch_block, const FunctionBlockPtr &branch_end,
+                                      const FunctionBlockPtr &after_block, const FunctionBlockPtr &block);
+  // Check if body block contains return statement, and propagate that flag back to block.
+  void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &header_block,
+                         const FunctionBlockPtr &body_block, const FunctionBlockPtr &after_block);
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -361,8 +368,6 @@ class Parser {
   std::vector<std::tuple<CNodePtr, FunctionBlockPtr, FunctionBlockPtr>> if_branch_calls_;
   // The rolled_body callers info. for later lifting operation.
   std::vector<std::pair<CNodePtr, FunctionBlockPtr>> rolled_body_calls_;
-  // Add exception for if parallel transform.
-  std::set<FunctionBlockPtr> ignored_if_latter_call_graphs_;
 };
 
 // AST node type define code to ast
