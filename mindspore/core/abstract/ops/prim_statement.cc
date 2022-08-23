@@ -166,8 +166,7 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
   CheckArgsSize(op_name, args_spec_list, 2);
   ValuePtr t = args_spec_list[1]->BuildValue();
   if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION) << "This comparator '" << t->ToString()
-                      << "' is not supported. For statement 'is', only support compare with 'None', 'False' or 'True'";
+    MS_LOG(EXCEPTION) << "For syntax like 'a is b', b supports True, False and None, but got " << t->ToString();
   }
   ValuePtr x = args_spec_list[0]->BuildValue();
 
@@ -182,9 +181,7 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
   CheckArgsSize(op_name, args_spec_list, 2);
   ValuePtr t = args_spec_list[1]->BuildValue();
   if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION)
-      << "This comparator '" << t->ToString()
-      << "' is not supported. For statement 'is not' , only support compare with 'None', 'False' or 'True'";
+    MS_LOG(EXCEPTION) << "For syntax like 'a is not b', b supports True, False and None, but got " << t->ToString();
   }
   ValuePtr x = args_spec_list[0]->BuildValue();
 

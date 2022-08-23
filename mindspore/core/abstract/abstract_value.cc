@@ -36,8 +36,7 @@ AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
 
 std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Type%20Join%20Failed\n"
-      << "This: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  oss << "\nInner Message:\nThis: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   // Get trace info of node.
   AnfNodePtr node = nullptr;
   if (AbstractBase::trace_node_provider_ != nullptr) {
@@ -52,7 +51,7 @@ std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const Abstra
 inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
   oss << "Type Join Failed: Abstract type " << abstract1->type_name() << " cannot join with " << abstract2->type_name()
-      << ".";
+      << ".\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Type%20Join%20Failed\n";
   oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(TypeError) << oss.str();
 }
@@ -60,7 +59,8 @@ inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const Abst
 inline void TypeJoinLogging(const TypePtr &type1, const TypePtr &type2, const AbstractBasePtr &abstract1,
                             const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Type Join Failed: dtype1 = " << type1->ToString() << ", dtype2 = " << type2->ToString() << ".";
+  oss << "Type Join Failed: dtype1 = " << type1->ToString() << ", dtype2 = " << type2->ToString()
+      << ".\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Type%20Join%20Failed\n";
   oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(TypeError) << oss.str();
 }
@@ -68,14 +68,15 @@ inline void TypeJoinLogging(const TypePtr &type1, const TypePtr &type2, const Ab
 inline void ShapeJoinLogging(const BaseShapePtr &shape1, const BaseShapePtr &shape2, const AbstractBasePtr &abstract1,
                              const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Shape Join Failed: shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString() << ".";
+  oss << "Shape Join Failed: shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString()
+      << ".\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Shape%20Join%20Failed\n";
   oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(ValueError) << oss.str();
 }
 
 std::string ExtractLoggingInfo(const std::string &info) {
   // Extract log information based on the keyword "Type Join Failed" or "Shape Join Failed"
-  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(Type%20Join%20Failed)");
+  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(Type%20Join%20Failed|Shape%20Join%20Failed)");
   std::smatch result;
   bool found = std::regex_search(info, result, e);
   if (found) {

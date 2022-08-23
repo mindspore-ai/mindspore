@@ -109,6 +109,8 @@ def _check_all_tensor(sequence):
 
 def _handle_func_args(func, *args, **kwargs):
     """Handle the *args and **kwargs inputs of the function."""
+    if not isinstance(func, (types.FunctionType, types.MethodType)):
+        raise RuntimeError('fn {} is not function or method'.format(func))
     if kwargs:
         bound_arguments = inspect.signature(func).bind(*args, **kwargs)
         bound_arguments.apply_defaults()

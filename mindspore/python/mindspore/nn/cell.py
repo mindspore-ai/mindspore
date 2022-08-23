@@ -438,12 +438,12 @@ class Cell(Cell_):
                     default_args += 1
 
         if len(inputs) < positional_args:
-            raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument, "
+            raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument, "
                             f"but got {len(inputs)}. When using set_inputs, please make sure that all networks "
                             f"and loss functions are configured with set_inputs.")
 
         if len(inputs) > positional_args + default_args:
-            raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument and "
+            raise TypeError(f"For 'Cell', the function construct requires {positional_args} positional argument and "
                             f"{default_args} default argument, total {positional_args + default_args}, "
                             f"but got {len(inputs)}.")
 

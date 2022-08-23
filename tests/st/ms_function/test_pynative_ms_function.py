@@ -473,7 +473,7 @@ def test_pynative_ms_function_with_kwargs_inputs():
     """
     Feature: PyNative ms_function.
     Description: PyNative ms_function with **kwargs.
-    Expectation: No exception.
+    Expectation: Raise expected exception
     """
 
     @ms_function
