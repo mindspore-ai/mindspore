@@ -1484,10 +1484,8 @@ class AutoMonadConverter {
     // Set device target for Load CNode.
     std::string target = GetCNodeTarget(cnode);
     load_cnode->set_user_data(primitive_target, std::make_shared<std::string>(target));
-    // Set load_cnode abstract to Tensor according the input Ref[Tensor].
-    auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(ref->abstract());
-    MS_EXCEPTION_IF_NULL(ref_abs);
-    load_cnode->set_abstract(ref_abs->CloneAsTensor());
+    // Set load_cnode abstract as the input abstract.
+    load_cnode->set_abstract(ref->abstract());
     return load_cnode;
   }
 
