@@ -27,7 +27,6 @@
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "debug/dump_data_builder.h"
 #include "runtime/device/device_address.h"
 #include "include/backend/visible.h"
 
@@ -193,12 +192,6 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::vector<AnfNodePtr> GetParametersMindRT() const { return parameters_mindRT_; }
 
-  std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
-
-  void ClearDumpDataBuilder(const std::string &node_name);
-
-  void WaitForWriteFileFinished() const;
-
  private:
   // private constructor for singleton
   Debugger();
@@ -324,9 +317,6 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   // map to store iter num in each epoch when dataset_sink_mode is true
   std::map<uint32_t, int32_t> graph_iter_num_map_;
-
-  // to construct kernel data for async dump, key is the dump path to the node
-  std::map<std::string, std::shared_ptr<DumpDataBuilder>> dump_data_construct_map_;
 
   // singleton
   inline static std::mutex instance_lock_ = {};

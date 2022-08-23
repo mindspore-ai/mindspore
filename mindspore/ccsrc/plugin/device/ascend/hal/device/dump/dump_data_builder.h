@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_DUMP_DATA_BUILDER_H_
-#define MINDSPORE_CCSRC_DEBUG_DUMP_DATA_BUILDER_H_
 
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_DUMP_DUMP_DATA_BUILDER_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_DUMP_DUMP_DATA_BUILDER_H_
 #include <vector>
 #include <string>
 #include <iostream>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#ifdef ENABLE_D
 #include "proto/dump_data.pb.h"
 #include "toolchain/adx_datadump_callback.h"
 
 using Adx::DumpChunk;
-#endif
+
 // This class is for building dump data receiving from adx server. Tensor Data for each kernel will be divided in pieces
 // and each piece would be wrapped into DumpChunk struct. This class provides function to merge dump chunks and
 // construct dump data object.
@@ -36,7 +35,6 @@ class DumpDataBuilder {
 
   ~DumpDataBuilder() = default;
 
-#ifdef ENABLE_D
   /*
    * Feature group: Dump.
    * Target device group: Ascend.
@@ -108,10 +106,9 @@ class DumpDataBuilder {
     }
     return true;
   }
-#endif
 
  private:
   std::vector<std::string> chunk_list_;
   uint64_t total_sz_{0};
 };
-#endif  // MINDSPORE_CCSRC_DEBUG_DUMP_DATA_BUILDER_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_DUMP_DUMP_DATA_BUILDER_H_

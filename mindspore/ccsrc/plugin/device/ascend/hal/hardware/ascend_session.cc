@@ -50,6 +50,7 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
+#include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #endif
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "plugin/device/ascend/hal/hardware/ascend_auto_monad.h"
@@ -1011,7 +1012,7 @@ void DumpInit(const std::string &device_type, uint32_t device_id) {
     if (device_type == kAscendDevice) {
       // register callback to adx
       if (json_parser.FileFormatIsNpy()) {
-        AdxRegDumpProcessCallBack(DumpDataCallBack);
+        AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
       }
     }
 #endif

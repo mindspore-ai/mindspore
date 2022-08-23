@@ -30,9 +30,6 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
-#ifdef ENABLE_D
-#include "proto/dump_data.pb.h"
-#endif
 #include "include/backend/visible.h"
 
 #ifndef ENABLE_DEBUGGER
@@ -87,13 +84,6 @@ class E2eDump {
   static void DumpOutputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name);
 
-#ifdef ENABLE_D
-  static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);
-
-  static void DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
-                                const char *data_ptr);
-#endif
-
   static bool IsDeviceTargetGPU();
 
   static bool IsDeviceTargetAscend();
@@ -119,18 +109,6 @@ class E2eDump {
 
   static void DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::string &dump_path, bool trans_flag,
                                       const Debugger *debugger);
-
-#ifdef ENABLE_D
-  static nlohmann::json ParseOverflowInfo(const char *data_ptr);
-
-  static bool ConvertFormatForOneTensor(dump_data_t *dump_tensor_info);
-
-  static void ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, size_t start_idx, size_t end_idx);
-
-  static bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info);
-
-  static bool DumpTensorDataIfNeeded(const dump_data_t &dump_tensor_info);
-#endif
 
   BACKEND_EXPORT inline static unsigned int starting_graph_id = INT32_MAX;
 };
