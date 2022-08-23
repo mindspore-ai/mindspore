@@ -318,7 +318,7 @@ def argmin(x, axis=-1):
         TypeError: If `axis` is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
@@ -1876,7 +1876,7 @@ def bessel_i0e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -2247,7 +2247,7 @@ def trunc(input_x):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)

@@ -188,7 +188,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **y** (Tensor) - 输入Tensor，shape应能在广播后与 `x` 相同，或 `x` 的shape在广播后与 `y` 相同。
+        - **y** (Tensor) - 输入Tensor。shape应能在广播后与 `x` 相同，或 `x` 的shape在广播后与 `y` 相同。
 
         **返回：**
 

@@ -1844,6 +1844,9 @@ class InplaceAdd(PrimitiveWithInfer):
 
     Refer to :func:`mindspore.ops.inplace_add` for more detail.
 
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore
@@ -1896,6 +1899,9 @@ class InplaceSub(PrimitiveWithInfer):
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
     Refer to :func:`mindspore.ops.inplace_sub` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -4812,7 +4818,7 @@ class BesselI0e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_i0e = ops.BesselI0e()
@@ -4852,7 +4858,7 @@ class BesselI1e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``CPU``
 
     Examples:
         >>> bessel_i1e = ops.BesselI1e()
@@ -5624,6 +5630,9 @@ class Trunc(Primitive):
     Returns a new tensor with the truncated integer values of the elements of input.
 
     Refer to :func:`mindspore.ops.trunc` for more detail.
+
+    Supported Platforms:
+        ``CPU``
     """
 
     @prim_attr_register
@@ -5939,23 +5948,24 @@ class RaggedRange(Primitive):
 
     Inputs:
         - **starts** (Tensor) - The starts of each range, whose type is int32, int64, float32 or float64,
-                                and shape is 0D or 1D.
+          and shape is 0D or 1D.
         - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
         - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
-                                and each element in the tensor should not be equal to 0.
+          and each element in the tensor should not be equal to 0.
+
     Outputs:
         - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
-                                          and type of the tensor is `Tsplits`,
-                                          shape of the tensor is equal to shape of input `starts` plus 1.
+          and type of the tensor is `Tsplits`,
+          shape of the tensor is equal to shape of input `starts` plus 1.
         - **rt_dense_values**  (Tensor) - The dense values of the return `RaggedTensor`,
-                                          and type of the tensor should be same as input `starts`.
-                                          Let size of input `starts`, input `limits` and input `deltas` are i,
-                                          if type of the input `starts`, input `limits` and input `deltas`
-                                          are int32 or int64, shape of the output `rt_dense_values` is equal to
-                                          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
-                                          if type of the input `starts`, input `limits` and input `deltas`
-                                          are float32 or float64, shape of the output `rt_dense_values` is equal to
-                                          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+          and type of the tensor should be same as input `starts`.
+          Let size of input `starts`, input `limits` and input `deltas` are i,
+          if type of the input `starts`, input `limits` and input `deltas`
+          are int32 or int64, shape of the output `rt_dense_values` is equal to
+          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
+          if type of the input `starts`, input `limits` and input `deltas`
+          are float32 or float64, shape of the output `rt_dense_values` is equal to
+          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
     Raises:
         TypeError: If any input is not Tensor.
         TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.
