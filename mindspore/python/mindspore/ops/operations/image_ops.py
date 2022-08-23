@@ -223,32 +223,23 @@ class ExtractGlimpse(Primitive):
         ValueError: If the input is not Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> class ExtractGlimpse(nn.Cell):
-        ...         def __init__(self, size, centered, normalized, uniform_noise, noise):
-        ...             super(ExtractGlimpse, self).__init__()
-        ...             self.size = size
-        ...             self.attribute = P.ExtractGlimpse(centered = centered, normalized = normalized,
-        ...             uniform_noise = uniform_noise, noise = noise)
-        ...         def construct(self, x, offsets):
-        ...             return self.attribute(x, self.size, offsets);
-        >>> x = Tensor(np.random.randn(1, 4, 2, 3).astype(np.float32))
-        >>> size = Tensor(np.array([2, 2]).astype("int32"))
-        >>> offsets = Tensor(np.array([[0, 0]]).astype("float32"))
-        >>> attribute = ExtractGlimpse(size, True, True, True, "uniform")
-        >>> output = attribute(x, offsets)
+        >>> x = Tensor([[[[0.0], [1.0], [2.0]], [[3.0], [4.0], [5.0]], [[6.0], [7.0], [8.0]]]], dtype=mindspore.float32)
+        >>> size = Tensor((2, 2), dtype=mindspore.int32)
+        >>> offsets = Tensor([[1, 1]], dtype=mindspore.float32)
+        >>> ops = P.image_ops.ExtractGlimpse(centered = False, normalized = False,
+        >>>                                  uniform_noise = False, noise = "uniform")
+        >>> output = ops(x, size, offsets)
         >>> print(output)
-        [[[[ 0.95008844 -0.1513572  -0.10321885]
-           [ 0.41059852  0.14404356  1.4542735 ]]
-
-          [[ 0.7610377   0.12167501  0.44386324]
-           [ 0.33367434  1.4940791  -0.20515826]]]]
+        [[[[0.]
+           [1.]]
+          [[3.]
+           [4.]]]]
     """
     @prim_attr_register
     def __init__(self, centered=True, normalized=True, uniform_noise=True, noise="uniform"):
-        self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['x', 'size', 'offsets'], outputs=['output'])
         self.centered = centered
         self.normalized = normalized

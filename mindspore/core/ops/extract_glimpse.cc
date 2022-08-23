@@ -23,19 +23,34 @@
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
+#include "abstract/dshape.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+inline bool CheckShapePositiveTool(const std::vector<int64_t> &input_shape) {
+  if (input_shape.size() != 0) {
+    if (std::all_of(input_shape.begin(), input_shape.end(), [](int64_t i) { return i > 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto offsets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  if (IsDynamicRank(size_shape)) {
+    return std::make_shared<abstract::Shape>(size_shape);
+  }
   const int kDimensionOne = 1;
   const int kDimensionTwo = 2;
   const int kDimensionFour = 4;
-  if (input_shape.size() != kDimensionFour) {
+  if (!IsDynamicRank(input_shape) && (input_shape.size() != kDimensionFour)) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the shape of parameter "
                       << "'x' must be 4, but got " << input_shape.size() << ".";
   }
@@ -43,23 +58,25 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the shape of parameter "
                       << "'size' must be 1, but got " << size_shape.size() << ".";
   }
-  if (offsets_shape.size() != kDimensionTwo) {
+  if (!IsDynamicRank(offsets_shape) && (offsets_shape.size() != kDimensionTwo)) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the shape of parameter "
                       << "'offsets' must be 2, but got " << offsets_shape.size() << ".";
   }
-  if (offsets_shape[1] != kDimensionTwo) {
-    MS_EXCEPTION(ValueError) << "The second dimension of offsets must be 2, "
-                             << "but got " << offsets_shape[1] << ".";
+  if (CheckShapePositiveTool(input_shape) && CheckShapePositiveTool(offsets_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("shape offsets", offsets_shape[1], kGreaterEqual, kDimensionTwo,
+                                             prim_name);
+    if (offsets_shape[1] != kDimensionTwo) {
+      MS_EXCEPTION(ValueError) << "The second dimension of offsets must be 2, "
+                               << "but got " << offsets_shape[1] << ".";
+    }
+    if (offsets_shape[0] != input_shape[0]) {
+      MS_EXCEPTION(ValueError) << "The first dimension of offsets must be consistent with "
+                               << "the first dimension of x, "
+                               << "but got " << offsets_shape[0] << ".";
+    }
   }
-  if (offsets_shape[0] != input_shape[0]) {
-    MS_EXCEPTION(ValueError) << "The first dimension of offsets must be consistent with "
-                             << "the first dimension of x, "
-                             << "but got " << offsets_shape[0] << ".";
-  }
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t max_length = GetValue<int64_t>(max_length_ptr);
-
+  int32_t g_height = -1;
+  int32_t g_width = -1;
   int64_t batch_cnt = input_shape[0];
   int64_t channels = input_shape.back();
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
@@ -70,32 +87,15 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input size must be const Tensor.";
     }
     int32_t *size_data = static_cast<int32_t *>(size_value_tensor->data_c());
-    int32_t g_height = size_data[0], g_width = size_data[1];
+    g_height = size_data[0];
+    g_width = size_data[1];
     if (g_height == 0 || g_width == 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of parameter "
                                << "'size' must be greater than zero, but got [0, 0].";
     }
-    int64_t output_elements_num = batch_cnt * g_height * g_width * channels;
-    if (output_elements_num > max_length) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', The number of elements of output must be less than max length: " << max_length
-                               << ", but got " << output_elements_num
-                               << "! The shape of  output should be reduced or max_length should be increased";
-    }
-    std::vector<int64_t> output_shape{batch_cnt, g_height, g_width, channels};
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    const int64_t image_size = max_length / (batch_cnt * channels);
-    const int64_t dim_size = static_cast<int64_t>(std::pow(image_size, 0.5));
-    ShapeVector output_shape{batch_cnt, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, channels};
-    ShapeVector shape_min(output_shape);
-    ShapeVector shape_max(output_shape);
-    shape_min[1] = 0;
-    shape_min[kDimensionTwo] = 0;
-    shape_max[1] = dim_size;
-    shape_max[kDimensionTwo] = dim_size;
-    return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
   }
+  std::vector<int64_t> output_shape{batch_cnt, g_height, g_width, channels};
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const int kMagicNumber = 2;
@@ -120,39 +120,21 @@ TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
-void ExtractGlimpse::Init(const bool &centered, const bool &normalized, const bool &uniform_noise,
-                          const std::string &noise) {
+void ExtractGlimpse::Init(const bool centered, const bool normalized, const bool uniform_noise, const string noise) {
   set_centered(centered);
   set_normalized(normalized);
   set_uniform_noise(uniform_noise);
-  set_noise(noise);
 }
-
-void ExtractGlimpse::set_centered(const bool &centered) { (void)AddAttr("centered", api::MakeValue(centered)); }
-
-bool ExtractGlimpse::get_centered() const {
-  auto value_ptr = GetAttr("centered");
-  return GetValue<bool>(value_ptr);
+void ExtractGlimpse::set_centered(const bool centered) { (void)this->AddAttr("centered", api::MakeValue(centered)); }
+bool ExtractGlimpse::get_centered() const { return GetValue<bool>(GetAttr("centered")); }
+void ExtractGlimpse::set_normalized(const bool normalized) {
+  (void)this->AddAttr(kNormalized, api::MakeValue(normalized));
 }
-
-void ExtractGlimpse::set_normalized(const bool &normalized) { (void)AddAttr("normalized", api::MakeValue(normalized)); }
-
-bool ExtractGlimpse::get_normalized() const {
-  auto value_ptr = GetAttr("normalized");
-  return GetValue<bool>(value_ptr);
+bool ExtractGlimpse::get_normalized() const { return GetValue<bool>(GetAttr(kNormalized)); }
+void ExtractGlimpse::set_uniform_noise(const bool uniform_noise) {
+  (void)this->AddAttr("uniform_noise", api::MakeValue(uniform_noise));
 }
-
-void ExtractGlimpse::set_uniform_noise(const bool &uniform_noise) {
-  (void)AddAttr("uniform_noise", api::MakeValue(uniform_noise));
-}
-
-bool ExtractGlimpse::get_uniform_noise() const {
-  auto value_ptr = GetAttr("uniform_noise");
-  return GetValue<bool>(value_ptr);
-}
-
-void ExtractGlimpse::set_noise(const std::string &noise) { (void)AddAttr("noise", api::MakeValue(noise)); }
-
+bool ExtractGlimpse::get_uniform_noise() const { return GetValue<bool>(GetAttr("uniform_noise")); }
 std::string ExtractGlimpse::get_noise() const {
   auto value_ptr = GetAttr("noise");
   return GetValue<std::string>(value_ptr);
