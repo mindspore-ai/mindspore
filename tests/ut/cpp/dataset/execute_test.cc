@@ -2836,7 +2836,7 @@ TEST_F(MindDataTestExecute, TestEraseEager) {
 }
 
 /// Feature: AdjustBrightness
-/// Description: Test executing AdjustBrightness op in eager mode 
+/// Description: Test executing AdjustBrightness op in eager mode
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAdjustBrightness) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustBrightness.";
@@ -2887,7 +2887,7 @@ TEST_F(MindDataTestExecute, TestAdjustSaturationEager) {
 }
 
 /// Feature: Posterize
-/// Description: Test executing Posterize op in eager mode 
+/// Description: Test executing Posterize op in eager mode
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestPosterizeEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestPosterizeEager.";
@@ -2921,7 +2921,7 @@ TEST_F(MindDataTestExecute, TestAdjustHue) {
 }
 
 /// Feature: AdjustContrast
-/// Description: Test executing AdjustContrast op in eager mode 
+/// Description: Test executing AdjustContrast op in eager mode
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAdjustContrast) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustContrast.";
@@ -2934,5 +2934,21 @@ TEST_F(MindDataTestExecute, TestAdjustContrast) {
 
   auto transform = Execute({decode, adjust_contrast_op});
   Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}
+
+/// Feature: ResizedCrop
+/// Description: Test executing Decode op then ResizedCrop op
+/// Expectation: Throw correct error and message
+TEST_F(MindDataTestExecute, TestResizedCrop) {
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> resizedCrop_op =
+    std::make_shared<vision::ResizedCrop>(0, 0, 128, 128, std::vector<int32_t>{128, 128});
+
+  // Test Compute(Tensor, Tensor) method of ResizedCrop
+  auto transform = Execute({decode_op, resizedCrop_op});
+  Status rc = transform(image, &image);
+
   EXPECT_EQ(rc, Status::OK());
 }

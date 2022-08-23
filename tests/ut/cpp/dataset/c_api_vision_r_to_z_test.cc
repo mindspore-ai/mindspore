@@ -821,3 +821,81 @@ TEST_F(MindDataTestPipeline, TestToTensorOpInvalidInput) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_ERROR(iter->GetNextRow(&row));
 }
+/// Feature: ResizedCrop op
+/// Description: Test ResizedCrop pipeline
+/// Expectation: Input is processed as expected and all rows iterated correctly
+TEST_F(MindDataTestPipeline, TestResizedCrop) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizedCrop.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  EXPECT_NE(ds, nullptr);
+
+  unsigned int left = 256;
+  unsigned int top = 256;
+  unsigned int height = 256;
+  unsigned int width = 256;
+  std::vector<int32_t> size{128, 128};
+  auto resized_crop_op = vision::ResizedCrop(top, left, height, width, size);
+
+  ds = ds->Map({resized_crop_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: ResizedCrop op
+/// Description: Test ResizedCrop with invalid fill_value
+/// Expectation: Pipeline iteration failed with wrong argument fill_value
+TEST_F(MindDataTestPipeline, TestResizedCropParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizedCropParamCheck.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Value of top/left/height/width out of boundary
+  // Create objects for the tensor ops
+  auto resized_crop_op1 = vision::ResizedCrop(-1, -1, -1, -1, {128, 128});
+  auto ds1 = ds->Map({resized_crop_op1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid coordinates for Crop
+  EXPECT_EQ(iter1, nullptr);
+
+  // Case 2: Value of size is negative
+  // Create objects for the tensor ops
+  auto resized_crop_op2 = vision::ResizedCrop(256, 256, 256, 256, {-128, -128});
+  auto ds2 = ds->Map({resized_crop_op2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid coordinates for Crop
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: Size is neither a single number nor a vector of size 2
+  // Create objects for the tensor ops
+  auto resized_crop_op3 = vision::ResizedCrop(256, 256, 256, 256, {128, 128, 128});
+  auto ds3 = ds->Map({resized_crop_op3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid size for Crop
+  EXPECT_EQ(iter3, nullptr);
+}

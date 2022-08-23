@@ -305,6 +305,23 @@ def check_resize_interpolation(method):
     return new_method
 
 
+def check_resized_crop(method):
+    """A wrapper that wraps a parameter checker around the original function(ResizedCrop operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [top, left, height, width, size, interpolation], _ = parse_user_args(method, *args, **kwargs)
+        check_non_negative_int32(top, "top")
+        check_non_negative_int32(left, "left")
+        check_pos_int32(height, "height")
+        check_pos_int32(width, "width")
+        type_check(interpolation, (Inter,), "interpolation")
+        check_crop_size(size)
+
+        return method(self, *args, **kwargs)
+    return new_method
+
+
 def check_resize(method):
     """A wrapper that wraps a parameter checker around the original function(resize operation)."""
 
