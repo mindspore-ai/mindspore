@@ -55,7 +55,7 @@ TEST_F(SVDTest, TestSVD) {
   }
   SVDMatrix svd(data.data(), data.size(), shape);
 
-  int status = svd.DoSVDWithRank(3);
+  int status = svd.CompressWithRank(3);
   ASSERT_EQ(status, RET_OK);
   std::vector<float> mat_a_rank = svd.GetMatA();
   std::vector<float> mat_b_rank = svd.GetMatB();
@@ -67,7 +67,7 @@ TEST_F(SVDTest, TestSVD) {
   ASSERT_EQ(mat_a_rank.size(), 21);
   ASSERT_EQ(mat_b_rank.size(), 15);
 
-  status = svd.DoSVDWithErr(5);
+  status = svd.CompressWithFNorm(5);
   ASSERT_EQ(status, RET_OK);
   std::vector<float> mat_a_err = svd.GetMatA();
   std::vector<float> mat_b_err = svd.GetMatB();
