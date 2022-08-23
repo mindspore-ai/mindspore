@@ -79,6 +79,21 @@ def test_fallback_round_with_n_zero():
     assert math.isclose(out, 11, rel_tol=1e-5)
 
 
+def test_fallback_round_with_n_none():
+    """
+    Feature: JIT Fallback
+    Description: Test round() in graph mode with input n is None.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = round(10.678, None)
+        return x
+    out = foo()
+    assert isinstance(out, int)
+    assert out == 11
+
+
 def test_fallback_round_with_n_positive_int():
     """
     Feature: JIT Fallback
