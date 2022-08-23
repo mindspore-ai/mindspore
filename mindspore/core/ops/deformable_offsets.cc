@@ -135,24 +135,13 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("offsets shape size", SizeToLong(offsets_shape.size()), kEqual, shape_size,
                                            prim_name);
-  auto x_min_shape = x_shape_map[kMinShape];
-  auto x_max_shape = x_shape_map[kMaxShape];
-  auto offsets_min_shape = offsets_shape_map[kMinShape];
-  auto offsets_max_shape = offsets_shape_map[kMaxShape];
-  CheckAndConvertUtils::CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
-  CheckAndConvertUtils::CheckMinMaxShape(offsets_shape, &offsets_min_shape, &offsets_max_shape);
   abstract::CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
   abstract::CheckShapeAnyAndPositive(prim_name + " offsets_shape", offsets_shape);
-  abstract::CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
-  abstract::CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
-  abstract::CheckShapeAllPositive(prim_name + " offsets_min_shape", offsets_min_shape);
-  abstract::CheckShapeAllPositive(prim_name + " offsets_max_shape", offsets_max_shape);
 
   constexpr uint64_t n_axis = 0;
   constexpr uint64_t c_axis = 1;
   constexpr uint64_t h_axis = 2;
   constexpr uint64_t w_axis = 3;
-
   constexpr size_t strides_num = 4;
   auto strides = CheckAttrTupleAndNCDimensions(primitive, kAttrStrides, strides_num, n_axis, c_axis);
 
@@ -186,33 +175,14 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   constexpr size_t pads_num = 4;
   std::vector<int64_t> pads = CheckAttrTuple(primitive, kPads, pads_num);
   std::vector<int64_t> output_hw;
-  std::vector<int64_t> output_hw_min;
-  std::vector<int64_t> output_hw_max;
   DeformableOffsetsPadFunction(&output_hw, kernel_size, strides, dilations, pads, x_shape[h_axis], x_shape[w_axis],
                                h_axis, w_axis);
-  DeformableOffsetsPadFunction(&output_hw_min, kernel_size, strides, dilations, pads, x_min_shape[h_axis],
-                               x_min_shape[w_axis], h_axis, w_axis, true);
-  DeformableOffsetsPadFunction(&output_hw_max, kernel_size, strides, dilations, pads, x_max_shape[h_axis],
-                               x_max_shape[w_axis], h_axis, w_axis);
 
   CheckOutputHeightAndWight(prim_name, output_hw, offsets_shape);
-  CheckOutputHeightAndWight(prim_name, output_hw_min, offsets_min_shape);
-  CheckOutputHeightAndWight(prim_name, output_hw_max, offsets_max_shape);
-
-  ShapeVector output_shape;
-  ShapeVector output_shape_min;
-  ShapeVector output_shape_max;
-  output_shape = {x_shape[n_axis], x_shape[c_axis], output_hw[0] * kernel_size[0], output_hw[1] * kernel_size[1]};
-  output_shape_min = {x_min_shape[n_axis], x_min_shape[c_axis], output_hw_min[0] * kernel_size[0],
-                      output_hw_min[1] * kernel_size[1]};
-  output_shape_max = {x_max_shape[n_axis], x_max_shape[c_axis], output_hw_max[0] * kernel_size[0],
-                      output_hw_max[1] * kernel_size[1]};
-
+  ShapeVector output_shape = {x_shape[n_axis], x_shape[c_axis], output_hw[0] * kernel_size[0],
+                              output_hw[1] * kernel_size[1]};
   abstract::CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
-  abstract::CheckShapeAllPositive(prim_name + " output_shape_min", output_shape_min);
-  abstract::CheckShapeAllPositive(prim_name + " output_shape_max", output_shape_max);
-
-  return std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr DeformableOffsetsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -427,23 +427,6 @@ class Cast(PrimitiveWithInfer):
         out = {'shape': x['shape'],
                'dtype': mstype.tensor_type(t['value']),
                'value': value}
-        if 'min_shape' in x and 'max_shape' in x:
-            out['min_shape'] = x['min_shape']
-            out['max_shape'] = x['max_shape']
-        if 'min_value' in x and 'max_value' in x:
-            np_dst_type = mstype.dtype_to_nptype(dst_type)
-            if isinstance(x['min_value'], (int, float, tuple, list)):
-                min_value = Tensor(np.array(x['min_value']).astype(np_dst_type))
-            else:
-                min_value = Tensor(x['min_value'].asnumpy().astype(np_dst_type))
-            min_value = tuple(min_value.asnumpy().tolist())
-            if isinstance(x['max_value'], (int, float, tuple, list)):
-                max_value = Tensor(np.array(x['max_value']).astype(np_dst_type))
-            else:
-                max_value = Tensor(x['max_value'].asnumpy().astype(np_dst_type))
-            max_value = tuple(max_value.asnumpy().tolist())
-            out['min_value'] = min_value
-            out['max_value'] = max_value
         if 'shape_value' in x:
             np_dst_type = mstype.dtype_to_nptype(dst_type)
             out['shape_value'] = tuple(np.array(x['shape_value']).astype(np_dst_type))
@@ -571,7 +554,7 @@ class Im2Col(Primitive):
     .. note::
         Currently, only 4-D input tensors (batched image-like tensors) are supported.
 
-    Args:
+      Args:
         ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         strides (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
@@ -587,11 +570,11 @@ class Im2Col(Primitive):
             If four int, pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
             Default: 0.
 
-    Inputs:
-        - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
-          support all real number data type.
+      Inputs:
+        - **x** (Tensor) : input tensor, only 4-D input tensors (batched image-like tensors) are supported.
+            support all real number data type.
 
-    Outputs:
+      Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
 
     Supported Platforms:
@@ -788,54 +771,22 @@ class Reshape(PrimitiveWithInfer):
     @staticmethod
     def _get_shape_and_range(x, shape):
         """ get min and max shape when output shape is dynamic"""
-        min_shape = None
-        max_shape = None
         x_shp = x['shape']
         if is_shape_unknown(shape['shape']):
             out_shape = [-2]
-            return out_shape, min_shape, max_shape
+            return out_shape
 
         shape_rank = shape['shape'][0]
         if not x_shp:
             # x is a scalar, output shape fixed
             out_shape = [1] * shape_rank
-            return out_shape, min_shape, max_shape
+            return out_shape
 
         out_shape = [-1] * shape_rank
-        if "max_value" in shape and "min_value" in shape:
-            min_shape = shape["min_value"]
-            max_shape = shape["max_value"]
-            if len(min_shape) != shape_rank or len(max_shape) != shape_rank:
-                min_shape = [1] * shape_rank
-                max_shape = [int(np.prod(max_shape))] * shape_rank
-            else:
-                for i in range(shape_rank):
-                    if min_shape[i] == max_shape[i] and min_shape[i] != 1:
-                        out_shape[i] = min_shape[i]
-        elif is_shape_unknown(x_shp) and "max_shape" in x:
-            # when dynamic memory allocation is supported, max_shape can be left out
-            min_shape = [1] * shape_rank
-            max_shape = [int(np.prod(x["max_shape"]))] * shape_rank
+
         if "shape_value" in shape:
             out_shape = shape["shape_value"]
-        return out_shape, min_shape, max_shape
-
-    @staticmethod
-    def _update_shape_range(out, x, shape_v, neg_index, dim_prod):
-        """ update min and max shape of output when input shape is dynamic"""
-        if 'max_shape' in x and 'min_shape' in x:
-            x_max_shape = x['max_shape']
-            x_min_shape = x['min_shape']
-            max_arr_prod = np.prod(x_max_shape)
-            min_arr_prod = np.prod(x_min_shape)
-            max_shape = list(shape_v)
-            min_shape = list(shape_v)
-            if neg_index != -1:
-                max_shape[neg_index] = int(max_arr_prod // dim_prod)
-                min_shape[neg_index] = int(min_arr_prod // dim_prod)
-            out['max_shape'] = tuple(max_shape)
-            out['min_shape'] = tuple(min_shape)
-        return out
+        return out_shape
 
     def _update_shape_and_value(self, out, x, shape_v, dim_prod, neg_index):
         """ update shape, value and min / max value of output when input shape is known"""
@@ -857,13 +808,6 @@ class Reshape(PrimitiveWithInfer):
         if x['value'] is not None:
             out['value'] = Tensor(x['value'].asnumpy().reshape(shape_v))
 
-        if ('min_value' in x and 'max_value' in x):
-            ret_min_value = np.array(x['min_value']).reshape(shape_v)
-            ret_max_value = np.array(x['max_value']).reshape(shape_v)
-            ret_min_value = tuple(ret_min_value.tolist())
-            ret_max_value = tuple(ret_max_value.tolist())
-            out['min_value'] = ret_min_value
-            out['max_value'] = ret_max_value
         return out
 
     def __infer__(self, x, shape):
@@ -871,13 +815,11 @@ class Reshape(PrimitiveWithInfer):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         # for shape is not constant
         if shape_v is None:
-            out_shape, min_shape, max_shape = self._get_shape_and_range(x, shape)
+            out_shape = self._get_shape_and_range(x, shape)
             return {
                 'shape': out_shape,
                 'dtype': x['dtype'],
                 'value': None,
-                'max_shape': max_shape,
-                'min_shape': min_shape
             }
 
         if isinstance(shape_v, Tensor_):
@@ -903,9 +845,7 @@ class Reshape(PrimitiveWithInfer):
                'dtype': x['dtype'],
                'value': None}
 
-        if is_shape_unknown(x['shape']):
-            out = self._update_shape_range(out, x, shape_v, neg_index, dim_prod)
-        else:
+        if not is_shape_unknown(x['shape']):
             out = self._update_shape_and_value(out, x, shape_v, dim_prod, neg_index)
         return out
 
@@ -1706,9 +1646,6 @@ class Fill(PrimitiveWithInfer):
                 'shape': dims['value'],
                 'dtype': x['dtype'],
             }
-            if ('min_value' in dims and 'max_value' in dims):
-                out['min_shape'] = dims['min_value']
-                out['max_shape'] = dims['max_value']
         return out
 
 
@@ -2389,14 +2326,6 @@ class Tile(PrimitiveWithInfer):
         x_shp = x['shape']
         multiples_v = multiples['value']
         value = None
-        if multiples_v is None:
-            multiples_v = multiples['min_value']
-        if 'max_shape' in x and 'min_shape' in x:
-            max_shape = x['max_shape']
-            min_shape = x['min_shape']
-        else:
-            max_shape = list(x_shp)
-            min_shape = list(x_shp)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
         if len_sub == 0:
@@ -2404,40 +2333,19 @@ class Tile(PrimitiveWithInfer):
         if len_sub > 0:
             for i in range(0, len_sub):
                 x_shp.insert(0, 1)
-                min_shape.insert(0, 1)
-                max_shape.insert(0, 1)
             multiples_w = multiples_v
         elif len_sub < 0:
             raise ValueError(f"For '{self.name}', the length of 'multiples' can not be smaller than "
                              f"the dimension of 'input_x', but got length of 'multiples': {len(multiples_v)} "
                              f"and dimension of 'input_x': {len(x_shp)}.")
-        if 'max_value' in multiples and 'min_value' in multiples:
-            multiples_v_max = multiples['max_value']
-            multiples_v_min = multiples['min_value']
-            i = 0
-            for a, b in zip(multiples_v_min, multiples_v_max):
-                if isinstance(a, (Tensor_, Tensor)):
-                    a = a.asnumpy()
-                    b = b.asnumpy()
-                if x_shp[i] >= 0:
-                    x_shp[i] *= a
-                if a != b:
-                    x_shp[i] = -1
-                min_shape[i] *= a
-                max_shape[i] *= b
-                i += 1
-        else:
-            for i, a in enumerate(multiples_w):
-                if x_shp[i] >= 0:
-                    x_shp[i] *= a
-                max_shape[i] *= a
-                min_shape[i] *= a
-            if x['value'] is not None:
-                value = Tensor(np.tile(x['value'].asnumpy(), multiples_w))
+
+        for i, a in enumerate(multiples_w):
+            if x_shp[i] >= 0:
+                x_shp[i] *= a
+        if x['value'] is not None:
+            value = Tensor(np.tile(x['value'].asnumpy(), multiples_w))
         out_shape = {
-            'shape': x_shp,
-            'max_shape': max_shape,
-            'min_shape': min_shape
+            'shape': x_shp
         }
         return out_shape, value
 
@@ -2455,15 +2363,10 @@ class Tile(PrimitiveWithInfer):
                     'value': None
                 }
             out_shape, value = self._get_shape_and_range(x, multiples)
-            max_shape = out_shape.get('max_shape', None)
-            min_shape = out_shape.get('min_shape', None)
             shape = out_shape.get('shape', None)
             out = {'shape': shape,
                    'dtype': x['dtype'],
                    'value': value}
-            if is_shape_known(max_shape) or is_shape_known(min_shape):
-                out['max_shape'] = max_shape
-                out['min_shape'] = min_shape
             return out
 
         validator.check_value_type(
@@ -2478,9 +2381,6 @@ class Tile(PrimitiveWithInfer):
         out = {'shape': shp,
                'dtype': x['dtype'],
                'value': value}
-        if 'max_shape' in x and 'min_shape' in x:
-            out['max_shape'] = out_shp.get('max_shape', None)
-            out['min_shape'] = out_shp.get('min_shape', None)
         return out
 
 
@@ -2551,28 +2451,6 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         out = {'shape': shp,
                'dtype': mstype.tensor_type(x_type.element_type()),
                'value': None}
-        max_output_incoming = []
-        min_output_incoming = []
-        if "max_value" in num_segments and "min_value" in num_segments:
-            output_max_shape = list(num_segments['max_value'])
-            output_min_shape = list(num_segments['min_value'])
-        else:
-            output_max_shape = [num_segments_v]
-            output_min_shape = [num_segments_v]
-            if num_segments_v is None:
-                output_max_shape = []
-                output_min_shape = []
-        if 'max_shape' in x and 'min_shape' in x:
-            max_output_incoming = x['max_shape']
-            min_output_incoming = x['min_shape']
-        elif is_shape_known(x_shp):
-            max_output_incoming = x_shp
-            min_output_incoming = x_shp
-        output_max_shape += max_output_incoming[segment_ids_shp_len:]
-        output_min_shape += min_output_incoming[segment_ids_shp_len:]
-        if len(output_max_shape) == len(shp):
-            out['max_shape'] = output_max_shape
-            out['min_shape'] = output_min_shape
         return out
 
 
@@ -2891,15 +2769,6 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
 
     out = {}
     if is_shape_unknown(out_shape):
-        if 'min_shape' in value and 'max_shape' in value:
-            x_min_shp = value['min_shape']
-            ret_min_shp = x_min_shp[0].copy()
-            ret_min_shp.insert(axis, n)
-            out['min_shape'] = ret_min_shp
-            x_max_shp = value['max_shape']
-            ret_max_shp = x_max_shp[0].copy()
-            ret_max_shp.insert(axis, n)
-            out['max_shape'] = ret_max_shp
         out_shape.insert(axis, n)
         out['shape'] = out_shape
         return out
@@ -2974,17 +2843,10 @@ class Stack(PrimitiveWithInfer):
                 input_array.append(npy_item)
             infered_value = Tensor(np.stack(input_array, axis=self.axis))
 
-        if 'min_shape' in all_shape and 'max_shape' in all_shape:
-            out = {'shape': all_shape.get('shape'),
-                   'min_shape': all_shape.get('min_shape'),
-                   'max_shape': all_shape.get('max_shape'),
-                   'dtype': x_type[0],
-                   'value': infered_value}
-        else:
-            shape = all_shape.get('shape') if isinstance(all_shape, dict) else all_shape
-            out = {'shape': shape,
-                   'dtype': x_type[0],
-                   'value': infered_value}
+        shape = all_shape.get('shape') if isinstance(all_shape, dict) else all_shape
+        out = {'shape': shape,
+               'dtype': x_type[0],
+               'value': infered_value}
 
         def unpack(x):
             if isinstance(x, (tuple, list)) and len(x) == 1:
@@ -3000,32 +2862,6 @@ class Stack(PrimitiveWithInfer):
             infered_shape_value = np.stack(input_shape_value, axis=self.axis)
             infered_shape_value = tuple(infered_shape_value.tolist())
             out['shape_value'] = infered_shape_value
-        if 'min_value' in value and 'max_value' in value:
-            min_value_array = []
-            max_value_array = []
-            infered_min_value = None
-            infered_max_value = None
-            for i in range(len(value['min_value'])):
-                cur_min_value = value['min_value'][i]
-                cur_max_value = value['max_value'][i]
-                if cur_min_value is None or cur_max_value is None:
-                    return out
-                if isinstance(cur_min_value, Tensor_):
-                    cur_min_value = cur_min_value.asnumpy()
-                elif isinstance(cur_min_value, tuple):
-                    cur_min_value = np.array(cur_min_value)
-                if isinstance(cur_max_value, Tensor_):
-                    cur_max_value = cur_max_value.asnumpy()
-                elif isinstance(cur_max_value, tuple):
-                    cur_max_value = np.array(cur_max_value)
-                min_value_array.append(cur_min_value)
-                max_value_array.append(cur_max_value)
-            infered_min_value = np.stack(min_value_array, axis=self.axis)
-            infered_max_value = np.stack(max_value_array, axis=self.axis)
-            infered_min_value = tuple(infered_min_value.tolist())
-            infered_max_value = tuple(infered_max_value.tolist())
-            out['min_value'] = infered_min_value
-            out['max_value'] = infered_max_value
         return out
 
 
@@ -3509,15 +3345,10 @@ class StridedSlice(PrimitiveWithInfer):
                              f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
         if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x['shape']):
-            ret_shape, ret_min_shape, ret_max_shape = \
-                self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
+            ret_shape = self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
             rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None}
-
-            if "min_shape" in x and "max_shape" in x:
-                rets['min_shape'] = ret_min_shape
-                rets['max_shape'] = ret_max_shape
 
             return rets
 
@@ -3747,8 +3578,6 @@ class StridedSlice(PrimitiveWithInfer):
         if self.ellipsis_mask:
             raise ValueError("Ellipsis Mask is currently not supported in dynamic shape.")
         ret_shape = []
-        ret_min_shape = []
-        ret_max_shape = []
         i, j = 0, 0
         slice_has_special_value = False
         begin_value, end_value, strides_value = self._get_slice_value(begin_v, end_v, strides_v)
@@ -3759,8 +3588,6 @@ class StridedSlice(PrimitiveWithInfer):
             if j < slice_len:
                 if j < len(new_axis_pos) and new_axis_pos[j] == '1':
                     ret_shape.append(1)
-                    ret_min_shape.append(1)
-                    ret_max_shape.append(1)
                     j += 1
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
@@ -3784,15 +3611,9 @@ class StridedSlice(PrimitiveWithInfer):
                 if end > 0:
                     slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
             ret_shape.append(slicing_length)
-            if "min_shape" in x and "max_shape" in x and x['max_shape'] is not None:
-                ret_min_shape.append(1)
-                if slicing_length == -1:
-                    ret_max_shape.append(x['max_shape'][i])
-                else:
-                    ret_max_shape.append(slicing_length)
             i += 1
             j += 1
-        return ret_shape, ret_min_shape, ret_max_shape
+        return ret_shape
 
     def _check_and_get_value(self, slice_input, name):
         """Check begin, end, strides. Get its length and value."""
@@ -6452,15 +6273,15 @@ class SearchSorted(PrimitiveWithInfer):
     Find the indices from the innermost dimension of `sequence` such that the order of the innermost dimension
     within `sequence` would be preserved when the corresponding values in `values` were inserted before the indices.
 
-    Args:
+      Args:
         out_int32 (bool): Output datatype. Optional. If True, the output datatype will be int32;
                           if False, the output datatype will be int64. Default is False.
         right (bool): Search Strategy. Optional. If True, return the last suitable index found.
                       If False, return the first such index. Default is False.
 
-    Inputs:
+      Inputs:
         - **sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
-          It must contain monitonically increasing sequence on the innermost dimension.
+                                  It must contain monitonically increasing sequence on the innermost dimension.
         - **values** (Tensor) - The shape of tensor is : math:`(x_1, x_2, ..., x_R-1, x_S)`.
 
     Outputs:

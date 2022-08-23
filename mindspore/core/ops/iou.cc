@@ -45,36 +45,10 @@ abstract::ShapePtr IOUInferShape(const PrimitivePtr &primitive, const std::vecto
   }
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[1]), kGreaterEqual, 4, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[1]), kGreaterEqual, 4, prim_name);
-  ShapeVector x_min_shape = x_shape_map[kMinShape];
-  ShapeVector x_max_shape = x_shape_map[kMaxShape];
-  ShapeVector y_min_shape = y_shape_map[kMinShape];
-  ShapeVector y_max_shape = y_shape_map[kMaxShape];
   ShapeVector ret_shape;
-  ShapeVector ret_min_shape;
-  ShapeVector ret_max_shape;
   ret_shape.push_back(y_shp[0]);
   ret_shape.push_back(x_shp[0]);
-  if (y_shape_ptr->IsDynamic()) {
-    if (y_min_shape.empty() || y_max_shape.empty()) {
-      return std::make_shared<abstract::Shape>(ret_shape);
-    }
-    ret_min_shape.push_back(y_min_shape[0]);
-    ret_max_shape.push_back(y_max_shape[0]);
-  } else {
-    ret_min_shape.push_back(y_shp[0]);
-    ret_max_shape.push_back(y_shp[0]);
-  }
-  if (x_shape_ptr->IsDynamic()) {
-    if (x_min_shape.empty() || x_max_shape.empty()) {
-      return std::make_shared<abstract::Shape>(ret_shape);
-    }
-    ret_min_shape.push_back(x_min_shape[0]);
-    ret_max_shape.push_back(x_max_shape[0]);
-  } else {
-    ret_min_shape.push_back(x_shp[0]);
-    ret_max_shape.push_back(x_shp[0]);
-  }
-  return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
+  return std::make_shared<abstract::Shape>(ret_shape);
 }
 
 TypePtr IOUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -30,9 +30,7 @@ abstract::ShapePtr ImagInferShape(const PrimitivePtr &primitive, const std::vect
   MS_LOG(DEBUG) << "Start infer shape for op: " << name;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr ImagInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

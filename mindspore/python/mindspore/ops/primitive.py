@@ -600,32 +600,6 @@ class PrimitiveWithInfer(Primitive):
         if not has_dynamic_shape(out['shape']):
             return out
 
-        # calculate min/max shape for output
-        def get_specified_shape(elems, attr):
-            has_specified_shape = False
-            specified_count = 0
-            ret_vals = []
-            for elem in elems:
-                if attr in elem:
-                    specified_count += 1
-                    ret_vals.append(elem[attr])
-            if specified_count > 0 and specified_count == len(elems):
-                has_specified_shape = True
-            return has_specified_shape, tuple(ret_vals)
-
-        has_min_shape, min_shapes = get_specified_shape(args, 'min_shape')
-        has_max_shape, max_shapes = get_specified_shape(args, 'max_shape')
-
-        if has_min_shape and has_max_shape:
-            fn_infer_min_shape = getattr(self, 'infer_shape')
-            fn_infer_max_shape = fn_infer_min_shape
-            if hasattr(self, 'infer_min_shape'):
-                fn_infer_min_shape = getattr(self, 'infer_min_shape')
-            if hasattr(self, 'infer_max_shape'):
-                fn_infer_max_shape = getattr(self, 'infer_max_shape')
-            out['min_shape'] = fn_infer_min_shape(*min_shapes)
-            out['max_shape'] = fn_infer_max_shape(*max_shapes)
-
         return out
 
 

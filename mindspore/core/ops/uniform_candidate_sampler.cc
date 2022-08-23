@@ -35,8 +35,6 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
-  auto min_shape = input_shape_map[kMinShape];
-  auto max_shape = input_shape_map[kMaxShape];
 
   // Check UniformCandidateSampler input shape's dimension whether equal or greater than 2.
   int64_t batch_rank = 0;
@@ -66,13 +64,7 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
     (void)CheckAndConvertUtils::CheckInteger("num_sampled", num_sampled, kLessEqual, range_max, op_name);
   }
 
-  bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
-                               [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   auto true_expected_count_shape = input_shape_ptr;
-  if (batch_rank == 0 && !x_not_dyn && min_shape.size() != 0 && max_shape.size() != 0) {
-    true_expected_count_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
-  }
-
   std::vector<int64_t> batch_lists;
   for (int64_t i = 0; i < batch_rank; i++) {
     (void)batch_lists.emplace_back(input_shape[i]);

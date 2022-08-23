@@ -35,9 +35,8 @@ abstract::ShapePtr MvlgammaInferShape(const PrimitivePtr &primitive, const std::
   if (first_input_shape_min.empty() || first_input_shape_max.empty()) {
     return std::make_shared<abstract::Shape>(in_shape);
   }
-  ShapeVector min_shape = {first_input_shape_min[0]};
-  ShapeVector max_shape = {first_input_shape_max[0]};
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr MvlgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

@@ -82,12 +82,8 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   for (int i = 0; i < SizeToLong(shape_v.size()); i++) {
     output_shape.push_back(-1);
   }
-  auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMinShape];
-  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMaxShape];
-  if (!min_shape.size() || !min_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For Stack, inputs['shape'] min or max value is empty.";
-  }
-  return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

@@ -72,10 +72,6 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
   auto x_shape = x_shape_map[kShape];
   auto y_shape = y_shape_map[kShape];
-  auto x_min_shape = x_shape_map[kMinShape];
-  auto x_max_shape = x_shape_map[kMaxShape];
-  auto y_min_shape = y_shape_map[kMinShape];
-  auto y_max_shape = y_shape_map[kMaxShape];
 
   // ToSupport Dynamic rank
   if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
@@ -83,18 +79,9 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   }
 
   if (x_shape == y_shape) {
-    return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+    return std::make_shared<abstract::Shape>(x_shape);
   }
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
-  bool is_x_dyn =
-    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
-  bool is_y_dyn =
-    std::any_of(y_shape.begin(), y_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
-  if (is_x_dyn || is_y_dyn) {
-    auto min_broadcast_shape = CalBroadCastShape(x_min_shape, y_min_shape, op_name);
-    auto max_broadcast_shape = CalBroadCastShape(x_max_shape, y_max_shape, op_name);
-    return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
-  }
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 int64_t ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, const int64_t &axis, const size_t dim) {
@@ -169,8 +156,6 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto input_shape = shape_ptr->shape();
-  auto input_min_shape = shape_ptr->min_shape();
-  auto input_max_shape = shape_ptr->max_shape();
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
@@ -178,14 +163,6 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
   ShapeVector out_shape = {};
-  ShapeVector out_min_shape = {};
-  ShapeVector out_max_shape = {};
-  int64_t max_v;
-  if (shape_ptr->IsDynamic()) {
-    max_v = *max_element(input_max_shape.begin(), input_max_shape.end());
-  } else {
-    max_v = *max_element(input_shape.begin(), input_shape.end());
-  }
   const uint64_t input_num_ascend = 2;
   if (CheckTensorShapeValid(input_args, input_num_ascend)) {
     auto axis_tensor = input_args[1]->cast<abstract::AbstractTensorPtr>();
@@ -195,22 +172,16 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
     auto axis_shape = axis_tensor_shape->shape();
     if (axis_shape.size() == 1 && axis_shape[0] == -1 && !keep_dims) {
       out_shape.push_back(-2);  // -2 : input num ascend
-      out_min_shape = input_min_shape;
-      out_max_shape = input_max_shape;
     } else if (!keep_dims) {
       for (size_t i = 0; i < input_shape.size() - axis_shape.size(); ++i) {
         out_shape.push_back(-1);
-        out_min_shape.push_back(1);
-        out_max_shape.push_back(max_v);
       }
     } else {
       for (size_t i = 0; i < input_shape.size(); ++i) {
         out_shape.push_back(-1);
-        out_min_shape.push_back(1);
-        out_max_shape.push_back(max_v);
       }
     }
-    return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+    return std::make_shared<abstract::Shape>(out_shape);
   } else {
     ValuePtr axis_value;
     ValuePtr axis_ptr;
@@ -250,14 +221,6 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
       axis_value = axis_ptr;
     }
     ReduceFuncCalShapeInferImpl(primitive, &out_shape, input_shape, axis_value, keep_dims);
-
-    if (!input_min_shape.empty() && !input_max_shape.empty()) {
-      ShapeVector shape_min = {};
-      ShapeVector shape_max = {};
-      ReduceFuncCalShapeInferImpl(primitive, &shape_min, input_min_shape, axis_value, keep_dims);
-      ReduceFuncCalShapeInferImpl(primitive, &shape_max, input_max_shape, axis_value, keep_dims);
-      return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
-    }
     return std::make_shared<abstract::Shape>(out_shape);
   }
 }

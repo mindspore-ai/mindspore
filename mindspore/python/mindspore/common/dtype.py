@@ -154,7 +154,7 @@ _simple_types = {
     complex: complex128,
     str: string,
     np.bool_: bool_,
-    np.str: string,
+    np.str_: string,
     np.int8: int8,
     np.int16: int16,
     np.int32: int32,

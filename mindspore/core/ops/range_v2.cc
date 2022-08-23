@@ -71,7 +71,6 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   int64_t shape_size = abstract::Shape::SHP_ANY;
   MS_EXCEPTION_IF_NULL(primitive->GetAttr(kMaxLen));
-  int64_t max_len = GetValue<int64_t>(primitive->GetAttr(kMaxLen));
   auto start_value = input_args[kInputIndex0]->BuildValue();
   auto limit_value = input_args[kInputIndex1]->BuildValue();
   auto delta_value = input_args[kInputIndex2]->BuildValue();
@@ -103,17 +102,10 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  if (shape_size > max_len) {
-    MS_EXCEPTION(ValueError) << "For RangeV2, the elements number in output exceeds maxlen, while output size = "
-                             << shape_size << ", max_len = " << max_len << ".";
-  }
-
   ShapeVector out_shape = {};
   if (is_compile) {
     out_shape.emplace_back(abstract::Shape::SHP_ANY);
-    ShapeVector out_min_shape = {1};
-    ShapeVector out_max_shape = {max_len};
-    return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 
   out_shape.emplace_back(shape_size);

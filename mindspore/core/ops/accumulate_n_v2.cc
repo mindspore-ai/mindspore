@@ -58,9 +58,7 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
     }
   }
   auto in_shape = element0_shape_map[kShape];
-  auto min_shape = element0_shape_map[kMinShape];
-  auto max_shape = element0_shape_map[kMaxShape];
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

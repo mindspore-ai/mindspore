@@ -68,13 +68,11 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
   std::vector<ShapeVector> shape;
   std::vector<ShapeVector> min_shape;
   std::vector<ShapeVector> max_shape;
-
   GetShapeVector(shape_attr, &shape);
   GetShapeVector(min_shape_attr, &min_shape);
   GetShapeVector(max_shape_attr, &max_shape);
 
   bool is_dynamic = IsShapesDynamic(shape);
-
   AbstractBasePtrList output;
   for (size_t i = 0; i < shape.size(); ++i) {
     auto ret_shape = !min_shape.empty() && !max_shape.empty() && is_dynamic

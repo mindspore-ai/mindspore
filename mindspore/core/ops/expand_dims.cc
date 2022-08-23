@@ -36,8 +36,6 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_ptr);
   auto x_shape = shape_map[kShape];
-  auto max_shape = shape_map[kMaxShape];
-  auto min_shape = shape_map[kMinShape];
 
   // ExpandDims could handle -1, but could not handle -2
   if (IsDynamicRank(x_shape)) {
@@ -62,14 +60,7 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
   }
 
   (void)x_shape.insert(x_shape.begin() + axis, 1);
-
-  if (!max_shape.empty() && !min_shape.empty()) {
-    (void)max_shape.insert(max_shape.begin() + axis, 1);
-    (void)min_shape.insert(min_shape.begin() + axis, 1);
-    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
-  } else {
-    return std::make_shared<abstract::Shape>(x_shape);
-  }
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -23,7 +23,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ...common._decorator import deprecated
-from .._utils import get_broadcast_shape, is_shape_unknown
+from .._utils import get_broadcast_shape
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._c_expression import Tensor as Tensor_
 
@@ -76,12 +76,6 @@ class _BinaryOp(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, y_shape):
         return get_broadcast_shape(x_shape, y_shape, self.name)
-
-    def infer_min_shape(self, x_shape, y_shape):
-        return get_broadcast_shape(x_shape, y_shape, self.name, "min_shape")
-
-    def infer_max_shape(self, x_shape, y_shape):
-        return get_broadcast_shape(x_shape, y_shape, self.name, "max_shape")
 
 
 class _MathBinaryOp(_BinaryOp):
@@ -511,31 +505,18 @@ class _Reduce(PrimitiveWithInfer):
         return output
 
     @staticmethod
-    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims, output_min_shape, output_max_shape):
+    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims):
         """ compute the shape, min/max shape of output with axis shape when axis value is None """
         input_shp = input_x['shape']
-        max_v = max(input_shp)
-        if 'max_shape' in input_x and 'min_shape' in input_x:
-            input_max_shp = input_x['max_shape']
-            max_v = max(input_max_shp)
         if axis_shape == -1 and not keep_dims:
             out_shape = np.array([-2]).tolist()
-            if 'max_shape' in input_x and 'min_shape' in input_x:
-                output_min_shape = input_x['min_shape']
-                output_max_shape = input_x['max_shape']
         elif not keep_dims:
             out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
             out_shape = out_shape.tolist()
-            output_min_shape = np.ones_like(out_shape).tolist()
-            output_max_shape = max_v * np.ones_like(out_shape)
-            output_max_shape = output_max_shape.tolist()
         else:
             out_shape = -1 * np.ones_like(input_shp)
             out_shape = out_shape.tolist()
-            output_min_shape = np.ones_like(input_shp).tolist()
-            output_max_shape = max_v * np.ones_like(input_shp)
-            output_max_shape = output_max_shape.tolist()
-        return out_shape, output_min_shape, output_max_shape
+        return out_shape
 
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
         """ return meta infos of input parameters """
@@ -545,14 +526,9 @@ class _Reduce(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
         if not isinstance(axis['dtype'], mstype.tensor_type) and axis_v is None:
             raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
-        output_max_shape = None
-        output_min_shape = None
         # when the rank of input_x is dynamic, the rank of output is also dynamic
         if -2 in input_shp:
             out_shape = np.array([-2]).tolist()
-            if 'max_shape' in input_x and 'min_shape' in input_x:
-                output_min_shape = input_x['min_shape']
-                output_max_shape = input_x['max_shape']
         # when axis value is none, the output shape is computed by axis shape
         elif axis_v is None:
             axis_shape_list = axis['shape']
@@ -562,13 +538,7 @@ class _Reduce(PrimitiveWithInfer):
                                 f"but got \'{len(axis_shape_list)}\'")
             validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
             axis_shape = axis_shape_list[0]
-            out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
-                input_x, axis_shape, self.keep_dims, output_min_shape, output_max_shape)
-        elif is_shape_unknown(input_shp):
-            if 'max_shape' in input_x and 'min_shape' in input_x:
-                output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
-                output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
-            out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
+            out_shape = _Reduce._infer_shape_with_axis_shape(input_x, axis_shape, self.keep_dims)
         else:
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
 
@@ -595,8 +565,6 @@ class _Reduce(PrimitiveWithInfer):
                 value = np.array(value)
                 value = Tensor(value)
         return {'shape': out_shape,
-                'min_shape': output_min_shape,
-                'max_shape': output_max_shape,
                 'dtype': input_x['dtype'],
                 'value': value}
 
@@ -6293,16 +6261,16 @@ class RaggedRange(Primitive):
     """
     Returns a `RaggedTensor` containing the specified sequences of numbers.
 
-    Args:
+      Args:
         Tsplits (mindspore.dtype): An mindspore.dtype from: mindspore.int32, mindspore.int64.
 
-    Inputs:
+      Inputs:
         - **starts** (Tensor) - The starts of each range, whose type is int32, int64, float32 or float64,
           and shape is 0D or 1D.
         - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
         - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
           and each element in the tensor should not be equal to 0.
-    Outputs:
+      Outputs:
         - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
           and type of the tensor is `Tsplits`,
           shape of the tensor is equal to shape of input `starts` plus 1.

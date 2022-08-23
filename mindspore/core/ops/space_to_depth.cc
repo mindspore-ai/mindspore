@@ -53,8 +53,6 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shapeMap[kShape];
-  auto min_shape = shapeMap[kMinShape];
-  auto max_shape = shapeMap[kMaxShape];
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto block_size = GetValue<int64_t>(primitive->GetAttr("block_size"));
@@ -77,18 +75,8 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
   out_shape[c_of_nchw] *= block_size * block_size;
   out_shape[h_of_nchw] /= block_size;
   out_shape[w_of_nchw] /= block_size;
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-  auto out_min_shape = min_shape;
-  out_min_shape[c_of_nchw] *= block_size * block_size;
-  out_min_shape[h_of_nchw] /= block_size;
-  out_min_shape[w_of_nchw] /= block_size;
-  auto out_max_shape = max_shape;
-  out_max_shape[c_of_nchw] *= block_size * block_size;
-  out_max_shape[h_of_nchw] /= block_size;
-  out_max_shape[w_of_nchw] /= block_size;
-  return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr SpaceToDepthInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

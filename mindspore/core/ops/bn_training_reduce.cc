@@ -44,8 +44,6 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape = input_shape[kShape];
-  auto min_shape = input_shape[kMinShape];
-  auto max_shape = input_shape[kMaxShape];
 
   constexpr auto kInputDim = 4;
   (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kEqual, kInputDim, primitive->name());
@@ -59,16 +57,9 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   ShapeVector batch = {shape[c_axis]};
   abstract::ShapePtr sum_shape;
   abstract::ShapePtr square_sum_shape;
-  if (min_shape.empty() || max_shape.empty()) {
-    sum_shape = std::make_shared<abstract::Shape>(batch);
-    square_sum_shape = std::make_shared<abstract::Shape>(batch);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{sum_shape, square_sum_shape});
-  }
 
-  ShapeVector batch_min = {min_shape[c_axis]};
-  ShapeVector batch_max = {max_shape[c_axis]};
-  sum_shape = std::make_shared<abstract::Shape>(batch, batch_min, batch_max);
-  square_sum_shape = std::make_shared<abstract::Shape>(batch, batch_min, batch_max);
+  sum_shape = std::make_shared<abstract::Shape>(batch);
+  square_sum_shape = std::make_shared<abstract::Shape>(batch);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{sum_shape, square_sum_shape});
 }
 

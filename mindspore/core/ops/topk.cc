@@ -36,8 +36,6 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
   auto prim_name = primitive->name();
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   int64_t k_v = 0;
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
@@ -59,15 +57,8 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeRight, k_range, prim_name);
     x_shape[ndims] = k_v;
   }
-  if (min_shape.empty() || max_shape.empty()) {
-    auto out_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
-  }
-  if (x_shape[ndims] != abstract::Shape::SHP_ANY) {
-    min_shape[ndims] = k_v;
-    max_shape[ndims] = k_v;
-  }
-  auto out_shape_ptr = std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+
+  auto out_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
 }
 

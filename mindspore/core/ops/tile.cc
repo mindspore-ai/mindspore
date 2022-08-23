@@ -63,8 +63,6 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   std::vector<int64_t> multiples_v;
   auto multiple_value = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(multiple_value);
@@ -82,12 +80,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   }
 
   auto infer_shape = GetInferShape(primitive, input_shape, multiples_v);
-  if (max_shape.empty() || min_shape.empty()) {
-    return std::make_shared<abstract::Shape>(infer_shape);
-  }
-  auto infer_shape_min = GetInferShape(primitive, min_shape, multiples_v);
-  auto infer_shape_max = GetInferShape(primitive, max_shape, multiples_v);
-  return std::make_shared<abstract::Shape>(infer_shape, infer_shape_min, infer_shape_max);
+  return std::make_shared<abstract::Shape>(infer_shape);
 }
 
 TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

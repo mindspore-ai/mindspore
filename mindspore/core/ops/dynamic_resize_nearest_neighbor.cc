@@ -44,28 +44,12 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(size_v);
   std::vector<int64_t> size_value;
   std::vector<int64_t> output_shape;
-  std::vector<int64_t> min_shape;
-  std::vector<int64_t> max_shape;
-  std::vector<int64_t> min_size;
-  std::vector<int64_t> max_size;
   if (size->isa<abstract::AbstractTensor>()) {
     if (size_v->isa<tensor::Tensor>()) {
       size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
     } else {
       size_value.push_back(-1);
       size_value.push_back(-1);
-      auto min_value = size->cast<abstract::AbstractTensorPtr>()->get_min_value();
-      auto max_value = size->cast<abstract::AbstractTensorPtr>()->get_max_value();
-      if (!min_value || !max_value) {
-        MS_EXCEPTION(ValueError) << "For 'ResizeNearestNeighbor', inputs['size'] min or max value is can not be empty.";
-      }
-      min_size = GetValue<std::vector<int64_t>>(min_value);
-      max_size = GetValue<std::vector<int64_t>>(max_value);
-      if (min_size.size() != size_size || max_size.size() != size_size) {
-        MS_EXCEPTION(ValueError)
-          << "For 'ResizeNearestNeighbor', inputs['size'] min and max value size must be 2, but got min: "
-          << min_size.size() << ",  max: " << max_size.size() << ".";
-      }
     }
   } else if (size->isa<abstract::AbstractTuple>()) {
     size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_v, prim_name);
@@ -78,48 +62,7 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
   output_shape.push_back(x_shape[1]);
   output_shape.push_back(size_value[0]);
   output_shape.push_back(size_value[1]);
-  if (!x_shape_ptr->IsDynamic() && min_size.empty()) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-  if (x_shape_ptr->IsDynamic() && min_size.empty()) {
-    auto x_min_shape = x_shape_ptr->min_shape();
-    auto x_max_shape = x_shape_ptr->max_shape();
-    if (x_min_shape.empty() || x_max_shape.empty()) {
-      return std::make_shared<abstract::Shape>(output_shape);
-    }
-    min_shape.push_back(x_min_shape[0]);
-    min_shape.push_back(x_min_shape[1]);
-    min_shape.push_back(size_value[0]);
-    min_shape.push_back(size_value[1]);
-    max_shape.push_back(x_max_shape[0]);
-    max_shape.push_back(x_max_shape[1]);
-    max_shape.push_back(size_value[0]);
-    max_shape.push_back(size_value[1]);
-  } else if (!x_shape_ptr->IsDynamic() && !min_size.empty()) {
-    min_shape.push_back(x_shape[0]);
-    min_shape.push_back(x_shape[1]);
-    min_shape.push_back(min_size[0]);
-    min_shape.push_back(min_size[1]);
-    max_shape.push_back(x_shape[0]);
-    max_shape.push_back(x_shape[1]);
-    max_shape.push_back(max_size[0]);
-    max_shape.push_back(max_size[1]);
-  } else {
-    auto x_min_shape = x_shape_ptr->min_shape();
-    auto x_max_shape = x_shape_ptr->max_shape();
-    if (x_min_shape.empty() || x_max_shape.empty()) {
-      return std::make_shared<abstract::Shape>(output_shape);
-    }
-    min_shape.push_back(x_min_shape[0]);
-    min_shape.push_back(x_min_shape[1]);
-    min_shape.push_back(min_size[0]);
-    min_shape.push_back(min_size[1]);
-    max_shape.push_back(x_max_shape[0]);
-    max_shape.push_back(x_max_shape[1]);
-    max_shape.push_back(max_size[0]);
-    max_shape.push_back(max_size[1]);
-  }
-  return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr DynamicResizeNearestNeighborInferType(const PrimitivePtr &prim,

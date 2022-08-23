@@ -86,8 +86,6 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto max_shape = shape_map[kMaxShape];
-  auto min_shape = shape_map[kMinShape];
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   const int64_t x_size = 4;
   const int64_t attr_size = 4;
@@ -143,44 +141,7 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  auto max_batch = max_shape[0];
-  auto max_channel = max_shape[1];
-  auto max_in_h = max_shape[2];
-  auto max_in_w = max_shape[3];
-  auto min_batch = min_shape[0];
-  auto min_channel = min_shape[1];
-  auto min_in_h = min_shape[2];
-  auto min_in_w = min_shape[3];
-
-  int64_t max_out_h = abstract::Shape::SHP_ANY;
-  int64_t max_out_w = abstract::Shape::SHP_ANY;
-  int64_t min_out_h = abstract::Shape::SHP_ANY;
-  int64_t min_out_w = abstract::Shape::SHP_ANY;
-
-  if (pad_mode == VALID) {
-    max_out_h = static_cast<int64_t>(std::ceil((max_in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
-    max_out_w = static_cast<int64_t>(std::ceil((max_in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
-    min_out_h = static_cast<int64_t>(std::ceil((min_in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
-    min_out_w = static_cast<int64_t>(std::ceil((min_in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
-  } else if (pad_mode == SAME) {
-    max_out_h = static_cast<int64_t>(std::ceil(max_in_h / static_cast<float>(stride_h)));
-    max_out_w = static_cast<int64_t>(std::ceil(max_in_w / static_cast<float>(stride_w)));
-    min_out_h = static_cast<int64_t>(std::ceil(min_in_h / static_cast<float>(stride_h)));
-    min_out_w = static_cast<int64_t>(std::ceil(min_in_w / static_cast<float>(stride_w)));
-  }
-
-  std::vector<int64_t> max_out_shape = {max_batch, max_channel, max_out_h, max_out_w};
-  std::vector<int64_t> min_out_shape = {min_batch, min_channel, min_out_h, min_out_w};
-
-  if (format == NHWC) {
-    max_out_shape = {max_batch, max_out_h, max_out_w, max_channel};
-    min_out_shape = {min_batch, min_out_h, min_out_w, min_channel};
-  }
-  return std::make_shared<abstract::Shape>(out_shape, min_out_shape, max_out_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr AvgPoolInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args) {

@@ -47,7 +47,6 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name, "input", "mask");
 
   auto num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
-
   ShapeVector output_shape = {abstract::Shape::SHP_ANY};
   ShapeVector min_shape = {0};
   ShapeVector max_shape = {num};

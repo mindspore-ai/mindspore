@@ -49,14 +49,7 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   auto input_shape_ = GetFormatShape(format, input_shape);
-  if (!min_shape.empty() && !max_shape.empty()) {
-    auto min_shape_ = GetFormatShape(format, min_shape);
-    auto max_shape_ = GetFormatShape(format, max_shape);
-    return std::make_shared<abstract::Shape>(input_shape_, min_shape_, max_shape_);
-  }
   return std::make_shared<abstract::Shape>(input_shape_);
 }
 TypePtr BiasAddGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

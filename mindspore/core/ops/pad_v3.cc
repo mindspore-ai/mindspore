@@ -107,9 +107,8 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     }
     (void)out_shape.emplace_back(now_dim_size);
   }
-  auto min_shape = out_shape;
-  auto max_shape = out_shape;
-  return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -40,11 +40,9 @@ abstract::ShapePtr HSwishInferShape(const PrimitivePtr &primitive, const std::ve
                                            prim_name);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape = input_shape[kShape];
-  auto min_shape = input_shape[kMinShape];
-  auto max_shape = input_shape[kMaxShape];
   auto out_shape = shape;
 
-  return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 }  // namespace
 

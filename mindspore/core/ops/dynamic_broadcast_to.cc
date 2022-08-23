@@ -60,37 +60,15 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                               << ".";
     }
     std::vector<int64_t> output_shape;
-    std::vector<int64_t> max_shape;
-    std::vector<int64_t> min_shape;
-
     if (y_shape->IsDynamic()) {
       output_shape.push_back(-2);
     } else {
-      auto out_dims = LongToSize(y_shape->shape()[0]);
-      auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
-      auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
-      min_shape = min_value ? GetValue<std::vector<int64_t>>(min_value) : ShapeVector();
-      max_shape = max_value ? GetValue<std::vector<int64_t>>(max_value) : ShapeVector();
-      if (min_shape.empty() || max_shape.empty()) {
-        output_shape = GetShapeValue(primitive, input_y);
-      } else {
-        if (min_shape.size() != out_dims || max_shape.size() != out_dims) {
-          MS_EXCEPTION(ValueError)
-            << "For 'BroadcastTo', inputs['shape'] min or max must have the same size as output's"
-               ". But got min shape size: "
-            << min_shape.size() << ", max shape size: " << max_shape.size() << ", output size: " << out_dims << ".";
-        }
-        for (size_t i = 0; i < out_dims; i++) {
-          auto value = min_shape[i] == max_shape[i] ? max_shape[i] : -1;
-          output_shape.push_back(value);
-        }
-      }
-
+      output_shape = GetShapeValue(primitive, input_y);
       CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(output_shape.size()),
                                   prim_name);
       CheckShapeValid(x_shape, output_shape);
     }
-    return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+    return std::make_shared<abstract::Shape>(output_shape);
   } else if (input_y->isa<abstract::AbstractTuple>()) {
     auto out_shape = GetValue<std::vector<int64_t>>(y_value);
     CheckShapeValid(x_shape, out_shape);

@@ -100,63 +100,12 @@ TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 
 abstract::ShapePtr ExtrectScatterNdShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, bool *is_dyn) {
-  auto prim_name = prim->name();
   ShapeVector out_shape;
   *is_dyn = false;
   if (inputs.size() > static_cast<size_t>(kScatterNdInputNum)) {
     auto shape = inputs[kInputIndex2];
-    auto shape_value = shape->BuildValue();
-    MS_EXCEPTION_IF_NULL(shape_value);
-    if (shape->isa<abstract::AbstractTuple>()) {
-      out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim_name);
-    } else if (shape->isa<abstract::AbstractTensor>()) {
-      if (shape_value->isa<tensor::Tensor>()) {
-        out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, prim_name);
-      } else if (shape_value->isa<ValueTuple>()) {
-        out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim_name);
-      } else {
-        *is_dyn = true;
-        auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, inputs, kScatterNdInputNum);
-        MS_EXCEPTION_IF_NULL(shape_ptr);
-        auto shape_shape = shape_ptr->shape();
-        if (shape_shape.size() != 1) {
-          MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the input [shape] must be 1-D Tensor, but got "
-                                   << shape_shape.size() << "-D.";
-        }
-
-        auto shape_len = LongToSize(shape_shape[0]);
-        auto abs_shape = shape->cast<abstract::AbstractTensorPtr>();
-        MS_EXCEPTION_IF_NULL(abs_shape);
-
-        auto shape_min_value = abs_shape->get_min_value();
-        auto shape_max_value = abs_shape->get_max_value();
-        if (shape_min_value == nullptr || shape_max_value == nullptr) {
-          for (size_t i = 0; i < shape_len; i++) {
-            out_shape.push_back(abstract::Shape::SHP_ANY);
-          }
-          return std::make_shared<abstract::Shape>(out_shape);
-        }
-
-        auto min_shape = GetValue<std::vector<int64_t>>(shape_min_value);
-        auto max_shape = GetValue<std::vector<int64_t>>(shape_max_value);
-        if (min_shape.size() != shape_len || max_shape.size() != shape_len) {
-          MS_LOG(EXCEPTION) << "For '" << prim_name
-                            << "', shape's min and max value must has lengths equal to shape "
-                               "itself, but got min value len: "
-                            << min_shape.size() << ", max value len: " << max_shape.size()
-                            << ", shape len: " << shape_len << ".";
-        }
-
-        for (size_t i = 0; i < shape_len; i++) {
-          if (min_shape[i] == max_shape[i]) {
-            out_shape.push_back(min_shape[i]);
-          } else {
-            out_shape.push_back(abstract::Shape::SHP_ANY);
-          }
-        }
-        return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
-      }
-    }
+    out_shape = GetShapeValue(prim, shape);
+    *is_dyn = IsDynamic(out_shape);
   } else {
     auto shape_attr = prim->GetAttr("shape");
     MS_EXCEPTION_IF_NULL(shape_attr);

@@ -68,8 +68,6 @@ abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
   }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   auto x_type_tmp = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type_tmp);
   auto input_type = x_type_tmp->cast<TensorTypePtr>();
@@ -78,15 +76,8 @@ abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
   auto mask_shape = ReLUV2GetOutputMaskShape(primitive, input_shape, x_dtype);
   abstract::ShapePtr inputs_shape;
   abstract::ShapePtr masks_shape;
-  if (min_shape.empty() || max_shape.empty()) {
-    inputs_shape = std::make_shared<abstract::Shape>(input_shape);
-    masks_shape = std::make_shared<abstract::Shape>(mask_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
-  }
-  auto min_mask_shape = ReLUV2GetOutputMaskShape(primitive, min_shape, x_dtype);
-  auto max_mask_shape = ReLUV2GetOutputMaskShape(primitive, max_shape, x_dtype);
-  inputs_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
-  masks_shape = std::make_shared<abstract::Shape>(mask_shape, min_mask_shape, max_mask_shape);
+  inputs_shape = std::make_shared<abstract::Shape>(input_shape);
+  masks_shape = std::make_shared<abstract::Shape>(mask_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
 }
 

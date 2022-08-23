@@ -118,19 +118,10 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
     auto x_shape = x_shape_ptr->shape();
     if (x_shape_ptr->IsDynamic()) {
-      auto x_min_shape = x_shape_ptr->min_shape();
-      auto x_max_shape = x_shape_ptr->max_shape();
-      x_min_shape[1] = 0;
-      x_min_shape[calnum2] = 0;
-      x_max_shape[1] = static_cast<int64_t>(std::sqrt(kMaxLen / (x_max_shape[0] * x_max_shape[calnum3])));
-      x_max_shape[calnum2] = static_cast<int64_t>(std::sqrt(kMaxLen / (x_max_shape[0] * x_max_shape[calnum3])));
-      return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+      return std::make_shared<abstract::Shape>(x_shape);
     }
     ShapeVector shape_out = {shape0_v[0], abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, shape0_v[indexid3]};
-    const int64_t kMaxShapeLen = static_cast<int64_t>(std::sqrt(kMaxLen / (shape0_v[0] * shape0_v[indexid3])));
-    ShapeVector shape_min = {shape0_v[0], 0, 0, shape0_v[indexid3]};
-    ShapeVector shape_max = {shape0_v[0], kMaxShapeLen, kMaxShapeLen, shape0_v[indexid3]};
-    return std::make_shared<abstract::Shape>(shape_out, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(shape_out);
   }
 }
 TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

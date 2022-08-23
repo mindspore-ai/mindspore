@@ -50,15 +50,6 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   }
 }
 
-void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (shape[i] < 0) {
-      MS_LOG(EXCEPTION) << "For '" << op << "',  shape element [" << i
-                        << "] must be positive integer, but got: " << shape[i] << ".";
-    }
-  }
-}
-
 int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
   MS_EXCEPTION_IF_NULL(attr);
   auto attr_value = attr->cast<Int64ImmPtr>();
@@ -193,10 +184,6 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   const int64_t shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
-  auto x_min_shape = x_shape_map[kMinShape];
-  auto x_max_shape = x_shape_map[kMaxShape];
-  auto w_min_shape = w_shape_map[kMinShape];
-  auto w_max_shape = w_shape_map[kMaxShape];
   CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
   CheckShapeAnyAndPositive(prim_name + " w_shape", w_shape);
   const uint64_t n_axis = 0;
@@ -256,35 +243,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   output_shape = (data_format == Format::NHWC) ? ShapeVector{x_shape[n_axis], output_hw[0], output_hw[1], out_channel}
                                                : ShapeVector{x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
   CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
-
-  if (x_min_shape.empty() || x_max_shape.empty() || w_min_shape.empty() || w_max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-  CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
-  CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
-  CheckShapeAllPositive(prim_name + " w_min_shape", w_min_shape);
-  CheckShapeAllPositive(prim_name + " w_max_shape", w_max_shape);
-  std::vector<int64_t> output_hw_min;
-  std::vector<int64_t> pad_list_min;
-  std::vector<int64_t> output_hw_max;
-  std::vector<int64_t> pad_list_max;
-
-  Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
-                    dilation, pad_mode, padding, true);
-  Conv2DPadFunction(&output_hw_max, &pad_list_max, x_max_shape[h_axis], x_max_shape[w_axis], kernel_size, stride,
-                    dilation, pad_mode, padding);
-
-  ShapeVector output_shape_min;
-  ShapeVector output_shape_max;
-  output_shape_min = (data_format == Format::NHWC)
-                       ? ShapeVector{x_min_shape[n_axis], output_hw_min[0], output_hw_min[1], out_channel}
-                       : ShapeVector{x_min_shape[n_axis], out_channel, output_hw_min[0], output_hw_min[1]};
-  output_shape_max = (data_format == Format::NHWC)
-                       ? ShapeVector{x_max_shape[n_axis], output_hw_max[0], output_hw_max[1], out_channel}
-                       : ShapeVector{x_max_shape[n_axis], out_channel, output_hw_max[0], output_hw_max[1]};
-  CheckShapeAllPositive(prim_name + " output_shape_min", output_shape_min);
-  CheckShapeAllPositive(prim_name + " output_shape_max", output_shape_max);
-  return std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

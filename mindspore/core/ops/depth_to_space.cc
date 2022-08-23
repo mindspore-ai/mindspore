@@ -53,8 +53,6 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   auto data_format_ptr = primitive->GetAttr("format");
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   primitive->AddAttr("data_format", data_format_ptr);
@@ -83,26 +81,7 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   if (format == Format::NHWC) {
     out_shape = {out_shape[dim_0], out_shape[dim_2], out_shape[dim_3], out_shape[dim_1]};
   }
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-  if (format == Format::NHWC) {
-    min_shape = {min_shape[dim_0], min_shape[dim_3], min_shape[dim_1], min_shape[dim_2]};
-    max_shape = {max_shape[dim_0], max_shape[dim_3], max_shape[dim_1], max_shape[dim_2]};
-  }
-  auto out_min_shape = min_shape;
-  out_min_shape[dim_1] /= block_size * block_size;
-  out_min_shape[dim_2] *= block_size;
-  out_min_shape[dim_3] *= block_size;
-  auto out_max_shape = max_shape;
-  out_max_shape[dim_1] /= block_size * block_size;
-  out_max_shape[dim_2] *= block_size;
-  out_max_shape[dim_3] *= block_size;
-  if (format == Format::NHWC) {
-    out_min_shape = {out_min_shape[dim_0], out_min_shape[dim_2], out_min_shape[dim_3], out_min_shape[dim_1]};
-    out_max_shape = {out_max_shape[dim_0], out_max_shape[dim_2], out_max_shape[dim_3], out_max_shape[dim_1]};
-  }
-  return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr DepthToSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -61,9 +61,7 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
     } else {
       constexpr int dynamic_rank_value = -2;
       ShapeVector shape = {dynamic_rank_value};
-      ShapeVector min_shape = {0};
-      ShapeVector max_shape = {abstract::Shape::SHP_ANY};
-      return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+      return std::make_shared<abstract::Shape>(shape);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name

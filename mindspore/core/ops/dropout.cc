@@ -47,10 +47,8 @@ AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const Prim
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
-  ShapeVector min_shape = x->shape()->min_shape();
-  ShapeVector max_shape = x->shape()->max_shape();
-  auto output_shape = std::make_shared<abstract::AbstractTensor>(
-    x->element(), std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
+  auto output_shape =
+    std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(shape));
   AbstractBasePtrList ret = {output_shape, output_shape};
   return std::make_shared<abstract::AbstractTuple>(ret);
 }

@@ -35,11 +35,6 @@ abstract::ShapePtr DataFormatDimMapInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
-    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
-  }
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
