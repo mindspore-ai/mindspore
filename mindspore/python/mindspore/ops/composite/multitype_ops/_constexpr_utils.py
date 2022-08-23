@@ -869,4 +869,4 @@ def use_copy_slice(tuple_index):
 
 @constexpr
 def gen_exception_msg(msg_format, *args):
-    return msg_format.format(args)
+    return msg_format.format(*args)
