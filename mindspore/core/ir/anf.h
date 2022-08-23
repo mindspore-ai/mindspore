@@ -882,6 +882,7 @@ class MS_CORE_API Parameter final : public ANode {
   bool is_top_graph_param_ = false;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
+using ParameterWeakPtr = std::weak_ptr<Parameter>;
 
 // Value is used to represent the atomic expression mentioned in BNF.
 // It mainly be stored in ValueNode. Value and ValueNode is related definition.
