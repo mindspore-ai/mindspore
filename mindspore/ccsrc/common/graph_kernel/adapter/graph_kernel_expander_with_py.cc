@@ -26,7 +26,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 namespace mindspore::graphkernel {
-std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
+std::vector<PrimitivePtr> GraphKernelExpanderWithPy::GetExpanderOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
     {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
@@ -89,6 +89,10 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
   auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                                   flags.enable_expand_ops, flags.disable_expand_ops);
   return GkUtils::FilterExcludedOps(ops);
+}
+
+std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
+  return GraphKernelExpanderWithPy::GetExpanderOps();
 }
 
 ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) { return GetExpander(node, false); }

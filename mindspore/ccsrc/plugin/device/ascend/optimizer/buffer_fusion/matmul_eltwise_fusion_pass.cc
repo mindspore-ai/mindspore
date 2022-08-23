@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
 
 namespace mindspore {
@@ -46,14 +45,6 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-          AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-          common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimAddN)) {
-        continue;
-      }
-    }
-
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&

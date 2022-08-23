@@ -273,4 +273,20 @@ void GraphKernelOptimize(const KernelGraphPtr &kernel_graph) {
   GraphKernelOptimizer graph_kernel_optimizer;
   graph_kernel_optimizer.Run(kernel_graph);
 }
+
+bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes) {
+  static std::vector<PrimitivePtr> supported_nodes;
+  if (supported_nodes.empty()) {
+    supported_nodes = GraphKernelExpanderWithPy::GetExpanderOps();
+    auto cluster_nodes = GraphKernelCluster::GetClusterOps();
+    (void)std::copy(cluster_nodes.begin(), cluster_nodes.end(), std::back_inserter(supported_nodes));
+  }
+  for (const auto &node : nodes) {
+    if (node != nullptr && !std::any_of(supported_nodes.begin(), supported_nodes.end(),
+                                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace mindspore::graphkernel

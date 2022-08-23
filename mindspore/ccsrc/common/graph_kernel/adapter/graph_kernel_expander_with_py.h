@@ -29,6 +29,7 @@ class GraphKernelExpanderWithPy : public GraphKernelExpander {
   GraphKernelExpanderWithPy() : GraphKernelExpander() {}
   explicit GraphKernelExpanderWithPy(const std::string &name) : GraphKernelExpander(name) {}
   ~GraphKernelExpanderWithPy() override = default;
+  static std::vector<PrimitivePtr> GetExpanderOps();
 
  protected:
   std::vector<PrimitivePtr> InitOpList() override;
