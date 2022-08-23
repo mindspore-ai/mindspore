@@ -1790,7 +1790,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
 
     Examples:
         >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
-        >>> output_tensor, argmax = F.max_pool3d(x, kernel_size=2, stride=1, padding=1, return_indices=True)
+        >>> output_tensor, argmax = ops.max_pool3d(x, kernel_size=2, stride=1, padding=1, return_indices=True)
         >>> print(output_tensor.shape)
         (2, 1, 3, 3, 3)
         >>> print(argmax.shape)
