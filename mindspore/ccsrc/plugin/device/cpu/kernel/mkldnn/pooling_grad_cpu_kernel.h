@@ -23,7 +23,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,7 +32,9 @@ constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr auto kMaxPoolGrad = "MaxPoolGrad";
 constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
 constexpr auto kUnknown = "Unknown";
-class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
+constexpr size_t kPoolingDilation = 1;
+
+class PoolingGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   PoolingGradCpuKernelMod() = default;
   explicit PoolingGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -73,6 +75,16 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
   }
 
  private:
+  void EliminateInvalidPadding(float *output);
+  void ReComputeDivisor(float *output);
+
+  dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
+  bool ceil_mode_{false};
+  int64_t divisor_override_{0};
+  std::vector<int64_t> dst_shape_;
+  std::vector<int64_t> kernel_;
+  std::vector<int64_t> padding_invalid_;
+
   void InitPoolingGradFields(const CNodePtr &kernel_node);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   void ComputeMaxValueIndex(void *src, void *dst, void *work_array);
