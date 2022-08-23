@@ -2060,6 +2060,13 @@ Status DATASET_API WriteFile(const std::string &filename, const mindspore::MSTen
 /// \param[in] quality The quality for JPEG file, in range of [1, 100]. Default: 75.
 /// \return The status code.
 Status DATASET_API WriteJpeg(const std::string &filename, const mindspore::MSTensor &image, int quality = 75);
+
+/// \brief Write the image into a PNG file.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] image The data tensor.
+/// \param[in] compression_level The compression level for PNG file, in range of [0, 9]. Default: 6.
+/// \return The status code.
+Status DATASET_API WritePng(const std::string &filename, const mindspore::MSTensor &image, int compression_level = 6);
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -939,5 +939,12 @@ PYBIND_REGISTER(WriteJPEGOperation, 1, ([](py::module *m) {
                                  THROW_IF_ERROR(WriteJpeg(filename, image, quality));
                                }));
                 }));
+
+PYBIND_REGISTER(WritePNGOperation, 1, ([](py::module *m) {
+                  (void)m->def("write_png", ([](const std::string &filename, const std::shared_ptr<Tensor> &image,
+                                                int compression_level) {
+                                 THROW_IF_ERROR(WritePng(filename, image, compression_level));
+                               }));
+                }));
 }  // namespace dataset
 }  // namespace mindspore

@@ -2518,5 +2518,85 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
   fs.close();
   return Status::OK();
 }
+
+Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &image, int compression_level) {
+  std::string err_msg;
+
+  if (image->type() != DataType::DE_UINT8) {
+    err_msg = "WritePng: The type of the elements of image should be UINT8, but got " + image->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  TensorShape shape = image->shape();
+  int rank = shape.Rank();
+  if (rank < kMinImageRank || rank > kDefaultImageRank) {
+    err_msg = "WritePng: The image has invalid dimensions. It should have two or three dimensions, but got ";
+    err_msg += std::to_string(rank) + " dimensions.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  int channels;
+  if (rank == kDefaultImageRank) {
+    channels = shape[kMinImageRank];
+    if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
+      err_msg = "WritePng: The image has invalid channels. It should have 1 or 3 channels, but got ";
+      err_msg += std::to_string(channels) + " channels.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    channels = 1;
+  }
+
+  if (compression_level < kMinPngCompression || compression_level > kMaxPngCompression) {
+    err_msg = "WritePng: Invalid compression_level " + std::to_string(compression_level) + ", should be in range of [" +
+              std::to_string(kMinPngCompression) + ", " + std::to_string(kMaxPngCompression) + "].";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::vector<int> params = {cv::IMWRITE_PNG_COMPRESSION, compression_level, cv::IMWRITE_PNG_STRATEGY,
+                             cv::IMWRITE_PNG_STRATEGY_RLE};
+  std::vector<unsigned char> buffer;
+  cv::Mat image_matrix;
+
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(image);
+  image_matrix = input_cv->mat();
+  if (!image_matrix.data) {
+    RETURN_STATUS_UNEXPECTED("WritePng: Load the image tensor failed.");
+  }
+
+  if (channels == kMinImageChannel) {
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".PNG", image_matrix, buffer, params),
+                                 "WritePng: Failed to encode image.");
+  } else {
+    cv::Mat image_bgr;
+    cv::cvtColor(image_matrix, image_bgr, cv::COLOR_RGB2BGR);
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".PNG", image_bgr, buffer, params), "WritePng: Failed to encode image.");
+  }
+
+  Path file(filename);
+  if (!file.Exists()) {
+    int file_descriptor;
+    RETURN_IF_NOT_OK(file.CreateFile(&file_descriptor));
+    RETURN_IF_NOT_OK(file.CloseFile(file_descriptor));
+  }
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("WritePng: Invalid file path, " + filename + " failed to get the real path.");
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("WritePng: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  std::ofstream fs(realpath.value().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "WritePng: Failed to open the file " + filename + " for writing.");
+
+  fs.write((const char *)buffer.data(), (long int)buffer.size());
+  if (fs.fail()) {
+    fs.close();
+    RETURN_STATUS_UNEXPECTED("WritePng: Failed to write the file " + filename);
+  }
+  fs.close();
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

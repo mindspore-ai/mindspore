@@ -1479,6 +1479,14 @@ Status WriteJpeg(const std::string &filename, const mindspore::MSTensor &image, 
   RETURN_IF_NOT_OK(mindspore::dataset::WriteJpeg(filename, image_de_tensor, quality));
   return Status::OK();
 }
+
+// WritePNG Function.
+Status WritePng(const std::string &filename, const mindspore::MSTensor &image, int compression_level) {
+  std::shared_ptr<dataset::Tensor> image_de_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromMSTensor(image, &image_de_tensor));
+  RETURN_IF_NOT_OK(mindspore::dataset::WritePng(filename, image_de_tensor, compression_level));
+  return Status::OK();
+}
 #endif  // not ENABLE_ANDROID
 }  // namespace vision
 }  // namespace dataset

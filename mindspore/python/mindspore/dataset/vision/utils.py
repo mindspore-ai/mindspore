@@ -602,6 +602,9 @@ def write_file(filename, data):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> # Generate a random data with 1024 bytes
+        >>> data = np.random.randint(256, size=(1024), dtype=np.uint8)
         >>> vision.write_file("/path/to/file", data)
     """
     if not isinstance(filename, str):
@@ -651,3 +654,43 @@ def write_jpeg(filename, image, quality=75):
         return cde.write_jpeg(filename, cde.Tensor(image.asnumpy()), quality)
     raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
                                                                                   mindspore.Tensor, type(image)))
+
+
+def write_png(filename, image, compression_level=6):
+    """
+    Write the image into a PNG file.
+
+    Args:
+        filename (str): The path to the file to be written.
+        image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
+        compression_level (int, optional): Compression level for the resulting PNG file, in range of [0, 9]. Default: 6.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
+        TypeError: If `compression_level` is not of type int.
+        RuntimeError: If the `filename` does not exist or not a common file.
+        RuntimeError: If the data type of `image` is not uint8.
+        RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
+        RuntimeError: If `compression_level` is less than 0 or greater than 9.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> # Generate a random image with height=120, width=340, channels=3
+        >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
+        >>> vision.write_png("/path/to/file", image)
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(compression_level, int):
+        raise TypeError("Input compression_level is not of type {0}, but got: {1}.".format(int,
+                                                                                           type(compression_level)))
+    if isinstance(image, np.ndarray):
+        return cde.write_png(filename, cde.Tensor(image), compression_level)
+    if isinstance(image, mindspore.Tensor):
+        return cde.write_png(filename, cde.Tensor(image.asnumpy()), compression_level)
+    raise TypeError("The input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
+                                                                                      mindspore.Tensor, type(image)))
