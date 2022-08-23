@@ -57,20 +57,26 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
         # Get build flag from env to choose common/auto build.
         set(NVCC_ARCH_FLAG_FROM_ENV $ENV{CUDA_ARCH})
         if(NVCC_ARCH_FLAG_FROM_ENV STREQUAL "common")
-            foreach(arch ${cuda_archs_bin})
-                if(arch  VERSION_LESS "7.0") # For common build, we need a Volta arch at least.
-                    message(FATAL_ERROR "The device arch must >= 7.0 to build common archs. But got " ${arch}
-                            " Using -G auto is recommended to detect device arch automatically.")
-                endif()
-            endforeach()
             message("Build common archs for release.")
             list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_53,code=sm_53
                                         -gencode=arch=compute_60,code=sm_60
-                                        -gencode=arch=compute_62,code=sm_62
                                         -gencode=arch=compute_70,code=sm_70
-                                        -gencode=arch=compute_72,code=sm_72
-                                        -gencode=arch=compute_75,code=compute_75
-                                        --expt-relaxed-constexpr)
+                                        -gencode=arch=compute_72,code=sm_72)
+            if(${CUDA_VERSION} VERSION_GREATER "9.5")
+                list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_75,code=sm_75)
+                if(${CUDA_VERSION} VERSION_LESS "11.0")
+                    list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_75,code=compute_75)
+                endif()
+            endif()
+            if(${CUDA_VERSION} VERSION_GREATER "10.5")
+                list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_80,code=sm_80)
+                if(${CUDA_VERSION} VERSION_LESS "11.1")
+                    list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_80,code=compute_80)
+                endif()
+            endif()
+            if(NOT ${CUDA_VERSION} VERSION_LESS "11.1")
+                list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_86,code=compute_86)
+            endif()
         else()
             message("Auto build for arch(s) " ${cuda_archs_bin})
             string(REGEX REPLACE "\\." "" cuda_archs_bin "${cuda_archs_bin}")
@@ -78,12 +84,16 @@ function(set_nvcc_flag CUDA_NVCC_FLAGS)
             foreach(arch ${cuda_archs_bin})
                 list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_${arch},code=sm_${arch})
             endforeach()
-            list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr)
+            # For auto build, it only generate the code for indeed arch, so add sm_53 as a default arch
+            # to avoid error in different archs. It may increase the compilation time.
+            list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
         endif()
+        message("Final CUDA_NVCC_FLASG " ${CUDA_NVCC_FLAGS})
     else()
         message("Failed to detect gpu arch automatically, build a base arch 5.3.")
-        list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+        list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
     endif()
+    list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr)
     set(${CUDA_NVCC_FLAGS} ${${CUDA_NVCC_FLAGS}} PARENT_SCOPE)
 endfunction()
 
