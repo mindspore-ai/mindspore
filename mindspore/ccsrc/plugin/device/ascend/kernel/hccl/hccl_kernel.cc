@@ -226,8 +226,12 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_run_mode = kernel_graph->is_graph_run_mode();
+
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   // Not task sink mode.
-  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || !graph_run_mode) {
+  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
+      (mode == kPynativeMode && !graph_run_mode)) {
     return mutable_workspace_size_list_;
   }
   // Task sink mode.
