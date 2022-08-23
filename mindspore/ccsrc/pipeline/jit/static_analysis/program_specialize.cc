@@ -216,39 +216,47 @@ void ProgramSpecializer::PutSpecializedAbstract(const CNodePtr &cnode, const Anf
   if (iter == specialized_abs_map_.end()) {
     MS_LOG(DEBUG) << "Emplace cnode: " << cnode->DebugString() << ", func: " << func->ToString()
                   << ", old_abstract: " << old_abs_func->ToString() << ", new_abs_func: " << new_abs_func->ToString();
-    (void)specialized_abs_map_.emplace(old_abs_func, new_abs_func);
+    (void)specialized_abs_map_.emplace(old_abs_func, std::make_pair(true, new_abs_func));
   } else {
     MS_LOG(DEBUG) << "Duplicate abstract from cnode: " << cnode->DebugString() << ", func: " << func->ToString()
                   << ", old_abstract: " << old_abs_func->ToString() << ", new_abs_func: " << new_abs_func->ToString();
-    if (!(*iter->second == *new_abs_func)) {
+    if (!(*iter->second.second == *new_abs_func)) {
       MS_LOG(DEBUG) << "Duplicate abstract from cnode: " << cnode->DebugString() << ", func: " << func->ToString()
-                    << ", old_abstract: " << old_abs_func->ToString() << ", first: " << iter->second->ToString()
+                    << ", old_abstract: " << old_abs_func->ToString() << ", first: " << iter->second.second->ToString()
                     << ", new_abs_func: " << new_abs_func->ToString();
       // Cannot determined which one to use.
-      const auto poly_abstract = std::make_shared<AbstractError>(kPolyNode, func);
-      iter->second = poly_abstract;
+      iter->second.first = false;
     }
   }
 }
 
-AbstractBasePtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func) {
+AbstractFunctionPtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func) {
   MS_EXCEPTION_IF_NULL(old_abs_func);
   auto iter = specialized_abs_map_.find(old_abs_func);
   if (iter != specialized_abs_map_.end()) {
-    MS_LOG(DEBUG) << "Find abstract for old_abstract: " << old_abs_func->ToString()
-                  << ", new_abs_func: " << iter->second->ToString();
-    if (iter->second->isa<AbstractFunction>()) {
-      return iter->second;
+    if (iter->second.first) {
+      MS_LOG(DEBUG) << "Find abstract for old_abstract: " << old_abs_func->ToString()
+                    << ", new_abs_func: " << iter->second.second->ToString();
+      return iter->second.second;
     }
     return nullptr;
+  }
+  if (old_abs_func->isa<FuncGraphAbstractClosure>()) {
+    const auto &old_func_graph_abs = dyn_cast_ptr<FuncGraphAbstractClosure>(old_abs_func);
+    auto unique_specialized_abs = GetUniqueFuncGraphAbstract(old_func_graph_abs->func_graph());
+    if (unique_specialized_abs != nullptr) {
+      MS_LOG(DEBUG) << "Find unique abstract for funcgraph: " << old_func_graph_abs->func_graph()->ToString() << " in "
+                    << old_abs_func->ToString() << ", unique_abs: " << unique_specialized_abs->ToString();
+      return unique_specialized_abs;
+    }
   }
   MS_LOG(DEBUG) << "Cannot find abstract for old_abstract: " << old_abs_func->ToString();
   return nullptr;
 }
 
-AbstractBasePtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func) {
+AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func) {
   MS_EXCEPTION_IF_NULL(old_abs_func);
-  AbstractBasePtr new_abs = nullptr;
+  AbstractFunctionPtr new_abs = nullptr;
   if (old_abs_func->isa<AbstractFuncUnion>()) {
     AbstractFuncAtomPtrList func_atoms;
     auto build_new_abs = [this, &func_atoms](const AbstractFuncAtomPtr &poss) {
@@ -992,6 +1000,10 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   // for specialize input0 of CNode in specialized func graph if input0 is not FuncGraph.
   auto new_abs_func = std::make_shared<FuncGraphAbstractClosure>(func_graph, dummy_context, nullptr, true);
   specializer_->PutSpecializedAbstract(cnode, func, func_abs, new_abs_func);
+  if (func_abs->isa<FuncGraphAbstractClosure>()) {
+    const auto &func_graph_abs = dyn_cast_ptr<FuncGraphAbstractClosure>(func_abs);
+    specializer_->PutSpecializedFuncGraphToAbstract(func_graph_abs->func_graph(), new_abs_func);
+  }
   return BuildValueNode(func_graph, new_abs_func);
 }
 
