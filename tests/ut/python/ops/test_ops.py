@@ -120,6 +120,7 @@ from mindspore.ops.operations.nn_ops import NuclearNorm
 from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
+from mindspore.ops.operations._grad_ops import KLDivLossGrad
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import UpsampleTrilinear3D
@@ -4329,6 +4330,13 @@ test_case_other_ops = [
         'block': P.KLDivLoss('none'),
         'desc_inputs': [Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32)),
                         Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32))],
+        'skip': ['backward']}),
+    ('KlDivLossGrad', {
+        'block': KLDivLossGrad(reduction="mean"),
+        'desc_inputs': [Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32)),
+                        Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32)),
+                        Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32))],
+        'desc_bprop': [[1]],
         'skip': ['backward']}),
     ('BlackmanWindow', {
         'block': BlackmanWindow(periodic=True, dtype=mstype.float32),

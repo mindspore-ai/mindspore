@@ -5506,7 +5506,7 @@ class KLDivLoss(Primitive):
         reduction (str): Specifies the reduction to be applied to the output.
             Default: 'mean'.
 
-            - On Ascend, the value of `reduction` must be one of 'batchmean', 'none' or 'sum'.
+            - On Ascend, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
             - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
             - On CPU, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
 
@@ -5522,6 +5522,7 @@ class KLDivLoss(Primitive):
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
         TypeError: If dtype of `logits` or `labels` is not currently supported.
+        ValueError: If shape of `logits` is not the same as `labels`.
         RuntimeError: If `logits` or `labels` is a scalar when `reduction` is 'batchmean'.
 
     Supported Platforms:
@@ -5553,7 +5554,7 @@ class KLDivLoss(Primitive):
         elif device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
-            support_mode = ['none', 'batchmean', 'sum']
+            support_mode = ['none', 'mean', 'batchmean', 'sum']
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
