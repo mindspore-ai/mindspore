@@ -22,64 +22,41 @@ namespace kernel {
 namespace {
 constexpr size_t kPdistInputsNum = 1;
 constexpr size_t kPdistOutputsNum = 1;
-constexpr size_t kPdistInputDimsMin = 2;
+constexpr float P_ZERO = 0.0;
+constexpr float P_ONE = 1.0;
+constexpr float P_TWO = 2.0;
 constexpr int64_t GRAIN_SIZE = 2048;
 }  // namespace
 
-template <typename T>
-void PdistZeroNormalcompute(const T *in1, const T *in2, T *output, size_t col, float p) {
-  double res = 0;
-  for (size_t i = 0; i < col; i++) {
-    res += (in1[i] != in2[1]);
-  }
-  *output = static_cast<T>(res);
-}
+struct zdist_calc {
+  static inline double map(const double &diff, const float &p) { return std::min(ceil(diff), 1.0); }
+  static inline double red(const double &agg, const double &up) { return agg + up; }
+  static inline double finish(const double &agg, const float &p) { return agg; }
+};
 
-template <typename T>
-void PdistInfNormalcompute(const T *in1, const T *in2, T *output, size_t col, float p) {
-  double res = 0;
-  for (size_t i = 0; i < col; i++) {
-    double x = static_cast<double>(in1[i]);
-    double y = static_cast<double>(in2[i]);
-    res = std::max(std::abs(x - y), res);
-  }
-  *output = static_cast<T>(res);
-}
+struct odist_calc {
+  static inline double map(const double &diff, const float &p) { return diff; }
+  static inline double red(const double &agg, const double &up) { return agg + up; }
+  static inline double finish(const double &agg, const float &p) { return agg; }
+};
 
-template <typename T>
-void PdistOneNormalcompute(const T *in1, const T *in2, T *output, size_t col, float p) {
-  double res = 0;
-  for (size_t i = 0; i < col; i++) {
-    double x = static_cast<double>(in1[i]);
-    double y = static_cast<double>(in2[i]);
-    res += std::abs(x - y);
-  }
-  *output = static_cast<T>(res);
-}
+struct tdist_calc {
+  static inline double map(const double &diff, const float &p) { return diff * diff; }
+  static inline double red(const double &agg, const double &up) { return agg + up; }
+  static inline double finish(const double &agg, const float &p) { return std::sqrt(agg); }
+};
 
-template <typename T>
-void PdistTwoNormalcompute(const T *in1, const T *in2, T *output, size_t col, float p) {
-  double res = 0;
-  for (size_t i = 0; i < col; i++) {
-    double x = static_cast<double>(in1[i]);
-    double y = static_cast<double>(in2[i]);
-    auto temp = x - y;
-    res += temp * temp;
-  }
-  *output = static_cast<T>(std::sqrt(res));
-}
+struct idist_calc {
+  static inline double map(const double &diff, const float &p) { return diff; }
+  static inline double red(const double &agg, const double &up) { return std::max(agg, up); }
+  static inline double finish(const double &agg, const float &p) { return agg; }
+};
 
-template <typename T>
-void PdistPNormalcompute(const T *in1, const T *in2, T *output, size_t col, float p) {
-  double res = 0;
-  for (size_t i = 0; i < col; i++) {
-    double x = static_cast<double>(in1[i]);
-    double y = static_cast<double>(in2[i]);
-    res += std::pow(std::abs(x - y), p);
-  }
-  res = std::pow(res, 1.0 / p);
-  *output = static_cast<T>(res);
-}
+struct pdist_calc {
+  static inline double map(const double &diff, const float &p) { return std::pow(diff, p); }
+  static inline double red(const double &agg, const double &up) { return agg + up; }
+  static inline double finish(const double &agg, const float &p) { return std::pow(agg, 1.0 / p); }
+};
 
 bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
@@ -90,31 +67,12 @@ bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_name_ = kernel_ptr->name();
   p_ = kernel_ptr->get_p();
-  if (inputs.size() != kPdistInputsNum || outputs.size() != kPdistOutputsNum) {
-    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kPdistInputsNum << " and "
-                  << kPdistOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
+
   auto input_shape = inputs[0]->GetShapeVector();
   auto input_dim_ = input_shape.size();
   h_ = input_shape[input_dim_ - kIndex2];
   w_ = input_shape[input_dim_ - kIndex1];
-
-  auto input_dtype_ = inputs[0]->GetDtype();
-  switch (input_dtype_) {
-    case kNumberTypeFloat64:
-      kernel_func_ = &PdistCpuKernelMod::LaunchKernel<double>;
-      break;
-    case kNumberTypeFloat32:
-      kernel_func_ = &PdistCpuKernelMod::LaunchKernel<float>;
-      break;
-    case kNumberTypeFloat16:
-      kernel_func_ = &PdistCpuKernelMod::LaunchKernel<float16>;
-      break;
-    default:
-      MS_LOG(ERROR) << "Pdist kernel does not support " << TypeIdToString(input_dtype_);
-      return false;
-  }
+  dtype_ = inputs[0]->GetDtype();
   return true;
 }
 
@@ -128,22 +86,22 @@ int PdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return 0;
 }
 
-template <typename T>
-bool PdistCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_size = inputs[0]->size / sizeof(T);
+template <typename F, typename T>
+bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  if (h_ == 1) {
+    return true;
+  }
   auto output_size = outputs[0]->size / sizeof(T);
-  const auto *input_start = GetDeviceAddress<T>(inputs, kIndex0);
-  const auto *input_end = input_start + input_size;
+  const auto *input = GetDeviceAddress<T>(inputs, kIndex0);
   auto *output = GetDeviceAddress<T>(outputs, kIndex0);
   int64_t combs = h_ * (h_ - 1) / 2;
   int64_t one_size = h_ * w_;
   int64_t temp = one_size - w_;
-  auto task = [this, input_start, input_end, output, combs, one_size, temp](size_t start, size_t end) {
+  auto task = [this, input, output, combs, one_size, temp](size_t start, size_t end) {
     int64_t l = start / combs;
     int64_t k = start % combs;
     double h2 = h_ - .5;
-    int64_t i = static_cast<int64_t>((h2 - sqrtf(h2 * h2 - 2 * k - 1)));
+    int64_t i = static_cast<int64_t>((h2 - std::sqrt(h2 * h2 - 2 * k - 1)));
     int64_t j = k - h_ * i + i * (i + 1) / 2 + i + 1;
     i = i * w_;
     j = j * w_;
@@ -151,19 +109,15 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
     const T *const res_end = output + end;
 
     while (res != res_end) {
-      const T *input_i = input_start + l * one_size + i;
-      const T *input_j = input_start + l * one_size + j;
-      if (p_ == 0.0) {
-        PdistZeroNormalcompute(input_i, input_j, res, w_, p_);
-      } else if (p_ == 1.0) {
-        PdistOneNormalcompute(input_i, input_j, res, w_, p_);
-      } else if (p_ == 2.0) {
-        PdistTwoNormalcompute(input_i, input_j, res, w_, p_);
-      } else if (std::isinf(p_)) {
-        PdistInfNormalcompute(input_i, input_j, res, w_, p_);
-      } else {
-        PdistPNormalcompute(input_i, input_j, res, w_, p_);
+      const T *input_i = input + l * one_size + i;
+      const T *input_j = input + l * one_size + j;
+      double agg = 0;
+      for (size_t x = 0; x < w_; x++) {
+        double a = static_cast<double>(*(input_i + x));
+        double b = static_cast<double>(*(input_j + x));
+        agg = F::red(agg, F::map(std::abs(a - b), p_));
       }
+      *res = static_cast<T>(F::finish(agg, p_));
       res += 1;
       j += w_;
       if (j == one_size) {
@@ -178,6 +132,38 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
     }
   };
   ParallelLaunch(task, output_size, GRAIN_SIZE / w_, this);
+  return true;
+}
+
+template <typename T>
+void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  if (p_ == P_ZERO) {
+    LaunchKernel<zdist_calc, T>(inputs, outputs);
+  } else if (p_ == P_ONE) {
+    LaunchKernel<odist_calc, T>(inputs, outputs);
+  } else if (p_ == P_TWO) {
+    LaunchKernel<tdist_calc, T>(inputs, outputs);
+  } else if (std::isinf(p_)) {
+    LaunchKernel<idist_calc, T>(inputs, outputs);
+  } else {
+    LaunchKernel<pdist_calc, T>(inputs, outputs);
+  }
+}
+
+bool PdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                               const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPdistInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPdistOutputsNum, kernel_name_);
+  if (dtype_ == kNumberTypeFloat64) {
+    Apply_pdist<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    Apply_pdist<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    Apply_pdist<float16>(inputs, outputs);
+  } else {
+    MS_LOG(ERROR) << "Pdist kernel does not support" << TypeIdToString(dtype_);
+    return false;
+  }
   return true;
 }
 

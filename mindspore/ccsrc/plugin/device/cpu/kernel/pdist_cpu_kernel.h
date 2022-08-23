@@ -38,22 +38,21 @@ class PdistCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
-  }
+              const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename F, typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using PdistKernel = std::function<bool(PdistCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &)>;
-  PdistKernel kernel_func_;
+  void Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   size_t h_;
   size_t w_;
   float p_;
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
