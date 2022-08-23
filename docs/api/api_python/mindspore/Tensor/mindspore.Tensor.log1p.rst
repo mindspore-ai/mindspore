@@ -5,6 +5,8 @@ mindspore.Tensor.log1p
 
     对当前Tensor逐元素加一后计算自然对数。
 
+    其中 `x` 表示当前Tensor。
+
     .. math::
         out_i = {log_e}(x_i + 1)
 

@@ -3,13 +3,13 @@ mindspore.Tensor.lerp
 
 .. py:method:: mindspore.Tensor.lerp(end, weight)
 
-    基于某个浮点数Scalar或权重Tensor的值， 计算当前Tensor和 `end` Tensor之间的线性插值。
+    基于某个浮点数Scalar或权重Tensor的值，计算当前Tensor和 `end` Tensor之间的线性插值。
 
     如果参数 `weight` 是一个Tensor，那么另两个输入的维度信息可以被广播到当前Tensor。
-    如果参数 `weight` 是一个Scalar， 那么 `end` 的维度信息可以被广播到当前Tensor。
+    如果参数 `weight` 是一个Scalar，那么 `end` 的维度信息可以被广播到当前Tensor。
 
     参数：
-        - **end** (Tensor) - 进行线性插值的Tensor结束点，其数据类型必须为float16或者float32。
+        - **end** (Tensor) - 进行线性插值的Tensor结束点。数据类型必须为float16或者float32。
         - **weight** (Union[float, Tensor]) - 线性插值公式的权重参数。当为Scalar时，其数据类型为float，当为Tensor时，其数据类型为float16或者float32。
 
     返回：

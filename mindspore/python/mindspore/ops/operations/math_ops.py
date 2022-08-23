@@ -1859,6 +1859,9 @@ class InplaceAdd(PrimitiveWithInfer):
 
     Refer to :func:`mindspore.ops.inplace_add` for more detail.
 
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore
@@ -1911,6 +1914,9 @@ class InplaceSub(PrimitiveWithInfer):
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
     Refer to :func:`mindspore.ops.inplace_sub` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -4923,7 +4929,7 @@ class BesselI0e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_i0e = ops.BesselI0e()
@@ -4963,7 +4969,7 @@ class BesselI1e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``CPU``
 
     Examples:
         >>> bessel_i1e = ops.BesselI1e()
@@ -5773,6 +5779,9 @@ class Trunc(Primitive):
     Returns a new tensor with the truncated integer values of the elements of input.
 
     Refer to :func:`mindspore.ops.trunc` for more detail.
+
+    Supported Platforms:
+        ``CPU``
     """
 
     @prim_attr_register

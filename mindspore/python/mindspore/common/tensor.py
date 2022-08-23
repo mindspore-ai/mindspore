@@ -421,6 +421,7 @@ class Tensor(Tensor_):
         Convert numpy array to Tensor.
         If the data is not C contiguous, the data will be copied to C contiguous to construct the tensor.
         Otherwise, The tensor will be constructed using this numpy array without copy.
+
         Args:
             array (numpy.array): The input array.
 
@@ -696,7 +697,7 @@ class Tensor(Tensor_):
         r"""
         Returns arctangent of x/y element-wise.
 
-        `x` refer to self tensor.
+        `x` refers to self tensor.
 
         It returns :math:`\theta\ \in\ [-\pi, \pi]`
         such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
@@ -706,10 +707,11 @@ class Tensor(Tensor_):
         the relatively highest precision data type.
 
         Args:
-            y (Tensor): The input tensor. It has the same shape with `x`.
+            y (Tensor): The input tensor. It has the same shape with `x` after broadcasting,
+                or the shape of `x` is the same as `y` after broadcasting.
 
         Returns:
-            Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
+            Tensor, the shape is the same as the one after broadcasting, and the data type is same as `x`.
 
         Raises:
             TypeError: If `x` or `y` is not a Tensor.
@@ -1246,7 +1248,7 @@ class Tensor(Tensor_):
         """
         Does a linear interpolation of two tensors start and end based on a float or tensor weight.
 
-        If `weight` is a tensor, the shapes of two inputs need to be broadcast;
+        If `weight` is a tensor, the shapes of two inputs need to be broadcast.
         If `weight` is a float, the shapes of `end` need to be broadcast.
 
         Args:
@@ -1407,7 +1409,7 @@ class Tensor(Tensor_):
         r"""
         Computes the determinant of one or more square matrices.
 
-        `x` refer to self tensor.
+        `x` refers to self tensor.
 
         Returns:
 
@@ -1435,7 +1437,7 @@ class Tensor(Tensor_):
         r"""
         Returns the natural logarithm of one plus the input tensor element-wise.
 
-        `x` refer to self tensor.
+        `x` refers to self tensor.
 
         .. math::
             out_i = {log_e}(x_i + 1)
@@ -1465,7 +1467,7 @@ class Tensor(Tensor_):
         Calculate the logit of a tensor element-wise. When eps is not None, element in 'x' is clamped to [eps, 1-eps].
         When eps is None, input 'x' is not clamped.
 
-        `x` refer to self tensor.
+        `x` refers to self tensor.
 
         .. math::
             \begin{align}
@@ -1508,7 +1510,7 @@ class Tensor(Tensor_):
         r"""
         Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
-        `x` refer to self tensor.
+        `x` refers to self tensor.
 
         Returns:
             Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
@@ -1601,6 +1603,8 @@ class Tensor(Tensor_):
         .. math::
             out_i = \frac{1}{x_{i} }
 
+        where `x` refers to self Tensor.
+
         Returns:
             Tensor, has the same type and shape as self Tensor.
 
@@ -1625,6 +1629,8 @@ class Tensor(Tensor_):
 
         .. math::
             out_i = \sim x_{i}
+
+        where `x` refers to self Tensor.
 
         Returns:
             Tensor, has the same shape as as self Tensor.
@@ -2191,9 +2197,6 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
         Raises:
             TypeError: If `order` is not string type.
             ValueError: If `order` is string type, but not 'C' or 'F'.
@@ -2202,6 +2205,9 @@ class Tensor(Tensor_):
             :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
 
             :func:`mindspore.Tensor.ravel`: Return a contiguous flattened tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -2582,11 +2588,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
         See also:
             :func:`mindspore.Tensor.sum`: Return sum of tensor elements over a given axis.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -3773,11 +3779,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor, the merged result.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
         Raises:
             ValueError: If the input tensor and any of the `choices` cannot be broadcast.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -4572,7 +4578,7 @@ class Tensor(Tensor_):
             Only 2-D tensor is supported for now.
 
         Returns:
-            COOTensor, a sparse representation of the original dense tensor, containing:
+            COOTensor, a sparse representation of the original dense tensor, containing the following parts.
 
             - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
             - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
@@ -4606,7 +4612,7 @@ class Tensor(Tensor_):
             Only 2-D tensor is supported for now.
 
         Returns:
-            CSRTensor, a sparse representation of the original dense tensor, containing:
+            CSRTensor, a sparse representation of the original dense tensor, containing the following parts.
 
             - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
             - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
@@ -4764,7 +4770,7 @@ class Tensor(Tensor_):
             RuntimeError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
 
         Supported Platforms:
-            ``GPU``
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> import numpy as np
@@ -4861,20 +4867,20 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('diag')()(self)
 
     def xdivy(self, y):
-        """
+        r"""
         Divides self tensor by the input tensor element-wise. Returns zero when self is zero. The dtype of
         original Tensor must be one of float, complex or bool. For simplicity, denote the original Tensor by x.
 
         .. math::
 
-            out_i = x_{i} / {y_{i}}
+            out_i = x_{i}\y_{i}
 
         `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         'y' must be tensor or scalar, when y is tensor, dtypes of x and y cannot be bool at the same time,
         and the shapes of them could be broadcast. When y is scalar, the scalar can only be a constant.
 
         Args:
-            - **y** (Union[Tensor, Number, bool]) - The second input y is a Number,
+            y (Union[Tensor, number.Number, bool]): The second input y is a Number,
               or a bool when the first input x is a tensor, or a tensor whose data type is float16,
               float32, float64, complex64, complex128 or bool.
 
@@ -4964,7 +4970,7 @@ class Tensor(Tensor_):
             - On Ascend, the data type of `x` and `y` must be float16 or float32.
 
         Args:
-            - **y** (Union[Tensor, number.Number, bool]) - The `y` input is a number.Number or
+            y (Union[Tensor, number.Number, bool]): The `y` input is a number.Number or
               a bool or a tensor whose data type is number or bool.
 
         Returns:
@@ -5039,7 +5045,7 @@ class Tensor(Tensor_):
         .. warning::
             - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
 
-        `input_x` refer to self tensor.
+        `input_x` refers to self tensor.
 
         If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
         and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,

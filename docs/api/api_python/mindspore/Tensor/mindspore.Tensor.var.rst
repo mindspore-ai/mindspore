@@ -7,7 +7,7 @@ mindspore.Tensor.var
 
     方差是平均值的平方偏差的平均值，即：:math:`var = mean(abs(x - x.mean())**2)` 。
 
-    返回方差值。默认情况下计算展开Tensor的方差，否则在指定维度上计算。
+    返回方差值，默认情况下计算展开Tensor的方差，否则在指定维度上计算。
 
     .. note::
         不支持NumPy参数 `dtype` 、 `out` 和 `where` 。

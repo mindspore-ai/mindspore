@@ -6,7 +6,7 @@ mindspore.Tensor.std
     计算指定维度的标准差。
     标准差是方差的算术平方根，如：:math:`std = sqrt(mean(abs(x - x.mean())**2))` 。
 
-    返回标准差。默认情况下计算展开数组的标准差，否则在指定维度上计算。
+    返回标准差，默认情况下计算展开数组的标准差，否则在指定维度上计算。
 
     .. note::
         不支持NumPy参数 `dtype` 、 `out` 和 `where` 。

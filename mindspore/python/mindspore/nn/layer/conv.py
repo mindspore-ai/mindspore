@@ -839,9 +839,6 @@ class Conv3dTranspose(_Conv):
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `padding` , `dilation` or `output_padding`
@@ -853,6 +850,9 @@ class Conv3dTranspose(_Conv):
         ValueError: If `padding` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)

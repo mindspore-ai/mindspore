@@ -90,7 +90,7 @@ class CELU(Cell):
         TypeError: If the dtype of 'input_x' is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
@@ -967,7 +967,7 @@ class Softsign(Cell):
     Refer to :func:`mindspore.ops.softsign` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
@@ -1409,7 +1409,7 @@ class Mish(Cell):
     Refer to :func:`mindspore.ops.mish` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)

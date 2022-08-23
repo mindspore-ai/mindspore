@@ -3,7 +3,7 @@ mindspore.Tensor.invert
 
 .. py:method:: mindspore.Tensor.invert()
 
-    按位翻转当前Tensor。
+    逐元素按位翻转当前Tensor。
 
     .. math::
         out_i = \sim x_{i}
