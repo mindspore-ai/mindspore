@@ -3089,21 +3089,21 @@ class L2Loss(Primitive):
         loss = \frac{\sum x ^ 2}{2}
 
     Inputs:
-        - **input_x** (Tensor) - Tensor for computing the L2 norm. Data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor for computing the L2 norm. Data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, has a Scalar Tensor with the same data type as `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
-        >>> l2_loss = ops.L2Loss()
+        >>> l2_loss = L2Loss()
         >>> output = l2_loss(input_x)
         >>> print(output)
         7.0

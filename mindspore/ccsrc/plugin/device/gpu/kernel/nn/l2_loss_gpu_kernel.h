@@ -18,51 +18,41 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_L2_LOSS_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
+#include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/l2_loss.cuh"
+#include "mindspore/core/ops/l2_loss.h"
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class L2LossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class L2LossGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<L2LossGpuKernelMod> {
  public:
   L2LossGpuKernelMod() : input_size_(1), is_null_input_(false) {}
   ~L2LossGpuKernelMod() override = default;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-
-    L2Loss(input_size_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ *= SizeOf(input_shape);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    InitSizeLists();
-    return true;
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  void ResetResource() noexcept;
+  void *cuda_stream_{nullptr};
   size_t input_size_;
   bool is_null_input_;
 };
