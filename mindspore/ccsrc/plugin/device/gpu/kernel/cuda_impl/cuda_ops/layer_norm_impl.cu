@@ -21,6 +21,21 @@
 
 constexpr int NUM_PER_THREAD_REDUCE = 4;
 constexpr int WARP_SIZE = 32;
+constexpr int kTileSize = 8;
+template <typename T>
+struct alignas(sizeof(T) * kTileSize) TArray {
+  T data[kTileSize];
+};
+
+template <typename T>
+inline __device__ T general_sqrt(T val) {
+  return (T)sqrt(static_cast<float>(val));
+}
+
+template <>
+inline __device__ half general_sqrt(half val) {
+  return hsqrt(val);
+}
 
 template <typename T>
 inline __device__ void MeanAndVarAccumulation(T *mean, T *var, T *num, const T &val) {
@@ -55,7 +70,23 @@ inline __device__ void ThreadReduce(const int &col_dim, const T *block_addr, T *
       if (pos >= col_dim) {
         return;
       }
+
       MeanAndVarAccumulation(mean, var, num, block_addr[pos]);
+    }
+  }
+}
+
+template <typename T>
+inline __device__ void TiledThreadReduce(const int &col_dim, const T *block_addr, T *mean, T *var, T *num) {
+  for (int i = threadIdx.x * kTileSize; i < col_dim; i += blockDim.x * kTileSize) {
+    T block_tile[kTileSize];
+    TArray<T> *tmp = reinterpret_cast<TArray<T> *>(&block_tile);
+    *tmp = *reinterpret_cast<const TArray<T> *>(&block_addr[i]);
+    for (int j = 0; j < kTileSize; ++j) {
+      num[0]++;
+      T mean_new = mean[0] + (block_tile[j] - mean[0]) / num[0];
+      var[0] = var[0] + (block_tile[j] - mean[0]) * (block_tile[j] - mean_new);
+      mean[0] = mean_new;
     }
   }
 }
@@ -121,6 +152,27 @@ inline __device__ void LayerNorm(const int &row, const int &col_dim, const int &
 }
 
 template <typename T>
+inline __device__ void TiledLayerNorm(const int &row, const int &col_dim, const int &param_dim, const T *x,
+                                      const T *share_mem, const T *gamma, const T *beta, const T epsilon, T *y) {
+  for (int col = threadIdx.x * kTileSize; col < col_dim; col += blockDim.x * kTileSize) {
+    int pos = row * col_dim + col;
+    T y_tile[kTileSize];
+    T x_tile[kTileSize];
+
+    TArray<T> *x_tmp = reinterpret_cast<TArray<T> *>(x_tile);
+    *x_tmp = *reinterpret_cast<const TArray<T> *>(&x[pos]);
+
+    for (int j = 0; j < kTileSize; ++j) {
+      int i = col + j;
+      y_tile[j] = (x_tile[j] - share_mem[0]) / general_sqrt(share_mem[1] + epsilon) * gamma[i] + beta[i];
+    }
+
+    TArray<T> *y_tmp = reinterpret_cast<TArray<T> *>(&y[pos]);
+    *y_tmp = *reinterpret_cast<TArray<T> *>(&y_tile);
+  }
+}
+
+template <typename T>
 __global__ void LayerNormKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon, const T *x,
                                 const T *gamma, const T *beta, T *y, T *mean_addr, T *var_addr) {
   for (auto row = blockIdx.x; row < row_dim; row += gridDim.x) {
@@ -140,13 +192,37 @@ __global__ void LayerNormKernel(const int row_dim, const int col_dim, const int 
 }
 
 template <typename T>
+__global__ void TiledLayerNormKernel(const int row_dim, const int col_dim, const int param_dim, const T epsilon,
+                                     const T *x, const T *gamma, const T *beta, T *y, T *mean_addr, T *var_addr) {
+  for (int row = blockIdx.x; row < row_dim; row += gridDim.x) {
+    T mean = 0;
+    T var = 0;
+    T num = 0;
+    const T *block_addr = x + row * col_dim;
+    DynamicSharedMem<T> share_mem;
+
+    TiledThreadReduce(col_dim, block_addr, &mean, &var, &num);
+    WarpReduce(&mean, &var, &num);
+    BlockReduce(col_dim, &mean, &var, &num, mean_addr, var_addr, share_mem.addr());
+
+    __syncthreads();
+    TiledLayerNorm(row, col_dim, param_dim, x, share_mem.addr(), gamma, beta, epsilon, y);
+  }
+}
+
+template <typename T>
 void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim, const T &epsilon, const T *x,
                const T *gamma, const T *beta, T *y, T *mean, T *var, cudaStream_t stream) {
   const int thread_per_block = 256;
   // keep the mean/var/num after warp reduce
   int share_mem_size = thread_per_block / WARP_SIZE * 3 * sizeof(T);
-  LayerNormKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x, gamma,
-                                                                         beta, y, mean, var);
+  if (col_dim == param_dim && row_dim % kTileSize == 0 && col_dim % kTileSize == 0) {
+    TiledLayerNormKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x,
+                                                                                gamma, beta, y, mean, var);
+  } else {
+    LayerNormKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, x,
+                                                                           gamma, beta, y, mean, var);
+  }
 }
 
 template CUDA_LIB_EXPORT void LayerNorm(const int &row_dim, const int &col_dim, const int &param_dim,
