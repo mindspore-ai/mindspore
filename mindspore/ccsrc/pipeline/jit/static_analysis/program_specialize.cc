@@ -191,7 +191,6 @@ FuncGraphPtr ProgramSpecializer::SpecializeFuncGraph(const FuncGraphPtr &fg, con
     MS_EXCEPTION_IF_NULL(iter->second);
     return iter->second->specialized_func_graph();
   }
-
   std::shared_ptr<FuncGraphSpecializer> fg_spec = std::make_shared<FuncGraphSpecializer>(this, fg, context);
   FuncGraphPtr specialized_func_graph = fg_spec->specialized_func_graph();
   specializations_[context->SpecializeKey()] = fg_spec;
@@ -479,6 +478,7 @@ void FuncGraphSpecializer::Run() {
                                                 ? specialized_func_graph_->get_return()->DebugString()
                                                 : "return null"
                                             : "FG(null)");
+  ProcessDeferredCNode();
 }
 
 void FuncGraphSpecializer::FirstPass() {
@@ -523,7 +523,7 @@ void FuncGraphSpecializer::FirstPass() {
 
 // Specialize CNode in func graphs
 void FuncGraphSpecializer::SecondPass() {
-  for (auto &cnode : BroadFirstSearchGraphCNodes(specialized_func_graph_->return_node())) {
+  for (const auto &cnode : BroadFirstSearchGraphCNodes(specialized_func_graph_->return_node())) {
     ProcessCNode(cnode);
   }
 }
@@ -973,6 +973,9 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
                   << ", " << func->ToString();
     return func;
   }
+  if (RecordDeferredCNode(cnode, context)) {
+    return func;
+  }
   FuncGraphPtr func_graph = specializer_->SpecializeFuncGraph(context->func_graph(), context);
   MS_EXCEPTION_IF_NULL(func_graph);
   func_graph->set_flag(kFuncGraphFlagUndetermined, false);
@@ -1167,7 +1170,8 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
     }
   }
 
-  // Specialize the function, aka inputs[0].
+  // Specialize the function, aka inputs[0], if input0 is a ValueNode<FuncGraph> or ValueNode<Primitive>,
+  // CanSpecializeValueNode return true, otherwise false.
   if (CanSpecializeValueNode(func)) {
     // For primitive node, we build the primitive node with inferred attributes in the first pass,
     // so we do not build replaced node again here in second pass.
@@ -1207,6 +1211,35 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
+}
+
+bool FuncGraphSpecializer::RecordDeferredCNode(const CNodePtr &cnode, const AnalysisContextPtr &context) {
+  auto parent_context = context->parent();
+  auto parent_not_specialized = parent_context != nullptr && parent_context->func_graph() != nullptr &&
+                                specializer_->GetFuncGraphSpecializer(parent_context) == nullptr;
+  if (parent_not_specialized) {
+    MS_LOG(DEBUG) << "Add deferred specialize cnode: " << cnode->DebugString()
+                  << ", parent context:" << parent_context->ToString();
+    specializer_->EraseSeen(cnode);
+    (void)specializer_->defer_specialize_nodes()[parent_context].emplace_back(std::make_pair(this, cnode));
+    return true;
+  }
+  return false;
+}
+
+void FuncGraphSpecializer::ProcessDeferredCNode() {
+  // Check whether there were call nodes depend on current func_graph_spcializer finished.
+  auto parent_context_it = specializer_->defer_specialize_nodes().find(context_);
+  if (parent_context_it == specializer_->defer_specialize_nodes().cend()) {
+    return;
+  }
+  const auto &defer_specialize_call_nodes = parent_context_it->second;
+  for (const auto &[func_sepcializer, deferred_node] : defer_specialize_call_nodes) {
+    MS_LOG(DEBUG) << "Start second pass of deferred node: " << deferred_node->DebugString();
+    func_sepcializer->ProcessCNode(deferred_node);
+  }
+  // Erase the current context which was parent context of deferred nodes.
+  (void)specializer_->defer_specialize_nodes().erase(context_);
 }
 
 namespace {

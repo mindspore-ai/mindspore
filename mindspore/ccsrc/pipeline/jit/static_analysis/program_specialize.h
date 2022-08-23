@@ -55,6 +55,7 @@ class ProgramSpecializer {
   FuncGraphPtr Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context);
   const mindspore::HashSet<AnfNodePtr> &seen() const { return seen_; }
   void AddSeen(const AnfNodePtr &node) { (void)seen_.insert(node); }
+  void EraseSeen(const AnfNodePtr &node) { (void)seen_.erase(node); }
 
   std::shared_ptr<FuncGraphSpecializer> GetFuncGraphSpecializer(const AnalysisContextPtr &context);
   // Specialze one FuncGraph in a given context.
@@ -70,6 +71,11 @@ class ProgramSpecializer {
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
   std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }
+  std::unordered_map<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>, ContextHasher,
+                     ContextEqual>
+    &defer_specialize_nodes() {
+    return defer_specialize_nodes_;
+  }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
@@ -77,6 +83,11 @@ class ProgramSpecializer {
   FuncGraphManagerPtr mng_;
   std::unordered_map<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>, ContextHasher, ContextEqual>
     specializations_;
+  // If caller's input0 is a poly func, and the func's parent has not been specialized, then the caller specialization
+  // need to be deferred after parent specialized.
+  std::unordered_map<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>, ContextHasher,
+                     ContextEqual>
+    defer_specialize_nodes_;
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
@@ -114,6 +125,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
   void ProcessCNode(const CNodePtr &cnode);
+  // If cnode need deferred specialized, return true, otherwise return false.
+  bool RecordDeferredCNode(const CNodePtr &cnode, const AnalysisContextPtr &context);
+  void ProcessDeferredCNode();
 
   void EliminateUnusedSequenceItem(const CNodePtr &cnode) const;
 
