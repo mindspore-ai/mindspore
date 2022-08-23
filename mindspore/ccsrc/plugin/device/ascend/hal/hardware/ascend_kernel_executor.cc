@@ -219,6 +219,22 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
   MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << graph->graph_id();
 }
 
+void AscendKernelExecutor::DoSomas(const KernelGraphPtr &graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    auto somas = std::make_shared<AscendSomas>();
+    bool ret = somas->Assign(graph);
+    if (ret) {
+      MS_LOG(INFO) << "Somas allocate success for graph " << graph->graph_id()
+                   << " somas size: " << graph->somas_whole_block_size();
+    } else {
+      MS_LOG(WARNING) << "Somas allocate failed for graph " << graph->graph_id();
+    }
+  }
+  MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << graph->graph_id();
+}
+
 void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &nodes = graph->execution_order();
@@ -274,6 +290,7 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
   SetAtomicCleanToNodes(graph, node_atomics_persistent_cache_);
   CreateKernel(atomic_nodes);
   LaunchDeviceLibrary();
+  DoSomas(graph);
 }
 
 std::shared_ptr<Bucket> AscendKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
