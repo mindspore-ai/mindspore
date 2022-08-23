@@ -28,6 +28,7 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_executor.h"
+#include "plugin/device/ascend/hal/hardware/ascend_somas.h"
 
 namespace mindspore {
 namespace device {
@@ -82,6 +83,7 @@ class AscendKernelExecutor : public DeprecatedKernelExecutor {
                            std::vector<AddressPtr> *real_inputs) const;
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const;
   void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const;
+  static void DoSomas(const KernelGraphPtr &graph);
 
   // Using node to get it's atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
