@@ -47,6 +47,7 @@ enum KernelType : int {
   CPU_KERNEL,
   GPU_KERNEL,
   BISHENG_KERNEL,
+  ACL_KERNEL,
 };
 namespace kernel {
 // Supported fusion type

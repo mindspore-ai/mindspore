@@ -51,6 +51,9 @@ enum MatchCountPriority : size_t {
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
 };
+static const std::set<std::string> kAclKernelSet = {
+  kBNInferOpName,          kBNTrainingUpdateGradOpName, kBNTrainingReduceGradOpName,
+  kBNTrainingReduceOpName, kBNTrainingUpdateOpName,     kMatMulOpName};
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
@@ -814,6 +817,40 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
   }
 }
 
+void SetAclKernelInfo(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  KernelType kernel_type = AnfAlgo::GetKernelType(kernel_node);
+  if (kernel_type != AICPU_KERNEL && kernel_type != TBE_KERNEL) {
+    MS_LOG(INFO) << "Current node don't support acl kernel launch! Node info:" << kernel_node->DebugString();
+    return;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (mode != kPynativeMode || device_target != kAscendDevice) {
+    MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
+    return;
+  }
+  if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
+    MS_LOG(INFO) << "Current node isn't a dynamic node! Node info:" << kernel_node->DebugString();
+    return;
+  }
+  auto op_type = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kAclKernelSet.count(op_type) == 0) {
+    MS_LOG(INFO) << "Current node not in acl kernel list! Node info:" << kernel_node->DebugString();
+    return;
+  }
+
+  // Update node's kernel type to acl.
+  auto new_builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(kernel_node));
+  MS_EXCEPTION_IF_NULL(new_builder);
+  new_builder->SetKernelType(ACL_KERNEL);
+  MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << kernel_node->DebugString();
+  AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), kernel_node.get());
+}
+
 std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &kernel_node,
                                                                                    KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
@@ -876,6 +913,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     return result;
   }
   SetRaiseOrReduceFlag(kernel_node, select_status);
+  SetAclKernelInfo(kernel_node);
   std::get<0>(result) = select_status;
   return result;
 }
