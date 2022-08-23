@@ -854,9 +854,8 @@ def softsign(x):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
-        >>> output = F.softsign(x)
+        >>> output = ops.softsign(x)
         >>> print(output)
         [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
     """
