@@ -1,3 +1,6 @@
+mindspore.amp.LossScaler
+========================
+
 .. py:class:: mindspore.amp.LossScaler
 
     使用混合精度时，用于管理损失缩放系数（loss scaler）的抽象类。

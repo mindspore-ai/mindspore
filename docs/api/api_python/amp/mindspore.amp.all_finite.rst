@@ -1,3 +1,6 @@
+mindspore.amp.all_finite
+========================
+
 .. py:function:: mindspore.amp.all_finite(inputs)
 
     检查inputs是否是有效值（无溢出）。

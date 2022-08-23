@@ -1,3 +1,6 @@
+mindspore.amp.DynamicLossScaler
+===============================
+
 .. py:class:: mindspore.amp.DynamicLossScaler(scale_value, scale_factor, scale_window)
 
     动态调整损失缩放系数的管理器。
