@@ -16,6 +16,7 @@
 
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -51,6 +52,13 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
         MS_LOG(DEBUG) << "Insert Input TensorMove for op " << communication_op->fullname_with_scope();
       }
     }
+  }
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+    // not use somas
+    return true;
   }
 
   // Need to insert TensorMove if the output of FusedCommunicationOp is GraphOutput

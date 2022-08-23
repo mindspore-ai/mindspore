@@ -113,6 +113,16 @@ void InsertTensorMoveForCascade::InsertOutputTensorMove(const FuncGraphPtr &grap
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
   MS_EXCEPTION_IF_NULL(kernel_select_);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto opt_level = ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL);
+  if (!task_sink && (opt_level == kOptimizeO0)) {
+    // not use somas
+    return;
+  }
+
   if (!common::AnfAlgo::IsFusedCommunicationOp(hccl_node)) {
     return;
   }

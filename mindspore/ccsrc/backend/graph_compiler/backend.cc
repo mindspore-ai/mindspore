@@ -1380,7 +1380,7 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   auto strategy = runtime::GraphExecutionStrategy::kPipeline;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     strategy = runtime::GraphExecutionStrategy::kPipelineWithExecutionOrder;
   }
   return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
