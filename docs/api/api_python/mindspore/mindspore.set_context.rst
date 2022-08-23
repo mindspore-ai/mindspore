@@ -81,7 +81,7 @@ mindspore.set_context
     - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
     - **enable_dump** (bool) - 此参数已弃用，将在下一版本中删除。
     - **save_dump_path** (str) - 此参数已弃用，将在下一版本中删除。
-    - **print_file_path** (str)：该路径用于保存打印数据。使用时 :class:`mindspore.ops.Print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题, 如果未设置，将报告错误:"prompt to set the upper absolute path"。
+    - **print_file_path** (str) - 该路径用于保存打印数据。使用时 :class:`mindspore.ops.Print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题, 如果未设置，将报告错误:"prompt to set the upper absolute path"。
     - **env_config_path** (str) - 通过 `context.set_context(env_config_path="./mindspore_config.json")` 来设置MindSpore环境配置文件路径。
 
       配置Running Data Recorder：
@@ -137,6 +137,7 @@ mindspore.set_context
     - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于0。默认值为30，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
     - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为True，以尝试提高训练性能。默认值：False。
     - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为True，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
+
     **异常：**
 
-    **ValueError**：输入key不是上下文中的属性。
+    - **ValueError**：输入key不是上下文中的属性。

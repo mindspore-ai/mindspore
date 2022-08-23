@@ -10,11 +10,8 @@ Cell管理
     :template: classtemplate.rst
 
     mindspore.amp.DynamicLossScaleManager
-
     mindspore.amp.LossScaleManager
-
     mindspore.amp.FixedLossScaleManager
-
     mindspore.amp.build_train_network
 
 函数式
@@ -26,11 +23,7 @@ Cell管理
     :template: classtemplate.rst
 
     mindspore.amp.DynamicLossScaler
-
     mindspore.amp.StaticLossScaler
-
     mindspore.amp.LossScaler
-
     mindspore.amp.auto_mixed_precision
-
     mindspore.amp.all_finite

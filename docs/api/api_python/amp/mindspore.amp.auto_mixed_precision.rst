@@ -1,3 +1,6 @@
+mindspore.amp.auto_mixed_precision
+==================================
+
 .. py:function:: mindspore.amp.auto_mixed_precision(network, amp_level="O0")
 
     对Cell进行自动混合精度处理。

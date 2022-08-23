@@ -1,3 +1,6 @@
+mindspore.amp.StaticLossScaler
+==============================
+
 .. py:class:: mindspore.amp.StaticLossScaler(scale_value)
 
     损失缩放系数不变的管理器。

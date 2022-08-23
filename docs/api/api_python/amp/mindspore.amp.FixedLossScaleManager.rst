@@ -1,3 +1,6 @@
+mindspore.amp.FixedLossScaleManager
+===================================
+
 .. py:class:: mindspore.amp.FixedLossScaleManager(loss_scale=128.0, drop_overflow_update=True)
 
     损失缩放系数不变的管理器，继承自 :class:`mindspore.amp.LossScaleManager` 。
