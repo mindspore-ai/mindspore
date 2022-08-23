@@ -31,6 +31,7 @@ namespace mindspore::prim {
 GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
 GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
+GVAR_DEF(PrimitivePtr, kPrimStridedSliceOnnx, std::make_shared<Primitive>("StridedSliceOnnx"));
 GVAR_DEF(PrimitivePtr, kPrimSolveTriangular, std::make_shared<Primitive>("SolveTriangular"));
 }  // namespace mindspore::prim
 
