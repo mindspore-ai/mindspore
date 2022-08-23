@@ -114,6 +114,16 @@ class SquareSumNet(nn.Cell):
         return self.reduce_sum(self.square(x))
 
 
+class ReduceSumReshapeNet(nn.Cell):
+    def __init__(self):
+        super(ReduceSumReshapeNet, self).__init__()
+        self.reduce_sum = ops.ReduceSum()
+        self.reshape = ops.Reshape()
+
+    def construct(self, x, y):
+        return self.reduce_sum(x) + self.reshape(y, ())
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -137,6 +147,9 @@ def test_reduce_num():
     assert np.allclose(MeanNet2()(x).asnumpy(), 3.5)
     assert np.allclose(SumNet()(x).asnumpy(), 105.0)
     assert np.allclose(SquareSumNet()(x).asnumpy(), 455.0)
+
+    y = Tensor(np.array([[[2]]]), mindspore.float32)
+    assert np.allclose(ReduceSumReshapeNet()(x, y).asnumpy(), 107.0)
 
     x_prod = Tensor(np.array(
         [[[1, 1, 1, 1, 1], [2, 2, 2, 2, 2]],

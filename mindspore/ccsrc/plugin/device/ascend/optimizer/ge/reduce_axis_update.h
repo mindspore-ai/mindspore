@@ -30,7 +30,7 @@ class ReduceAxisUpdate : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  static bool IsAxisEmpty(const ValueNodePtr &axis_node);
+  bool IsAxisEmpty(const ValueNodePtr &axis_node) const;
   static bool IsReduce(const BaseRef &ref);
 };
 }  // namespace opt

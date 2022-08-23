@@ -44,7 +44,7 @@ bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
   return false;
 }
 
-bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) {
+bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
   const ValuePtr &value = axis_node->value();
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<ValueTuple>()) {
@@ -100,7 +100,7 @@ const AnfNodePtr ReduceAxisUpdate::Process(const FuncGraphPtr &, const AnfNodePt
 
   ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   size_t x_dim_len = x_shape.size();
-  MS_LOG(INFO) << "input x dim len: " << x_dim_len;
+  MS_LOG(INFO) << "Input x dim len: " << x_dim_len;
   std::vector<int64_t> axis;
   for (size_t i = 0; i < x_dim_len; ++i) {
     (void)axis.emplace_back(SizeToLong(i));
@@ -108,8 +108,12 @@ const AnfNodePtr ReduceAxisUpdate::Process(const FuncGraphPtr &, const AnfNodePt
   }
 
   ValuePtr new_value = MakeValue(axis);
-  axis_value_node->set_value(new_value);
-  axis_value_node->set_abstract(new_value->ToAbstract());
+  MS_EXCEPTION_IF_NULL(new_value);
+  auto new_axis_node = std::make_shared<ValueNode>(new_value);
+  MS_EXCEPTION_IF_NULL(new_axis_node);
+  new_axis_node->set_abstract(new_value->ToAbstract());
+
+  cnode->set_input(kAxisInputIndex, new_axis_node);
 
   return node;
 }
