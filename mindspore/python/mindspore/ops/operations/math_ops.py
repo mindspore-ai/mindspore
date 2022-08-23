@@ -1438,7 +1438,7 @@ class MatMul(PrimitiveWithCheck):
                                                       self.name)
 
 
-class BatchMatMul(MatMul):
+class BatchMatMul(Primitive):
     r"""
     Computes matrix multiplication between two tensors by batch.
 
@@ -1508,11 +1508,6 @@ class BatchMatMul(MatMul):
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
-
-    def check_shape_size(self, x, y):
-        if len(x) < 3 or len(y) < 2:
-            raise ValueError(f"For '{self.name}', input 'x' must be greater than or equal to 3, input 'y' should "
-                             f"be greater than or equal to 2, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
 
 
 class Betainc(Primitive):
@@ -6289,7 +6284,7 @@ class RaggedRange(Primitive):
     """
     Returns a `RaggedTensor` containing the specified sequences of numbers.
 
-     Args:
+    Args:
         Tsplits (mindspore.dtype): An mindspore.dtype from: mindspore.int32, mindspore.int64.
 
     Inputs:

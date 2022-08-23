@@ -69,12 +69,6 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
   auto context = MsContext::GetInstance();
-  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (!is_ascend && x_shp.size() != y_shp.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "' on cpu/gpu, input 'x' must have the same size as input 'y'. But got 'x' size: "
-                             << x_shp.size() << "'y' size: " << y_shp.size() << ".";
-  }
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
   if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
