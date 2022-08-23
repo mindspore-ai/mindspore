@@ -1405,13 +1405,13 @@ class DataFormatVecPermute(Primitive):
         ValueError: If input_x shape is not (4, ) or (4, 2).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self, src_format="NHWC", dst_format="NCHW"):
         ...         super().__init__()
-        ...         self.op = P.DataFormatVecPermute(src_format, dst_format)
+        ...         self.op = P.nn_ops.DataFormatVecPermute(src_format, dst_format)
         ...     def construct(self, x):
         ...         return self.op(x)
         ...
