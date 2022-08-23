@@ -71,8 +71,8 @@ function Run_x86_codegen() {
           return 1;
       fi
 
-      bind_mode=""
-      thread_num=""
+      bind_mode="0"
+      thread_num="1"
       suffix=""
       if [[ $7 == "parallel" ]]; then
           bind_mode="0"
@@ -87,8 +87,8 @@ function Run_x86_codegen() {
       make || return 1
       # 2. run benchmark
       echo "net file: ${output_file}/src/net.bin" >> $4
-      echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode}" >> $4
-      ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} >> $4
+      echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
+      ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
       if [ $? = 0 ]; then
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
@@ -181,8 +181,8 @@ function Run_cortex_m_codegen() {
           return 1;
       fi
 
-      bind_mode=""
-      thread_num=""
+      bind_mode="0"
+      thread_num="1"
       suffix=""
       if [[ $3 =~ "parallel" ]]; then
           bind_mode="0"
@@ -218,6 +218,126 @@ function Run_cortex_m_codegen() {
       else
           run_result='cortex_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
           echo "return is "${calib_ret} >> $5;
+          return 1;
+      fi
+    done < $3
+}
+
+function Run_quant_codegen() {
+    # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig
+    local bind_mode thread_num suffix run_result
+    rm -rf $1
+    mkdir -p $1
+
+    # Unzip x86 runtime and converter
+    cd ${x86_path} || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+
+    cp tools/converter/converter/converter_lite ./ || exit 1
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
+
+    while read line; do
+      if [[ $line == \#* || $line == "" ]]; then
+        continue
+      fi
+      model_info=`echo ${line} | awk -F ' ' '{print $1}'`
+      model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+
+      IFS="," read -r -a name_array <<< ${input_names}
+      data_path=${models_path}"/input_output/"
+      model_calib_dir=$1"/"${model_name}_calib
+      rm -rf ${model_calib_dir}
+      mkdir -p ${model_calib_dir}
+      if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+        cp ${data_path}'input/'${model_name}'.ms.bin' ${model_calib_dir}"/0.bin"
+        calibrate_paths='"'${name_array[0]}'":'${model_calib_dir}"/"
+      else
+        for i in $(seq 1 $input_num)
+        do
+          mkdir -p ${model_calib_dir}"/"${i}
+          cp ${data_path}'input/'${model_name}'.ms.bin_'$i  ${model_calib_dir}"/"${i}
+          calibrate_paths=${spec_shapes}'"'${name_array[$i-1]}'":'${model_calib_dir}"/"${i}','
+        done
+      fi
+      echo "calib_paths:${calibrate_paths}" >> "$4"
+
+      config_file=$1"/"${model_name}_micro_quant.cfg
+      cp $6 ${config_file} || exit 1
+      sed -i "s#calibrate_path=#calibrate_path=${calibrate_paths}#g" ${config_file}
+
+      model_type=${model_name##*.}
+      case $model_type in
+        pb)
+          model_fmk="TF"
+          ;;
+        tflite)
+          model_fmk="TFLITE"
+          ;;
+        onnx)
+          model_fmk="ONNX"
+          ;;
+        mindir)
+          model_fmk="MINDIR"
+          ;;
+        *)
+          model_type="caffe"
+          model_fmk="CAFFE"
+          ;;
+      esac
+      # set parameters
+      model_file=$2"/"${model_name}
+      weight_file=""
+      if [[ $model_fmk == "CAFFE" ]]; then
+        model_file=${model_file}".prototxt"
+        weight_file=${model_file%.*}".caffemodel"
+      fi
+
+      output_file=$1"/"${model_name}
+      quant_type=""
+      spec_shapes=""
+      train_model="false"
+      in_dtype="DEFAULT"
+      out_dtype="DEFAULT"
+
+      # start running converter
+      cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+      echo "model:"${model_name}
+      echo ${model_name} >> "$4"
+      echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\
+        ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+      ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
+        --configFile=${config_file} --trainModel=${train_model} >> "$4"
+      if [ $? = 0 ]; then
+          converter_result='converter '${model_type}' quant '${model_name}' pass';echo ${converter_result} >> $5
+      else
+          converter_result='converter '${model_type}' quant '${model_name}' failed';echo ${converter_result} >> $5
+          return 1;
+      fi
+
+      bind_mode="0"
+      thread_num="1"
+      suffix="_quant"
+      echo ${model_name} >> "$4"
+
+      # 1. build benchmark
+      mkdir -p ${output_file}/build && cd ${output_file}/build || exit 1
+      cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
+      make || return 1
+      # 2. run benchmark
+      benchmark_data_file=${models_path}"/input_output/output/"${model_name}.ms.out
+      echo "net file: ${output_file}/src/net.bin" >> $4
+      echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0" >> $4
+      ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 >> $4
+      if [ $? = 0 ]; then
+          run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+      else
+          run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
           return 1;
       fi
     done < $3
@@ -427,6 +547,7 @@ fi
 models_codegen_config=${basepath}/../${config_folder}/models_codegen.cfg
 models_cortex_codegen_config=${basepath}/../${config_folder}/models_codegen_cortex.cfg
 models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen.cfg
+models_quant_codegen_config=${basepath}/../${config_folder}/models_codegen_quant.cfg
 
 #micro config
 micro_x86_config=${basepath}/../${config_folder}/micro/micro_x86.cfg
@@ -434,6 +555,7 @@ micro_x86_parallel_config=${basepath}/../${config_folder}/micro/micro_x86_parall
 micro_arm64_config=${basepath}/../${config_folder}/micro/micro_arm64.cfg
 micro_ARM32_config=${basepath}/../${config_folder}/micro/micro_arm32A.cfg
 micro_cortex_config=${basepath}/../${config_folder}/micro/micro_cortex_m.cfg
+micro_quant_config=${basepath}/../${config_folder}/micro/micro_x86_quant.cfg
 
 # Set models and build path
 build_path_x86=${basepath}/codegen_build_x86
@@ -441,6 +563,7 @@ build_path_parallel=${basepath}/codegen_build_parallel
 build_path_arm64=${basepath}/codegen_build_arm64
 build_path_arm32=${basepath}/codegen_build_arm32
 build_path_cortex=${basepath}/codegen_build_cortex
+build_path_quant=${basepath}/codegen_build_quant
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -462,6 +585,8 @@ run_x86_codegen_parallel_log_file=${basepath}/run_x86_codegen_parallel_log.txt
 echo 'run x86 codegen parallel logs: ' > ${run_x86_codegen_parallel_log_file}
 run_cortex_codegen_log_file=${basepath}/run_cortex_codegen_log.txt
 echo 'run cortex_codegen logs: ' > ${run_cortex_codegen_log_file}
+run_quant_codegen_log_file=${basepath}/run_quant_codegen_log.txt
+echo 'run x86_quant_codegen logs: ' > ${run_quant_codegen_log_file}
 
 echo "input backend is ${backend}"
 backend=${backend:-"all"}
@@ -504,6 +629,14 @@ if [[ $backend == "cortex_codegen" ]]; then
     echo "start Run cortex codegen ..."
     Run_cortex_m_codegen ${build_path_cortex} ${models_path} ${models_cortex_codegen_config} ${run_cortex_codegen_log_file} ${run_benchmark_result_file} ${micro_cortex_config}
     Run_cortex_codegen_status=$?
+#    Run_arm64_codegen_PID=$!
+#    sleep 1
+fi
+if [[ $backend == "all" || $backend == "codegen" || $backend == "quant_codegen" ]]; then
+    # Run on codegen
+    echo "start Run quant codegen ..."
+    Run_quant_codegen ${build_path_quant} ${models_path} ${models_quant_codegen_config} ${run_quant_codegen_log_file} ${run_benchmark_result_file} ${micro_quant_config}
+    Run_quant_codegen_status=$?
 #    Run_arm64_codegen_PID=$!
 #    sleep 1
 fi
@@ -550,6 +683,15 @@ if [[ $backend == "cortex_codegen" ]]; then
     if [[ ${Run_cortex_codegen_status} != 0 ]];then
         echo "Run_cortex_codegen failed"
         cat ${run_cortex_codegen_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "codegen" || $backend == "quant_codegen" ]]; then
+#    wait ${Run_arm32_codegen_PID}
+#    Run_arm32_codegen_status=$?
+    if [[ ${Run_quant_codegen_status} != 0 ]];then
+        echo "Run_quant_codegen failed"
+        cat ${run_quant_codegen_log_file}
         isFailed=1
     fi
 fi
