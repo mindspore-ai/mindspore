@@ -24,8 +24,9 @@ namespace mindspore::lite::decomposer {
 namespace {
 constexpr int kRowIndex = 0;
 constexpr int kColIndex = 1;
+constexpr int kMinSize = 2;
 }  // namespace
-int SVDMatrix::DoSVDWithRank(int rank) {
+int SVDMatrix::CompressWithRank(int rank) {
   if (rank <= 0) {
     MS_LOG(ERROR) << " The rank = " << rank << ", it is too small";
     return RET_ERROR;
@@ -41,49 +42,45 @@ int SVDMatrix::DoSVDWithRank(int rank) {
   mat_a_.clear();
   mat_b_.clear();
 
-  SVDCompress();
+  Decomposition();
+  TruncateSVD(svd_);
+
   return RET_OK;
 }
 
-int SVDMatrix::DoSVDWithErr(float err) {
+int SVDMatrix::Decomposition() {
+  if (shape_.size() != kMinSize) {
+    MS_LOG(ERROR) << "shape size only support 2, but get " << shape_.size();
+    return RET_ERROR;
+  }
+  int row = shape_[kRowIndex];
+  int col = shape_[kColIndex];
+
+  // Convert std::vector to Eigen::MatrixXf
+  origin_matrix_ = Eigen::Map<Eigen::VectorXf, Eigen::Unaligned>(data_.data(), data_.size()).eval();
+  origin_matrix_.resize(row, col);
+
+  // Singular Value Decomposition
+  svd_ = Eigen::BDCSVD<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+    origin_matrix_, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+  U_ = svd_.matrixU();
+  V_ = svd_.matrixV();
+  Sigma_ = svd_.singularValues().asDiagonal();
+  return RET_OK;
+}
+
+int SVDMatrix::CompressWithFNorm(float f_norm) {
   // clear mat
   mat_a_.clear();
   mat_b_.clear();
-
-  int row = shape_[kRowIndex];
-  int col = shape_[kColIndex];
-
-  // Convert std::vector to Eigen::MatrixXf
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> orgin_matrix =
-    Eigen::Map<Eigen::VectorXf, Eigen::Unaligned>(data_.data(), data_.size());
-  orgin_matrix.resize(row, col);
-
-  // Singular Value Decomposition
-  Eigen::BDCSVD<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> svd(
-    orgin_matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-  if (GetBestRank(orgin_matrix, svd, err) == RET_ERROR) {
+  Decomposition();
+  if (GetBestRank(origin_matrix_, svd_, f_norm) == RET_ERROR) {
     return RET_ERROR;
   }
-  TruncateSVD(svd);
+  TruncateSVD(svd_);
 
   return RET_OK;
-}
-
-void SVDMatrix::SVDCompress() {
-  int row = shape_[kRowIndex];
-  int col = shape_[kColIndex];
-
-  // Convert std::vector to Eigen::MatrixXf
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> orgin_matrix =
-    Eigen::Map<Eigen::VectorXf, Eigen::Unaligned>(data_.data(), data_.size());
-  orgin_matrix.resize(row, col);
-
-  // Singular Value Decomposition
-  Eigen::BDCSVD<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> svd(
-    orgin_matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-  TruncateSVD(svd);
 }
 
 void SVDMatrix::TruncateSVD(
