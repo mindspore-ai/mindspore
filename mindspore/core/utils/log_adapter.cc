@@ -791,7 +791,7 @@ MS_CORE_API void mindspore_log_init(void) {
 #define google mindspore_private
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+#if !defined(_WIN32) && !defined(_WIN64)
     google::InitGoogleLogging("mindspore");
 #endif
     is_glog_initialzed = true;
