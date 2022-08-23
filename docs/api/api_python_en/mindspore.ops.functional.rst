@@ -128,6 +128,7 @@ Element-by-Element Operations
     :template: classtemplate.rst
 
     mindspore.ops.abs
+    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
