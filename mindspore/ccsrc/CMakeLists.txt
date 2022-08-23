@@ -188,13 +188,17 @@ endif()
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
     link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
 else()
+    if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 \
         -Wno-delete-non-abstract-non-virtual-dtor -Wno-unused-private-field -Wno-overloaded-virtual \
         -Wno-unused-const-variable -Wno-pessimizing-move -Wno-range-loop-analysis -Wno-mismatched-tags \
         -Wno-c++11-narrowing")
+    else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+    endif()
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
 endif()
 
@@ -292,7 +296,9 @@ list(APPEND MINDSPORE_PROTO_LIST ${RPC_PROTO_SRCS})
 
 if(MINDSPORE_PROTO_LIST)
     add_library(proto_input STATIC ${MINDSPORE_PROTO_LIST})
+    if(NOT MSVC)
     set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable -Wno-array-bounds")
+    endif()
 endif()
 
 ## make sub objects

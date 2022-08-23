@@ -33,8 +33,10 @@ elseif(ENABLE_SYM_FILE)
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -g -ggdb -Wl,--allow-shlib-undefined \
         -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
 else()
+    if(NOT MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Wl,--allow-shlib-undefined \
         -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
+    endif()
 endif()
 
 if(ENABLE_PYTHON)
@@ -46,13 +48,19 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
         -D_FORTIFY_SOURCE=2 -Wno-cpp ${MACOSX_CXX_WARNING_FLAGS}")
 else()
+    if(NOT MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
         -Wl,--allow-shlib-undefined -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 \
         -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2 -Wno-cpp")
+    endif()
 endif()
 
+if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 \
     -Werror -Wall -Wno-deprecated-declarations -fPIC")
+else()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PYBIND11_CPP_STANDARD -std=c++17)
@@ -106,7 +114,9 @@ if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
     include(${CMAKE_SOURCE_DIR}/cmake/dependency_graphengine.cmake)
 endif()
 
+if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+endif()
 add_subdirectory(mindspore/ccsrc)
 add_subdirectory(mindspore/core)
 
