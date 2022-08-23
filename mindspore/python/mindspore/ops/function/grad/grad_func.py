@@ -544,28 +544,28 @@ def derivative(fn, primals, order):
 
 def jvp(fn, inputs, v):
     """
-    Compute the jacobian-vector-product of the given network.
+    Compute the jacobian-vector-product of the given network. `jvp` matches
+    `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
             Tensors.
-        inputs (Union[Tensor, Tuple or List of Tensors]): The inputs to `fn`.
-        v (Union[Tensor, Tuple or or List of Tensors]): The shape and type of v should be the same as inputs.
+        inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
+        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of v
+            should be the same as inputs.
 
     Returns:
-        Tuple, tuple of output and jvp.
-
-        - **netout** (Tensor or Tuple of Tensors) - The output of "fn(inputs)".
-        - **jvp** (Tensor or Tuple of Tensors) - The result of the dot product.
+        - **netout** (Union[Tensor, tuple(Tensor]]) - The output of `fn(inputs)` .
+        - **jvp** (Union[Tensor, tuple(Tensor]]) - The result of jacobian-vector-product.
 
     Raises:
-        TypeError: If the input is not a tensor or tuple or list of tensors.
+        TypeError: `inputs` or `v` does not belong to required types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
@@ -573,7 +573,7 @@ def jvp(fn, inputs, v):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = F.jvp(Net(), (x, y), (v, v))
+        >>> output = ops.jvp(Net(), (x, y), (v, v))
         >>> print(output[0])
         [[ 2. 10.]
          [30. 68.]]
@@ -667,28 +667,31 @@ def linearize(fn, inputs):
 
 def vjp(fn, inputs, v):
     """
-    Compute the vector-jacobian-product of the given network.
+    Compute the vector-jacobian-product of the given network. `vjp` matches
+    `reverse-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#reverse-mode-ad>`_.
+
+    Note:
+        This function is subjected to change in the future.
 
     Args:
         fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
             Tensors.
-        inputs (Union[Tensor, Tuple or List of Tensors]): The inputs to `fn`.
-        v (Union[Tensor, Tuple or List of Tensors]): The shape and type of v should be the same as outputs.
+        inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
+        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in vector-jacobian-product. The shape and type of v
+            should be the same as outputs.
 
     Returns:
-        Tuple, tuple of output and vjp.
-
-        - **netout** (Tensor or Tuple of Tensors) - The output of "fn(inputs)".
-        - **vjp** (Tensor or Tuple of Tensors) - The result of the dot product.
+        - **netout** (Union[Tensor, tuple(Tensor]]) - The output of `fn(inputs)` .
+        - **vjp** (Union[Tensor, tuple(Tensor]]) - The result of vector-jacobian-product.
 
     Raises:
-        TypeError: If the input is not a tensor or tuple or list of tensors.
+        TypeError: `inputs` or `v` does not belong to required types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y):
@@ -696,7 +699,7 @@ def vjp(fn, inputs, v):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-        >>> output = F.vjp(Net(), (x, y), v)
+        >>> output = ops.vjp(Net(), (x, y), v)
         >>> print(output[0])
         [[ 2. 10.]
          [30. 68.]]
