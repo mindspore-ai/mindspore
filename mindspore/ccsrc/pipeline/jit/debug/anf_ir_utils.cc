@@ -69,7 +69,7 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   if (abstract != nullptr && abstract->isa<abstract::AbstractTensor>()) {
     tensor_value = abstract->BuildValue();
   }
-  abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
+  abstract::BaseShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::BaseShape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {

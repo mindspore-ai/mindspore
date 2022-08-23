@@ -48,7 +48,7 @@ std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return "NullAbstract";
   }
-  auto shape = abs->BuildShape()->cast<abstract::ShapePtr>();
+  auto shape = abs->BuildShape()->cast<abstract::BaseShapePtr>();
   TypePtr type = abs->BuildType();
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {

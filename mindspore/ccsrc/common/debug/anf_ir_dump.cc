@@ -76,7 +76,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
     sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
   }
 
-  abstract::ShapePtr shape = dyn_cast<abstract::Shape>(node->Shape());
+  abstract::BaseShapePtr shape = dyn_cast<abstract::BaseShape>(node->Shape());
   TypePtr type = dyn_cast<Type>(node->Type());
   if ((shape != nullptr) && (type != nullptr)) {
     buffer << "<" << type << ", " << shape->ToString();
