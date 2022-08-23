@@ -98,3 +98,4 @@ Utilities
     mindspore.dataset.vision.read_file
     mindspore.dataset.vision.read_image
     mindspore.dataset.vision.write_file
+    mindspore.dataset.vision.write_jpeg

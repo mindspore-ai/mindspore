@@ -1457,6 +1457,14 @@ Status WriteFile(const std::string &filename, const mindspore::MSTensor &data) {
   RETURN_IF_NOT_OK(mindspore::dataset::WriteFile(filename, de_tensor));
   return Status::OK();
 }
+
+// WriteJpeg Function.
+Status WriteJpeg(const std::string &filename, const mindspore::MSTensor &image, int quality) {
+  std::shared_ptr<dataset::Tensor> image_de_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromMSTensor(image, &image_de_tensor));
+  RETURN_IF_NOT_OK(mindspore::dataset::WriteJpeg(filename, image_de_tensor, quality));
+  return Status::OK();
+}
 #endif  // not ENABLE_ANDROID
 }  // namespace vision
 }  // namespace dataset

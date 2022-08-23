@@ -2244,7 +2244,7 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(image);
   image_matrix = input_cv->mat();
   if (!image_matrix.data) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] EncodeJpeg: load the image tensor failed.");
+    RETURN_STATUS_UNEXPECTED("EncodeJpeg: Load the image tensor failed.");
   }
 
   if (channels == kMinImageChannel) {
@@ -2350,7 +2350,7 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
   }
   auto realpath = FileUtils::GetRealPath(filename.c_str());
   if (!realpath.has_value()) {
-    RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " can not get the real path.");
+    RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " failed to get the real path.");
   }
   struct stat sb;
   stat(realpath.value().c_str(), &sb);
@@ -2368,6 +2368,88 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
       fs.close();
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
+  }
+  fs.close();
+  return Status::OK();
+}
+
+Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &image, int quality) {
+  std::string err_msg;
+
+  if (image->type() != DataType::DE_UINT8) {
+    err_msg = "WriteJpeg: The type of the elements of image should be UINT8, but got " + image->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  TensorShape shape = image->shape();
+  int rank = shape.Rank();
+  if (rank < kMinImageRank || rank > kDefaultImageRank) {
+    err_msg = "WriteJpeg: The image has invalid dimensions. It should have two or three dimensions, but got ";
+    err_msg += std::to_string(rank) + " dimensions.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  int channels;
+  if (rank == kDefaultImageRank) {
+    channels = shape[kMinImageRank];
+    if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
+      err_msg = "WriteJpeg: The image has invalid channels. It should have 1 or 3 channels, but got ";
+      err_msg += std::to_string(channels) + " channels.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    channels = 1;
+  }
+
+  if (quality < kMinJpegQuality || quality > kMaxJpegQuality) {
+    err_msg = "WriteJpeg: Invalid quality " + std::to_string(quality) + ", should be in range of [" +
+              std::to_string(kMinJpegQuality) + ", " + std::to_string(kMaxJpegQuality) + "].";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY,  quality, cv::IMWRITE_JPEG_PROGRESSIVE,  0,
+                             cv::IMWRITE_JPEG_OPTIMIZE, 0,       cv::IMWRITE_JPEG_RST_INTERVAL, 0};
+
+  std::vector<unsigned char> buffer;
+  cv::Mat image_matrix;
+
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(image);
+  image_matrix = input_cv->mat();
+  if (!image_matrix.data) {
+    RETURN_STATUS_UNEXPECTED("WriteJpeg: Load the image tensor failed.");
+  }
+
+  if (channels == kMinImageChannel) {
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".JPEG", image_matrix, buffer, params),
+                                 "WriteJpeg: Failed to encode image.");
+  } else {
+    cv::Mat image_bgr;
+    cv::cvtColor(image_matrix, image_bgr, cv::COLOR_RGB2BGR);
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".JPEG", image_bgr, buffer, params),
+                                 "WriteJpeg: Failed to encode image.");
+  }
+
+  Path file(filename);
+  if (!file.Exists()) {
+    int file_descriptor;
+    RETURN_IF_NOT_OK(file.CreateFile(&file_descriptor));
+    RETURN_IF_NOT_OK(file.CloseFile(file_descriptor));
+  }
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("WriteJpeg: Invalid file path, " + filename + " failed to get the real path.");
+  }
+  struct stat sb;
+  stat(realpath.value().c_str(), &sb);
+  if (S_ISREG(sb.st_mode) == 0) {
+    RETURN_STATUS_UNEXPECTED("WriteJpeg: Invalid file path, " + filename + " is not a regular file.");
+  }
+
+  std::ofstream fs(realpath.value().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+  CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "WriteJpeg: Failed to open the file " + filename + " for writing.");
+
+  fs.write((const char *)buffer.data(), (long int)buffer.size());
+  if (fs.fail()) {
+    fs.close();
+    RETURN_STATUS_UNEXPECTED("WriteJpeg: Failed to write the file " + filename);
   }
   fs.close();
   return Status::OK();

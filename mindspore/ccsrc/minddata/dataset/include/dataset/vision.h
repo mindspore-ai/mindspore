@@ -2046,6 +2046,13 @@ class DATASET_API VerticalFlip final : public TensorTransform {
 /// \param[in] data The tensor data.
 /// \return The status code.
 Status DATASET_API WriteFile(const std::string &filename, const mindspore::MSTensor &data);
+
+/// \brief Write the image data into a JPEG file.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] image The data tensor.
+/// \param[in] quality The quality for JPEG file, in range of [1, 100]. Default: 75.
+/// \return The status code.
+Status DATASET_API WriteJpeg(const std::string &filename, const mindspore::MSTensor &image, int quality = 75);
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
