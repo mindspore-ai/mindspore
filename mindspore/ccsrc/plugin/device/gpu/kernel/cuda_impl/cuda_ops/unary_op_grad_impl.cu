@@ -126,7 +126,38 @@ __global__ void AcoshGradKernel(const T *input, const T *dout, T *output, const 
 template <typename T>
 __global__ void ReciprocalGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
-    T neg_one = static_cast<T>(-1);
+    float inputf = static_cast<float>(input[i]);
+    float doutf = static_cast<float>(dout[i]);
+    float res = -1 * doutf * inputf * inputf;
+    output[i] = static_cast<T>(res);
+  }
+  return;
+}
+
+template <>
+__global__ void ReciprocalGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    double neg_one = static_cast<double>(-1);
+    output[i] = neg_one * dout[i] * input[i] * input[i];
+  }
+  return;
+}
+
+template <>
+__global__ void ReciprocalGradKernel(const Complex<float> *input, const Complex<float> *dout, Complex<float> *output,
+                                     const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    Complex<float> neg_one = static_cast<Complex<float>>(-1);
+    output[i] = neg_one * dout[i] * input[i] * input[i];
+  }
+  return;
+}
+
+template <>
+__global__ void ReciprocalGradKernel(const Complex<double> *input, const Complex<double> *dout, Complex<double> *output,
+                                     const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    Complex<double> neg_one = static_cast<Complex<double>>(-1);
     output[i] = neg_one * dout[i] * input[i] * input[i];
   }
   return;
