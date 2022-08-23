@@ -583,7 +583,6 @@ bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_ru
 
 void ForwardExecutor::ExecuteLazyTask() {
   mindspore::ScopedLongRunning long_running;
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->WaitTaskFinish();

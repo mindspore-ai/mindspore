@@ -68,7 +68,6 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
-#include "backend/common/session/pynative_task_manager.h"
 #include "profiler/device/profiling.h"
 #include "kernel/common_utils.h"
 
@@ -1117,7 +1116,6 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (const auto &iter : stream_id_map_) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(iter.second);

@@ -698,73 +698,6 @@ void AscendSession::BindAddressToTensor(
   }
 }
 
-void AscendSession::LaunchFunc(const KernelGraphPtr &graph,
-                               const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
-                               const std::vector<tensor::TensorPtr> &input_tensors) {
-  MS_EXCEPTION_IF_NULL(graph);
-  // Wait for AllReduce
-  for (auto &tensor : input_tensors) {
-    if (tensor->NeedWaitDevice()) {
-      tensor->WaitDevice();
-    }
-  }
-
-  RunOpRemoveNopNode(graph);
-  RunOpMemoryAllocNew(input_tensors, tensor_to_node, *graph);
-  AnfAlgo::CacheAddrForGraph(graph);
-  // Bind Device Ptr to DeviceAddress of Tensor
-  BindAddressToTensor(tensor_to_node);
-  RunOpGenKernelEvent(graph.get());
-
-  LoadInputData(graph, input_tensors);
-  Execute(graph, false);
-  RunOpMemoryClear(graph.get());
-}
-
-void AscendSession::BatchBuildKernel(const std::vector<std::shared_ptr<SessionTask>> &build_tasks) {
-  std::vector<CNodePtr> node_to_build;
-  std::vector<KernelGraphPtr> graphs;
-
-  // Hide Nop Node && Collect nodes to build.
-  for (const auto &task : build_tasks) {
-    MS_EXCEPTION_IF_NULL(task);
-    const auto &context = task->context();
-    MS_EXCEPTION_IF_NULL(context);
-    const auto &graph = context->graph();
-    MS_EXCEPTION_IF_NULL(graph);
-
-    RunOpHideNopNode(graph);
-
-    const auto &nodes = graph->execution_order();
-    std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
-    graphs.push_back(graph);
-  }
-
-  // Build first time.
-  BuildKernel(node_to_build);
-
-  std::vector<CNodePtr> atomic_node_to_build;
-  for (auto &graph : graphs) {
-    device::ascend::InsertAtomicCleanOps(graph);
-    const auto &nodes = graph->execution_order();
-    std::copy(nodes.begin(), nodes.end(), std::back_inserter(atomic_node_to_build));
-  }
-  // Build AtomicClean.
-  BuildKernel(atomic_node_to_build);
-}
-
-void AscendSession::PrepareForOutputTensor(const KernelGraphPtr &graph,
-                                           const std::vector<tensor::TensorPtr> &input_tensors,
-                                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
-                                           VectorRef *const outputs) const {
-  // Create DeviceAddress For Output Tensor(contain: Shape, Format, DType)
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  runtime_instance->RunOpMallocPre(*graph, input_tensors);
-  runtime_instance->UpdateRefNodeOutputMem(*graph);
-  // CREATE OUTPUT TENSOR ADDRESS
-  UpdateOutputs(graph, outputs, input_tensors, tensor_to_node);
-}
-
 void StoreCNodePrimitive(const KernelGraphPtr &graph) {
   const auto &nodes = graph->execution_order();
   for (auto &node : nodes) {
@@ -775,77 +708,10 @@ void StoreCNodePrimitive(const KernelGraphPtr &graph) {
   }
 }
 
-KernelGraphPtr AscendSession::CreateKernelGraph(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                                const std::vector<tensor::TensorPtr> &input_tensors,
-                                                const std::vector<int64_t> &tensors_mask, bool cache_miss) {
-  auto &task_manager = PynativeTaskManager::GetInstance();
-  KernelGraphPtr graph = nullptr;
-  if (cache_miss) {
-    graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
-    MS_EXCEPTION_IF_NULL(graph);
-    InitRuntimeResource();
-    run_op_graphs_[graph_info] = graph;
-  } else {
-    if (!task_manager.QueueEmpty()) {
-      graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
-      InitRuntimeResource();
-    } else {
-      graph = run_op_graphs_[graph_info];
-    }
-  }
-  return graph;
-}
-
-bool AscendSession::DisableLazyBuild(const BackendOpRunInfoPtr &op_run_info) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return !op_run_info->base_op_run_info.lazy_build || ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
-         op_run_info->base_op_run_info.has_dynamic_output ||
-         ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-}
-
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  if (DisableLazyBuild(op_run_info)) {
-    session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
-    RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
-  bool cache_miss = run_op_graphs_.find(graph_info) == run_op_graphs_.end();
-  auto graph = CreateKernelGraph(graph_info, op_run_info, *input_tensors, tensors_mask, cache_miss);
-  EraseValueNodeTensor(tensors_mask, input_tensors);
-  MS_EXCEPTION_IF_NULL(graph);
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
-  PrepareForOutputTensor(graph, *input_tensors, &tensor_to_node, outputs);
-
-  auto &task_manager = PynativeTaskManager::GetInstance();
-  if (!cache_miss && task_manager.QueueEmpty()) {
-    // Cache match and there are no task in Queue. Just Launch immediately.
-    LaunchFunc(graph, tensor_to_node, *input_tensors);
-  } else {
-    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->base_op_run_info.has_dynamic_output,
-                                                         graph, tensors_mask, *input_tensors, tensor_to_node);
-    task_manager.PushLaunchTask(std::make_shared<LaunchTask>(run_op_context));
-
-    if (cache_miss || !task_manager.QueueEmpty()) {
-      // Copy Primitive. The attributes of Primitive will be modified.
-      StoreCNodePrimitive(graph);
-      task_manager.PushBuildTask(std::make_shared<BuildTask>(run_op_context));
-    }
-  }
-
-  if (!task_manager.inited()) {
-    task_manager.Init([this]() { ExecuteAllTaskInQueue(); });
-  }
-
-  if (task_manager.QueueFull()) {
-    task_manager.ExecuteRemainingTasks();
-  }
+  RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
 }
 
 void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
@@ -1689,42 +1555,6 @@ void AscendSession::ReportErrorMessage() {
 
 void AscendSession::SetThreadContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
 
-void AscendSession::ExecuteAllTaskInQueue() {
-  // Execute All Task
-  auto &task_manager = PynativeTaskManager::GetInstance();
-  if (task_manager.QueueEmpty()) {
-    return;
-  }
-
-  try {
-    MS_LOG(DEBUG) << "Start";
-    auto ms_context = MsContext::GetInstance();
-    auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
-
-    BatchBuildKernel(task_manager.GetAllBuildTasks());
-    task_manager.ClearAllBuildTasks();
-
-    // Launch one by one
-    auto &launch_tasks = task_manager.GetAllLaunchTasks();
-    while (!launch_tasks.empty()) {
-      auto &launch_task = launch_tasks.front();
-      const auto &context = launch_task->context();
-      LaunchFunc(context->graph(), context->tensor_to_node(), context->input_tensors());
-      launch_tasks.pop();
-    }
-
-    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
-    MS_LOG(DEBUG) << "End";
-  } catch (const std::exception &ex) {
-    task_manager.Reset();
-    throw(std::runtime_error(ex.what()));
-  } catch (...) {
-    task_manager.Reset();
-    std::string exName(abi::__cxa_current_exception_type()->name());
-    MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
-  }
-}
 void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
                                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                         std::map<DeviceAddressPtr, DeviceAddressPtr> *) {

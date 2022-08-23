@@ -55,7 +55,6 @@
 #include "abstract/abstract_value.h"
 #endif
 #include "backend/common/session/session_factory.h"
-#include "backend/common/session/pynative_task_manager.h"
 #include "runtime/pynative/op_executor.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -2642,8 +2641,6 @@ void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_ta
 
 void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                      VectorRef *outputs) {
-  MS_LOG(INFO) << "Clean task in Queue";
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   MS_LOG(INFO) << "Start!";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
