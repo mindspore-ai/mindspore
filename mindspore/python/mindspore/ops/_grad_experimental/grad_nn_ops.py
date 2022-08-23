@@ -40,6 +40,8 @@ from ..operations.nn_ops import UpsampleTrilinear3D
 from ..operations._grad_ops import UpsampleTrilinear3DGrad
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
+from ..operations.nn_ops import PadV3
+from ..operations._grad_ops import PadV3Grad
 from ..operations.nn_ops import AvgPoolV1
 from ..operations._grad_ops import AvgPoolGradV1
 from ..operations.nn_ops import UpsampleNearest3D
@@ -99,6 +101,25 @@ def get_bprop_hshrink(self):
     def bprop(features, out, gradients):
         dx = grad(gradients, features)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(PadV3)
+def get_bprop_pad_v3(self):
+    """Grad definition for `PadV3` operation."""
+    mode = self.mode
+    if mode == 'constant':
+        pad_v3_grad = PadV3(mode, self.paddings_contiguous)
+    else:
+        pad_v3_grad = PadV3Grad(mode, self.paddings_contiguous)
+    def bprop(x, paddings, constant_values, out, dout):
+        if mode == 'constant':
+            neg_paddings = tuple(-x for x in paddings)
+            dx = pad_v3_grad(dout, neg_paddings, zeros_like(constant_values))
+        else:
+            dx = pad_v3_grad(dout, paddings)
+        return (dx, zeros_like(paddings), zeros_like(constant_values))
 
     return bprop
 
