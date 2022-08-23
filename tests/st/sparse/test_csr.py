@@ -24,16 +24,7 @@ from mindspore.train.serialization import export, load
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _csr_ops
 
-from .sparse_utils import get_platform, compare_res
-
-
-def compare_csr(csr1, csr2):
-    assert isinstance(csr1, CSRTensor)
-    assert isinstance(csr2, CSRTensor)
-    assert (csr1.indptr.asnumpy() == csr2.indptr.asnumpy()).all()
-    assert (csr1.indices.asnumpy() == csr2.indices.asnumpy()).all()
-    assert (csr1.values.asnumpy() == csr2.values.asnumpy()).all()
-    assert csr1.shape == csr2.shape
+from .sparse_utils import get_platform, compare_res, compare_csr
 
 
 @pytest.mark.level0
@@ -54,6 +45,7 @@ def test_make_csr():
     indices = Tensor([0, 1])
     values = Tensor([1, 2], dtype=mstype.float32)
     shape = (2, 6)
+
     def test_pynative():
         return CSRTensor(indptr, indices, values, shape)
     test_graph = ms_function(test_pynative)
@@ -394,6 +386,7 @@ def test_csrtensor_export_and_import_mindir():
     """
     if get_platform() != "linux":
         return
+
     class TestCSRTensor(nn.Cell):
         def __init__(self, shape):
             super(TestCSRTensor, self).__init__()
@@ -655,6 +648,7 @@ def test_csr_method():
     """
     if get_platform() != "linux":
         return
+
     class CSRToCOONet(nn.Cell):
         def construct(self, csr_tensor):
             return csr_tensor.to_coo()
@@ -790,6 +784,7 @@ def test_dense_to_csr():
     Expectation: Success.
     """
     dense_tensor = Tensor([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=mstype.float32)
+
     def test_to_csr(dense_tensor):
         return dense_tensor.to_csr()
 

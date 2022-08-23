@@ -542,11 +542,11 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return new_node;
   }
 
-  static inline const mindspore::HashMap<PrimitivePtr, int64_t> sparse_attr_map = {
-    {prim::kPrimCSRTensorGetIndptr, 0},     {prim::kPrimCSRTensorGetIndices, 1}, {prim::kPrimCSRTensorGetValues, 2},
-    {prim::kPrimCSRTensorGetDenseShape, 3}, {prim::kPrimCOOTensorGetIndices, 0}, {prim::kPrimCOOTensorGetValues, 1},
-    {prim::kPrimCOOTensorGetDenseShape, 2}, {prim::kPrimRowTensorGetIndices, 0}, {prim::kPrimRowTensorGetValues, 1},
-    {prim::kPrimRowTensorGetDenseShape, 2}};
+  static inline const mindspore::HashMap<std::string, int64_t> sparse_attr_map = {
+    {prim::kCSRTensorGetIndptr, 0},     {prim::kCSRTensorGetIndices, 1}, {prim::kCSRTensorGetValues, 2},
+    {prim::kCSRTensorGetDenseShape, 3}, {prim::kCOOTensorGetIndices, 0}, {prim::kCOOTensorGetValues, 1},
+    {prim::kCOOTensorGetDenseShape, 2}, {prim::kRowTensorGetIndices, 0}, {prim::kRowTensorGetValues, 1},
+    {prim::kRowTensorGetDenseShape, 2}};
 
   // From:
   //   SparseTensorGetXXX(sparse) # index
@@ -561,13 +561,15 @@ class CleanAfterOptARewriter : public BaseRewriter {
     CheckInputsSize(node, kExpectInputSize);
 
     auto prim = GetValueNode<PrimitivePtr>(node->input(0));
-    auto iter = sparse_attr_map.find(prim);
-    if (iter != sparse_attr_map.end()) {
-      const auto &sparse = node->input(kSparseAttrIndex);
-      auto index_node = NewValueNode(iter->second);
-      auto new_node = node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, index_node});
-      new_node->set_abstract(node->abstract());
-      return new_node;
+    if (prim != nullptr) {
+      auto iter = sparse_attr_map.find(prim->name());
+      if (iter != sparse_attr_map.end()) {
+        const auto &sparse = node->input(kSparseAttrIndex);
+        auto index_node = NewValueNode(iter->second);
+        auto new_node = node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, index_node});
+        new_node->set_abstract(node->abstract());
+        return new_node;
+      }
     }
     return nullptr;
   }

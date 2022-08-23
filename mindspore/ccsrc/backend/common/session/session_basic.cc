@@ -1665,6 +1665,10 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_sync_status(kNeedSyncHostToDevice);
     return tensor;
+  } else if (value->isa<tensor::CSRTensor>()) {
+    return value->cast<tensor::CSRTensorPtr>()->GetTensorAt(output_index);
+  } else if (value->isa<tensor::COOTensor>()) {
+    return value->cast<tensor::COOTensorPtr>()->GetTensorAt(output_index);
   }
   return nullptr;
 }
