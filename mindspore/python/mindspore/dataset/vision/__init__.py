@@ -85,4 +85,4 @@ from .transforms import AdjustBrightness, AdjustContrast, AdjustGamma, AdjustHue
     ResizeWithBBox, RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, ToNumpy, ToPIL, ToTensor, ToType, \
     TrivialAugmentWide, UniformAugment, VerticalFlip, not_random
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, encode_jpeg, \
-    get_image_num_channels, get_image_size
+    get_image_num_channels, get_image_size, write_file

@@ -509,6 +509,12 @@ Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \param[in] quality The quality for the output tensor from 1 to 100. Default: 75.
 /// \return The status code.
 Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality = 75);
+
+/// \brief Write the one dimension uint8 data into a file using binary mode.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] data The tensor data.
+/// \return The status code.
+Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

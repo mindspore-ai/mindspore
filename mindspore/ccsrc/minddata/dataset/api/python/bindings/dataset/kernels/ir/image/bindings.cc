@@ -902,5 +902,11 @@ PYBIND_REGISTER(
         return vertical_flip;
       }));
   }));
+
+PYBIND_REGISTER(WriteFileOperation, 1, ([](py::module *m) {
+                  (void)m->def("write_file", ([](const std::string &filename, const std::shared_ptr<Tensor> &data) {
+                                 THROW_IF_ERROR(WriteFile(filename, data));
+                               }));
+                }));
 }  // namespace dataset
 }  // namespace mindspore

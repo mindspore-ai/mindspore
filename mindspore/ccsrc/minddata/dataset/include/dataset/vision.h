@@ -2021,6 +2021,12 @@ class DATASET_API VerticalFlip final : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
+
+/// \brief Write the one dimension uint8 data into a file using binary mode.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] data The tensor data.
+/// \return The status code.
+Status DATASET_API WriteFile(const std::string &filename, const mindspore::MSTensor &data);
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

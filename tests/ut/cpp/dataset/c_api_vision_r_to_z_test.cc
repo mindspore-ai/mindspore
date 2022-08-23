@@ -821,6 +821,7 @@ TEST_F(MindDataTestPipeline, TestToTensorOpInvalidInput) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_ERROR(iter->GetNextRow(&row));
 }
+
 /// Feature: ResizedCrop op
 /// Description: Test ResizedCrop pipeline
 /// Expectation: Input is processed as expected and all rows iterated correctly
@@ -899,7 +900,6 @@ TEST_F(MindDataTestPipeline, TestResizedCropParamCheck) {
   // Expect failure: invalid size for Crop
   EXPECT_EQ(iter3, nullptr);
 }
-
 
 /// Feature: RandAugment
 /// Description: test RandAugment pipeline
@@ -1130,4 +1130,52 @@ TEST_F(MindDataTestPipeline, TestRandAugmentMagGreNMBError) {
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
+}
+    
+/// Feature: WriteFile
+/// Description: Test WriteFile by writing the data into a file using binary mode
+/// Expectation: The file should be writeen and removed successfully
+TEST_F(MindDataTestPipeline, TestWriteFileNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesWriteFileNormal.";
+  std::string folder_path = "./data/dataset/";
+  std::string filename_1, filename_2;
+  filename_1 = folder_path + "apple.jpg";
+  filename_2 = filename_1 + ".test_write_file";
+
+  std::shared_ptr<Tensor> de_tensor_1, de_tensor_2;
+  Tensor::CreateFromFile(filename_1, &de_tensor_1);
+  auto data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor_1));
+
+  ASSERT_OK(mindspore::dataset::vision::WriteFile(filename_2, data_tensor));
+  Tensor::CreateFromFile(filename_2, &de_tensor_2);
+  EXPECT_EQ(de_tensor_1->shape(), de_tensor_2->shape());
+  remove(filename_2.c_str());
+}
+
+/// Feature: WriteFile
+/// Description: Test WriFile with invalid parameter
+/// Expectation: Error is caught when the parameter is invalid
+TEST_F(MindDataTestPipeline, TestWriteFileException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesWriteFileException.";
+  std::string folder_path = "./data/dataset/";
+  std::string filename_1, filename_2;
+  filename_1 = folder_path + "apple.jpg";
+  filename_2 = filename_1 + ".test_write_file";
+
+  std::shared_ptr<Tensor> de_tensor_1;
+  Tensor::CreateFromFile(filename_1, &de_tensor_1);
+  auto data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor_1));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::WriteFile(folder_path, data_tensor));
+
+  // Test with an invalid filename
+  ASSERT_ERROR(mindspore::dataset::vision::WriteFile("/dev/cdrom/0", data_tensor));
+
+  // Test with invalid float elements
+  std::shared_ptr<Tensor> input;
+  std::vector<float> float_vector = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.10, 11.11, 12.12};
+  Tensor::CreateFromVector(float_vector, TensorShape({12}), &input);
+  data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteFile(filename_2, data_tensor));
 }

@@ -445,3 +445,32 @@ def parse_padding(padding):
     if isinstance(padding, list):
         padding = tuple(padding)
     return padding
+
+
+def write_file(filename, data):
+    """
+    Write the one dimension uint8 data into a file using binary mode.
+
+    Args:
+        filename (str): The path to the file to be written.
+        data (Union[numpy.ndarray, mindspore.Tensor]): The one dimension uint8 data to be written.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `data` is not of type numpy.ndarray or mindspore.Tensor.
+        RuntimeError: If the `filename` path is not a common file.
+        RuntimeError: If the data type of `data` is not uint8.
+        RuntimeError: If the shape of `data` is not a one-dimensional array.
+
+    Examples:
+        >>> from mindspore.dataset import vision
+        >>> vision.write_file("/path/to/file", data)
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if isinstance(data, np.ndarray):
+        return cde.write_file(filename, cde.Tensor(data))
+    if isinstance(data, mindspore.Tensor):
+        return cde.write_file(filename, cde.Tensor(data.asnumpy()))
+    raise TypeError("Input data is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
+                                                                                 mindspore.Tensor, type(data)))

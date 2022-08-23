@@ -1424,6 +1424,14 @@ std::shared_ptr<TensorOperation> UniformAugment::Parse() {
 VerticalFlip::VerticalFlip() = default;
 
 std::shared_ptr<TensorOperation> VerticalFlip::Parse() { return std::make_shared<VerticalFlipOperation>(); }
+
+// WriteFile Function.
+Status WriteFile(const std::string &filename, const mindspore::MSTensor &data) {
+  std::shared_ptr<dataset::Tensor> de_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromMSTensor(data, &de_tensor));
+  RETURN_IF_NOT_OK(mindspore::dataset::WriteFile(filename, de_tensor));
+  return Status::OK();
+}
 #endif  // not ENABLE_ANDROID
 }  // namespace vision
 }  // namespace dataset
