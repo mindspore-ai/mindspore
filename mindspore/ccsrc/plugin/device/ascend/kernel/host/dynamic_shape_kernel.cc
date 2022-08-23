@@ -80,9 +80,6 @@ bool TensorShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::ve
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
   try {
     Execute();
   } catch (const std::exception &e) {

@@ -21,6 +21,7 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -110,11 +111,11 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
 
     auto cnode = GetCNode(op_name);
     MS_EXCEPTION_IF_NULL(cnode);
-    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
+    const auto stream_id = AnfAlgo::GetStreamId(cnode);
+    const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), kernel_mod->stream());
+    (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), stream);
 
     MS_LOG(INFO) << "Report step point, rt_model_id_: " << rt_model_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)

@@ -116,13 +116,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto comm_stream_attr = prim->GetAttr("stream_id");
-    if (comm_stream_attr) {
-      comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
-      MS_EXCEPTION_IF_NULL(comm_stream_);
-    }
 
     SelectCollectiveHandle();
     return true;
@@ -136,7 +129,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     root_ = 0;
     is_null_input_ = false;
     collective_handle_ = nullptr;
-    comm_stream_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -150,38 +142,35 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
                        void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    (void)AllReduce(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_, stream,
-                    group_name_);
+    (void)AllReduce(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_,
+                    reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
   void LaunchAllGather(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                        void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    (void)AllGather(input_addr, output_addr, input_size_ / sizeof(T), nccl_data_type_, stream, group_name_);
+    (void)AllGather(input_addr, output_addr, input_size_ / sizeof(T), nccl_data_type_,
+                    reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
   void LaunchReduceScatter(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                            void *stream_ptr) {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
-    (void)ReduceScatter(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_, stream,
-                        group_name_);
+    (void)ReduceScatter(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_,
+                        reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
   }
 
   void LaunchBroadcast(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                        void *stream_ptr) {
     T *input_addr = nullptr;
     T *output_addr = nullptr;
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
     for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
       input_addr = GetDeviceAddress<T>(inputs, i);
       output_addr = GetDeviceAddress<T>(outputs, i);
-      (void)Broadcast(input_addr, output_addr, output_size_list_[i] / sizeof(T), nccl_data_type_, root_, stream,
-                      group_name_);
+      (void)Broadcast(input_addr, output_addr, output_size_list_[i] / sizeof(T), nccl_data_type_, root_,
+                      reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     }
   }
 
@@ -240,7 +229,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
   size_t output_size_;
   int root_;
   bool is_null_input_;
-  cudaStream_t comm_stream_;
 
   static const size_t COMMUNICATION_MEM_ALIGN_SIZE = 16;
 };

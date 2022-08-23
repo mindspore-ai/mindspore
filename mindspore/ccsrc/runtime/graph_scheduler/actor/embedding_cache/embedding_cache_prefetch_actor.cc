@@ -97,8 +97,7 @@ ValueNodePtr NewValueNode(int64_t value, const DeviceContext *device_context, si
   MS_EXCEPTION_IF_NULL(address);
 
   // Sync tensor value.
-  MS_EXCEPTION_IF_CHECK_FAIL(address->AsyncHostToDevice({}, tensor_size, output_type_id, tensor->data_c(),
-                                                        device_context->device_res_manager_->GetStream(stream_id)),
+  MS_EXCEPTION_IF_CHECK_FAIL(address->AsyncHostToDevice({}, tensor_size, output_type_id, tensor->data_c(), stream_id),
                              "Async memcpy host to device failed.");
   MS_EXCEPTION_IF_CHECK_FAIL(device_context->device_res_manager_->SyncStream(stream_id), "Synchronize stream failed.");
 
@@ -199,8 +198,7 @@ bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const Devi
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
                                                                                  kTypeUnknown, ShapeVector());
   MS_ERROR_IF_NULL(device_address);
-  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr,
-                                                             device_context->device_res_manager_->GetStream(stream_id)),
+  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, stream_id),
                            "Async memcpy host to device failed.");
 
   return true;
@@ -219,8 +217,7 @@ bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const Devi
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
                                                                                  kTypeUnknown, ShapeVector());
   MS_ERROR_IF_NULL(device_address);
-  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr,
-                                                             device_context->device_res_manager_->GetStream(stream_id)),
+  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, stream_id),
                            "Async memcpy device to host failed.");
 
   return true;
@@ -296,7 +293,6 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
   PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
   emb_lookup_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
   emb_lookup_primitive->set_attr(kAttrOutputIsDynamicShape, MakeValue(true));
-  emb_lookup_primitive->set_attr(kAttrStream, MakeValue(stream_id_));
 
   std::vector<AnfNodePtr> emb_lookup_input_nodes{NewValueNode(emb_lookup_primitive), input_param, input_indices,
                                                  offset_value_node};
@@ -309,6 +305,7 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
   MS_EXCEPTION_IF_NULL(device_context_);
   MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
   device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
+  AnfAlgo::SetStreamId(stream_id_, embedding_cache_lookup_node_.get());
 }
 
 void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
@@ -325,7 +322,6 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
   // 2. Create a CNode for operator ScatterUpdate.
   PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kScatterUpdateOpName);
   embedding_cache_update_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
-  embedding_cache_update_primitive->set_attr(kAttrStream, MakeValue(stream_id_));
 
   std::vector<AnfNodePtr> embedding_cache_update_input_nodes{NewValueNode(embedding_cache_update_primitive),
                                                              input_param, input_indices, update_values};
@@ -338,6 +334,7 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
   MS_EXCEPTION_IF_NULL(device_context_);
   MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
   device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
+  AnfAlgo::SetStreamId(stream_id_, embedding_cache_update_node_.get());
 }
 
 bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num,
@@ -380,8 +377,8 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
 
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->kernel_executor_);
-  auto ret =
-    device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
+  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {},
+                                                             kernel_outputs, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
     return false;
@@ -431,8 +428,8 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
 
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->kernel_executor_);
-  auto ret =
-    device_context_->kernel_executor_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
+  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {},
+                                                             kernel_outputs, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;

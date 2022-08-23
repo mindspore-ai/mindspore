@@ -122,8 +122,10 @@ class DeviceResManager {
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                TypeId type_id, const ShapeVector &shape) const = 0;
 
-  // Create a stream with assigning a stream id, the assigned stream id will be written to the variable '*stream_id';
-  bool CreateStream(size_t *stream_id);
+  // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
+  virtual bool CreateStream(size_t *stream_id) const { return true; }
+  // Destroy a stream bound to the input parameter "stream_id".
+  virtual bool DestroyStream(size_t stream_id) const { return true; }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.
@@ -131,12 +133,6 @@ class DeviceResManager {
   // Since the current entry for creating streams is not unified, the implementation of the 'SyncStream'
   // interface is implemented by subclasses.
   virtual bool SyncStream(size_t stream_id = 0) const { return true; }
-
-  // Destroy all streams created by 'CreateStream'.
-  bool DestroyAllStreams();
-
-  // Get physical stream based on logical stream id.
-  void *GetStream(size_t stream_id) const;
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
@@ -146,17 +142,6 @@ class DeviceResManager {
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
  protected:
-  // Create a stream on the device of this device context.
-  virtual bool CreateStream(void **stream) const { return true; }
-  // Destroy a stream on the device of this device context.
-  virtual bool DestroyStream(void *stream) const { return true; }
-
-  // Record stream ids to stream address, key: stream id, value: address of stream.
-  std::map<size_t, void *> stream_ids_;
-
-  // Ensure the thread safety for creating stream.
-  std::mutex stream_mutex_;
-
   // Ensure the thread safety for allocating device memory.
   mutable std::mutex alloc_mem_mutex_;
 
@@ -207,7 +192,8 @@ class KernelExecutor {
 
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const {
+                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                            size_t stream_id) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 

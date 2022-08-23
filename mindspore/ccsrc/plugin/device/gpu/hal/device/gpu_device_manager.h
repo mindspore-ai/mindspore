@@ -40,8 +40,13 @@ class GPUDeviceManager {
   bool is_device_id_init() const;
 
   bool CreateStream(CudaDeviceStream *stream);
+  bool CreateStream(size_t *stream_id);
+  bool DestroyStream(size_t stream_id);
+  CudaDeviceStream GetStream(size_t stream_id) const;
+  bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
   const CudaDeviceStream &default_stream() const;
+  size_t default_stream_id() const;
 
   const cudnnHandle_t &GetCudnnHandle() const;
   const cublasHandle_t &GetCublasHandle() const;
@@ -68,8 +73,13 @@ class GPUDeviceManager {
   GPUDeviceManager(const GPUDeviceManager &) = delete;
   GPUDeviceManager &operator=(const GPUDeviceManager &) = delete;
 
+  // Ensure the thread safety for creating and destroying stream.
+  std::mutex stream_mutex_;
+
   // default CUDA stream used for all the kernels.
   CudaDeviceStream default_stream_{nullptr};
+
+  size_t default_stream_id_{0};
 
   // all gpu CUDA streams including default_stream_.
   std::vector<CudaDeviceStream> gpu_streams_;

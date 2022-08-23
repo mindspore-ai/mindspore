@@ -48,6 +48,7 @@ class DynamicAicpuOpKernelMod : public AicpuOpKernelMod {
   std::shared_ptr<device::ascend::AicpuExtInfoHandler> ext_info_handler_ = nullptr;
   size_t ext_info_size_ = 0;
   device::ascend::UnknowShapeOpType unknow_type_;
+  void *stream_;
 };
 
 using DynamicAicpuOpKernelModPtr = std::shared_ptr<DynamicAicpuOpKernelMod>;

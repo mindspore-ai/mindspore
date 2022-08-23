@@ -100,15 +100,10 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto comm_stream_attr = prim->GetAttr("stream_id");
-    if (comm_stream_attr) {
-      comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
-      MS_EXCEPTION_IF_NULL(comm_stream_);
-    }
 
     // Used by AlltoAllv
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
     auto send_rank_ids_attr = prim->GetAttr(kAttrSendRankIds);
     auto recv_rank_ids_attr = prim->GetAttr(kAttrRecvRankIds);
     if (send_rank_ids_attr && recv_rank_ids_attr) {
@@ -132,7 +127,6 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     root_ = 0;
     is_null_input_ = false;
     collective_handle_ = nullptr;
-    comm_stream_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -147,7 +141,6 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
                        void *stream_ptr) {
     T *input_addr = nullptr;
     I *output_addr = nullptr;
-    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
 
     // send_rank_id and recv rank_id size needs to be equal to input_list size, unless there is a depend input in
     // the input_list.
@@ -165,14 +158,14 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     if (!need_drop_input_) {
       for (size_t i = 0; i < input_size_list_.size(); ++i) {
         input_addr = GetDeviceAddress<T>(inputs, i);
-        (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids_[i], stream,
-                   group_name_);
+        (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids_[i],
+                   reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
       }
     }
     for (size_t i = 0; i < output_size_list_.size(); ++i) {
       output_addr = GetDeviceAddress<I>(outputs, i);
-      (void)Recv(output_addr, output_size_list_[i] / sizeof(I), output_nccl_data_type_, recv_rank_ids_[i], stream,
-                 group_name_);
+      (void)Recv(output_addr, output_size_list_[i] / sizeof(I), output_nccl_data_type_, recv_rank_ids_[i],
+                 reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     }
     (void)GroupEnd();
   }
@@ -202,7 +195,6 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
   size_t output_size_;
   int root_;
   bool is_null_input_;
-  cudaStream_t comm_stream_;
   ncclDataType_t output_nccl_data_type_;
   ncclDataType_t input_nccl_data_type_;
   std::vector<int64_t> send_rank_ids_;

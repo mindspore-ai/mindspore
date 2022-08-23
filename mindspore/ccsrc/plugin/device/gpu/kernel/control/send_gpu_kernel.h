@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CONTROL_SEND_GPU_KERNEL_H_
 
 #include <vector>
+#include "include/common/utils/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
@@ -29,16 +30,15 @@ class SendGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   ~SendGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *) override {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaEventRecord(record_event_, record_stream_),
+              void *stream_ptr) override {
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaEventRecord(record_event_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Recording cuda event failed.");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
-    record_stream_ = reinterpret_cast<cudaStream_t>(GetAttr<uintptr_t>(kernel_node, "record_event_stream"));
-    record_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, "record_event"));
+    record_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, kAttrRecordEvent));
     InitSizeLists();
     return true;
   }
@@ -52,7 +52,6 @@ class SendGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  cudaStream_t record_stream_{nullptr};
   cudaEvent_t record_event_{nullptr};
 };
 }  // namespace kernel

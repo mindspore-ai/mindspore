@@ -159,7 +159,7 @@ StreamActiveKind GetStreamKind(uint32_t cur_stream_id, uint32_t pre_stream_id, u
 
 void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
   auto exec_orders = graph_ptr->execution_order();
-  for (auto node : exec_orders) {
+  for (const auto &node : exec_orders) {
     common::AnfAlgo::SetNodeAttr(kAttrStreamID, MakeValue<uint32_t>(AnfAlgo::GetStreamId(node)), node);
   }
 }
@@ -235,9 +235,7 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
   if (kernels.empty()) {
     return;
   }
-  group_stream_id_map_[kHcclWorldGroup] = kWorldGroupStreamIndex;
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    auto &node = kernels[i];
+  for (const auto &node : kernels) {
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
     } else {
@@ -481,6 +479,10 @@ void AscendStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr>
 }
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
+  const auto default_stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  MS_EXCEPTION_IF_NULL(default_stream);
+  const auto comm_stream = AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex);
+  MS_EXCEPTION_IF_NULL(comm_stream);
   if (graph_ptr->has_flag(kFlagPyNativeRunInGraph) && !graph_ptr->is_graph_run_mode()) {
     AssignStreamForPynativeGraph(graph_ptr.get());
     return;

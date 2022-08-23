@@ -63,7 +63,8 @@ class CPUKernelExecutor : public KernelExecutor {
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                    size_t /* stream_id */) const override;
 
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all

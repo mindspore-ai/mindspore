@@ -783,10 +783,7 @@ static bool IsCtrlSink() {
     return false;
   }
 
-  if (!ms_ctx->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
-    return false;
-  }
-  return true;
+  return ms_ctx->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
 bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {

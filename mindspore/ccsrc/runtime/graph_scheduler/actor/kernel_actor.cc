@@ -474,7 +474,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   return device_contexts_[0]->kernel_executor_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                             launch_info_.outputs_);
+                                                             launch_info_.outputs_, kernel_info_->stream_id());
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {

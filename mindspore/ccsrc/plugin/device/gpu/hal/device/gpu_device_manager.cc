@@ -28,6 +28,7 @@ void GPUDeviceManager::InitDevice() {
     return;
   }
   CHECK_OP_RET_WITH_EXCEPT(CreateStream(&default_stream_), "Failed to create CUDA stream.");
+  default_stream_id_ = gpu_streams_.size() - 1;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreate(&cudnn_handle_), "Failed to create cuDNN handle");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
                                       "Failed to set stream for cuDNN handle.");
@@ -54,13 +55,15 @@ void GPUDeviceManager::ReleaseDevice() {
   if (!dev_alive_) {
     return;
   }
-
-  for (CudaDeviceStream stream : gpu_streams_) {
-    if (stream != nullptr) {
-      CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
+  {
+    std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
+    for (CudaDeviceStream stream : gpu_streams_) {
+      if (stream != nullptr) {
+        CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
+      }
     }
+    gpu_streams_.clear();
   }
-  gpu_streams_.clear();
 
   if (cudnn_handle_ != nullptr) {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroy(cudnn_handle_), "Failed to destroy cuDNN handle");
@@ -80,12 +83,46 @@ void GPUDeviceManager::ReleaseDevice() {
 }
 
 bool GPUDeviceManager::CreateStream(CudaDeviceStream *stream) {
+  std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(stream), "Failed to create CUDA stream");
-  gpu_streams_.emplace_back(*stream);
+  (void)gpu_streams_.emplace_back(*stream);
   return true;
 }
 
+bool GPUDeviceManager::CreateStream(size_t *stream_id) {
+  std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
+  CudaDeviceStream stream;
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(&stream), "Failed to create CUDA stream");
+  *stream_id = gpu_streams_.size();
+  (void)gpu_streams_.emplace_back(stream);
+  return true;
+}
+
+bool GPUDeviceManager::DestroyStream(size_t stream_id) {
+  std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
+  if (stream_id >= gpu_streams_.size()) {
+    MS_LOG(EXCEPTION) << "CUDA stream not found for stream id " << stream_id;
+  }
+  if (gpu_streams_.at(stream_id) == nullptr) {
+    MS_LOG(WARNING) << "CUDA stream hsa been destroyed for stream id " << stream_id;
+    return true;
+  }
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyStream(gpu_streams_.at(stream_id)), "Failed to create CUDA stream");
+  gpu_streams_[stream_id] = nullptr;
+  return true;
+}
+
+CudaDeviceStream GPUDeviceManager::GetStream(size_t stream_id) const {
+  if (stream_id >= gpu_streams_.size()) {
+    MS_LOG(DEBUG) << "Stream for stream id[" << stream_id << "] not found, return nullptr.";
+    return nullptr;
+  }
+  return gpu_streams_[stream_id];
+}
+
 const CudaDeviceStream &GPUDeviceManager::default_stream() const { return default_stream_; }
+
+size_t GPUDeviceManager::default_stream_id() const { return default_stream_id_; }
 
 int GPUDeviceManager::device_count() const { return CudaDriver::device_count(); }
 
@@ -111,6 +148,14 @@ const cublasHandle_t &GPUDeviceManager::GetCublasHandle() const { return cublas_
 const cusolverDnHandle_t &GPUDeviceManager::GetCusolverDnHandle() const { return cusolver_dn_handle_; }
 
 const cusparseHandle_t &GPUDeviceManager::GetCuSparseHandle() const { return cusparse_handle_; }
+
+bool GPUDeviceManager::SyncStream(size_t stream_id) const {
+  auto stream = GetStream(stream_id);
+  if (stream == nullptr) {
+    MS_LOG(EXCEPTION) << "Get CUDA stream for stream id failed.";
+  }
+  return SyncStream(stream);
+}
 
 bool GPUDeviceManager::SyncStream(const CudaDeviceStream &stream) const {
   return dev_alive_ ? CudaDriver::SyncStream(stream) : false;

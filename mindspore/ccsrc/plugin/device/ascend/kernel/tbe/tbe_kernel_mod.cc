@@ -39,9 +39,6 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
     MS_LOG(ERROR) << "kernel pack should not be nullptr.";
     return false;
   }
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
   // launch atomic_cleans first
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
@@ -76,8 +73,8 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
-  auto lock = device::KernelRuntime::LockRuntime(stream_);
-  auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_);
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
+  auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_ptr);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
     return false;

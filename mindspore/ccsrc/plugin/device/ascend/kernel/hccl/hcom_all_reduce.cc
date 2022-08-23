@@ -30,11 +30,8 @@ bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->addr, outputs[0]->addr, hccl_count_,
-                                                                    hccl_data_type_list_[0], op_type_, stream_, group_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(
+    inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], op_type_, stream_ptr, group_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
     return false;

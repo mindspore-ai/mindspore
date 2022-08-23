@@ -46,8 +46,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool LoadData(const session::KernelGraph &graph) override;
   bool GenTask(const session::KernelGraph &graph);
   void GenKernelEvents(const session::KernelGraph &graph) override;
-  void SetKernelModStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *last_stream_nodes);
-  void SetKernelModRtStream(const std::vector<CNodePtr> &kernels);
+  void GetLastNodesOnStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *stream_last_nodes);
   void ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
                             std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
                             const std::vector<size_t> &last_stream_nodes);
@@ -76,6 +75,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
   void *GetModelStream(uint32_t graph_id) const override;
+  void *GetKernelStream(const AnfNodePtr &kernel) const override;
   // add for MindRT
   void ReleaseDeviceRes() override;
   uint64_t GetMsUsedHbmSize() const;
@@ -127,8 +127,6 @@ class AscendKernelRuntime : public KernelRuntime {
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtExceptionInfo> task_fail_infoes_;
-  std::map<uint32_t, std::shared_ptr<std::map<uint32_t, void *>>> device_stream_id_map_;
-  std::map<uint32_t, void *> stream_id_map_;
   std::set<uint32_t> initialized_device_set_{};
   tasksink::RtModelZeroCopy rt_model_zero_copy_;
 };

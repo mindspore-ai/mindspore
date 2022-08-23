@@ -477,7 +477,8 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
-    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs)) {
+    const size_t stream_id = AnfAlgo::GetStreamId(node);
+    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 

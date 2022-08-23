@@ -337,8 +337,8 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 }
 
 bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) const {
+                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                     size_t /* stream_id */) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

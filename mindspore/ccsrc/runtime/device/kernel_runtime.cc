@@ -104,7 +104,6 @@ constexpr size_t kMinInputSize = 2;
 KernelRuntime::TbeLaunchKernelModCallBack KernelRuntime::tbe_call_ = nullptr;
 KernelRuntime::~KernelRuntime() {
   stream_ = nullptr;
-  independent_stream_ = nullptr;
   communication_stream_ = nullptr;
 }
 
@@ -1666,14 +1665,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   KernelLaunchInfo kernel_launch_info;
-  auto stream = kernel_mod->stream();
-  if (stream == nullptr) {
-    if (common::AnfAlgo::IsCommunicationOp(kernel)) {
-      stream = communication_stream_;
-    } else {
-      stream = stream_;
-    }
-  }
+  auto stream = GetKernelStream(kernel);
   bool ret = true;
   if (mem_scheduler != nullptr) {
     ret = MemSchedulerPreCompute(kernel, mem_scheduler, stream, mock, &kernel_launch_info);

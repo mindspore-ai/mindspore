@@ -157,7 +157,8 @@ void ReshapeKernelMod::Execute() const {
   MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
 
-void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
+void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+                               void *stream_ptr) const {
   MS_LOG(INFO) << "Execute host ReshapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -176,9 +177,9 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
 
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream_);
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   auto status =
-    rtMemcpyAsync(output_addr, outputs[0]->size, address_x, input_size_byte, RT_MEMCPY_DEVICE_TO_DEVICE, stream_);
+    rtMemcpyAsync(output_addr, outputs[0]->size, address_x, input_size_byte, RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtMemcpyAsync failed, ret = 0x" << status;
   }
@@ -191,11 +192,8 @@ bool ReshapeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
   try {
-    Execute(inputs, outputs);
+    Execute(inputs, outputs, stream_ptr);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. node: " << cnode->fullname_with_scope() << ", Error message is "
                   << e.what();

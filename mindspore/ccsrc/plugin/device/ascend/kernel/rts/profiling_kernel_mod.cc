@@ -54,10 +54,7 @@ bool ProfilingKernelMod::Launch(const std::vector<AddressPtr> &, const std::vect
   if (!common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
     return true;
   }
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
-  auto rt_ret = rtProfilerTrace(log_id_, notify_, flags_, stream_);
+  auto rt_ret = rtProfilerTrace(log_id_, notify_, flags_, stream_ptr);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtProfilerTrace failed";
     return false;

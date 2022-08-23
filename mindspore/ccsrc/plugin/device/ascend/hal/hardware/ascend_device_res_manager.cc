@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "runtime/rt.h"
+#include "include/common/utils/utils.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -40,12 +42,6 @@ void AscendDeviceResManager::Initialize() {
     // get actual rank id if it's distribution training case.
     rank_id_ = GetRankId();
   }
-
-  compute_stream_ = runtime_instance_->compute_stream();
-  MS_EXCEPTION_IF_NULL(compute_stream_);
-  communication_stream_ = runtime_instance_->communication_stream();
-  MS_EXCEPTION_IF_NULL(communication_stream_);
-
   MS_LOG(INFO) << "Device resource manager Initialize success.";
 }
 
@@ -60,6 +56,7 @@ void AscendDeviceResManager::Destroy() {
     runtime_instance_ = nullptr;
   }
   MS_LOG(INFO) << "Device resource manager Destroy success.";
+  AscendStreamMng::GetInstance().DestroyAllStreams();
 }
 
 bool AscendDeviceResManager::BindDeviceToCurrentThread() const {
@@ -110,8 +107,8 @@ std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
   std::vector<size_t> align_size_list;
-  for (size_t i = 0; i < size_list.size(); i++) {
-    auto align_size = device::MemoryManager::GetCommonAlignSize(size_list[i]);
+  for (size_t size : size_list) {
+    auto align_size = device::MemoryManager::GetCommonAlignSize(size);
     align_size_list.emplace_back(align_size);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
@@ -130,42 +127,24 @@ DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_
   return device_address;
 }
 
+bool AscendDeviceResManager::CreateStream(size_t *stream_id) const {
+  return AscendStreamMng::GetInstance().CreateStream(stream_id);
+}
+
+bool AscendDeviceResManager::DestroyStream(size_t stream_id) const {
+  return AscendStreamMng::GetInstance().DestroyStream(stream_id);
+}
+
 bool AscendDeviceResManager::SyncStream(size_t stream_id) const {
-  auto iter = stream_ids_.find(stream_id);
-  if (iter != stream_ids_.end()) {
-    MS_EXCEPTION_IF_NULL(iter->second);
-    auto ret = rtStreamSynchronize(iter->second);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Failed to synchronize ascend stream, ret[" << ret << "]";
-      return false;
-    }
-    return true;
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream != nullptr) {
+    return AscendStreamMng::GetInstance().SyncStream(stream_id);
   }
 
   if (runtime_instance_ != nullptr) {
     return runtime_instance_->SyncStream();
   }
 
-  return true;
-}
-
-bool AscendDeviceResManager::CreateStream(void **stream) const {
-  MS_EXCEPTION_IF_NULL(stream);
-  auto ret = rtStreamCreate(stream, 0);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Failed to create ascend stream, ret[" << ret << "]";
-    return false;
-  }
-  return true;
-}
-
-bool AscendDeviceResManager::DestroyStream(void *stream) const {
-  MS_EXCEPTION_IF_NULL(stream);
-  auto ret = rtStreamDestroy(stream);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Failed to destroy ascend stream, ret[" << ret << "]";
-    return false;
-  }
   return true;
 }
 }  // namespace ascend

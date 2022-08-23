@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
 #include "abstract/utils.h"
@@ -529,9 +530,10 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
 }
 
 bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
-                                            const void *host_ptr, void *stream) const {
+                                            const void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(ptr_, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
@@ -543,9 +545,10 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, siz
 }
 
 bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
-                                            void *host_ptr, void *stream) const {
+                                            void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(host_ptr, size, ptr_, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);

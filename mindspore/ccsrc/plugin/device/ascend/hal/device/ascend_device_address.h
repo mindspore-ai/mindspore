@@ -66,10 +66,11 @@ class AscendDeviceAddress : public DeviceAddress {
 #endif
 
   // Asynchronously copy host memory to device side.
-  bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr, void *stream) const;
+  bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
+                         size_t stream_id) const;
 
   // Asynchronously copy device memory to host side.
-  bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr, void *stream) const;
+  bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr, size_t stream_id) const;
 
  private:
   bool SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const;

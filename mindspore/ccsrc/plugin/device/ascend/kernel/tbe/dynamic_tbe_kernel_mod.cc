@@ -218,9 +218,6 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     MS_LOG(ERROR) << "The kernel_pack should not be nullptr.";
     return false;
   }
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
 
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);

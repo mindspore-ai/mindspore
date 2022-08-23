@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"
@@ -202,8 +203,6 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       const auto &kernels = graph->execution_order();
       CreateKernel(kernels);
-      MS_EXCEPTION_IF_NULL(res_manager_->runtime_instance_);
-      res_manager_->runtime_instance_->SetKernelModRtStream(kernels);
     }
   } catch (const std::exception &e) {
     ReportErrorMessage();
@@ -309,9 +308,11 @@ std::shared_ptr<Bucket> AscendKernelExecutor::CreateBucket(uint32_t bucket_id, u
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
   if (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel) {
-    bucket->Init({res_manager_->compute_stream_}, {res_manager_->compute_stream_});
+    bucket->Init({AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)},
+                 {AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)});
   } else {
-    bucket->Init({res_manager_->compute_stream_}, {res_manager_->communication_stream_});
+    bucket->Init({AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)},
+                 {AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex)});
   }
   return bucket;
 }
@@ -320,7 +321,8 @@ bool AscendKernelExecutor::PySyncRuning() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream(0)) {
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) &&
+      !res_manager_->SyncStream(kDefaultStreamIndex)) {
     return false;
   }
   return true;
@@ -335,39 +337,14 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
     return false;
   }
 
-  aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, res_manager_->compute_stream_);
+  aclError status =
+    aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE,
+                     AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex));
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
     return false;
   }
   return true;
-}
-
-void *AscendKernelExecutor::GetKernelStream(const CNodePtr &node) const {
-  auto kernel_mod = AnfAlgo::GetKernelMod(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return res_manager_->compute_stream_;
-  } else if (common::AnfAlgo::HasNodeAttr(kAttrStream, node)) {
-    auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(node, kAttrStream);
-    auto iter = res_manager_->stream_ids_.find(stream_id);
-    if (iter == res_manager_->stream_ids_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find stream for stream id: " << stream_id;
-    }
-    void *stream = iter->second;
-    MS_EXCEPTION_IF_NULL(stream);
-    return stream;
-  } else {
-    auto stream = kernel_mod->stream();
-    if (stream == nullptr) {
-      stream = res_manager_->compute_stream_;
-      MS_LOG(INFO) << "Assign default compute stream for node " << node->fullname_with_scope();
-    }
-    return stream;
-  }
 }
 
 bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
@@ -390,7 +367,8 @@ bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vec
 }
 
 bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                        const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs) const {
+                                        const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
+                                        size_t stream_id) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto graph_id = AnfAlgo::GetGraphId(kernel.get());
@@ -409,13 +387,16 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
+
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);
   if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     auto iter = node_atomics_persistent_cache_.find(kernel);
     if (iter != node_atomics_persistent_cache_.end()) {
       std::lock_guard<std::mutex> locker(launch_mutex_);
       // launch atomic clean
-      if (!LaunchAtomicClean(kernel, workspace, outputs)) {
+      if (!LaunchAtomicClean(kernel, workspace, outputs, stream)) {
         MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
         return false;
       }
@@ -427,7 +408,6 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
-    auto stream = GetKernelStream(kernel);
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
     MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -458,7 +438,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 }
 
 bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) const {
+                                             const std::vector<AddressPtr> &outputs, void *stream) const {
   auto iter = node_atomics_persistent_cache_.find(node);
   if (iter == node_atomics_persistent_cache_.end()) {
     return true;
@@ -494,7 +474,7 @@ bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::ve
   // Launch Atomic Node
   auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(node));
+  return kernel_mod->Launch(atomic_inputs, {}, {}, stream);
 }
 }  // namespace ascend
 }  // namespace device

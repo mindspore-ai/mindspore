@@ -204,7 +204,6 @@ class AscendStreamAssign {
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
   std::set<CNodeKey> independent_targets_;
-  std::map<std::string, uint32_t> group_stream_id_map_;
 
   // key:group name, value:key1:graph id, value1:stream id
   std::map<std::string, std::map<uint32_t, std::set<uint32_t>>> group_hcom_graph_map_;
