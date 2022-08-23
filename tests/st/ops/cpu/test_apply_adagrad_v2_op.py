@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 
@@ -67,3 +68,46 @@ def test_apply_adagrad_v2():
 
     assert np.all(np.abs(expect_var_np - res_var_mindspore) < eps)
     assert np.all(np.abs(expect_accum_np - res_accum_mindspore) < eps)
+
+
+class VmapNet(nn.Cell):
+    def __init__(self):
+        super(VmapNet, self).__init__()
+        self.apply_gradient_descent = P.ApplyAdagradV2(1e-6)
+
+    def construct(self, var, accum, lr, grad):
+        return self.apply_gradient_descent(var, accum, lr, grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_apply_adagrad_v2():
+    """
+    Feature: ApplyAdagradV2 cpu op vmap.
+    Description: test vmap feature for ApplyAdagradV2 cpu op.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    var_array = np.array([[0.59021956, 0.6402413, 0.26803252],
+                          [0.64904916, 0.5892827, 0.6982026],
+                          [0.4472826, 0.4589515, 0.29412633]])
+    accum_array = np.array([[0.59021956, 0.6402413, 0.26803252],
+                            [0.64904916, 0.5892827, 0.6982026],
+                            [0.4472826, 0.4589515, 0.29412633]])
+    var = Parameter(var_array, name="var")
+    accum = Parameter(accum_array, name="accum")
+    lr = Tensor([0.001, 0.1, 3], mstype.float32)
+    grad = Tensor(np.arange(9).reshape(3, 3).astype(np.float16))
+    net = VmapNet()
+    expect_var = np.array([[0.59021956, 0.6394605, 0.26706442],
+                           [0.55247104, 0.49107486, 0.59957045],
+                           [-2.53425217, -2.52709651, -2.69900346]])
+    expect_accum = np.array([[0.59021956, 1.64024138, 4.26803255],
+                             [9.64904881, 16.58928299, 25.69820213],
+                             [36.44728088, 49.45895004, 64.29412842]])
+    [vmap_var, vmap_accum] = F.vmap(net, in_axes=(0, 0, 0, 0))(var, accum, lr, grad)
+    error_var = np.ones(shape=expect_var.shape) * 1.0e-6
+    error_accum = np.ones(shape=expect_accum.shape) * 1.0e-6
+    assert np.all(abs(vmap_var.asnumpy() - expect_var) < error_var)
+    assert np.all(abs(vmap_accum.asnumpy() - expect_accum) < error_accum)

@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/apply_adagrad_v2_cpu_kernel.h"
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <utility>
 #include <thread>
@@ -38,6 +39,7 @@ constexpr size_t kGradIndex = 3;
 bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+  batch_rank_ = base_operator->get_batch_rank();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
   if (kernel_ptr == nullptr) {
@@ -101,6 +103,12 @@ int ApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != KRET_OK) {
     return ret;
   }
+  // get inner input size.
+  if (batch_rank_ != 0) {
+    auto input_shape = inputs[kIndex0]->GetShapeVector();
+    inner_input_size_ =
+      std::accumulate(input_shape.begin() + batch_rank_, input_shape.end(), size_t(1), std::multiplies<size_t>());
+  }
   return ret;
 }
 
@@ -116,13 +124,14 @@ bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   size_t length = inputs[0]->size / sizeof(T);
   const float &epsilon = this->epsilon_;
   const bool &update_slots = this->update_slots_;
-  auto task = [var, accum, lr, gradient, &epsilon, &update_slots](size_t start, size_t end) {
+  auto task = [this, var, accum, lr, gradient, &epsilon, &update_slots](size_t start, size_t end) {
     // DataType can only be float32 or float16, so eps will not be zero.
     const T zero = static_cast<T>(0);
     const T one = static_cast<T>(1);
     const T eps_if_zero = static_cast<T>(1e-6);
     const T eps_param = static_cast<T>(epsilon);
     for (size_t i = start; i < end; ++i) {
+      size_t batch_index = inner_input_size_ <= 0 ? 0 : i / inner_input_size_;
       // update accum: accum += grad * grad
       if (update_slots) {
         accum[i] += gradient[i] * gradient[i];
@@ -133,7 +142,7 @@ bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         dividend = dividend + eps_if_zero;
       }
       // update var: var -= lr * grad * \frac{1}{\sqrt{accum} * eps}
-      var[i] -= lr[0] * gradient[i] * (one / dividend);
+      var[i] -= lr[batch_index] * gradient[i] * (one / dividend);
     }
   };
   ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);

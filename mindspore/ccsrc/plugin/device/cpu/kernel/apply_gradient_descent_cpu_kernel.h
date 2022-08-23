@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_APPLY_GRADIENT_DESCENT_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_APPLY_GRADIENT_DESCENT_CPU_KERNEL_H_
 #include <algorithm>
+#include <map>
 #include <vector>
 #include <memory>
 #include <string>
@@ -31,6 +32,11 @@ class ApplyGradientDescentCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -54,6 +60,8 @@ class ApplyGradientDescentCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   size_t input_size_;
+  size_t inner_input_size_;  // inner_input_size_ is the number of elements in one batch.
+  int64_t batch_rank_{0};
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void ComputeTask(T *x_data_addr, T *grid_data_addr, T *output_data_addr, const size_t &seq);

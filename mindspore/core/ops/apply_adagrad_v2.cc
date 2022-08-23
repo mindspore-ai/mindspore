@@ -17,6 +17,7 @@
 #include "ops/apply_adagrad_v2.h"
 
 #include <algorithm>
+#include <functional>
 #include <set>
 #include <utility>
 
@@ -36,12 +37,21 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto grad_shape = input_args[kInputIndex3]->BuildShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
+  }
   // lr must be a scalar [Number, Tensor]
   const int64_t kShapeSize_ = 1;
   auto lr_shape_size = lr_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_size, kLessEqual, kShapeSize_, primitive->name());
-  if (lr_shape_size == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize_, primitive->name());
+  if (batch_rank > 0) {
+    // when batch dimension exists, the rank of `lr` must equal to batch_rank.
+    (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_size, kEqual, batch_rank, primitive->name());
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_size, kLessEqual, kShapeSize_, primitive->name());
+    if (lr_shape_size == 1) {
+      (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize_, primitive->name());
+    }
   }
   // var, accum and grad must have the same shape
   if (grad_shape_ptr->IsDynamic()) {

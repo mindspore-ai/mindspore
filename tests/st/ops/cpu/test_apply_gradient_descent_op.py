@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
@@ -122,3 +123,37 @@ def test_apply_gradient_descent_wrong_dtype():
         delta = Tensor(np.arange(34, 44).reshape(2, 5).astype(np.float32))
         net = Net(var)
         _ = net(alpha, delta)
+
+
+class VmapNet(nn.Cell):
+    def __init__(self):
+        super(VmapNet, self).__init__()
+        self.apply_gradient_descent = P.ApplyGradientDescent()
+
+    def construct(self, var, alpha, delta):
+        return self.apply_gradient_descent(var, alpha, delta)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_apply_gradient_descent():
+    """
+    Feature: ApplyGradientDescent cpu op vmap.
+    Description: test vmap feature for ApplyGradientDescent cpu op.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    var = Parameter(np.arange(30).reshape(3, 2, 5).astype(np.float32) / 10, name="var")
+    alpha = Tensor(np.array([0.0001, 0.1, 3]).astype(np.float32))
+    delta = Tensor(np.arange(34, 64).reshape(3, 2, 5).astype(np.float32))
+    net = VmapNet()
+    expect = np.array([[[[-0.0034, 0.0965, 0.1964, 0.29630002, 0.3962],
+                         [0.4961, 0.596, 0.69589996, 0.79580003, 0.8957]],
+                        [[-3.4, -3.4, -3.3999999, -3.4000003, -3.4],
+                         [-3.4, -3.4, -3.3999999, -3.4000003, -3.4]],
+                        [[-160, -162.9, -165.8, -168.7, -171.6],
+                         [-174.5, -177.4, -180.3, -183.2, -186.1]]]]).astype(np.float32)
+    out_vmap = F.vmap(net, in_axes=(0, 0, 0))(var, alpha, delta)
+    error = np.ones(shape=expect.shape) * 1.0e-6
+    assert np.all(abs(out_vmap.asnumpy() - expect) < error)
