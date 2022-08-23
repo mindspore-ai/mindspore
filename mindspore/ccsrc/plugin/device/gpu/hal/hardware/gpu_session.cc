@@ -404,6 +404,7 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // Insert maketuple graph output in case of multi-outputs.
   // The ConvertTupleOutputToMaketuple pass will insert TupleGetItem.
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
+  SessionBasic::UnifyMindIR(root_graph);
   opt::BackendCommonOptimization(root_graph);
   return CompileGraphImpl(root_graph);
 }
