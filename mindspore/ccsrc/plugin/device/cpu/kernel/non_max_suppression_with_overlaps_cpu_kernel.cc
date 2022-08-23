@@ -100,7 +100,10 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     }
   }
   float similarity = static_cast<float>(0.0);
-  Candidate next_candidate = {.box_index = 0, .score = static_cast<float>(0.0), .suppress_begin_index = 0};
+  Candidate next_candidate;
+  next_candidate.box_index = 0;
+  next_candidate.score = static_cast<float>(0.0);
+  next_candidate.suppress_begin_index = 0;
   int32_t cnt = 0;
   while (cnt < max_output_size_ && !candidate_priority_queue.empty()) {
     next_candidate = candidate_priority_queue.top();

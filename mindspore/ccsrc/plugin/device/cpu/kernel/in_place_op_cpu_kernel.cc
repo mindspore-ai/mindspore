@@ -104,7 +104,8 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
       {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Atomic<Sub>>},
     };
     if (inplaceOpFuncMap.find(kernel_name_) == inplaceOpFuncMap.end()) {
-      MS_LOG(EXCEPTION) << "For 'InplaceOp', only supports operators in " << Map2Str(inplaceOpFuncMap) << ", but got "
+      MS_LOG(EXCEPTION) << "For 'InplaceOp', only supports operators in "
+                        << Map2Str<std::unordered_map, TypeComputeFunc>(inplaceOpFuncMap) << ", but got "
                         << kernel_name_ << ".";
     }
 
@@ -115,7 +116,8 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     if (kernel_name_ != prim::kPrimInplaceUpdate->name() && (indices_set.size() != indices_.size())) {
       if (inplaceOpFuncMap.find(kernel_name_) == inplaceOpFuncMap.end()) {
         MS_LOG(EXCEPTION) << "For 'InplaceOp', atomic operations only support operators in "
-                          << Map2Str(inplaceOpFuncMap) << ", but got " << kernel_name_ << ".";
+                          << Map2Str<std::unordered_map, TypeComputeFunc>(inplaceOpFuncMap) << ", but got "
+                          << kernel_name_ << ".";
       }
       compute_func_ = inplaceOpAtomicFuncMap.at(kernel_name_);
     } else {
