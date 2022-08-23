@@ -275,7 +275,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);
   reg.AddFlag("online_tuning", &online_tuning);
   reg.AddFlag("cpu_refer_thread_num", &cpu_refer_thread_num);
-  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
+  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_1);
   reg.AddFlag("parallel_ops_level", &parallel_ops_level);
   reg.AddFlag("recompute_increment_threshold", &recompute_increment_threshold);
   reg.AddFlag("recompute_peak_threshold", &recompute_peak_threshold);

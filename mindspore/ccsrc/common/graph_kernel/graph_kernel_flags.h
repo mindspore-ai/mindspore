@@ -32,7 +32,8 @@ constexpr unsigned int OptLevel_MAX = 4;
 
 constexpr unsigned int OpLevel_0 = 0;
 constexpr unsigned int OpLevel_1 = 1;
-constexpr unsigned int OpLevel_MAX = 2;
+constexpr unsigned int OpLevel_2 = 2;
+constexpr unsigned int OpLevel_MAX = 3;
 constexpr unsigned int default_cpu_refer_tread_num = 8;
 
 class GraphKernelFlags {
