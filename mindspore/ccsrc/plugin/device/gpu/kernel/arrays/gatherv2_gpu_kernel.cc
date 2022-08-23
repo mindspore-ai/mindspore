@@ -24,19 +24,19 @@ using Complex = mindspore::utils::Complex<T>;
 
 MS_REG_GPU_KERNEL_THREE(
   Gather,
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
   GatherV2FwdGpuKernelMod, Complex<float>, int, int64_t)
 MS_REG_GPU_KERNEL_THREE(
   Gather,
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
   GatherV2FwdGpuKernelMod, Complex<float>, int64_t, int64_t)
 MS_REG_GPU_KERNEL_THREE(
   Gather,
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
   GatherV2FwdGpuKernelMod, Complex<double>, int, int64_t)
 MS_REG_GPU_KERNEL_THREE(
   Gather,
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
   GatherV2FwdGpuKernelMod, Complex<double>, int64_t, int64_t)
 MS_REG_GPU_KERNEL_THREE(
   Gather,
