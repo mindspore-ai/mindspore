@@ -95,16 +95,12 @@ class AnfNodeConfig : public Config {
         node_(node),
         context_(nullptr),
         func_graph_(func_graph) {
-    FuncGraphPtr fg;
-    if (IsValueNode<FuncGraph>(node)) {
-      auto v = node->cast<ValueNodePtr>();
-      fg = v->value()->cast<FuncGraphPtr>();
-    } else {
-      fg = node->func_graph();
-    }
-
     if (context == nullptr) {
       return;
+    }
+    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
+    if (fg == nullptr && node != nullptr) {
+      fg = node->func_graph();
     }
     if (context->func_graph() == fg) {
       // Usually `node` is CNode and not a FV, or top graph's ValueNodes.
