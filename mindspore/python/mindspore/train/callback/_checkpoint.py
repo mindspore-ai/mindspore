@@ -72,7 +72,7 @@ class CheckpointConfig:
 
     Note:
         During the training process, if dataset is transmitted through the data channel,
-        It is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
+        it is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
         Otherwise, the time to save the checkpoint may be biased.
         It is recommended to set only one save strategy and one keep strategy at the same time.
         If both `save_checkpoint_steps` and `save_checkpoint_seconds` are set,

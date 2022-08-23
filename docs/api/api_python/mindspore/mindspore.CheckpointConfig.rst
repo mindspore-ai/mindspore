@@ -6,7 +6,7 @@ mindspore.CheckpointConfig
     保存checkpoint时的配置策略。
 
     .. note::
-        在训练过程中，如果数据集是通过数据通道传输的，建议将 `save_checkpoint_steps` 设为循环下沉step数量的整数倍数，否则，保存checkpoint的时机可能会有偏差。建议同时只设置一种触发保存checkpoint策略和一种保留checkpoint文件总数策略。如果同时设置了 `save_checkpoint_steps` 和 `save_checkpoint_seconds` ，则 `save_checkpoint_seconds` 无效。如果同时设置了 `keep_checkpoint_max` 和 `keep_checkpoint_per_n_minutes` ，则 `keep_checkpoint_per_n_minutes` 无效。
+        在训练过程中，如果数据集是通过数据通道传输的，建议将 `save_checkpoint_steps` 设为循环下沉step数量的整数倍数。否则，保存checkpoint的时机可能会有偏差。建议同时只设置一种触发保存checkpoint策略和一种保留checkpoint文件总数策略。如果同时设置了 `save_checkpoint_steps` 和 `save_checkpoint_seconds` ，则 `save_checkpoint_seconds` 无效。如果同时设置了 `keep_checkpoint_max` 和 `keep_checkpoint_per_n_minutes` ，则 `keep_checkpoint_per_n_minutes` 无效。
 
     参数：
         - **save_checkpoint_steps** (int) - 每隔多少个step保存一次checkpoint。默认值：1。
