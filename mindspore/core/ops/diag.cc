@@ -73,10 +73,9 @@ AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto infer_type = DiagInferType(primitive, input_args);
-  auto infer_shape = DiagInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstract(DiagInferShape(primitive, input_args), DiagInferType(primitive, input_args));
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Diag, prim::kPrimDiag, DiagInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

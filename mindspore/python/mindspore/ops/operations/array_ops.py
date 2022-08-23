@@ -3900,14 +3900,15 @@ class DiagPart(PrimitiveWithInfer):
         ValueError: If input_shape[i] is not equal to input_shape[i + len(input_shape)/2].
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples
         >>> input_x = Tensor([[1, 0, 0, 0],
         ...                   [0, 2, 0, 0],
         ...                   [0, 0, 3, 0],
         ...                   [0, 0, 0, 4]])
-        >>> diag_part = ops.DiagPart()
+        >>> import mindspore.ops as P
+        >>> diag_part = P.DiagPart()
         >>> output = diag_part(input_x)
         >>> print(output)
         [1 2 3 4]
