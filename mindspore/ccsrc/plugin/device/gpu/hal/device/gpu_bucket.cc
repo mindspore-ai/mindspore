@@ -17,7 +17,9 @@
 #include "plugin/device/gpu/hal/device/gpu_bucket.h"
 
 #include <cuda_runtime_api.h>
+#ifndef _WIN32
 #include <nccl.h>
+#endif
 #include <vector>
 #include <memory>
 #include "abstract/utils.h"
@@ -107,6 +109,7 @@ void GPUBucket::CopyTensorToContiguousMemory() {
 }
 
 void GPUBucket::LaunchAllReduce() {
+#ifndef _WIN32
   MS_LOG(INFO) << "start";
   collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
   auto all_reduce_funcptr =
@@ -149,6 +152,9 @@ void GPUBucket::LaunchAllReduce() {
   }
 
   MS_LOG(INFO) << "end";
+#else
+  MS_LOG(EXCEPTION) << "windows not support nccl, so not support LaunchAllReduce.";
+#endif
 }
 
 void GPUBucket::Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) {

@@ -99,12 +99,16 @@ bool GPUKernelRuntime::Init() {
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
     if (collective_handle != nullptr) {
+#ifndef _WIN32
       MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_id_;
       auto init_nccl_comm_funcptr =
         reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
       MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
       (*init_nccl_comm_funcptr)();
       MS_LOG(INFO) << "End initializing NCCL communicator.";
+#else
+      MS_LOG(EXCEPTION) << "windows not support nccl.";
+#endif
     }
   }
   device_init_ = true;

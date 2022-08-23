@@ -34,7 +34,9 @@ namespace py = pybind11;
 
 namespace mindspore {
 namespace dataset {
+#ifndef _MSC_VER
 #pragma GCC visibility push(hidden)
+#endif
 
 constexpr int32_t kGetItemTimeOutMilliSeconds = 25000;
 
@@ -114,7 +116,9 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   Status Init();
 };
 
+#ifndef _MSC_VER
 #pragma GCC visibility pop
+#endif
 }  // namespace dataset
 }  // namespace mindspore
 

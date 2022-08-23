@@ -113,6 +113,7 @@ void GPUSession::Init(uint32_t device_id) {
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
     if (collective_handle != nullptr) {
+#ifndef _WIN32
       MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_id;
       auto init_nccl_comm_funcptr =
         reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
@@ -120,6 +121,9 @@ void GPUSession::Init(uint32_t device_id) {
       (*init_nccl_comm_funcptr)();
       MS_LOG(INFO) << "End initializing NCCL communicator.";
       rank_id_ = GetRankId();
+#else
+      MS_LOG(EXCEPTION) << "windows not support nccl.";
+#endif
     }
   }
 #ifndef ENABLE_SECURITY

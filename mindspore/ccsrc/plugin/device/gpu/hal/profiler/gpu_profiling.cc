@@ -16,10 +16,17 @@
 
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 
+#ifndef _WIN32
 #include <cxxabi.h>
+#else
+#include <typeinfo>
+#include <Windows.h>
+#endif
 #include <chrono>
 #include <cmath>
 #include <ctime>
+#include <thread>
+#include <sstream>
 #include "plugin/device/gpu/hal/profiler/cupti_interface.h"
 #include "plugin/device/gpu/hal/profiler/gpu_data_saver.h"
 #include "include/common/pybind_api/api_register.h"
@@ -27,6 +34,39 @@
 #include "include/common/utils/utils.h"
 #include "utils/profile.h"
 #include "utils/ms_context.h"
+
+#ifdef _MSC_VER
+namespace {
+static int check_align(size_t align) {
+  constexpr int step = 2;
+  for (size_t i = sizeof(void *); i != 0; i *= step) {
+    if (align == i) {
+      return 0;
+    }
+  }
+  return EINVAL;
+}
+
+int posix_memalign(void **ptr, size_t align, size_t size) {
+  if (check_align(align)) {
+    return EINVAL;
+  }
+  if (ptr == nullptr) {
+    return EINVAL;
+  }
+
+  int saved_errno = errno;
+  void *p = _aligned_malloc(size, align);
+  if (p == nullptr) {
+    errno = saved_errno;
+    return ENOMEM;
+  }
+
+  *ptr = p;
+  return 0;
+}
+}  // namespace
+#endif
 
 namespace mindspore {
 namespace profiler {
@@ -70,8 +110,17 @@ const size_t ALIGN_SIZE = 8;
   } while (0)
 
 int32_t GetThreadID() {
+#ifndef _MSC_VER
   uint32_t thread_id = static_cast<uint32_t>(pthread_self());
   return thread_id;
+#else
+  std::thread::id tid = std::this_thread::get_id();
+  std::stringstream ss;
+  ss << tid;
+  int32_t idx = 0;
+  ss >> idx;
+  return idx;
+#endif
 }
 
 uint32_t GetStreamID(const CUcontext context, const void *stream) {
@@ -100,9 +149,13 @@ uint64_t GetHostTimeStamp() {
 }
 
 std::string GetKernelFunc(const char *name) {
-  char *demangledName = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
-  if (demangledName != nullptr) {
-    return demangledName;
+#ifndef _MSC_VER
+  const char *demangled_name = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
+#else
+  const char *demangled_name = typeid(name).name();
+#endif
+  if (demangled_name != nullptr) {
+    return demangled_name;
   } else {
     return name;
   }
