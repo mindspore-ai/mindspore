@@ -162,6 +162,10 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int ShuffleTensorRT::InputTensorPreprocess(TensorRTContext *ctx) {
+  if (in_tensors_[0].Data() != nullptr) {
+    auto input = ConvertConstantTensor(ctx, in_tensors_[0], op_name_);
+    ctx->RegisterTensor(ITensorHelper{input}, in_tensors_[0].Name());
+  }
   shuffler_input_ = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
   out_format_ = input(ctx, 0).format_;
