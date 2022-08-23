@@ -150,12 +150,12 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> import mindspore.common.dtype as mstype
         >>> import numpy as np
         >>> logits = Tensor(np.random.random((10, 5)).astype(np.float32), mstype.float32)
-        >>> net = F.random_categorical(logits, 8)
+        >>> net = ops.random_categorical(logits, 8)
         >>> result = net.shape
         >>> print(result)
         (10, 8)
