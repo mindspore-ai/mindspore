@@ -40,6 +40,8 @@
 #include "ops/reduce_min.h"
 #include "ops/reduce_max.h"
 #include "ops/reduce_prod.h"
+#include "ops/reduce_all.h"
+#include "ops/reduce_any.h"
 #include "abstract/abstract_function.h"
 #include "abstract/ops/infer_functions.h"
 #include "utils/ms_context.h"
@@ -170,10 +172,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kRandomGamma, ShapeSet{0, 1}},
                                          {kDynamicBroadcastTo, ShapeSet{1}},
                                          {kNonDeterministicInts, ShapeSet{0}},
-                                         {prim::kPrimReduceMean->name(), ShapeSet{1}},
-                                         {prim::kPrimReduceMax->name(), ShapeSet{1}},
-                                         {prim::kPrimReduceMin->name(), ShapeSet{1}},
-                                         {prim::kPrimReduceProd->name(), ShapeSet{1}},
                                          {prim::kPrimArgminV2->name(), ShapeSet{1}},
                                          {kAffineGrid, ShapeSet{1}},
                                          {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
@@ -367,8 +365,8 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimReduceSum, R{ops::ReduceSumInfer, nullptr, true}},
     {prim::kPrimReduceMean, R{ops::ReduceMeanInfer, nullptr, true}},
     {prim::kPrimReduceProd, R{ops::ReduceProdInfer, nullptr, true}},
-    {prim::kPrimReduceAll, R{InferImplReduceFunc, nullptr, true}},
-    {prim::kPrimReduceAny, R{InferImplReduceFunc, nullptr, true}},
+    {prim::kPrimReduceAll, R{ops::ReduceAllInfer, nullptr, true}},
+    {prim::kPrimReduceAny, R{ops::ReduceAnyInfer, nullptr, true}},
     {prim::kPrimReduceMax, R{ops::ReduceMaxInfer, nullptr, true}},
     {prim::kPrimReduceMin, R{ops::ReduceMinInfer, nullptr, true}},
     {prim::kPrimBiasAddGrad, R{InferImplBiasAddGrad, nullptr, true}},

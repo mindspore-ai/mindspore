@@ -24,6 +24,17 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(ReduceAny, Reduce);
+AbstractBasePtr ReduceAnyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t input_num = 1;
+  MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                     primitive->name());
+  return abstract::MakeAbstract(ReduceBaseInferShape(primitive, input_args, kNameReduceAny),
+                                ReduceBaseInferType(primitive, input_args));
+}
+
 REGISTER_PRIMITIVE_C(kNameReduceAny, ReduceAny);
+REGISTER_HOST_DEPENDS(kNameReduceAny, {1});
 }  // namespace ops
 }  // namespace mindspore

@@ -36,5 +36,6 @@ AbstractBasePtr ReduceMaxInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 
 REGISTER_PRIMITIVE_C(kNameReduceMax, ReduceMax);
+REGISTER_HOST_DEPENDS(kNameReduceMax, {1});
 }  // namespace ops
 }  // namespace mindspore

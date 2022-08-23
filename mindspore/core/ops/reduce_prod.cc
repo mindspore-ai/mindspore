@@ -39,5 +39,6 @@ AbstractBasePtr ReduceProdInfer(const abstract::AnalysisEnginePtr &, const Primi
 }
 
 REGISTER_PRIMITIVE_C(kNameReduceProd, ReduceProd);
+REGISTER_HOST_DEPENDS(kNameReduceProd, {1});
 }  // namespace ops
 }  // namespace mindspore

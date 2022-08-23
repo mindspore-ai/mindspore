@@ -37,7 +37,6 @@ constexpr auto kReduceAll = "ReduceAll";
 constexpr auto kReduceAny = "ReduceAny";
 
 constexpr size_t kReduceSmallVectorSize = 200000;
-constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
 
 using complex64 = std::complex<float>;
@@ -59,6 +58,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
   void ChooseFunc(const std::string &kernel_name_);
+  void HandleInputAxis();
 
   enum class ReduceFuncType {
     kReduceAllType,
@@ -71,6 +71,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   };
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> axis_;
+  static constexpr size_t kAxisIndex_{1};
   ReduceFuncType reduce_type_{ReduceFuncType::kReduceAllType};
   std::function<void(const T *, T *, size_t, size_t, TransposeIterator *)> reduce_func_;
   bool simple_execute_{false};
@@ -177,14 +178,8 @@ void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator 
 }
 
 template <typename T>
-int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  axis_ = kernel_ptr->get_axis();
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (a < -dimension || a >= dimension) {
       MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
@@ -197,7 +192,6 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
-
   // special accelerate for axis = 1 and input has 2 dims
   if constexpr (std::is_same<T, float>::value) {
     if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
@@ -205,6 +199,20 @@ int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const s
       simple_execute_ = true;
     }
   }
+}
+
+template <typename T>
+int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  if (kernel_ptr->HasAttr(kAttrAxis)) {
+    axis_ = kernel_ptr->get_axis();
+  }
+  (void)GetDynamicAttrIntValue(inputs, kAxisIndex_, inputsOnHost, kernel_name_, &axis_);
+  HandleInputAxis();
   return KRET_OK;
 }
 
@@ -264,7 +272,6 @@ template <typename T>
 bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
   size_t input_size = inputs[0]->size / sizeof(T);
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
@@ -371,58 +378,103 @@ std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
   return std::make_shared<ReduceCpuKernelFunc<T>>();
 }
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+#define REDUCE_CPU_REG(MS_T, MS_S, T) \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), SpecializeReduceFunc<T>
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_all_any_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>},
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_max_min_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
+  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
+  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
+  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)}};
+static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_prod_mean_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   SpecializeReduceFunc<complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   SpecializeReduceFunc<complex128>},
+  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
+  {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
+  {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
+  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
+  {REDUCE_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
+  {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64)},
+  {REDUCE_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64)},
+  {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128)},
+  {REDUCE_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128)}};
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
-  {kReduceMean,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     SpecializeReduceFunc<complex64>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     SpecializeReduceFunc<complex128>}}},
-  {kReduceMax,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceSum,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {kReduceMin,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceProd,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     SpecializeReduceFunc<complex64>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     SpecializeReduceFunc<complex128>}}},
-  {kReduceAll,
-   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {kReduceAny,
-   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}}};
+  {prim::kPrimReduceSum->name(), kernel_sum_prod_mean_list},
+  {prim::kPrimReduceMean->name(), kernel_sum_prod_mean_list},
+  {prim::kPrimReduceProd->name(), kernel_sum_prod_mean_list},
+  {prim::kPrimReduceMax->name(), kernel_max_min_list},
+  {prim::kPrimReduceMin->name(), kernel_max_min_list},
+  {prim::kPrimReduceAll->name(), kernel_all_any_list},
+  {prim::kPrimReduceAny->name(), kernel_all_any_list}};
 }  // namespace
+
+std::vector<KernelAttr> ReduceCpuKernelMod::GetOpSupport() {
+  auto iter = kernel_attr_list.find(kernel_type_);
+  if (iter == kernel_attr_list.end()) {
+    MS_LOG(ERROR) << "For 'Reduce ops', it does not support " << kernel_type_;
+    return std::vector<KernelAttr>{};
+  }
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpecializeReduceFuncCreator> &pair) { return pair.first; });
+  return support_list;
+}
 
 bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
