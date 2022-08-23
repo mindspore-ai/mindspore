@@ -132,6 +132,66 @@ class MIND_API IntegerImm : public Scalar {
   MIND_API_BASE_MEMBER(IntegerImm);
 };
 
+/// \brief Int8Imm defines interface for int8 data.
+class MIND_API Int8Imm : public IntegerImm {
+ public:
+  MIND_API_BASE_MEMBER(Int8Imm);
+
+  /// \brief Create Int8Imm with the given int8 value.
+  ///
+  /// \param[in] value The given int8 value.
+  explicit Int8Imm(int8_t value);
+
+  /// \brief Get the int8 value of this Int8Imm.
+  ///
+  /// \return The int8 value of this Int8Imm.
+  int8_t value() const;
+};
+
+using Int8ImmPtr = SharedPtr<Int8Imm>;
+
+MIND_API_IMM_TRAIT(Int8Imm, int8_t);
+
+/// \brief Int16Imm defines interface for int16 data.
+class MIND_API Int16Imm : public IntegerImm {
+ public:
+  MIND_API_BASE_MEMBER(Int16Imm);
+
+  /// \brief Create Int1I6mm with the given int16 value.
+  ///
+  /// \param[in] value The given int16 value.
+  explicit Int16Imm(int16_t value);
+
+  /// \brief Get the int16 value of this Int16Imm.
+  ///
+  /// \return The int16 value of this Int16Imm.
+  int16_t value() const;
+};
+
+using Int16ImmPtr = SharedPtr<Int16Imm>;
+
+MIND_API_IMM_TRAIT(Int16Imm, int16_t);
+
+/// \brief Int32Imm defines interface for int32 data.
+class MIND_API Int32Imm : public IntegerImm {
+ public:
+  MIND_API_BASE_MEMBER(Int32Imm);
+
+  /// \brief Create Int32Imm with the given int32 value.
+  ///
+  /// \param[in] value The given int32 value.
+  explicit Int32Imm(int32_t value);
+
+  /// \brief Get the int32 value of this Int32Imm.
+  ///
+  /// \return The int32 value of this Int32Imm.
+  int32_t value() const;
+};
+
+using Int32ImmPtr = SharedPtr<Int32Imm>;
+
+MIND_API_IMM_TRAIT(Int32Imm, int32_t);
+
 /// \brief Int64Imm defines interface for int64 data.
 class MIND_API Int64Imm : public IntegerImm {
  public:
