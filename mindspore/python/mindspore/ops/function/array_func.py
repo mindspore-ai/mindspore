@@ -2725,13 +2725,13 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[1, 1, 1], [1, 1, 1]]), mindspore.float32)
         >>> axis = 0
         >>> reduction = "add"
-        >>> output = F.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
         [[ 2.0  3.0  3.0]
          [ 5.0  5.0  7.0]
@@ -2741,7 +2741,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
         >>> axis = 1
         >>> reduction = "none"
-        >>> output = F.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
         [[ 1  2  8  4  8]]
     """
