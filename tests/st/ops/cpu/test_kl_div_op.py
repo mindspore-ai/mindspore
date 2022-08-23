@@ -34,15 +34,17 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
-def test_mode_none_and_dtype_with_static_input(dtype):
+def test_mode_none_and_dtype_with_static_input(mode, dtype):
     """
     Feature: test none mode with different input dtype.
     Description: input with negative elements.
     Expectation: success.
     """
+    context.set_context(mode=mode)
     np.random.seed(42)
     prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
     target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
@@ -53,15 +55,17 @@ def test_mode_none_and_dtype_with_static_input(dtype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
-def test_mode_mean_and_dtype_with_static_input(dtype):
+def test_mode_mean_and_dtype_with_static_input(mode, dtype):
     """
     Feature: test mean mode with different input dtype.
     Description: input with negative elements.
     Expectation: success.
     """
+    context.set_context(mode=mode)
     np.random.seed(42)
     prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
     target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
@@ -72,15 +76,17 @@ def test_mode_mean_and_dtype_with_static_input(dtype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
-def test_mode_sum_and_dtype_with_static_input(dtype):
+def test_mode_sum_and_dtype_with_static_input(mode, dtype):
     """
     Feature: test sum mode with different input dtype.
     Description: input with negative elements.
     Expectation: success.
     """
+    context.set_context(mode=mode)
     np.random.seed(42)
     prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
     target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
@@ -91,19 +97,117 @@ def test_mode_sum_and_dtype_with_static_input(dtype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
-def test_mode_batchmean_and_dtype_with_static_input(dtype):
+def test_mode_batchmean_and_dtype_with_static_input(mode, dtype):
     """
     Feature: test batchmean mode with different input dtype.
     Description: input with negative elements.
     Expectation: success.
     """
+    context.set_context(mode=mode)
     np.random.seed(42)
     prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
     target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
     net = Net("batchmean")
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = np.array([0.52491106]).astype(dtype)
+    assert np.allclose(loss.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.float32])
+def test_mode_none_and_dtype_with_dynamic_input(mode, dtype):
+    """
+    Feature: test none mode with different input dtype.
+    Description: input with negative elements.
+    Expectation: success.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
+    target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
+    net = Net("none")
+    dyn_prediction = Tensor(shape=[None, None], dtype=mindspore.float32)
+    dyn_target = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net.set_inputs(dyn_prediction, dyn_target)
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = np.array([[0, 0.35667494], [0.69314718, 0]]).astype(dtype)
+    assert np.allclose(loss.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.float32])
+def test_mode_mean_and_dtype_with_dynamic_input(mode, dtype):
+    """
+    Feature: test mean mode with different input dtype.
+    Description: input with negative elements.
+    Expectation: success.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
+    target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
+    net = Net("mean")
+    dyn_prediction = Tensor(shape=[None, None], dtype=mindspore.float32)
+    dyn_target = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net.set_inputs(dyn_prediction, dyn_target)
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = np.array([0.26245553]).astype(dtype)
+    assert np.allclose(loss.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.float32])
+def test_mode_sum_and_dtype_with_dynamic_input(mode, dtype):
+    """
+    Feature: test sum mode with different input dtype.
+    Description: input with negative elements.
+    Expectation: success.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
+    target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
+    net = Net("sum")
+    dyn_prediction = Tensor(shape=[None, None], dtype=mindspore.float32)
+    dyn_target = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net.set_inputs(dyn_prediction, dyn_target)
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = np.array([1.04982212]).astype(dtype)
+    assert np.allclose(loss.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.float32])
+def test_mode_batchmean_and_dtype_with_dynamic_input(mode, dtype):
+    """
+    Feature: test batchmean mode with different input dtype.
+    Description: input with negative elements.
+    Expectation: success.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
+    target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
+    net = Net("batchmean")
+    dyn_prediction = Tensor(shape=[None, None], dtype=mindspore.float32)
+    dyn_target = Tensor(shape=[None, None], dtype=mindspore.float32)
+    net.set_inputs(dyn_prediction, dyn_target)
     loss = net(Tensor(prediction), Tensor(target))
     expect = np.array([0.52491106]).astype(dtype)
     assert np.allclose(loss.asnumpy(), expect)
