@@ -537,7 +537,7 @@ def sparse_add(x1, x2, thresh):
         >>> from mindspore import Tensor, COOTensor
         >>> from mindspore import dtype as mstype
         >>> from mindspore import context
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = (3, 4)
@@ -547,7 +547,7 @@ def sparse_add(x1, x2, thresh):
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indics1, values1, shape1)
         >>> thres = Tensor(0, dtype=mstype.int32)
-        >>> out = F.sparse_add(input0, input1, thres)
+        >>> out = ops.sparse_add(input0, input1, thres)
         >>> print(out)
         COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[4, 2],
         dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
