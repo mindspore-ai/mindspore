@@ -1206,10 +1206,12 @@ using GraphSegmentPtr = std::shared_ptr<GraphSegment>;
 
 constexpr auto kElementsUseFlagsKey = "elements_use_flags";
 inline std::shared_ptr<std::vector<bool>> GetSequenceNodeElementsUseFlags(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   return node->template user_data<std::vector<bool>>(kElementsUseFlagsKey);
 }
 
 inline void SetSequenceNodeElementsUseFlags(const AnfNodePtr &node, const std::shared_ptr<std::vector<bool>> &flags) {
+  MS_EXCEPTION_IF_NULL(node);
   node->set_user_data(kElementsUseFlagsKey, flags);
 }
 

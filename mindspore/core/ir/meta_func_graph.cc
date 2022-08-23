@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrLis
     cache_[types] = fg;
     return fg;
   } else {
+    MS_EXCEPTION_IF_NULL(iter->second);
     MS_LOG(DEBUG) << "MetaFuncgraph: cache hit for types: " << mindspore::ToString(args_spec_list)
                   << ", g: " << iter->second->ToString();
     return iter->second;

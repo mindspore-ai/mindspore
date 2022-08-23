@@ -102,7 +102,7 @@ class ParamInfo {
 
   std::vector<int64_t> cache_shape() const { return cache_shape_; }
   void set_cache_shape(const std::vector<int64_t> &cache_shape) { cache_shape_ = cache_shape; }
-  ParameterPtr parameter() { return parameter_.lock(); }
+  ParameterPtr parameter() const { return parameter_.lock(); }
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
   void ClearParameter() { parameter_.reset(); }
 

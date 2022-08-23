@@ -287,6 +287,7 @@ FuncGraphSet &FuncGraphManager::func_graphs_used_total(const FuncGraphPtr &fg) c
 
 bool FuncGraphManager::recursive(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(recursive_);
   recursive_->Recompute(fg);
   if (recursive_->recursive_analysis().count(fg) == 0) {
     MS_LOG(WARNING) << "This func graph is not in manager: " << fg->ToString();
@@ -297,6 +298,7 @@ bool FuncGraphManager::recursive(const FuncGraphPtr &fg) const {
 
 std::shared_ptr<std::list<FuncGraphPtr>> FuncGraphManager::recursive_graphs(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(recursive_);
   if (recursive(fg)) {
     if (recursive_->recursive_map().count(fg) == 0) {
       auto trace = std::list<FuncGraphPtr>();
@@ -659,7 +661,9 @@ void FuncGraphManager::AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) 
 
 void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target,
                                              const ScopePtr &scope) {
+  MS_EXCEPTION_IF_NULL(source);
   AnfNodePtr source_return = source->get_return();
+  MS_EXCEPTION_IF_NULL(source_return);
   AnfNodePtr source_output = source->output();
   AnfNodePtr source_prim = source_return->cast_ptr<CNode>()->input(0);
 
@@ -882,6 +886,7 @@ FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(
   auto &fvs = fg->free_variables();
   for (auto fv : fvs) {
     auto fv_node = fv.first;
+    MS_EXCEPTION_IF_NULL(fv_node);
     auto fv_func_graph = fv_node->func_graph();
     if (fv_func_graph == nullptr) {
       MS_LOG(INFO) << "Meet a FV '" << fv_node->DebugString() << "' whose func graph is null, during seeking for "
@@ -1116,6 +1121,7 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
         return false;
       });
     if (contains_meta_fg_prim != meta_fg_prim_values.end()) {
+      MS_EXCEPTION_IF_NULL(contains_meta_fg_prim->first);
       MS_LOG(DEBUG) << fg->ToString() << " contains MetaFgPrim(" << contains_meta_fg_prim->first->DebugString() << ")";
       return true;
     }
@@ -1126,13 +1132,11 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
   if (!fv_nodes.empty()) {
     auto contains_meta_fg_prim_cnode = std::find_if(fv_nodes.begin(), fv_nodes.end(), [seen_num](const auto &iter) {
       // Check if the FV is a MetaFgPrim (J/Vmap/Taylor) call CNode.
-      if (IsPrimitiveCNode(iter.first, prim::kPrimJ) || IsPrimitiveCNode(iter.first, prim::kPrimVmap) ||
-          IsPrimitiveCNode(iter.first, prim::kPrimTaylor)) {
-        return true;
-      }
-      return false;
+      return IsPrimitiveCNode(iter.first, prim::kPrimJ) || IsPrimitiveCNode(iter.first, prim::kPrimVmap) ||
+             IsPrimitiveCNode(iter.first, prim::kPrimTaylor);
     });
     if (contains_meta_fg_prim_cnode != fv_nodes.end()) {
+      MS_EXCEPTION_IF_NULL(contains_meta_fg_prim_cnode->first);
       MS_LOG(DEBUG) << fg->ToString() << " contains FV MetaFgPrim (J/Vmap/Taylor) ("
                     << contains_meta_fg_prim_cnode->first->DebugString() << ")";
       return true;
@@ -1144,6 +1148,7 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
   fg->seen_ = seen_num;
   for (auto &item : fg->func_graphs_used()) {
     auto used_g = item.first;
+    MS_EXCEPTION_IF_NULL(used_g);
     if (SeekMetaFgPrim(used_g, seen_num)) {
       MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString()
                     << " which contains J(func_graph), J(Primitive), Vmap(func_graph), Vmap(Primitive), "

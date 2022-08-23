@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] name The name of attribute to be delete.
   /// \return The primitive to which attribute has been added.
   Primitive &DelAttr(const std::string &name) {
-    attrs_.erase(name);
+    (void)attrs_.erase(name);
     return *this;
   }
   /// \brief Use add attribute by using a map,all elements of the map will be added in the primitive's attribute map.

@@ -294,6 +294,7 @@ ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node) {
 }
 
 std::string GetCNodeFuncName(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     return "";
   }
