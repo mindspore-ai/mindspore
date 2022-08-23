@@ -230,7 +230,7 @@ void GetFusionScopeComputeNodeList(const session::KernelGraph *kernel_graph,
     while (iter != buffer_fusion_infos->end()) {
       if (graphkernel::GraphKernelSupported(iter->second.anf_nodes)) {
         MS_LOG(DEBUG) << "Fusion id: " << iter->first << ", uses Graph Kernel Fusion";
-        buffer_fusion_infos->erase(iter++);
+        iter = buffer_fusion_infos->erase(iter);
       } else {
         iter++;
       }

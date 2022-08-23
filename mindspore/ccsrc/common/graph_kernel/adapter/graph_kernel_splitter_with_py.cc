@@ -370,8 +370,7 @@ class CostModelSplitSchemer : public SplitSchemer {
 };
 
 std::shared_ptr<SplitSchemer> GraphKernelSplitterWithPy::GetSplitSchema(const std::string &processor) {
-  // default use c++ split model for CPU target.
-  if (processor != kCPUDevice) {
+  if (processor != kCPUDevice && processor != kAscendDevice) {
     MS_LOG(DEBUG) << "use py split model";
     return std::make_shared<CostModelSplitSchemer>();
   } else {
