@@ -3500,7 +3500,7 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
         >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
-        >>> output = F.adaptive_max_pool2d(input_x, (None, 2))
+        >>> output = ops.adaptive_max_pool2d(input_x, (None, 2))
         >>> print(output)
         [[[[2. 3.]
            [5. 6.]
@@ -3512,7 +3512,7 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
            [5. 6.]
            [8. 9.]]]]
         >>> # case 2: output_size=2
-        >>> output = F.adaptive_max_pool2d(input_x, 2)
+        >>> output = ops.adaptive_max_pool2d(input_x, 2)
         >>> print(output)
         [[[[5. 6.]
            [8. 9.]]
@@ -3521,7 +3521,7 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
           [[5. 6.]
            [8. 9.]]]]
         >>> # case 3: output_size=(1, 2)
-        >>> output = F.adaptive_max_pool2d(input_x, (1, 2))
+        >>> output = ops.adaptive_max_pool2d(input_x, (1, 2))
         >>> print(output)
         [[[[8. 9.]]
           [[8. 9.]]
