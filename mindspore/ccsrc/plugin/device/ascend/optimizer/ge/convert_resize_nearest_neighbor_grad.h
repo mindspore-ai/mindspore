@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
 
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class ReduceAxisUpdate : public PatternProcessPass {
+class ConvertResizeNearestNeighborGrad : public PatternProcessPass {
  public:
-  explicit ReduceAxisUpdate(bool multigraph = true) : PatternProcessPass("reduce_axis_update", multigraph) {}
-  ~ReduceAxisUpdate() override = default;
+  explicit ConvertResizeNearestNeighborGrad(bool multigraph = true)
+      : PatternProcessPass("convert_resize_nearest_neighbor_grad", multigraph) {}
+  ~ConvertResizeNearestNeighborGrad() override = default;
 
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  bool IsAxisEmpty(const ValueNodePtr &axis_node) const;
-  static bool IsReduce(const BaseRef &ref);
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
