@@ -19,6 +19,7 @@
 #include <map>
 #include <utility>
 #include <algorithm>
+#include "common/util/platform_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
@@ -34,6 +35,8 @@
 
 namespace mindspore::kernel {
 namespace {
+constexpr auto kAICORE = "AiCore";
+constexpr auto kVectorCore = "VectorCore";
 static std::unordered_map<std::string, ATTR_DTYPE> type_attr_dtype_map = {
   {kVTypeInt, ATTR_DTYPE::ATTR_INT32},
   {kVTypeInt64, ATTR_DTYPE::ATTR_INT64},
@@ -227,6 +230,26 @@ bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nl
   return true;
 }
 }  // namespace
+
+std::string TbeJsonCreator::GetCoreType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::string core_type;
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
+    core_type = kernel_info->select_kernel_build_info()->core_type();
+  }
+  if (core_type.empty()) {
+    fe::PlatformInfo platform_info;
+    fe::OptionalInfo optional_info;
+    if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info) != 0) {
+      MS_LOG(WARNING) << "Get platform info failed.";
+      core_type = kAICORE;
+    } else {
+      core_type = (platform_info.ai_core_spec.cube_vector_split == 1) ? kVectorCore : kAICORE;
+    }
+  }
+  return core_type;
+}
 
 bool TbeJsonCreator::GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);

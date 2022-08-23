@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/session/anf_runtime_algorithm.h"
+
 #include <memory>
 #include <algorithm>
 #include <map>
@@ -667,19 +668,6 @@ void AnfRuntimeAlgorithm::SetCoreType(const AnfNodePtr &node, const std::string 
   MS_EXCEPTION_IF_NULL(builder);
   builder->SetCoreType(core_type);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-}
-
-std::string AnfRuntimeAlgorithm::GetCoreType(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-  if (kernel_info == nullptr) {
-    return "";
-  }
-  auto build_info = kernel_info->select_kernel_build_info();
-  if (build_info == nullptr) {
-    return "";
-  }
-  return build_info->core_type();
 }
 
 void AnfRuntimeAlgorithm::SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc) {

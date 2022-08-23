@@ -115,9 +115,6 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   // add all graphs to manager first, so that don't have to make new manager in following passes.
   memo_.clear();
   AddGraphToManager(NOT_NULL(graph), NOT_NULL(graph_manager_));
-
-  PlatformInfoInitialization();
-
   memo_.clear();
   IRFusionOptimization(graph);
 }

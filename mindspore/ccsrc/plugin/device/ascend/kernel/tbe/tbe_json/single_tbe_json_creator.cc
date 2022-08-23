@@ -42,7 +42,7 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
     MS_LOG(ERROR) << "Anf Node [" << op_name << "] generate op_list json failed";
     return false;
   }
-  auto core_type = AnfAlgo::GetCoreType(anf_node);
+  auto core_type = GetCoreType(anf_node);
   soc_info_json[kJCoreType] = core_type;
   (*kernel_json)[kJSocInfo] = soc_info_json;
   (*kernel_json)[kJOpList] = op_list;

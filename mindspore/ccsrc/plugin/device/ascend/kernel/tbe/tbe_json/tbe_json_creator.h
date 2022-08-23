@@ -73,6 +73,7 @@ class TbeJsonCreator {
   virtual bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
 
  protected:
+  static std::string GetCoreType(const AnfNodePtr &node);
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
   void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const;
