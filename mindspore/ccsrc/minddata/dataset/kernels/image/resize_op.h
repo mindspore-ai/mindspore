@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,7 @@
 #include <string>
 
 #include "minddata/dataset/core/tensor.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#else
-#include "minddata/dataset/kernels/image/lite_image_utils.h"
-#endif
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -57,7 +51,10 @@ class ResizeOp : public TensorOp {
   void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  TensorShape ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w);
 
   std::string Name() const override { return kResizeOp; }
 

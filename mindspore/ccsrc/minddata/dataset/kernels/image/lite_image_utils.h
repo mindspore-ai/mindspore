@@ -19,6 +19,7 @@
 #include <csetjmp>
 #include <memory>
 #include <random>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -33,10 +34,15 @@
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
 namespace dataset {
+constexpr dsize_t kDefaultImageRank = 3;  // images are hwc channels in general
+constexpr dsize_t kMinImageRank = 2;      // images have at least 2 dimensions
 constexpr int32_t kMaxPixelValue = 255;
+constexpr dsize_t kHeightIndex = 0;  // index of height of HWC images
+constexpr dsize_t kWidthIndex = 1;   // index of width of HWC images
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
@@ -160,6 +166,22 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 /// \param[in] sigma_y Gaussian kernel standard deviation of height
 Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_size_x,
                     int32_t kernel_size_y, float sigma_x, float sigma_y);
+
+/// \brief Get the size of input image.
+/// \param[in] image Tensor of the image.
+/// \param[out] size Size of the image as [height, width].
+/// \return The status code.
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *size);
+
+/// \brief Validate image Dtype, rank and channel.
+/// \param[in] image Image tensor to be validated.
+/// \param[in] op_name operator name.
+/// \param[in] valid_dtype Valid date type of the image tensor. Default: {}, means not to check date type.
+/// \param[in] valid_rank Valid dimension of the image tensor. Default: {}, means not to check dimension.
+/// \param[in] valid_channel Valid channel of the image tensor. Default: {}, means not to check channel.
+Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op_name,
+                     const std::set<uint8_t> &valid_dtype = {}, const std::set<dsize_t> &valid_rank = {},
+                     const std::set<dsize_t> &valid_channel = {});
 
 /// \brief Validate image rank.
 /// \param[in] op_name operator name.
