@@ -68,6 +68,10 @@ class GPUdeviceInfo {
   inline int blocks_num(const int total_threads) const {
     return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
   }
+  inline int blocks_num(const int total_threads, const int block_size) const {
+    int valid_block_size = std::min(block_size, threads_per_block_);
+    return std::min(((total_threads - 1) / valid_block_size) + 1, max_blocks_);
+  }
   inline int blocks_max_num(int size) const { return std::min(size, max_blocks_); }
   inline dim3 grids_max_size() const { return max_grid_size_; }
   size_t share_memory_size() const { return max_share_memory_; }
@@ -96,6 +100,8 @@ class GPUdeviceInfo {
 
 #define CUDA_BLOCKS(device_id, total_threads) \
   mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->blocks_num(total_threads)
+#define CUDA_BLOCKS_CAL(device_id, total_threads, block_size) \
+  mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->blocks_num(total_threads, block_size)
 #define CUDA_THREADS(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num()
 #define CUDA_THREADS_MAXSIZE(device_id, size) \
   mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num(size)

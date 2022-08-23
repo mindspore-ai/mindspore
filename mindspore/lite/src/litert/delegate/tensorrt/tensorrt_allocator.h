@@ -56,9 +56,14 @@ class TensorRTAllocator {
 
   bool GetMemIsValid(const std::string &name);
 
+  void SetDeviceID(uint32_t device_id) { this->device_id_ = device_id; }
+
+  uint32_t GetDeviceID() const { return this->device_id_; }
+
  private:
   std::map<std::string, CudaTensorParam> cuda_tensor_map_;
   cudaStream_t stream_;
+  uint32_t device_id_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H_

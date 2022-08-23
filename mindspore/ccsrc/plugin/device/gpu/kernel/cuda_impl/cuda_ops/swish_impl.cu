@@ -26,9 +26,9 @@ __global__ void SwishKernel(size_t size, const T *input, T *output) {
 }
 
 template <typename T>
-void CalSwish(size_t size, const T *input, T *output, cudaStream_t cuda_stream, uint32_t device_id) {
+void Swish(size_t size, const T *input, T *output, cudaStream_t cuda_stream, const uint32_t device_id) {
   SwishKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, output);
 }
 
-template CUDA_LIB_EXPORT void CalSwish<float>(size_t size, const float *input, float *output, cudaStream_t cuda_stream,
-                                              uint32_t device_id);
+template CUDA_LIB_EXPORT void Swish<float>(size_t size, const float *input, float *output, cudaStream_t cuda_stream,
+                                           const uint32_t device_id);

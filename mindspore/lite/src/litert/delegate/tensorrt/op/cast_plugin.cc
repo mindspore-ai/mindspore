@@ -15,7 +15,7 @@
  */
 
 #include "src/litert/delegate/tensorrt/op/cast_plugin.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/cast.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -49,11 +49,11 @@ int CastPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinf
   if (inputDesc->type == nvinfer1::DataType::kINT32 && dest_datatype_ == nvinfer1::DataType::kFLOAT) {
     auto input = static_cast<const int *>(inputs[0]);
     auto output = static_cast<float *>(outputs[0]);
-    Cast(element_cnt, input, output, stream);
+    Cast(element_cnt, input, output, stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT && dest_datatype_ == nvinfer1::DataType::kINT32) {
     auto input = static_cast<const float *>(inputs[0]);
     auto output = static_cast<int *>(outputs[0]);
-    Cast(element_cnt, input, output, stream);
+    Cast(element_cnt, input, output, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported data type cast " << layer_name_;
   }

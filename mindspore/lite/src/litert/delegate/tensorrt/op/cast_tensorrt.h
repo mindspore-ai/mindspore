@@ -19,7 +19,6 @@
 #include <vector>
 #include "src/litert/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/litert/delegate/tensorrt/op/tensorrt_plugin.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
 class CastTensorRT : public TensorRTOp {

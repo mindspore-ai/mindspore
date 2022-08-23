@@ -66,7 +66,7 @@ bool GeLUGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *x_addr = GetDeviceAddress<T>(inputs, 1);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
 
-  GeluGradKernel(input_size_, dy_addr, x_addr, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  GeluGradKernel(input_size_, dy_addr, x_addr, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
   return true;
 }
 

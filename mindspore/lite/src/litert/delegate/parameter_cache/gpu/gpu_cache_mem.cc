@@ -17,7 +17,7 @@
 #include "src/litert/delegate/parameter_cache/gpu/gpu_cache_mem.h"
 #include <cuda_runtime.h>
 #include <string>
-#include "src/litert/delegate/tensorrt/cuda_impl/hash.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/hash_impl.cuh"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/delegate/parameter_cache/factory_mgr_base.h"
@@ -26,6 +26,7 @@ namespace cache {
 namespace gpu {
 RET_COMMON_PRODUCT_REGISTRAR(std::string, cache::CacheMemBase, cache::gpu::GPUCacheMem, "gpu", GPUCacheMem);
 bool GPUCacheMem::InitDevice(uint32_t device_id, const void *context) {
+  device_id_ = device_id;
   auto cuda_ret = cudaSetDevice(static_cast<int>(device_id));
   if (cuda_ret != cudaSuccess) {
     MS_LOG(ERROR) << "Failed to set device id " << device_id << ", cuda_ret " << cuda_ret << " "
@@ -130,7 +131,7 @@ bool GPUCacheMem::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, 
   }
 
   DoHashSwapOut(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_out_value_addr),
-                reinterpret_cast<int *>(swap_out_index_addr), swap_out_size, embedding_size, stream_);
+                reinterpret_cast<int *>(swap_out_index_addr), swap_out_size, embedding_size, stream_, device_id_);
   return true;
 }
 
@@ -150,7 +151,7 @@ bool GPUCacheMem::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, vo
   }
 
   DoHashSwapIn(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_in_value_addr),
-               reinterpret_cast<int *>(swap_in_index_addr), swap_in_size, embedding_size, stream_);
+               reinterpret_cast<int *>(swap_in_index_addr), swap_in_size, embedding_size, stream_, device_id_);
   return true;
 }
 }  // namespace gpu

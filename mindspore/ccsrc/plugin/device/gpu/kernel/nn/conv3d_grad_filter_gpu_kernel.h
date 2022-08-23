@@ -104,7 +104,7 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
       "ConvolutionBackwardFilter failed");
 
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      Cast(num_output_elements_, dw, dw_float32, reinterpret_cast<cudaStream_t>(stream_ptr));
+      Cast(num_output_elements_, dw, dw_float32, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
     }
     return true;
   }

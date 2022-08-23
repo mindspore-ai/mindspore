@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CAST_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CAST_IMPL_CUH_
 #include <vector>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename S, typename T>
-CUDA_LIB_EXPORT void Cast(const int input_size, const S *input_addr, T *output_addr, cudaStream_t stream);
+CUDA_LIB_EXPORT void Cast(const int input_size, const S *input_addr, T *output_addr, cudaStream_t stream,
+                          uint32_t device_id);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CAST_IMPL_CUH_

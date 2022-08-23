@@ -23,7 +23,7 @@
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
 #include "src/litert/delegate/tensorrt/op/logical_tensorrt.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/logical.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_impl.cuh"
 
 namespace mindspore::lite {
 int LogicalTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -95,13 +95,13 @@ int LogicalPlugin::RunCudaLogical(const nvinfer1::PluginTensorDesc *inputDesc, c
                                   void *const *outputs, cudaStream_t stream) {
   switch (primitive_type_) {
     case (schema::PrimitiveType_LogicalAnd): {
-      LogicalAnd(static_cast<const int *>(inputs[0]), static_cast<const int *>(inputs[1]),
-                 static_cast<int *>(outputs[0]), GetDimsVolume(inputDesc[0].dims), stream);
+      LogicalAnd(GetDimsVolume(inputDesc[0].dims), static_cast<const int *>(inputs[0]),
+                 static_cast<const int *>(inputs[1]), static_cast<int *>(outputs[0]), stream, device_id_);
       break;
     }
     case (schema::PrimitiveType_LogicalOr): {
-      LogicalOr(static_cast<const int *>(inputs[0]), static_cast<const int *>(inputs[1]),
-                static_cast<int *>(outputs[0]), GetDimsVolume(inputDesc[0].dims), stream);
+      LogicalOr(GetDimsVolume(inputDesc[0].dims), static_cast<const int *>(inputs[0]),
+                static_cast<const int *>(inputs[1]), static_cast<int *>(outputs[0]), stream, device_id_);
       break;
     }
     default: {

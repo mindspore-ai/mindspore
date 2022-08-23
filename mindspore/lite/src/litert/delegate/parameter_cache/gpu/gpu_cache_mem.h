@@ -41,6 +41,7 @@ class GPUCacheMem : public cache::CacheMemBase {
 
  private:
   cudaStream_t stream_;
+  uint32_t device_id_{0};
 };
 }  // namespace gpu
 }  // namespace cache
