@@ -79,8 +79,9 @@ class OCRDetectionPreHandle(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 3 Tensors, representing imgs after prehandle, scale of the height and scale of the width.
+
         - **resized_img** (Tensor) - Imgs after prehandle, has the same shape of `img` input.
-                                     The data type must be uint8.
+          The data type must be uint8.
         - **h_scale** (Scalar) - Height scale. The data type must be float32.
         - **w_scale** (Scalar) - Width scale. The data type must be float32.
     """
@@ -117,6 +118,7 @@ class OCRFindContours(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 3 Tensors.
+
         - **polys_data** (Tensor) - Point data of every contours. The data type must be int32.
         - **polys_offset** (Tensor) - Offset of every contours. The data type must be int32.
         - **polys_size** (Tensor) - Size of every contours. The data type must be int32.
@@ -151,6 +153,7 @@ class BatchDilatePolys(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 3 Tensors.
+
         - **dilated_polys_data** (Tensor) - Point data of every dilated contours. The data type must be int32.
         - **dilated_polys_offset** (Tensor) - Offset of every dilated contours. The data type must be int32.
         - **dilated_polys_size** (Tensor) - Size of every dilated contours. The data type must be int32.
@@ -188,6 +191,7 @@ class ResizeAndClipPolys(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 4 Tensors.
+
         - **clipped_polys_data** (Tensor) - Point data of every clipped contours. The data type must be int32.
         - **clipped_polys_offset** (Tensor) - Offset of every clipped contours. The data type must be int32.
         - **clipped_polys_size** (Tensor) - Size of every clipped contours. The data type must be int32.
@@ -224,6 +228,7 @@ class OCRDetectionPostHandle(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 4 Tensors.
+
         - **imgs_data** (Tensor) - Image data of the origin image. The data type must be uint8.
         - **imgs_offset** (Tensor) - Offset of every imgs data. The data type must be int32.
         - **imgs_size** (Tensor) - Shape of every imgs data. The data type must be int32.

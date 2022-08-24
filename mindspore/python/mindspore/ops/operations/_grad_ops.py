@@ -2047,7 +2047,7 @@ class UpsampleNearest3DGrad(Primitive):
             One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
     Inputs:
         - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
-            float16, float32, float64.
+          float16, float32, float64.
 
     Outputs:
         Tensor, A 5-D tensor. Has the same type as input grad_output, shape depends on x and output_size/scales.
@@ -3494,9 +3494,9 @@ class GridSampler2DGrad(Primitive):
         - **grad** (Tensor) - A 4-D tensor whose dtype is float16 or float32 and whose shape is :math:`(N, C,
           H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
         - **input_x** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,
-         H_{in}, W_{in})`.
+          H_{in}, W_{in})`.
         - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose
-         shape is :math:`(N, H_{out}, W_{out}, 2)`.
+          shape is :math:`(N, H_{out}, W_{out}, 2)`.
 
     Outputs:
         - **dx** (Tensor) - A 4-D tensor whose dtype and shape are the same as `input_x`.

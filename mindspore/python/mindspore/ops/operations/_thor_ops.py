@@ -665,7 +665,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
 
     Inputs:
         - **input_x1** (Tensor) - The first input is the diag part of the cov matrix of feature map.
-                                  Supported dtype [float32].
+          Supported dtype [float32].
         - **input_x2** (Tensor) - The second input is the corresponding 1st-order grad. Supported dtype [float32].
         - **input_x3** (Tensor) - The third input is the diag part of the cov matrix of dout.
           Supported dtype [float32].
