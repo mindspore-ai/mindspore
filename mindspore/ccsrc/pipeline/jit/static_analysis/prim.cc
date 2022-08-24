@@ -1691,10 +1691,12 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     }
   }
 
+  // Get attribute or method of class object decorated by ms_class.
   auto class_value = GetMsClassObject(data_args);
   if (class_value != nullptr) {
     return GetEvaluatedValueForMsClassAttrOrMethod(args_spec_list, class_value, out_conf);
   }
+  // Get attribute or method of nn.Cell object.
   auto data_func_graph = dyn_cast_ptr<FuncGraphAbstractClosure>(data_args);
   if (data_func_graph != nullptr) {
     auto res = GetEvaluatedValueForCellAttrOrMethod(args_spec_list, data_func_graph->func_graph(), out_conf);
