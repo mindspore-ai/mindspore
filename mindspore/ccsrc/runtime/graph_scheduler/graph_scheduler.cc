@@ -429,7 +429,7 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   // Bind single thread to response to memory alloc and free quickly.
-  (void)actor_manager->Spawn(base_actor, false);
+  (void)actor_manager->Spawn(base_actor, true);
 
   // Create and schedule recorder actor.
   bool recorder_actor_need = false;

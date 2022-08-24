@@ -66,24 +66,26 @@ bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  std::unique_ptr<T *[]> inputs_host = std::make_unique<T *[]>(input_num_);
+  auto *output = reinterpret_cast<char *>(outputs[0]->addr);
+  std::vector<char *> inputs_host;
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs_host[i] = static_cast<T *>(inputs[i]->addr);
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[i]->addr));
   }
 
   // multi-threading
   size_t input_size = output_size_;
   size_t dims_behind_axis = dims_behind_axis_;
-  auto task = [this, &output, &dims_behind_axis, &inputs_host](size_t start, size_t end) {
+  size_t copy_time = input_size / dims_behind_axis;
+  size_t single_copy_size = dims_behind_axis * sizeof(T);
+  auto task = [&](size_t start, size_t end) {
     for (size_t pos = start; pos < end; ++pos) {
-      size_t cur_input_index = pos / dims_behind_axis % this->input_num_;
-      size_t cycle_len = this->input_num_ * dims_behind_axis;
-      size_t local_index = pos / cycle_len * dims_behind_axis + pos % cycle_len % dims_behind_axis;
-      output[pos] = inputs_host[cur_input_index][local_index];
+      size_t cur_input_index = pos % this->input_num_;
+      size_t local_idx = pos / this->input_num_;
+      (void)memcpy_s(output + single_copy_size * pos, single_copy_size,
+                     inputs_host[cur_input_index] + single_copy_size * local_idx, single_copy_size);
     }
   };
-  ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, copy_time, this, &parallel_search_info_);
   return true;
 }
 
