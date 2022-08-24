@@ -169,8 +169,8 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
       return ret_empty;
     }
 
-    MS_LOG(INFO) << "Output node: " << output_with_index.first->fullname_with_scope()
-                 << " with output index: " << output_with_index.second;
+    MS_LOG(DEBUG) << "Output node: " << output_with_index.first->fullname_with_scope()
+                  << " with output index: " << output_with_index.second;
     ret.push_back(output_with_index);
   }
   return ret;
