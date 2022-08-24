@@ -83,28 +83,6 @@ inline int GetPad(int input, int kernel, int stride) {
   return std::max<int>(0, (CeilDivide(input, stride) - 1) * stride + kernel - input);
 }
 
-inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index,
-                                              const std::string &kernel_name) {
-  std::vector<int64_t> tensor_value;
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  size_t data_size = input_tensor->DataSize();
-  auto tensor_type = input_tensor->Dtype();
-  if (tensor_type->type_id() == kNumberTypeInt32) {
-    auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(tensor_data);
-    tensor_value.assign(tensor_data, tensor_data + data_size);
-  } else if (tensor_type->type_id() == kNumberTypeInt64) {
-    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(tensor_data);
-    tensor_value.assign(tensor_data, tensor_data + data_size);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
-                            << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
-                            << input_tensor->ToString();
-  }
-  return tensor_value;
-}
-
 // Choose the suitable datatype for cudnn
 inline cudnnDataType_t GetCudnnDataType(const std::string &Type) {
   auto type = kCudnnDtypeMap.find(Type);
@@ -552,9 +530,6 @@ bool GetCudnnDataType(const std::string &Type, cudnnDataType_t *out_type);
 
 bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type);
 
-bool GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index, const std::string &kernel_name,
-                       const std::string &tensor_name, std::vector<int64_t> *tensor_value);
-
 bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2);
 
 // This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
@@ -564,36 +539,6 @@ bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2);
 // problem by writing uchar when calling these macros, and expanding uchar after the
 // variable has been created.
 using uchar = unsigned char;
-
-std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs,
-                                                           const size_t input_index,
-                                                           const std::map<uint32_t, tensor::TensorPtr> &depends,
-                                                           const std::string &kernel_name);
-
-inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   int64_t *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
-  if (!res.has_value()) {
-    return false;
-  }
-  if (res.value().empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
-  }
-  *attr_value = res.value()[0];
-  return true;
-}
-
-inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   std::vector<int64_t> *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
-  if (!res.has_value()) {
-    return false;
-  }
-  *attr_value = res.value();
-  return true;
-}
 
 inline size_t GetTensorSize(std::vector<size_t> shape) {
   return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());

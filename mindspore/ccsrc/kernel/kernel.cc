@@ -224,5 +224,37 @@ int KernelMod::Resize(const BaseOperatorPtr & /* base_operator */, const std::ve
   }
   return static_cast<int>(ret);
 }
+
+std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
+  const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const std::string &kernel_name) {
+  // The value of dynamic attr can only be obtained after the InferOp() is executed
+  if (depend_tensor_map.empty()) {
+    MS_LOG(DEBUG) << "For '" << kernel_name << "', the depend_tensor_map is currently empty";
+    return std::nullopt;
+  }
+  auto depend_iter = depend_tensor_map.find(input_index);
+  if (depend_iter == depend_tensor_map.end()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', fail to find the " << input_index
+                      << "th input in the depend_tensor_map";
+  }
+  auto input_tensor = depend_iter->second;
+  auto input_shape = inputs[input_index]->GetShapeVector();
+  // The shape keep in depend_tensor_map was processed if it was empty.
+  if (input_shape.empty()) {
+    input_shape.push_back(1);
+  }
+  if (input_shape != input_tensor->shape()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the " << input_index
+                      << "th input is different between the InferShape and the TensorShape: " << input_shape << " vs "
+                      << input_tensor->shape();
+  }
+  const auto &data_format = inputs[input_index]->GetFormat();
+  if (data_format != mindspore::Format::DEFAULT_FORMAT && data_format != mindspore::Format::NCHW) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "',  the format of the " << input_index
+                      << "th input currently should be the default format and does not support " << data_format;
+  }
+  return GetTensorIntValue(input_tensor, input_index, kernel_name);
+}
 }  // namespace kernel
 }  // namespace mindspore

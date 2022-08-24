@@ -104,44 +104,6 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
   return;
 }
 
-// To reduce code repeat, use InferImplReduceFunc. Currently registered with ReduceMean, ReduceSum,
-// ReduceAll, ReduceAny, ReduceMax, ReduceMin.
-AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  const auto kReduceInputNum = 1;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kReduceInputNum);
-  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(input_x);
-  MS_EXCEPTION_IF_NULL(input_x->element());
-
-  ValuePtr keep_dims = primitive->GetAttr("keep_dims");
-  MS_EXCEPTION_IF_NULL(keep_dims);
-  if (!keep_dims->isa<BoolImm>()) {
-    MS_LOG(EXCEPTION) << "Keep_dims should be Bool.";
-  }
-  bool keep_dims_value = GetValue<bool>(keep_dims);
-
-  ValuePtr axis = primitive->GetAttr("axis");
-  MS_EXCEPTION_IF_NULL(axis);
-
-  ShapeVector shape = {};
-  ShapeVector x_shape = input_x->shape()->shape();
-  InferImplReduceFuncCalShape(&shape, x_shape, axis, keep_dims_value);
-
-  bool x_is_dyn = (!input_x->shape()->min_shape().empty() && !input_x->shape()->max_shape().empty());
-  if (x_is_dyn) {
-    ShapeVector shape_min = {};
-    ShapeVector shape_max = {};
-    ShapeVector x_shape_min = input_x->shape()->min_shape();
-    ShapeVector x_shape_max = input_x->shape()->max_shape();
-    InferImplReduceFuncCalShape(&shape_min, x_shape_min, axis, keep_dims_value);
-    InferImplReduceFuncCalShape(&shape_max, x_shape_max, axis, keep_dims_value);
-    return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape, shape_min, shape_max));
-  }
-  return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape));
-}
-
 AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   constexpr auto kBinaryBaseInputNum = 2;

@@ -36,5 +36,6 @@ AbstractBasePtr ReduceMinInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 
 REGISTER_PRIMITIVE_C(kNameReduceMin, ReduceMin);
+REGISTER_HOST_DEPENDS(kNameReduceMin, {1});
 }  // namespace ops
 }  // namespace mindspore
