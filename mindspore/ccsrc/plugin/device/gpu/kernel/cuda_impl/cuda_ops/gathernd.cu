@@ -32,7 +32,7 @@ __global__ void GatherNdKernel(T *input, S *indices, T *output, const size_t out
     for (size_t k = 0; k < indices_dim1; k++) {
       size_t ind = indices_dim1 * i + k;
       indices_i = indices[ind];
-      out_of_bound |= !(indices_i < batch_indices[k]);
+      out_of_bound |= !(indices_i < batch_indices[k] && indices_i >= 0);
       read_index += indices_i * batch_strides[k];
     }
     read_index += j;
@@ -63,7 +63,7 @@ __global__ void GatherNdKernel(cuComplex *input, S *indices, cuComplex *output, 
     for (size_t k = 0; k < indices_dim1; k++) {
       size_t ind = indices_dim1 * i + k;
       indices_i = indices[ind];
-      out_of_bound |= !(indices_i < batch_indices[k]);
+      out_of_bound |= !(indices_i < batch_indices[k] && indices_i >= 0);
       read_index += indices_i * batch_strides[k];
     }
     read_index += j;
