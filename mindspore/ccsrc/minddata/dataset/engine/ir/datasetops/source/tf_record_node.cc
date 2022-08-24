@@ -17,20 +17,20 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 
 #include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
+#include <fstream>
 
-#include "utils/file_utils.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+#include "utils/file_utils.h"
 #include "utils/system/crc32c.h"
 
 namespace mindspore {
 namespace dataset {
+std::unordered_set<std::string> TFRecordNode::large_files_ = {};
+const int64_t kTFRecordFileLimit = 0x140000000;
+
 std::shared_ptr<DatasetNode> TFRecordNode::Copy() {
   std::shared_ptr<TFRecordNode> node;
   if (schema_obj_ != nullptr) {
@@ -50,6 +50,76 @@ void TFRecordNode::Print(std::ostream &out) const {
           ",shard_id:" + std::to_string(shard_id_) + ",...)");
 }
 
+Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filenames) {
+  std::vector<std::string> invalid_files;
+
+  for (const std::string &filename : filenames) {
+    // invalid path
+    auto realpath = FileUtils::GetRealPath(filename.c_str());
+    if (!realpath.has_value()) {
+      invalid_files.push_back(filename);
+      continue;
+    }
+
+    // failed to open
+    std::ifstream reader;
+    reader.open(realpath.value());
+    if (!reader) {
+      invalid_files.push_back(filename);
+      reader.close();
+      continue;
+    }
+
+    // read data
+    int64_t record_length = 0;
+    (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
+
+    // read crc from file
+    uint32_t masked_crc = 0;
+    (void)reader.read(reinterpret_cast<char *>(&masked_crc), static_cast<std::streamsize>(sizeof(uint32_t)));
+
+    // generate crc from data
+    uint32_t generated_crc =
+      system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
+
+    // invalid tfrecord file
+    if (masked_crc != generated_crc) {
+      invalid_files.push_back(filename);
+      reader.close();
+      continue;
+    }
+
+    // check and log large files
+    CheckLargeFile(filename, &reader);
+    reader.close();
+  }
+
+  if (!invalid_files.empty()) {
+    std::string err_msg;
+    err_msg += "Invalid file. The following files either cannot be opened, or are not valid TFRecordDataset files:\n";
+
+    std::string accumulated_filenames = std::accumulate(
+      invalid_files.begin(), invalid_files.end(), std::string(""),
+      [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
+    err_msg += accumulated_filenames;
+    RETURN_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+void TFRecordNode::CheckLargeFile(const std::string &filename, std::ifstream *reader) {
+  if (large_files_.find(filename) == large_files_.end()) {
+    int64_t file_len = reader->seekg(0, std::ios::end).tellg();
+    if (file_len > kTFRecordFileLimit) {
+      MS_LOG(WARNING)
+        << "The size of following TFRecord file is larger than 5G. There may be performance problems in "
+        << "distributed scenarios. The file can be split into sub-files smaller than 5G to obtain better performance. "
+        << "Large TFRecord file: " << filename;
+      large_files_.insert(filename);
+    }
+  }
+}
+
 // Validator for TFRecordNode
 Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
@@ -59,21 +129,8 @@ Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("TFRecordDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("TFRecordDataset", num_shards_, shard_id_));
 
-  std::vector<std::string> invalid_files = TFReaderOp::ValidateFirstRowCrc(dataset_files_);
-
-  std::string err_msg;
-  if (!invalid_files.empty()) {
-    err_msg += "Invalid file. The following files either cannot be opened, or are not valid TFRecordDataset files:\n";
-
-    std::string accumulated_filenames = std::accumulate(
-      invalid_files.begin(), invalid_files.end(), std::string(""),
-      [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
-    err_msg += accumulated_filenames;
-  }
-  if (err_msg.empty()) {
-    return Status::OK();
-  }
-  RETURN_SYNTAX_ERROR(err_msg);
+  RETURN_IF_NOT_OK(ValidateTFRecordFiles(dataset_files_));
+  return Status::OK();
 }
 
 // Function to build TFRecordNode

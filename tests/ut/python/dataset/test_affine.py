@@ -17,11 +17,10 @@ Testing Affine op in DE
 """
 import numpy as np
 
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from mindspore.dataset.vision import Inter
+import mindspore.dataset as ds
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 from util import visualize_list, diff_mse
 
 GENERATE_GOLDEN = False
@@ -102,54 +101,51 @@ def test_affine_exception_translate_value():
     """
     logger.info("test_affine_exception_translate_value")
     try:
-        _ = vision.Affine(degrees=15, translate=(0.1,), scale=2.1, shear=[1.5, 1.5], resample=Inter.BILINEAR)
+        _ = vision.Affine(degrees=15, translate=(0.1,), scale=2.1, shear=[1.5, 1.5], resample=vision.Inter.BILINEAR)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "The length of translate should be 2."
 
 
-def test_affine_op():
+def test_affine_pipeline(plot=False):
     """
-    Feature: Affine op
-    Description: Test Affine in Python transformations
+    Feature: Affine
+    Description: Test Affine in pipeline mode
     Expectation: The dataset is processed as expected
     """
     # First dataset
-    transforms1 = [vision.Decode(True), vision.Resize([64, 64]), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
+    transforms_list = transforms.Compose([vision.Decode(),
+                                          vision.Resize([64, 64])])
+    dataset = ds.TFRecordDataset(DATA_DIR,
+                                 SCHEMA_DIR,
+                                 columns_list=["image"],
+                                 shuffle=False)
+    dataset = dataset.map(operations=transforms_list, input_columns=["image"])
 
     # Second dataset
-    transforms2 = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[10.0, 10.0]),
-        vision.ToTensor()
-    ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
+    affine_transforms_list = transforms.Compose([vision.Decode(),
+                                                 vision.Resize([64, 64]),
+                                                 vision.Affine(degrees=15, translate=[0.2, 0.2],
+                                                               scale=1.1, shear=[10.0, 10.0])])
+    affine_dataset = ds.TFRecordDataset(DATA_DIR,
+                                        SCHEMA_DIR,
+                                        columns_list=["image"],
+                                        shuffle=False)
+    affine_dataset = affine_dataset.map(operations=affine_transforms_list, input_columns=["image"])
 
-    num_iter = 0
-    image_affine = []
-    image_original = []
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = (data1["image"].transpose(1, 2, 0) * 255).asnumpy()
-        cvt_img = (data2["image"].transpose(1, 2, 0) * 255).asnumpy()
-        image_affine.append(cvt_img)
-        image_original.append(ori_img)
-    visualize_list(image_original, image_affine)
+    num_image = 0
+    image_list = []
+    affine_image_list = []
+    for image, affine_image in zip(dataset.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                   affine_dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        num_image += 1
+        image_list.append(image["image"])
+        affine_image_list.append(affine_image["image"])
+
+    assert num_image == 3
+
+    if plot:
+        visualize_list(image_list, affine_image_list)
 
 
 def test_affine_eager():
@@ -196,5 +192,5 @@ if __name__ == "__main__":
     test_affine_exception_shear_size()
     test_affine_exception_translate_size()
     test_affine_exception_translate_value()
-    test_affine_op()
+    test_affine_pipeline(plot=False)
     test_affine_eager()
