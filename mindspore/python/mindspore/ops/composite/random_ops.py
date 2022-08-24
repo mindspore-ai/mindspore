@@ -174,7 +174,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         TypeError: If 'dtype' is neither int32 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops

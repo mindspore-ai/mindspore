@@ -61,9 +61,9 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
   abstract::ShapePtr output_shape;
   auto shape_value = input_args[0]->BuildValue();
   if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
-    shape = shape_value->isa<ValueTuple>()
-              ? CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name)
-              : CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name);
+    shape = shape_value->isa<tensor::Tensor>()
+              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
+              : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {
     shape = {-2};  // unknown dimension.
