@@ -20,6 +20,7 @@ from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
 def test_fallback_list_with_input_tuple():
     """
     Feature: JIT Fallback
