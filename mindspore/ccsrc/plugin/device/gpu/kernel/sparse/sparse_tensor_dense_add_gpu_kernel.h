@@ -18,11 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPARSE_TENSOR_DENSE_ADD_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
+#include <cusparse.h>
 #include <vector>
 #include <string>
 #include <map>
-#include <algorithm>
 #include <utility>
+#include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -34,7 +35,7 @@ constexpr auto kUnknown = "Unknown";
 
 class SparseTensorDenseAddGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SparseTensorDenseAddGpuKernelMod() = default;
+  SparseTensorDenseAddGpuKernelMod() { ResetResource(); }
   ~SparseTensorDenseAddGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -50,6 +51,23 @@ class SparseTensorDenseAddGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelAttr> GetOpSupport() override;
+  void ResetResource() noexcept {
+    is_null_output_ = false;
+    x2_shape_size = 0;
+    input_elements_ = 0;
+    workspace_size_ = 0;
+    output_elements_ = 1;
+    workspace_size_list_.clear();
+  }
+
+ protected:
+  void InitSizeLists() {
+    workspace_size_list_.clear();
+
+    // The workspace size
+    workspace_size_ = x2_shape_size * sizeof(size_t);
+    workspace_size_list_.push_back(workspace_size_);
+  }
 
  private:
   template <typename T, typename I>
@@ -62,12 +80,16 @@ class SparseTensorDenseAddGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, SparseTensorDenseAddLaunchFunc>> func_list_;
   SparseTensorDenseAddLaunchFunc kernel_func_;
   void *cuda_stream_{nullptr};
+  std::vector<int64_t> x2_shape_;
   size_t unit_size_{1};
   size_t input_elements_{};
   size_t output_elements_{1};
   size_t rank_{};
+  size_t x2_shape_size;
+  size_t workspace_size_;
+  bool is_null_output_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPARSE_TENSOR_DENSE_ADD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SPARSE_SPARSE_TENSOR_DENSE_ADD_GPU_KERNEL_H_
