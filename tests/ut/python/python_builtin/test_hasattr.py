@@ -183,6 +183,21 @@ def test_hasattr_ms_class_2():
     def foo():
         return hasattr(ms_obj, "none")
 
+    assert foo()
+
+
+def test_hasattr_ms_class_3():
+    """
+    Feature: Syntax hasattr.
+    Description: Graph syntax hasattr support ms_class input.
+    Expectation: No exception.
+    """
+    ms_obj = MSClass1()
+
+    @ms_function
+    def foo():
+        return hasattr(ms_obj, "none2")
+
     assert not foo()
 
 
@@ -248,6 +263,21 @@ def test_hasattr_cell_obj_2():
     @ms_function
     def foo():
         return hasattr(cell_obj, "none")
+
+    assert foo()
+
+
+def test_hasattr_cell_obj_3():
+    """
+    Feature: Syntax hasattr.
+    Description: Graph syntax hasattr support cell object input.
+    Expectation: No exception.
+    """
+    cell_obj = Net()
+
+    @ms_function
+    def foo():
+        return hasattr(cell_obj, "none2")
 
     assert not foo()
 

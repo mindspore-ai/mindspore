@@ -177,5 +177,6 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<Slice, Type, std::shared_ptr<Slice>>(m_sub, "Slice").def(py::init());
     (void)py::class_<TypeEllipsis, Type, std::shared_ptr<TypeEllipsis>>(m_sub, "TypeEllipsis").def(py::init());
     (void)py::class_<MsClassType, Type, std::shared_ptr<MsClassType>>(m_sub, "TypeMsClassType").def(py::init());
+    (void)py::class_<TypeNull, Type, std::shared_ptr<TypeNull>>(m_sub, "TypeNull").def(py::init());
   }));
 }  // namespace mindspore

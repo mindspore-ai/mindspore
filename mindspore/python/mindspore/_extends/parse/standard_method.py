@@ -35,6 +35,7 @@ from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
 from ...ops.function.sparse_func import sparse_add
+from ...common import dtype as mstype
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
@@ -271,8 +272,8 @@ def hasattr(x, attr):  # pylint: disable=redefined-builtin
     Returns:
         Boolean value, indicates whether the object x has attribute attr.
     """
-    out = getattr(x, attr, None)
-    return out is not None
+    out = getattr(x, attr, mstype._null)
+    return not isinstance(out, mstype._null_type)
 
 
 def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name

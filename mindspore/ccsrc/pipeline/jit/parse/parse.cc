@@ -1329,6 +1329,42 @@ AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block
   return var_node;
 }
 
+AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object &node, const py::object &value_body,
+                                 const AnfNodePtr &value_node) {
+  if (py::hasattr(value_body, "id")) {
+    std::string module_name = py::cast<std::string>(python_adapter::GetPyObjAttr(value_body, "id"));
+    py::dict global_dict = const_cast<py::dict &>(block->global_py_params());
+    if (global_dict.contains(module_name)) {
+      py::object module_obj = global_dict[py::str(module_name)];
+      std::string module_str = py::cast<std::string>(py::str(module_obj));
+      bool the_module_is_mindspore = module_str.find("module 'mindspore'") != std::string::npos;
+      if (the_module_is_mindspore) {
+        std::string script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
+        AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
+        interpret_node->set_interpret(true);
+        interpret_node->set_interpret_internal_type(true);
+        return interpret_node;
+      }
+    }
+  }
+  return nullptr;
+}
+
+AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &value_body) {
+  if (py::hasattr(value_body, "id")) {
+    std::string module_name = py::cast<std::string>(python_adapter::GetPyObjAttr(value_body, "id"));
+    py::dict global_dict = const_cast<py::dict &>(block->global_py_params());
+    if (global_dict.contains(module_name)) {
+      py::object module_obj = global_dict[py::str(module_name)];
+      std::string module_str = py::cast<std::string>(py::str(module_obj));
+      if (module_str.find("module 'mindspore.common.dtype'") != std::string::npos) {
+        return NewValueNode(std::make_shared<TypeNull>());
+      }
+    }
+  }
+  return nullptr;
+}
+
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
@@ -1356,24 +1392,18 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   MS_LOG(DEBUG) << "Attr = " << attr_str;
   // The fallback feature is enabled in default.
   static const auto use_fallback = (support_fallback() != "0");
-  // Process xxx.Tensor() and xxx is mindspore. Check it with global dict.
   if (use_fallback && attr_str == "Tensor") {
-    // Check the module is mindspore
-    if (py::hasattr(value_body, "id")) {
-      std::string module_name = py::cast<std::string>(python_adapter::GetPyObjAttr(value_body, "id"));
-      py::dict global_dict = const_cast<py::dict &>(block->global_py_params());
-      if (global_dict.contains(module_name)) {
-        py::object module_obj = global_dict[py::str(module_name)];
-        std::string module_str = py::cast<std::string>(py::str(module_obj));
-        bool the_module_is_mindspore = module_str.find("module 'mindspore'") != std::string::npos;
-        if (the_module_is_mindspore) {
-          std::string script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
-          AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
-          interpret_node->set_interpret(true);
-          interpret_node->set_interpret_internal_type(true);
-          return interpret_node;
-        }
-      }
+    // Process xxx.Tensor() and xxx is mindspore.
+    auto ret = ParseMsTensor(block, node, value_body, value_node);
+    if (ret != nullptr) {
+      return ret;
+    }
+  }
+  if (attr_str == "_null") {
+    // For stype._null, return TypeNull value node directly.
+    auto ret = ParseNull(block, value_body);
+    if (ret != nullptr) {
+      return ret;
     }
   }
   AnfNodePtr attr_node = nullptr;
