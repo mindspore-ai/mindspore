@@ -789,8 +789,8 @@ class LayerNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
     Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It can be described using the following formula. It is applied across all channels
-    and pixel but only one batch size.
+    testing time. It is applied across all channels
+    and pixel but only one batch size. It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta

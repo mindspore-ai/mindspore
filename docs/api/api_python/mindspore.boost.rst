@@ -163,7 +163,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
 .. py:class:: mindspore.boost.OptimizerProcess(opt)
 
-    处理Boost的优化器，目前支持给优化器添加梯度中心化和创建新的优化器。
+    处理Boost的优化器。目前支持给优化器添加梯度中心化和创建新的优化器。
 
     参数：
         - **opt** (Cell) - 使用的优化器。
@@ -218,7 +218,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     Boost网络训练封装类。
 
-    用优化器封装网络，使用输入训练网络来获取结果。反向图在 *construct* 函数中自动创建，并且支持多种不同的并行模式。
+    用优化器封装网络。使用输入训练网络来获取结果。反向图在 *construct* 函数中创建，以更新参数，并且支持多种不同的并行模式。
 
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
@@ -290,8 +290,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     使用混合精度功能的Boost训练网络。
 
-    实现了包含损失缩放（loss scale）的单次训练。它使用网络、优化器和用于更新损失缩放系数（loss scale）的Cell(或一个Tensor)作为参数。可在host侧或device侧更新损失缩放系数。
-    如果需要在host侧更新，使用Tensor作为 `scale_sense` ，否则，使用可更新损失缩放系数的Cell实例作为 `scale_sense` 。
+    实现了包含损失缩放（loss scale）的单次训练。它使用网络、优化器和用于更新损失缩放系数（loss scale）的Cell(或一个Tensor)作为参数。可在host侧或device侧更新损失缩放系数。BoostTrainOneStepWithLossScaleCell会被编译成图，其中inputs作为输入数据。张量类型参数 `scale_sense` 作为损失缩放时使用的值。
+    如果需要在host侧更新，使用Tensor作为 `scale_sense` 。如果需要在device侧更新，使用可更新损失缩放系数的Cell实例作为 `scale_sense` 。
 
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。

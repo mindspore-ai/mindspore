@@ -74,7 +74,7 @@
 
     .. py:method:: open_and_set_header()
 
-        打开MindRecord文件准备写入并且设置描述其meta信息的头部，该函数仅用于并行写入，并在 `write_raw_data` 函数之前调用。
+        打开MindRecord文件准备写入并且设置描述其meta信息的头部。该函数仅用于并行写入，并在 `write_raw_data` 函数之前调用。
 
         返回：
             MSRStatus，SUCCESS或FAILED。

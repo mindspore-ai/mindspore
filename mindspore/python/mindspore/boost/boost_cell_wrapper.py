@@ -104,7 +104,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     Boost Network training package class.
 
     Wraps the network with an optimizer. The resulting Cell is trained with input '\*inputs'.
-    The backward graph will be created in the construct function to update the parameter. Different
+    The backward graph will be created in the construct function to update the parameter, and different
     parallel modes are available for training.
 
     Args:
@@ -380,7 +380,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     Cell as args. The loss scale value can be updated in both host side or device side. The
     BoostTrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
     The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
-    the value must be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
+    the value must be provided. If the Tensor type of `scale_sense` is not given, the loss scale update logic
     must be provide by Cell type of `scale_sense`.
 
     Args:

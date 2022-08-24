@@ -267,7 +267,7 @@ class XavierUniform(Initializer):
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 
-    where :math:`gain` is an optional scaling factor, :math:`n_{in}` is the number of input units in the weight tensor,
+    where :math:`gain` is an optional scaling factor.  :math:`n_{in}` is the number of input units in the weight tensor,
     :math:`n_{out}` is the number of output units in the weight tensor.
 
     For details of XavierUniform algorithm, please check
@@ -305,7 +305,8 @@ class HeUniform(Initializer):
         boundary = \text{gain} \times \sqrt{\frac{3}{fan\_mode}}
 
     where :math:`gain` is an optional scaling factor. If :math:`fan\_mode` is 'fan_in', it is the number of input units
-    of the weight tensor. If :math:`fan\_mode` is 'fan_out', it is the number of output units of the weight tensor.
+    of the weight tensor, while if :math:`fan\_mode` is 'fan_out',
+    it is the number of output units of the weight tensor.
 
     For details of HeUniform algorithm, please check
     `<https://arxiv.org/abs/1502.01852>`_.
@@ -437,7 +438,7 @@ class Identity(Initializer):
 class Sparse(Initializer):
     """
     Generates a 2 dimension sparse matrix array in order to initialize a tensor. The non-zero positions
-    will be filled with the value sampled from the normal distribution :math:`{N}(0, 0.01)`
+    will be filled with the value sampled from the normal distribution :math:`{N}(0, 0.01)`.
 
     Args:
          sparsity (float): The fraction of elements being set to zero in each column.

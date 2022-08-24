@@ -5,6 +5,8 @@ mindspore.nn.AvgPool2d
 
     对输入的多维数据进行二维的平均池化运算。
 
+    在输入张量上应用2D average pooling，可视为二维输入平面的组合。
+
     通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`(kH,kW)` 和 `stride` ，公式定义如下
 
     .. math::

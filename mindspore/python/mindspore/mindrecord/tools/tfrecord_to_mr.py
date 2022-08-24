@@ -210,7 +210,7 @@ class TFRecordToMR:
     def tfrecord_iterator_oldversion(self):
         """
         Yield a dict with key to be fields in schema, and value to be data.
-        This function is for old version tensorflow whose version number < 2.1.0
+        This function is for old version tensorflow whose version number < 2.1.0.
 
         Returns:
             dict, data dictionary whose keys are the same as columns.

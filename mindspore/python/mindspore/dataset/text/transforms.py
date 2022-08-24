@@ -498,7 +498,7 @@ class ToNumber(TextTensorOperation):
     Strings are cast according to the rules specified in the following links, except that any strings which represent
     negative numbers cannot be cast to an unsigned integer type, rules links are as follows:
     https://en.cppreference.com/w/cpp/string/basic_string/stof,
-    https://en.cppreference.com/w/cpp/string/basic_string/stoul,
+    https://en.cppreference.com/w/cpp/string/basic_string/stoul.
 
     Args:
         data_type (mindspore.dtype): Type to be cast to. Must be a numeric type in mindspore.dtype.
@@ -893,7 +893,7 @@ if platform.system().lower() != 'windows':
     class CaseFold(TextTensorOperation):
         """
         Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
-        lower case. Supported normalization forms please refer to
+        lower case than :func:`str.lower`. For supported normalization forms, please refer to
         `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ .
 
         Note:

@@ -2689,7 +2689,8 @@ class RandomPosterize(ImageTensorOperation):
 
 class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
     """
-    This operator will crop the input image randomly, and resize the cropped image using a selected interpolation mode.
+    This operator will crop the input image randomly,
+    and resize the cropped image using a selected interpolation mode :class:`mindspore.dataset.vision.Inter`.
 
     Note:
         If the input image is more than one, then make sure that the image size is the same.
@@ -2856,7 +2857,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
 class RandomResize(ImageTensorOperation):
     """
-    Resize the input image using a randomly selected interpolation mode.
+    Resize the input image using a randomly selected interpolation mode :class:`mindspore.dataset.vision.Inter`.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
@@ -2898,7 +2899,8 @@ class RandomResize(ImageTensorOperation):
 
 class RandomResizeWithBBox(ImageTensorOperation):
     """
-    Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
+    Tensor operation to resize the input image
+    using a randomly selected interpolation mode :class:`mindspore.dataset.vision.Inter` and adjust
     bounding boxes accordingly.
 
     Args:
@@ -3281,7 +3283,7 @@ class Rescale(ImageTensorOperation):
 
 class Resize(ImageTensorOperation, PyTensorOperation):
     """
-    Resize the input image to the given size with a given interpolation mode.
+    Resize the input image to the given size with a given interpolation mode :class:`mindspore.dataset.vision.Inter`.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.

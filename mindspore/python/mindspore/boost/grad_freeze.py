@@ -190,8 +190,9 @@ class _TrainFreezeCell(Cell):
 
 class GradientFreeze:
     r"""
-    Freezing the gradients of some layers randomly. The number and
-    probability of frozen layers can be configured by users
+    Gradients freezing algorithm, freezing the gradients of some layers randomly,
+    to improve network training performance. The number and
+    probability of frozen layers can be configured by users.
 
     Args:
         param_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.

@@ -3,7 +3,7 @@ mindspore.nn.BleuScore
 
 .. py:class:: mindspore.nn.BleuScore(n_gram=4, smooth=False)
 
-    计算具有一个或多个引用的机器翻译文本的BLEU分数。
+    计算BLEU分数。BLEU指的是具有一个或多个引用的机器翻译文本的metric。
 
     参数： 
         - **n_gram** (int) - 取值范围为1~4。默认值：4。

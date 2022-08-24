@@ -109,7 +109,7 @@ class GloVe(cde.GloVe):
 
 class JiebaMode(IntEnum):
     """
-    An enumeration for JiebaTokenizer.
+    An enumeration for :class:`mindspore.dataset.text.JiebaTokenizer`.
 
     Possible enumeration values are: JiebaMode.MIX, JiebaMode.MP, JiebaMode.HMM.
 
@@ -286,7 +286,7 @@ class SentencePieceVocab:
 
 class SPieceTokenizerLoadType(IntEnum):
     """
-    An enumeration for loading type of SentencePieceTokenizer.
+    An enumeration for loading type of :class:`mindspore.dataset.text.SentencePieceTokenizer`.
 
     Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadType.MODEL.
 
@@ -300,7 +300,7 @@ class SPieceTokenizerLoadType(IntEnum):
 
 class SPieceTokenizerOutType(IntEnum):
     """
-    An enumeration for SPieceTokenizerOutType.
+    An enumeration for :class:`mindspore.dataset.text.SentencePieceTokenizer`.
 
     Possible enumeration values are: SPieceTokenizerOutType.STRING, SPieceTokenizerOutType.INT.
 

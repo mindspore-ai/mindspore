@@ -5,7 +5,7 @@ mindspore.nn.TrainOneStepCell
 
     训练网络封装类。
 
-    封装 `network` 和 `optimizer` ，构建一个输入'\*inputs'的用于训练的Cell。
+    封装 `network` 和 `optimizer` 。构建一个输入'\*inputs'的用于训练的Cell。
     执行函数 `construct` 中会构建反向图以更新网络参数。支持不同的并行训练模式。
 
     参数：
