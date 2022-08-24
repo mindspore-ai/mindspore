@@ -373,6 +373,7 @@ from .grad import (
     derivative,
     jvp,
     vjp,
+    jacfwd,
     linearize
 )
 from .debug_func import (

@@ -23,6 +23,7 @@ from .grad_func import (
     derivative,
     jvp,
     vjp,
+    jacfwd,
     linearize
 )
 

@@ -14,16 +14,16 @@
 # ============================================================================
 
 """Defines gradient related operators with functional form."""
-
 from __future__ import absolute_import
 from functools import partial
+import numpy as np
 from mindspore.common import ms_function
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops.primitive import constexpr
-from mindspore.ops.function import ones, expand_dims
-from mindspore.ops.composite import _Grad, _TaylorOperation, GradOperation
+from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose
+from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
 from mindspore.ops import operations as P
 
 cast = P.Cast()
@@ -48,6 +48,7 @@ def _raise_type_error():
 def _convert_grad_position_type(grad_position):
     """Check and convert the type and size of grad position index."""
     if isinstance(grad_position, tuple):
+        grad_position = tuple(set(grad_position))
         for gp in grad_position:
             if not isinstance(gp, int):
                 raise TypeError(f"For 'F.grad', the element in 'grad_position' must be int.")
@@ -59,6 +60,16 @@ def _convert_grad_position_type(grad_position):
         grad_position = (grad_position,)
     else:
         raise TypeError(f"For 'F.grad', the 'grad_position' must be int or tuple.")
+    return grad_position
+
+
+@constexpr
+def _check_grad_position(grad_position, args_num):
+    """Check and convert grad position index."""
+    grad_position = _convert_grad_position_type(grad_position)
+    for gp in grad_position:
+        if gp < 0 or gp >= args_num:
+            raise ValueError("The element in grad_position must belong to [0, args_num).")
     return grad_position
 
 
@@ -547,8 +558,8 @@ def derivative(fn, primals, order):
     return out_primals, out_series
 
 
-_grad_jvp_single = GradOperation(sens_param=True)
-_grad_jvp_all = GradOperation(sens_param=True, get_all=True)
+_grad_single = GradOperation(sens_param=True)
+_grad_all = GradOperation(sens_param=True, get_all=True)
 
 
 def jvp(fn, inputs, v, has_aux=False):
@@ -626,10 +637,10 @@ def jvp(fn, inputs, v, has_aux=False):
         fn_ = fn
 
     def grad_single(u, first_grad_single_value):
-        return _grad_jvp_single(fn_)(*first_grad_single_value, u)
+        return _grad_single(fn_)(*first_grad_single_value, u)
 
     def grad_all(u, first_grad):
-        return _grad_jvp_all(fn_)(*first_grad, u)
+        return _grad_all(fn_)(*first_grad, u)
 
     @ms_function(hash_args=fn_)
     def _wrap_container(*arg):
@@ -643,10 +654,10 @@ def jvp(fn, inputs, v, has_aux=False):
         else:
             u = oneslike(outputs)
         if len(jvp_inputs) == 1:
-            second_grad_net = _grad_jvp_single(grad_single)
+            second_grad_net = _grad_single(grad_single)
             gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
         else:
-            second_grad_net = _grad_jvp_single(grad_all)
+            second_grad_net = _grad_single(grad_all)
             gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
         if has_aux:
             res = fn(*jvp_inputs)
@@ -741,9 +752,6 @@ def _check_tensor(inputs):
     return True
 
 
-vjp_grad = GradOperation(get_all=True, sens_param=True)
-
-
 def vjp(fn, *inputs, has_aux=False):
     """
     Compute the vector-jacobian-product of the given network. `vjp` matches
@@ -830,8 +838,8 @@ def vjp(fn, *inputs, has_aux=False):
     def wrap_container(*v):
         _check_tensor(v)
         if len(v) == 1:
-            return vjp_grad(fn_)(*inputs, v[0])
-        return vjp_grad(fn_)(*inputs, v)
+            return _grad_all(fn_)(*inputs, v[0])
+        return _grad_all(fn_)(*inputs, v)
 
     res = fn(*inputs)
     if has_aux:
@@ -841,6 +849,201 @@ def vjp(fn, *inputs, has_aux=False):
     return res, wrap_container
 
 
+@constexpr
+def _jac_generate_target_dimension(x):
+    """For given length = len(x), this method generates target dimension tuple (1, 2, 3,..., length, 0)."""
+    target_dimension = tuple(index + 1 for index, _ in enumerate(x[1:])) + (0,)
+    return target_dimension
+
+
+def _jac_trans_item(item, inputs_shape, grad_position):
+    """transfer origin item to derivative of each output with respect to each input."""
+    output_wrt_input_all = ()
+    length = len(inputs_shape) - 1
+    for i in range(length):
+        if i in grad_position:
+            origin_output_wrt_input = item[inputs_shape[i][1]:inputs_shape[i + 1][1]]
+            target_dimension = _jac_generate_target_dimension(origin_output_wrt_input.shape)
+            temp = transpose(origin_output_wrt_input, target_dimension)
+            output_wrt_input = reshape(temp, temp.shape[:-1] + inputs_shape[i + 1][0])
+            output_wrt_input_all += (output_wrt_input,)
+    return output_wrt_input_all
+
+
+def _jacfwd_postprocess(x, inputs_shape, grad_position):
+    """reformat jacobian."""
+    if isinstance(x, tuple):
+        jacobian = ()
+        for item in x:
+            jacobian += _jac_trans_item(item, inputs_shape, grad_position)
+        res = jacobian
+    else:
+        res = _jac_trans_item(x, inputs_shape, grad_position)
+    if len(res) == 1:
+        return res[0]
+    input_num = len(grad_position)
+    if len(res) % input_num != 0:
+        raise ValueError("The numbers of inputs and outputs do not match.")
+    output_num = len(res) // input_num
+    if input_num == 1 or output_num == 1:
+        return res
+    jac = ()
+    for i in range(output_num):
+        input_grad = ()
+        for j in range(input_num):
+            input_grad += (res[i * input_num + j],)
+        jac += (input_grad,)
+    return jac
+
+
+def _jacfwd_construct_v(inputs, grad_position):
+    """
+    For input (x, y), x.shape = (a, b), y.shape = (c, d), this method generates corresponding v (v1, v2),
+    v1.shape = (N, a, b), v2.shape = (N, c, d), while N = a*b + c*d.
+    """
+    v = ()
+    primals = ()
+    inputs_shape = (((), 0),)
+    num = 0
+    items_num = ()
+    cum_num = (0,)
+    for item in inputs:
+        item_num = size(item)
+        num += item_num
+        inputs_shape += ((item.shape, num),)
+        items_num += (item_num,)
+        cum_num += (num,)
+    for i, element in enumerate(inputs):
+        item_size = items_num[i]
+        if i in grad_position:
+            temp2 = Tensor(np.eye(num, item_size, -cum_num[i], np.float32))
+        else:
+            temp2 = zeros((num, item_size), mstype.float32)
+        input_v = reshape(temp2, (num,) + element.shape)
+        primal = broadcast_to(element, (num,) + element.shape)
+        v += (input_v,)
+        primals += (primal,)
+    if len(inputs) == 1:
+        return primals, v[0], inputs_shape
+    return primals, v, inputs_shape
+
+
+_vmap = _Vmap()
+
+
+def jacfwd(fn, grad_position=0, has_aux=False):
+    """
+    Compute Jacobian via forward mode, corresponding to
+    `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
+    When number of outputs is much greater than that of inputs, it's better to calculate Jacobian via forward mode than
+    reverse mode to get better performance.
+
+    Args:
+        fn (Union(Cell, function)): Function to do GradOperation.
+        grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False.
+
+    Returns:
+        Function, returns the Jacobian function for the input function or cell.
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
+        like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore.ops import jacfwd
+        >>> from mindspore import Tensor
+        >>> class MultipleInputsMultipleOutputsNet(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x ** 2 + y ** 2 + z ** 2, x * y * z
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> z = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+        >>> net = MultipleInputsMultipleOutputsNet()
+        >>> jac, aux = jacfwd(net, grad_position=0, has_aux=True)(x, y, z)
+        >>> print(jac)
+        Tensor(shape=[2, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  0.00000000e+00]],
+          [[ 0.00000000e+00,  4.00000000e+00],
+           [ 0.00000000e+00,  0.00000000e+00]]],
+         [[[ 0.00000000e+00,  0.00000000e+00],
+           [ 6.00000000e+00,  0.00000000e+00]],
+          [[ 0.00000000e+00,  0.00000000e+00],
+           [ 0.00000000e+00,  8.00000000e+00]]]])
+        >>> print(aux)
+        [[ 1.  4.]
+         [ 9. 16.]]
+    """
+    _check_has_aux_type(has_aux)
+
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError("When 'has_aux' is True, origin 'fn' requires more than one outputs.")
+        res = outputs[0]
+        return res
+
+    def grad_single(u, first_grad_single_value):
+        if has_aux:
+            return _grad_single(aux_fn)(*first_grad_single_value, u)
+        return _grad_single(fn)(*first_grad_single_value, u)
+
+    def grad_all(u, first_grad):
+        if has_aux:
+            return _grad_all(aux_fn)(*first_grad, u)
+        return _grad_all(fn)(*first_grad, u)
+
+    @ms_function
+    def wrapped(*args):
+        checked_grad_position = _check_grad_position(grad_position, len(args))
+        primals, v, inputs_shape = _jacfwd_construct_v(args, checked_grad_position)
+
+        def inner_fn(jvp_inputs, vectors):
+            outputs = fn(*jvp_inputs)
+            if isinstance(outputs, tuple):
+                u = ()
+                for item in outputs:
+                    u = u + (oneslike(item),)
+            else:
+                u = oneslike(outputs)
+            if len(jvp_inputs) == 1:
+                second_grad_net = _grad_single(grad_single)
+            else:
+                second_grad_net = _grad_single(grad_all)
+            gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
+            return gradient_outputs
+
+        def inner_aux_fn(jvp_inputs, vectors):
+            outputs = aux_fn(*jvp_inputs)
+            u = oneslike(outputs)
+            if len(jvp_inputs) == 1:
+                second_grad_net = _grad_single(grad_single)
+            else:
+                second_grad_net = _grad_single(grad_all)
+            gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
+            return gradient_outputs
+
+        if has_aux:
+            res = _vmap(inner_aux_fn)(primals, v)
+            jac_res = _jacfwd_postprocess(res, inputs_shape, checked_grad_position)
+            forward_outputs = fn(*args)
+            if len(forward_outputs) == 2:
+                return jac_res, forward_outputs[1]
+            return jac_res, forward_outputs[1:]
+        res = _vmap(inner_fn)(primals, v)
+        jac_res = _jacfwd_postprocess(res, inputs_shape, checked_grad_position)
+        return jac_res
+
+    return wrapped
+
+
 __all__ = [
     'grad',
     'value_and_grad',
@@ -848,6 +1051,7 @@ __all__ = [
     'derivative',
     'jvp',
     'vjp',
+    'jacfwd',
     'linearize'
 ]
 __all__.sort()

@@ -552,6 +552,7 @@ Parameter操作函数
     mindspore.ops.jet
     mindspore.ops.jvp
     mindspore.ops.vjp
+    mindspore.ops.jacfwd
     mindspore.ops.vmap
 
 调试函数
