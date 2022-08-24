@@ -69,7 +69,7 @@ bool HasSideEffect(const CNodePtr &cnode) {
 }
 
 bool IsSpecialNode(const CNodePtr &cnode) {
-  auto first_input = cnode->input(0);
+  const auto &first_input = cnode->input(0);
   return IsPrimitiveCNode(first_input, prim::kPrimJ) || IsPrimitiveCNode(first_input, prim::kPrimVmap) ||
          IsPrimitiveCNode(first_input, prim::kPrimTaylor) || IsPrimitiveCNode(first_input, prim::kPrimShard) ||
          IsValueNode<FuncGraph>(first_input) || cnode->IsApply(prim::kPrimCall) || cnode->IsApply(prim::kPrimPartial) ||
@@ -317,9 +317,7 @@ bool CheckExistSpecialNode(const AnfNodePtr &update_state, const AnfNodePtr &fir
   auto monad = update_state_cnode->input(monad_input_index);
   auto attach_node = update_state_cnode->input(attach_input_index);
   MS_EXCEPTION_IF_NULL(attach_node);
-  auto attach_cnode = attach_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(attach_cnode);
-  if (IsSpecialNode(attach_cnode)) {
+  if (attach_node->isa<CNode>() && IsSpecialNode(attach_node->cast<CNodePtr>())) {
     return true;
   }
   if (monad == first_monad) {

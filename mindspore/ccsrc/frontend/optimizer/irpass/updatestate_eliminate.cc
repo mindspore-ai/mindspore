@@ -780,7 +780,7 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
   if (cnode == nullptr) {
     return update_state_node->input(kInputIndex);
   }
-  auto first_input = cnode->input(0);
+  const auto &first_input = cnode->input(0);
   bool is_special_ops = cnode->IsApply(prim::kPrimTupleGetItem) || cnode->IsApply(prim::kPrimDepend) ||
                         cnode->IsApply(prim::kPrimPartial) || cnode->IsApply(prim::kPrimMakeTuple) ||
                         cnode->IsApply(prim::kPrimCall) || IsValueNode<FuncGraph>(first_input) ||
