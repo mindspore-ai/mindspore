@@ -64,6 +64,11 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64 OR PLATFORM_MCU)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math")
     endif()
+elseif(NOT MSVC)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+            -fdata-sections")
+    endif()
 endif()
 
 if(NOT MSVC)
