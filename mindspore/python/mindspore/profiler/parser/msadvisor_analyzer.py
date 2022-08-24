@@ -55,8 +55,8 @@ class Msadvisor:
         if running_result.returncode == 0:
             logger.info("MSAdvisor process finished.")
         else:
-            logger.info("MSAdvisor running failed,"
-                        "please check MSAdvisor running log.")
+            logger.warning("MSAdvisor running failed,"
+                           "please check MSAdvisor running log.")
 
     def analyse(self):
         """
