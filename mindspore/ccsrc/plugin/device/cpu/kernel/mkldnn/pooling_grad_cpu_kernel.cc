@@ -128,6 +128,67 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
+void PoolingGradCpuKernelMod::ReComputeDivisor(float *dst) {
+  const int64_t kernel_size = std::accumulate(kernel_.begin(), kernel_.end(), int64_t(1), std::multiplies<int64_t>());
+  const size_t size = std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>());
+  CTask task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      dst[i] = dst[i] * LongToFloat(kernel_size) / LongToFloat(divisor_override_);
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
+}
+
+void PoolingGradCpuKernelMod::EliminateInvalidPadding(float *dst) {
+  if (dst_shape_.size() < SHAPE_5D || kernel_.size() + NC_LEN < SHAPE_5D ||
+      padding_invalid_.size() + NC_LEN < SHAPE_5D) {
+    MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
+  }
+  const auto d_max = LongToSize(dst_shape_[D_INDEX] - 1);
+  const auto h_max = LongToSize(dst_shape_[H_INDEX] - 1);
+  const auto w_max = LongToSize(dst_shape_[W_INDEX] - 1);
+  const size_t d_index = D_INDEX - NC_LEN;
+  const size_t h_index = H_INDEX - NC_LEN;
+  const size_t w_index = W_INDEX - NC_LEN;
+  const int64_t valid_d = kernel_[d_index] - padding_invalid_[d_index];
+  const int64_t valid_h = kernel_[h_index] - padding_invalid_[h_index];
+  const int64_t valid_w = kernel_[w_index] - padding_invalid_[w_index];
+  const std::vector<int64_t> valid_kernel_array{kernel_[d_index] * kernel_[h_index] * kernel_[w_index],
+                                                kernel_[d_index] * kernel_[h_index] * valid_w,
+                                                kernel_[d_index] * valid_h * kernel_[w_index],
+                                                kernel_[d_index] * valid_h * valid_w,
+                                                valid_d * kernel_[h_index] * kernel_[w_index],
+                                                valid_d * kernel_[h_index] * valid_w,
+                                                valid_d * valid_h * kernel_[w_index],
+                                                valid_d * valid_h * valid_w};
+  const int base = 2;
+  const int64_t kernel_size = std::accumulate(kernel_.begin(), kernel_.end(), int64_t(1), std::multiplies<int64_t>());
+  CTask task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      for (size_t d = 0; d <= d_max; d++) {
+        for (size_t h = 0; h <= h_max; h++) {
+          for (size_t w = 0; w <= w_max; w++) {
+            const char d_bound = d == d_max ? '1' : '0';
+            const char h_bound = h == h_max ? '1' : '0';
+            const char w_bound = w == w_max ? '1' : '0';
+            const std::string bin{d_bound, h_bound, w_bound};
+            const int kernel_index = std::stoi(bin, nullptr, base);
+            const int64_t valid_kernel_size = valid_kernel_array[kernel_index];
+            if (valid_kernel_size != kernel_size) {
+              const size_t index =
+                static_cast<size_t>(i * dst_shape_[D_INDEX] * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] +
+                                    d * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] + h * dst_shape_[W_INDEX] + w);
+              dst[index] = dst[index] * LongToFloat(kernel_size) / LongToFloat(valid_kernel_size);
+            }
+          }
+        }
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, static_cast<size_t>(dst_shape_[N_INDEX] * dst_shape_[C_INDEX]), this,
+                           &parallel_search_info_);
+}
+
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
 void PoolingGradCpuKernelMod::ExecuteForwardByMSThreadPool(const std::unordered_map<int, dnnl::memory> &arguments) {
   const size_t MAX_POW = 6;
