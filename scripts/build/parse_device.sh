@@ -49,6 +49,7 @@ parse_device()
     # building 310 package by giving specific -V 310 instruction
     if [[ "X$DEVICE_VERSION" == "X310" ]]; then
       ENABLE_ACL="on"
+      export ENABLE_AKG="off"
     # universal ascend package
     elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
       export ENABLE_D="on"
@@ -72,7 +73,7 @@ parse_device()
     exit 1
   fi
 
-  if [[ "X$ENABLE_AKG" == "Xon" && "X$ENABLE_D" != "Xon" ]]; then
+  if [[ "X$ENABLE_AKG" == "Xon" && "X$ENABLE_D" != "Xon" && "X$ENABLE_CPU" == "Xon" ]]; then
     # check llvm version for akg 
     HAS_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
     export USE_LLVM=$HAS_LLVM

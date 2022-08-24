@@ -774,6 +774,10 @@ fi
 get_version
 CMAKE_ARGS="${CMAKE_ARGS} -DVERSION_STR=${VERSION_STR}"
 
+if [[ "X$LITE_PLATFORM" != "Xx86_64" ]]; then
+    export ENABLE_AKG="off"
+fi
+
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar
 elif [[ "X$LITE_PLATFORM" != "X" ]]; then

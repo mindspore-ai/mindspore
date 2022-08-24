@@ -84,8 +84,8 @@ process_options()
       I)
         build_option_proc_upper_i ;;
       K)
-        export ENABLE_AKG="on"
-        echo "enable compile with akg" ;;
+        check_on_off $OPTARG K
+        export ENABLE_AKG="$OPTARG" ;;
       B)
         build_option_proc_upper_b ;;
       E)

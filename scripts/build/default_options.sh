@@ -43,7 +43,7 @@ init_default_options()
   export LITE_PLATFORM=""
   export LITE_ENABLE_AAR="off"
   export USE_GLOG="on"
-  export ENABLE_AKG="off"
+  export ENABLE_AKG="on"
   export ENABLE_ACL="off"
   export ENABLE_D="off"
   export ENABLE_DEBUGGER="on"
