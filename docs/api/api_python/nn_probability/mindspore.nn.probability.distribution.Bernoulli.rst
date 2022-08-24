@@ -13,7 +13,7 @@ mindspore.nn.probability.distribution.Bernoulli
         - **name** (str) - 分布的名称。默认值：'Bernoulli'。
 
     .. note:: 
-        `probs` 中元素必须是合适的概率（0<p<1）。
+        `probs` 中元素必须是合适的概率（0<p<1）。`dist_spec_args` 是 `probs`。
 
     异常：
         - **ValueError** - `probs` 中元素小于0或大于1。

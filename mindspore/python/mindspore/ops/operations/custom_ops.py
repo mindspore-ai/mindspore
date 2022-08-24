@@ -147,7 +147,7 @@ class Custom(ops.PrimitiveWithInfer):
         This is an experimental prototype that is subject to change.
 
     .. note::
-        The supported platforms are determined by the input `func_type`:
+        The supported platforms are determined by the input `func_type`. The supported platforms are as follows:
 
         - "hybrid": supports ["Ascend", "GPU", "CPU"].
         - "akg": supports ["Ascend", "GPU", "CPU"].

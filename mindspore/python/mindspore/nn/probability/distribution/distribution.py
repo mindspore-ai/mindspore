@@ -34,9 +34,6 @@ class Distribution(Cell):
         name (str): The name of the distribution.
         param (dict): The parameters used to initialize the distribution.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Note:
         Derived class must override operations such as `_mean`, `_prob`,
         and `_log_prob`. Required arguments, such as `value` for `_prob`,
@@ -50,6 +47,9 @@ class Distribution(Cell):
         For all functions, passing in `dist_spec_args`, is optional.
         Function calls with the additional `dist_spec_args` passed in will evaluate the result with
         a new distribution specified by the `dist_spec_args`. However, it will not change the original distribution.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self,

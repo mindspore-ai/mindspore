@@ -42,6 +42,5 @@ mindspore.ops.conv2d
         - **TypeError** - `out_channel` 或 `group` 不是int。
         - **ValueError** - `kernel_size` 、 `stride` 或 `diation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
-        - **ValueError** - `pad_val` 是一个长度不等于4的tuple。
+        - **ValueError** - `padding` 是一个长度不等于4的tuple。
         - **ValueError** - `pad_mode` 不等于"pad"，`pad_val` 不等于(0, 0, 0, 0)。
-        - **ValueError** - `data_format` 既不是"NCW"，也不是"NHWC"。
