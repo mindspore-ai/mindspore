@@ -45,7 +45,6 @@ Neural Network
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avg_pool2d
-    mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
@@ -79,7 +78,6 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
@@ -298,7 +296,6 @@ Linear Algebraic Functions
     mindspore.ops.dot
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
-    mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
     mindspore.ops.tensor_dot
@@ -316,7 +313,6 @@ Tensor Building
 
     mindspore.ops.eye
     mindspore.ops.fill
-    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.ones
     mindspore.ops.ones_like
