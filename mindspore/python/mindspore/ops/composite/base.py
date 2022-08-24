@@ -538,23 +538,20 @@ class _Grad(GradOperation_):
                 return out
         else:
             grad_.pynative_ = True
+            fn_ = fn
+            if self.has_aux:
+                fn_ = aux_fn
             # after_grad of this branch can't use @ms_function, just directly call grad_
             if self.get_by_position:
                 def after_grad(*args, **kwargs):
-                    if self.has_aux:
-                        return grad_(aux_fn, weights, grad_position)(*args, **kwargs)
-                    return grad_(fn, weights, grad_position)(*args, **kwargs)
+                    return grad_(fn_, weights, grad_position)(*args, **kwargs)
             else:
                 if self.get_by_list:
                     def after_grad(*args, **kwargs):
-                        if self.has_aux:
-                            return grad_(aux_fn, weights)(*args, **kwargs)
-                        return grad_(fn, weights)(*args, **kwargs)
+                        return grad_(fn_, weights)(*args, **kwargs)
                 else:
                     def after_grad(*args, **kwargs):
-                        if self.has_aux:
-                            return grad_(aux_fn)(*args, **kwargs)
-                        return grad_(fn)(*args, **kwargs)
+                        return grad_(fn_)(*args, **kwargs)
 
         self.grad_fn = after_grad
         self.fn = fn
